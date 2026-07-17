@@ -296,3 +296,25 @@ This file only edits JSON settings (services, deliveryOptions, general) and has 
 ---
 Task ID: fix-features
 Agent: main
+
+---
+Task ID: fix-round2-bugs
+Agent: main
+Task: إصلاح 4 مشاكل حرجة: PDF عربي، شعار، قوالب، ميزات
+
+Work Log:
+- حللت 5 لقطات شاشة وحددت المشاكل بدقة
+- إصلاح PDF: إضافة خط Amiri العربي + arabic-reshaper + bidi-js
+- إصلاح الشعار: زيادة الحد 300KB→2MB + ضغط تلقائي 512x512
+- إصلاح القوالب: تمرير adminPin عبر المكونات (7 نقاط نهاية)
+- إعادة بناء نظام الميزات: 7 مجانية + 18 مدفوعة مع عرض واضح
+- رفعت على GitHub واختبرت على Vercel:
+  - ✅ تغيير السمة يعمل (تم التحقق بالتوست)
+  - ✅ الميزات تعرض بشكل صحيح (7/25)
+  - ✅ حد الشعار 2MB يظهر
+
+Stage Summary:
+- 4 مشاكل رئيسية تم إصلاحها
+- الموقع يعمل: https://tayf-saas.vercel.app
+- كلمة مرور الأدمن: Admin@2025
+- متجر تجريبي: /s/matbaa-alnoor (PIN: 1234)
