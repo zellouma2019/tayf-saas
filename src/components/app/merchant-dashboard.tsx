@@ -176,6 +176,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [viewMode, setViewMode] = useState<OrderViewMode>("table");
   const [selectedOrder, setSelectedOrder] = useState<PrintOrderLite | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // جلب عدد الطلبات المعلقة
@@ -384,15 +385,26 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   const loadAll = useCallback(() => {
     setLoading(true);
+    setLoadError(null);
     Promise.all([
-      fetch(`/api/admin/stats?shopId=${shopId}`).then((r) => r.json()),
-      fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`).then((r) => r.json()),
+      fetch(`/api/admin/stats?shopId=${shopId}`).then((r) => {
+        if (!r.ok) throw new Error(`stats: ${r.status}`);
+        return r.json();
+      }),
+      fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`).then((r) => {
+        if (!r.ok) throw new Error(`orders: ${r.status}`);
+        return r.json();
+      }),
     ])
       .then(([s, o]) => {
         setStats(s);
         setRawOrders(o.orders || []);
+        setLoadError(null);
       })
-      .catch(() => {})
+      .catch((e) => {
+        console.error('[MerchantDashboard] loadAll failed:', e);
+        setLoadError('فشل تحميل البيانات. تحقق من الاتصال بالإنترنت وأعد المحاولة.');
+      })
       .finally(() => {
         setLoading(false);
         refreshShop();
@@ -574,7 +586,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       <div className="flex-1 bg-slate-50 overflow-auto">
         {/* ===== الشريط العلوي ===== */}
         <header className="bg-white border-b border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] h-16 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -584,12 +596,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <Menu className="h-5 w-5" />
             </button>
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
               style={{ backgroundColor: shop?.primaryColor || '#0d7377' }}
             >
               {(() => {
                 const Comp = DYN_ICON_MAP[shop?.logoIcon || "Printer"] || PrinterIcon;
-                return <Comp className="h-5 w-5 text-white" />;
+                return <Comp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />;
               })()}
             </div>
             <div className="hidden sm:flex items-center gap-2.5 bg-gradient-to-l from-teal-50 to-cyan-50 border border-teal-200/60 -mx-2 px-3 py-1.5 rounded-xl">
@@ -603,7 +615,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="text-xs text-slate-400 truncate">لوحة التحكم</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); }}
@@ -621,7 +633,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               href={customerLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+              className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-2.5 sm:px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
             >
               <Plus className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">طلب جديد</span>
@@ -630,7 +642,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               size="icon"
               variant="ghost"
               onClick={loadAll}
-              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 h-10 w-10 rounded-lg shrink-0 transition-all duration-200"
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 h-9 w-9 sm:h-10 sm:w-10 rounded-lg shrink-0 transition-all duration-200"
               title="تحديث"
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
@@ -745,7 +757,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </h3>
                 </div>
                 <div className="p-0">
-                  {loading ? (
+                  {loadError ? (
+                    <div className="py-12 flex flex-col items-center px-4">
+                      <AlertCircle className="h-10 w-10 text-rose-300 mb-3" />
+                      <p className="text-sm font-medium text-slate-500 mb-1">فشل تحميل البيانات</p>
+                      <p className="text-xs text-slate-400 mb-4 text-center">{loadError}</p>
+                      <button
+                        type="button"
+                        onClick={loadAll}
+                        className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium bg-teal-50 hover:bg-teal-100 rounded-lg px-4 py-2 transition-colors"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        إعادة المحاولة
+                      </button>
+                    </div>
+                  ) : loading ? (
                     <div className="py-12 text-center text-slate-400 text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
@@ -923,7 +949,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   <h3 className="text-sm font-semibold text-slate-800">الطلبات ({orders.length})</h3>
                 </div>
                 <div className="p-0">
-                  {loading ? (
+                  {loadError ? (
+                    <div className="py-16 flex flex-col items-center px-4">
+                      <AlertCircle className="h-10 w-10 text-rose-300 mb-3" />
+                      <p className="text-sm font-medium text-slate-500 mb-1">فشل تحميل البيانات</p>
+                      <p className="text-xs text-slate-400 mb-4 text-center">{loadError}</p>
+                      <button
+                        type="button"
+                        onClick={loadAll}
+                        className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium bg-teal-50 hover:bg-teal-100 rounded-lg px-4 py-2 transition-colors"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        إعادة المحاولة
+                      </button>
+                    </div>
+                  ) : loading ? (
                     <div className="py-16 text-center text-slate-400 text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
@@ -1029,7 +1069,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </div>
                 </div>
                 <div className="p-4 space-y-3">
-                  {loading ? (
+                  {loadError ? (
+                    <div className="py-10 flex flex-col items-center px-4">
+                      <AlertCircle className="h-8 w-8 text-rose-300 mb-2" />
+                      <p className="text-xs text-slate-400 mb-3 text-center">{loadError}</p>
+                      <button type="button" onClick={loadAll} className="inline-flex items-center gap-1.5 text-xs text-teal-600 font-medium bg-teal-50 rounded-lg px-3 py-1.5">
+                        <RefreshCw className="h-3 w-3" /> إعادة المحاولة
+                      </button>
+                    </div>
+                  ) : loading ? (
                     <div className="py-10 text-center text-slate-400 text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
@@ -1049,7 +1097,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* ===== عرض كانبان ===== */}
               {viewMode === "kanban" && (
                 <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-                  {loading ? (
+                  {loadError ? (
+                    <div className="py-16 flex flex-col items-center px-4">
+                      <AlertCircle className="h-10 w-10 text-rose-300 mb-3" />
+                      <p className="text-xs text-slate-400 mb-3 text-center">{loadError}</p>
+                      <button type="button" onClick={loadAll} className="inline-flex items-center gap-1.5 text-xs text-teal-600 font-medium bg-teal-50 rounded-lg px-4 py-2">
+                        <RefreshCw className="h-3.5 w-3.5" /> إعادة المحاولة
+                      </button>
+                    </div>
+                  ) : loading ? (
                     <div className="py-16 text-center text-slate-400 text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
@@ -1499,15 +1555,20 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       });
       // ضغط الصورة إلى 512x512 كحد أقصى بصيغة JPEG
       const dataUrl = await compressLogo(rawDataUrl);
-      // حفظ الرابط في المتجر
-      const saveRes = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
-        method: "PUT",
+      // حفظ الشعار كملف (وليس data URL في قاعدة البيانات)
+      const saveRes = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}/logo`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logoUrl: dataUrl, adminPin }),
+        body: JSON.stringify({ logoDataUrl: dataUrl, adminPin }),
       });
-      if (!saveRes.ok) throw new Error("فشل حفظ الشعار");
-      setLogoUrl(dataUrl);
+      if (!saveRes.ok) {
+        const errData = await saveRes.json().catch(() => ({}));
+        throw new Error(errData.error || "فشل حفظ الشعار");
+      }
+      const result = await saveRes.json();
+      setLogoUrl(result.logoUrl);
       toast.success("تم رفع الشعار بنجاح");
+      refreshShop();
     } catch (err) {
       toast.error("فشل رفع الشعار", { description: (err as Error).message });
     } finally {
