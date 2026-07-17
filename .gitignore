@@ -1,0 +1,57 @@
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+*.log
+dev.log
+dev.out.log
+server.log
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+
+# z-ai internal
+.claude
+.z-ai-config
+test
+prompt
+
+# Skills & temp
+/skills/
+tool-results/
+upload/
+qa-*.png
+screenshot-*.png
+
+# Database (user generates their own)
+db/*.db
+db/*.db-journal
+db/*.db-wal
+db/*.db-shm

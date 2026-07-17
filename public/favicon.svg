@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="50%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="fg2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="6" fill="#0F172A"/>
+  <rect x="7" y="7" width="18" height="14" rx="2" fill="none" stroke="url(#fg)" stroke-width="1.5"/>
+  <line x1="10" y1="11" x2="22" y2="11" stroke="url(#fg2)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+  <line x1="10" y1="14" x2="20" y2="14" stroke="url(#fg2)" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+  <rect x="7" y="23" width="18" height="2.5" rx="1.25" fill="url(#fg)" opacity="0.9"/>
+  <text x="16" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-size="5" font-weight="800" fill="url(#fg2)">طيف</text>
+</svg>
