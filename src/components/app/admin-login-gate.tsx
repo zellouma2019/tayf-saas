@@ -82,20 +82,20 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center" dir="rtl">
-        <RefreshCw className="h-6 w-6 text-violet-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-teal-50/50 via-slate-50 to-cyan-50/30 flex items-center justify-center" dir="rtl">
+        <RefreshCw className="h-6 w-6 text-teal-500 animate-spin" />
       </div>
     );
   }
 
   // بعد تعيين كلمة مرور: عرض حقل كلمة المرور
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-slate-50 to-indigo-50 flex items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50/50 via-slate-50 to-emerald-50/30 flex items-center justify-center p-4" dir="rtl">
       {/* Decorative blob */}
-      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-violet-200/30 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-cyan-200/20 rounded-full blur-3xl pointer-events-none" />
       {/* Decorative grid pattern */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #7c3aed 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #0d7377 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
       <Card className="w-full max-w-sm shadow-2xl border-slate-200/40 dark:border-slate-700/40 backdrop-blur-sm bg-background/80 relative z-10">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center mb-6">
@@ -125,7 +125,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
             </div>
             <Button
               type="submit"
-              className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-200"
+              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200"
               disabled={verifying || !password.trim()}
             >
               {verifying ? <RefreshCw className="h-4 w-4 animate-spin" /> : "دخول"}

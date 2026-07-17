@@ -23,10 +23,10 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
   return (
     <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-600 via-violet-500 to-indigo-600 p-6 sm:p-8 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-teal-600 via-teal-500 to-cyan-600 p-6 sm:p-8 text-white">
         <div className="relative z-10">
           <h2 className="text-xl sm:text-2xl font-bold mb-1">مرحباً بك في طيف 👋</h2>
-          <p className="text-violet-100 text-sm max-w-lg">
+          <p className="text-teal-100 text-sm max-w-lg">
             منصة إدارة المطابع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين
           </p>
         </div>
@@ -44,8 +44,8 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border-t-2 border-t-violet-500 p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(stats.totalOrders ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950 dark:to-violet-900/50 flex items-center justify-center shrink-0"><Package className="h-5 w-5 text-violet-600" /></div></div>
+        <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border-t-2 border-t-teal-500 p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(stats.totalOrders ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950 dark:to-teal-900/50 flex items-center justify-center shrink-0"><Package className="h-5 w-5 text-teal-600" /></div></div>
         </div>
         <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border-t-2 border-t-emerald-500 p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatDA(stats.totalRevenue ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900/50 flex items-center justify-center shrink-0"><DollarSign className="h-5 w-5 text-emerald-600" /></div></div>
@@ -62,7 +62,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
       <Card className="bg-slate-50/50 dark:bg-slate-900/50 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-            <BarChart3 className="h-4 w-4 text-violet-600" />
+            <BarChart3 className="h-4 w-4 text-teal-600" />
             توزيع حالات الطلبات
           </CardTitle>
         </CardHeader>
@@ -134,8 +134,8 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
       {(stats.shopStats.length ?? 0) === 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button onClick={onOpenCreate} className="group bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5 text-right hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950 dark:to-violet-900/50 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Store className="h-5 w-5 text-violet-600" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950 dark:to-teal-900/50 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Store className="h-5 w-5 text-teal-600" />
             </div>
             <h3 className="text-sm font-bold text-foreground mb-1">إنشاء متجرك الأول</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">ابدأ بتسجيل مطبعتك وشارك الرابط مع زبائنك</p>
@@ -162,7 +162,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
         <Card className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-              <Activity className="h-4 w-4 text-violet-600" />
+              <Activity className="h-4 w-4 text-teal-600" />
               النشاطات الأخيرة
             </CardTitle>
           </CardHeader>
@@ -203,7 +203,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
         <Card className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-              <Clock className="h-4 w-4 text-violet-600" />
+              <Clock className="h-4 w-4 text-teal-600" />
               آخر الطلبات عبر المتاجر
             </CardTitle>
           </CardHeader>
@@ -253,7 +253,7 @@ function PieChartCard({ stats }: { stats: GlobalStats }) {
       <Card className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-            <Activity className="h-4 w-4 text-violet-600" />
+            <Activity className="h-4 w-4 text-teal-600" />
             توزيع حالات الطلبات - مخطط دائري
           </CardTitle>
         </CardHeader>
@@ -273,7 +273,7 @@ function PieChartCard({ stats }: { stats: GlobalStats }) {
     <Card className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-          <Activity className="h-4 w-4 text-violet-600" />
+          <Activity className="h-4 w-4 text-teal-600" />
           توزيع حالات الطلبات - مخطط دائري
         </CardTitle>
       </CardHeader>
@@ -314,7 +314,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
       <Card className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-            <TrendingUp className="h-4 w-4 text-violet-600" />
+            <TrendingUp className="h-4 w-4 text-teal-600" />
             مقارنة إيرادات المتاجر
           </CardTitle>
         </CardHeader>
@@ -332,7 +332,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
     <Card className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-          <TrendingUp className="h-4 w-4 text-violet-600" />
+          <TrendingUp className="h-4 w-4 text-teal-600" />
           مقارنة إيرادات المتاجر
         </CardTitle>
       </CardHeader>
@@ -346,7 +346,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
               formatter={(value: number) => [formatDA(value), "الإيرادات"]}
               labelFormatter={(label: string) => `المتجر: ${label}`}
             />
-            <Bar dataKey="revenue" fill="#7C3AED" radius={[0, 6, 6, 0]} barSize={22} />
+            <Bar dataKey="revenue" fill="#0d7377" radius={[0, 6, 6, 0]} barSize={22} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

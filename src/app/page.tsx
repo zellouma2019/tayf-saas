@@ -109,7 +109,7 @@ export default function SuperAdminPage() {
 
   function SortIcon({ field }: { field: string }) {
     if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-slate-300" />;
-    return sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-violet-600" /> : <ArrowUp className="h-3 w-3 text-violet-600" />;
+    return sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-teal-600" /> : <ArrowUp className="h-3 w-3 text-teal-600" />;
   }
 
   function exportToExcel() {
@@ -175,11 +175,11 @@ export default function SuperAdminPage() {
         <header className="bg-background border-b border-slate-200 dark:border-slate-700 h-16 sticky top-0 z-30 px-4 sm:px-6">
           <div className="h-full flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <button type="button" onClick={() => setMobileOpen(!mobileOpen)} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 md:hidden" aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}><Menu size={20} /></button>
+              <button type="button" onClick={() => setMobileOpen(!mobileOpen)} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 md:hidden" aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}><Menu size={20} /></button>
               <div className="min-w-0"><h1 className="text-sm font-semibold text-slate-800 truncate">{TAB_TITLES[activeTab] || "لوحة التحكم"}</h1><p className="text-xs text-slate-400 truncate">لوحة التحكم / {TAB_TITLES[activeTab] || "نظرة عامة"}</p></div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => setCreateOpen(true)} className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
+              <button onClick={() => setCreateOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
               <button onClick={loadAll} className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2.5 text-sm transition-colors"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function SuperAdminPage() {
           {activeTab === "orders" && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="relative md:col-span-1"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث برقم الطلب، اسم، هاتف، أو متجر..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 bg-background" /></div>
+                <div className="relative md:col-span-1"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث برقم الطلب، اسم، هاتف، أو متجر..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 bg-background" /></div>
                 <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-slate-200 bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{stats?.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-slate-200 bg-background"><SelectValue placeholder="كل الحالات" /></SelectTrigger><SelectContent><SelectItem value="all">كل الحالات</SelectItem>{STATUS_FLOW.map((s) => (<SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>))}<SelectItem value="cancelled">ملغي</SelectItem></SelectContent></Select>
                 <button onClick={exportToExcel} disabled={filteredOrders.length === 0} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed bg-background"><Download className="h-4 w-4" />تصدير Excel</button>
@@ -256,9 +256,9 @@ export default function SuperAdminPage() {
                 <div className="text-sm text-slate-400">{stats?.shopCount ?? 0} متجر</div>
                 <button onClick={() => setCreateOpen(true)} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر جديد</button>
               </div>
-              <div className="relative"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} placeholder="ابحث في المتاجر بالاسم أو الرابط..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 bg-background" /></div>
-              {loading ? (<div className="text-center py-16 text-slate-400 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-violet-500" />جارٍ التحميل...</div>) : (stats?.shopStats.length ?? 0) === 0 ? (
-                <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"><div className="py-20 text-center"><div className="w-16 h-16 mx-auto rounded-2xl bg-slate-50 flex items-center justify-center mb-4"><Store className="h-8 w-8 text-slate-300" /></div><p className="font-semibold text-slate-700 mb-2">لا توجد متاجر بعد</p><p className="text-xs text-slate-400 mb-4">ابدأ بإنشاء متجرك الأول</p><button onClick={() => setCreateOpen(true)} className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر</button></div></div>
+              <div className="relative"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} placeholder="ابحث في المتاجر بالاسم أو الرابط..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 bg-background" /></div>
+              {loading ? (<div className="text-center py-16 text-slate-400 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-teal-500" />جارٍ التحميل...</div>) : (stats?.shopStats.length ?? 0) === 0 ? (
+                <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"><div className="py-20 text-center"><div className="w-16 h-16 mx-auto rounded-2xl bg-slate-50 flex items-center justify-center mb-4"><Store className="h-8 w-8 text-slate-300" /></div><p className="font-semibold text-slate-700 mb-2">لا توجد متاجر بعد</p><p className="text-xs text-slate-400 mb-4">ابدأ بإنشاء متجرك الأول</p><button onClick={() => setCreateOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر</button></div></div>
               ) : (
                 <div className="space-y-4">
                   {stats?.shopStats.filter((shop) => { if (!shopSearch.trim()) return true; const q = shopSearch.toLowerCase(); return shop.name.toLowerCase().includes(q) || shop.slug.toLowerCase().includes(q); }).map((shop) => (<ShopManageCard key={shop.id} shop={shop} onCopyLink={copyLink} onCopyAdminLink={copyAdminLink} onRefresh={loadAll} />))}
@@ -284,7 +284,7 @@ function EmptyOrdersMessage({ hasOrders, onClear }: { hasOrders: boolean; onClea
     <div className="py-16 text-center">
       <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center mb-4"><Package className="h-8 w-8 text-slate-300" /></div>
       <p className="font-semibold text-slate-700 mb-1">{hasOrders ? "لا توجد طلبات تطابق البحث" : "لا توجد طلبات بعد"}</p>
-      {hasOrders && <button onClick={onClear} className="inline-flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-700 font-medium transition-colors mt-2"><RotateCcw className="h-3.5 w-3.5" />مسح الفلاتر</button>}
+      {hasOrders && <button onClick={onClear} className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors mt-2"><RotateCcw className="h-3.5 w-3.5" />مسح الفلاتر</button>}
     </div>
   );
 }
@@ -297,7 +297,7 @@ function OrderDetailDialog({ order, onClose, onStatusChange, onDelete }: {
 }) {
   return (
     <Dialog open={!!order} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-md sm:max-w-lg border-t-4 border-t-violet-500" dir="rtl">
+      <DialogContent className="max-w-md sm:max-w-lg border-t-4 border-t-teal-500" dir="rtl">
         <DialogTitle className="sr-only">تفاصيل الطلب</DialogTitle>
         {order && (
           <div className="space-y-5">

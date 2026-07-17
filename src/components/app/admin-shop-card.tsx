@@ -78,12 +78,12 @@ export function ShopOverviewCard({ shop, onRefresh }: {
 }) {
   return (
     <Card className={cn("bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all hover:bg-gradient-to-l hover:from-slate-50 hover:to-transparent overflow-hidden", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
-      <div className="h-1 bg-violet-600" />
+      <div className="h-1 bg-teal-600" />
       <CardHeader className="pb-2 px-5 pt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
-              <Store className="h-5 w-5 text-violet-600" />
+            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+              <Store className="h-5 w-5 text-teal-600" />
             </div>
             <div className="min-w-0">
               <CardTitle className="text-sm truncate text-slate-800">{shop.name}</CardTitle>
@@ -100,7 +100,7 @@ export function ShopOverviewCard({ shop, onRefresh }: {
             {shop.isActive ? "نشط" : "متوقف"}
           </span>
           {shop.plan === "pro" || shop.plan === "paid" ? (
-            <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-violet-50 text-violet-600 flex items-center gap-1">
+            <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-teal-50 text-teal-600 flex items-center gap-1">
               <Crown className="h-3 w-3" /> PRO
             </span>
           ) : (
@@ -257,8 +257,8 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
           {/* السطر الأول: اسم المتجر + الحالة + التجربة */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
-                <Store className="h-5 w-5 text-violet-600" />
+              <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+                <Store className="h-5 w-5 text-teal-600" />
               </div>
               <div className="min-w-0">
                 <div className="font-bold text-sm truncate text-slate-800">{getCountry(shop.country)?.flag} {shop.name}</div>
@@ -278,7 +278,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
               </span>
               <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
                 isPaid
-                  ? "bg-violet-50 text-violet-600"
+                  ? "bg-teal-50 text-teal-600"
                   : "bg-slate-50 text-slate-500"
               }`}>
                 {isPaid ? "✦ مدفوع" : "مجاني"}
@@ -324,7 +324,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
                     <Timer className="h-3.5 w-3.5 ml-2 text-sky-500" /> تجربة 7 أيام
                   </DropdownMenuItem>
                   <DropdownMenuItem className="rounded-lg cursor-pointer text-xs" onClick={() => quickTrial(15)}>
-                    <Timer className="h-3.5 w-3.5 ml-2 text-violet-500" /> تجربة 15 يوم
+                    <Timer className="h-3.5 w-3.5 ml-2 text-teal-500" /> تجربة 15 يوم
                   </DropdownMenuItem>
                   <DropdownMenuItem className="rounded-lg cursor-pointer text-xs" onClick={() => quickTrial(30)}>
                     <Timer className="h-3.5 w-3.5 ml-2 text-amber-500" /> تجربة 30 يوم
@@ -334,7 +334,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
               <button className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
                 <ExternalLink className="h-3.5 w-3.5" /> فتح الإدارة
               </button>
-              <button className="border border-violet-200 text-violet-600 hover:bg-violet-50 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}`)}>
+              <button className="border border-teal-200 text-teal-600 hover:bg-teal-50 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}`)}>
                 <Eye className="h-3.5 w-3.5" /> معاينة
               </button>
               <AlertDialog>
@@ -530,29 +530,29 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
         <form onSubmit={handleSave} className="space-y-6 mt-2">
           {/* معلومات المتجر */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-violet-500 pr-3">
-              <Store className="h-4 w-4 text-violet-600" /> معلومات المتجر
+            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-teal-500 pr-3">
+              <Store className="h-4 w-4 text-teal-600" /> معلومات المتجر
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <Label className="text-slate-600">اسم المتجر</Label>
-                <Input value={form.name} onChange={(e) => updateField("name", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" required />
+                <Input value={form.name} onChange={(e) => updateField("name", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" required />
               </div>
               <div>
                 <Label className="text-slate-600">هاتف المتجر</Label>
-                <Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" dir="ltr" placeholder="0XXX..." />
+                <Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="0XXX..." />
               </div>
               <div>
                 <Label className="text-slate-600">واتساب</Label>
-                <Input value={form.whatsapp} onChange={(e) => updateField("whatsapp", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" dir="ltr" placeholder="0XXX..." />
+                <Input value={form.whatsapp} onChange={(e) => updateField("whatsapp", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="0XXX..." />
               </div>
               <div>
                 <Label className="text-slate-600">البريد الإلكتروني</Label>
-                <Input value={form.email} onChange={(e) => updateField("email", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" dir="ltr" type="email" />
+                <Input value={form.email} onChange={(e) => updateField("email", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" type="email" />
               </div>
               <div>
                 <Label className="text-slate-600">العنوان</Label>
-                <Input value={form.address} onChange={(e) => updateField("address", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" />
+                <Input value={form.address} onChange={(e) => updateField("address", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" />
               </div>
             </div>
           </div>
@@ -565,11 +565,11 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-slate-600">اسم العميل</Label>
-                <Input value={form.ownerName} onChange={(e) => updateField("ownerName", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" />
+                <Input value={form.ownerName} onChange={(e) => updateField("ownerName", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" />
               </div>
               <div>
                 <Label className="text-slate-600">هاتف العميل</Label>
-                <Input value={form.ownerPhone} onChange={(e) => updateField("ownerPhone", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" dir="ltr" placeholder="0XXX..." />
+                <Input value={form.ownerPhone} onChange={(e) => updateField("ownerPhone", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="0XXX..." />
               </div>
             </div>
           </div>
@@ -581,20 +581,20 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
             </h4>
             <div>
               <Label className="text-slate-600">كلمة مرور الإدارة</Label>
-              <Input value={form.adminPin} onChange={(e) => updateField("adminPin", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" dir="ltr" required />
+              <Input value={form.adminPin} onChange={(e) => updateField("adminPin", e.target.value)} className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" required />
               <p className="text-xs text-slate-400 mt-1.5">أرسل هذه الكلمة للعميل مع رابط الإدارة</p>
             </div>
           </div>
 
           {/* المظهر */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-violet-400 pr-3">
-              <Settings className="h-4 w-4 text-violet-500" /> المظهر
+            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-teal-400 pr-3">
+              <Settings className="h-4 w-4 text-teal-500" /> المظهر
             </h4>
             <div>
               <Label className="text-slate-600">اللون الرئيسي</Label>
               <div className="flex gap-3 mt-1.5">
-                <Input value={form.primaryColor} onChange={(e) => updateField("primaryColor", e.target.value)} className="flex-1 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500" dir="ltr" placeholder="#7c3aed" />
+                <Input value={form.primaryColor} onChange={(e) => updateField("primaryColor", e.target.value)} className="flex-1 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="#7c3aed" />
                 {form.primaryColor && (
                   <div className="w-10 h-10 rounded-lg border border-slate-200 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ backgroundColor: form.primaryColor }} />
                 )}
@@ -604,15 +604,15 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
 
           {/* فترة التجربة + إجراءات سريعة */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-violet-400 pr-3">
-              <CalendarDays className="h-4 w-4 text-violet-600" /> فترة التجربة والمدة
+            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-teal-400 pr-3">
+              <CalendarDays className="h-4 w-4 text-teal-600" /> فترة التجربة والمدة
             </h4>
 
             {/* إجراءات سريعة */}
             <div className="space-y-3 bg-slate-50/60 rounded-xl p-4 border border-slate-100">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
-                  <Zap className="h-3.5 w-3.5 text-violet-600" />
+                <div className="w-6 h-6 rounded-lg bg-teal-100 flex items-center justify-center">
+                  <Zap className="h-3.5 w-3.5 text-teal-600" />
                 </div>
                 <span className="text-sm font-bold text-slate-700">إجراءات سريعة</span>
               </div>
@@ -635,7 +635,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                 </button>
                 <button
                   type="button"
-                  className="text-xs h-10 rounded-lg bg-violet-600 hover:bg-violet-700 text-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-colors inline-flex items-center justify-center gap-1.5"
+                  className="text-xs h-10 rounded-lg bg-teal-600 hover:bg-teal-700 text-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-colors inline-flex items-center justify-center gap-1.5"
                   onClick={() => quickAction("trial15")}
                 >
                   <Timer className="h-3.5 w-3.5 ml-1.5" />
@@ -669,7 +669,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                   min="0"
                   value={form.trialDays}
                   onChange={(e) => updateField("trialDays", e.target.value)}
-                  className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                  className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500"
                   dir="ltr"
                   placeholder="اتركه فارغاً = بلا حدود"
                 />
@@ -680,7 +680,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                   type="date"
                   value={form.trialStartsAt}
                   onChange={(e) => updateField("trialStartsAt", e.target.value)}
-                  className="mt-1.5 rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                  className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500"
                   dir="ltr"
                 />
                 <p className="text-xs text-slate-400 mt-1.5">
@@ -704,8 +704,8 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
 
           {/* الخطة */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-violet-400 pr-3">
-              <CreditCard className="h-4 w-4 text-violet-600" /> الخطة
+            <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-teal-400 pr-3">
+              <CreditCard className="h-4 w-4 text-teal-600" /> الخطة
             </h4>
             <div>
               <Label className="text-slate-600">نوع الخطة</Label>
@@ -727,7 +727,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
               </Select>
             </div>
             {isPaidPlan && (
-              <div className="bg-violet-50 border border-violet-200/80 rounded-lg p-4 text-xs text-violet-700">
+              <div className="bg-teal-50 border border-teal-200/80 rounded-lg p-4 text-xs text-teal-700">
                 ✅ الخطة المدفوعة: جميع الميزات مفعّلة تلقائياً. يمكنك تعطيل ميزة معينة يدوياً إذا أردت.
               </div>
             )}
@@ -736,7 +736,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
               <Textarea
                 value={paymentInfo}
                 onChange={(e) => setPaymentInfo(e.target.value)}
-                className="mt-1.5 text-xs rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                className="mt-1.5 text-xs rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500"
                 rows={3}
                 placeholder="طريقة الدفع، المبلغ، التاريخ..."
               />
@@ -746,7 +746,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
               <Textarea
                 value={ownerNotes}
                 onChange={(e) => setOwnerNotes(e.target.value)}
-                className="mt-1.5 text-xs rounded-lg border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                className="mt-1.5 text-xs rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500"
                 rows={3}
                 placeholder="ملاحظات خاصة عن هذا المتجر..."
               />
@@ -758,8 +758,8 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
           {/* إدارة الميزات */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-violet-400 pr-3">
-                <ToggleLeft className="h-4 w-4 text-violet-600" /> إدارة الميزات
+              <h4 className="text-sm font-bold flex items-center gap-2 text-slate-700 border-r-2 border-teal-400 pr-3">
+                <ToggleLeft className="h-4 w-4 text-teal-600" /> إدارة الميزات
               </h4>
               <Badge variant="outline" className="text-xs rounded-lg border-slate-200 text-slate-500">
                 {enabledCount}/{TOTAL_FEATURES} مفعّلة
@@ -767,7 +767,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
             </div>
 
             {isPaidPlan && (
-              <div className="text-xs text-violet-700 bg-violet-50 border border-violet-200/80 rounded-lg p-3">
+              <div className="text-xs text-teal-700 bg-teal-50 border border-teal-200/80 rounded-lg p-3">
                 ✨ الخطة المدفوعة — جميع الميزات مفعّلة افتراضياً. يمكنك تعطيل ميزة معينة يدوياً.
               </div>
             )}
@@ -811,12 +811,12 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-5 rounded-full bg-violet-400" />
-                        <span className="text-xs font-bold text-violet-700">مدفوعة ({paidFeatures.length})</span>
-                        <span className="text-[10px] text-violet-500">— قابلة للتبديل</span>
+                        <div className="w-1.5 h-5 rounded-full bg-teal-400" />
+                        <span className="text-xs font-bold text-teal-700">مدفوعة ({paidFeatures.length})</span>
+                        <span className="text-[10px] text-teal-500">— قابلة للتبديل</span>
                       </div>
                       <div className="flex gap-1">
-                        <button type="button" className="text-[11px] h-6 px-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-md transition-colors" onClick={() => enableAllForGroup(paidFeatures)}>
+                        <button type="button" className="text-[11px] h-6 px-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-md transition-colors" onClick={() => enableAllForGroup(paidFeatures)}>
                           تفعيل الكل
                         </button>
                         <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(paidFeatures)}>
@@ -824,13 +824,13 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                         </button>
                       </div>
                     </div>
-                    <div className="space-y-0.5 max-h-72 overflow-y-auto rounded-lg border border-violet-100 bg-violet-50/20 p-2.5">
+                    <div className="space-y-0.5 max-h-72 overflow-y-auto rounded-lg border border-teal-100 bg-teal-50/20 p-2.5">
                       {paidFeatures.map((f) => (
                         <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-white/70 transition-colors">
                           <Checkbox
                             checked={features[f.key] === true}
                             onCheckedChange={() => toggleFeature(f.key)}
-                            className="mt-0.5 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600"
+                            className="mt-0.5 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
@@ -838,7 +838,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                               <span className={cn(
                                 "text-[10px] px-1.5 py-0.5 rounded font-medium",
                                 features[f.key]
-                                  ? "bg-violet-100 text-violet-600"
+                                  ? "bg-teal-100 text-teal-600"
                                   : "bg-slate-100 text-slate-400"
                               )}>
                                 {features[f.key] ? "مفعّل" : "مدفوع"}
@@ -857,7 +857,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
 
           {/* أزرار الحفظ */}
           <div className="flex gap-3 pt-3">
-            <button type="submit" className="flex-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors" disabled={saving}>
+            <button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors" disabled={saving}>
               {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
             </button>
             <button type="button" onClick={onClose} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm font-medium transition-colors">

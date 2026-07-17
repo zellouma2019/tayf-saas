@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
     "preview-chat-25b4c095-e627-480e-ab7b-6e25473ffb45.space-z.ai",
   ],
   serverExternalPackages: ["sharp", "@libsql/client"],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "5mb",
+    },
+  },
 };
 
 export default nextConfig;

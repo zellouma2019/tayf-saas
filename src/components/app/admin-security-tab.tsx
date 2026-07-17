@@ -149,11 +149,11 @@ export function SecurityTab() {
   return (
     <div className="space-y-5">
       {/* بانر حماية */}
-      <div className="bg-violet-50 border border-violet-100 rounded-xl p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-          <ShieldCheck className="h-5 w-5 text-violet-600" />
+      <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+          <ShieldCheck className="h-5 w-5 text-teal-600" />
         </div>
-        <p className="text-sm text-violet-800 font-medium">حماية لوحة التحكم الخاصة بك — تأكد من استخدام كلمة مرور قوية</p>
+        <p className="text-sm text-teal-800 font-medium">حماية لوحة التحكم الخاصة بك — تأكد من استخدام كلمة مرور قوية</p>
       </div>
 
       {/* معلومات الجلسة */}
@@ -181,8 +181,8 @@ export function SecurityTab() {
         <div className="p-5 pb-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm flex items-center gap-2 text-slate-700 font-semibold">
-              <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
-                <Lock className="h-4 w-4 text-violet-600" />
+              <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
+                <Lock className="h-4 w-4 text-teal-600" />
               </div>
               كلمة مرور لوحة التحكم
             </h3>
@@ -284,7 +284,7 @@ export function SecurityTab() {
             </div>
             <Button
               type="submit"
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg h-10 px-5"
+              className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg h-10 px-5"
               disabled={changingPwd || (!isDefaultPwd && !currentPwd) || !newPwd || newPwd !== confirmPwd}
             >
               {changingPwd ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -370,8 +370,8 @@ export function SecurityTab() {
                   className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center shrink-0">
-                      <span className="text-sm font-bold text-violet-700">
+                    <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-teal-700">
                         {m.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -387,7 +387,7 @@ export function SecurityTab() {
                     <Badge
                       className={cn(
                         "text-xs",
-                        m.role === "admin" ? "bg-violet-50 text-violet-700 border-violet-200" :
+                        m.role === "admin" ? "bg-teal-50 text-teal-700 border-teal-200" :
                         m.role === "viewer" ? "bg-slate-100 text-slate-600 border-slate-200" :
                         "bg-emerald-50 text-emerald-700 border-emerald-200"
                       )}

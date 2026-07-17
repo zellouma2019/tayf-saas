@@ -77,10 +77,10 @@ export function SettingsTab() {
       description: "إعدادات الخدمات والأسعار الافتراضية",
       value: services,
       setValue: setServices,
-      borderColor: "border-r-violet-400",
-      iconBg: "bg-violet-50",
-      iconColor: "text-violet-600",
-      icon: <Printer className="h-4 w-4 text-violet-600" />,
+      borderColor: "border-r-teal-400",
+      iconBg: "bg-teal-50",
+      iconColor: "text-teal-600",
+      icon: <Printer className="h-4 w-4 text-teal-600" />,
       minH: "min-h-[160px]",
     },
     {
@@ -111,13 +111,13 @@ export function SettingsTab() {
 
   return (
     <div className="space-y-5">
-      <div className="bg-violet-50/60 rounded-xl border border-violet-200/40 p-4 flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-          <Settings className="h-4 w-4 text-violet-600" />
+      <div className="bg-teal-50/60 rounded-xl border border-teal-200/40 p-4 flex items-start gap-3">
+        <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center shrink-0 mt-0.5">
+          <Settings className="h-4 w-4 text-teal-600" />
         </div>
         <div>
-          <h3 className="text-sm text-violet-800 font-semibold">إعدادات النظام العامة</h3>
-          <p className="text-xs text-violet-600/70 mt-0.5">
+          <h3 className="text-sm text-teal-800 font-semibold">إعدادات النظام العامة</h3>
+          <p className="text-xs text-teal-600/70 mt-0.5">
             هذه الإعدادات تُطبّق على جميع المتاجر الجديدة كقيم افتراضية
           </p>
         </div>
@@ -125,7 +125,7 @@ export function SettingsTab() {
 
       {loading ? (
         <div className="text-center py-10 text-slate-400 text-sm">
-          <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-violet-500" />
+          <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-teal-500" />
           جارٍ التحميل...
         </div>
       ) : (
@@ -152,7 +152,7 @@ export function SettingsTab() {
                           <div className="text-sm font-bold text-slate-700">{sec.label}</div>
                           <button
                             type="button"
-                            className="text-slate-300 hover:text-violet-500 transition-colors shrink-0"
+                            className="text-slate-300 hover:text-teal-500 transition-colors shrink-0"
                             onClick={() => robustCopy(sec.value, "تم نسخ القسم", sec.label)}
                             title="نسخ JSON"
                           >
@@ -183,7 +183,7 @@ export function SettingsTab() {
                       "font-mono text-xs rounded-lg bg-slate-50/50 leading-relaxed",
                       sec.minH,
                       valid
-                        ? "border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                        ? "border-slate-200 focus:ring-teal-500/20 focus:border-teal-500"
                         : "border-rose-200 focus:ring-rose-500/20 focus:border-rose-500"
                     )}
                     dir="ltr"
@@ -197,7 +197,7 @@ export function SettingsTab() {
                       إعادة تعيين
                     </button>
                     <button
-                      className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                      className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                       onClick={() => saveSection(sec.key, sec.value)}
                       disabled={saving === sec.key}
                     >

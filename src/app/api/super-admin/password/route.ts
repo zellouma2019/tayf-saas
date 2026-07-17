@@ -3,9 +3,12 @@ import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تهيئة قاعدة البيانات إن لم تكن جاهزة
+let dbChecked = false;
 async function ensureSchema(): Promise<boolean> {
+  if (dbChecked) return true;
   try {
     await db.shop.count();
+    dbChecked = true;
     return true;
   } catch {
     try {
@@ -13,6 +16,7 @@ async function ensureSchema(): Promise<boolean> {
         ? `https://${process.env.VERCEL_URL}`
         : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
       const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
+      if (res.ok) dbChecked = true;
       return res.ok;
     } catch {
       return false;

@@ -127,7 +127,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
         'relative flex w-full items-center gap-3 rounded-md',
         collapsed ? 'justify-center px-0 py-2.5' : 'px-4 py-2.5',
         'transition-colors duration-150 ease-in-out',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800',
         isActive
           ? 'bg-slate-700 text-white'
           : 'text-slate-300 hover:bg-slate-700/60 hover:text-slate-100',
@@ -136,7 +136,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       <span
         className={cn(
           'absolute right-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-150',
-          isActive ? 'bg-violet-600 opacity-100' : 'bg-transparent opacity-0',
+          isActive ? 'bg-teal-600 opacity-100' : 'bg-transparent opacity-0',
         )}
       />
 
@@ -153,7 +153,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
           <span className="truncate">{item.label}</span>
 
           {item.badge != null && (
-            <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+            <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-teal-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
               {item.badge}
             </span>
           )}
@@ -161,7 +161,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       )}
 
       {collapsed && item.badge != null && (
-        <span className="absolute -left-0.5 -top-0.5 h-2 w-2 rounded-full bg-violet-500" />
+        <span className="absolute -left-0.5 -top-0.5 h-2 w-2 rounded-full bg-teal-500" />
       )}
     </button>
   );
@@ -360,7 +360,7 @@ export function DashboardSidebar({
           type="button"
           onClick={onToggleCollapse}
           className={cn(
-            'flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium text-slate-400 transition-colors duration-150 hover:bg-slate-700/60 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500',
+            'flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium text-slate-400 transition-colors duration-150 hover:bg-slate-700/60 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500',
             effectiveCollapsed && 'justify-center px-0',
           )}
           aria-label={effectiveCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}

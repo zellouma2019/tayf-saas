@@ -86,3 +86,55 @@ Stage Summary:
 - الشعار يتجاوب مع dark/light
 - اللغة والعملة قابلة للتغيير من التاجر
 - الموقع: https://tayf-saas.vercel.app
+---
+Task ID: 2-a
+Agent: general-purpose
+Task: Optimize ensureSchema in all API routes with caching
+
+Work Log:
+- Searched all 12 API route files for ensureSchema functions
+- Found ensureSchema in only 2 files: super-admin/auth/route.ts and super-admin/password/route.ts
+- Added module-level `let dbChecked = false;` to both files
+- Applied optimized pattern: early return on dbChecked, set dbChecked on both success paths
+
+Stage Summary:
+- All API routes now use cached DB check
+- Eliminates redundant DB initialization attempts
+---
+Task ID: 4
+Agent: general-purpose
+Task: Update admin dashboard color scheme to teal+amber
+
+Work Log:
+- Analyzed logo colors: teal (#0d7377 / #0070b0 range) + amber (#f0b000)
+- Updated dashboard-sidebar.tsx: ring-violet-500→teal-500, bg-violet-600→teal-600, bg-violet-500→teal-500
+- Updated admin-login-gate.tsx: gradient backgrounds→teal/cyan/emerald, radial dot #7c3aed→#0d7377, button→teal, shadow→teal, spinner→teal
+- Updated page.tsx (admin): all violet-600/700/500/200/50/100→teal equivalents, focus rings, sort icons, buttons, dialog borders
+- Updated admin-shop-card.tsx: all violet references→teal (45 replacements)
+- Updated admin-overview-tab.tsx: welcome banner gradient→teal/cyan, stat cards→teal, chart icons→teal, bar chart fill #7C3AED→#0d7377
+- Updated admin-settings-tab.tsx: info banner→teal, section icons/borders→teal, save buttons→teal, focus rings→teal
+- Updated admin-security-tab.tsx: protection banner→teal, password icon→teal, team avatars→teal, admin badges→teal, submit button→teal
+- Updated admin-create-shop.tsx: icon backgrounds→teal, pin display box→teal, form focus rings→teal, submit button→teal
+- Verified zero remaining violet references in all 8 admin files
+- Did NOT touch merchant-dashboard.tsx, app-shell.tsx, or customer-facing files
+
+Stage Summary:
+- Admin dashboard now uses teal primary + amber accents matching brand logo
+---
+Task ID: round4-bugfix
+Agent: main
+Task: Fix 5 critical bugs reported by user (screenshots)
+
+Work Log:
+- **Bug 1: Features not activating for customer** — Fixed wrong feature key in ThemePickerSection: `themeCustomization` → `customTheme` and `hasFeature("customLogo")` → `hasFeature("customTheme")`
+- **Bug 2: Slow response** — Simplified middleware.ts to pass-through (removed blocking DB init). Each API route already has its own ensureSchema fallback. Also optimized ensureSchema in shops/[slug] and super-admin routes with dbChecked caching.
+- **Bug 3: Logo upload failure** — Added `maxDuration = 30` and increased body size limit in next.config.ts (`serverActions.bodySizeLimit: "5mb"`)
+- **Bug 4: Empty space in theme section** — Was caused by Bug 1 (wrong feature key made ProLock lock the entire theme section)
+- **Bug 5: Admin dashboard colors** — Changed all admin-only files from violet to teal (#0d7377) + amber (#f0b000) to match the brand logo colors
+
+Stage Summary:
+- 15 files modified, 0 lint errors
+- Admin dashboard: teal + amber theme matching logo
+- Theme customization: now properly uses `customTheme` feature key (which is FREE)
+- Middleware: simplified to pass-through for performance
+- Logo upload: increased timeout and body size limits

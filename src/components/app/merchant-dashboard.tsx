@@ -1822,7 +1822,7 @@ function ThemePickerSection({
   adminPin: string;
 }) {
   const { hasFeature, refreshShop } = useShop();
-  const canCustomize = hasFeature("customLogo");
+  const canCustomize = hasFeature("customTheme");
   const [selectedThemeId, setSelectedThemeId] = useState(1);
   const [saving, setSaving] = useState(false);
 
@@ -1853,7 +1853,7 @@ function ThemePickerSection({
   }
 
   return (
-    <ProLock featureKey="themeCustomization" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
+    <ProLock featureKey="customTheme" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
           <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
