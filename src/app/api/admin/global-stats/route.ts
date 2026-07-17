@@ -97,16 +97,18 @@ export async function GET(req: NextRequest) {
         activeShopCount: shops.filter((s) => s.isActive).length,
         statusCounts,
         shopStats,
-        recentOrders: recentOrders.map((o) => ({
-        ...o,
+        recentOrders: recentOrders.map((o) => {
+        const { fileData, smartAnalysis, adminNotes, ...rest } = o;
+        return {
+        ...rest,
         options: JSON.parse(o.options),
         customer: JSON.parse(o.customer),
         delivery: JSON.parse(o.delivery),
         pricing: JSON.parse(o.pricing),
-        smartAnalysis: o.smartAnalysis ? JSON.parse(o.smartAnalysis) : null,
         shopName: o.shop?.name || "—",
         shopSlug: o.shop?.slug || "",
-      })),
+      };
+      }),
       },
       {
         headers: {
