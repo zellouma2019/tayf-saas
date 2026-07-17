@@ -65,3 +65,24 @@ Added language and currency selection to the merchant's advanced shop settings, 
 
 ## Lint Results
 - 0 errors, 1 pre-existing warning (unrelated alt-text in file-analysis-panel.tsx)
+---
+Task ID: round3-features-merchant-control
+Agent: main
+Task: ميزات جديدة + شعار + لغة/عملة + طباعة مباشرة + تخصيص المتجر
+
+Work Log:
+- استبدال الشعار بالنسخة الجديدة مع دعم dark/light mode (8 صور)
+- إضافة قسم "اللغة والعملة" (22 دولة عربية + 5 لغات)
+- إضافة قسم "تخصيص إضافي" (6 خيارات جديدة)
+- إضافة ميزة الطباعة المباشرة (مدفوعة) مع تذكرة A4
+- تحويل تغيير المظهر إلى ميزة مجانية
+- إضافة أكواد الخصم كميزة مدفوعة
+- إصلاح isFeatureEnabled لتفعيل الميزات المجانية دائماً
+- إصلاح مفتاح القالب (customLogo → themeCustomization)
+- اختبار شامل على Vercel: كل شيء يعمل
+
+Stage Summary:
+- 8 مجانية + 19 مدفوعة (إجمالي 27 ميزة)
+- الشعار يتجاوب مع dark/light
+- اللغة والعملة قابلة للتغيير من التاجر
+- الموقع: https://tayf-saas.vercel.app
