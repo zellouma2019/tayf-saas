@@ -1,28 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
-
-/// تهيئة قاعدة البيانات إن لم تكن جاهزة
-let dbChecked = false;
-async function ensureSchema(): Promise<boolean> {
-  if (dbChecked) return true;
-  try {
-    await db.shop.count();
-    dbChecked = true;
-    return true;
-  } catch {
-    try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
-      if (res.ok) dbChecked = true;
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-}
 
 /// تغيير كلمة مرور المدير الأول
 export async function PUT(req: NextRequest) {
@@ -30,15 +8,18 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    // التأكد من وجود الجداول (singleton — runs once per process)
+    await ensureDb();
+
     const { currentPassword, newPassword } = await req.json();
 
     if (!newPassword) {
       return NextResponse.json({ error: "كلمة المرور الجديدة مطلوبة" }, { status: 400 });
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 10) {
       return NextResponse.json(
-        { error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" },
+        { error: "كلمة المرور يجب أن تكون 10 أحرف على الأقل" },
         { status: 400 },
       );
     }
@@ -76,22 +57,12 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
+
     const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
     return NextResponse.json({ isDefault });
   } catch {
-    // قاعدة البيانات غير جاهزة — محاولة تهيئتها
-    const ready = await ensureSchema();
-    if (!ready) {
-      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
-    }
-    // إعادة المحاولة بعد التهيئة
-    try {
-      const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
-      const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
-      return NextResponse.json({ isDefault });
-    } catch {
-      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
-    }
+    return NextResponse.json({ error: "خطأ في جلب حالة كلمة المرور" }, { status: 500 });
   }
 }

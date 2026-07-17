@@ -19,9 +19,9 @@ export async function PUT(
       return NextResponse.json({ error: "كلمة المرور الجديدة مطلوبة" }, { status: 400 });
     }
 
-    if (newPin.length < 4) {
+    if (newPin.length < 10) {
       return NextResponse.json(
-        { error: "كلمة المرور يجب أن تكون 4 أحرف على الأقل" },
+        { error: "كلمة المرور يجب أن تكون 10 أحرف على الأقل" },
         { status: 400 },
       );
     }

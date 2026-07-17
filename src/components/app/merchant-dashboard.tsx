@@ -1403,8 +1403,8 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       toast.error("أدخل كلمة المرور الحالية");
       return;
     }
-    if (!pinForm.newPin || pinForm.newPin.length < 4) {
-      toast.error("كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل");
+    if (!pinForm.newPin || pinForm.newPin.length < 10) {
+      toast.error("كلمة المرور الجديدة يجب أن تكون 10 أحرف على الأقل");
       return;
     }
     if (pinForm.newPin !== pinForm.confirmPin) {
@@ -1763,11 +1763,11 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   type={showNewPin ? "text" : "password"}
                   value={pinForm.newPin}
                   onChange={(e) => setPinForm({ ...pinForm, newPin: e.target.value })}
-                  placeholder="4 أحرف على الأقل"
+                  placeholder="10 أحرف على الأقل"
                   dir="ltr"
                   className="h-11 pe-10 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                   required
-                  minLength={4}
+                  minLength={10}
                 />
                 <button
                   type="button"
@@ -1790,7 +1790,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                 dir="ltr"
                 className="h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                 required
-                minLength={4}
+                minLength={10}
               />
               {pinForm.confirmPin && pinForm.newPin !== pinForm.confirmPin && (
                 <p className="text-xs text-rose-500 mt-1">كلمة المرور غير متطابقة</p>

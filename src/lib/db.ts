@@ -3,7 +3,6 @@ import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
-  dbInitialized: boolean
 }
 
 function createPrismaClient() {
@@ -40,24 +39,31 @@ export const db = globalForPrisma.prisma ?? createPrismaClient()
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
 // تهيئة تلقائية لقاعدة البيانات عند أول طلب (لـ Turso/Vercel)
-export async function ensureDb() {
-  if (globalForPrisma.dbInitialized) return
-  try {
-    await db.shop.count()
-    globalForPrisma.dbInitialized = true
-  } catch {
-    // الجداول غير موجودة — تهيئة أولية
-    console.log('[DB] Initializing database schema...')
-    try {
-      const res = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/setup`, {
-        method: 'POST',
-      })
-      if (res.ok) {
-        globalForPrisma.dbInitialized = true
-        console.log('[DB] ✓ Database initialized successfully')
+// Singleton Promise: all callers share the same init, runs only once per process
+let _ensureDbPromise: Promise<void> | undefined
+
+export function ensureDb(): Promise<void> {
+  if (!_ensureDbPromise) {
+    _ensureDbPromise = (async () => {
+      try {
+        await db.shop.count()
+        console.log('[DB] ✓ Schema verified')
+      } catch {
+        // الجداول غير موجودة — تهيئة أولية
+        console.log('[DB] Initializing database schema...')
+        try {
+          const baseUrl = process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+          const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' })
+          if (res.ok) {
+            console.log('[DB] ✓ Database initialized successfully')
+          }
+        } catch (e) {
+          console.error('[DB] Auto-initialization failed:', e)
+        }
       }
-    } catch (e) {
-      console.error('[DB] Auto-initialization failed:', e)
-    }
+    })()
   }
+  return _ensureDbPromise
 }
