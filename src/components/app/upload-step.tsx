@@ -33,7 +33,6 @@ import {
   Camera,
   Smartphone,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { RealFileAnalysis } from "@/lib/file-analyzer";
 import type { ServiceType } from "@/lib/print-config";
@@ -92,34 +91,8 @@ const PHASE_CONFIG: Record<
 };
 
 /* ═══════════════════════════════════════════════════════
-   Animation Variants
+   (animation variants removed — using CSS transitions)
    ═══════════════════════════════════════════════════════ */
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.05 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 400, damping: 25 },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { type: "spring", stiffness: 300, damping: 20 },
-  },
-};
 
 /* ═══════════════════════════════════════════════════════
    Sub-Components: AnimatedCounter
@@ -196,7 +169,7 @@ function CircularGauge({
           strokeWidth={strokeWidth}
           className="text-muted/40"
         />
-        <motion.circle
+        <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -205,9 +178,9 @@ function CircularGauge({
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
+          strokeDashoffset={offset}
+          className="transition-all duration-[1400ms] ease-out"
+          style={{ transitionDelay: "0.3s" }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
@@ -255,9 +228,8 @@ function InfoChip({
   colorClass?: string;
 }) {
   const content = (
-    <motion.div
-      variants={itemVariants}
-      className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 py-2.5 hover:shadow-sm transition-shadow border-r-[3px] border-r-teal-300"
+    <div
+      className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 py-2.5 hover:shadow-sm transition-shadow border-r-[3px] border-r-teal-300 animate-in fade-in slide-in-from-bottom-2 duration-300"
     >
       <span className={`shrink-0 ${colorClass || "text-teal-500"}`}>{icon}</span>
       <div className="min-w-0 flex-1">
@@ -272,7 +244,7 @@ function InfoChip({
       {tooltipText && (
         <Info className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
       )}
-    </motion.div>
+    </div>
   );
 
   if (tooltipText) {
@@ -301,14 +273,12 @@ function SuggestionPill({
   label: string;
 }) {
   return (
-    <motion.span
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/60"
+    <span
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/60 animate-in fade-in zoom-in-95 duration-300"
     >
       {icon}
       {label}
-    </motion.span>
+    </span>
   );
 }
 
@@ -456,62 +426,44 @@ export default function UploadStep({
     <div className="space-y-5">
       {/* ─── Section Header ─── */}
       <div>
-        <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="animate-in fade-in slide-in-from-right-2 duration-300">
           <h3 className="text-base font-semibold mb-1">ارفع ملفك هنا</h3>
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Brain className="h-3.5 w-3.5 text-amber-600" />
             نظام ذكي سيحلل ملفك فعلياً ويستخرج كل المعلومات الحقيقية
           </p>
-        </motion.div>
+        </div>
       </div>
 
       {/* ─── Dropzone ─── */}
-      <motion.div
+      <div
         ref={dropzoneRef}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        variants={scaleIn}
-        initial="hidden"
-        animate="visible"
         className="relative"
       >
-        <motion.div
-          animate={
-            isDragOver
-              ? { scale: 1.02 }
-              : { scale: 1 }
-          }
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        <div
           className={`
             relative cursor-pointer rounded-2xl border-2 border-dashed p-6 md:p-8 text-center
             transition-all duration-300 overflow-hidden
             ${isDragOver
-              ? "bg-teal-50/80 border-teal-400 shadow-lg shadow-teal-100"
+              ? "bg-teal-50/80 border-teal-400 shadow-lg shadow-teal-100 scale-[1.02]"
               : "bg-amber-50/30 border-amber-300/70 animate-border-dance hover:bg-gradient-to-br hover:from-teal-50/50 hover:to-teal-50/50 hover:shadow-md"
             }
           `}
           onClick={() => fileInputRef.current?.click()}
         >
           {/* Drag overlay glow */}
-          <AnimatePresence>
-            {isDragOver && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-100/40 to-teal-100/40 pointer-events-none"
-                style={{
-                  boxShadow: "inset 0 0 50px rgba(139, 92, 246, 0.12)",
-                }}
-              />
-            )}
-          </AnimatePresence>
+          {isDragOver && (
+            <div
+              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-100/40 to-teal-100/40 pointer-events-none transition-opacity duration-200"
+              style={{
+                boxShadow: "inset 0 0 50px rgba(139, 92, 246, 0.12)",
+              }}
+            />
+          )}
 
           {/* Hidden file input */}
           <input
@@ -524,18 +476,13 @@ export default function UploadStep({
           />
 
           {/* Content */}
-          <AnimatePresence mode="wait">
             {hasFile ? (
-              <motion.div
+              <div
                 key="file-selected"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="relative z-10"
+                className="relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-250"
               >
-                <motion.div
-                  className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3 ${!isDone && !isProcessing ? "" : ""}`}
+                <div
+                  className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3 transition-transform duration-500 ${isProcessing ? "[animation:wiggle_2s_ease-in-out_infinite]" : ""}`}
                   style={{
                     background: isDone
                       ? "linear-gradient(135deg, #10b981, #34d399)"
@@ -543,21 +490,15 @@ export default function UploadStep({
                         ? "linear-gradient(135deg, #0d7377, #14b8a6)"
                         : "linear-gradient(135deg, #f59e0b, #fbbf24)",
                   }}
-                  animate={isProcessing ? { rotate: [0, 5, -5, 0] } : {}}
-                  transition={isProcessing ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
                 >
                   {isDone ? (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.1 }}
-                    >
+                    <div className="animate-in zoom-in duration-300">
                       <CheckCircle2 className="h-8 w-8 text-white" />
-                    </motion.div>
+                    </div>
                   ) : (
                     <FileIcon className="h-8 w-8 text-white" />
                   )}
-                </motion.div>
+                </div>
                 <div className="flex items-center justify-center gap-2 text-sm font-bold text-foreground break-all max-w-md mx-auto">
                   {fileName}
                 </div>
@@ -579,47 +520,37 @@ export default function UploadStep({
                 {/* Thin progress bar at bottom during upload */}
                 {analysisPhase === "uploading" && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted/30">
-                    <motion.div
-                      className="h-full bg-gradient-to-l from-teal-500 to-teal-600 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${uploadProgress}%` }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    <div
+                      className="h-full bg-gradient-to-l from-teal-500 to-teal-600 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
                 )}
                 {/* Success shimmer at bottom when done */}
                 {isDone && (
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="absolute bottom-0 left-0 right-0 h-1 origin-right bg-gradient-to-l from-emerald-400 via-emerald-300 to-transparent"
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1 origin-right bg-gradient-to-l from-emerald-400 via-emerald-300 to-transparent animate-in slide-in-from-right duration-800"
                   />
                 )}
-              </motion.div>
+              </div>
             ) : (
-              <motion.div
+              <div
                 key="empty-state"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="relative z-10"
+                className="relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-250"
               >
-                <motion.div
-                  className="w-[72px] h-[72px] mx-auto rounded-full flex items-center justify-center mb-4 animate-upload-pulse"
+                <div
+                  className="w-[72px] h-[72px] mx-auto rounded-full flex items-center justify-center mb-4 animate-upload-pulse transition-transform duration-300"
                   style={{
                     background: "linear-gradient(135deg, #0d7377, #14b8a6)",
+                    transform: isDragOver ? "translateY(-6px) scale(1.1)" : undefined,
                   }}
-                  animate={isDragOver ? { y: -6, scale: 1.1 } : { y: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   {isMobile ? (
                     <Camera className="h-9 w-9 text-white" />
                   ) : (
                     <Upload className="h-9 w-9 text-white" />
                   )}
-                </motion.div>
+                </div>
                 {isDragOver ? (
                   <div className="font-bold text-base text-teal-700">
                     أفلت الملف هنا الآن
@@ -638,19 +569,14 @@ export default function UploadStep({
                     </div>
                   </>
                 )}
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* ─── URL / Text Input ─── */}
       {!hasFile && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: "100ms", animationFillMode: "both" }}>
           <div className="relative">
             <Link className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 pointer-events-none" />
             <input
@@ -678,16 +604,14 @@ export default function UploadStep({
               ? "يمكنك لصق رابط مباشرة بالضغط مطولاً"
               : "يمكنك لصق رابط مباشرة باستخدام Ctrl+V"}
           </p>
-        </motion.div>
+        </div>
       )}
 
       {/* ─── Device-Specific Quick Actions ─── */}
       {!hasFile && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-3 gap-2"
+        <div
+          className="grid grid-cols-3 gap-2 animate-in fade-in duration-300"
+          style={{ animationDelay: "150ms", animationFillMode: "both" }}
         >
           {/* File Picker */}
           <button
@@ -762,55 +686,43 @@ export default function UploadStep({
               {isMobile ? "الصق من الحافظة" : "الصق (Ctrl+V)"}
             </span>
           </button>
-        </motion.div>
+        </div>
       )}
 
       {/* ─── File Type Badges ─── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.15 }}
-        className="flex flex-wrap items-center justify-center gap-2"
+      <div
+        className="flex flex-wrap items-center justify-center gap-2 animate-in fade-in duration-300"
+        style={{ animationDelay: "150ms", animationFillMode: "both" }}
       >
         {Object.entries(FILE_TYPE_META).map(([type, meta]) => {
           const Icon = meta.icon;
           return (
-            <motion.span
+            <span
               key={type}
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className={`text-xs px-3 py-1.5 rounded-full border font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-shadow cursor-default ${meta.bg} ${meta.color}`}
+              className={`text-xs px-3 py-1.5 rounded-full border font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-shadow cursor-default animate-in fade-in zoom-in-95 duration-300 ${meta.bg} ${meta.color}`}
             >
               <Icon className="h-3.5 w-3.5" />
               {meta.label}
-            </motion.span>
+            </span>
           );
         })}
-      </motion.div>
+      </div>
 
       {/* ─── Security note ─── */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5"
+      <p
+        className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5 animate-in fade-in duration-300"
+        style={{ animationDelay: "200ms", animationFillMode: "both" }}
       >
         <span className="text-emerald-500">&#128274;</span>
         ملفاتك آمنة — تُعالج محلياً ولا تُرفع لأي خادم خارجي
-      </motion.p>
+      </p>
 
       {/* ═══════════════════════════════════════════════════
           Multi-Stage Progress
           ═══════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {isProcessing && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
+      {isProcessing && (
+          <div
+            className="overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
           >
             <div className="rounded-2xl border-2 border-amber-200 bg-white p-4 space-y-3">
               {/* Phase indicators */}
@@ -824,22 +736,10 @@ export default function UploadStep({
                   return (
                     <div key={phase} className="flex items-center gap-3 flex-1">
                       <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                        <motion.div
-                          animate={
-                            isActive
-                              ? { scale: [1, 1.1, 1] }
-                              : isComplete
-                                ? { scale: 1 }
-                                : { scale: 1 }
-                          }
-                          transition={
-                            isActive
-                              ? { repeat: Infinity, duration: 1.5 }
-                              : {}
-                          }
+                        <div
                           className={`
-                            w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300
-                            ${isComplete ? "bg-emerald-100" : isActive ? "bg-amber-100" : "bg-muted"}
+                            w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300
+                            ${isComplete ? "bg-emerald-100" : isActive ? "bg-amber-100 animate-pulse" : "bg-muted"}
                           `}
                         >
                           {isComplete ? (
@@ -849,7 +749,7 @@ export default function UploadStep({
                           ) : (
                             <PhaseIcon className="h-4.5 w-4.5 text-muted-foreground/40" />
                           )}
-                        </motion.div>
+                        </div>
                         <span
                           className={`text-[10px] font-medium text-center leading-tight ${
                             isActive
@@ -864,13 +764,9 @@ export default function UploadStep({
                       </div>
                       {i < phases.length - 1 && (
                         <div className="flex-1 h-0.5 bg-muted rounded-full overflow-hidden -mt-5">
-                          <motion.div
-                            className="h-full bg-emerald-400 rounded-full"
-                            initial={{ width: "0%" }}
-                            animate={{
-                              width: isComplete ? "100%" : isActive ? "50%" : "0%",
-                            }}
-                            transition={{ duration: 0.5 }}
+                          <div
+                            className="h-full bg-emerald-400 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: isComplete ? "100%" : isActive ? "50%" : "0%" }}
                           />
                         </div>
                       )}
@@ -891,11 +787,9 @@ export default function UploadStep({
                     </span>
                   </div>
                   <div className="h-2 bg-amber-100 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-l from-amber-500 to-amber-400"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${uploadProgress}%` }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    <div
+                      className="h-full rounded-full bg-gradient-to-l from-amber-500 to-amber-400 transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -910,10 +804,8 @@ export default function UploadStep({
               {(analysisPhase === "local-analysis" || analysisPhase === "ai-analysis") && (
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-teal-50 to-teal-100 border border-teal-100">
                   <div className="relative">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="w-8 h-8 rounded-full border-2 border-teal-200 border-t-teal-500"
+                    <div
+                      className="w-8 h-8 rounded-full border-2 border-teal-200 border-t-teal-500 [animation:spin_2s_linear_infinite]"
                     />
                     <Sparkles className="h-3.5 w-3.5 text-teal-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                   </div>
@@ -928,18 +820,13 @@ export default function UploadStep({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* ─── Error State ─── */}
-      <AnimatePresence>
         {isError && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 flex items-start gap-3"
+          <div
+            className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
             <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
@@ -954,21 +841,15 @@ export default function UploadStep({
             >
               إعادة المحاولة
             </button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* ═══════════════════════════════════════════════════
           Enhanced Analysis Panel
           ═══════════════════════════════════════════════════ */}
-      <AnimatePresence mode="wait">
-        {hasAnalysis && analysis && serviceType && (
-          <motion.div
-            key="analysis-panel"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-4"
+      {hasAnalysis && analysis && serviceType && (
+          <div
+            className="space-y-4 animate-in fade-in duration-300"
           >
             <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
               <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-0">
@@ -976,7 +857,7 @@ export default function UploadStep({
                 <div className="p-4 sm:p-5 space-y-4 order-2 lg:order-1">
                   {/* ─── Gauges Row: DPI + Confidence ─── */}
                   {analysis.estimatedDPI != null && (
-                    <motion.div variants={itemVariants} className="flex items-center justify-center gap-5 sm:gap-8 py-2 sm:py-3">
+                    <div className="flex items-center justify-center gap-5 sm:gap-8 py-2 sm:py-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <CircularGauge
                         value={analysis.estimatedDPI}
                         max={600}
@@ -1003,13 +884,12 @@ export default function UploadStep({
                         label="الثقة %"
                         tooltipText="نسبة ثقة الذكاء الاصطناعي في تحليل الملف واقتراحاته. كلما اقتربت من 100% كانت التوصيات أدق."
                       />
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* ─── Basic Info Cards Grid ─── */}
-                  <motion.div
-                    variants={containerVariants}
-                    className="grid grid-cols-2 sm:grid-cols-3 gap-2.5"
+                  <div
+                    className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300"
                   >
                     <InfoChip
                       icon={<FileText className="h-4 w-4" />}
@@ -1058,11 +938,11 @@ export default function UploadStep({
                         tooltipText="اسم المؤلف كما هو مسجّل في بيانات الملف الوصفية."
                       />
                     )}
-                  </motion.div>
+                  </div>
 
                   {/* ─── Dimensions Section ─── */}
                   {(analysis.pageDimensionsMM || analysis.closestPaperSize || analysis.orientation) && (
-                    <motion.div variants={itemVariants}>
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="flex items-center gap-1.5 mb-2.5">
                         <Ruler className="h-3.5 w-3.5 text-amber-500" />
                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -1118,11 +998,11 @@ export default function UploadStep({
                           />
                         )}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* ─── Quality & Colors Section ─── */}
-                  <motion.div variants={itemVariants}>
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex items-center gap-1.5 mb-2.5">
                       <Target className="h-3.5 w-3.5 text-amber-500" />
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -1194,9 +1074,8 @@ export default function UploadStep({
 
                     {/* ─── Dominant Colors ─── */}
                     {analysis.dominantColors && analysis.dominantColors.length > 0 && (
-                      <motion.div
-                        variants={itemVariants}
-                        className="flex items-center gap-2.5 mt-2.5 p-2.5 bg-muted/30 rounded-xl"
+                      <div
+                        className="flex items-center gap-2.5 mt-2.5 p-2.5 bg-muted/30 rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-300"
                       >
                         <Palette className="h-4 w-4 text-amber-500 shrink-0" />
                         <span className="text-xs text-muted-foreground shrink-0">ألوان سائدة</span>
@@ -1204,12 +1083,9 @@ export default function UploadStep({
                           {analysis.dominantColors.map((color, i) => (
                             <Tooltip key={i}>
                               <TooltipTrigger asChild>
-                                <motion.span
-                                  initial={{ opacity: 0, scale: 0 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ delay: 0.5 + i * 0.08, type: "spring", stiffness: 400 }}
-                                  className="inline-block h-6 w-6 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
-                                  style={{ backgroundColor: color }}
+                                <span
+                                  className="inline-block h-6 w-6 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform animate-in fade-in zoom-in duration-300"
+                                  style={{ backgroundColor: color, animationDelay: `${500 + i * 80}ms`, animationFillMode: "both" }}
                                 />
                               </TooltipTrigger>
                               <TooltipContent side="top">
@@ -1218,12 +1094,12 @@ export default function UploadStep({
                             </Tooltip>
                           ))}
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </motion.div>
+                  </div>
 
                   {/* ─── AI Recommendations Section ─── */}
-                  <motion.div variants={itemVariants}>
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex items-center gap-1.5 mb-2.5">
                       <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -1276,29 +1152,26 @@ export default function UploadStep({
                     {analysis.insights && analysis.insights.length > 0 && (
                       <ul className="space-y-1.5">
                         {analysis.insights.slice(0, 5).map((insight, i) => (
-                          <motion.li
+                          <li
                             key={i}
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.6 + i * 0.1 }}
-                            className="flex items-start gap-2 text-sm"
+                            className="flex items-start gap-2 text-sm animate-in fade-in slide-in-from-right-2 duration-300"
+                            style={{ animationDelay: `${600 + i * 100}ms`, animationFillMode: "both" }}
                           >
                             <span className="mt-0.5 shrink-0 text-amber-400">
                               <Zap className="h-3.5 w-3.5" />
                             </span>
                             <span className="text-muted-foreground leading-relaxed">{insight}</span>
-                          </motion.li>
+                          </li>
                         ))}
                       </ul>
                     )}
-                  </motion.div>
+                  </div>
                 </div>
 
                 {/* ─── Right: Preview Column (first on mobile, second on desktop) ─── */}
                 {analysis.thumbnailUrl && (
-                  <motion.div
-                    variants={scaleIn}
-                    className="p-4 sm:p-5 lg:border-r border-b lg:border-b-0 border-border bg-muted/20 flex flex-col items-center order-1 lg:order-2"
+                  <div
+                    className="p-4 sm:p-5 lg:border-r border-b lg:border-b-0 border-border bg-muted/20 flex flex-col items-center order-1 lg:order-2 animate-in fade-in zoom-in-95 duration-300"
                   >
                     <div className="flex items-center gap-1.5 mb-3 self-start">
                       <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1306,10 +1179,8 @@ export default function UploadStep({
                         معاينة
                       </span>
                     </div>
-                    <motion.div
-                      className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    <div
+                      className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full transition-transform duration-200 hover:scale-[1.02]"
                     >
                       <img
                         src={analysis.thumbnailUrl}
@@ -1322,7 +1193,7 @@ export default function UploadStep({
                           PDF
                         </span>
                       )}
-                    </motion.div>
+                    </div>
                     {analysis.textPreview && analysis.textPreview.length > 0 && (
                       <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed line-clamp-4 text-center">
                         {analysis.textPreview.length > 150
@@ -1342,39 +1213,31 @@ export default function UploadStep({
                         )}
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* ─── Empty State (before upload) ─── */}
-      <AnimatePresence>
-        {!hasAnalysis && !analyzing && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="rounded-2xl border-2 border-dashed border-amber-200/60 bg-amber-50/20 p-6 text-center"
+      {!hasAnalysis && !analyzing && (
+          <div
+            className="rounded-2xl border-2 border-dashed border-amber-200/60 bg-amber-50/20 p-6 text-center animate-in fade-in slide-in-from-bottom-3 duration-300"
           >
-            <motion.div
-              animate={{ y: [0, -4, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              className="w-14 h-14 mx-auto rounded-2xl bg-amber-100/60 flex items-center justify-center mb-3"
+            <div
+              className="w-14 h-14 mx-auto rounded-2xl bg-amber-100/60 flex items-center justify-center mb-3 [animation:float_3s_ease-in-out_infinite]"
             >
               <Brain className="h-7 w-7 text-amber-500" />
-            </motion.div>
+            </div>
             <div className="font-bold text-sm text-amber-800 mb-1">
               التحليل الذكي ينتظر ملفك
             </div>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
               ارفع ملفك أعلاه وسيقوم النظام بتحليله تلقائياً واقتراح أفضل خيارات الطباعة
             </p>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }

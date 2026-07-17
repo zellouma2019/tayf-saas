@@ -88,15 +88,16 @@ export async function GET(req: NextRequest) {
       recentOrders: [] as unknown[],
     }));
 
-    return NextResponse.json({
-      totalOrders,
-      totalRevenue,
-      todayOrders: todayOrdersResult,
-      shopCount: shops.length,
-      activeShopCount: shops.filter((s) => s.isActive).length,
-      statusCounts,
-      shopStats,
-      recentOrders: recentOrders.map((o) => ({
+    return NextResponse.json(
+      {
+        totalOrders,
+        totalRevenue,
+        todayOrders: todayOrdersResult,
+        shopCount: shops.length,
+        activeShopCount: shops.filter((s) => s.isActive).length,
+        statusCounts,
+        shopStats,
+        recentOrders: recentOrders.map((o) => ({
         ...o,
         options: JSON.parse(o.options),
         customer: JSON.parse(o.customer),
@@ -106,7 +107,13 @@ export async function GET(req: NextRequest) {
         shopName: o.shop?.name || "—",
         shopSlug: o.shop?.slug || "",
       })),
-    });
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=5, stale-while-revalidate=30",
+        },
+      },
+    );
   } catch (e) {
     console.error('[admin/global-stats]', e);
     return NextResponse.json({ error: "حدث خطأ أثناء جلب الإحصائيات" }, { status: 500 });

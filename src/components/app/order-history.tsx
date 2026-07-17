@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { History, Phone, Search, Loader2, Inbox, Package } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { shopApi } from "@/lib/shop-api";
 import { formatDA, formatDateTimeAr } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
@@ -136,19 +135,11 @@ export function OrderHistory() {
           <p className="text-xs text-muted-foreground mb-2">
             تم العثور على {orders.length} طلب
           </p>
-          <AnimatePresence>
-            {orders.map((order, i) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
-              >
-                <HistoryCard order={order} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {orders.map((order) => (
+            <div key={order.id} className="animate-in fade-in slide-in-from-bottom-3 duration-300">
+              <HistoryCard order={order} />
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -35,7 +35,11 @@ export async function GET(req: NextRequest) {
         else if (row.key === "intro") settings.intro = { ...settings.intro, ...parsed };
       } catch {}
     }
-    return NextResponse.json(settings);
+    return NextResponse.json(settings, {
+      headers: {
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+      },
+    });
   } catch (e) {
     console.error('[settings/GET]', e);
     return NextResponse.json({ error: "حدث خطأ أثناء جلب الإعدادات" }, { status: 500 });

@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { Suspense, useCallback, useState, useMemo, useEffect } from "react";
 import { shopApi } from "@/lib/shop-api";
 import { useShop } from "@/lib/shop-context";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   LayoutGrid,
   Plus,
@@ -210,7 +209,6 @@ export function AppShell() {
   return (
     <>
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
-    <LayoutGroup>
       <div
         className="min-h-screen flex flex-col"
         style={{
@@ -302,11 +300,9 @@ export function AppShell() {
                 style={view === item.key ? { color: shopTheme.nav.activeText } : undefined}
               >
                 {view === item.key && (
-                  <motion.div
-                    layoutId="nav-active-desktop"
-                    className="absolute inset-0 rounded-full shadow-sm"
+                  <div
+                    className="absolute inset-0 rounded-full shadow-sm transition-all duration-300"
                     style={{ backgroundColor: shopTheme.nav.active, zIndex: -1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
                 <item.icon className="h-4 w-4 relative z-10" />
@@ -333,11 +329,9 @@ export function AppShell() {
                 aria-label={item.label}
               >
                 {view === item.key && (
-                  <motion.div
-                    layoutId="nav-active-mobile"
-                    className="absolute inset-0 rounded-full"
+                  <div
+                    className="absolute inset-0 rounded-full transition-all duration-300"
                     style={{ backgroundColor: shopTheme.nav.active, zIndex: -1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
                 <item.icon className="h-4 w-4 relative z-10" />
@@ -392,67 +386,35 @@ export function AppShell() {
               </div>
             )}
             <Suspense fallback={<PageSkeleton />}>
-            <AnimatePresence mode="wait">
-              {view === "new" && (
-                <motion.div
-                  key="view-new"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
+            {view === "new" && (
+                <div key="view-new" className="animate-in fade-in duration-200">
                   <NewOrderWizard
                     onCreated={handleCreated}
                     prefillOrder={prefillOrder}
                     onPrefillConsumed={handlePrefillConsumed}
                   />
-                </motion.div>
+                </div>
               )}
               {view === "repeat" && (
-                <motion.div
-                  key="view-repeat"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
+                <div key="view-repeat" className="animate-in fade-in duration-200">
                   <RepeatOrder onRepeat={handleRepeat} />
-                </motion.div>
+                </div>
               )}
               {view === "track" && (
-                <motion.div
-                  key="view-track"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
+                <div key="view-track" className="animate-in fade-in duration-200">
                   <TrackOrder key={refreshKey} />
-                </motion.div>
+                </div>
               )}
               {view === "history" && (
-                <motion.div
-                  key="view-history"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
+                <div key="view-history" className="animate-in fade-in duration-200">
                   <OrderHistory />
-                </motion.div>
+                </div>
               )}
               {view === "admin" && (
-                <motion.div
-                  key="view-admin"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                >
+                <div key="view-admin" className="animate-in fade-in duration-200">
                   <AdminPanel key={refreshKey} onRefresh={incrementRefresh} />
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
             </Suspense>
           </div>
         </div>
@@ -471,12 +433,11 @@ export function AppShell() {
           >
             <Info className="h-3.5 w-3.5" />
             <span className="font-medium">{footerOpen ? "إخفاء التفاصيل" : "عرض معلومات المطبعة"}</span>
-            <motion.div
-              animate={{ rotate: footerOpen ? 180 : 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+            <div
+              className={`transition-transform duration-300 ${footerOpen ? "rotate-180" : ""}`}
             >
               <ChevronUp className="h-4 w-4" />
-            </motion.div>
+            </div>
           </button>
 
           {/* محتوى التذييل: الحاسوب دائماً ظاهر، الجوال يتقلّب */}
@@ -631,7 +592,6 @@ export function AppShell() {
 
       <SonnerToaster position="top-center" dir="rtl" />
       </div>
-    </LayoutGroup>
     </>
   );
 }
