@@ -329,3 +329,37 @@ Stage Summary:
 - Net code change: -987 lines removed, +319 added (net -668 lines)
 - Expected production improvement: from ~60s to <2s on Vercel
 - Commit pushed to GitHub: a54f736
+---
+Task ID: 2
+Agent: Main Agent
+Task: Deep investigation and fix of Vercel live site slowness
+
+Work Log:
+- Opened https://tayf-saas.vercel.app/ with agent-browser fresh session
+- Captured network requests: found 14 JS chunks + 2 CSS + 3 API calls
+- Measured /api/admin/global-stats: 21 seconds, 6,808,486 bytes (6.8MB!)
+- Measured /api/orders: 13 seconds, 6,807,039 bytes (6.8MB!)
+- Total data per page load: 13.6MB downloaded (34 seconds combined)
+- Root cause: API responses include base64-encoded fileData of ALL uploaded files
+  - Order A-7935: 2.77MB (ChatGPT Image 3.png)
+  - Order A-8768: 2.77MB (اعلان 1.png)
+  - Order A-6604: 343KB (image)
+  - Order A-9169: 904KB (algeria-market-review.pdf)
+- Fixed 6 API endpoints to strip fileData and smartAnalysis:
+  1. /api/admin/global-stats
+  2. /api/orders
+  3. /api/admin/stats
+  4. /api/orders/by-phone
+  5. /api/track
+  6. /api/orders/[id] (GET + PUT)
+- Local verification: 6.8MB → 2.5KB (global-stats), 6.8MB → 1.5KB (orders)
+- Local timing: 21s → 0.017s, 13s → 0.009s
+- Pushed to GitHub: commits e47dbca, 112a4bd, cc86c70
+- Vercel auto-deployment NOT triggering — needs manual check
+
+Stage Summary:
+- ROOT CAUSE: `...o` spread in API responses includes base64 fileData (6.8MB per response)
+- FIX: Explicitly destructure out fileData in all list API endpoints
+- RESULT: 1,300x faster API responses (34s → 0.026s locally)
+- BLOCKER: Vercel auto-deploy not triggering — user needs to check Vercel dashboard
+  and manually trigger "Redeploy" or reconnect GitHub integration
