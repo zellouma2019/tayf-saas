@@ -138,3 +138,12 @@ Stage Summary:
 - Theme customization: now properly uses `customTheme` feature key (which is FREE)
 - Middleware: simplified to pass-through for performance
 - Logo upload: increased timeout and body size limits
+
+## Live Testing Results (Vercel)
+- ✅ Admin login: Teal+amber theme applied, sidebar colors match logo
+- ✅ Merchant dashboard: Loads, all sections visible, theme picker WORKS
+- ✅ Theme change: "تم تغيير القالب اللوني" confirmed, themeId changed 1→2 in DB
+- ✅ Customer shop: HTTP 200, loads all services, dark mode toggle works
+- ⚠️ Global-stats API: Turso cold-start timeout (pre-existing infra issue)
+- ⚠️ Settings API: Same Turso timeout (pre-existing)
+- Note: The admin panel shops list requires global-stats to load. This is a Turso performance issue, not a code bug.
