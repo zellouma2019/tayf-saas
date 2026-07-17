@@ -74,3 +74,34 @@ All real errors are preserved via `console.error()` with a route identifier tag.
 
 ## Lint Results
 - 0 errors, 1 pre-existing warning (unrelated alt-text issue in file-analysis-panel.tsx)
+---
+Task ID: fix-critical-bugs-vercel
+Agent: main
+Task: إصلاح المشاكل الحرجة على Vercel (قاعدة البيانات، الشعار، الأخطاء)
+
+Work Log:
+- حللت لقطات الشاشة واكتشفت 4 مشاكل رئيسية:
+  1. قاعدة البيانات لم تُهيّأ (ensureDb غير مستدعى)
+  2. أخطاء Prisma الخام معرّضة للمستخدمين
+  3. لوحة التحكم فارغة عند عدم جاهزية DB
+  4. الشعار القديم لم يُستبدل
+- أنشأت middleware.ts لتهيئة DB تلقائياً
+- أصلحت GET /api/super-admin/password ليهيئ DB
+- أصلحت GET /api/shops/[slug] ليهيئ DB
+- استبدلت رسائل الخطأ الخام بعربية في 30+ مسار API
+- حولت الشعار الجديد إلى 4 أحجام (512, 192, 64, 32 px)
+- استبدلت الشعار في 6 ملفات مصدرية
+- رفعت على GitHub وVercel أعاد النشر تلقائياً
+- هيلت DB يدوياً واختبرت الموقع بنجاح:
+  - لوحة تحكم المدير: تعمل
+  - إنشاء متجر: يعمل
+  - صفحة الزبون: تعمل
+  - لوحة تحكم التاجر (PIN 1234): تعمل
+
+Stage Summary:
+- ✅ قاعدة البيانات مهيأة (9 جداول) على Turso
+- ✅ الشعار الجديد في كل الأماكن
+- ✅ لا أخطاء خام معرّضة
+- ✅ كل الواجهات الثلاث تعمل (مدير، تاجر، زبون)
+- متجر تجريبي: https://tayf-saas.vercel.app/s/matbaa-alnoor
+- كلمة مرور التاجر: 1234
