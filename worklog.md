@@ -272,3 +272,32 @@ Stage Summary:
 - All changes use Tailwind CSS classes only (no CSS files modified)
 - No business logic or state management changes
 - Focus areas: mobile sidebar UX, header bar overflow prevention, dialog action button wrapping, stepper compactness
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Fix slowness, logo upload, error handling, and responsiveness
+
+Work Log:
+- Analyzed 5 uploaded screenshots showing: loading states stuck forever, text truncation on mobile, broken layouts
+- Identified root causes of slowness:
+  - ensureDb() was making a self-referencing HTTP fetch to /api/setup on cold start
+  - /api/orders was returning base64 file previews for ALL orders by default
+  - XLSX library (500KB+) was imported at top level in admin page
+  - Merchant dashboard loadAll() had silent .catch(() => {}) — errors left page stuck on loading
+- Fixed ensureDb() to run SQL directly instead of self-referencing HTTP call
+- Changed /api/orders to NOT return file previews by default (noPreview=true by default)
+- Moved XLSX to dynamic import in admin page.tsx
+- Added loadError state + retry button UI in both admin and merchant dashboards
+- Made customLogo a FREE feature in shop-features.ts
+- Created /api/shops/[slug]/logo endpoint that saves logos as files instead of data URLs
+- Updated merchant dashboard to use new logo upload endpoint
+- Fixed app-shell.tsx to display shop's custom logo in customer header (was always showing Tayf logo)
+- Delegated responsiveness fixes to frontend-styling-expert subagent
+
+Stage Summary:
+- 10 files changed, 466 insertions, 66 deletions
+- Pushed to GitHub: commit 8772d54
+- Key performance wins: eliminated cold-start HTTP round-trip, reduced API response sizes, smaller initial JS bundle
+- Logo system: now saves to filesystem, displays on customer page, free for all shops
+- Error handling: pages no longer get stuck on "loading" forever — shows error + retry button
