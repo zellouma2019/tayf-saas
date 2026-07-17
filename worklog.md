@@ -1350,3 +1350,37 @@ Stage Summary:
 Unresolved / Risks:
 - Sandbox 4GB memory limits dev server uptime (production build works fine)
 - Uploaded user logo file was not accessible (cleaned before capture)
+
+---
+Task ID: Round 10 - GitHub + Vercel + Turso Deployment
+Agent: main
+Task: رفع المشروع على GitHub ونشره على Vercel مع قاعدة بيانات Turso سحابية
+
+Work Log:
+- تحقق من حجم المشروع: المصدر فقط 2.6 ميجا (بعد حذف pdf.worker.min.mjs 1.2MB)
+- أنشأ مستودع GitHub: https://github.com/zellouma2019/tayf-saas
+- رفع المشروع بالكامل (207 ملف، 47,548 سطر)
+- حذف ملف pdf.worker.min.mjs غير المستخدم (كان يستخدم CDN بالفعل)
+- أعدّ next.config.ts: إضافة serverExternalPackages لـ sharp و @libsql/client
+- أعدّ package.json: إزالة prisma db push من أمر البناء (يُنفّذ عبر /api/setup)
+- أنشأ /api/setup/route.ts: تهيئة تلقائية لقاعدة البيانات عند أول زيارة
+- أعدّل db.ts: إضافة دالة ensureDb() للتحقق التلقائي
+- أعدّل super-admin/auth/route.ts: تهيئة تلقائية عند أول محاولة دخول
+- أنشأ .env.example: توثيق متغيرات البيئة
+- أنشأ deploy.sh: سكريبت نشر تلقائي كامل
+- حدّث README.md: زر Deploy with Vercel + تعليمات بالعربية
+- أعدّ المشروع ليعمل مع Turso (9 جيجا مجاناً) عبر @prisma/adapter-libsql
+
+Stage Summary:
+- ✅ المشروع على GitHub: https://github.com/zellouma2019/tayf-saas
+- ✅ حجم المشروع: 2.6 ميجا فقط
+- ✅ تهيئة تلقائية لقاعدة البيانات
+- ✅ مشروع جاهز للنشر على Vercel
+- ⏳ يحتاج المستخدم: إنشاء حساب Turso + ربط Vercel (5 دقائق)
+- كلمة مرور المدير الافتراضية: Admin@2025
+
+Unresolved / Next Steps:
+- المستخدم يحتاج لإنشاء حساب Turso مجاني (https://turso.tech) — لا يمكن إنشاؤه برمجياً
+- المستخدم يحتاج لربط المستودع بـ Vercel وإضافة متغيرات البيئة
+- ميزات AI (z-ai-web-dev-sdk) لن تعمل على Vercel (خدمات داخلية)
+- بعد النشر: اختبار شامل من الرابط الحي
