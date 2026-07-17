@@ -42,8 +42,9 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (e) {
+    console.error('[records/GET]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء جلب السجلات" },
       { status: 500 },
     );
   }
@@ -90,8 +91,9 @@ export async function POST(req: NextRequest) {
       data: JSON.parse(record.data),
     });
   } catch (e) {
+    console.error('[records/POST]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء إنشاء السجل" },
       { status: 500 },
     );
   }

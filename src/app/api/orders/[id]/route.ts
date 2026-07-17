@@ -27,7 +27,8 @@ export async function GET(
       smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/[id]/GET]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب الطلب" }, { status: 500 });
   }
 }
 
@@ -187,7 +188,8 @@ export async function PUT(
       smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/[id]/PUT]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء تحديث الطلب" }, { status: 500 });
   }
 }
 
@@ -214,6 +216,7 @@ export async function DELETE(
     await db.printOrder.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/[id]/DELETE]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء حذف الطلب" }, { status: 500 });
   }
 }

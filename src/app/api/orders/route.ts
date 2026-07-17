@@ -117,7 +117,8 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/GET]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب الطلبات" }, { status: 500 });
   }
 }
 
@@ -197,6 +198,7 @@ export async function POST(req: NextRequest) {
       smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/POST]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء إنشاء الطلب" }, { status: 500 });
   }
 }

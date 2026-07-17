@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 401 });
-  } catch {
+  } catch (e) {
+    console.error('[super-admin/auth/POST]', e);
     return NextResponse.json({ error: "خطأ في التحقق" }, { status: 500 });
   }
 }

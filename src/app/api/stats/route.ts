@@ -51,8 +51,9 @@ export async function GET(req: NextRequest) {
       byTemplate,
     });
   } catch (e) {
+    console.error('[stats]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء جلب الإحصائيات" },
       { status: 500 },
     );
   }

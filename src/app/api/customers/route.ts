@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[customers/GET]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب الزبائن" }, { status: 500 });
   }
 }
 
@@ -157,6 +158,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(customer);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[customers/POST]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء معالجة الطلب" }, { status: 500 });
   }
 }

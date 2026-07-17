@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
       count: orders.length,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/by-phone]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء البحث" }, { status: 500 });
   }
 }

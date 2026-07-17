@@ -22,7 +22,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     });
     return NextResponse.json(expense);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[expenses/[id]/PUT]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء تحديث المصروف" }, { status: 500 });
   }
 }
 
@@ -41,6 +42,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await db.expense.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[expenses/[id]/DELETE]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء حذف المصروف" }, { status: 500 });
   }
 }

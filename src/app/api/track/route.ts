@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[track]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء البحث" }, { status: 500 });
   }
 }

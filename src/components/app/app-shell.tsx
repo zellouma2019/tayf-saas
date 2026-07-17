@@ -205,7 +205,7 @@ export function AppShell() {
             onClick={() => { setFooterOpen(false); setView("new"); }}
             className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0"
           >
-            <img src="/tayf-logo.svg" alt={shopName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300" />
+            <img src="/tayf-logo-sm.png" alt={shopName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300" />
             <div className="text-right min-w-0">
               <div className="font-bold text-sm md:text-base leading-tight truncate">{shopName}</div>
               <div className="text-xs md:text-xs text-muted-foreground leading-tight truncate">
@@ -515,7 +515,7 @@ export function AppShell() {
 
                 <div className="mt-8 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-500">
                   © {new Date().getFullYear()} {shopName} — جميع الحقوق محفوظة
-                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1"><img src="/tayf-logo.svg" alt="طيف" className="w-4 h-4 inline" /> طيف</div>
+                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1"><img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline" /> طيف</div>
                 </div>
             </div>
           </div>

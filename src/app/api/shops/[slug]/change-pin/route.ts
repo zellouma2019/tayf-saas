@@ -44,6 +44,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[shops/[slug]/change-pin]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء تغيير كلمة المرور" }, { status: 500 });
   }
 }

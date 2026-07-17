@@ -17,8 +17,9 @@ export async function GET(
     });
     return NextResponse.json({ logs });
   } catch (e) {
+    console.error('[orders/[id]/audit]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء جلب سجل التغييرات" },
       { status: 500 },
     );
   }

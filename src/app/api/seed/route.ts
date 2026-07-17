@@ -38,8 +38,9 @@ export async function POST(req: NextRequest) {
       templates: templates.map((t) => ({ ...t, fields: JSON.parse(t.fields) })),
     });
   } catch (e) {
+    console.error('[seed]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء زرع القوالب" },
       { status: 500 },
     );
   }

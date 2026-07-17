@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json(settings);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[settings/GET]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب الإعدادات" }, { status: 500 });
   }
 }
 
@@ -66,7 +67,8 @@ export async function PUT(req: NextRequest) {
     await Promise.all(updates);
     return NextResponse.json({ success: true });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[settings/PUT]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء تحديث الإعدادات" }, { status: 500 });
   }
 }
 
@@ -81,6 +83,7 @@ export async function DELETE(req: NextRequest) {
     await db.setting.deleteMany({ where });
     return NextResponse.json({ success: true });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[settings/DELETE]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء إعادة التعيين" }, { status: 500 });
   }
 }

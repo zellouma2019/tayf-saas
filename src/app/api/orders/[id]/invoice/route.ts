@@ -224,6 +224,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/[id]/invoice]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء إنشاء الفاتورة" }, { status: 500 });
   }
 }

@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[expenses/GET]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب المصروفات" }, { status: 500 });
   }
 }
 
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(expense);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[expenses/POST]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء إضافة المصروف" }, { status: 500 });
   }
 }

@@ -107,7 +107,7 @@ export function Intro({ onFinish }: IntroProps) {
           } ${phase >= 1 && phase < 4 ? 'animate-float-gentle' : ''}`}
         >
           {/* الشعار */}
-          <img src="/tayf-logo.svg" alt="طيف" className="w-20 h-20 sm:w-24 sm:h-24" />
+          <img src="/brand/tayf-logo.png" alt="طيف" className="w-20 h-20 sm:w-24 sm:h-24" />
           {/* حلقة دوارة */}
           {settings.showSpinningRing && (
             <div

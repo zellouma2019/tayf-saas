@@ -33,8 +33,9 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (e) {
+    console.error('[templates/GET]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء جلب القوالب" },
       { status: 500 },
     );
   }
@@ -58,8 +59,9 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ ...template, schema: JSON.parse(template.schema) });
   } catch (e) {
+    console.error('[templates/POST]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء إنشاء القالب" },
       { status: 500 },
     );
   }

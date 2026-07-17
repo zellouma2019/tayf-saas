@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ notifications: notifications.slice(0, 30) });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[notifications]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب الإشعارات" }, { status: 500 });
   }
 }

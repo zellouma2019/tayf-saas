@@ -130,6 +130,7 @@ export async function GET(
       return NextResponse.json({ error: "فشل توليد المصغّرة" }, { status: 500 });
     }
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/[id]/thumbnail]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب المصغّرة" }, { status: 500 });
   }
 }

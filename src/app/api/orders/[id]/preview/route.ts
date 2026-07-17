@@ -74,6 +74,7 @@ export async function GET(
       },
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/[id]/preview]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء معاينة الملف" }, { status: 500 });
   }
 }

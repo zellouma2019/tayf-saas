@@ -16,7 +16,14 @@ export async function POST() {
         })
       }
     } catch {
-      // الجداول غير موجودة، سنقوم بإنشائها
+      // الجداول غير موجودة، سنقوم بإنشاؤها
+    }
+
+    // تفعيل المفاتيح الأجنبية (مهم لـ Turso/libSQL)
+    try {
+      await db.$executeRawUnsafe('PRAGMA foreign_keys = ON')
+    } catch {
+      // قد يكون مفعّلاً بالفعل
     }
 
     // إنشاء الجداول باستخدام SQL الخام
@@ -191,6 +198,7 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS "FormRecord_status_idx" ON "FormRecord"("status")`,
     ]
 
+    let errors = 0
     for (const sql of statements) {
       try {
         await db.$executeRawUnsafe(sql)
@@ -199,8 +207,17 @@ export async function POST() {
         // تجاهل أخطاء "already exists" - الجدول موجود بالفعل
         if (!msg.includes('already exists') && !msg.includes('duplicate')) {
           console.error('Schema error:', msg)
+          errors++
         }
       }
+    }
+
+    if (errors > 0) {
+      return NextResponse.json({
+        success: false,
+        message: 'فشل تهيئة بعض الجداول',
+        errors,
+      }, { status: 500 })
     }
 
     // إنشاء حساب المدير الأول
@@ -215,16 +232,57 @@ export async function POST() {
       // المدير موجود بالفعل
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'تم تهيئة قاعدة البيانات بنجاح ✓',
-    })
+    // === Health check: verify tables were created ===
+    try {
+      const healthResult = await db.$queryRaw<Array<{ name: string }>>`
+        SELECT name FROM sqlite_master WHERE type='table' AND name IN (
+          'Shop', 'PrintOrder', 'Setting', 'SuperAdmin',
+          'Expense', 'Customer', 'AuditLog', 'FormTemplate', 'FormRecord'
+        )
+      `
+      const createdTables = new Set(healthResult.map(r => r.name))
+      const expectedTables = [
+        'Shop', 'PrintOrder', 'Setting', 'SuperAdmin',
+        'Expense', 'Customer', 'AuditLog', 'FormTemplate', 'FormRecord',
+      ]
+      const missingTables = expectedTables.filter(t => !createdTables.has(t))
+
+      if (missingTables.length > 0) {
+        console.error('[setup] Missing tables after creation:', missingTables)
+        return NextResponse.json({
+          success: false,
+          message: 'بعض الجداول لم تُنشأ بنجاح',
+          missingTables,
+        }, { status: 500 })
+      }
+
+      // تفعيل المفاتيح الأجنبية بعد التحقق
+      await db.$executeRawUnsafe('PRAGMA foreign_keys = ON')
+
+      const shopCount = await db.shop.count()
+
+      return NextResponse.json({
+        success: true,
+        message: 'تم تهيئة قاعدة البيانات بنجاح ✓',
+        tablesCreated: expectedTables.length,
+        shopCount,
+      })
+    } catch (healthErr: unknown) {
+      const msg = healthErr instanceof Error ? healthErr.message : String(healthErr)
+      console.error('[setup] Health check failed:', msg)
+      // إذا فشل الـ health check لكن لم تكن أخطاء في الإنشاء، نُرجع نجاح مع تحذير
+      return NextResponse.json({
+        success: true,
+        message: 'تم إنشاء الجداول مع تحفظ — يُرجى التحقق يدوياً',
+        warning: msg,
+      })
+    }
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
+    console.error('[setup] Fatal error:', msg)
     return NextResponse.json({
       success: false,
       message: 'فشل تهيئة قاعدة البيانات',
-      error: msg,
     }, { status: 500 })
   }
 }

@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(shop, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[shops/POST]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء إنشاء المتجر" }, { status: 500 });
   }
 }
 
@@ -71,6 +72,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ shops });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[shops/GET]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب المتاجر" }, { status: 500 });
   }
 }

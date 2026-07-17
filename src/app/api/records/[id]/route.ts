@@ -22,8 +22,9 @@ export async function GET(
       data: JSON.parse(record.data),
     });
   } catch (e) {
+    console.error('[records/[id]/GET]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء جلب السجل" },
       { status: 500 },
     );
   }
@@ -62,8 +63,9 @@ export async function PUT(
       data: JSON.parse(record.data),
     });
   } catch (e) {
+    console.error('[records/[id]/PUT]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء تحديث السجل" },
       { status: 500 },
     );
   }
@@ -85,8 +87,9 @@ export async function DELETE(
     await db.formRecord.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e) {
+    console.error('[records/[id]/DELETE]', e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "حدث خطأ أثناء حذف السجل" },
       { status: 500 },
     );
   }

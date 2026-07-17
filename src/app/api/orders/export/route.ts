@@ -114,6 +114,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[orders/export]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء تصدير الطلبات" }, { status: 500 });
   }
 }

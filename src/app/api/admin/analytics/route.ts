@@ -182,6 +182,7 @@ export async function GET(request: Request) {
       heatmap,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[admin/analytics]', e);
+    return NextResponse.json({ error: "حدث خطأ أثناء جلب التحليلات" }, { status: 500 });
   }
 }

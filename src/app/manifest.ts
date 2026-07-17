@@ -15,6 +15,16 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "any",
         type: "image/svg+xml",
       },
+      {
+        src: "/brand/tayf-logo.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        src: "/tayf-icon.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
     ],
   };
 }

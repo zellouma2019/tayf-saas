@@ -26,9 +26,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
     ],
     apple: [
       { url: "/apple-touch-icon.svg", type: "image/svg+xml" },
+      { url: "/brand/tayf-logo.png", sizes: "512x512", type: "image/png" },
     ],
   },
   openGraph: {
@@ -49,7 +51,8 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png" />
+        <link rel="apple-touch-icon" href="/brand/tayf-logo.png" sizes="512x512" type="image/png" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta property="og:title" content="طيف — منصة إدارة المطابع" />
         <meta property="og:description" content="منصة متكاملة لإدارة المطابع والخدمات الطباعية" />

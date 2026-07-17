@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
+/// تهيئة قاعدة البيانات إن لم تكن جاهزة
+async function ensureSchema(): Promise<boolean> {
+  try {
+    await db.shop.count();
+    return true;
+  } catch {
+    try {
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
 /// تغيير كلمة مرور المدير الأول
 export async function PUT(req: NextRequest) {
   const rl = withRateLimit(req, "super-admin-password");
@@ -58,6 +76,18 @@ export async function GET(req: NextRequest) {
     const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
     return NextResponse.json({ isDefault });
   } catch {
-    return NextResponse.json({ isDefault: true });
+    // قاعدة البيانات غير جاهزة — محاولة تهيئتها
+    const ready = await ensureSchema();
+    if (!ready) {
+      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
+    }
+    // إعادة المحاولة بعد التهيئة
+    try {
+      const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+      const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
+      return NextResponse.json({ isDefault });
+    } catch {
+      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
+    }
   }
 }
