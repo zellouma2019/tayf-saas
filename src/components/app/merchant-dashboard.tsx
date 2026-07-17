@@ -153,6 +153,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const { shop, hasFeature, refreshShop } = useShop();
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
+  const verifiedPinRef = useRef("");
   const [pinError, setPinError] = useState(false);
   const [pinAttempts, setPinAttempts] = useState(0);
   const [verifying, setVerifying] = useState(false);
@@ -414,6 +415,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       });
       if (res.ok) {
         toast.success("مرحباً بك في لوحة التحكم");
+        verifiedPinRef.current = pin;
         setUnlocked(true);
         setPin("");
       } else {
@@ -1140,7 +1142,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
           {/* ===== تبويب إعدادات المتجر ===== */}
           {activeTab === "settings" && (
-            <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} />
+            <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
           )}
 
           {/* ===== تبويب الإعدادات المتقدمة ===== */}
@@ -1317,7 +1319,7 @@ const DEFAULT_SERVICES = [
 ];
 
 // ===== إعدادات المتجر (داخل لوحة التاجر) =====
-function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
+function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; shopSlug: string; adminPin: string }) {
   const { shop, hasFeature, refreshShop } = useShop();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -1374,8 +1376,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
     e.preventDefault();
     setSaving(true);
     try {
-      const updateData: Record<string, string | number> = { ...form };
-      // لا نُرسل كلمة المرور في حفظ الإعدادات العامة — لها نقطة نهاية خاصة
+      const updateData: Record<string, string | number> = { ...form, adminPin };
 
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
@@ -1439,7 +1440,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ownerName: form.ownerName, ownerPhone: form.ownerPhone }),
+        body: JSON.stringify({ ownerName: form.ownerName, ownerPhone: form.ownerPhone, adminPin }),
       });
       if (!res.ok) throw new Error("فشل الحفظ");
       toast.success("تم حفظ معلومات المالك");
@@ -1451,27 +1452,57 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
     }
   }
 
+  // ===== ضغط الصورة قبل الرفع =====
+  async function compressLogo(dataUrl: string, maxSize = 512): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = Math.round((height / width) * maxSize);
+            width = maxSize;
+          } else {
+            width = Math.round((width / height) * maxSize);
+            height = maxSize;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("فشل إنشاء سياق الرسم")); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = () => reject(new Error("فشل تحميل الصورة"));
+      img.src = dataUrl;
+    });
+  }
+
   // ===== رفع الشعار =====
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 300 * 1024) {
-      toast.error("حجم الملف كبير جداً", { description: "الحد الأقصى 300 ك.ب" });
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("حجم الملف كبير جداً", { description: "الحد الأقصى 2 م.ب" });
       return;
     }
     setUploading(true);
     try {
-      const dataUrl: string = await new Promise<string>((resolve, reject) => {
+      const rawDataUrl: string = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = () => reject(new Error("فشل قراءة الملف"));
         reader.readAsDataURL(file);
       });
+      // ضغط الصورة إلى 512x512 كحد أقصى بصيغة JPEG
+      const dataUrl = await compressLogo(rawDataUrl);
       // حفظ الرابط في المتجر
       const saveRes = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logoUrl: dataUrl }),
+        body: JSON.stringify({ logoUrl: dataUrl, adminPin }),
       });
       if (!saveRes.ok) throw new Error("فشل حفظ الشعار");
       setLogoUrl(dataUrl);
@@ -1489,7 +1520,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logoUrl: null }),
+        body: JSON.stringify({ logoUrl: null, adminPin }),
       });
       if (!res.ok) throw new Error("فشل حذف الشعار");
       setLogoUrl(null);
@@ -1508,7 +1539,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logoIcon: iconName }),
+        body: JSON.stringify({ logoIcon: iconName, adminPin }),
       });
       if (!res.ok) throw new Error("فشل الحفظ");
       toast.success("تم تغيير أيقونة الشعار");
@@ -1573,7 +1604,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
                     </span>
                   </div>
                 </label>
-                <p className="text-xs text-slate-400">الحد الأقصى: 300 ك.ب</p>
+                <p className="text-xs text-slate-400">الحد الأقصى: 2 م.ب (يُضغط تلقائياً)</p>
               </div>
             </div>
           </div>
@@ -1625,7 +1656,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
       </ProLock>
 
       {/* ===== 3. القالب اللوني (customLogo) ===== */}
-      <ThemePickerSection shopSlug={shopSlug} shop={shop} />
+      <ThemePickerSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} />
 
       {/* ===== 4. معلومات المتجر (مجاني) ===== */}
       <form onSubmit={handleSave} className="space-y-5">
@@ -1667,7 +1698,7 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
       </form>
 
       {/* ===== 5. إدارة الأسعار والخدمات (customPricing / serviceToggle) ===== */}
-      <PriceEditorSection shopSlug={shopSlug} shop={shop} />
+      <PriceEditorSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} />
 
       {/* ===== 6. معلومات المالك + تغيير كلمة المرور (مجاني) ===== */}
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
@@ -1783,9 +1814,11 @@ function MerchantShopSettings({ shopId, shopSlug }: { shopId: string; shopSlug: 
 function ThemePickerSection({
   shopSlug,
   shop,
+  adminPin,
 }: {
   shopSlug: string;
   shop: { themeId?: number } | null;
+  adminPin: string;
 }) {
   const { hasFeature, refreshShop } = useShop();
   const canCustomize = hasFeature("customLogo");
@@ -1806,7 +1839,7 @@ function ThemePickerSection({
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ themeId }),
+        body: JSON.stringify({ themeId, adminPin }),
       });
       if (!res.ok) throw new Error("فشل الحفظ");
       toast.success("تم تغيير القالب اللوني");
@@ -1879,9 +1912,11 @@ interface ServiceSpec {
 function PriceEditorSection({
   shopSlug,
   shop,
+  adminPin,
 }: {
   shopSlug: string;
   shop: { settings?: string | null } | null;
+  adminPin: string;
 }) {
   const { hasFeature } = useShop();
   const canCustomize = hasFeature("customPricing") || hasFeature("serviceToggle");
@@ -1922,7 +1957,7 @@ function PriceEditorSection({
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: JSON.stringify(newSettings) }),
+        body: JSON.stringify({ settings: JSON.stringify(newSettings), adminPin }),
       });
       if (!res.ok) throw new Error("فشل الحفظ");
       toast.success("تم حفظ الأسعار والخدمات");

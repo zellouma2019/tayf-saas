@@ -1,361 +1,311 @@
 // ============================================================
-// نظام الميزات المدفوعة — تعريفات وأدوات مساعدة
-// فقط الميزات المُنفَّذة فعلياً
+// نظام الميزات — تعريفات وأدوات مساعدة
+// Print Shop SaaS Feature System
 // ============================================================
 
-/// مفاتيح الميزات المدفوعة — كل مفتاح يمثل ميزة مُنفَّذة فعلياً
+/// مفاتيح الميزات
 export type FeatureKey =
-  // ===== ميزات واجهة الزبون =====
-  | "directTrackingLink"     // رابط تتبع مباشر فريد لكل طلب
-  | "couponCode"             // كوبون خصم عند تقديم الطلب
-  | "specialOffers"          // العروض الخاصة التلقائية
-  | "customLogo"             // شعار مخصص للمتجر
-  | "customFooter"           // تذييل مخصص مع ساعات العمل والتواصل
-  | "darkMode"               // الوضع الداكن لواجهة الزبائن
-  | "invoiceBranding"        // فاتورة PDF بالشعار والألوان المخصصة
-  | "whatsappLink"           // رابط واتساب مباشر في صفحة نجاح الطلب
-  | "orderTracking"          // تتبع حالة الطلب
-  | "repeatOrder"            // إعادة طلب سابق بضغطة واحدة
-  | "smartFileAnalysis"      // تحليل ذكي للملفات المرفوعة
-  | "orderInvoice"           // تنزيل فاتورة PDF
-  | "aiAssistant"            // المساعد الذكي (AI)
-  | "voiceInput"             // الإدخال الصوتي
-  | "imageGeneration"        // توليد التصميم بالذكاء الاصطناعي
-  | "competitorSearch"       // بحث أسعار المنافسين
-  | "introAnimation"         // شاشة ترحيب متحركة
-  // ===== ميزات لوحة التاجر =====
-  | "merchantFileDownload"   // تنزيل ملف الزبون لطباعته من لوحة التاجر
-  | "exportExcel"            // تصدير الطلبات CSV/Excel
-  | "customPricing"          // أسعار مخصصة لكل خدمة
-  | "serviceToggle"          // تفعيل/تعطيل الخدمات
-  | "customerCrm"            // قاعدة بيانات الزبائن
-  | "bulkActions"            // إجراءات جماعية على الطلبات
-  | "advancedAnalytics"      // تحليلات متقدمة (رسوم بيانية)
-  | "whiteLabel"             // إزالة علامة "طيف"
-  | "orderKanban"            // لوحة كانبان لإدارة الطلبات
+  // ===== ميزات مجانية (7) — مفعّلة تلقائياً =====
+  | "orderCreation"          // إنشاء الطلبات
+  | "orderTracking"          // تتبع الطلبات
+  | "smartFileAnalysis"      // تحليل الملفات المرفوعة
+  | "darkMode"               // الوضع الداكن
+  | "webNotifications"       // إشعارات الويب
+  | "directTrackingLink"     // تتبع الطلب بالرابط
+  | "rtlSupport"             // دعم RTL
+  // ===== ميزات مدفوعة (14) =====
+  | "whatsappNotifications"  // إشعارات واتساب
+  | "advancedAnalytics"      // تحليلات متقدمة
   | "receiptPrinting"        // طباعة إيصال حراري
-  | "expenseTracking"        // تتبع المصاريف والأرباح
-  | "customerDatabase"       // قاعدة بيانات العملاء
-  | "formTemplates"          // قوالب النماذج الرسمية
-  | "analyticsDashboard"     // لوحة التحليلات التفصيلية
-  | "whatsappNotifications"  // إشعارات واتساب تلقائية
-  | "customTheme"            // تخصيص الألوان والمظهر
-  | "autoBackup"             // نسخ احتياطي تلقائي
-  | "prioritySupport"        // دعم فني ذو أولوية
+  | "exportExcel"            // تصدير Excel
+  | "orderKanban"            // لوحة كانبان
+  | "customerCrm"            // إدارة العملاء
+  | "expenseTracking"        // إدارة المصاريف
+  | "formTemplates"          // قوالب النماذج
+  | "orderInvoice"           // فواتير PDF
+  | "aiAssistant"            // المساعد الذكي
+  | "customTheme"            // تخصيص السمة
+  | "customLogo"             // شعار مخصص
+  | "customDomain"           // مجال خاص
+  | "prioritySupport"        // أولوية الدعم
+  // ===== ميزات مدفوعة إضافية (مستخدمة في الكود) =====
+  | "bulkActions"            // إجراءات جماعية
+  | "customPricing"          // أسعار مخصصة
+  | "serviceToggle"          // تفعيل/تعطيل الخدمات
+  | "merchantFileDownload"   // تنزيل ملفات الطلبات
   ;
+
+/// فئة الميزة
+export type FeatureCategory = "core" | "analytics" | "notifications" | "printing" | "export" | "management" | "branding" | "support";
 
 /// تعريف ميزة واحدة
 export interface FeatureDef {
   key: FeatureKey;
   label: string;
   description: string;
-  /// أي مستوى يظهر فيه: "customer" | "merchant"
-  level: "customer" | "merchant";
-  /// أيقونة من lucide (اسمها كنص)
   icon: string;
-  /// ترتيب العرض
+  category: FeatureCategory;
+  isFree: boolean;
   order: number;
 }
 
-/// كل الميزات المعرّفة — مُنفَّذة فعلياً
-export const FEATURE_DEFINITIONS: FeatureDef[] = [
-  // ===== ميزات واجهة الزبون (17) =====
+/// كل الميزات المعرّفة
+export const FEATURES: FeatureDef[] = [
+  // ===== ميزات مجانية (7) =====
   {
-    key: "directTrackingLink",
-    label: "رابط تتبع مباشر",
-    description: "رابط فريد لكل طلب يمكن للزبون استخدامه لتتبع طلبه بدون إدخال بيانات",
-    level: "customer",
-    icon: "Link2",
+    key: "orderCreation",
+    label: "إنشاء الطلبات",
+    description: "إنشاء طلبات طباعة جديدة بسهولة وسرعة عبر واجهة بسيطة",
+    icon: "Plus",
+    category: "core",
+    isFree: true,
     order: 1,
   },
   {
-    key: "couponCode",
-    label: "كوبون خصم",
-    description: "إمكانية إدخال كود خصم عند تقديم الطلب مع تحكم كامل بالكوبونات",
-    level: "customer",
-    icon: "Percent",
+    key: "orderTracking",
+    label: "تتبع الطلبات",
+    description: "تتبع حالة الطلب لحظة بلحظة مع إشعارات تلقائية عند تغيير الحالة",
+    icon: "MapPin",
+    category: "core",
+    isFree: true,
     order: 2,
   },
   {
-    key: "specialOffers",
-    label: "العروض الخاصة",
-    description: "عرض عروض وخصومات تلقائية للزبائن مثل خصم الكميات وعرض اليوم",
-    level: "customer",
-    icon: "Sparkles",
+    key: "smartFileAnalysis",
+    label: "تحليل الملفات",
+    description: "تحليل ذكي للملفات المرفوعة لتحديد عدد الصفحات والحجم والنوع تلقائياً",
+    icon: "ScanSearch",
+    category: "core",
+    isFree: true,
     order: 3,
-  },
-  {
-    key: "customLogo",
-    label: "شعار مخصص",
-    description: "إضافة شعار المتجر في واجهة الزبائن والفاتورة بدلاً من الأيقونة الافتراضية",
-    level: "customer",
-    icon: "Image",
-    order: 4,
-  },
-  {
-    key: "customFooter",
-    label: "تذييل مخصص",
-    description: "تذييل غني مع ساعات العمل وروابط التواصل الاجتماعي ومعلومات الاتصال",
-    level: "customer",
-    icon: "Layout",
-    order: 5,
   },
   {
     key: "darkMode",
     label: "الوضع الداكن",
-    description: "إمكانية التبديل بين الوضع الفاتح والداكن في واجهة الزبائن",
-    level: "customer",
+    description: "إمكانية التبديل بين الوضع الفاتح والداكن في واجهة المتجر",
     icon: "Moon",
+    category: "core",
+    isFree: true,
+    order: 4,
+  },
+  {
+    key: "webNotifications",
+    label: "إشعارات الويب",
+    description: "إشعارات المتصفح عند تغيير حالة الطلب أو وصول طلب جديد",
+    icon: "Bell",
+    category: "notifications",
+    isFree: true,
+    order: 5,
+  },
+  {
+    key: "directTrackingLink",
+    label: "تتبع الطلب بالرابط",
+    description: "رابط فريد لكل طلب يمكن للزبون استخدامه لتتبع طلبه مباشرة",
+    icon: "Link2",
+    category: "core",
+    isFree: true,
     order: 6,
   },
   {
-    key: "invoiceBranding",
-    label: "فاتورة احترافية",
-    description: "فاتورة PDF بالشعار والألوان المخصصة وبيانات المتجر الكاملة",
-    level: "customer",
-    icon: "FileText",
+    key: "rtlSupport",
+    label: "دعم RTL",
+    description: "دعم كامل للكتابة من اليمين لليسار للغات العربية والعبرية",
+    icon: "AlignRight",
+    category: "core",
+    isFree: true,
     order: 7,
   },
+
+  // ===== ميزات مدفوعة (14) =====
   {
-    key: "whatsappLink",
-    label: "رابط واتساب",
-    description: "زر واتساب مباشر في صفحة نجاح الطلب لتمكين الزبون من التواصل",
-    level: "customer",
+    key: "whatsappNotifications",
+    label: "إشعارات واتساب",
+    description: "إرسال إشعارات واتساب تلقائية للزبون عند تغيير حالة الطلب",
     icon: "MessageCircle",
-    order: 8,
-  },
-  {
-    key: "orderTracking",
-    label: "تتبع حالة الطلب",
-    description: "تتبع حالة الطلب لحظة بلحظة مع إشعارات تلقائية عند تغيير الحالة",
-    level: "customer",
-    icon: "MapPin",
-    order: 9,
-  },
-  {
-    key: "repeatOrder",
-    label: "إعادة طلب سابق",
-    description: "إعادة طلب سابق بضغطة واحدة بدون إعادة إدخال البيانات",
-    level: "customer",
-    icon: "RotateCcw",
-    order: 10,
-  },
-  {
-    key: "smartFileAnalysis",
-    label: "تحليل ذكي للملفات",
-    description: "تحليل ذكي للملفات المرفوعة لتحديد عدد الصفحات والحجم والنوع تلقائياً",
-    level: "customer",
-    icon: "ScanSearch",
-    order: 11,
-  },
-  {
-    key: "orderInvoice",
-    label: "تنزيل فاتورة PDF",
-    description: "تنزيل فاتورة PDF احترافية لكل طلب مع تفاصيل كاملة",
-    level: "customer",
-    icon: "FileDown",
-    order: 12,
-  },
-  {
-    key: "aiAssistant",
-    label: "المساعد الذكي",
-    description: "مساعد ذكي بالذكاء الاصطناعي يجيب على أسئلة الزبائن ويوجههم",
-    level: "customer",
-    icon: "Bot",
-    order: 13,
-  },
-  {
-    key: "voiceInput",
-    label: "الإدخال الصوتي",
-    description: "إمكانية إدخال البيانات بالصوت بدلاً من الكتابة",
-    level: "customer",
-    icon: "Mic",
-    order: 14,
-  },
-  {
-    key: "imageGeneration",
-    label: "توليد التصميم بالذكاء الاصطناعي",
-    description: "توليد تصاميم بالذكاء الاصطناعي بناءً على وصف نصي",
-    level: "customer",
-    icon: "ImagePlus",
-    order: 15,
-  },
-  {
-    key: "competitorSearch",
-    label: "بحث أسعار المنافسين",
-    description: "بحث أسعار المنافسين وعرض مقارنة الأسعار للزبائن",
-    level: "customer",
-    icon: "Search",
-    order: 16,
-  },
-  {
-    key: "introAnimation",
-    label: "شاشة ترحيب متحركة",
-    description: "شاشة ترحيب متحركة تعرض عند أول زيارة للمتجر",
-    level: "customer",
-    icon: "Play",
-    order: 17,
-  },
-  // ===== ميزات لوحة التاجر (19) =====
-  {
-    key: "merchantFileDownload",
-    label: "تنزيل ملفات الطلبات",
-    description: "تنزيل ملفات الزبائن مباشرة من لوحة التحكم لطباعتها فوراً دون البحث عنها",
-    level: "merchant",
-    icon: "Download",
-    order: 100,
-  },
-  {
-    key: "exportExcel",
-    label: "تصدير Excel",
-    description: "تصدير الطلبات والزبائن إلى ملف CSV",
-    level: "merchant",
-    icon: "FileSpreadsheet",
+    category: "notifications",
+    isFree: false,
     order: 101,
-  },
-  {
-    key: "customPricing",
-    label: "أسعار مخصصة",
-    description: "تعديل سعر كل خدمة ونوع ورق وتجليد حسب رغبتك",
-    level: "merchant",
-    icon: "DollarSign",
-    order: 102,
-  },
-  {
-    key: "serviceToggle",
-    label: "تفعيل/تعطيل الخدمات",
-    description: "اختيار الخدمات المتاحة للزبائن وإخفاء غير المطلوبة",
-    level: "merchant",
-    icon: "ToggleLeft",
-    order: 103,
-  },
-  {
-    key: "customerCrm",
-    label: "قاعدة بيانات الزبائن",
-    description: "عرض كل الزبائن مع إحصائيات لكل واحد وتاريخ الطلبات",
-    level: "merchant",
-    icon: "Users",
-    order: 104,
-  },
-  {
-    key: "bulkActions",
-    label: "إجراءات جماعية",
-    description: "تحديد عدة طلبات وتغيير حالتها دفعة واحدة أو حذفها",
-    level: "merchant",
-    icon: "ListChecks",
-    order: 105,
   },
   {
     key: "advancedAnalytics",
     label: "تحليلات متقدمة",
     description: "رسوم بيانية تفصيلية وتحليل الاتجاهات وأفضل الزبائن",
-    level: "merchant",
     icon: "BarChart3",
-    order: 106,
-  },
-  {
-    key: "whiteLabel",
-    label: "إزالة العلامة التجارية",
-    description: "إزالة علامة 'طيف' وجعل النظام بالكامل بعلامتك التجارية",
-    level: "merchant",
-    icon: "EyeOff",
-    order: 107,
-  },
-  {
-    key: "orderKanban",
-    label: "لوحة كانبان",
-    description: "لوحة كانبان لإدارة الطلبات بسحب وإفلات بين الحالات",
-    level: "merchant",
-    icon: "Columns",
-    order: 108,
+    category: "analytics",
+    isFree: false,
+    order: 102,
   },
   {
     key: "receiptPrinting",
     label: "طباعة إيصال حراري",
     description: "طباعة إيصال حراري مباشرة لكل طلب جاهز",
-    level: "merchant",
     icon: "Receipt",
-    order: 109,
+    category: "printing",
+    isFree: false,
+    order: 103,
+  },
+  {
+    key: "exportExcel",
+    label: "تصدير Excel",
+    description: "تصدير الطلبات والزبائن إلى ملف CSV/Excel",
+    icon: "FileSpreadsheet",
+    category: "export",
+    isFree: false,
+    order: 104,
+  },
+  {
+    key: "orderKanban",
+    label: "لوحة كانبان",
+    description: "لوحة كانبان لإدارة الطلبات بسحب وإفلات بين الحالات",
+    icon: "Columns3",
+    category: "management",
+    isFree: false,
+    order: 105,
+  },
+  {
+    key: "customerCrm",
+    label: "إدارة العملاء",
+    description: "قاعدة بيانات شاملة للعملاء مع سجل المبيعات والتفضيلات",
+    icon: "Users",
+    category: "management",
+    isFree: false,
+    order: 106,
   },
   {
     key: "expenseTracking",
-    label: "تتبع المصاريف والأرباح",
+    label: "إدارة المصاريف",
     description: "تتبع المصاريف التشغيلية وحساب الأرباح الصافية",
-    level: "merchant",
     icon: "Wallet",
-    order: 110,
-  },
-  {
-    key: "customerDatabase",
-    label: "قاعدة بيانات العملاء",
-    description: "قاعدة بيانات شاملة للعملاء مع سجل المبيعات والتفضيلات",
-    level: "merchant",
-    icon: "Database",
-    order: 111,
+    category: "management",
+    isFree: false,
+    order: 107,
   },
   {
     key: "formTemplates",
-    label: "قوالب النماذج الرسمية",
+    label: "قوالب النماذج",
     description: "قوالب جاهزة للنماذج الرسمية مثل طلبات التوظيف والسيرة الذاتية",
-    level: "merchant",
     icon: "FileStack",
-    order: 112,
+    category: "management",
+    isFree: false,
+    order: 108,
   },
   {
-    key: "analyticsDashboard",
-    label: "لوحة التحليلات التفصيلية",
-    description: "لوحة تحليلات تفصيلية مع مؤشرات الأداء والتقارير اليومية",
-    level: "merchant",
-    icon: "LineChart",
-    order: 113,
+    key: "orderInvoice",
+    label: "فواتير PDF",
+    description: "تنزيل فاتورة PDF احترافية لكل طلب مع تفاصيل كاملة",
+    icon: "FileText",
+    category: "export",
+    isFree: false,
+    order: 109,
   },
   {
-    key: "whatsappNotifications",
-    label: "إشعارات واتساب تلقائية",
-    description: "إرسال إشعارات واتساب تلقائية عند تغيير حالة الطلب",
-    level: "merchant",
-    icon: "Bell",
-    order: 114,
+    key: "aiAssistant",
+    label: "المساعد الذكي",
+    description: "مساعد ذكي بالذكاء الاصطناعي يجيب على أسئلة الزبائن ويوجههم",
+    icon: "Bot",
+    category: "support",
+    isFree: false,
+    order: 110,
   },
   {
     key: "customTheme",
-    label: "تخصيص الألوان والمظهر",
+    label: "تخصيص السمة",
     description: "تخصيص ألوان ومظهر المتجر حسب الهوية البصرية",
-    level: "merchant",
     icon: "Palette",
-    order: 115,
+    category: "branding",
+    isFree: false,
+    order: 111,
   },
   {
-    key: "autoBackup",
-    label: "نسخ احتياطي تلقائي",
-    description: "نسخ احتياطي تلقائي يومي للبيانات والطلبات",
-    level: "merchant",
-    icon: "HardDrive",
-    order: 116,
+    key: "customLogo",
+    label: "شعار مخصص",
+    description: "إضافة شعار المتجر في واجهة الزبائن والفاتورة",
+    icon: "Image",
+    category: "branding",
+    isFree: false,
+    order: 112,
+  },
+  {
+    key: "customDomain",
+    label: "مجال خاص",
+    description: "ربط المتجر بمجال خاص مثل print.yourdomain.com",
+    icon: "Globe",
+    category: "branding",
+    isFree: false,
+    order: 113,
   },
   {
     key: "prioritySupport",
-    label: "دعم فني ذو أولوية",
+    label: "أولوية الدعم",
     description: "دعم فني ذو أولوية مع استجابة سريعة",
-    level: "merchant",
     icon: "Headset",
-    order: 117,
+    category: "support",
+    isFree: false,
+    order: 114,
+  },
+
+  // ===== ميزات مدفوعة إضافية =====
+  {
+    key: "bulkActions",
+    label: "إجراءات جماعية",
+    description: "تحديد عدة طلبات وتغيير حالتها دفعة واحدة أو حذفها",
+    icon: "ListChecks",
+    category: "management",
+    isFree: false,
+    order: 201,
+  },
+  {
+    key: "customPricing",
+    label: "أسعار مخصصة",
+    description: "تعديل سعر كل خدمة ونوع ورق وتجليد حسب رغبتك",
+    icon: "DollarSign",
+    category: "management",
+    isFree: false,
+    order: 202,
+  },
+  {
+    key: "serviceToggle",
+    label: "تفعيل/تعطيل الخدمات",
+    description: "اختيار الخدمات المتاحة للزبائن وإخفاء غير المطلوبة",
+    icon: "ToggleLeft",
+    category: "management",
+    isFree: false,
+    order: 203,
+  },
+  {
+    key: "merchantFileDownload",
+    label: "تنزيل ملفات الطلبات",
+    description: "تنزيل ملفات الزبائن مباشرة من لوحة التحكم لطباعتها فوراً",
+    icon: "Download",
+    category: "export",
+    isFree: false,
+    order: 204,
   },
 ];
 
 /// خريطة سريعة: key → FeatureDef
-const FEATURES_MAP = new Map(FEATURE_DEFINITIONS.map((f) => [f.key, f]));
+const FEATURES_MAP = new Map(FEATURES.map((f) => [f.key, f]));
 
 /// جلب تعريف ميزة بالاسم
 export function getFeatureDef(key: FeatureKey): FeatureDef | undefined {
   return FEATURES_MAP.get(key);
 }
 
-/// ميزات واجهة الزبون فقط
-export const CUSTOMER_FEATURES = FEATURE_DEFINITIONS.filter((f) => f.level === "customer");
+/// هل ميزة مجانية؟
+export function isFeatureFree(key: FeatureKey): boolean {
+  const def = FEATURES_MAP.get(key);
+  return def?.isFree ?? false;
+}
 
-/// ميزات لوحة التاجر فقط
-export const MERCHANT_FEATURES = FEATURE_DEFINITIONS.filter((f) => f.level === "merchant");
+/// ميزات مجانية فقط
+export const FREE_FEATURES: FeatureKey[] = FEATURES
+  .filter((f) => f.isFree)
+  .map((f) => f.key);
+
+/// ميزات مدفوعة فقط
+export const PAID_FEATURES: FeatureKey[] = FEATURES
+  .filter((f) => !f.isFree)
+  .map((f) => f.key);
 
 /// نوع خطة المتجر
 export type ShopPlan = "free" | "paid";
@@ -367,31 +317,18 @@ export interface ShopFeatures {
 
 /// الـ features الافتراضية (كل شيء مقفل)
 export const DEFAULT_FEATURES: ShopFeatures = {};
-FEATURE_DEFINITIONS.forEach((f) => {
+FEATURES.forEach((f) => {
   DEFAULT_FEATURES[f.key] = false;
 });
 
-/// الميزات المفتوحة تلقائياً في الخطة المجانية
-export const FREE_FEATURES: FeatureKey[] = [
-  // Basic features every shop needs
-  "orderTracking",
-  "repeatOrder",
-  "orderInvoice",
-  "whatsappLink",
-  "directTrackingLink",
-  // Some nice-to-haves to show value
-  "smartFileAnalysis",
-  "introAnimation",
-];
-
-/// الـ features الافتراضية للخطة المجانية (مع الميزات المفتوحة تلقائياً)
+/// الـ features الافتراضية للخطة المجانية (مع الميزات المجانية مفتوحة)
 export const FREE_DEFAULT_FEATURES: ShopFeatures = { ...DEFAULT_FEATURES };
 FREE_FEATURES.forEach((key) => {
   FREE_DEFAULT_FEATURES[key] = true;
 });
 
 /// مجموعة المفاتيح الصالحة — لتنظيف البيانات القديمة
-const VALID_KEYS = new Set(FEATURE_DEFINITIONS.map((f) => f.key));
+const VALID_KEYS = new Set(FEATURES.map((f) => f.key));
 
 /// تنظيف كائن الميزات من المفاتيح القديمة غير الصالحة
 function cleanFeatures(raw: Record<string, unknown>): ShopFeatures {
@@ -401,6 +338,10 @@ function cleanFeatures(raw: Record<string, unknown>): ShopFeatures {
       clean[k] = v === true;
     }
   }
+  // تأكد أن الميزات المجانية مفعّلة
+  FREE_FEATURES.forEach((key) => {
+    clean[key] = true;
+  });
   return clean;
 }
 
@@ -409,7 +350,7 @@ export function parseFeatures(featuresJson: string | null | undefined, plan: str
   // الخطة المدفوعة تعطي كل شيء مفتوح افتراضياً
   if (plan === "paid") {
     const all: ShopFeatures = {};
-    FEATURE_DEFINITIONS.forEach((f) => {
+    FEATURES.forEach((f) => {
       all[f.key] = true;
     });
     // إذا كان هناك تعطيل يدوي، نحترمه
@@ -448,6 +389,17 @@ export function isFeatureEnabled(
   return features[key] === true;
 }
 
+/// هل ميزة معينة مفعّلة؟ (يقبل JSON string)
+export function isFeatureEnabledStr(
+  featuresJson: string | null | undefined,
+  featureId: string,
+  plan: string,
+): boolean {
+  if (!featuresJson) return false;
+  const parsed = parseFeatures(featuresJson, plan);
+  return parsed[featureId] === true;
+}
+
 /// عدد الميزات المفعّلة
 export function countEnabledFeatures(features: ShopFeatures | null | undefined): number {
   if (!features) return 0;
@@ -455,4 +407,22 @@ export function countEnabledFeatures(features: ShopFeatures | null | undefined):
 }
 
 /// عدد الميزات الكلي
-export const TOTAL_FEATURES = FEATURE_DEFINITIONS.length;
+export const TOTAL_FEATURES = FEATURES.length;
+
+/// عدد الميزات المجانية
+export const TOTAL_FREE_FEATURES = FREE_FEATURES.length;
+
+/// عدد الميزات المدفوعة
+export const TOTAL_PAID_FEATURES = PAID_FEATURES.length;
+
+// ============================================================
+// Backward compatibility — أسماء قديمة
+// ============================================================
+
+/** @deprecated استخدم FEATURES بدلاً منه */
+export const FEATURE_DEFINITIONS = FEATURES;
+
+/** @deprecated استخدم isFeatureFree() بدلاً من الفلترة يدوياً */
+export const CUSTOMER_FEATURES = FEATURES;
+/** @deprecated استخدم isFeatureFree() بدلاً من الفلترة يدوياً */
+export const MERCHANT_FEATURES = FEATURES;

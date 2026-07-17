@@ -5,7 +5,7 @@ import {
   Store, Copy, Trash2, ExternalLink, Eye, EyeOff,
   Pencil, Timer, ToggleLeft, Hourglass, Crown,
   Users, Lock, Settings, CalendarDays, CreditCard,
-  Zap, Infinity, XCircle, Check,
+  Zap, Infinity, XCircle, Check, CheckCircle2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +35,8 @@ import {
   STATUS_META, formatDA,
 } from "@/lib/print-config";
 import {
-  FEATURE_DEFINITIONS, CUSTOMER_FEATURES, MERCHANT_FEATURES,
-  parseFeatures, countEnabledFeatures, TOTAL_FEATURES,
-  FREE_FEATURES,
+  FEATURES, parseFeatures, countEnabledFeatures, TOTAL_FEATURES,
+  FREE_FEATURES, isFeatureFree,
   type FeatureKey, type ShopFeatures,
 } from "@/lib/shop-features";
 import { getCountry } from "@/lib/countries";
@@ -230,7 +229,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
   async function quickTrial(days: number) {
     try {
       const all: ShopFeatures = {};
-      FEATURE_DEFINITIONS.forEach((f) => { all[f.key] = true; });
+      FEATURES.forEach((f) => { all[f.key] = true; });
       const today = new Date().toISOString();
       const res = await adminFetch(`/api/admin/shops/${shop.slug}`, {
         method: "PUT",
@@ -436,13 +435,13 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
     setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function enableAllForGroup(groupFeatures: typeof FEATURE_DEFINITIONS) {
+  function enableAllForGroup(groupFeatures: typeof FEATURES) {
     const updated = { ...features };
     groupFeatures.forEach((f) => { updated[f.key] = true; });
     setFeatures(updated);
   }
 
-  function disableAllForGroup(groupFeatures: typeof FEATURE_DEFINITIONS) {
+  function disableAllForGroup(groupFeatures: typeof FEATURES) {
     const updated = { ...features };
     groupFeatures.forEach((f) => { updated[f.key] = false; });
     setFeatures(updated);
@@ -450,13 +449,13 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
 
   function enableAllFeatures() {
     const all: ShopFeatures = {};
-    FEATURE_DEFINITIONS.forEach((f) => { all[f.key] = true; });
+    FEATURES.forEach((f) => { all[f.key] = true; });
     setFeatures(all);
   }
 
   function disableAllFeatures() {
     const all: ShopFeatures = {};
-    FEATURE_DEFINITIONS.forEach((f) => { all[f.key] = false; });
+    FEATURES.forEach((f) => { all[f.key] = false; });
     setFeatures(all);
     setPlan("free");
   }
@@ -714,7 +713,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                 setPlan(v);
                 if (v === "paid") {
                   const all: ShopFeatures = {};
-                  FEATURE_DEFINITIONS.forEach((f) => { all[f.key] = true; });
+                  FEATURES.forEach((f) => { all[f.key] = true; });
                   setFeatures(all);
                 }
               }}>
@@ -769,180 +768,87 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
 
             {isPaidPlan && (
               <div className="text-xs text-violet-700 bg-violet-50 border border-violet-200/80 rounded-lg p-3">
-                الخطة المدفوعة — جميع الميزات مفعّلة افتراضياً
+                ✨ الخطة المدفوعة — جميع الميزات مفعّلة افتراضياً. يمكنك تعطيل ميزة معينة يدوياً.
               </div>
             )}
             {!isPaidPlan && (
               <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg p-3">
-                ✅ الميزات المجانية مفتوحة تلقائياً لكل متجر جديد — يمكنك تعطيلها أو تفعيل ميزات مدفوعة يدوياً
+                ✅ الميزات المجانية (7) مفتوحة تلقائياً لكل متجر. يمكنك تفعيل ميزات مدفوعة يدوياً.
               </div>
             )}
 
             {(() => {
-              const freeSet = new Set(FREE_FEATURES);
-              const freeCustomer = CUSTOMER_FEATURES.filter((f) => freeSet.has(f.key));
-              const paidCustomer = CUSTOMER_FEATURES.filter((f) => !freeSet.has(f.key));
-              const freeMerchant = MERCHANT_FEATURES.filter((f) => freeSet.has(f.key));
-              const paidMerchant = MERCHANT_FEATURES.filter((f) => !freeSet.has(f.key));
+              const freeFeatures = FEATURES.filter((f) => f.isFree);
+              const paidFeatures = FEATURES.filter((f) => !f.isFree);
 
               return (
                 <>
-                  {/* ===== الميزات المجانية ===== */}
+                  {/* ===== الميزات المجانية — دائماً مفعّلة ===== */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-1.5 h-5 rounded-full bg-emerald-400" />
-                      <span className="text-xs font-bold text-emerald-700">الميزات المجانية ({freeCustomer.length + freeMerchant.length})</span>
-                      <span className="text-[10px] text-emerald-500">— مفعّلة تلقائياً</span>
+                      <span className="text-xs font-bold text-emerald-700">مجانية — دائماً مفعّلة ({freeFeatures.length})</span>
                     </div>
-
-                    {/* Free customer features */}
-                    {freeCustomer.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-medium text-slate-500">واجهة الزبون ({freeCustomer.length})</span>
-                          <div className="flex gap-1">
-                            <button type="button" className="text-[11px] h-6 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors" onClick={() => enableAllForGroup(freeCustomer)}>
-                              تفعيل الكل
-                            </button>
-                            <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(freeCustomer)}>
-                              تعطيل الكل
-                            </button>
+                    <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg border border-emerald-100 bg-emerald-50/30 p-2.5">
+                      {freeFeatures.map((f) => (
+                        <div key={f.key} className="flex items-start gap-3 py-1 px-2 rounded-lg">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
+                              {f.label}
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 font-medium">مجاني</span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 leading-relaxed">{f.description}</div>
                           </div>
                         </div>
-                        <div className="space-y-0.5 max-h-44 overflow-y-auto rounded-lg border border-emerald-100 bg-emerald-50/30 p-2.5">
-                          {freeCustomer.map((f) => (
-                            <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-white/70 transition-colors">
-                              <Checkbox
-                                checked={features[f.key] === true}
-                                onCheckedChange={() => toggleFeature(f.key)}
-                                className="mt-0.5 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
-                                  {f.label}
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 font-medium">مجاني</span>
-                                </div>
-                                <div className="text-[11px] text-slate-400 leading-relaxed">{f.description}</div>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Free merchant features */}
-                    {freeMerchant.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-medium text-slate-500">لوحة التاجر ({freeMerchant.length})</span>
-                          <div className="flex gap-1">
-                            <button type="button" className="text-[11px] h-6 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors" onClick={() => enableAllForGroup(freeMerchant)}>
-                              تفعيل الكل
-                            </button>
-                            <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(freeMerchant)}>
-                              تعطيل الكل
-                            </button>
-                          </div>
-                        </div>
-                        <div className="space-y-0.5 max-h-44 overflow-y-auto rounded-lg border border-emerald-100 bg-emerald-50/30 p-2.5">
-                          {freeMerchant.map((f) => (
-                            <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-white/70 transition-colors">
-                              <Checkbox
-                                checked={features[f.key] === true}
-                                onCheckedChange={() => toggleFeature(f.key)}
-                                className="mt-0.5 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
-                                  {f.label}
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 font-medium">مجاني</span>
-                                </div>
-                                <div className="text-[11px] text-slate-400 leading-relaxed">{f.description}</div>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
 
-                  {/* ===== الميزات المدفوعة ===== */}
+                  {/* ===== الميزات المدفوعة — قابلة للتبديل ===== */}
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-1.5 h-5 rounded-full bg-violet-400" />
-                      <span className="text-xs font-bold text-violet-700">الميزات المدفوعة ({paidCustomer.length + paidMerchant.length})</span>
-                      <span className="text-[10px] text-violet-500">— تحتاج خطة مدفوعة</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-5 rounded-full bg-violet-400" />
+                        <span className="text-xs font-bold text-violet-700">مدفوعة ({paidFeatures.length})</span>
+                        <span className="text-[10px] text-violet-500">— قابلة للتبديل</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <button type="button" className="text-[11px] h-6 px-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-md transition-colors" onClick={() => enableAllForGroup(paidFeatures)}>
+                          تفعيل الكل
+                        </button>
+                        <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(paidFeatures)}>
+                          تعطيل الكل
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Paid customer features */}
-                    {paidCustomer.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-medium text-slate-500">واجهة الزبون ({paidCustomer.length})</span>
-                          <div className="flex gap-1">
-                            <button type="button" className="text-[11px] h-6 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors" onClick={() => enableAllForGroup(paidCustomer)}>
-                              تفعيل الكل
-                            </button>
-                            <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(paidCustomer)}>
-                              تعطيل الكل
-                            </button>
+                    <div className="space-y-0.5 max-h-72 overflow-y-auto rounded-lg border border-violet-100 bg-violet-50/20 p-2.5">
+                      {paidFeatures.map((f) => (
+                        <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-white/70 transition-colors">
+                          <Checkbox
+                            checked={features[f.key] === true}
+                            onCheckedChange={() => toggleFeature(f.key)}
+                            className="mt-0.5 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
+                              {f.label}
+                              <span className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                features[f.key]
+                                  ? "bg-violet-100 text-violet-600"
+                                  : "bg-slate-100 text-slate-400"
+                              )}>
+                                {features[f.key] ? "مفعّل" : "مدفوع"}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 leading-relaxed">{f.description}</div>
                           </div>
-                        </div>
-                        <div className="space-y-0.5 max-h-52 overflow-y-auto rounded-lg border border-violet-100 bg-violet-50/30 p-2.5">
-                          {paidCustomer.map((f) => (
-                            <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-white/70 transition-colors">
-                              <Checkbox
-                                checked={features[f.key] === true}
-                                onCheckedChange={() => toggleFeature(f.key)}
-                                className="mt-0.5 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
-                                  {f.label}
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium">مدفوع</span>
-                                </div>
-                                <div className="text-[11px] text-slate-400 leading-relaxed">{f.description}</div>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Paid merchant features */}
-                    {paidMerchant.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-medium text-slate-500">لوحة التاجر ({paidMerchant.length})</span>
-                          <div className="flex gap-1">
-                            <button type="button" className="text-[11px] h-6 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors" onClick={() => enableAllForGroup(paidMerchant)}>
-                              تفعيل الكل
-                            </button>
-                            <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(paidMerchant)}>
-                              تعطيل الكل
-                            </button>
-                          </div>
-                        </div>
-                        <div className="space-y-0.5 max-h-52 overflow-y-auto rounded-lg border border-violet-100 bg-violet-50/30 p-2.5">
-                          {paidMerchant.map((f) => (
-                            <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-white/70 transition-colors">
-                              <Checkbox
-                                checked={features[f.key] === true}
-                                onCheckedChange={() => toggleFeature(f.key)}
-                                className="mt-0.5 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-medium text-slate-700 flex items-center gap-2">
-                                  {f.label}
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium">مدفوع</span>
-                                </div>
-                                <div className="text-[11px] text-slate-400 leading-relaxed">{f.description}</div>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </>
               );

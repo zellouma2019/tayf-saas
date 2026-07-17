@@ -3,10 +3,12 @@
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 import { shopApi } from "@/lib/shop-api";
+import { initArabicPdf, ar, arFont } from "@/lib/pdf-arabic";
 
 /**
  * تحويل فاتورة إلى ملف PDF خفيف وتنزيلها مباشرة
  * يستخدم jsPDF مباشرةً بدون html2canvas لتجنب التهنيق والتجمد
+ * يدعم النص العربي عبر خط Amiri + arabic-reshaper + bidi-js
  */
 export async function downloadInvoicePDF(orderId: string, reference?: string): Promise<boolean> {
   try {
@@ -40,6 +42,9 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
       format: "a4",
     });
 
+    // 4b. تسجيل خط Amiri العربي
+    await initArabicPdf(doc);
+
     const pageWidth = 210;
     const margin = 15;
     const contentWidth = pageWidth - margin * 2;
@@ -51,18 +56,20 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
     doc.rect(0, 0, pageWidth, 40, "F");
 
     doc.setTextColor(255, 255, 255);
+    doc.setFont(arFont(true));
     doc.setFontSize(18);
-    doc.text(shopData.name || "مطبعة", pageWidth - margin, y + 8, { align: "right" });
+    doc.text(ar(shopData.name || "مطبعة"), pageWidth - margin, y + 8, { align: "right" });
 
+    doc.setFont(arFont(false));
     doc.setFontSize(9);
-    doc.text("فاتورة طلب طباعة", pageWidth - margin, y + 16, { align: "right" });
+    doc.text(ar("فاتورة طلب طباعة"), pageWidth - margin, y + 16, { align: "right" });
 
     if (shopData.phone) {
       doc.setFontSize(8);
-      doc.text(`هاتف: ${shopData.phone}`, pageWidth - margin, y + 24, { align: "right" });
+      doc.text(ar(`هاتف: ${shopData.phone}`), pageWidth - margin, y + 24, { align: "right" });
     }
     if (shopData.address) {
-      doc.text(`العنوان: ${shopData.address}`, pageWidth - margin, y + 30, { align: "right" });
+      doc.text(ar(`العنوان: ${shopData.address}`), pageWidth - margin, y + 30, { align: "right" });
     }
 
     y = 50;
@@ -72,27 +79,27 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
     doc.setFontSize(10);
 
     // عنوان: رقم الفاتورة - التاريخ
-    doc.setFont(undefined, "bold");
-    doc.text("رقم الطلب:", pageWidth - margin, y, { align: "right" });
-    doc.setFont(undefined, "normal");
-    doc.text(order.reference || orderId.slice(0, 8), margin, y, { align: "left" });
+    doc.setFont(arFont(true));
+    doc.text(ar("رقم الطلب:"), pageWidth - margin, y, { align: "right" });
+    doc.setFont(arFont(false));
+    doc.text(ar(order.reference || orderId.slice(0, 8)), margin, y, { align: "left" });
     y += 7;
 
-    doc.setFont(undefined, "bold");
-    doc.text("التاريخ:", pageWidth - margin, y, { align: "right" });
-    doc.setFont(undefined, "normal");
+    doc.setFont(arFont(true));
+    doc.text(ar("التاريخ:"), pageWidth - margin, y, { align: "right" });
+    doc.setFont(arFont(false));
     const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("ar-SA") : "---";
-    doc.text(orderDate, margin, y, { align: "left" });
+    doc.text(ar(orderDate), margin, y, { align: "left" });
     y += 7;
 
-    doc.setFont(undefined, "bold");
-    doc.text("الحالة:", pageWidth - margin, y, { align: "right" });
-    doc.setFont(undefined, "normal");
+    doc.setFont(arFont(true));
+    doc.text(ar("الحالة:"), pageWidth - margin, y, { align: "right" });
+    doc.setFont(arFont(false));
     const statusMap: Record<string, string> = {
       pending: "جديد", confirmed: "مؤكد", printing: "قيد الطباعة",
       ready: "جاهز", delivered: "تم التسليم", cancelled: "ملغي",
     };
-    doc.text(statusMap[order.status] || order.status, margin, y, { align: "left" });
+    doc.text(ar(statusMap[order.status] || order.status), margin, y, { align: "left" });
     y += 12;
 
     // === خط فاصل ===
@@ -103,14 +110,14 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
 
     // === معلومات العميل ===
     doc.setFontSize(11);
-    doc.setFont(undefined, "bold");
+    doc.setFont(arFont(true));
     doc.setTextColor(primaryColor);
-    doc.text("بيانات العميل", pageWidth - margin, y, { align: "right" });
+    doc.text(ar("بيانات العميل"), pageWidth - margin, y, { align: "right" });
     y += 8;
 
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
-    doc.setFont(undefined, "normal");
+    doc.setFont(arFont(false));
 
     const customerFields = [
       { label: "الاسم", value: customer?.name || "---" },
@@ -120,10 +127,10 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
 
     for (const field of customerFields) {
       if (!field.value) continue;
-      doc.setFont(undefined, "bold");
-      doc.text(`${field.label}:`, pageWidth - margin, y, { align: "right" });
-      doc.setFont(undefined, "normal");
-      doc.text(field.value, margin, y, { align: "left" });
+      doc.setFont(arFont(true));
+      doc.text(ar(`${field.label}:`), pageWidth - margin, y, { align: "right" });
+      doc.setFont(arFont(false));
+      doc.text(ar(field.value), margin, y, { align: "left" });
       y += 6;
     }
 
@@ -135,14 +142,14 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
     y += 8;
 
     doc.setFontSize(11);
-    doc.setFont(undefined, "bold");
+    doc.setFont(arFont(true));
     doc.setTextColor(primaryColor);
-    doc.text("تفاصيل الطلب", pageWidth - margin, y, { align: "right" });
+    doc.text(ar("تفاصيل الطلب"), pageWidth - margin, y, { align: "right" });
     y += 8;
 
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
-    doc.setFont(undefined, "normal");
+    doc.setFont(arFont(false));
 
     const orderDetails = [
       { label: "نوع الخدمة", value: order.serviceName || order.serviceType || "---" },
@@ -157,10 +164,10 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
     if (delivery?.method) orderDetails.push({ label: "طريقة التسليم", value: delivery.method === "delivery" ? "توصيل" : "استلام يدوي" });
 
     for (const field of orderDetails) {
-      doc.setFont(undefined, "bold");
-      doc.text(`${field.label}:`, pageWidth - margin, y, { align: "right" });
-      doc.setFont(undefined, "normal");
-      doc.text(field.value, margin, y, { align: "left" });
+      doc.setFont(arFont(true));
+      doc.text(ar(`${field.label}:`), pageWidth - margin, y, { align: "right" });
+      doc.setFont(arFont(false));
+      doc.text(ar(field.value), margin, y, { align: "left" });
       y += 6;
     }
 
@@ -180,18 +187,18 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
 
     if (pricing) {
       if (pricing.unitPrice != null) {
-        doc.text(`سعر الوحدة: ${pricing.unitPrice}`, pageWidth - margin, y + 5, { align: "right" });
+        doc.text(ar(`سعر الوحدة: ${pricing.unitPrice}`), pageWidth - margin, y + 5, { align: "right" });
       }
       if (pricing.subtotal != null) {
-        doc.text(`المجموع الفرعي: ${pricing.subtotal}`, pageWidth - margin, y + 12, { align: "right" });
+        doc.text(ar(`المجموع الفرعي: ${pricing.subtotal}`), pageWidth - margin, y + 12, { align: "right" });
       }
     }
 
     doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
+    doc.setFont(arFont(true));
     doc.setTextColor(primaryColor);
     const total = order.total || pricing?.total || 0;
-    doc.text(`الإجمالي: ${total}`, pageWidth - margin, y + 22, { align: "right" });
+    doc.text(ar(`الإجمالي: ${total}`), pageWidth - margin, y + 22, { align: "right" });
 
     y += 40;
 
@@ -207,9 +214,10 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
 
     doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
-    doc.text("شكراً لتعاملكم معنا", pageWidth / 2, y, { align: "center" });
+    doc.setFont(arFont(false));
+    doc.text(ar("شكراً لتعاملكم معنا"), pageWidth / 2, y, { align: "center" });
     y += 5;
-    doc.text(`© ${new Date().getFullYear()} ${shopData.name || "طيف"} — جميع الحقوق محفوظة`, pageWidth / 2, y, { align: "center" });
+    doc.text(ar(`© ${new Date().getFullYear()} ${shopData.name || "طيف"} — جميع الحقوق محفوظة`), pageWidth / 2, y, { align: "center" });
 
     // 5. حفظ الملف
     const fileName = reference
