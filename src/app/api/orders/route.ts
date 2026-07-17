@@ -81,8 +81,9 @@ export async function GET(req: NextRequest) {
       db.printOrder.count({ where }),
     ]);
 
-    return NextResponse.json({
-      orders: orders.map((o) => {
+    return NextResponse.json(
+      {
+        orders: orders.map((o) => {
         // للصور فقط، أضف filePreview كـ Data URL للمعاينة
         const filePreview = noPreview ? null : o.fileData ? getFilePreview(o.fileData, o.fileType) : null;
         let parsedTags: string[] = [];
@@ -115,7 +116,13 @@ export async function GET(req: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit),
       },
-    });
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=3, stale-while-revalidate=15",
+        },
+      },
+    );
   } catch (e) {
     console.error('[orders/GET]', e);
     return NextResponse.json({ error: "حدث خطأ أثناء جلب الطلبات" }, { status: 500 });

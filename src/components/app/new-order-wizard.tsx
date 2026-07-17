@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   SERVICES as STATIC_SERVICES,
@@ -838,16 +837,10 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 <div key={i} className="flex items-center">
                   {/* Step circle */}
                   <div className="flex flex-col items-center gap-1.5">
-                    <motion.div
-                      animate={isActive ? { scale: [1, 1.12, 1], boxShadow: [
-                        "0 0 0 0 rgba(124,58,237,0.4)",
-                        "0 0 12px 4px rgba(124,58,237,0.15)",
-                        "0 0 0 0 rgba(124,58,237,0.4)",
-                      ]} : {}}
-                      transition={isActive ? { repeat: Infinity, duration: 2.5, ease: "easeInOut" } : {}}
+                    <div
                       className={`
                         rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
-                        ${isActive ? "w-11 h-11" : "w-9 h-9"}
+                        ${isActive ? "w-11 h-11 animate-pulse" : "w-9 h-9"}
                         ${isCompleted
                           ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
                           : isActive
@@ -864,7 +857,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       ) : (
                         <span>{i + 1}</span>
                       )}
-                    </motion.div>
+                    </div>
                     <div className="text-center">
                       <span className={`text-[11px] font-semibold leading-tight block ${
                         isActive ? "text-teal-700" : isCompleted ? "text-emerald-600" : "text-muted-foreground/50"
@@ -881,11 +874,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {/* Connecting line */}
                   {i < STEP_LABELS.length - 1 && (
                     <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-1.5 sm:mx-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden relative -mt-5">
-                      <motion.div
-                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-teal-500 to-teal-600"
-                        initial={{ width: "0%" }}
-                        animate={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
-                        transition={{ duration: 0.6, ease: "easeOut" }}
+                      <div
+                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-teal-500 to-teal-600 transition-all duration-600 ease-out"
+                        style={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
                       />
                     </div>
                   )}
@@ -917,10 +908,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           <div className="space-y-6">
             {/* Service Selection Cards */}
             {!serviceType && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
+              <div
+                className="animate-in fade-in slide-in-from-bottom-3 duration-400"
               >
                 <div className="flex items-center gap-1.5 mb-3">
                   <Zap className="h-4 w-4 text-teal-500" />
@@ -930,13 +919,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {visibleServices.map((spec) => {
                     const isPopular = spec.popularity >= 90;
                     return (
-                      <motion.button
+                      <button
                         key={spec.type}
                         type="button"
                         onClick={() => handleServiceSelect(spec.type)}
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="relative p-4 rounded-2xl border-2 text-right transition-all duration-200 bg-card hover:shadow-lg hover:shadow-teal-100/50 dark:hover:shadow-teal-900/20 hover:scale-[1.02] hover:-translate-y-1 border-border hover:border-teal-300 dark:hover:border-teal-600 group hover:bg-gradient-to-br hover:from-teal-50/80 hover:to-teal-50/50 dark:hover:from-teal-950/30 dark:hover:to-teal-950/20"
+                        className="relative p-4 rounded-2xl border-2 text-right transition-all duration-200 bg-card hover:shadow-lg hover:shadow-teal-100/50 dark:hover:shadow-teal-900/20 hover:scale-[1.02] hover:-translate-y-1 border-border hover:border-teal-300 dark:hover:border-teal-600 group hover:bg-gradient-to-br hover:from-teal-50/80 hover:to-teal-50/50 dark:hover:from-teal-950/30 dark:hover:to-teal-950/20 active:scale-[0.97]"
                       >
                         {isPopular && (
                           <span className="absolute -top-2.5 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white text-[10px] font-bold shadow-sm animate-pulse">
@@ -954,7 +941,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                             ابتداءً من {spec.basePricePerPage}/صفحة
                           </div>
                         )}
-                      </motion.button>
+                      </button>
                     );
                   })}
                 </div>
@@ -968,15 +955,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAllServices ? "rotate-180" : ""}`} />
                   </button>
                 )}
-              </motion.div>
+              </div>
             )}
 
             {/* Selected service banner */}
             {serviceType && selectedService && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-3 p-3 rounded-xl bg-teal-50 border-2 border-teal-200 ring-2 ring-teal-500"
+              <div
+                className="flex items-center gap-3 p-3 rounded-xl bg-teal-50 border-2 border-teal-200 ring-2 ring-teal-500 animate-in fade-in zoom-in-95 duration-300"
               >
                 <div className="text-3xl">{selectedService.emoji}</div>
                 <div className="flex-1 min-w-0">
@@ -990,7 +975,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 >
                   تغيير
                 </button>
-              </motion.div>
+              </div>
             )}
 
             {/* Upload Step (only shown after service is selected) */}

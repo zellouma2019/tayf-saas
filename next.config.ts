@@ -8,11 +8,24 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "preview-chat-25b4c095-e627-480e-ab7b-6e25473ffb45.space-z.ai",
   ],
-  serverExternalPackages: ["sharp", "@libsql/client"],
+  // حزم ثقيلة لا تُضمَّن في وظائف Serverless — تُحمَّل من node_modules مباشرة
+  serverExternalPackages: [
+    "sharp",
+    "@libsql/client",
+    "xlsx",
+    "qrcode",
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: "5mb",
     },
+    // تحسين حزم العميل
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "date-fns",
+      "@radix-ui/react-icons",
+    ],
   },
 };
 

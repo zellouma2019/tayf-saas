@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 import {
   CheckCircle2,
   Copy,
@@ -116,20 +115,14 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 />
               ))}
             </div>
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="text-3xl mb-3 tracking-widest"
-            >🎉 ✨ 🎊</motion.div>
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
-              className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-200 via-emerald-300 to-teal-400 flex items-center justify-center mb-4 ring-4 ring-emerald-100 dark:ring-emerald-900/50 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-800/30 animate-pulse-glow"
+            <div
+              className="text-3xl mb-3 tracking-widest animate-in fade-in zoom-in duration-500"
+            >🎉 ✨ 🎊</div>
+            <div
+              className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-200 via-emerald-300 to-teal-400 flex items-center justify-center mb-4 ring-4 ring-emerald-100 dark:ring-emerald-900/50 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-800/30 animate-pulse-glow animate-in fade-in zoom-in duration-500"
             >
               <CheckCircle2 className="h-12 w-12 text-emerald-600" />
-            </motion.div>
+            </div>
             <h2 className="text-2xl font-bold mb-2">تم استلام طلبك بنجاح</h2>
             <p className="text-sm text-muted-foreground">
               طلبك الآن في النظام — سنتواصل معك قريباً لتأكيد التفاصيل

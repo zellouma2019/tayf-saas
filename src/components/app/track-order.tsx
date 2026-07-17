@@ -27,7 +27,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const SERVICE_EMOJI: Record<string, string> = {
@@ -119,23 +118,15 @@ export function TrackOrder() {
       )}
 
       {!loading && orders.length > 0 && (
-        <motion.div
-          className="space-y-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+        <div
+          className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-400"
         >
-          {orders.map((o, i) => (
-            <motion.div
-              key={o.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.1, ease: "easeOut" }}
-            >
+          {orders.map((o) => (
+            <div key={o.id}>
               <OrderTrackingCard order={o} />
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );
@@ -276,24 +267,19 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
 
         <div className="p-5 space-y-4">
             {/* نسبة الإنجاز */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-            className="flex items-center gap-3 mb-1"
+          <div
+            className="flex items-center gap-3 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-400"
           >
             <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-gradient-to-l from-emerald-400 via-emerald-500 to-teal-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30"
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.round(Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100))}%` }}
-                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+              <div
+                className="h-full rounded-full bg-gradient-to-l from-emerald-400 via-emerald-500 to-teal-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30 transition-all duration-700 ease-out"
+                style={{ width: `${Math.round(Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100))}%` }}
               />
             </div>
             <span className="text-xs font-bold text-emerald-600 min-w-[3ch] text-left tabular-nums">
               {Math.round(Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100))}%
             </span>
-          </motion.div>
+          </div>
 
             {/* خط الزمن المحسّن */}
           <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60">
@@ -310,23 +296,17 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                 const m = STATUS_META[s];
                 return (
                   <div key={s} className="flex-1 flex flex-col items-center relative z-10">
-                    <motion.div
-                      animate={active ? { scale: [1, 1.15, 1], boxShadow: [
-                        "0 0 0 0 rgba(245,158,11,0.4)",
-                        "0 0 0 8px rgba(245,158,11,0)",
-                        "0 0 0 0 rgba(245,158,11,0.4)",
-                      ]} : {}}
-                      transition={active ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-colors duration-300 ${
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all duration-300 ${
                         done
                           ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-200 dark:shadow-emerald-900/30"
                           : active
-                            ? "bg-amber-400 border-amber-400 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/30"
+                            ? "bg-amber-400 border-amber-400 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/30 animate-pulse"
                             : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400"
                       }`}
                     >
                       {done ? <CheckCircle2 className="h-4 w-4" /> : <span>{m.emoji}</span>}
-                    </motion.div>
+                    </div>
                     <div
                       className={`text-[11px] mt-1.5 text-center leading-tight ${
                         done || active ? "font-semibold text-foreground" : "text-muted-foreground/60"
