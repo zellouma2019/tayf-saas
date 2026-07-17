@@ -287,9 +287,22 @@ export function MerchantOrderDetail({
       onStatusChange(order, "printing");
       onUpdated();
 
-      // 2) Wait a tick for the DOM to settle, then trigger print
-      await new Promise((r) => setTimeout(r, 300));
-      window.print();
+      // 2) Print the actual uploaded file (not the receipt)
+      const fileUrl = order.fileData;
+      if (fileUrl) {
+        const win = window.open(fileUrl, "_blank");
+        if (win) {
+          setTimeout(() => {
+            try { win.print(); } catch {}
+          }, 1000);
+        } else {
+          toast.error("يرجى السماح بالنوافذ المنبثقة لطباعة الملف");
+        }
+      } else {
+        // Fallback to receipt if no file attached
+        await new Promise((r) => setTimeout(r, 300));
+        window.print();
+      }
 
       // 3) After print dialog closes, change to "ready"
       const readyRes = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
@@ -384,6 +397,27 @@ export function MerchantOrderDetail({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+  }
+
+  function handlePrintFile() {
+    if (!order) return;
+    const fileUrl = order.fileData;
+    if (!fileUrl) {
+      toast.error("لا يوجد ملف مرفق لطباعته");
+      return;
+    }
+    // Open the file in a new window for printing
+    const win = window.open(fileUrl, "_blank");
+    if (win) {
+      // For PDFs, the browser will show the PDF viewer with print button
+      // For images, the user can right-click and print
+      // Auto-trigger print after a short delay for PDFs
+      setTimeout(() => {
+        try { win.print(); } catch {}
+      }, 1000);
+    } else {
+      toast.error("يرجى السماح بالنوافذ المنبثقة لطباعة الملف");
     }
   }
 
@@ -996,6 +1030,15 @@ export function MerchantOrderDetail({
               >
                 <FileCheck className="h-3.5 w-3.5 ml-1" />
                 فاتورة
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrintFile}
+                className="text-xs rounded-lg border-slate-200 hover:bg-slate-50 transition-all duration-200"
+              >
+                <Download className="h-3.5 w-3.5 ml-1" />
+                طباعة الملف
               </Button>
               {hasReceiptPrinting && (
                 <Button
