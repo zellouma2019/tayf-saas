@@ -18,13 +18,15 @@ export async function GET(
     if (!order) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
+    const { fileData, ...orderWithoutFile } = order;
     return NextResponse.json({
-      ...order,
+      ...orderWithoutFile,
       options: JSON.parse(order.options),
       customer: JSON.parse(order.customer),
       delivery: JSON.parse(order.delivery),
       pricing: JSON.parse(order.pricing),
       smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
+      hasFile: !!fileData,
     });
   } catch (e) {
     console.error('[orders/[id]/GET]', e);
@@ -147,8 +149,9 @@ export async function PUT(
         });
       }
 
+      const { fileData: _fd, ...updatedWithoutFile } = updated;
       return NextResponse.json({
-        ...updated,
+        ...updatedWithoutFile,
         options: JSON.parse(updated.options),
         customer: JSON.parse(updated.customer),
         delivery: JSON.parse(updated.delivery),

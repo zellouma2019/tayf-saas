@@ -30,14 +30,16 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      orders: orders.map((o) => ({
-        ...o,
-        options: JSON.parse(o.options),
-        customer: JSON.parse(o.customer),
-        delivery: JSON.parse(o.delivery),
-        pricing: JSON.parse(o.pricing),
-        smartAnalysis: o.smartAnalysis ? JSON.parse(o.smartAnalysis) : null,
-      })),
+      orders: orders.map((o) => {
+        const { fileData, smartAnalysis, ...rest } = o;
+        return {
+          ...rest,
+          options: JSON.parse(o.options),
+          customer: JSON.parse(o.customer),
+          delivery: JSON.parse(o.delivery),
+          pricing: JSON.parse(o.pricing),
+        };
+      }),
       count: orders.length,
     });
   } catch (e) {

@@ -57,13 +57,16 @@ export async function GET(request: NextRequest) {
         count: s._count,
         revenue: s._sum.total || 0,
       })),
-      recentOrders: recentOrders.map((o) => ({
-        ...o,
-        options: JSON.parse(o.options),
-        customer: JSON.parse(o.customer),
-        delivery: JSON.parse(o.delivery),
-        pricing: JSON.parse(o.pricing),
-      })),
+      recentOrders: recentOrders.map((o) => {
+        const { fileData, smartAnalysis, ...rest } = o;
+        return {
+          ...rest,
+          options: JSON.parse(o.options),
+          customer: JSON.parse(o.customer),
+          delivery: JSON.parse(o.delivery),
+          pricing: JSON.parse(o.pricing),
+        };
+      }),
     });
   } catch (e) {
     console.error('[admin/stats]', e);
