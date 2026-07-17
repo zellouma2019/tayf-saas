@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, useCallback, useState, useMemo, useEffect } from "react";
 import { shopApi } from "@/lib/shop-api";
 import { useShop } from "@/lib/shop-context";
@@ -24,14 +25,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { NewOrderWizard } from "@/components/app/new-order-wizard";
-import { RepeatOrder } from "@/components/app/repeat-order";
-import { TrackOrder } from "@/components/app/track-order";
-import { AdminPanel } from "@/components/app/admin-panel";
-import { OrderHistory } from "@/components/app/order-history";
-import { OrderSuccess } from "@/components/app/order-success";
 import { AdminGate } from "@/components/app/admin-gate";
-import { FloatingAssistant } from "@/components/app/floating-assistant";
 import { PageSkeleton } from "@/components/app/page-skeleton";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Intro } from "@/components/app/intro";
@@ -39,6 +33,41 @@ import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { getCountry } from "@/lib/countries";
 import { DEFAULT_SETTINGS, type AppSettings } from "@/lib/default-settings";
+import { getTheme } from "@/lib/themes";
+
+// Dynamic imports for heavy components (lazy loaded on demand)
+const NewOrderWizard = dynamic(() => import("@/components/app/new-order-wizard").then(m => ({ default: m.NewOrderWizard })), {
+  loading: () => <PageSkeleton />,
+  ssr: false,
+});
+
+const RepeatOrder = dynamic(() => import("@/components/app/repeat-order").then(m => ({ default: m.RepeatOrder })), {
+  loading: () => <PageSkeleton />,
+  ssr: false,
+});
+
+const TrackOrder = dynamic(() => import("@/components/app/track-order").then(m => ({ default: m.TrackOrder })), {
+  loading: () => <PageSkeleton />,
+  ssr: false,
+});
+
+const AdminPanel = dynamic(() => import("@/components/app/admin-panel").then(m => ({ default: m.AdminPanel })), {
+  loading: () => <PageSkeleton />,
+  ssr: false,
+});
+
+const OrderHistory = dynamic(() => import("@/components/app/order-history").then(m => ({ default: m.OrderHistory })), {
+  loading: () => <PageSkeleton />,
+  ssr: false,
+});
+
+const OrderSuccess = dynamic(() => import("@/components/app/order-success").then(m => ({ default: m.OrderSuccess })), {
+  ssr: false,
+});
+
+const FloatingAssistant = dynamic(() => import("@/components/app/floating-assistant").then(m => ({ default: m.FloatingAssistant })), {
+  ssr: false,
+});
 
 type View = "new" | "repeat" | "track" | "history" | "admin";
 
@@ -55,6 +84,7 @@ export function AppShell() {
   const [footerOpen, setFooterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { shop, hasFeature } = useShop();
+  const shopTheme = getTheme(shop?.themeId);
   // تحليل إعدادات المتجر (services مأخوذة من shop.settings JSON)
   const shopServices = useMemo(() => {
     try {
@@ -180,28 +210,38 @@ export function AppShell() {
     <>
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
     <LayoutGroup>
-      <div className="min-h-screen flex flex-col bg-background" dir="rtl">
+      <div
+        className="min-h-screen flex flex-col"
+        style={{
+          backgroundColor: shopTheme.contentBg,
+          '--shop-accent': shopTheme.accent,
+          '--shop-footer-hover': shopTheme.footer.linkHover,
+          '--shop-footer-border': shopTheme.footer.border,
+          '--shop-footer-icon': shopTheme.footerIcon,
+        } as React.CSSProperties}
+        dir="rtl"
+      >
       {/* ===== الشريط العلوي الأسود ===== */}
       {view !== "new" && (
-      <div className="bg-neutral-900 text-neutral-200 dark:bg-neutral-950 dark:text-neutral-300">
+      <div style={{ backgroundColor: shopTheme.topBar.bg, color: shopTheme.topBar.text }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-8 sm:h-9 flex items-center justify-between gap-2">
           {/* الجوال: معلومة واحدة واضحة */}
           <div className="flex sm:hidden items-center gap-1.5 text-xs min-w-0">
-            <span className="text-amber-400 shrink-0">⚡</span>
+            <span style={{ color: shopTheme.topBar.accent }} className="shrink-0">⚡</span>
             <span className="truncate">اطلب خلال دقيقة</span>
           </div>
           {/* الحاسوب: كل المميزات */}
           <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
-              <span className="text-amber-400">⚡</span>
+              <span style={{ color: shopTheme.topBar.accent }}>⚡</span>
               اطلب خلال دقيقة
             </span>
             <span className="hidden md:flex items-center gap-1.5 whitespace-nowrap">
-              <span className="text-amber-400">🕐</span>
+              <span style={{ color: shopTheme.topBar.accent }}>🕐</span>
               جاهز خلال ساعة
             </span>
             <span className="hidden lg:flex items-center gap-1.5 whitespace-nowrap">
-              <span className="text-amber-400">🔔</span>
+              <span style={{ color: shopTheme.topBar.accent }}>🔔</span>
               إشعار عند الجاهزية
             </span>
           </div>
@@ -220,15 +260,18 @@ export function AppShell() {
       )}
 
       {/* ===== الترويسة الرئيسية ===== */}
-      <header className={`bg-background border-b border-border/50 sticky top-0 z-40 no-print transition-shadow duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-gradient-to-l after:from-teal-500/40 after:via-amber-400/30 after:to-teal-500/40 ${scrolled ? 'shadow-sm' : ''}`}>
+      <header
+        className={`border-b sticky top-0 z-40 no-print transition-shadow duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[var(--shop-accent)] ${scrolled ? 'shadow-sm' : ''}`}
+        style={{ backgroundColor: shopTheme.header.bg, borderColor: shopTheme.header.border }}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
           {/* الشعار */}
           <button
             onClick={() => { setFooterOpen(false); setView("new"); }}
             className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0"
           >
-            <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-teal-500/20 transition-all duration-300 dark:hidden" />
-            <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-teal-500/20 transition-all duration-300 hidden dark:block" />
+            <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 dark:hidden" />
+            <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 hidden dark:block" />
             <div className="text-right min-w-0">
               <div className="font-bold text-sm md:text-base leading-tight truncate">{displayBusinessName}</div>
               <div className="text-xs md:text-xs text-muted-foreground leading-tight truncate">
@@ -246,15 +289,16 @@ export function AppShell() {
                 onClick={() => handleNavClick(item.key)}
                 className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   view === item.key
-                    ? "text-white"
+                    ? ""
                     : "text-foreground hover:bg-background"
                 }`}
+                style={view === item.key ? { color: shopTheme.nav.activeText } : undefined}
               >
                 {view === item.key && (
                   <motion.div
                     layoutId="nav-active-desktop"
-                    className="absolute inset-0 bg-neutral-900 rounded-full shadow-sm"
-                    style={{ zIndex: -1 }}
+                    className="absolute inset-0 rounded-full shadow-sm"
+                    style={{ backgroundColor: shopTheme.nav.active, zIndex: -1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -275,16 +319,17 @@ export function AppShell() {
                 onClick={() => handleNavClick(item.key)}
                 className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
                   view === item.key
-                    ? "text-white"
+                    ? ""
                     : "text-foreground hover:bg-background"
                 }`}
+                style={view === item.key ? { color: shopTheme.nav.activeText } : undefined}
                 aria-label={item.label}
               >
                 {view === item.key && (
                   <motion.div
                     layoutId="nav-active-mobile"
-                    className="absolute inset-0 bg-neutral-900 rounded-full"
-                    style={{ zIndex: -1 }}
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: shopTheme.nav.active, zIndex: -1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -328,7 +373,14 @@ export function AppShell() {
           <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full">
             {/* Welcome message */}
             {welcomeMessage && view === "new" && (
-              <div className="mb-4 p-3 rounded-xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-800/40 text-sm text-teal-700 dark:text-teal-300 text-center">
+              <div
+                className="mb-4 p-3 rounded-xl border text-sm text-center"
+                style={{
+                  backgroundColor: shopTheme.accent + '15',
+                  borderColor: shopTheme.accent + '40',
+                  color: shopTheme.accent,
+                }}
+              >
                 {welcomeMessage}
               </div>
             )}
@@ -400,13 +452,13 @@ export function AppShell() {
 
         {/* ===== التذييل (يختفي في قسم الإدارة) ===== */}
         {view !== "admin" && (
-        <footer className="bg-neutral-900 text-neutral-300 mt-auto no-print">
+        <footer className="mt-auto no-print" style={{ backgroundColor: shopTheme.footer.bg, color: shopTheme.footer.text }}>
           {/* خط فاصل متدرّج */}
-          <div className="h-px bg-gradient-to-l from-amber-500/50 via-neutral-700 to-amber-500/50" />
+          <div className="h-px" style={{ background: `linear-gradient(to left, ${shopTheme.footerIcon}80, ${shopTheme.footer.border}, ${shopTheme.footerIcon}80)` }} />
           {/* زر الطي/الفتح - يظهر فقط على الجوال */}
           <button
             onClick={() => setFooterOpen(!footerOpen)}
-            className="md:hidden w-full flex items-center justify-center gap-2 py-3.5 px-4 text-xs text-neutral-400 hover:text-amber-400 transition-colors border-b border-neutral-800/60 active:bg-neutral-800/50"
+            className="md:hidden w-full flex items-center justify-center gap-2 py-3.5 px-4 text-xs text-neutral-400 hover:text-[var(--shop-footer-hover)] transition-colors border-b border-[var(--shop-footer-border)] active:bg-neutral-800/50"
             aria-expanded={footerOpen}
             aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}
           >
@@ -433,7 +485,7 @@ export function AppShell() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-9 h-9 rounded-lg bg-amber-400 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: shopTheme.footerIcon }}>
                         <Printer className="h-5 w-5 text-neutral-900" />
                       </div>
                       <div>
@@ -450,27 +502,27 @@ export function AppShell() {
                     <h4 className="text-white font-semibold text-sm mb-3">روابط سريعة</h4>
                     <ul className="space-y-2 text-xs">
                       <li>
-                        <button onClick={() => { setFooterOpen(false); setView("new"); }} className="hover:text-amber-400 transition-colors flex items-center gap-2">
+                        <button onClick={() => { setFooterOpen(false); setView("new"); }} className="hover:text-[var(--shop-footer-hover)] transition-colors flex items-center gap-2">
                           <Plus className="h-3.5 w-3.5 text-neutral-500" />
                           طلب طباعة جديد
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => setView("track")} className="hover:text-amber-400 transition-colors flex items-center gap-2">
+                        <button onClick={() => setView("track")} className="hover:text-[var(--shop-footer-hover)] transition-colors flex items-center gap-2">
                           <Search className="h-3.5 w-3.5 text-neutral-500" />
                           تتبّع طلب
                         </button>
                       </li>
                       {showAdminLink && (
                       <li>
-                        <button onClick={() => handleNavClick("admin")} className="hover:text-amber-400 transition-colors flex items-center gap-2">
+                        <button onClick={() => handleNavClick("admin")} className="hover:text-[var(--shop-footer-hover)] transition-colors flex items-center gap-2">
                           <Shield className="h-3.5 w-3.5 text-neutral-500" />
                           لوحة الإدارة
                         </button>
                       </li>
                       )}
                       <li>
-                        <button onClick={() => setView("repeat")} className="hover:text-amber-400 transition-colors flex items-center gap-2">
+                        <button onClick={() => setView("repeat")} className="hover:text-[var(--shop-footer-hover)] transition-colors flex items-center gap-2">
                           <RotateCcw className="h-3.5 w-3.5 text-neutral-500" />
                           إعادة طلب سابق
                         </button>
@@ -485,7 +537,7 @@ export function AppShell() {
                         {shopServices.map((s: { name: string; emoji?: string }, i: number) => (
                           <div
                             key={i}
-                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-amber-400 transition-all duration-200 cursor-default hover:shadow-[0_0_8px_rgba(245,158,11,0.15)]"
+                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-white/5 hover:text-[var(--shop-footer-hover)] transition-all duration-200 cursor-default"
                           >
                             <span className="shrink-0">{s.emoji || "🖨️"}</span>
                             <span className="truncate">{s.name}</span>
@@ -495,7 +547,7 @@ export function AppShell() {
                     ) : (
                       <div className="grid grid-cols-2 gap-1.5">
                         {[{e:"🖨️",n:"طباعة مستند"},{e:"📄",n:"نسخ مستندات"},{e:"🖼️",n:"طباعة صور"},{e:"📚",n:"تجليد"},{e:"🪪",n:"بطاقات"},{e:"📜",n:"ملصقات"}].map((s) => (
-                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-amber-400 hover:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all cursor-default">
+                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-white/5 hover:text-[var(--shop-footer-hover)] transition-all cursor-default">
                             <span className="shrink-0">{s.e}</span>
                             <span className="truncate">{s.n}</span>
                           </div>
@@ -509,30 +561,30 @@ export function AppShell() {
                     <ul className="space-y-3 text-xs">
                       {shopAddress && (
                       <li className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                        <MapPin className="h-4 w-4 text-[var(--shop-footer-icon)] shrink-0 mt-0.5" />
                         <span>{shopAddress}</span>
                       </li>
                       )}
                       {formattedPhone && (
                       <li className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-amber-400" />
+                        <Phone className="h-4 w-4 text-[var(--shop-footer-icon)]" />
                         <span>{formattedPhone}</span>
                       </li>
                       )}
                       {whatsappBtnNumber && (
                       <li className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-amber-400" />
-                        <a href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">واتساب</a>
+                        <MessageCircle className="h-4 w-4 text-[var(--shop-footer-icon)]" />
+                        <a href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--shop-footer-hover)] transition-colors">واتساب</a>
                       </li>
                       )}
                       {shopEmail && (
                       <li className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-amber-400" />
-                        <a href={`mailto:${shopEmail}`} className="hover:text-amber-400 transition-colors">{shopEmail}</a>
+                        <Mail className="h-4 w-4 text-[var(--shop-footer-icon)]" />
+                        <a href={`mailto:${shopEmail}`} className="hover:text-[var(--shop-footer-hover)] transition-colors">{shopEmail}</a>
                       </li>
                       )}
-                      <li className="flex items-start gap-2 pt-2 border-t border-neutral-700">
-                        <Clock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <li className="flex items-start gap-2 pt-2 border-t border-[var(--shop-footer-border)]">
+                        <Clock className="h-4 w-4 text-[var(--shop-footer-icon)] shrink-0 mt-0.5" />
                         <div>
                           <div>السبت - الخميس: 8:00 ص — 8:00 م</div>
                           <div className="text-neutral-500">الجمعة: مغلق</div>
@@ -542,7 +594,7 @@ export function AppShell() {
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-500">
+                <div className="mt-8 pt-6 border-t border-[var(--shop-footer-border)] text-center text-xs text-neutral-500">
                   © {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة
                   <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1"><img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" /><img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" /> طيف</div>
                 </div>

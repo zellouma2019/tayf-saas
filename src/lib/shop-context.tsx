@@ -116,7 +116,9 @@ export function ShopProvider({
       }
     }
 
-    return fetch(`/api/shops/${encodeURIComponent(currentSlug)}`)
+    return fetch(`/api/shops/${encodeURIComponent(currentSlug)}`, {
+      priority: 'high',
+    })
       .then((r) => {
         if (!r.ok) throw new Error("المتجر غير موجود");
         return r.json();
