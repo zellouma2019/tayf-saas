@@ -206,3 +206,25 @@ Stage Summary:
 - PDF invoice now opens HTML version directly (Arabic renders correctly)
 - Phone validation shows digit count feedback per country
 - Password minimum changed from 6 to 10, removed restrictive requirements
+
+---
+Task ID: 3
+Agent: main
+Task: Fix deep slowness, invoice download, file print separation, theme application
+
+Work Log:
+- Analyzed 4 screenshots identifying: invoice download failure, print file vs invoice confusion, theme color not applying
+- Made 7 heavy components lazy-loaded with next/dynamic (NewOrderWizard, RepeatOrder, TrackOrder, AdminPanel, OrderHistory, OrderSuccess, FloatingAssistant)
+- Added priority:'high' to shop data fetch for slow connections
+- Fixed invoice download: auto-resolve shopId from URL slug when useAppStore.shopId is null (customer view)
+- Added new "طباعة الملف" button in merchant order detail to open actual customer file
+- Fixed handleDirectPrint to open the file URL instead of window.print()
+- Applied theme colors (topbar, header, nav, footer) from themeId to customer-facing app-shell using inline styles + CSS variables
+- Verified via Agent Browser: all 3 print buttons visible, no errors, fast load times
+
+Stage Summary:
+- Performance: Initial JS bundle significantly reduced via code splitting
+- Invoice: Download works from both customer and merchant views
+- Print: 3 clear separate buttons (فاتورة / طباعة الملف / طباعة إيصال)
+- Theme: Customer page now reflects themeId changes visually
+- All changes pushed to GitHub (commit 77ac677)
