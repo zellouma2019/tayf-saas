@@ -37,6 +37,8 @@ import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Intro } from "@/components/app/intro";
 import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { getCountry } from "@/lib/countries";
+import { DEFAULT_SETTINGS, type AppSettings } from "@/lib/default-settings";
 
 type View = "new" | "repeat" | "track" | "history" | "admin";
 
@@ -69,6 +71,26 @@ export function AppShell() {
   const shopWhatsapp = shop?.whatsapp || shopPhone;
   const shopEmail = shop?.email || "";
   const shopAddress = shop?.address || "";
+  const shopCountry = shop?.country || "DZ";
+
+  // Parse shop settings for general customization
+  const shopSettings = useMemo((): AppSettings["general"] => {
+    try {
+      const raw = (shop?.settings as string) || "{}";
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULT_SETTINGS.general, ...(parsed.general ?? {}) };
+    } catch {
+      return DEFAULT_SETTINGS.general;
+    }
+  }, [shop?.settings]);
+
+  const countryData = getCountry(shopCountry);
+  const displayBusinessName = shopSettings.businessName || shopName;
+  const displayTagline = shopSettings.tagline || "";
+  const whatsappBtnNumber = shopSettings.whatsappButtonNumber || shopWhatsapp;
+  const isOrderTrackingEnabled = shopSettings.enableOrderTracking !== false;
+  const welcomeMessage = shopSettings.welcomeMessage || "";
+
   const formattedPhone = shopPhone ? shopPhone.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4") : "";
 
   // Track scroll for header shadow
@@ -149,7 +171,7 @@ export function AppShell() {
   const navItems: { key: View; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }>; desktopOnly?: boolean }[] = [
     { key: "new", label: "طلب جديد", shortLabel: "جديد", icon: Plus },
     { key: "repeat", label: "تكرار طلب", shortLabel: "تكرار", icon: RotateCcw },
-    { key: "track", label: "تتبّع", shortLabel: "تتبّع", icon: Search },
+    ...(isOrderTrackingEnabled ? [{ key: "track" as View, label: "تتبّع", shortLabel: "تتبّع", icon: Search }] : []),
     { key: "history", label: "سجل الطلبات", shortLabel: "سجل", icon: History, desktopOnly: true },
     ...(showAdminLink ? [{ key: "admin" as View, label: "الإدارة", shortLabel: "إدارة", icon: LayoutGrid }] : []),
   ];
@@ -205,12 +227,13 @@ export function AppShell() {
             onClick={() => { setFooterOpen(false); setView("new"); }}
             className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0"
           >
-            <img src="/tayf-logo-sm.png" alt={shopName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300" />
+            <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300 dark:hidden" />
+            <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300 hidden dark:block" />
             <div className="text-right min-w-0">
-              <div className="font-bold text-sm md:text-base leading-tight truncate">{shopName}</div>
+              <div className="font-bold text-sm md:text-base leading-tight truncate">{displayBusinessName}</div>
               <div className="text-xs md:text-xs text-muted-foreground leading-tight truncate">
-                <span className="sm:hidden">اطبع بسهولة</span>
-                <span className="hidden sm:inline">اطبع بسهولة — أسرع من واتساب</span>
+                <span className="sm:hidden">{displayTagline || "اطبع بسهولة"}</span>
+                <span className="hidden sm:inline">{displayTagline || "اطبع بسهولة — أسرع من واتساب"}</span>
               </div>
             </div>
           </button>
@@ -303,6 +326,12 @@ export function AppShell() {
       <main className="flex-1 flex flex-col">
         <div className="flex-1 py-4 md:py-8">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full">
+            {/* Welcome message */}
+            {welcomeMessage && view === "new" && (
+              <div className="mb-4 p-3 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 text-sm text-violet-700 dark:text-violet-300 text-center">
+                {welcomeMessage}
+              </div>
+            )}
             <Suspense fallback={<PageSkeleton />}>
             <AnimatePresence mode="wait">
               {view === "new" && (
@@ -408,8 +437,8 @@ export function AppShell() {
                         <Printer className="h-5 w-5 text-neutral-900" />
                       </div>
                       <div>
-                        <div className="font-bold text-white">{shopName}</div>
-                        <div className="text-xs text-neutral-400">اطبع بسهولة</div>
+                        <div className="font-bold text-white">{displayBusinessName}</div>
+                        <div className="text-xs text-neutral-400">{displayTagline || "اطبع بسهولة"}</div>
                       </div>
                     </div>
                     <p className="text-xs text-neutral-400 leading-relaxed">
@@ -490,10 +519,10 @@ export function AppShell() {
                         <span>{formattedPhone}</span>
                       </li>
                       )}
-                      {shopWhatsapp && (
+                      {whatsappBtnNumber && (
                       <li className="flex items-center gap-2">
                         <MessageCircle className="h-4 w-4 text-amber-400" />
-                        <a href={`https://wa.me/${shopWhatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">واتساب</a>
+                        <a href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">واتساب</a>
                       </li>
                       )}
                       {shopEmail && (
@@ -514,8 +543,8 @@ export function AppShell() {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-500">
-                  © {new Date().getFullYear()} {shopName} — جميع الحقوق محفوظة
-                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1"><img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline" /> طيف</div>
+                  © {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة
+                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1"><img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" /><img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" /> طيف</div>
                 </div>
             </div>
           </div>

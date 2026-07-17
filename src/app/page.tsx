@@ -169,7 +169,7 @@ export default function SuperAdminPage() {
         sections={sidebarSections} activeKey={activeTab} onNavigate={setActiveTab}
         collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)}
-        logo={<div className="flex items-center gap-3"><img src="/tayf-logo-sm.png" alt="طيف" className="w-9 h-9 rounded-xl shrink-0" />{!sidebarCollapsed && <div className="min-w-0"><div className="font-bold text-sm text-white truncate">طيف</div><div className="text-[10px] text-slate-400 truncate">لوحة التحكم</div></div>}</div>}
+        logo={<div className="flex items-center gap-3"><img src="/tayf-logo-sm.png" alt="طيف" className="w-9 h-9 rounded-xl shrink-0 dark:hidden" /><img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-9 h-9 rounded-xl shrink-0 hidden dark:block" />{!sidebarCollapsed && <div className="min-w-0"><div className="font-bold text-sm text-white truncate">طيف</div><div className="text-[10px] text-slate-400 truncate">لوحة التحكم</div></div>}</div>}
       />
       <div className="flex-1 bg-slate-50 overflow-auto">
         <header className="bg-background border-b border-slate-200 dark:border-slate-700 h-16 sticky top-0 z-30 px-4 sm:px-6">

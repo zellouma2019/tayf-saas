@@ -31,6 +31,13 @@ export interface AppSettings {
     workHours: string;
     adminCode: string;
     autoDeleteDays: number;
+    // Customization options
+    businessName: string; // اسم الأعمال البديل (يظهر بدلاً من اسم المتجر)
+    tagline: string; // شعار نصي مخصص (يظهر أسفل اسم المتجر)
+    whatsappButtonNumber: string; // رقم واتساب منفصل لزر واتساب العائم
+    enableOrderTracking: boolean; // تفعيل تتبع الطلبات للعملاء
+    welcomeMessage: string; // رسالة ترحيب مخصصة
+    minOrderAmount: number; // الحد الأدنى للطلب بعملة المتجر
   };
   intro: IntroSettings;
 }
@@ -50,6 +57,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
     workHours: "السبت - الخميس: 8:00 ص — 7:00 م",
     adminCode: "2514",
     autoDeleteDays: 10,
+    // Customization options
+    businessName: "",
+    tagline: "",
+    whatsappButtonNumber: "",
+    enableOrderTracking: true,
+    welcomeMessage: "",
+    minOrderAmount: 0,
   },
   intro: {
     enabled: true,

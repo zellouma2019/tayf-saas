@@ -1147,7 +1147,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
           {/* ===== تبويب الإعدادات المتقدمة ===== */}
           {activeTab === "advancedSettings" && (
-            <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} />
+            <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
           )}
 
           {/* ===== تبويب مشاركة الرابط ===== */}
@@ -1208,6 +1208,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         shopPhone={shop?.phone || ""}
         shopAddress={shop?.address || null}
         hasReceiptPrinting={hasFeature("receiptPrinting")}
+        hasDirectPrinting={hasFeature("directPrinting")}
       />
     </div>
   );

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FAQS, type FAQItem } from "@/lib/smart-assistant";
 import { toast } from "sonner";
+import { DEFAULT_SETTINGS, type AppSettings } from "@/lib/default-settings";
 
 interface FloatingAssistantProps {
   onRepeatOrder?: () => void;
@@ -35,14 +36,34 @@ interface SearchResult {
   domain: string;
 }
 
-const WHATSAPP_NUMBER = "0560000000";
 const WHATSAPP_MSG = "مرحباً، أريد الاستفسار عن خدمة الطباعة";
 
 type AssistantMode = "ai" | "fallback";
 
 export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
-  const { hasFeature } = useShop();
+  const { shop, hasFeature } = useShop();
   const isAiEnabled = hasFeature("aiAssistant");
+
+  // Load WhatsApp number from settings
+  const [whatsappNumber, setWhatsappNumber] = useState("0560000000");
+  useEffect(() => {
+    shopApi("/api/settings")
+      .then((r) => r.json())
+      .then((data: AppSettings) => {
+        const general = { ...DEFAULT_SETTINGS.general, ...(data.general ?? {}) };
+        if (general.whatsappButtonNumber) {
+          setWhatsappNumber(general.whatsappButtonNumber);
+        } else if (shop?.whatsapp) {
+          setWhatsappNumber(shop.whatsapp);
+        } else if (general.whatsappNumber) {
+          setWhatsappNumber(general.whatsappNumber);
+        }
+      })
+      .catch(() => {
+        // fallback: use shop whatsapp
+        if (shop?.whatsapp) setWhatsappNumber(shop.whatsapp);
+      });
+  }, [shop?.whatsapp]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -92,7 +113,8 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
   }, []);
 
   function openWhatsApp() {
-    const url = `https://wa.me/213${WHATSAPP_NUMBER.substring(1)}?text=${encodeURIComponent(WHATSAPP_MSG)}`;
+    const cleanNumber = whatsappNumber.replace(/[^0-9]/g, "");
+    const url = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(WHATSAPP_MSG)}`;
     window.open(url, "_blank");
     setMenuOpen(false);
     toast.success("فتح واتساب", { description: "سيتم تحويلك للمحادثة" });

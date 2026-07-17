@@ -99,7 +99,8 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
       <Card className="w-full max-w-sm shadow-2xl border-slate-200/40 dark:border-slate-700/40 backdrop-blur-sm bg-background/80 relative z-10">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center mb-6">
-            <img src="/brand/tayf-logo.png" alt="طيف" className="w-16 h-16 mx-auto mb-4 animate-float" />
+            <img src="/brand/tayf-logo.png" alt="طيف" className="w-16 h-16 mx-auto mb-4 animate-float dark:hidden" />
+            <img src="/brand/tayf-logo-dark.png" alt="طيف" className="w-16 h-16 mx-auto mb-4 animate-float hidden dark:block" />
             <h1 className="text-lg font-bold text-slate-800"><span className="animate-fade-in inline-block">طيف</span></h1>
             <p className="text-sm text-slate-400 mt-1">منصة إدارة المطابع</p>
           </div>

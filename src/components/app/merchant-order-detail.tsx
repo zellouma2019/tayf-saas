@@ -18,6 +18,8 @@ import {
   Tag,
   Plus,
   AlertTriangle,
+  Lock,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
@@ -52,6 +54,7 @@ import {
   HIDDEN_OPTION_KEYS,
 } from "@/lib/option-translations";
 import { cn } from "@/lib/utils";
+import { PrintJobTicket } from "@/components/app/print-job-ticket";
 
 // ===== أنواع =====
 
@@ -66,6 +69,7 @@ interface MerchantOrderDetailProps {
   shopPhone: string;
   shopAddress: string | null;
   hasReceiptPrinting?: boolean;
+  hasDirectPrinting?: boolean;
 }
 
 interface AuditLog {
@@ -104,6 +108,7 @@ export function MerchantOrderDetail({
   shopPhone,
   shopAddress,
   hasReceiptPrinting,
+  hasDirectPrinting,
 }: MerchantOrderDetailProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -112,6 +117,7 @@ export function MerchantOrderDetail({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [printingAction, setPrintingAction] = useState<"start" | "complete" | null>(null);
+  const [directPrintLoading, setDirectPrintLoading] = useState(false);
 
   // ===== حقول التعديل =====
   const [editName, setEditName] = useState("");
@@ -259,6 +265,52 @@ export function MerchantOrderDetail({
     }
   }
 
+  // ===== طباعة مباشرة =====
+  async function handleDirectPrint() {
+    if (!order) return;
+    setDirectPrintLoading(true);
+    try {
+      // 1) Change status to "printing"
+      const printRes = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "printing" }),
+      });
+      if (!printRes.ok) {
+        const err = await printRes.json();
+        throw new Error(err.error || "فشل تحديث الحالة");
+      }
+
+      toast.success("بدأت الطباعة", {
+        description: `${order.reference} — جارٍ تنفيذ الطباعة`,
+      });
+      onStatusChange(order, "printing");
+      onUpdated();
+
+      // 2) Wait a tick for the DOM to settle, then trigger print
+      await new Promise((r) => setTimeout(r, 300));
+      window.print();
+
+      // 3) After print dialog closes, change to "ready"
+      const readyRes = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ready" }),
+      });
+      if (readyRes.ok) {
+        toast.success("تمت الطباعة", {
+          description: `${order.reference} — جاهز للاستلام`,
+        });
+        onStatusChange(order, "ready");
+        onUpdated();
+      }
+    } catch (e) {
+      toast.error("خطأ في الطباعة المباشرة", { description: (e as Error).message });
+    } finally {
+      setDirectPrintLoading(false);
+    }
+  }
+
   async function handleDelete() {
     if (!order) return;
     setDeleting(true);
@@ -348,6 +400,7 @@ export function MerchantOrderDetail({
   const profit = (order.total || 0) - (editCost || 0);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="sm:max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-slate-50 border-slate-200/60"
@@ -433,6 +486,44 @@ export function MerchantOrderDetail({
                         انتهى: {formatDateTimeAr(order.completedPrintingAt)}
                       </span>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ===== طباعة مباشرة ===== */}
+            {order.status !== "cancelled" && order.status !== "delivered" && (
+              <div className="pt-2 mt-2 border-t border-slate-100">
+                {hasDirectPrinting ? (
+                  <Button
+                    size="sm"
+                    onClick={handleDirectPrint}
+                    disabled={directPrintLoading || printingAction !== null}
+                    className={cn(
+                      "h-10 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] gap-2",
+                      "bg-gradient-to-l from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md shadow-amber-200/60",
+                      directPrintLoading && "opacity-70 pointer-events-none",
+                    )}
+                  >
+                    {directPrintLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        جارٍ الطباعة...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4" />
+                        طباعة مباشرة
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Lock className="h-3.5 w-3.5" />
+                    <span>الطباعة المباشرة ميزة مدفوعة</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500 font-medium">
+                      تفعيل الميزة
+                    </span>
                   </div>
                 )}
               </div>
@@ -966,5 +1057,16 @@ export function MerchantOrderDetail({
         </div>
       </DialogContent>
     </Dialog>
+
+      {/* Print Job Ticket — hidden on screen, visible only when printing */}
+      {hasDirectPrinting && order && (
+        <PrintJobTicket
+          order={order}
+          shopName={shopName}
+          shopPhone={shopPhone}
+          shopAddress={shopAddress}
+        />
+      )}
+    </>
   );
 }

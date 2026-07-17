@@ -73,6 +73,13 @@ import {
   ShieldCheck,
   Lock,
   Check,
+  Globe,
+  Languages,
+  DollarSign,
+  ToggleLeft,
+  Megaphone,
+  Tag,
+  Hash,
 } from "lucide-react";
 import { useShop } from "@/lib/shop-context";
 import {
@@ -97,6 +104,7 @@ import type {
   ServiceType,
 } from "@/lib/service-specs";
 import type { DeliveryOption } from "@/lib/print-config";
+import { ARAB_COUNTRIES, APP_LANGUAGES, getCountry, getLanguage, formatCurrency } from "@/lib/countries";
 
 // ============================================================
 // Props
@@ -105,6 +113,7 @@ import type { DeliveryOption } from "@/lib/print-config";
 interface MerchantSettingsAdvancedProps {
   shopId: string;
   shopSlug: string;
+  adminPin: string;
 }
 
 // ============================================================
@@ -400,14 +409,27 @@ function FeaturesTab() {
 
 export function MerchantSettingsAdvanced({
   shopId: _shopId,
-  shopSlug: _shopSlug,
+  shopSlug,
+  adminPin,
 }: MerchantSettingsAdvancedProps) {
+  const { shop, refreshShop } = useShop();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [original, setOriginal] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+
+  // Country & Language state (Shop model fields)
+  const [selectedCountry, setSelectedCountry] = useState(shop?.country || "DZ");
+  const [selectedLanguage, setSelectedLanguage] = useState(shop?.language || "ar");
+  const [savingShopFields, setSavingShopFields] = useState(false);
+
+  // Sync country/language from shop context when it refreshes
+  useEffect(() => {
+    if (shop?.country) setSelectedCountry(shop.country);
+    if (shop?.language) setSelectedLanguage(shop.language);
+  }, [shop?.country, shop?.language]);
 
   // ---------- Load settings ----------
   const loadSettings = useCallback(async () => {
@@ -733,6 +755,37 @@ export function MerchantSettingsAdvanced({
     }
   }
 
+  // Save country/language (Shop model fields via /api/shops/[slug])
+  async function handleSaveCountryLanguage() {
+    if (!adminPin) {
+      toast.error("لا يمكن الحفظ", { description: "كلمة المرور غير متوفرة. أعد تحميل الصفحة." });
+      return;
+    }
+    setSavingShopFields(true);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country: selectedCountry, language: selectedLanguage, adminPin }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "فشل الحفظ");
+      }
+      toast.success("تم حفظ اللغة والعملة", {
+        description: "ستظهر التغييرات للعملاء فوراً",
+        icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+      });
+      refreshShop();
+    } catch (e) {
+      toast.error("فشل حفظ اللغة والعملة", {
+        description: (e as Error).message,
+      });
+    } finally {
+      setSavingShopFields(false);
+    }
+  }
+
   async function handleReset() {
     setResetting(true);
     try {
@@ -956,11 +1009,11 @@ export function MerchantSettingsAdvanced({
                 hint="نسبة التوفير عند الطباعة على الوجهين"
               />
               <Field
-                label="أدنى مبلغ للطلب (د.ج)"
+                label="أدنى مبلغ للطلب"
                 type="number"
                 value={settings.general.minOrder}
                 onChange={(v) => updateGeneral("minOrder", toNumber(v))}
-                hint="الحد الأدنى لقيمة الطلب المسموح به"
+                hint={`الحد الأدنى لقيمة الطلب المسموح به (${getCountry(selectedCountry)?.currencySymbol || "د.ج"})`}
               />
               <Field
                 label="حذف الطلبات القديمة تلقائياً (أيام)"
@@ -1046,6 +1099,217 @@ export function MerchantSettingsAdvanced({
                   rows={2}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ==========================================
+              اللغة والعملة
+              ========================================== */}
+          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+            <CardHeader className="pb-3">
+              <SectionHeader
+                icon={Globe}
+                title="اللغة والعملة"
+                description="حدد الدولة واللغة الأساسية لمتجرك — العملة تتحدد تلقائياً"
+              />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Country dropdown */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                    <Globe className="h-3.5 w-3.5 text-violet-500" />
+                    الدولة
+                  </Label>
+                  <Select
+                    value={selectedCountry}
+                    onValueChange={(v) => setSelectedCountry(v)}
+                  >
+                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20">
+                      <SelectValue placeholder="اختر الدولة" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64 overflow-y-auto">
+                      {ARAB_COUNTRIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          <span className="flex items-center gap-2">
+                            <span>{c.flag}</span>
+                            <span>{c.nameAr}</span>
+                            <span className="text-[10px] text-slate-400">({c.code})</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Language dropdown */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                    <Languages className="h-3.5 w-3.5 text-emerald-500" />
+                    اللغة
+                  </Label>
+                  <Select
+                    value={selectedLanguage}
+                    onValueChange={(v) => setSelectedLanguage(v)}
+                  >
+                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20">
+                      <SelectValue placeholder="اختر اللغة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {APP_LANGUAGES.map((l) => (
+                        <SelectItem key={l.code} value={l.code}>
+                          <span className="flex items-center gap-2">
+                            <span>{l.flag}</span>
+                            <span>{l.nameNative}</span>
+                            <span className="text-[10px] text-slate-400">({l.code})</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Currency display (read-only) */}
+              {(() => {
+                const country = getCountry(selectedCountry);
+                return (
+                  <div className="flex items-center gap-4 p-3 rounded-lg bg-white border border-slate-200/60">
+                    <div className="flex items-center gap-2 flex-1">
+                      <DollarSign className="h-4 w-4 text-amber-500 shrink-0" />
+                      <div>
+                        <div className="text-xs text-slate-500">العملة</div>
+                        <div className="text-sm font-semibold text-slate-700">
+                          {country?.currencySymbol} {country?.currencyCode}
+                          <span className="text-xs text-slate-400 font-normal mr-2">({country?.nameAr})</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs text-slate-400">مثال</div>
+                      <div className="text-sm font-medium text-slate-600">
+                        {formatCurrency(1500, selectedCountry)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Save button for country/language */}
+              {(selectedCountry !== shop?.country || selectedLanguage !== shop?.language) && (
+                <Button
+                  size="sm"
+                  onClick={handleSaveCountryLanguage}
+                  disabled={savingShopFields}
+                  className="bg-violet-600 hover:bg-violet-700 text-white gap-1.5 h-9 text-xs"
+                >
+                  {savingShopFields ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
+                  حفظ اللغة والعملة
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ==========================================
+              تخصيص إضافي
+              ========================================== */}
+          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+            <CardHeader className="pb-3">
+              <SectionHeader
+                icon={Sparkles}
+                title="تخصيص إضافي"
+                description="تحكم في مظهر واجهة العملاء والسلوك الأساسي"
+              />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Business name override */}
+              <Field
+                label="اسم الأعمال (بديل عن اسم المتجر)"
+                value={settings.general.businessName ?? ""}
+                onChange={(v) => updateGeneral("businessName", v)}
+                placeholder="إذا تركته فارغاً يُعرض اسم المتجر الافتراضي"
+                hint="يظهر في رأس الصفحة للعملاء بدلاً من اسم المتجر"
+              />
+
+              {/* Custom tagline */}
+              <Field
+                label="شعار نصي مخصص"
+                value={settings.general.tagline ?? ""}
+                onChange={(v) => updateGeneral("tagline", v)}
+                placeholder="أسرع طباعة في المدينة"
+                hint="يظهر أسفل اسم المتجر في صفحة العملاء"
+              />
+
+              {/* WhatsApp button number */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  رقم الواتساب للزر العائم
+                </Label>
+                <Input
+                  value={settings.general.whatsappButtonNumber ?? ""}
+                  onChange={(e) => updateGeneral("whatsappButtonNumber", e.target.value)}
+                  dir="ltr"
+                  className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                  placeholder="اتركه فارغاً لاستخدام رقم الواتساب الرئيسي"
+                />
+                <p className="text-[11px] text-slate-400">
+                  رقم منفصل يُستخدم لزر واتساب العائم في صفحة العملاء. إذا فارغ يُستخدم الرقم الرئيسي.
+                </p>
+              </div>
+
+              {/* Enable order tracking toggle */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
+                <div>
+                  <div className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <ToggleLeft className="h-4 w-4 text-violet-500" />
+                    تفعيل تتبع الطلبات
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    السماح للعملاء بتتبع طلباتهم عبر الرقم
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400">
+                    {settings.general.enableOrderTracking ? "مفعّل" : "معطّل"}
+                  </span>
+                  <Switch
+                    checked={settings.general.enableOrderTracking ?? true}
+                    onCheckedChange={(v) => updateGeneral("enableOrderTracking", v)}
+                  />
+                </div>
+              </div>
+
+              {/* Welcome message */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <Megaphone className="h-3.5 w-3.5 text-rose-500" />
+                  رسالة الترحيب
+                </Label>
+                <Textarea
+                  value={settings.general.welcomeMessage ?? ""}
+                  onChange={(e) => updateGeneral("welcomeMessage", e.target.value)}
+                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                  rows={2}
+                  placeholder="رسالة ترحيب مخصصة تظهر للعملاء (اختياري)"
+                />
+                <p className="text-[11px] text-slate-400">
+                  إذا تركتها فارغة لن تظهر رسالة إضافية
+                </p>
+              </div>
+
+              {/* Minimum order amount */}
+              <Field
+                label="الحد الأدنى للطلب"
+                type="number"
+                value={settings.general.minOrderAmount ?? 0}
+                onChange={(v) => updateGeneral("minOrderAmount", toNumber(v))}
+                hint={`بالعملة المحلية (${getCountry(selectedCountry)?.currencySymbol || "د.ج"}). 0 = بدون حد أدنى`}
+              />
             </CardContent>
           </Card>
         </TabsContent>

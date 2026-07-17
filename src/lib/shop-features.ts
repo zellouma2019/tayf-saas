@@ -5,7 +5,7 @@
 
 /// مفاتيح الميزات
 export type FeatureKey =
-  // ===== ميزات مجانية (7) — مفعّلة تلقائياً =====
+  // ===== ميزات مجانية (8) — مفعّلة تلقائياً =====
   | "orderCreation"          // إنشاء الطلبات
   | "orderTracking"          // تتبع الطلبات
   | "smartFileAnalysis"      // تحليل الملفات المرفوعة
@@ -13,7 +13,7 @@ export type FeatureKey =
   | "webNotifications"       // إشعارات الويب
   | "directTrackingLink"     // تتبع الطلب بالرابط
   | "rtlSupport"             // دعم RTL
-  // ===== ميزات مدفوعة (14) =====
+  // ===== ميزات مدفوعة (18) =====
   | "whatsappNotifications"  // إشعارات واتساب
   | "advancedAnalytics"      // تحليلات متقدمة
   | "receiptPrinting"        // طباعة إيصال حراري
@@ -33,10 +33,12 @@ export type FeatureKey =
   | "customPricing"          // أسعار مخصصة
   | "serviceToggle"          // تفعيل/تعطيل الخدمات
   | "merchantFileDownload"   // تنزيل ملفات الطلبات
+  | "discountCodes"           // أكواد الخصم
+  | "directPrinting"          // الطباعة المباشرة
   ;
 
 /// فئة الميزة
-export type FeatureCategory = "core" | "analytics" | "notifications" | "printing" | "export" | "management" | "branding" | "support";
+export type FeatureCategory = "core" | "analytics" | "notifications" | "printing" | "export" | "management" | "branding" | "support" | "marketing" | "operations";
 
 /// تعريف ميزة واحدة
 export interface FeatureDef {
@@ -51,7 +53,7 @@ export interface FeatureDef {
 
 /// كل الميزات المعرّفة
 export const FEATURES: FeatureDef[] = [
-  // ===== ميزات مجانية (7) =====
+  // ===== ميزات مجانية (8) =====
   {
     key: "orderCreation",
     label: "إنشاء الطلبات",
@@ -116,7 +118,7 @@ export const FEATURES: FeatureDef[] = [
     order: 7,
   },
 
-  // ===== ميزات مدفوعة (14) =====
+  // ===== ميزات مدفوعة (18) =====
   {
     key: "whatsappNotifications",
     label: "إشعارات واتساب",
@@ -213,7 +215,7 @@ export const FEATURES: FeatureDef[] = [
     description: "تخصيص ألوان ومظهر المتجر حسب الهوية البصرية",
     icon: "Palette",
     category: "branding",
-    isFree: false,
+    isFree: true,
     order: 111,
   },
   {
@@ -280,6 +282,24 @@ export const FEATURES: FeatureDef[] = [
     category: "export",
     isFree: false,
     order: 204,
+  },
+  {
+    key: "discountCodes",
+    label: "أكواد الخصم",
+    description: "إنشاء أكواد خصم قابلة للتخصيص لجذب العملاء",
+    icon: "Percent",
+    category: "marketing",
+    isFree: false,
+    order: 205,
+  },
+  {
+    key: "directPrinting",
+    label: "الطباعة المباشرة",
+    description: "طباعة الطلبات مباشرة على الطابعة بعد المراجعة",
+    icon: "Printer",
+    category: "operations",
+    isFree: false,
+    order: 206,
   },
 ];
 
