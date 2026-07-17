@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  RotateCcw, LayoutGrid, Settings, Lock, Menu, Download,
+  RotateCcw, LayoutGrid, Settings, Lock, Menu, Download, AlertCircle,
 } from "lucide-react";
-import * as XLSX from "xlsx";
+// XLSX dynamically imported on demand — not in the initial bundle
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -61,21 +61,29 @@ export default function SuperAdminPage() {
   const [selectedOrder, setSelectedOrder] = useState<GlobalOrder | null>(null);
   const [sortField, setSortField] = useState<string>("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [statsRes, ordersRes] = await Promise.all([
         adminFetch("/api/admin/global-stats"),
         adminFetch("/api/orders"),
       ]);
-      if (!statsRes.ok || !ordersRes.ok) return;
+      if (!statsRes.ok || !ordersRes.ok) {
+        const msg = !statsRes.ok ? `إحصائيات: ${statsRes.status}` : `طلبات: ${ordersRes.status}`;
+        setLoadError(msg);
+        return;
+      }
       const stats = await statsRes.json();
       const orders = await ordersRes.json();
       setGlobalStats(stats);
       setAllOrders(orders.orders || []);
       setLastUpdated("الآن");
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "خطأ غير معروف";
+      setLoadError(msg);
       toast.error("خطأ في تحميل البيانات");
     } finally {
       setLoading(false);
@@ -112,7 +120,8 @@ export default function SuperAdminPage() {
     return sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-teal-600" /> : <ArrowUp className="h-3 w-3 text-teal-600" />;
   }
 
-  function exportToExcel() {
+  async function exportToExcel() {
+    const XLSX = await import("xlsx");
     const rows = filteredOrders.map((o) => ({
       "رقم الطلب": o.reference, "المتجر": o.shopName, "الخدمة": o.serviceName,
       "العميل": o.customer.name, "الهاتف": o.customer.phone, "المجموع": o.total,
@@ -179,8 +188,8 @@ export default function SuperAdminPage() {
               <div className="min-w-0"><h1 className="text-sm font-semibold text-slate-800 truncate">{TAB_TITLES[activeTab] || "لوحة التحكم"}</h1><p className="text-xs text-slate-400 truncate">لوحة التحكم / {TAB_TITLES[activeTab] || "نظرة عامة"}</p></div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => setCreateOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
-              <button onClick={loadAll} className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2.5 text-sm transition-colors"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
+              <button onClick={() => setCreateOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-2.5 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
+              <button onClick={loadAll} className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 sm:p-2.5 text-sm transition-colors"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
             </div>
           </div>
         </header>
@@ -189,6 +198,15 @@ export default function SuperAdminPage() {
           <div className="p-4 sm:p-6 space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => (<div key={i} className="animate-pulse bg-slate-200 rounded-xl p-5"><div className="flex items-start justify-between"><div className="space-y-2.5 flex-1"><div className="h-8 bg-slate-300/60 rounded-lg w-24" /><div className="h-3 bg-slate-300/40 rounded w-28" /></div><div className="w-11 h-11 rounded-xl bg-slate-300/50" /></div></div>))}</div>
             <div className="animate-pulse bg-slate-200 rounded-xl p-6"><div className="h-5 bg-slate-300/50 rounded-lg w-48 mb-5" /><div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="h-12 bg-slate-300/30 rounded-lg" />))}</div></div>
+          </div>
+        ) : loadError ? (
+          <div className="p-4 sm:p-6 flex flex-col items-center justify-center min-h-[40vh]">
+            <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+            <p className="text-sm font-medium text-slate-600 mb-1">فشل تحميل البيانات</p>
+            <p className="text-xs text-slate-400 mb-4">{loadError}</p>
+            <button onClick={loadAll} className="inline-flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium bg-teal-50 hover:bg-teal-100 rounded-lg px-5 py-2.5 transition-colors">
+              <RefreshCw className="h-4 w-4" /> إعادة المحاولة
+            </button>
           </div>
         ) : (
         <div className="p-4 sm:p-6 space-y-6">

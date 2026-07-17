@@ -224,7 +224,7 @@ export const FEATURES: FeatureDef[] = [
     description: "إضافة شعار المتجر في واجهة الزبائن والفاتورة",
     icon: "Image",
     category: "branding",
-    isFree: false,
+    isFree: true,
     order: 112,
   },
   {

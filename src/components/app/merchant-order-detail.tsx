@@ -566,7 +566,7 @@ export function MerchantOrderDetail({
 
           {/* ===== شريط تقدم الحالة ===== */}
           {order.status !== "cancelled" && (
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 {STATUS_FLOW.map((step, idx) => {
                   const stepMeta = STATUS_META[step];
@@ -584,27 +584,27 @@ export function MerchantOrderDetail({
 
                   return (
                     <div key={step} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex flex-col items-center gap-1.5">
+                      <div className="flex flex-col items-center gap-1 sm:gap-1.5">
                         <div className="relative">
                           {isCompleted ? (
-                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])}>
-                              <Check className="h-4 w-4" strokeWidth={3} />
+                            <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])}>
+                              <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={3} />
                             </div>
                           ) : isCurrent ? (
                             <div className="relative">
-                              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])} />
-                              <div className={cn("absolute inset-0 w-8 h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
+                              <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])} />
+                              <div className={cn("absolute inset-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-full border-2 border-slate-300 bg-white" />
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-slate-300 bg-white" />
                           )}
                         </div>
-                        <span className={cn("text-[10px] font-medium", isFuture ? "text-slate-400" : isCurrent ? "text-slate-800" : "text-slate-600")}>
+                        <span className={cn("text-[9px] sm:text-[10px] font-medium leading-tight text-center max-w-[60px] sm:max-w-none", isFuture ? "text-slate-400" : isCurrent ? "text-slate-800" : "text-slate-600")}>
                           {stepMeta.label}
                         </span>
                       </div>
                       {idx < STATUS_FLOW.length - 1 && (
-                        <div className="flex-1 h-0.5 mx-2 mt-[-18px]">
+                        <div className="flex-1 h-0.5 mx-1 sm:mx-2 mt-[-16px] sm:mt-[-18px]">
                           <div className={cn("h-full rounded-full", idx < currentIdx ? "bg-slate-400" : "bg-slate-200")} />
                         </div>
                       )}
@@ -1011,8 +1011,8 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== أزرار الحفظ والإجراءات ===== */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 pt-2 border-t border-slate-200/60">
+            <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
                 size="sm"
@@ -1022,6 +1022,17 @@ export function MerchantOrderDetail({
                 <X className="h-3.5 w-3.5 ml-1" />
                 إغلاق
               </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+                className="text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+              >
+                <Save className="h-3.5 w-3.5 ml-1" />
+                {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
               <Button
                 variant="outline"
                 size="sm"
@@ -1048,7 +1059,7 @@ export function MerchantOrderDetail({
                   className="text-xs rounded-lg border-slate-200 hover:bg-slate-50 transition-all duration-200"
                 >
                   <Printer className="h-3.5 w-3.5 ml-1" />
-                  طباعة إيصال
+                  إيصال
                 </Button>
               )}
               {!showDeleteConfirm ? (
@@ -1087,15 +1098,6 @@ export function MerchantOrderDetail({
                 </div>
               )}
             </div>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saving}
-              className="text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
-            >
-              <Save className="h-3.5 w-3.5 ml-1" />
-              {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
-            </Button>
           </div>
         </div>
       </DialogContent>

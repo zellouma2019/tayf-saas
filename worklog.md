@@ -228,3 +228,47 @@ Stage Summary:
 - Print: 3 clear separate buttons (فاتورة / طباعة الملف / طباعة إيصال)
 - Theme: Customer page now reflects themeId changes visually
 - All changes pushed to GitHub (commit 77ac677)
+---
+Task ID: responsiveness-fix
+Agent: frontend-styling-expert
+Task: Fix top 5 critical responsiveness issues in merchant dashboard, admin panel, and order detail dialog
+
+Work Log:
+- **Fix 1: Sidebar mobile drawer missing close button** (`dashboard-sidebar.tsx`)
+  - Added X close button to mobile drawer header, restructured logo area with close button alongside
+  - Imported `X` icon from lucide-react
+  - Users can now close the sidebar via the X button (in addition to backdrop tap and Escape key)
+
+- **Fix 2: Merchant dashboard header overflow on mobile** (`merchant-dashboard.tsx`)
+  - Added `shrink-0` to right-side action buttons container to prevent compression
+  - Reduced gap from `gap-2` to `gap-1 sm:gap-2` on mobile
+  - Reduced "طلب جديد" button padding from `px-3` to `px-2.5 sm:px-3`
+  - Reduced refresh icon button size from `h-10 w-10` to `h-9 w-9 sm:h-10 sm:w-10`
+  - Reduced shop icon from `w-10 h-10` to `w-9 h-9 sm:w-10 sm:h-10` on mobile
+  - Reduced header left-side gap from `gap-3` to `gap-2 sm:gap-3`
+
+- **Fix 3: Admin panel header button sizing on mobile** (`page.tsx`)
+  - Reduced "إنشاء متجر" button padding from `px-4` to `px-2.5 sm:px-4`
+  - Reduced refresh button padding from `p-2.5` to `p-2 sm:p-2.5`
+
+- **Fix 4: Order detail dialog bottom action buttons overflow** (`merchant-order-detail.tsx`)
+  - Restructured bottom action bar from single-row `justify-between` to two-row layout:
+    - Row 1: "إغلاق" (left) + "حفظ التغييرات" (right)
+    - Row 2: Wrapped action buttons (فاتورة, طباعة الملف, إيصال, حذف) using `flex flex-wrap gap-1.5`
+  - Shortened "طباعة إيصال" label to "إيصال" to save space
+  - Prevents horizontal overflow on narrow mobile screens
+
+- **Fix 5: Order detail dialog status stepper cramped on mobile** (`merchant-order-detail.tsx`)
+  - Reduced step dots from `w-8 h-8` to `w-7 h-7 sm:w-8 sm:h-8`
+  - Reduced step dot icons from `h-4 w-4` to `h-3.5 w-3.5 sm:h-4 sm:w-4`
+  - Reduced label font from `text-[10px]` to `text-[9px] sm:text-[10px]` with `max-w-[60px] sm:max-w-none` and `leading-tight text-center`
+  - Reduced connecting line margins from `mx-2` to `mx-1 sm:mx-2`
+  - Reduced stepper padding from `p-4` to `p-3 sm:p-4`
+  - Adjusted negative margin for lines from `mt-[-18px]` to `mt-[-16px] sm:mt-[-18px]`
+
+Stage Summary:
+- 4 files modified: dashboard-sidebar.tsx, merchant-dashboard.tsx, page.tsx, merchant-order-detail.tsx
+- 0 new TypeScript errors introduced (1 pre-existing error in merchant-dashboard.tsx unrelated)
+- All changes use Tailwind CSS classes only (no CSS files modified)
+- No business logic or state management changes
+- Focus areas: mobile sidebar UX, header bar overflow prevention, dialog action button wrapping, stepper compactness

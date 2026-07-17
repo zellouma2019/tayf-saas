@@ -97,6 +97,7 @@ export function AppShell() {
   }, [shop?.settings]);
 
   const shopName = shop?.name || "طيف";
+  const shopLogoUrl = shop?.logoUrl || null;
   const shopPhone = shop?.phone || "";
   const shopWhatsapp = shop?.whatsapp || shopPhone;
   const shopEmail = shop?.email || "";
@@ -270,8 +271,14 @@ export function AppShell() {
             onClick={() => { setFooterOpen(false); setView("new"); }}
             className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0"
           >
-            <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 dark:hidden" />
-            <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 hidden dark:block" />
+            {shopLogoUrl ? (
+              <img src={shopLogoUrl} alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 object-cover ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300" />
+            ) : (
+              <>
+                <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 dark:hidden" />
+                <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 hidden dark:block" />
+              </>
+            )}
             <div className="text-right min-w-0">
               <div className="font-bold text-sm md:text-base leading-tight truncate">{displayBusinessName}</div>
               <div className="text-xs md:text-xs text-muted-foreground leading-tight truncate">

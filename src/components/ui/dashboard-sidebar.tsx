@@ -1,6 +1,6 @@
 'use client';
 
-import { type LucideIcon, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { type LucideIcon, PanelRightClose, PanelRightOpen, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   useCallback,
@@ -308,11 +308,19 @@ export function DashboardSidebar({
           )}
           style={{ width: 260, backgroundColor: '#1e293b' }}
         >
-          {logo && (
-            <div className="mt-6 flex shrink-0 items-center justify-center px-4 pb-4">
+          <div className="flex items-center justify-between px-4 pt-5 pb-3">
+            <div className="min-w-0 flex-1">
               {logo}
             </div>
-          )}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-700/60 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 shrink-0"
+              aria-label="إغلاق القائمة"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
             {renderedSections}
