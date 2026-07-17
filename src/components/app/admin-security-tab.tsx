@@ -27,18 +27,13 @@ export function SecurityTab() {
   const [showNew, setShowNew] = useState(false);
   const [changingPwd, setChangingPwd] = useState(false);
 
-  // مؤشر قوة كلمة المرور
+  // مؤشر قوة كلمة المرور — مبني على الطول فقط
   const pwdStrength = useMemo(() => {
     if (!newPwd) return { level: 0, label: "", color: "" };
-    let score = 0;
-    if (newPwd.length >= 6) score++;
-    if (newPwd.length >= 8) score++;
-    if (/[A-Z]/.test(newPwd)) score++;
-    if (/[0-9]/.test(newPwd)) score++;
-    if (/[^A-Za-z0-9]/.test(newPwd)) score++;
-    if (score <= 1) return { level: 1, label: "ضعيفة", color: "bg-rose-500" };
-    if (score <= 2) return { level: 2, label: "متوسطة", color: "bg-amber-500" };
-    if (score <= 3) return { level: 3, label: "جيدة", color: "bg-sky-500" };
+    const len = newPwd.length;
+    if (len < 10) return { level: 1, label: "قصيرة", color: "bg-rose-500" };
+    if (len <= 14) return { level: 2, label: "مقبولة", color: "bg-amber-500" };
+    if (len <= 19) return { level: 3, label: "جيدة", color: "bg-emerald-500" };
     return { level: 4, label: "قوية", color: "bg-emerald-500" };
   }, [newPwd]);
 
@@ -71,8 +66,8 @@ export function SecurityTab() {
       if (newPwd !== confirmPwd) toast.error("كلمة المرور الجديدة غير متطابقة");
       return;
     }
-    if (newPwd.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    if (newPwd.length < 10) {
+      toast.error("كلمة المرور يجب أن تكون 10 أحرف على الأقل");
       return;
     }
     setChangingPwd(true);
@@ -228,10 +223,10 @@ export function SecurityTab() {
                   type={showNew ? "text" : "password"}
                   value={newPwd}
                   onChange={(e) => setNewPwd(e.target.value)}
-                  placeholder="6 أحرف على الأقل"
+                  placeholder="10 أحرف على الأقل"
                   className="h-10 text-sm pe-10 rounded-lg"
                   required
-                  minLength={6}
+                  minLength={10}
                 />
                 <button
                   type="button"
@@ -259,8 +254,7 @@ export function SecurityTab() {
                   <p className={cn(
                     "text-xs",
                     pwdStrength.level <= 1 ? "text-rose-500" :
-                    pwdStrength.level <= 2 ? "text-amber-500" :
-                    pwdStrength.level <= 3 ? "text-sky-500" : "text-emerald-500"
+                    pwdStrength.level <= 2 ? "text-amber-500" : "text-emerald-500"
                   )}>
                     القوة: {pwdStrength.label}
                   </p>
@@ -276,7 +270,7 @@ export function SecurityTab() {
                 placeholder="أعد إدخال كلمة المرور"
                 className="h-10 text-sm rounded-lg"
                 required
-                minLength={6}
+                minLength={10}
               />
               {confirmPwd && newPwd !== confirmPwd && (
                 <p className="text-xs text-rose-500 mt-1">كلمة المرور غير متطابقة</p>

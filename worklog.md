@@ -189,3 +189,20 @@ Stage Summary:
 - Configurable: 10 color presets + custom hex picker in admin settings
 - Testing: Customer page (0.24s cached), merchant dashboard, admin settings all verified working
 - Lint: 0 errors, 1 pre-existing warning
+---
+Task ID: 1
+Agent: main
+Task: Fix slowness, PDF invoice Arabic, phone validation, password rules
+
+Work Log:
+- Removed duplicated ensureSchema from auth and password routes
+- Improved ensureDb in db.ts as singleton
+- Replaced jsPDF invoice with direct HTML invoice (fixes Arabic garbled text)
+- Enhanced phone validation with country-aware digit counting
+- Simplified password rules to minimum 10 characters
+
+Stage Summary:
+- Slowness fixed by eliminating redundant DB init calls
+- PDF invoice now opens HTML version directly (Arabic renders correctly)
+- Phone validation shows digit count feedback per country
+- Password minimum changed from 6 to 10, removed restrictive requirements

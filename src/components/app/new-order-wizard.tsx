@@ -52,7 +52,7 @@ import {
 import type { AppSettings } from "@/lib/default-settings";
 import { analyzeFileReal, analyzeFileWithAI, parsePageRange, type RealFileAnalysis } from "@/lib/file-analyzer";
 import UploadStep, { type AnalysisPhase } from "@/components/app/upload-step";
-import { isValidPhone as isValidAlgerianPhone, getPhoneErrorMessage } from "@/lib/phone-validation";
+import { isValidPhone, getPhoneErrorMessage, getPhoneValidationInfo } from "@/lib/phone-validation";
 import { selectOffer, type Offer } from "@/lib/offers";
 import { shopApi } from "@/lib/shop-api";
 import { OfferPopup } from "@/components/app/offer-popup";
@@ -99,6 +99,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   const [deliveryTimeSlot, setDeliveryTimeSlot] = useState<string>(""); // فترة زمنية: morning/noon/evening
   const [custName, setCustName] = useState("");
   const [custPhone, setCustPhone] = useState("");
+  const phoneInfo = useMemo(() => getPhoneValidationInfo(custPhone, shop?.country), [custPhone, shop?.country]);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [custWhatsapp, setCustWhatsapp] = useState("");
   const [whatsappTouched, setWhatsappTouched] = useState(false);
@@ -441,8 +442,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     }
     if (step === 3) {
       if (!custName.trim() || !custPhone.trim()) return false;
-      if (!isValidAlgerianPhone(custPhone)) return false;
-      if (custWhatsapp.trim() && !isValidAlgerianPhone(custWhatsapp)) return false;
+      if (!isValidPhone(custPhone, shop?.country)) return false;
+      if (custWhatsapp.trim() && !isValidPhone(custWhatsapp, shop?.country)) return false;
       if (custDelivery === "delivery" && !custAddress.trim()) return false;
       return true;
     }
@@ -1398,22 +1399,37 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   onBlur={() => setPhoneTouched(true)}
                   placeholder={phonePlaceholder}
                   className={`mt-1.5 font-mono tracking-wider ${
-                    phoneTouched && custPhone && !isValidAlgerianPhone(custPhone)
+                    phoneTouched && custPhone && !phoneInfo.isValid && phoneInfo.digitCount > 0
                       ? "border-destructive bg-destructive/5"
-                      : phoneTouched && isValidAlgerianPhone(custPhone)
+                      : phoneTouched && phoneInfo.isValid
                         ? "border-emerald-400 bg-emerald-50/30"
                         : ""
                   }`}
                   dir="ltr"
                 />
                 <div className="flex items-center justify-between mt-1">
-                  {phoneTouched && custPhone && !isValidAlgerianPhone(custPhone) ? (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <span>✗</span> {getPhoneErrorMessage(custPhone)}
-                    </p>
-                  ) : phoneTouched && isValidAlgerianPhone(custPhone) ? (
+                  {phoneInfo.isValid ? (
                     <p className="text-xs text-emerald-600 flex items-center gap-1">
-                      <span>✓</span> رقم صحيح
+                      <span>✓</span> رقم صحيح ({phoneInfo.digitCount} أرقام)
+                    </p>
+                  ) : phoneTouched && custPhone && phoneInfo.digitCount > 0 && !/[^\d+\-\s()]/.test(custPhone) && phoneInfo.digitCount < phoneInfo.expectedMax ? (
+                    <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                      <span>⏳</span>
+                      <span>أدخلت {phoneInfo.digitCount} من {phoneInfo.expectedMax} رقماً</span>
+                      <span className="inline-flex items-center gap-0.5 mr-1">
+                        {[...Array(phoneInfo.expectedMax)].map((_, i) => (
+                          <span
+                            key={i}
+                            className={`inline-block w-1.5 h-3 rounded-full transition-colors ${
+                              i < phoneInfo.digitCount ? "bg-amber-400" : "bg-slate-200 dark:bg-slate-600"
+                            }`}
+                          />
+                        ))}
+                      </span>
+                    </p>
+                  ) : phoneTouched && custPhone && phoneInfo.digitCount > 0 ? (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <span>✗</span> {phoneInfo.message}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">أدخل رقم هاتفك الصحيح</p>
@@ -1432,17 +1448,17 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   onBlur={() => setWhatsappTouched(true)}
                   placeholder="اتركه فارغاً إذا كان نفس رقم الهاتف"
                   className={`mt-1.5 font-mono tracking-wider ${
-                    whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp)
+                    whatsappTouched && custWhatsapp && !isValidPhone(custWhatsapp, shop?.country)
                       ? "border-destructive bg-destructive/5"
-                      : whatsappTouched && custWhatsapp && isValidAlgerianPhone(custWhatsapp)
+                      : whatsappTouched && custWhatsapp && isValidPhone(custWhatsapp, shop?.country)
                         ? "border-emerald-400 bg-emerald-50/30"
                         : ""
                   }`}
                   dir="ltr"
                 />
-                {whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp) && (
+                {whatsappTouched && custWhatsapp && !isValidPhone(custWhatsapp, shop?.country) && (
                   <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                    <span>✗</span> {getPhoneErrorMessage(custWhatsapp)}
+                    <span>✗</span> {getPhoneErrorMessage(custWhatsapp, shop?.country)}
                   </p>
                 )}
               </div>
