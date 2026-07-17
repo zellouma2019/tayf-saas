@@ -3,6 +3,7 @@ import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
+  dbInitialized: boolean
 }
 
 function createPrismaClient() {
@@ -21,8 +22,7 @@ function createPrismaClient() {
     })
   }
 
-  // بدون Turso في بيئة الإنتاج → نستخدم SQLite المحلي كحل احتياطي
-  // ملاحظة: على Vercel يجب إعداد متغيرات Turso في Environment Variables
+  // بدون Turso في بيئة الإنتاج → تحذير
   if (process.env.NODE_ENV === 'production') {
     console.warn(
       '[DB] ⚠️ TURSO_DATABASE_URL or TURSO_AUTH_TOKEN not set. ' +
@@ -38,3 +38,26 @@ function createPrismaClient() {
 export const db = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+
+// تهيئة تلقائية لقاعدة البيانات عند أول طلب (لـ Turso/Vercel)
+export async function ensureDb() {
+  if (globalForPrisma.dbInitialized) return
+  try {
+    await db.shop.count()
+    globalForPrisma.dbInitialized = true
+  } catch {
+    // الجداول غير موجودة — تهيئة أولية
+    console.log('[DB] Initializing database schema...')
+    try {
+      const res = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/setup`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        globalForPrisma.dbInitialized = true
+        console.log('[DB] ✓ Database initialized successfully')
+      }
+    } catch (e) {
+      console.error('[DB] Auto-initialization failed:', e)
+    }
+  }
+}

@@ -2,12 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
+// تهيئة قاعدة البيانات تلقائياً (لأول مرة على Vercel/Turso)
+async function ensureSchema() {
+  try {
+    await db.shop.count();
+    return true;
+  } catch {
+    // الجداول غير موجودة — محاولة إنشائها
+    try {
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
 /// تسجيل دخول المدير الأول
 export async function POST(req: NextRequest) {
   const rl = withRateLimit(req, "super-admin-auth");
   if (!rl.ok) return rl.response;
 
   try {
+    // التأكد من وجود الجداول
+    const ready = await ensureSchema();
+    if (!ready) {
+      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
+    }
+
     const { password } = await req.json();
     if (!password) {
       return NextResponse.json({ error: "كلمة المرور مطلوبة" }, { status: 400 });
@@ -24,7 +49,6 @@ export async function POST(req: NextRequest) {
     const isFirstTime = !admin.password || admin.password === "Admin@2025";
 
     if (isFirstTime) {
-      // أول مرة: أي كلمة مرور أو بدون كلمة مرور
       return NextResponse.json({ success: true, isFirstTime: true });
     }
 
