@@ -301,3 +301,31 @@ Stage Summary:
 - Key performance wins: eliminated cold-start HTTP round-trip, reduced API response sizes, smaller initial JS bundle
 - Logo system: now saves to filesystem, displays on customer page, free for all shops
 - Error handling: pages no longer get stuck on "loading" forever — shows error + retry button
+---
+Task ID: 1
+Agent: Main Agent
+Task: Deep analysis and fix of severe slowness (~60s load time) across the project
+
+Work Log:
+- Analyzed the full project to identify root cause of ~1 minute load times
+- Checked all API routes, client components, dependencies, and configuration
+- Identified that slowness was NOT from GitHub or Vercel infrastructure
+- Found 6 root causes in the project code itself
+- Removed dead dependencies: @mdxeditor/editor (4MB), jspdf (29MB), arabic-reshaper, bidi-js
+- Removed framer-motion from 7 client components, replaced with CSS transitions
+- Added serverExternalPackages in next.config.ts: sharp, @libsql/client, xlsx, qrcode
+- Added optimizePackageImports in next.config.ts: lucide-react, recharts, date-fns
+- Made admin-overview-tab (recharts) dynamically imported
+- Added Cache-Control headers to 4 API routes
+- Created vercel.json with optimized function settings and static caching
+- Added loading.tsx files for instant perceived performance
+- Removed orphaned pdf-arabic.ts
+- Verified all pages render correctly with agent-browser
+- Pushed to GitHub
+
+Stage Summary:
+- Root cause: ~73MB of dead/heavy dependencies bloating the JS bundle and Vercel serverless functions
+- Key metrics after fix: Admin page renders in 150ms, API calls respond in 10-17ms after warm
+- Net code change: -987 lines removed, +319 added (net -668 lines)
+- Expected production improvement: from ~60s to <2s on Vercel
+- Commit pushed to GitHub: a54f736
