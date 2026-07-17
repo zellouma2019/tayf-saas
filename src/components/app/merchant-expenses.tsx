@@ -256,8 +256,8 @@ function MerchantExpensesInner() {
     <div className="space-y-4" dir="rtl">
       {/* ===== العنوان ===== */}
       <div className="flex items-center gap-3">
-        <h2 className="text-lg font-bold flex items-center gap-2 border-r-4 border-violet-500 pr-3">
-          <Receipt className="h-5 w-5 text-violet-600" />
+        <h2 className="text-lg font-bold flex items-center gap-2 border-r-4 border-teal-500 pr-3">
+          <Receipt className="h-5 w-5 text-teal-600" />
           إدارة المصاريف
         </h2>
       </div>
@@ -266,7 +266,7 @@ function MerchantExpensesInner() {
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm font-semibold flex items-center gap-1.5 mb-1">
-            <Plus className="h-4 w-4 text-violet-600" />
+            <Plus className="h-4 w-4 text-teal-600" />
             إضافة مصروف جديد
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -321,7 +321,7 @@ function MerchantExpensesInner() {
             type="submit"
             disabled={submitting || !formCategory || !formAmount}
             size="sm"
-            className="gap-1.5 bg-violet-600 hover:bg-violet-700"
+            className="gap-1.5 bg-teal-600 hover:bg-teal-700"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -337,7 +337,7 @@ function MerchantExpensesInner() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
           <div className="flex items-center gap-2 mb-1">
-            <CalendarDays className="h-4 w-4 text-violet-600" />
+            <CalendarDays className="h-4 w-4 text-teal-600" />
             <span className="text-xs text-muted-foreground">مصاريف الشهر</span>
           </div>
           <p className="text-xl font-bold">{formatDA(monthTotal ?? 0)}</p>
@@ -356,7 +356,7 @@ function MerchantExpensesInner() {
         <Button
           variant={!categoryFilter ? "default" : "outline"}
           size="sm"
-          className={`h-8 text-xs ${!categoryFilter ? "bg-violet-600 text-white hover:bg-violet-700" : ""}`}
+          className={`h-8 text-xs ${!categoryFilter ? "bg-teal-600 text-white hover:bg-teal-700" : ""}`}
           onClick={() => handleFilterChange("__all__")}
         >
           الكل
@@ -368,7 +368,7 @@ function MerchantExpensesInner() {
             size="sm"
             className={`h-8 text-xs gap-1 ${
               categoryFilter === cat.value
-                ? "bg-violet-600 text-white hover:bg-violet-700"
+                ? "bg-teal-600 text-white hover:bg-teal-700"
                 : ""
             }`}
             onClick={() => handleFilterChange(cat.value)}
@@ -518,7 +518,7 @@ function MerchantExpensesInner() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+                                className="h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
                                 onClick={() => startEdit(exp)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
@@ -609,7 +609,7 @@ function MerchantExpensesInner() {
                       <div className="flex gap-2 pt-1">
                         <Button
                           size="sm"
-                          className="gap-1.5 bg-violet-600 hover:bg-violet-700"
+                          className="gap-1.5 bg-teal-600 hover:bg-teal-700"
                           onClick={() => handleSaveEdit(exp.id)}
                           disabled={savingId === exp.id}
                         >
@@ -641,7 +641,7 @@ function MerchantExpensesInner() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-violet-600"
+                            className="h-8 w-8 text-teal-600"
                             onClick={() => startEdit(exp)}
                           >
                             <Pencil className="h-3.5 w-3.5" />

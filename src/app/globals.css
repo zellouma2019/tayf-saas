@@ -47,6 +47,13 @@
 
 :root {
   --radius: 0.75rem;
+  /* اللون الأساسي للوحة التحكم — قابل للتغيير من الإعدادات */
+  --dashboard-accent: #0d7377;
+  --dashboard-accent-light: #14b8a6;
+  --dashboard-accent-dark: #0f766e;
+  --dashboard-accent-50: #f0fdfa;
+  --dashboard-accent-100: #ccfbf1;
+  --dashboard-accent-200: #99f6e4;
   /* خلفية بيج فاتح جداً */
   --background: oklch(0.985 0.008 85);
   --foreground: oklch(0.18 0.01 60);
@@ -274,8 +281,8 @@ html {
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(124, 58, 237, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px rgba(13, 115, 119, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(13, 115, 119, 0.4); }
 }
 .animate-glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
@@ -316,11 +323,11 @@ html {
   border-radius: inherit;
   background: conic-gradient(
     from var(--border-angle, 0deg),
-    #10b981,
+    #0d7377,
     #f59e0b,
-    #8b5cf6,
-    #3b82f6,
-    #10b981
+    #14b8a6,
+    #0d9488,
+    #0d7377
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

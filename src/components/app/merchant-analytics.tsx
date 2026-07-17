@@ -56,7 +56,7 @@ const STATUS_PIE_COLORS: Record<string, string> = {
 };
 
 const SERVICE_BAR_COLORS = [
-  "#7C3AED",
+  "#0d7377",
   "#D97706",
   "#059669",
   "#0891B2",
@@ -108,7 +108,7 @@ function ArabicTooltip({
       {label && <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="flex items-center gap-2 text-xs">
-          <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: p.fill || "#7C3AED" }} />
+          <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: p.fill || "#0d7377" }} />
           <span className="text-slate-600 dark:text-slate-300">{p.name}:</span>
           <span className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">{valueLabel === "إيرادات" ? formatDA(p.value) : p.value}</span>
         </p>
@@ -133,7 +133,7 @@ function RevenueTooltip({
 // ===== عنوان القسم =====
 function SectionHeader({ title }: { title: string }) {
   return (
-    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 border-r-4 border-violet-500 pr-3 mb-4">
+    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 border-r-4 border-teal-500 pr-3 mb-4">
       {title}
     </h3>
   );
@@ -343,8 +343,8 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
           <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/60 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-violet-600" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100/60 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-teal-600" />
                 </div>
                 {weekTrendPercent !== 0 && (
                   <span
@@ -457,7 +457,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                   <Bar
                     dataKey="orders"
                     name="عدد الطلبات"
-                    fill="#7C3AED"
+                    fill="#0d7377"
                     radius={[6, 6, 0, 0]}
                     maxBarSize={40}
                   />
@@ -528,8 +528,8 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
               <AreaChart data={dailyRevenueData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor="#0d7377" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#0d7377" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -555,11 +555,11 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                 <Area
                   type="monotone"
                   dataKey="إيرادات"
-                  stroke="#7C3AED"
+                  stroke="#0d7377"
                   strokeWidth={2.5}
                   fill="url(#revenueGradient)"
-                  dot={{ r: 4, fill: "#7C3AED", stroke: "#fff", strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: "#7C3AED", stroke: "#fff", strokeWidth: 2 }}
+                  dot={{ r: 4, fill: "#0d7377", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: "#0d7377", stroke: "#fff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

@@ -220,15 +220,15 @@ export function AppShell() {
       )}
 
       {/* ===== الترويسة الرئيسية ===== */}
-      <header className={`bg-background border-b border-border/50 sticky top-0 z-40 no-print transition-shadow duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-gradient-to-l after:from-violet-500/40 after:via-amber-400/30 after:to-violet-500/40 ${scrolled ? 'shadow-sm' : ''}`}>
+      <header className={`bg-background border-b border-border/50 sticky top-0 z-40 no-print transition-shadow duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-gradient-to-l after:from-teal-500/40 after:via-amber-400/30 after:to-teal-500/40 ${scrolled ? 'shadow-sm' : ''}`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
           {/* الشعار */}
           <button
             onClick={() => { setFooterOpen(false); setView("new"); }}
             className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0"
           >
-            <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300 dark:hidden" />
-            <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-violet-500/20 transition-all duration-300 hidden dark:block" />
+            <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-teal-500/20 transition-all duration-300 dark:hidden" />
+            <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-teal-500/20 transition-all duration-300 hidden dark:block" />
             <div className="text-right min-w-0">
               <div className="font-bold text-sm md:text-base leading-tight truncate">{displayBusinessName}</div>
               <div className="text-xs md:text-xs text-muted-foreground leading-tight truncate">
@@ -328,7 +328,7 @@ export function AppShell() {
           <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full">
             {/* Welcome message */}
             {welcomeMessage && view === "new" && (
-              <div className="mb-4 p-3 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 text-sm text-violet-700 dark:text-violet-300 text-center">
+              <div className="mb-4 p-3 rounded-xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-800/40 text-sm text-teal-700 dark:text-teal-300 text-center">
                 {welcomeMessage}
               </div>
             )}

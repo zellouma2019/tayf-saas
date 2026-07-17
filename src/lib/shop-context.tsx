@@ -67,6 +67,24 @@ export function useShop() {
   return useContext(ShopContext);
 }
 
+// ذاكرة تخزين مؤقت في الذاكرة (بقاء خلال حياة التطبيق)
+const shopCache = new Map<string, { data: ShopData; timestamp: number }>();
+const CACHE_TTL = 30_000; // 30 ثانية
+
+function getCachedShop(slug: string): ShopData | null {
+  const entry = shopCache.get(slug);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    shopCache.delete(slug);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedShop(slug: string, data: ShopData) {
+  shopCache.set(slug, { data, timestamp: Date.now() });
+}
+
 export function ShopProvider({
   slug,
   children,
@@ -88,13 +106,23 @@ export function ShopProvider({
 
   const activeRef = useRef(true);
 
-  const fetchShop = useCallback((currentSlug: string) => {
+  const fetchShop = useCallback((currentSlug: string, useCache = true) => {
+    // تحقق من الذاكرة المؤقتة أولاً
+    if (useCache) {
+      const cached = getCachedShop(currentSlug);
+      if (cached) {
+        if (activeRef.current) setState({ shop: cached, loading: false, error: null });
+        return Promise.resolve();
+      }
+    }
+
     return fetch(`/api/shops/${encodeURIComponent(currentSlug)}`)
       .then((r) => {
         if (!r.ok) throw new Error("المتجر غير موجود");
         return r.json();
       })
       .then((d) => {
+        setCachedShop(currentSlug, d.shop);
         if (activeRef.current) setState({ shop: d.shop, loading: false, error: null });
       })
       .catch((e) => {
@@ -110,13 +138,14 @@ export function ShopProvider({
   }, [slug, fetchShop]);
 
   const refreshShop = useCallback(async () => {
-    await fetchShop(slugRef.current);
+    // تجاوز الذاكرة المؤقتة عند التحديث اليدوي
+    shopCache.delete(slugRef.current);
+    await fetchShop(slugRef.current, false);
   }, [fetchShop]);
 
   const parsedFeatures = parseFeatures(state.shop?.features, state.shop?.plan || "free");
   const isPaid = state.shop?.plan === "paid";
 
-  // حساب أيام التجربة المتبقية
   let trialDaysLeft: number | null = null;
   let isTrial = false;
   if (state.shop?.trialDays && state.shop?.trialStartsAt && !isPaid) {

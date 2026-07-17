@@ -15,7 +15,7 @@ import type { PrintOrderLite } from "@/lib/order-types";
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; border: string }> = {
   pending:   { label: "بانتظار المراجعة", bg: "bg-amber-50 dark:bg-amber-950/40",   text: "text-amber-700 dark:text-amber-300",   border: "border-amber-200 dark:border-amber-800" },
   confirmed: { label: "مؤكّد",          bg: "bg-blue-50 dark:bg-blue-950/40",      text: "text-blue-700 dark:text-blue-300",      border: "border-blue-200 dark:border-blue-800" },
-  printing:  { label: "جارٍ الطباعة",    bg: "bg-violet-50 dark:bg-violet-950/40",   text: "text-violet-700 dark:text-violet-300",  border: "border-violet-200 dark:border-violet-800" },
+  printing:  { label: "جارٍ الطباعة",    bg: "bg-teal-50 dark:bg-teal-950/40",   text: "text-teal-700 dark:text-teal-300",  border: "border-teal-200 dark:border-teal-800" },
   ready:     { label: "جاهز للاستلام",  bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-800" },
   delivered: { label: "تم التسليم",      bg: "bg-slate-100 dark:bg-slate-800/50",   text: "text-slate-600 dark:text-slate-300",    border: "border-slate-200 dark:border-slate-700" },
   cancelled: { label: "ملغي",           bg: "bg-rose-50 dark:bg-rose-950/40",      text: "text-rose-700 dark:text-rose-300",      border: "border-rose-200 dark:border-rose-800" },
@@ -64,11 +64,11 @@ export function OrderHistory() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* المنطقة الترويسية */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 to-violet-50/40 border border-slate-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(139,92,246,0.06),transparent_50%)]" />
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 to-teal-50/40 border border-slate-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(13,115,119,0.06),transparent_50%)]" />
         <div className="relative">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-100 to-violet-100 flex items-center justify-center mb-3 shadow-sm">
-            <History className="h-7 w-7 text-violet-600" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-100 to-teal-100 flex items-center justify-center mb-3 shadow-sm">
+            <History className="h-7 w-7 text-teal-600" />
           </div>
           <h1 className="text-2xl font-bold mb-1">سجل الطلبات</h1>
           <p className="text-sm text-muted-foreground">
@@ -112,7 +112,7 @@ export function OrderHistory() {
       {/* حالة التحميل */}
       {loading && (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-500 mb-3" />
+          <Loader2 className="h-6 w-6 animate-spin text-teal-500 mb-3" />
           <p className="text-sm font-medium">جارٍ البحث عن طلباتك...</p>
         </div>
       )}
@@ -166,7 +166,7 @@ function HistoryCard({ order }: { order: PrintOrderLite }) {
         <div className="flex items-start justify-between gap-3">
           {/* الجانب الأيمن: الرمز + المعلومات */}
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-violet-50 flex items-center justify-center shrink-0 text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-teal-50 flex items-center justify-center shrink-0 text-lg">
               {emoji}
             </div>
             <div className="min-w-0 flex-1">

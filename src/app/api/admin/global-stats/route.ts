@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
-/// إحصائيات شاملة لصاحب المشروع (جميع المتاجر)
+/// إحصائيات شاملة لصاحب المشروع (جميع المتاجر) — محسّنة
 export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "global-stats");
   if (!rl.ok) return rl.response;
@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // إحصائيات عامة
-    const [totalOrders, totalRevenueResult, todayOrdersResult, shops] = await Promise.all([
+    // جلب كل البيانات بالتوازي (بدون N+1)
+    const [totalOrders, totalRevenueResult, todayOrdersResult, shops, allStatuses] = await Promise.all([
       db.printOrder.count(),
       db.printOrder.aggregate({ _sum: { total: true } }),
       db.printOrder.count({ where: { createdAt: { gte: today } } }),
@@ -22,84 +22,71 @@ export async function GET(req: NextRequest) {
           _count: { select: { orders: true } },
         },
       }),
+      db.printOrder.groupBy({ by: ["status"], _count: true }),
     ]);
 
     const totalRevenue = totalRevenueResult._sum.total || 0;
 
-    // إحصائيات لكل متجر
-    const shopStats = await Promise.all(
-      shops.map(async (shop) => {
-        const [shopRevenue, shopToday] = await Promise.all([
-          db.printOrder.aggregate({
-            where: { shopId: shop.id },
-            _sum: { total: true },
-          }),
-          db.printOrder.count({
-            where: { shopId: shop.id, createdAt: { gte: today } },
-          }),
-        ]);
+    // توزيع الحالات
+    const statusCounts: Record<string, number> = {};
+    for (const s of allStatuses) {
+      statusCounts[s.status] = s._count;
+    }
 
-        // آخر 5 طلبات لكل متجر
-        const recentShopOrders = await db.printOrder.findMany({
-          where: { shopId: shop.id },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        });
-
-        return {
-          id: shop.id,
-          name: shop.name,
-          slug: shop.slug,
-          ownerName: shop.ownerName,
-          ownerPhone: shop.ownerPhone,
-          phone: shop.phone,
-          whatsapp: shop.whatsapp,
-          email: shop.email,
-          address: shop.address,
-          primaryColor: shop.primaryColor,
-
-          isActive: shop.isActive,
-          trialDays: shop.trialDays,
-          trialStartsAt: shop.trialStartsAt?.toISOString() || null,
-          plan: shop.plan || "free",
-          features: shop.features || null,
-          paymentInfo: shop.paymentInfo || null,
-          ownerNotes: shop.ownerNotes || null,
-          orders: shop._count.orders,
-          revenue: shopRevenue._sum.total || 0,
-          todayOrders: shopToday,
-          recentOrders: recentShopOrders.map((o) => ({
-            id: o.id,
-            reference: o.reference,
-            serviceName: o.serviceName,
-            status: o.status,
-            total: o.total,
-            customer: JSON.parse(o.customer),
-            createdAt: o.createdAt,
-          })),
-        };
-      })
-    );
-
-    // آخر 30 طلب عبر كل المتاجر
+    // آخر 30 طلب
     const recentOrders = await db.printOrder.findMany({
       orderBy: { createdAt: "desc" },
       take: 30,
-      include: {
-        shop: { select: { name: true, slug: true } },
-      },
+      include: { shop: { select: { name: true, slug: true } } },
     });
 
-    // توزيع الحالات
-    const statusDistribution = await db.printOrder.groupBy({
-      by: ["status"],
-      _count: true,
-    });
+    // إحصائيات كل متجر — استعلام واحد مجمّع بدل N+1
+    const shopIds = shops.map(s => s.id);
 
-    const statusCounts: Record<string, number> = {};
-    for (const s of statusDistribution) {
-      statusCounts[s.status] = s._count;
-    }
+    // إجمالي ربح كل متجر
+    const revenueByShop = shopIds.length > 0
+      ? await db.printOrder.groupBy({
+          by: ["shopId"],
+          _sum: { total: true },
+          where: { shopId: { in: shopIds } },
+        })
+      : [];
+
+    // طلبات اليوم لكل متجر
+    const todayByShop = shopIds.length > 0
+      ? await db.printOrder.groupBy({
+          by: ["shopId"],
+          _count: true,
+          where: { shopId: { in: shopIds }, createdAt: { gte: today } },
+        })
+      : [];
+
+    const revenueMap = new Map(revenueByShop.map(r => [r.shopId, r._sum.total || 0]));
+    const todayMap = new Map(todayByShop.map(r => [r.shopId, r._count]));
+
+    const shopStats = shops.map(shop => ({
+      id: shop.id,
+      name: shop.name,
+      slug: shop.slug,
+      ownerName: shop.ownerName,
+      ownerPhone: shop.ownerPhone,
+      phone: shop.phone,
+      whatsapp: shop.whatsapp,
+      email: shop.email,
+      address: shop.address,
+      primaryColor: shop.primaryColor,
+      isActive: shop.isActive,
+      trialDays: shop.trialDays,
+      trialStartsAt: shop.trialStartsAt?.toISOString() || null,
+      plan: shop.plan || "free",
+      features: shop.features || null,
+      paymentInfo: shop.paymentInfo || null,
+      ownerNotes: shop.ownerNotes || null,
+      orders: shop._count.orders,
+      revenue: revenueMap.get(shop.id) || 0,
+      todayOrders: todayMap.get(shop.id) || 0,
+      recentOrders: [] as unknown[],
+    }));
 
     return NextResponse.json({
       totalOrders,

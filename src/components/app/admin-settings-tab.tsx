@@ -1,11 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Settings, Copy, RotateCcw, Printer, ShoppingBag, FileText, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Settings, Copy, RotateCcw, Printer, ShoppingBag, FileText, RefreshCw, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { robustCopy } from "@/lib/admin-utils";
+
+const ACCENT_PRESETS = [
+  { name: "تيل (افتراضي)", color: "#0d7377" },
+  { name: "أخضر زمردي", color: "#059669" },
+  { name: "أزرق", color: "#2563eb" },
+  { name: "نيلي", color: "#4f46e5" },
+  { name: "بنفسجي", color: "#7c3aed" },
+  { name: "وردي", color: "#db2777" },
+  { name: "أحمر", color: "#dc2626" },
+  { name: "برتقالي", color: "#ea580c" },
+  { name: "ذهبي", color: "#d97706" },
+  { name: "رمادي غامق", color: "#475569" },
+];
+
+function applyAccentColor(hex: string) {
+  const root = document.documentElement;
+  root.style.setProperty("--dashboard-accent", hex);
+  // إنشاء نسخ فاتحة وغامقة تلقائياً
+  root.style.setProperty("--dashboard-accent-light", hex);
+  root.style.setProperty("--dashboard-accent-dark", hex);
+  // حساب لون خفيف 50
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  root.style.setProperty("--dashboard-accent-50", `rgba(${r},${g},${b},0.05)`);
+  root.style.setProperty("--dashboard-accent-100", `rgba(${r},${g},${b},0.1)`);
+  root.style.setProperty("--dashboard-accent-200", `rgba(${r},${g},${b},0.2)`);
+}
 
 export function SettingsTab() {
   const [loading, setLoading] = useState(true);
@@ -13,6 +43,9 @@ export function SettingsTab() {
   const [services, setServices] = useState("");
   const [deliveryOptions, setDeliveryOptions] = useState("");
   const [general, setGeneral] = useState("");
+  const [accentColor, setAccentColor] = useState("#0d7377");
+  const [customColor, setCustomColor] = useState("");
+  const [savingColor, setSavingColor] = useState(false);
 
   async function loadSettings() {
     setLoading(true);
@@ -23,6 +56,12 @@ export function SettingsTab() {
       setServices(JSON.stringify(data.services || {}, null, 2));
       setDeliveryOptions(JSON.stringify(data.deliveryOptions || {}, null, 2));
       setGeneral(JSON.stringify(data.general || {}, null, 2));
+      // تحميل لون الأكسنت
+      const savedColor = data.general?.dashboardAccentColor;
+      if (savedColor) {
+        setAccentColor(savedColor);
+        applyAccentColor(savedColor);
+      }
     } catch {
       toast.error("خطأ في تحميل الإعدادات");
     } finally {
@@ -31,6 +70,28 @@ export function SettingsTab() {
   }
 
   useEffect(() => { loadSettings(); }, []);
+
+  const saveAccentColor = useCallback(async (color: string) => {
+    setSavingColor(true);
+    setAccentColor(color);
+    applyAccentColor(color);
+    try {
+      const parsed = JSON.parse(general || "{}");
+      parsed.dashboardAccentColor = color;
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ general: parsed }),
+      });
+      if (!res.ok) throw new Error("فشل");
+      setGeneral(JSON.stringify(parsed, null, 2));
+      toast.success("تم تغيير اللون الأساسي");
+    } catch {
+      toast.error("فشل حفظ اللون");
+    } finally {
+      setSavingColor(false);
+    }
+  }, [general]);
 
   async function saveSection(section: string, value: string) {
     setSaving(section);
@@ -122,6 +183,97 @@ export function SettingsTab() {
           </p>
         </div>
       </div>
+
+      {/* ===== اللون الأساسي للوحة التحكم ===== */}
+      {!loading && (
+        <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border-r-[3px] border-r-teal-400 p-4">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+              <Palette className="h-4 w-4 text-teal-600" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-700">اللون الأساسي للوحة التحكم</div>
+              <div className="text-xs text-slate-400 mt-0.5">يُطبّق على جميع لوحات التحكم كاللون الافتراضي</div>
+            </div>
+          </div>
+
+          {/* معاينة مباشرة */}
+          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            <div
+              className="w-10 h-10 rounded-xl shadow-md transition-colors duration-300"
+              style={{ backgroundColor: accentColor }}
+            />
+            <div>
+              <div className="text-xs text-slate-500">اللون الحالي</div>
+              <div className="text-sm font-mono font-bold" style={{ color: accentColor }}>{accentColor}</div>
+            </div>
+            <div className="flex-1" />
+            <div className="flex gap-1.5">
+              <div className="w-6 h-6 rounded-md" style={{ backgroundColor: accentColor }} />
+              <div className="w-6 h-6 rounded-md opacity-80" style={{ backgroundColor: accentColor }} />
+              <div className="w-6 h-6 rounded-md opacity-60" style={{ backgroundColor: accentColor }} />
+              <div className="w-6 h-6 rounded-md opacity-40" style={{ backgroundColor: accentColor }} />
+            </div>
+          </div>
+
+          {/* ألوان جاهزة */}
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4">
+            {ACCENT_PRESETS.map((preset) => (
+              <button
+                key={preset.color}
+                type="button"
+                title={preset.name}
+                disabled={savingColor}
+                onClick={() => saveAccentColor(preset.color)}
+                className={cn(
+                  "w-full aspect-square rounded-xl border-2 transition-all duration-200 hover:scale-110 active:scale-95",
+                  accentColor === preset.color
+                    ? "border-slate-800 dark:border-white scale-105 shadow-md"
+                    : "border-transparent hover:border-slate-300"
+                )}
+                style={{ backgroundColor: preset.color }}
+              />
+            ))}
+          </div>
+
+          {/* لون مخصص */}
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <Label className="text-xs text-slate-500 mb-1.5 block">لون مخصص (Hex)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="w-10 h-10 p-0.5 cursor-pointer rounded-lg"
+                />
+                <Input
+                  dir="ltr"
+                  placeholder="#0d7377"
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="font-mono text-sm h-10"
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (customColor && /^#[0-9a-fA-F]{6}$/.test(customColor)) {
+                  saveAccentColor(customColor);
+                  setCustomColor("");
+                } else {
+                  toast.error("أدخل لون صالح مثل #0d7377");
+                }
+              }}
+              disabled={savingColor || !customColor}
+              className="h-10 px-4 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
+              style={{ backgroundColor: accentColor }}
+            >
+              {savingColor ? "..." : "تطبيق"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-10 text-slate-400 text-sm">

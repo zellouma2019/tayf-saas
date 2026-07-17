@@ -244,8 +244,8 @@ function MerchantCustomersInner() {
     <div className="space-y-5" dir="rtl">
       {/* ===== الشريط العلوي ===== */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <h2 className="text-lg font-bold flex items-center gap-2 border-r-4 border-violet-500 pr-3">
-          <Users className="h-5 w-5 text-violet-600" />
+        <h2 className="text-lg font-bold flex items-center gap-2 border-r-4 border-teal-500 pr-3">
+          <Users className="h-5 w-5 text-teal-600" />
           إدارة العملاء
         </h2>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -282,7 +282,7 @@ function MerchantCustomersInner() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
           <div className="flex items-center gap-2 mb-1">
-            <Users className="h-4 w-4 text-violet-500" />
+            <Users className="h-4 w-4 text-teal-500" />
             <span className="text-xs text-muted-foreground">
               إجمالي العملاء
             </span>
@@ -582,7 +582,7 @@ function MerchantCustomersInner() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5 text-violet-600" />
+              <Edit className="h-5 w-5 text-teal-600" />
               تعديل بيانات العميل
             </DialogTitle>
           </DialogHeader>

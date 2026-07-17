@@ -181,7 +181,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         dir={dir}
-        className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+        className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
       />
       {hint && <p className="text-[11px] text-slate-400">{hint}</p>}
     </div>
@@ -202,7 +202,7 @@ const SERVICE_TYPE_LABELS: Record<string, string> = {
 };
 
 // ============================================================
-// Section header component (violet right border)
+// Section header component (teal right border)
 // ============================================================
 
 function SectionHeader({
@@ -215,9 +215,9 @@ function SectionHeader({
   description?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 border-r-4 border-violet-500 pr-3 mb-1">
-      <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-        <Icon className="h-4 w-4 text-violet-600" />
+    <div className="flex items-start gap-3 border-r-4 border-teal-500 pr-3 mb-1">
+      <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+        <Icon className="h-4 w-4 text-teal-600" />
       </div>
       <div>
         <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
@@ -268,13 +268,13 @@ function FeaturesTab() {
         </CardHeader>
         <CardContent>
           {isPaid ? (
-            <div className="text-xs text-violet-700 bg-violet-50 border border-violet-200/80 rounded-lg p-3">
+            <div className="text-xs text-teal-700 bg-teal-50 border border-teal-200/80 rounded-lg p-3">
               ✨ الخطة المدفوعة — جميع الميزات مفعّلة ({TOTAL_FEATURES})
             </div>
           ) : (
             <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200/60 rounded-lg p-3">
               الخطة المجانية — {TOTAL_FREE_FEATURES} ميزات مجانية مفعّلة + {activePaidFeatures.length} ميزات مدفوعة مفعّلة من أصل {TOTAL_PAID_FEATURES}.
-              <span className="text-violet-600 font-medium"> تواصل مع الإدارة للترقية.</span>
+              <span className="text-teal-600 font-medium"> تواصل مع الإدارة للترقية.</span>
             </div>
           )}
         </CardContent>
@@ -321,16 +321,16 @@ function FeaturesTab() {
 
       {/* Active paid features */}
       {activePaidFeatures.length > 0 && (
-        <Card className="bg-violet-50/40 border-violet-100/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <Card className="bg-teal-50/40 border-teal-100/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-5 rounded-full bg-violet-400" />
-              <CardTitle className="text-sm font-bold text-violet-700">
+              <div className="w-1.5 h-5 rounded-full bg-teal-400" />
+              <CardTitle className="text-sm font-bold text-teal-700">
                 ميزات مدفوعة مفعّلة ({activePaidFeatures.length})
               </CardTitle>
               <Badge
                 variant="outline"
-                className="text-[10px] rounded-md bg-violet-100 text-violet-600 border-violet-200"
+                className="text-[10px] rounded-md bg-teal-100 text-teal-600 border-teal-200"
               >
                 مفعّل
               </Badge>
@@ -341,15 +341,15 @@ function FeaturesTab() {
               {activePaidFeatures.map((f) => (
                 <div
                   key={f.key}
-                  className="flex items-center gap-2.5 bg-white rounded-lg px-3 py-2.5 border border-violet-100/80"
+                  className="flex items-center gap-2.5 bg-white rounded-lg px-3 py-2.5 border border-teal-100/80"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
-                    <Check className="h-3.5 w-3.5 text-violet-600" />
+                  <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
+                    <Check className="h-3.5 w-3.5 text-teal-600" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
                       {f.label}
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium">مفعّل</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-600 font-medium">مفعّل</span>
                     </div>
                     <div className="text-[10px] text-slate-400 truncate">{f.description}</div>
                   </div>
@@ -397,7 +397,7 @@ function FeaturesTab() {
                 </div>
               ))}
             </div>
-            <div className="text-xs text-violet-600 bg-violet-50 border border-violet-200/80 rounded-lg p-3 mt-2">
+            <div className="text-xs text-teal-600 bg-teal-50 border border-teal-200/80 rounded-lg p-3 mt-2">
               🔒 هذه الميزات متاحة فقط في الخطة المدفوعة. تواصل مع الإدارة للترقية.
             </div>
           </CardContent>
@@ -822,7 +822,7 @@ export function MerchantSettingsAdvanced({
   if (loading || !settings) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-        <RefreshCw className="h-8 w-8 animate-spin mb-3 text-violet-500" />
+        <RefreshCw className="h-8 w-8 animate-spin mb-3 text-teal-500" />
         <p className="text-sm">جارٍ تحميل الإعدادات...</p>
       </div>
     );
@@ -837,7 +837,7 @@ export function MerchantSettingsAdvanced({
       {/* ===== Header ===== */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-teal-600 flex items-center justify-center shrink-0 shadow-sm">
             <Settings className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -914,7 +914,7 @@ export function MerchantSettingsAdvanced({
             size="sm"
             onClick={handleSave}
             disabled={!hasChanges || saving}
-            className="bg-violet-600 hover:bg-violet-700 text-white gap-1.5 h-9 text-xs"
+            className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5 h-9 text-xs"
           >
             {saving ? (
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -935,35 +935,35 @@ export function MerchantSettingsAdvanced({
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto p-1 bg-slate-100 border border-slate-200/60 rounded-xl">
           <TabsTrigger
             value="general"
-            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-lg"
+            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg"
           >
             <SlidersHorizontal className="h-4 w-4" />
             إعدادات عامة
           </TabsTrigger>
           <TabsTrigger
             value="delivery"
-            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-lg"
+            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg"
           >
             <Truck className="h-4 w-4" />
             خيارات التسليم
           </TabsTrigger>
           <TabsTrigger
             value="intro"
-            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-lg"
+            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg"
           >
             <Sparkles className="h-4 w-4" />
             شاشة الترحيب
           </TabsTrigger>
           <TabsTrigger
             value="services"
-            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-lg"
+            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg"
           >
             <Layers className="h-4 w-4" />
             الخدمات المتقدمة
           </TabsTrigger>
           <TabsTrigger
             value="features"
-            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-lg"
+            className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg"
           >
             <ShieldCheck className="h-4 w-4" />
             الميزات
@@ -1054,7 +1054,7 @@ export function MerchantSettingsAdvanced({
                       updateGeneral("whatsappNumber", e.target.value)
                     }
                     dir="ltr"
-                    className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                    className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                     placeholder="0560000000"
                   />
                 </div>
@@ -1069,7 +1069,7 @@ export function MerchantSettingsAdvanced({
                       updateGeneral("phoneNumber", e.target.value)
                     }
                     dir="ltr"
-                    className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                    className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                     placeholder="0560000000"
                   />
                 </div>
@@ -1083,7 +1083,7 @@ export function MerchantSettingsAdvanced({
                   value={settings.general.email}
                   onChange={(e) => updateGeneral("email", e.target.value)}
                   dir="ltr"
-                  className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                  className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   placeholder="contact@example.com"
                 />
               </div>
@@ -1095,7 +1095,7 @@ export function MerchantSettingsAdvanced({
                 <Textarea
                   value={settings.general.address}
                   onChange={(e) => updateGeneral("address", e.target.value)}
-                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   rows={2}
                 />
               </div>
@@ -1118,14 +1118,14 @@ export function MerchantSettingsAdvanced({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                    <Globe className="h-3.5 w-3.5 text-violet-500" />
+                    <Globe className="h-3.5 w-3.5 text-teal-500" />
                     الدولة
                   </Label>
                   <Select
                     value={selectedCountry}
                     onValueChange={(v) => setSelectedCountry(v)}
                   >
-                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20">
+                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
                       <SelectValue placeholder="اختر الدولة" />
                     </SelectTrigger>
                     <SelectContent className="max-h-64 overflow-y-auto">
@@ -1152,7 +1152,7 @@ export function MerchantSettingsAdvanced({
                     value={selectedLanguage}
                     onValueChange={(v) => setSelectedLanguage(v)}
                   >
-                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20">
+                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
                       <SelectValue placeholder="اختر اللغة" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1201,7 +1201,7 @@ export function MerchantSettingsAdvanced({
                   size="sm"
                   onClick={handleSaveCountryLanguage}
                   disabled={savingShopFields}
-                  className="bg-violet-600 hover:bg-violet-700 text-white gap-1.5 h-9 text-xs"
+                  className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5 h-9 text-xs"
                 >
                   {savingShopFields ? (
                     <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -1254,7 +1254,7 @@ export function MerchantSettingsAdvanced({
                   value={settings.general.whatsappButtonNumber ?? ""}
                   onChange={(e) => updateGeneral("whatsappButtonNumber", e.target.value)}
                   dir="ltr"
-                  className="h-9 text-sm border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                  className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   placeholder="اتركه فارغاً لاستخدام رقم الواتساب الرئيسي"
                 />
                 <p className="text-[11px] text-slate-400">
@@ -1266,7 +1266,7 @@ export function MerchantSettingsAdvanced({
               <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
                 <div>
                   <div className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <ToggleLeft className="h-4 w-4 text-violet-500" />
+                    <ToggleLeft className="h-4 w-4 text-teal-500" />
                     تفعيل تتبع الطلبات
                   </div>
                   <div className="text-xs text-slate-400 mt-0.5">
@@ -1293,7 +1293,7 @@ export function MerchantSettingsAdvanced({
                 <Textarea
                   value={settings.general.welcomeMessage ?? ""}
                   onChange={(e) => updateGeneral("welcomeMessage", e.target.value)}
-                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-violet-400 focus:ring-violet-400/20"
+                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   rows={2}
                   placeholder="رسالة ترحيب مخصصة تظهر للعملاء (اختياري)"
                 />
@@ -1320,8 +1320,8 @@ export function MerchantSettingsAdvanced({
         <TabsContent value="delivery" className="space-y-4 outline-none">
           <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                <Truck className="h-4 w-4 text-violet-600" />
+              <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+                <Truck className="h-4 w-4 text-teal-600" />
               </div>
               <div className="text-xs text-slate-400 leading-relaxed">
                 تحكّم في خيارات التوصيل المعروضة للعملاء. يمكنك تفعيل أو تعطيل
@@ -1450,7 +1450,7 @@ export function MerchantSettingsAdvanced({
 
           <Button
             variant="outline"
-            className="w-full border-dashed h-11 text-sm gap-1.5 text-slate-400 hover:text-slate-600 border-slate-200/60 hover:border-violet-300 rounded-xl"
+            className="w-full border-dashed h-11 text-sm gap-1.5 text-slate-400 hover:text-slate-600 border-slate-200/60 hover:border-teal-300 rounded-xl"
             onClick={addDelivery}
           >
             <Plus className="h-4 w-4" />
@@ -1464,8 +1464,8 @@ export function MerchantSettingsAdvanced({
         <TabsContent value="intro" className="space-y-4 outline-none">
           <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                <Sparkles className="h-4 w-4 text-violet-600" />
+              <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+                <Sparkles className="h-4 w-4 text-teal-600" />
               </div>
               <div className="text-xs text-slate-400 leading-relaxed">
                 خصّص شاشة الترحيب التي تظهر عند دخول العميل. يمكنك تغيير
@@ -1623,7 +1623,7 @@ export function MerchantSettingsAdvanced({
 
               {/* Live preview */}
               <div className="rounded-xl border border-slate-200/60 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                <div className="px-4 py-2 bg-violet-50 border-b border-slate-200/60 text-xs font-bold text-violet-700">
+                <div className="px-4 py-2 bg-teal-50 border-b border-slate-200/60 text-xs font-bold text-teal-700">
                   معاينة مباشرة
                 </div>
                 <div
@@ -1692,8 +1692,8 @@ export function MerchantSettingsAdvanced({
         <TabsContent value="services" className="space-y-4 outline-none">
           <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                <Layers className="h-4 w-4 text-violet-600" />
+              <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+                <Layers className="h-4 w-4 text-teal-600" />
               </div>
               <div className="text-xs text-slate-400 leading-relaxed">
                 اضغط على أي خدمة لتوسيعها وتعديل أقسامها وخياراتها.
@@ -1712,7 +1712,7 @@ export function MerchantSettingsAdvanced({
               >
                 <AccordionTrigger className="px-4 hover:no-underline hover:bg-slate-50">
                   <div className="flex items-center gap-3 w-full pr-2">
-                    <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-xl shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center text-xl shrink-0">
                       {service.emoji}
                     </div>
                     <div className="flex-1 text-right">
@@ -1727,7 +1727,7 @@ export function MerchantSettingsAdvanced({
                           {SERVICE_TYPE_LABELS[service.type] || service.type}
                         </Badge>
                         {service.isPopular && (
-                          <Badge className="text-xs bg-violet-100 text-violet-700 border-violet-200 gap-0.5">
+                          <Badge className="text-xs bg-teal-100 text-teal-700 border-teal-200 gap-0.5">
                             <Star className="h-2.5 w-2.5 fill-current" />
                             شائع
                           </Badge>
@@ -1772,7 +1772,7 @@ export function MerchantSettingsAdvanced({
                         </AlertDialogContent>
                       </AlertDialog>
                       <div>
-                        <div className="text-sm font-bold text-violet-600">
+                        <div className="text-sm font-bold text-teal-600">
                           {service.basePricePerPage} د.ج
                         </div>
                         <div className="text-xs text-slate-400">
@@ -1840,7 +1840,7 @@ export function MerchantSettingsAdvanced({
                               isPopular: e.target.checked,
                             })
                           }
-                          className="w-4 h-4 rounded accent-violet-600"
+                          className="w-4 h-4 rounded accent-teal-600"
                         />
                         <span className="text-slate-500">خدمة شائعة</span>
                       </label>
@@ -1899,7 +1899,7 @@ export function MerchantSettingsAdvanced({
 
                   {/* Sections */}
                   <div className="space-y-3">
-                    <div className="border-r-4 border-violet-500 pr-3">
+                    <div className="border-r-4 border-teal-500 pr-3">
                       <h4 className="text-sm font-semibold text-slate-700">
                         الأقسام ({service.sections.length})
                       </h4>
@@ -1999,7 +1999,7 @@ export function MerchantSettingsAdvanced({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 text-xs gap-1 border-slate-200/60 text-violet-600 hover:bg-violet-50 hover:border-violet-200"
+                                className="h-7 text-xs gap-1 border-slate-200/60 text-teal-600 hover:bg-teal-50 hover:border-teal-200"
                                 onClick={() => addOption(sIdx, secIdx)}
                               >
                                 <Plus className="h-3 w-3" />
@@ -2145,7 +2145,7 @@ export function MerchantSettingsAdvanced({
                     {/* Add section button */}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed h-10 text-sm gap-1.5 text-slate-400 hover:text-slate-600 hover:border-violet-300 rounded-lg"
+                      className="w-full border-dashed h-10 text-sm gap-1.5 text-slate-400 hover:text-slate-600 hover:border-teal-300 rounded-lg"
                       onClick={() => addSection(sIdx)}
                     >
                       <Plus className="h-4 w-4" />
@@ -2160,7 +2160,7 @@ export function MerchantSettingsAdvanced({
           {/* Add service button */}
           <Button
             variant="outline"
-            className="w-full border-dashed border-2 border-violet-200 text-violet-600 hover:bg-violet-50 hover:border-violet-300 gap-2 h-12 rounded-xl"
+            className="w-full border-dashed border-2 border-teal-200 text-teal-600 hover:bg-teal-50 hover:border-teal-300 gap-2 h-12 rounded-xl"
             onClick={addService}
           >
             <Plus className="h-5 w-5" />
@@ -2179,9 +2179,9 @@ export function MerchantSettingsAdvanced({
       {/* ===== Floating save bar (shows when there are unsaved changes) ===== */}
       {hasChanges && (
         <div className="sticky bottom-4 z-30 mx-auto max-w-md">
-          <div className="bg-slate-800 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-violet-500/30">
+          <div className="bg-slate-800 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-teal-500/30">
             <div className="flex items-center gap-2 text-xs">
-              <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
               <span>لديك تغييرات غير محفوظة</span>
             </div>
             <div className="flex items-center gap-2">
@@ -2198,7 +2198,7 @@ export function MerchantSettingsAdvanced({
                 size="sm"
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-violet-600 hover:bg-violet-700 text-white h-8 gap-1.5 text-xs"
+                className="bg-teal-600 hover:bg-teal-700 text-white h-8 gap-1.5 text-xs"
               >
                 {saving ? (
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />

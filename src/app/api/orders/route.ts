@@ -40,8 +40,8 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    // صيانة تلقائية: حذف الطلبات older than 10 days
-    await runAutoCleanup();
+    // صيانة تلقائية في الخلفية (غير متزامنة — لا تبطئ الطلب)
+    runAutoCleanup().catch(() => {});
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");

@@ -850,7 +850,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         ${isCompleted
                           ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
                           : isActive
-                            ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-300"
+                            ? "bg-gradient-to-br from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-300"
                             : "bg-slate-100 text-slate-400"
                         }
                       `}
@@ -866,12 +866,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     </motion.div>
                     <div className="text-center">
                       <span className={`text-[11px] font-semibold leading-tight block ${
-                        isActive ? "text-violet-700" : isCompleted ? "text-emerald-600" : "text-muted-foreground/50"
+                        isActive ? "text-teal-700" : isCompleted ? "text-emerald-600" : "text-muted-foreground/50"
                       }`}>
                         {label}
                       </span>
                       <span className={`text-[10px] leading-tight block mt-0.5 ${
-                        isActive ? "text-violet-400" : "text-muted-foreground/40"
+                        isActive ? "text-teal-400" : "text-muted-foreground/40"
                       }`}>
                         {STEP_DURATIONS[i]}
                       </span>
@@ -881,7 +881,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {i < STEP_LABELS.length - 1 && (
                     <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-1.5 sm:mx-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden relative -mt-5">
                       <motion.div
-                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-violet-500 to-indigo-500"
+                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-teal-500 to-teal-600"
                         initial={{ width: "0%" }}
                         animate={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -895,7 +895,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-violet-700 bg-violet-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span className="text-xs font-medium text-teal-700 bg-teal-100 px-2.5 py-1 rounded-full flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {STEP_DURATIONS[step]}
               </span>
@@ -904,7 +904,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
               </span>
             </div>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-violet-500" />
+              <Sparkles className="h-3 w-3 text-teal-500" />
               المجموع ≈ دقيقة واحدة
             </span>
           </div>
@@ -922,7 +922,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 transition={{ duration: 0.4 }}
               >
                 <div className="flex items-center gap-1.5 mb-3">
-                  <Zap className="h-4 w-4 text-violet-500" />
+                  <Zap className="h-4 w-4 text-teal-500" />
                   <span className="text-sm font-bold">اختر نوع الخدمة</span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -935,21 +935,21 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         onClick={() => handleServiceSelect(spec.type)}
                         whileHover={{ y: -2 }}
                         whileTap={{ scale: 0.97 }}
-                        className="relative p-4 rounded-2xl border-2 text-right transition-all duration-200 bg-card hover:shadow-lg hover:shadow-violet-100/50 dark:hover:shadow-violet-900/20 hover:scale-[1.02] hover:-translate-y-1 border-border hover:border-violet-300 dark:hover:border-violet-600 group hover:bg-gradient-to-br hover:from-violet-50/80 hover:to-indigo-50/50 dark:hover:from-violet-950/30 dark:hover:to-indigo-950/20"
+                        className="relative p-4 rounded-2xl border-2 text-right transition-all duration-200 bg-card hover:shadow-lg hover:shadow-teal-100/50 dark:hover:shadow-teal-900/20 hover:scale-[1.02] hover:-translate-y-1 border-border hover:border-teal-300 dark:hover:border-teal-600 group hover:bg-gradient-to-br hover:from-teal-50/80 hover:to-teal-50/50 dark:hover:from-teal-950/30 dark:hover:to-teal-950/20"
                       >
                         {isPopular && (
-                          <span className="absolute -top-2.5 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
+                          <span className="absolute -top-2.5 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white text-[10px] font-bold shadow-sm animate-pulse">
                             <Flame className="h-3 w-3" />
                             الأكثر طلباً
                           </span>
                         )}
                         <div className="text-3xl mb-2">{spec.emoji}</div>
-                        <div className="font-bold text-sm group-hover:text-violet-700 transition-colors">{spec.name}</div>
+                        <div className="font-bold text-sm group-hover:text-teal-700 transition-colors">{spec.name}</div>
                         <div className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
                           {spec.description}
                         </div>
                         {spec.basePricePerPage > 0 && (
-                          <div className="mt-2 text-xs font-bold text-violet-600">
+                          <div className="mt-2 text-xs font-bold text-teal-600">
                             ابتداءً من {spec.basePricePerPage}/صفحة
                           </div>
                         )}
@@ -961,7 +961,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   <button
                     type="button"
                     onClick={() => setShowAllServices(!showAllServices)}
-                    className="mt-3 text-xs font-medium text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1"
+                    className="mt-3 text-xs font-medium text-teal-600 hover:text-teal-800 transition-colors flex items-center gap-1"
                   >
                     {showAllServices ? "عرض الخدمات الأساسية فقط" : `عرض جميع الخدمات (${Object.values(dynamicSpecs).length})`}
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAllServices ? "rotate-180" : ""}`} />
@@ -975,17 +975,17 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
               <motion.div
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-3 p-3 rounded-xl bg-violet-50 border-2 border-violet-200 ring-2 ring-violet-500"
+                className="flex items-center gap-3 p-3 rounded-xl bg-teal-50 border-2 border-teal-200 ring-2 ring-teal-500"
               >
                 <div className="text-3xl">{selectedService.emoji}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm text-violet-800">{selectedService.name}</div>
-                  <div className="text-xs text-violet-600">{selectedService.description}</div>
+                  <div className="font-bold text-sm text-teal-800">{selectedService.name}</div>
+                  <div className="text-xs text-teal-600">{selectedService.description}</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setServiceType(null)}
-                  className="text-xs text-violet-500 hover:text-violet-800 font-medium transition-colors"
+                  className="text-xs text-teal-500 hover:text-teal-800 font-medium transition-colors"
                 >
                   تغيير
                 </button>
@@ -1656,7 +1656,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           <Button
             onClick={next}
             disabled={!canProceed() || submitting}
-            className="bg-gradient-to-l from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/30 transition-all duration-200"
+            className="bg-gradient-to-l from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-teal-900/30 transition-all duration-200"
           >
             {submitting ? (
               <span className="animate-pulse">جارٍ الإرسال...</span>

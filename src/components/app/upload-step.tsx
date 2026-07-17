@@ -75,7 +75,7 @@ const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg:
   DOCX: { icon: FileSpreadsheet, color: "text-blue-500", bg: "bg-blue-50 border-blue-200", label: "DOCX" },
   JPG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 border-emerald-200", label: "JPG" },
   JPEG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 border-emerald-200", label: "JPEG" },
-  PNG: { icon: ImageIcon, color: "text-violet-500", bg: "bg-violet-50 border-violet-200", label: "PNG" },
+  PNG: { icon: ImageIcon, color: "text-teal-500", bg: "bg-teal-50 border-teal-200", label: "PNG" },
   WEBP: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 border-amber-200", label: "WEBP" },
 };
 
@@ -257,9 +257,9 @@ function InfoChip({
   const content = (
     <motion.div
       variants={itemVariants}
-      className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 py-2.5 hover:shadow-sm transition-shadow border-r-[3px] border-r-violet-300"
+      className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 py-2.5 hover:shadow-sm transition-shadow border-r-[3px] border-r-teal-300"
     >
-      <span className={`shrink-0 ${colorClass || "text-violet-500"}`}>{icon}</span>
+      <span className={`shrink-0 ${colorClass || "text-teal-500"}`}>{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="text-[11px] text-muted-foreground leading-tight">{label}</div>
         <div
@@ -492,8 +492,8 @@ export default function UploadStep({
             relative cursor-pointer rounded-2xl border-2 border-dashed p-6 md:p-8 text-center
             transition-all duration-300 overflow-hidden
             ${isDragOver
-              ? "bg-violet-50/80 border-violet-400 shadow-lg shadow-violet-100"
-              : "bg-amber-50/30 border-amber-300/70 animate-border-dance hover:bg-gradient-to-br hover:from-violet-50/50 hover:to-indigo-50/50 hover:shadow-md"
+              ? "bg-teal-50/80 border-teal-400 shadow-lg shadow-teal-100"
+              : "bg-amber-50/30 border-amber-300/70 animate-border-dance hover:bg-gradient-to-br hover:from-teal-50/50 hover:to-teal-50/50 hover:shadow-md"
             }
           `}
           onClick={() => fileInputRef.current?.click()}
@@ -505,7 +505,7 @@ export default function UploadStep({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-100/40 to-indigo-100/40 pointer-events-none"
+                className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-100/40 to-teal-100/40 pointer-events-none"
                 style={{
                   boxShadow: "inset 0 0 50px rgba(139, 92, 246, 0.12)",
                 }}
@@ -540,7 +540,7 @@ export default function UploadStep({
                     background: isDone
                       ? "linear-gradient(135deg, #10b981, #34d399)"
                       : isProcessing
-                        ? "linear-gradient(135deg, #8b5cf6, #6366f1)"
+                        ? "linear-gradient(135deg, #0d7377, #14b8a6)"
                         : "linear-gradient(135deg, #f59e0b, #fbbf24)",
                   }}
                   animate={isProcessing ? { rotate: [0, 5, -5, 0] } : {}}
@@ -563,7 +563,7 @@ export default function UploadStep({
                 </div>
                 <div className="text-xs text-muted-foreground mt-1.5">
                   {isProcessing ? (
-                    <span className="flex items-center justify-center gap-1.5 text-violet-600">
+                    <span className="flex items-center justify-center gap-1.5 text-teal-600">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       جارٍ المعالجة...
                     </span>
@@ -580,7 +580,7 @@ export default function UploadStep({
                 {analysisPhase === "uploading" && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted/30">
                     <motion.div
-                      className="h-full bg-gradient-to-l from-violet-500 to-indigo-500 rounded-full"
+                      className="h-full bg-gradient-to-l from-teal-500 to-teal-600 rounded-full"
                       initial={{ width: 0 }}
                       animate={{ width: `${uploadProgress}%` }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
@@ -609,7 +609,7 @@ export default function UploadStep({
                 <motion.div
                   className="w-[72px] h-[72px] mx-auto rounded-full flex items-center justify-center mb-4 animate-upload-pulse"
                   style={{
-                    background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
+                    background: "linear-gradient(135deg, #0d7377, #14b8a6)",
                   }}
                   animate={isDragOver ? { y: -6, scale: 1.1 } : { y: 0 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -621,7 +621,7 @@ export default function UploadStep({
                   )}
                 </motion.div>
                 {isDragOver ? (
-                  <div className="font-bold text-base text-violet-700">
+                  <div className="font-bold text-base text-teal-700">
                     أفلت الملف هنا الآن
                   </div>
                 ) : (
@@ -755,8 +755,8 @@ export default function UploadStep({
             }}
             className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
-              <Copy className="h-4.5 w-4.5 text-violet-500" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
+              <Copy className="h-4.5 w-4.5 text-teal-500" />
             </div>
             <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
               {isMobile ? "الصق من الحافظة" : "الصق (Ctrl+V)"}
@@ -908,20 +908,20 @@ export default function UploadStep({
               )}
 
               {(analysisPhase === "local-analysis" || analysisPhase === "ai-analysis") && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-teal-50 to-teal-100 border border-teal-100">
                   <div className="relative">
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="w-8 h-8 rounded-full border-2 border-violet-200 border-t-violet-500"
+                      className="w-8 h-8 rounded-full border-2 border-teal-200 border-t-teal-500"
                     />
-                    <Sparkles className="h-3.5 w-3.5 text-violet-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    <Sparkles className="h-3.5 w-3.5 text-teal-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                   </div>
                   <div>
-                    <span className="font-bold text-sm text-violet-700">
+                    <span className="font-bold text-sm text-teal-700">
                       جارٍ التحليل الذكي...
                     </span>
-                    <span className="block text-xs text-violet-500 mt-0.5">
+                    <span className="block text-xs text-teal-500 mt-0.5">
                       {PHASE_CONFIG[analysisPhase].description}
                     </span>
                   </div>

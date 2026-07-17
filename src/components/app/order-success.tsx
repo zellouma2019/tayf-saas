@@ -104,7 +104,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                   key={i}
                   className="confetti-dot absolute w-2 h-2 rounded-full"
                   style={{
-                    backgroundColor: ['#8b5cf6', '#f59e0b', '#10b981', '#ec4899', '#3b82f6'][i % 5],
+                    backgroundColor: ['#0d7377', '#f59e0b', '#10b981', '#ec4899', '#3b82f6'][i % 5],
                     top: `${50 + Math.random() * 40}%`,
                     left: `${10 + Math.random() * 80}%`,
                     '--x': `${(Math.random() - 0.5) * 120}px`,
@@ -312,7 +312,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               </Button>
               <Button
                 variant="outline"
-                className="w-full border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-950/30 hover:bg-violet-100 dark:hover:bg-violet-950/50 hover:border-violet-400 dark:hover:border-violet-600 text-violet-800 dark:text-violet-300 transition-all duration-200"
+                className="w-full border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-950/50 hover:border-teal-400 dark:hover:border-teal-600 text-teal-800 dark:text-teal-300 transition-all duration-200"
                 onClick={() => {
                   onClose();
                   onNavigate("track");

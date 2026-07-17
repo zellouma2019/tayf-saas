@@ -250,7 +250,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
       {/* شريط لون المتجر في الأعلى */}
       <div
         className="h-1.5"
-        style={{ background: shop.primaryColor ? `linear-gradient(to left, ${shop.primaryColor}, ${shop.primaryColor}cc)` : "linear-gradient(to left, #7c3aed, #6d28d9)" }}
+        style={{ background: shop.primaryColor ? `linear-gradient(to left, ${shop.primaryColor}, ${shop.primaryColor}cc)` : "linear-gradient(to left, #0d7377, #0f766e)" }}
       />
       <CardContent className="p-0">
         <div className="flex flex-col gap-4 p-5">
@@ -594,7 +594,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
             <div>
               <Label className="text-slate-600">اللون الرئيسي</Label>
               <div className="flex gap-3 mt-1.5">
-                <Input value={form.primaryColor} onChange={(e) => updateField("primaryColor", e.target.value)} className="flex-1 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="#7c3aed" />
+                <Input value={form.primaryColor} onChange={(e) => updateField("primaryColor", e.target.value)} className="flex-1 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="#0d7377" />
                 {form.primaryColor && (
                   <div className="w-10 h-10 rounded-lg border border-slate-200 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ backgroundColor: form.primaryColor }} />
                 )}

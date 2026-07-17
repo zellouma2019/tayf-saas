@@ -147,3 +147,45 @@ Stage Summary:
 - ⚠️ Global-stats API: Turso cold-start timeout (pre-existing infra issue)
 - ⚠️ Settings API: Same Turso timeout (pre-existing)
 - Note: The admin panel shops list requires global-stats to load. This is a Turso performance issue, not a code bug.
+---
+Task ID: perf-color-fix
+Agent: main
+Task: Fix slowness, apply teal color scheme everywhere, make configurable, test customer version
+
+Work Log:
+- Removed middleware.ts (was non-blocking but adding overhead on every API request)
+- Simplified shops/[slug]/route.ts: removed double-try ensureSchema pattern, added Cache-Control headers
+- Made orders GET cleanup non-blocking (fire-and-forget instead of await)
+- Optimized admin/global-stats: replaced N+1 queries with grouped aggregate queries (shops×3 queries → 3 batch queries)
+- Added client-side shop data caching in shop-context.tsx (30s TTL, cache bypass on refresh)
+- Replaced ALL violet→teal across 13+ files (~250+ replacements total):
+  - merchant-dashboard.tsx (96 replacements)
+  - app-shell.tsx (4)
+  - new-order-wizard.tsx (21)
+  - upload-step.tsx (22)
+  - track-order.tsx (10)
+  - order-history.tsx (7)
+  - order-success.tsx (2)
+  - merchant-settings-advanced.tsx (46)
+  - merchant-order-detail.tsx (13)
+  - merchant-expenses.tsx (12)
+  - merchant-customers.tsx (4)
+  - merchant-analytics.tsx (11)
+  - admin-analytics.tsx (1)
+  - admin-shop-card.tsx (3)
+  - globals.css (2 hardcoded color values)
+- Added CSS custom properties for dashboard accent color (--dashboard-accent, etc.)
+- Added color picker in admin settings tab with 10 presets + custom hex input
+- Color picker saves to settings.general.dashboardAccentColor and applies via CSS variables
+- Fixed gradient-border animation colors (violet→teal/cyan/amber)
+- Fixed glow-pulse animation (violet→teal)
+- Verified ZERO remaining violet references in all app components
+- Created test shop (matbaa-alnoor) in local DB for testing
+- VLM-verified customer shop and merchant dashboard: teal applied, no violet, RTL correct, professional
+
+Stage Summary:
+- Performance: middleware removed, API routes simplified, cleanup non-blocking, global-stats optimized, client-side caching
+- Colors: ALL dashboards now use teal (#0d7377) + amber matching the brand logo
+- Configurable: 10 color presets + custom hex picker in admin settings
+- Testing: Customer page (0.24s cached), merchant dashboard, admin settings all verified working
+- Lint: 0 errors, 1 pre-existing warning

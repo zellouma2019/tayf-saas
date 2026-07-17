@@ -100,7 +100,7 @@ const CHART_COLORS = [
   "#D97706", // amber-600
   "#059669", // emerald-600
   "#DC2626", // red-600
-  "#7C3AED", // violet-600
+  "#0d7377", // teal-600
   "#0891B2", // cyan-600
   "#EA580C", // orange-600
 ];

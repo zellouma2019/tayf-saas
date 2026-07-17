@@ -64,11 +64,11 @@ export function TrackOrder() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* منطقة البحث مع خلفية محسّنة */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-violet-50 to-slate-50 border border-slate-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.06),transparent_50%)]" />
+      <div className="relative rounded-2xl bg-gradient-to-br from-teal-50 to-slate-50 border border-slate-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(13,115,119,0.06),transparent_50%)]" />
         <div className="relative">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center mb-3 shadow-sm">
-            <Search className="h-7 w-7 text-violet-600" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-teal-50 to-teal-200 flex items-center justify-center mb-3 shadow-sm">
+            <Search className="h-7 w-7 text-teal-600" />
           </div>
           <h1 className="text-2xl font-bold mb-1">تتبّع طلبك</h1>
           <p className="text-sm text-muted-foreground">
@@ -101,7 +101,7 @@ export function TrackOrder() {
 
       {loading && (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-500 mb-3" />
+          <Loader2 className="h-6 w-6 animate-spin text-teal-500 mb-3" />
           <p className="text-sm font-medium">جارٍ البحث عن طلبك...</p>
         </div>
       )}
@@ -357,15 +357,15 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
             <button
               onClick={downloadInvoice}
               disabled={pdfLoading}
-              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/30 border border-violet-200/60 hover:from-violet-100 hover:to-violet-100/50 transition-all text-right disabled:opacity-60"
+              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100/30 border border-teal-200/60 hover:from-teal-100 hover:to-teal-100/50 transition-all text-right disabled:opacity-60"
             >
               {pdfLoading ? (
-                <Loader2 className="h-5 w-5 text-violet-600 shrink-0 animate-spin" />
+                <Loader2 className="h-5 w-5 text-teal-600 shrink-0 animate-spin" />
               ) : (
-                <FileText className="h-5 w-5 text-violet-600 shrink-0" />
+                <FileText className="h-5 w-5 text-teal-600 shrink-0" />
               )}
               <div>
-                <div className="text-xs font-bold text-violet-800">{pdfLoading ? "جارٍ الإنشاء..." : "فاتورة PDF"}</div>
+                <div className="text-xs font-bold text-teal-800">{pdfLoading ? "جارٍ الإنشاء..." : "فاتورة PDF"}</div>
                 <div className="text-[11px] text-muted-foreground">تنزيل الفاتورة</div>
               </div>
             </button>

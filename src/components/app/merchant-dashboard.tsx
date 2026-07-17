@@ -236,7 +236,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }
   function SortIcon({ field }: { field: string }) {
     if (sortField !== field) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-violet-600" /> : <ArrowUp className="h-3 w-3 text-violet-600" />;
+    return sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-teal-600" /> : <ArrowUp className="h-3 w-3 text-teal-600" />;
   }
 
   // اشتقاق الحالات المتاحة من STATUS_FLOW
@@ -461,18 +461,18 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   // ===== شاشة كلمة المرور =====
   if (!unlocked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 p-4" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-teal-50/30 p-4" dir="rtl">
         {/* Decorative grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #7c3aed 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #0d7377 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
         <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-slate-200/60 relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
           <CardContent className="p-8">
             <div className="text-center mb-8">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-5 shadow-lg shadow-violet-300/40" style={{ animation: "float 3s ease-in-out infinite" }}>
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-5 shadow-lg shadow-teal-300/40" style={{ animation: "float 3s ease-in-out infinite" }}>
                 <Lock className="h-12 w-12 text-white" />
               </div>
               <h2 className="text-xl font-bold text-slate-800">لوحة تحكم المتجر</h2>
               <p className="text-sm text-slate-500 mt-2">أدخل رمز PIN للوصول إلى لوحة التحكم</p>
-              <p className="text-xs text-violet-600 font-medium mt-1">طيف</p>
+              <p className="text-xs text-teal-600 font-medium mt-1">طيف</p>
             </div>
 
             <form onSubmit={handlePinSubmit} className="space-y-5">
@@ -483,7 +483,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   onChange={(e) => { setPin(e.target.value); setPinError(false); }}
                   placeholder="• • • •"
                   className={cn(
-                    "text-center text-2xl tracking-[0.5em] h-12 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 shadow-sm bg-slate-50 transition-shadow",
+                    "text-center text-2xl tracking-[0.5em] h-12 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 shadow-sm bg-slate-50 transition-shadow",
                     pinError && "ring-2 ring-rose-400 bg-rose-50/50 shadow-rose-100",
                   )}
                   autoFocus
@@ -499,7 +499,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 disabled={pin.length < 1 || verifying}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -509,7 +509,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
             <button
               type="button"
-              className="text-xs text-violet-500 hover:text-violet-700 transition-colors mt-4 w-full text-center"
+              className="text-xs text-teal-500 hover:text-teal-700 transition-colors mt-4 w-full text-center"
               onClick={() => toast.info("تواصل مع صاحب المنصة")}
             >
               هل نسيت الرمز؟
@@ -527,12 +527,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const customerLink = typeof window !== "undefined" ? `${window.location.origin}/s/${shopSlug}` : `/s/${shopSlug}`;
 
   const statCards = [
-    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-violet-600", bg: "bg-gradient-to-br from-violet-50 to-violet-100/60", borderColor: "border-t-violet-400" },
+    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-teal-600", bg: "bg-gradient-to-br from-teal-50 to-teal-100/60", borderColor: "border-t-teal-400" },
     { title: "إجمالي الإيرادات", value: formatDA(stats?.totalRevenue ?? 0), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60", borderColor: "border-t-emerald-400" },
     { title: "صافي الربح", value: formatDA(totalProfit), icon: TrendingUp, color: totalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: totalProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100/60" : "bg-gradient-to-br from-rose-50 to-rose-100/60", borderColor: totalProfit >= 0 ? "border-t-emerald-400" : "border-t-rose-400" },
     { title: "قيد التنفيذ", value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60", borderColor: "border-t-amber-400" },
     { title: "إيرادات اليوم", value: formatDA(todayRevenue), icon: Inbox, color: "text-sky-600", bg: "bg-gradient-to-br from-sky-50 to-sky-100/60", borderColor: "border-t-sky-400", trend: todayRevenue > 0 ? "up" : todayRevenue < 0 ? "down" : undefined },
-    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-violet-600" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-violet-50 to-violet-100/60" : "bg-gradient-to-br from-rose-50 to-rose-100/60", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-violet-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
+    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-teal-600" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-teal-50 to-teal-100/60" : "bg-gradient-to-br from-rose-50 to-rose-100/60", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-teal-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
   ];
 
   const quickFilters = [
@@ -558,7 +558,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-              style={{ backgroundColor: shop?.primaryColor || '#7c3aed' }}
+              style={{ backgroundColor: shop?.primaryColor || '#0d7377' }}
             >
               {(() => {
                 const Comp = DYN_ICON_MAP[shop?.logoIcon || "Printer"] || PrinterIcon;
@@ -578,21 +578,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             <button
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 md:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 md:hidden"
               aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
             >
               <Menu className="h-5 w-5" />
             </button>
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-              style={{ backgroundColor: shop?.primaryColor || '#7c3aed' }}
+              style={{ backgroundColor: shop?.primaryColor || '#0d7377' }}
             >
               {(() => {
                 const Comp = DYN_ICON_MAP[shop?.logoIcon || "Printer"] || PrinterIcon;
                 return <Comp className="h-5 w-5 text-white" />;
               })()}
             </div>
-            <div className="hidden sm:flex items-center gap-2.5 bg-gradient-to-l from-violet-50 to-indigo-50 border border-violet-200/60 -mx-2 px-3 py-1.5 rounded-xl">
+            <div className="hidden sm:flex items-center gap-2.5 bg-gradient-to-l from-teal-50 to-cyan-50 border border-teal-200/60 -mx-2 px-3 py-1.5 rounded-xl">
               <div className="min-w-0">
                 <div className="font-bold text-sm truncate text-slate-800">{shop?.name || "المتجر"}</div>
                 <div className="text-xs text-slate-400 truncate">لوحة التحكم</div>
@@ -621,7 +621,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               href={customerLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+              className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
             >
               <Plus className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">طلب جديد</span>
@@ -639,7 +639,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               type="button"
               onClick={loadAll}
               disabled={loading}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-600 hover:bg-violet-50 border border-slate-200 hover:border-violet-200 rounded-lg px-3 py-2 font-medium transition-all duration-200"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-teal-600 hover:bg-teal-50 border border-slate-200 hover:border-teal-200 rounded-lg px-3 py-2 font-medium transition-all duration-200"
             >
               <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
               تحديث
@@ -671,7 +671,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* إجراءات سريعة */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { icon: Plus, label: "طلب جديد", color: "from-violet-500 to-violet-600", action: () => window.open(customerLink, '_blank') },
+                  { icon: Plus, label: "طلب جديد", color: "from-teal-500 to-teal-600", action: () => window.open(customerLink, '_blank') },
                   { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => toast.info("قريباً: التقارير اليومية") },
                   { icon: Users, label: "العملاء", color: "from-amber-500 to-amber-600", action: () => setActiveTab("customers") },
                   { icon: FileText, label: "المصاريف", color: "from-rose-500 to-rose-600", action: () => setActiveTab("expenses") },
@@ -691,10 +691,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {!(stats?.totalOrders ?? 0) && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-600 via-violet-500 to-indigo-600 p-6 sm:p-8 text-white">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-teal-600 via-teal-500 to-cyan-600 p-6 sm:p-8 text-white">
                   <div className="relative z-10">
                     <h2 className="text-lg sm:text-xl font-bold mb-1">🎉 متجرك جاهز لاستقبال الطلبات!</h2>
-                    <p className="text-violet-100 text-sm max-w-lg mb-4">
+                    <p className="text-teal-100 text-sm max-w-lg mb-4">
                       شارك رابط متجرك مع زبائنك لبدء استقبال طلبات الطباعة أونلاين
                     </p>
                     <div className="flex items-center gap-3">
@@ -702,7 +702,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                         href={customerLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 bg-white text-violet-600 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-violet-50 transition-colors shadow-sm"
+                        className="inline-flex items-center gap-1.5 bg-white text-teal-600 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-teal-50 transition-colors shadow-sm"
                       >
                         <ExternalLink className="h-4 w-4" />
                         معاينة المتجر
@@ -740,7 +740,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                 <div className="border-b border-slate-200/60 px-4 sm:px-6 pt-5 pb-3">
                   <h3 className="text-sm font-semibold flex items-center gap-2 text-slate-800">
-                    <Clock className="h-4 w-4 text-violet-500" />
+                    <Clock className="h-4 w-4 text-teal-500" />
                     آخر الطلبات
                   </h3>
                 </div>
@@ -759,7 +759,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                         href={customerLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-4 text-xs text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1 transition-colors"
+                        className="mt-4 text-xs text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 transition-colors"
                       >
                         <ExternalLink className="h-3 w-3" />
                         افتح المتجر واطلب الآن
@@ -782,7 +782,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className="font-mono text-xs font-bold text-slate-800 cursor-pointer hover:text-violet-600 transition-colors"
+                                  className="font-mono text-xs font-bold text-slate-800 cursor-pointer hover:text-teal-600 transition-colors"
                                   onClick={() => setSelectedOrder(o)}
                                 >{o.reference}</span>
                                 <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium", meta.bg)}>{meta.label}</span>
@@ -792,7 +792,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                               </div>
                             </div>
                             <div className="text-left shrink-0">
-                              <div className="text-sm font-bold text-violet-600">{formatDA(o.total)}</div>
+                              <div className="text-sm font-bold text-teal-600">{formatDA(o.total)}</div>
                               <div className="text-xs text-slate-400">{formatDateTimeAr(o.createdAt)}</div>
                             </div>
                           </div>
@@ -821,7 +821,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   className={cn(
                     "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
                     viewMode === "table"
-                      ? "bg-violet-600 text-white"
+                      ? "bg-teal-600 text-white"
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
                   )}
                 >
@@ -834,7 +834,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   className={cn(
                     "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
                     viewMode === "kanban"
-                      ? "bg-violet-600 text-white"
+                      ? "bg-teal-600 text-white"
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
                   )}
                 >
@@ -850,7 +850,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="ابحث برقم الطلب أو اسم/هاتف العميل..."
-                    className="pr-10 text-sm h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                    className="pr-10 text-sm h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                     onKeyDown={(e) => e.key === "Enter" && loadAll()}
                   />
                 </div>
@@ -898,7 +898,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     className={cn(
                       "flex items-center gap-2 text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0 min-h-[44px]",
                       isActive
-                        ? "bg-violet-600 text-white rounded-lg px-4 py-2 shadow-md shadow-violet-200"
+                        ? "bg-teal-600 text-white rounded-lg px-4 py-2 shadow-md shadow-teal-200"
                         : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 hover:shadow-sm hover:-translate-y-0.5 rounded-lg px-4 py-2",
                     )}
                   >
@@ -1005,7 +1005,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       {hasFeature("bulkActions") && !mobileSelectionMode && orders.length > 0 && (
                         <button
                           onClick={() => setMobileSelectionMode(true)}
-                          className="text-[11px] px-2.5 py-1 rounded-md transition-colors bg-violet-600 text-white hover:bg-violet-700 flex items-center gap-1"
+                          className="text-[11px] px-2.5 py-1 rounded-md transition-colors bg-teal-600 text-white hover:bg-teal-700 flex items-center gap-1"
                         >
                           <ListChecks className="h-3 w-3" />
                           تحديد
@@ -1019,10 +1019,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                           إلغاء
                         </button>
                       )}
-                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2 py-1 rounded-md transition-colors", sortField === "date" ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:text-slate-600")}>
+                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2 py-1 rounded-md transition-colors", sortField === "date" ? "bg-teal-100 text-teal-700" : "text-slate-400 hover:text-slate-600")}>
                         {sortDir === "desc" ? "الأحدث" : "الأقدم"}
                       </button>
-                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2 py-1 rounded-md transition-colors", sortField === "total" ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:text-slate-600")}>
+                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2 py-1 rounded-md transition-colors", sortField === "total" ? "bg-teal-100 text-teal-700" : "text-slate-400 hover:text-slate-600")}>
                         الأعلى سعراً
                       </button>
                     </div>
@@ -1067,7 +1067,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
               {/* شريط الإجراءات الجماعية العائم */}
               {hasFeature("bulkActions") && selectedIds.size > 0 && (
-                <div className="fixed bottom-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto z-50 flex items-center gap-2 sm:gap-3 bg-violet-600 text-white rounded-xl px-3 sm:px-5 py-3 sm:py-3.5 shadow-2xl shadow-violet-600/30 animate-in slide-in-from-bottom-4 duration-300 ease-out overflow-x-auto">
+                <div className="fixed bottom-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto z-50 flex items-center gap-2 sm:gap-3 bg-teal-600 text-white rounded-xl px-3 sm:px-5 py-3 sm:py-3.5 shadow-2xl shadow-teal-600/30 animate-in slide-in-from-bottom-4 duration-300 ease-out overflow-x-auto">
                   <span className="text-sm font-semibold whitespace-nowrap">
                     <CheckSquare className="h-4 w-4 inline-block ml-1.5 -mt-0.5" />
                     {selectedIds.size} محدد
@@ -1253,7 +1253,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
       {!isEnabled && (
         <div className="absolute inset-0 bg-white/80 backdrop-blur-md flex items-center justify-center rounded-xl z-10">
           <div className="bg-white rounded-xl p-6 text-center max-w-[260px] mx-4 shadow-xl border border-slate-200/60">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-4 shadow-lg shadow-violet-200/50">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-4 shadow-lg shadow-teal-200/50">
               <ShieldCheck className="h-8 w-8 text-white" />
             </div>
             <h4 className="font-bold text-sm mb-1 text-slate-800">{title}</h4>
@@ -1261,7 +1261,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
             {!showContact ? (
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white rounded-lg shadow-sm transition-all duration-200 active:scale-[0.98]"
+                className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white rounded-lg shadow-sm transition-all duration-200 active:scale-[0.98]"
                 onClick={() => setShowContact(true)}
               >
                 <Crown className="h-4 w-4 ml-1" />
@@ -1554,8 +1554,8 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
     <div className="max-w-2xl mx-auto space-y-6">
       {/* ===== عنوان التاجر ===== */}
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center">
-          <User className="h-5 w-5 text-violet-600" />
+        <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center">
+          <User className="h-5 w-5 text-teal-600" />
         </div>
         <div>
           <h2 className="font-bold text-lg text-slate-800">{shop?.name || "التاجر"}</h2>
@@ -1567,10 +1567,10 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       <ProLock featureKey="customLogo" title="شعار المتجر" desc="ارفع شعار متجرك ليظهر للزبائن">
         <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="p-4 sm:p-6 space-y-5">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-              <Upload className="h-4 w-4 text-violet-600" />
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+              <Upload className="h-4 w-4 text-teal-600" />
               شعار المتجر
-              <Badge className="bg-gradient-to-r from-violet-600 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
+              <Badge className="bg-gradient-to-r from-teal-600 to-teal-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
             </h3>
             <div className="flex items-center gap-4">
               {logoUrl ? (
@@ -1598,9 +1598,9 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                     onChange={handleLogoUpload}
                     disabled={uploading}
                   />
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all duration-200 border border-violet-200/60">
-                    <Upload className="h-4 w-4 text-violet-600" />
-                    <span className="text-sm font-medium text-violet-700">
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-teal-50 hover:bg-teal-100 transition-all duration-200 border border-teal-200/60">
+                    <Upload className="h-4 w-4 text-teal-600" />
+                    <span className="text-sm font-medium text-teal-700">
                       {uploading ? "جارٍ الرفع..." : "اختر صورة"}
                     </span>
                   </div>
@@ -1616,10 +1616,10 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       <ProLock featureKey="customLogo" title="أيقونة الشعار" desc="اختر أيقونة مميزة لشعار متجرك">
         <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="p-4 sm:p-6 space-y-5">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-              <Palette className="h-4 w-4 text-violet-600" />
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+              <Palette className="h-4 w-4 text-teal-600" />
               أيقونة الشعار
-              <Badge className="bg-gradient-to-r from-violet-600 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
+              <Badge className="bg-gradient-to-r from-teal-600 to-teal-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
             </h3>
             <div className="grid grid-cols-4 sm:grid-cols-4 gap-2.5">
               {Object.entries(DYN_ICON_MAP).map(([name, IconComp]) => (
@@ -1630,11 +1630,11 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   className={cn(
                     "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
                     selectedIcon === name
-                      ? "bg-violet-50 shadow-md ring-1 ring-violet-300 border-violet-200"
+                      ? "bg-teal-50 shadow-md ring-1 ring-teal-300 border-teal-200"
                       : "bg-slate-50 hover:bg-slate-100 hover:shadow-md",
                   )}
                 >
-                  <IconComp className={cn("h-7 w-7", selectedIcon === name ? "text-violet-600 font-bold" : "text-slate-500")} />
+                  <IconComp className={cn("h-7 w-7", selectedIcon === name ? "text-teal-600 font-bold" : "text-slate-500")} />
                   <span className="text-xs font-medium text-slate-600">{ICON_LABELS[name]}</span>
                 </button>
               ))}
@@ -1642,7 +1642,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             {/* معاينة حية */}
             <div className="mt-3 pt-4 border-t border-slate-200/60">
               <p className="text-xs text-slate-400 mb-3">معاينة:</p>
-              <div className="inline-flex items-center gap-2.5 p-3 rounded-xl shadow-sm" style={{ backgroundColor: shop?.primaryColor || "#7c3aed" }}>
+              <div className="inline-flex items-center gap-2.5 p-3 rounded-xl shadow-sm" style={{ backgroundColor: shop?.primaryColor || "#0d7377" }}>
                 <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   {(() => {
                     const Comp = DYN_ICON_MAP[selectedIcon] || PrinterIcon;
@@ -1663,36 +1663,36 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       <form onSubmit={handleSave} className="space-y-5">
         <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="p-4 sm:p-6 space-y-5">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-              <Store className="h-4 w-4 text-violet-600" />
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+              <Store className="h-4 w-4 text-teal-600" />
               معلومات المتجر
             </h3>
             <div>
               <Label className="text-slate-600 text-sm">اسم المتجر</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="flex items-center gap-1.5 text-slate-600 text-sm"><Phone className="h-3.5 w-3.5 text-slate-400" />الهاتف</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" dir="ltr" />
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" dir="ltr" />
               </div>
               <div>
                 <Label className="flex items-center gap-1.5 text-slate-600 text-sm"><MessageCircle className="h-3.5 w-3.5 text-slate-400" />واتساب</Label>
-                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" dir="ltr" />
+                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" dir="ltr" />
               </div>
               <div>
                 <Label className="flex items-center gap-1.5 text-slate-600 text-sm"><Mail className="h-3.5 w-3.5 text-slate-400" />البريد الإلكتروني</Label>
-                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" dir="ltr" />
+                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" dir="ltr" />
               </div>
               <div>
                 <Label className="flex items-center gap-1.5 text-slate-600 text-sm"><MapPin className="h-3.5 w-3.5 text-slate-400" />العنوان</Label>
-                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" />
               </div>
             </div>
           </div>
         </div>
 
-        <Button type="submit" className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]" disabled={saving}>
+        <Button type="submit" className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]" disabled={saving}>
           <Save className="h-4 w-4" />
           {saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
         </Button>
@@ -1704,21 +1704,21 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       {/* ===== 6. معلومات المالك + تغيير كلمة المرور (مجاني) ===== */}
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-            <User className="h-4 w-4 text-violet-600" />
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+            <User className="h-4 w-4 text-teal-600" />
             معلومات المالك
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-slate-600 text-sm">الاسم</Label>
-              <Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
+              <Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" />
             </div>
             <div>
               <Label className="text-slate-600 text-sm">الهاتف</Label>
-              <Input value={form.ownerPhone} onChange={(e) => setForm({ ...form, ownerPhone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all" dir="ltr" />
+              <Input value={form.ownerPhone} onChange={(e) => setForm({ ...form, ownerPhone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all" dir="ltr" />
             </div>
           </div>
-          <Button onClick={handleSaveOwnerInfo} className="w-full h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]" disabled={saving}>
+          <Button onClick={handleSaveOwnerInfo} className="w-full h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]" disabled={saving}>
             <Save className="h-4 w-4" />
             {saving ? "جارٍ الحفظ..." : "حفظ معلومات المالك"}
           </Button>
@@ -1727,8 +1727,8 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
 
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-            <Lock className="h-4 w-4 text-violet-600" />
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+            <Lock className="h-4 w-4 text-teal-600" />
             تغيير كلمة المرور
           </h3>
           <form onSubmit={handleChangePin} className="space-y-3 max-w-md">
@@ -1742,7 +1742,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   onChange={(e) => setPinForm({ ...pinForm, currentPin: e.target.value })}
                   placeholder="أدخل كلمة المرور الحالية"
                   dir="ltr"
-                  className="h-11 pe-10 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                  className="h-11 pe-10 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                   required
                 />
                 <button
@@ -1765,7 +1765,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   onChange={(e) => setPinForm({ ...pinForm, newPin: e.target.value })}
                   placeholder="4 أحرف على الأقل"
                   dir="ltr"
-                  className="h-11 pe-10 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                  className="h-11 pe-10 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                   required
                   minLength={4}
                 />
@@ -1788,7 +1788,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                 onChange={(e) => setPinForm({ ...pinForm, confirmPin: e.target.value })}
                 placeholder="أعد إدخال كلمة المرور"
                 dir="ltr"
-                className="h-11 rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                className="h-11 rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                 required
                 minLength={4}
               />
@@ -1798,7 +1798,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             </div>
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+              className="w-full h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
               disabled={changingPin || !pinForm.currentPin || !pinForm.newPin || pinForm.newPin !== pinForm.confirmPin}
             >
               {changingPin ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -1856,8 +1856,8 @@ function ThemePickerSection({
     <ProLock featureKey="customTheme" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-            <Palette className="h-4 w-4 text-violet-600" />
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+            <Palette className="h-4 w-4 text-teal-600" />
             القالب اللوني
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1869,7 +1869,7 @@ function ThemePickerSection({
                 className={cn(
                   "rounded-xl overflow-hidden transition-all duration-200 text-right border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
                   selectedThemeId === theme.id
-                    ? "ring-2 ring-violet-500 shadow-md border-violet-200"
+                    ? "ring-2 ring-teal-500 shadow-md border-teal-200"
                     : "hover:shadow-md",
                 )}
               >
@@ -1972,10 +1972,10 @@ function PriceEditorSection({
     <ProLock featureKey={["customPricing", "serviceToggle"]} title="إدارة الأسعار والخدمات" desc="خصّص أسعار خدماتك بسهولة">
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
-            <DollarSign className="h-4 w-4 text-violet-600" />
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3">
+            <DollarSign className="h-4 w-4 text-teal-600" />
             إدارة الأسعار والخدمات
-            <Badge className="bg-gradient-to-r from-violet-600 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
+            <Badge className="bg-gradient-to-r from-teal-600 to-teal-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
           </h3>
 
           <div className="space-y-2.5">
@@ -2017,7 +2017,7 @@ function PriceEditorSection({
                       <Input
                         value={svc.name}
                         onChange={(e) => updateService(idx, { name: e.target.value })}
-                        className="mt-1 h-10 text-sm rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                        className="mt-1 h-10 text-sm rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                       />
                     </div>
                     <div>
@@ -2026,7 +2026,7 @@ function PriceEditorSection({
                         type="number"
                         value={svc.basePricePerPage}
                         onChange={(e) => updateService(idx, { basePricePerPage: parseInt(e.target.value) || 0 })}
-                        className="mt-1 h-10 text-sm rounded-xl border-slate-200 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+                        className="mt-1 h-10 text-sm rounded-xl border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
                         dir="ltr"
                         min={0}
                       />
@@ -2049,7 +2049,7 @@ function PriceEditorSection({
 
           <Button
             onClick={handleSaveServices}
-            className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
             disabled={saving}
           >
             <Save className="h-4 w-4" />
@@ -2174,8 +2174,8 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-violet-50 flex items-center justify-center mb-4 border border-violet-200/60">
-          <Link2 className="h-8 w-8 text-violet-600" />
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-teal-50 flex items-center justify-center mb-4 border border-teal-200/60">
+          <Link2 className="h-8 w-8 text-teal-600" />
         </div>
         <h2 className="text-xl font-bold text-slate-800">مشاركة متجرك</h2>
         <p className="text-sm text-slate-500 mt-1.5">انشر رابط متجرك ليزوره زبائنك ويقدمون طلباتهم</p>
@@ -2213,8 +2213,8 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-xl bg-violet-50/80 flex items-center justify-center">
-              <QrCode className="h-4 w-4 text-violet-600" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50/80 flex items-center justify-center">
+              <QrCode className="h-4 w-4 text-teal-600" />
             </div>
             <div>
               <h3 className="font-bold text-sm text-slate-800">رمز QR للمتجر</h3>
@@ -2245,7 +2245,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
             ) : (
               <div className="w-48 h-48 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200/60">
                 <div className="text-center">
-                  <div className="animate-spin w-6 h-6 border-2 border-slate-200 border-t-violet-500 rounded-full mx-auto mb-2" />
+                  <div className="animate-spin w-6 h-6 border-2 border-slate-200 border-t-teal-500 rounded-full mx-auto mb-2" />
                   <span className="text-xs text-slate-400">جارٍ توليد الرمز...</span>
                 </div>
               </div>
@@ -2255,21 +2255,21 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       </div>
 
       {/* مشاركة عبر واتساب */}
-      <Button onClick={shareViaWhatsApp} className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white gap-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]">
+      <Button onClick={shareViaWhatsApp} className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white gap-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]">
         <MessageCircle className="h-5 w-5" />
         مشاركة عبر واتساب
       </Button>
 
       {/* رابط الإدارة */}
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ borderWidth: "1.5px", borderStyle: "dashed", borderColor: "#7c3aed" }}>
+      <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ borderWidth: "1.5px", borderStyle: "dashed", borderColor: "#0d7377" }}>
         <div className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-50/80 flex items-center justify-center">
-              <AlertCircle className="h-4 w-4 text-violet-600" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50/80 flex items-center justify-center">
+              <AlertCircle className="h-4 w-4 text-teal-600" />
             </div>
             <div>
               <h3 className="font-bold text-sm text-slate-800">رابط الإدارة (لك أنت فقط)</h3>
-              <p className="text-xs text-violet-600">⚠️ لا تشارك هذا الرابط مع أحد</p>
+              <p className="text-xs text-teal-600">⚠️ لا تشارك هذا الرابط مع أحد</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -2288,9 +2288,9 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       </div>
 
       {/* تعليمات */}
-      <div className="bg-violet-50 rounded-xl p-5 space-y-3 border border-violet-100">
-        <h4 className="font-bold text-sm text-violet-800">📌 كيف تستخدم هذه الأدوات؟</h4>
-        <ul className="text-xs text-violet-700/90 space-y-2">
+      <div className="bg-teal-50 rounded-xl p-5 space-y-3 border border-teal-100">
+        <h4 className="font-bold text-sm text-teal-800">📌 كيف تستخدم هذه الأدوات؟</h4>
+        <ul className="text-xs text-teal-700/90 space-y-2">
           <li className="flex items-start gap-2.5">
             <span className="shrink-0 mt-0.5">✅</span>
             <span><strong>رابط الزبائن:</strong> أرسله لعملائك ليقدموا طلباتهم مباشرة</span>
@@ -2365,7 +2365,7 @@ function MobileOrderCard({
   const borderClass = statusBorderClass[order.status] || "border-l-slate-300";
 
   return (
-    <div className={cn("bg-white rounded-xl border border-slate-200/60 border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-200", borderClass, selected && "ring-2 ring-violet-500 ring-offset-1")}>
+    <div className={cn("bg-white rounded-xl border border-slate-200/60 border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-200", borderClass, selected && "ring-2 ring-teal-500 ring-offset-1")}>
       <button
         onClick={() => { if (selectionMode) { onToggleSelect?.(); return; } setExpanded(!expanded); if (!expanded && onClick) onClick(order); }}
         className="w-full p-4 text-right hover:bg-slate-50 transition-colors duration-200"
@@ -2396,13 +2396,13 @@ function MobileOrderCard({
             <div className="text-xs text-slate-400" dir="ltr">{order.customer.phone}</div>
           </div>
           <div className="text-left shrink-0">
-            <div className="font-bold text-violet-600 text-sm">{formatDA(order.total)}</div>
+            <div className="font-bold text-teal-600 text-sm">{formatDA(order.total)}</div>
             <div className="text-xs text-slate-400">{order.pages}ص × {order.copies}ن</div>
           </div>
         </div>
         <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
           <span>{formatDateTimeAr(order.createdAt)}</span>
-          <span className={cn("flex items-center gap-1 text-violet-500", expanded && "rotate-90", "transition-transform duration-200")}>
+          <span className={cn("flex items-center gap-1 text-teal-500", expanded && "rotate-90", "transition-transform duration-200")}>
             <ChevronLeft className="h-3.5 w-3.5" />
             {expanded ? "إخفاء" : "عرض التفاصيل"}
           </span>
@@ -2429,12 +2429,12 @@ function MobileOrderCard({
             <div>
               <div className="text-xs font-bold text-slate-700 mb-2">ملف الزبون</div>
               <div className="flex items-center gap-2 rounded-xl bg-white shadow-sm border border-slate-200/60 p-2.5">
-                <FileText className="h-4 w-4 text-violet-500 shrink-0" />
+                <FileText className="h-4 w-4 text-teal-500 shrink-0" />
                 <span className="text-xs truncate text-slate-700 flex-1">{order.fileName}</span>
                 {canDownloadFile ? (
                   <Button
                     size="sm"
-                    className="h-7 text-[11px] px-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg shrink-0 transition-all duration-200 active:scale-[0.97]"
+                    className="h-7 text-[11px] px-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg shrink-0 transition-all duration-200 active:scale-[0.97]"
                     onClick={(e) => { e.stopPropagation(); window.open(`/api/orders/${order.id}/file?shopId=${shopId}`, "_blank"); }}
                   >
                     <Download className="h-3 w-3 ml-1" />
@@ -2460,7 +2460,7 @@ function MobileOrderCard({
               <div className="text-xs font-bold text-slate-700 mb-2">الوسوم</div>
               <div className="flex flex-wrap gap-1.5">
                 {order.tags.map((tag, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200/60">
+                  <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60">
                     <Tag className="h-2.5 w-2.5" />
                     {tag}
                   </span>
@@ -2543,7 +2543,7 @@ function ChangeStatusSelect({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="text-sm h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]">
+        <Button size="sm" className="text-sm h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]">
           <MoreHorizontal className="h-3.5 w-3.5" />
           تغيير الحالة
         </Button>

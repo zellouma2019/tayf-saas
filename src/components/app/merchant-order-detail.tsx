@@ -455,7 +455,7 @@ export function MerchantOrderDetail({
                     size="sm"
                     onClick={() => handlePrintingAction("start")}
                     disabled={printingAction !== null}
-                    className="h-9 text-xs bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+                    className="h-9 text-xs bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
                   >
                     <Printer className="h-3.5 w-3.5 ml-1" />
                     {printingAction === "start" ? "جارٍ..." : "بدأ الطباعة"}
@@ -583,7 +583,7 @@ export function MerchantOrderDetail({
 
           {/* ===== معلومات العميل ===== */}
           <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
               معلومات العميل
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -638,7 +638,7 @@ export function MerchantOrderDetail({
 
           {/* ===== مواصفات الطباعة ===== */}
           <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
               مواصفات الطباعة
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -668,7 +668,7 @@ export function MerchantOrderDetail({
 
           {/* ===== الكميات والأسعار ===== */}
           <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
               الكميات والأسعار
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -747,7 +747,7 @@ export function MerchantOrderDetail({
 
           {/* ===== ملاحظات إدارية ===== */}
           <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
               ملاحظات إدارية
             </h3>
             <Textarea
@@ -760,7 +760,7 @@ export function MerchantOrderDetail({
 
           {/* ===== الوسوم ===== */}
           <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
               <Tag className="h-3.5 w-3.5" />
               الوسوم
             </h3>
@@ -773,7 +773,7 @@ export function MerchantOrderDetail({
                   className={cn(
                     "cursor-pointer select-none text-xs rounded-lg transition-all duration-150",
                     editTags.includes(tag)
-                      ? "bg-violet-600 hover:bg-violet-700 text-white border-violet-600"
+                      ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50",
                   )}
                   onClick={() => togglePresetTag(tag)}
@@ -812,13 +812,13 @@ export function MerchantOrderDetail({
                 {editTags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200/60"
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="hover:text-violet-900 transition-colors"
+                      className="hover:text-teal-900 transition-colors"
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -831,11 +831,11 @@ export function MerchantOrderDetail({
           {/* ===== معلومات الملف ===== */}
           {order.fileName && (
             <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-              <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
                 الملف المرفق
               </h3>
               <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200/60 p-3">
-                <FileText className="h-8 w-8 text-violet-500 shrink-0" />
+                <FileText className="h-8 w-8 text-teal-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate text-slate-800">{order.fileName}</div>
                   <div className="text-xs text-slate-400">
@@ -858,7 +858,7 @@ export function MerchantOrderDetail({
 
           {/* ===== التسليم ===== */}
           <section className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
               التسليم
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -884,7 +884,7 @@ export function MerchantOrderDetail({
               className="flex items-center gap-2 w-full text-right"
               onClick={() => setShowAudit(!showAudit)}
             >
-              <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3 mb-0">
+              <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-teal-500 pr-3 mb-0">
                 سجل التغييرات
                 {auditLogs.length > 0 && (
                   <span className="text-xs font-normal text-slate-400">
