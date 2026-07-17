@@ -1853,13 +1853,12 @@ function ThemePickerSection({
   }
 
   return (
-    <ProLock featureKey="customLogo" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
+    <ProLock featureKey="themeCustomization" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
       <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
           <h3 className="text-sm font-semibold flex items-center gap-2.5 text-slate-800 border-r-4 border-violet-500 pr-3">
             <Palette className="h-4 w-4 text-violet-600" />
             القالب اللوني
-            <Badge className="bg-gradient-to-r from-violet-600 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {SHOP_THEMES.map((theme) => (

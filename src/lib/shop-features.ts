@@ -405,6 +405,8 @@ export function isFeatureEnabled(
   features: ShopFeatures | null | undefined,
   key: FeatureKey,
 ): boolean {
+  // الميزات المجانية مفعّلة دائماً
+  if (isFeatureFree(key)) return true;
   if (!features) return false;
   return features[key] === true;
 }
@@ -415,6 +417,8 @@ export function isFeatureEnabledStr(
   featureId: string,
   plan: string,
 ): boolean {
+  // الميزات المجانية مفعّلة دائماً
+  if (isFeatureFree(featureId as FeatureKey)) return true;
   if (!featuresJson) return false;
   const parsed = parseFeatures(featuresJson, plan);
   return parsed[featureId] === true;
