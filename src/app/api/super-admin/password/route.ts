@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { ensureSchema } from "@/lib/ensure-schema";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تغيير كلمة مرور المدير الأول
@@ -9,7 +8,7 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureSchema();
+    ensureDb(); // لا ننتظر — التهيئة تحدث بالتوازي
 
     const { currentPassword, newPassword } = await req.json();
 
@@ -17,9 +16,9 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "كلمة المرور الجديدة مطلوبة" }, { status: 400 });
     }
 
-    if (newPassword.length < 10) {
+    if (newPassword.length < 6) {
       return NextResponse.json(
-        { error: "كلمة المرور يجب أن تكون 10 أحرف على الأقل" },
+        { error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" },
         { status: 400 },
       );
     }
@@ -57,7 +56,7 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureSchema();
+    ensureDb(); // لا ننتظر
 
     const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     const isDefault = !admin || !admin.password || admin.password === "Admin@2025";

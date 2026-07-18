@@ -1,17 +1,12 @@
+// تهيئة قاعدة البيانات — مباشرة بدون طلب HTTP
+// يستخدم ensureDb من db.ts الذي ينشئ الجداول عبر SQL مباشرة
+import { ensureDb } from "@/lib/db";
+
 export async function ensureSchema(): Promise<boolean> {
   try {
-    const { db } = await import("@/lib/db");
-    await db.shop.count();
+    await ensureDb();
     return true;
   } catch {
-    try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
-      return res.ok;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }

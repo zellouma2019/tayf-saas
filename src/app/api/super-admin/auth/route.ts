@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { ensureSchema } from "@/lib/ensure-schema";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تسجيل دخول المدير الأول
@@ -9,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureSchema();
+    ensureDb(); // لا ننتظر — التهيئة تحدث بالتوازي
 
     const { password } = await req.json();
     if (!password) {
