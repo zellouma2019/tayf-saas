@@ -54,6 +54,7 @@ interface AdminStats {
 
 interface AdminAnalyticsProps {
   stats: AdminStats | null;
+  orders?: PrintOrderLite[];
 }
 
 interface MonthBucket {
@@ -198,11 +199,17 @@ function PieTooltip({
 }
 
 // ===== المكوّن الرئيسي =====
-export function AdminAnalytics({ stats }: AdminAnalyticsProps) {
+export function AdminAnalytics({ stats, orders: propOrders }: AdminAnalyticsProps) {
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // استخدم الطلبات الممررة كـ prop إذا وجدت، وإلا اجلبها
   useEffect(() => {
+    if (propOrders && propOrders.length > 0) {
+      setOrders(propOrders);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     shopApi("/api/orders?limit=10000&noPreview=true")
       .then((r) => r.json())
@@ -216,7 +223,7 @@ export function AdminAnalytics({ stats }: AdminAnalyticsProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [propOrders]);
 
   const analytics = useMemo(() => computeAnalytics(orders), [orders]);
 

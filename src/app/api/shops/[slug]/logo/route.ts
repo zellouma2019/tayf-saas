@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
-import fs from "fs";
-import path from "path";
 
 export const maxDuration = 15;
 
@@ -27,48 +25,26 @@ export async function POST(
       return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 403 });
     }
 
-    // استخراج البيانات من Data URL
+    // استخراج البيانات من Data URL للتحقق من الصيغة والحجم
     const matches = logoDataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
     if (!matches) {
       return NextResponse.json({ error: "صيغة الصورة غير صالحة" }, { status: 400 });
     }
 
-    const ext = matches[1] === "jpeg" ? "jpg" : matches[1];
-    const base64Data = matches[2];
-    const buffer = Buffer.from(base64Data, "base64");
+    const buffer = Buffer.from(matches[2], "base64");
 
     // حد أقصى 500KB
     if (buffer.length > 500 * 1024) {
       return NextResponse.json({ error: "حجم الصورة كبير جداً (الحد 500 ك.ب)" }, { status: 400 });
     }
 
-    // حفظ الملف
-    const uploadsDir = path.join(process.cwd(), "uploads", "logos");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    const fileName = `logo_${slug}_${Date.now()}.${ext}`;
-    const filePath = path.join(uploadsDir, fileName);
-
-    // حذف الشعار القديم إذا كان ملفاً محلياً
-    if (shop.logoUrl && shop.logoUrl.startsWith("/uploads/logos/")) {
-      const oldPath = path.join(process.cwd(), shop.logoUrl);
-      if (fs.existsSync(oldPath)) {
-        try { fs.unlinkSync(oldPath); } catch {}
-      }
-    }
-
-    fs.writeFileSync(filePath, buffer);
-    const logoUrl = `/uploads/logos/${fileName}`;
-
-    // تحديث المتجر
+    // تخزين Data URL مباشرة في قاعدة البيانات (يعمل على Vercel وكل البيئات)
     await db.shop.update({
       where: { slug },
-      data: { logoUrl },
+      data: { logoUrl: logoDataUrl },
     });
 
-    return NextResponse.json({ success: true, logoUrl });
+    return NextResponse.json({ success: true, logoUrl: logoDataUrl });
   } catch (e) {
     console.error('[shops/[slug]/logo]', e);
     return NextResponse.json({ error: "فشل رفع الشعار" }, { status: 500 });

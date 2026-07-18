@@ -32,14 +32,15 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
     ? { ...DEFAULT_INTRO, ...introSettings }
     : DEFAULT_INTRO;
 
-  // إذا كان الإنترو معطّل، أنهِ فوراً
-  if (!settings.enabled) {
-    return null;
-  }
-
   const duration = settings.duration || 4200;
+  const enabled = settings.enabled;
 
   useEffect(() => {
+    if (!enabled) {
+      onFinish();
+      return;
+    }
+
     const timers: ReturnType<typeof setTimeout>[] = [];
     timers.push(setTimeout(() => setPhase(1), 200));
     timers.push(setTimeout(() => setPhase(2), Math.min(1000, duration * 0.24)));
@@ -47,7 +48,10 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
     timers.push(setTimeout(() => setPhase(4), duration - 1000));
     timers.push(setTimeout(() => onFinish(), duration));
     return () => timers.forEach(clearTimeout);
-  }, [duration, onFinish]);
+  }, [enabled, duration, onFinish]);
+
+  // إذا كان الإنترو معطّل، لا تعرض شيئاً
+  if (!enabled) return null;
 
   const accent = settings.accentColor || "#D4AF37";
   const bg = settings.bgColor || "#1a1a1a";

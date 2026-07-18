@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { shopApi } from "@/lib/shop-api";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -67,17 +68,32 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { OrderDetailsRow } from "@/components/app/order-details-row";
 import { OrderDetailModal } from "@/components/app/order-detail-modal";
-import { AdminSettings } from "@/components/app/admin-settings";
-import { AdminAnalytics } from "@/components/app/admin-analytics";
-import { AdminCustomers } from "@/components/app/admin-customers";
-import { KanbanBoard } from "@/components/app/kanban-board";
-import { AdminExpenses } from "@/components/app/admin-expenses";
-import { AdminShortcuts } from "@/components/app/admin-shortcuts";
+import { PageSkeleton } from "@/components/app/page-skeleton";
 import {
   translateOptionKey,
   translateOptionValue,
   HIDDEN_OPTION_KEYS,
 } from "@/lib/option-translations";
+
+// Dynamic imports for heavy tab components
+const AdminSettings = dynamic(() => import("@/components/app/admin-settings").then(m => ({ default: m.AdminSettings })), {
+  ssr: false, loading: () => <PageSkeleton />,
+});
+const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then(m => ({ default: m.AdminAnalytics })), {
+  ssr: false, loading: () => <PageSkeleton />,
+});
+const AdminCustomers = dynamic(() => import("@/components/app/admin-customers").then(m => ({ default: m.AdminCustomers })), {
+  ssr: false, loading: () => <PageSkeleton />,
+});
+const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then(m => ({ default: m.KanbanBoard })), {
+  ssr: false, loading: () => <PageSkeleton />,
+});
+const AdminExpenses = dynamic(() => import("@/components/app/admin-expenses").then(m => ({ default: m.AdminExpenses })), {
+  ssr: false, loading: () => <PageSkeleton />,
+});
+const AdminShortcuts = dynamic(() => import("@/components/app/admin-shortcuts").then(m => ({ default: m.AdminShortcuts })), {
+  ssr: false, loading: () => <PageSkeleton />,
+});
 
 interface Notification {
   id: string;
@@ -141,7 +157,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(true);
   const adminCode = useAppStore((s) => s.adminCode);
-  const adminHeaders: Record<string, string> = { "x-admin-code": adminCode };
+  const adminHeadersRef = useRef<Record<string, string>>({ "x-admin-code": adminCode });
+  useEffect(() => { adminHeadersRef.current = { "x-admin-code": adminCode }; }, [adminCode]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -154,7 +171,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   const [detailOrder, setDetailOrder] = useState<PrintOrderLite | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotif, setShowNotif] = useState(false);
-  const [lastCheck, setLastCheck] = useState(() => new Date().toISOString());
+  const [lastCheck] = useState(() => new Date().toISOString());
+  const lastCheckRef = useRef(lastCheck);
   const notifRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState("orders");
@@ -163,8 +181,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   useEffect(() => {
     async function fetchNotifs() {
       try {
-        const res = await fetch(`/api/notifications?since=${encodeURIComponent(lastCheck)}`, {
-          headers: adminHeaders,
+        const res = await fetch(`/api/notifications?since=${encodeURIComponent(lastCheckRef.current)}`, {
+          headers: adminHeadersRef.currentRef.current,
         });
         if (res.ok) {
           const data = await res.json();
@@ -173,7 +191,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             const fresh = (data.notifications as Notification[]).filter((n) => !ids.has(n.id));
             return [...fresh, ...prev].slice(0, 30);
           });
-          setLastCheck(new Date().toISOString());
+          lastCheckRef.current = new Date().toISOString();
         }
       } catch {
         /* silent */
@@ -182,7 +200,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     fetchNotifs();
     const interval = setInterval(fetchNotifs, 30_000);
     return () => clearInterval(interval);
-  }, [lastCheck]);
+  }, []);
 
   // Close notification dropdown on outside click
   useEffect(() => {
@@ -200,7 +218,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   async function exportXLSX() {
     setExporting(true);
     try {
-      const res = await shopApi("/api/orders/export", { method: "POST", headers: adminHeaders });
+      const res = await shopApi("/api/orders/export", { method: "POST", headers: adminHeadersRef.current });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -224,7 +242,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   // ===== TanStack Query: إحصائيات مع كاش تلقائي =====
   const { data: queryStats } = useQuery({
     queryKey: ["admin-stats"],
-    queryFn: () => shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
+    queryFn: () => shopApi("/api/admin/stats", { headers: adminHeadersRef.current }).then((r) => r.json()),
     staleTime: 15 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -237,7 +255,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   function loadAll() {
     setLoading(true);
     Promise.all([
-      shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
+      shopApi("/api/admin/stats", { headers: adminHeadersRef.current }).then((r) => r.json()).catch(() => null),
       shopApi("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
       .then(([s, o]) => {
@@ -295,7 +313,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     try {
       const res = await fetch(`/api/orders/${order.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...adminHeaders },
+        headers: { "Content-Type": "application/json", ...adminHeadersRef.current },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error("فشل التحديث");
@@ -303,7 +321,6 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         description: `${order.reference} → ${STATUS_META[status].label}`,
       });
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
-      loadAll();
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
     }
@@ -361,7 +378,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         ids.map((id) =>
           fetch(`/api/orders/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json", ...adminHeaders },
+            headers: { "Content-Type": "application/json", ...adminHeadersRef.current },
             body: JSON.stringify({ action: "status", status }),
           }),
         ),
@@ -381,7 +398,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     setDeleting(true);
     try {
       const ids = Array.from(selectedIds);
-      await Promise.all(ids.map((id) => fetch(`/api/orders/${id}`, { method: "DELETE", headers: adminHeaders })));
+      await Promise.all(ids.map((id) => fetch(`/api/orders/${id}`, { method: "DELETE", headers: adminHeadersRef.current })));
       toast.success("تم حذف الطلبات المحددة", { description: `${ids.length} طلب` });
       setSelectedIds(new Set());
       loadAll();
@@ -892,7 +909,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
         {/* ===== تبويب التحليلات ===== */}
         <TabsContent value="analytics" className="mt-4">
-          <AdminAnalytics stats={stats} />
+          <AdminAnalytics stats={stats} orders={orders} />
         </TabsContent>
 
         {/* ===== تبويب العملاء ===== */}
