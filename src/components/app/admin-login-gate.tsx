@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lock, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { Lock, Eye, EyeOff, RefreshCw, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -11,13 +11,14 @@ import { markAuthenticated } from "@/lib/admin-utils";
 
 export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [checking, setChecking] = useState(true);
   const [isFirstSetup, setIsFirstSetup] = useState(false);
 
-  // التحقق: هل هذه أول مرة (لم يتم تعيين كلمة مرور بعد)؟
   useEffect(() => {
     fetch("/api/super-admin/password")
       .then((r) => r.json())
@@ -25,39 +26,39 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
         const first = d.isDefault === true;
         setIsFirstSetup(first);
         setChecking(false);
-        // أول مرة: دخول مباشر تلقائي بدون عرض بوابة
-        if (first) {
-          markAuthenticated();
-          onUnlock();
-          setTimeout(() => {
-            toast.warning("أضف كلمة مرور", {
-              description: "اذهب إلى الإعدادات ← الأمان والفريق وقم بتعيين كلمة مرور",
-              duration: 8000,
-            });
-          }, 600);
-        }
       })
       .catch(() => setChecking(false));
   }, []);
 
+  async function handleSetupSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password.trim() || !confirmPassword.trim() || verifying) return;
+    if (password.trim().length < 6) { setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); return; }
+    if (password.trim() !== confirmPassword.trim()) { setError("كلمتا المرور غير متطابقتين"); return; }
+    setVerifying(true);
+    setError("");
+    try {
+      const res = await fetch("/api/super-admin/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: password.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        markAuthenticated();
+        toast.success("تم إنشاء كلمة المرور بنجاح");
+        onUnlock();
+      } else {
+        setError(data.error || "فشل إنشاء كلمة المرور");
+      }
+    } catch { setError("خطأ في الاتصال"); } finally { setVerifying(false); }
+  }
+
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
-
-    // أول مرة: دخول مباشر بدون كلمة مرور
-    if (isFirstSetup) {
-      markAuthenticated();
-      onUnlock();
-      setTimeout(() => {
-        toast.warning("أضف كلمة مرور", {
-          description: "اذهب إلى الإعدادات ← الأمان والفريق وقم بتعيين كلمة مرور",
-          duration: 8000,
-        });
-      }, 500);
-      return;
-    }
-
     if (!password.trim() || verifying) return;
     setVerifying(true);
+    setError("");
     try {
       const res = await fetch("/api/super-admin/auth", {
         method: "POST",
@@ -68,66 +69,77 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
       if (res.ok && data.success) {
         markAuthenticated();
         onUnlock();
+      } else if (data.requiresSetup) {
+        setIsFirstSetup(true);
+        toast.info("يرجى إنشاء كلمة مرور جديدة");
       } else {
-        setError(true);
-        toast.error("كلمة المرور غير صحيحة");
+        setError(data.error || "كلمة المرور غير صحيحة");
       }
-    } catch {
-      setError(true);
-      toast.error("خطأ في الاتصال");
-    } finally {
-      setVerifying(false);
-    }
+    } catch { setError("خطأ في الاتصال"); } finally { setVerifying(false); }
   }
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50/50 via-slate-50 to-cyan-50/30 flex items-center justify-center" dir="rtl">
-        <RefreshCw className="h-6 w-6 text-teal-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center" dir="rtl">
+        <RefreshCw className="h-6 w-6 text-violet-500 animate-spin" />
       </div>
     );
   }
 
-  // بعد تعيين كلمة مرور: عرض حقل كلمة المرور
+  if (isFirstSetup) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-slate-50 to-indigo-50 flex items-center justify-center p-4" dir="rtl">
+        <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-violet-200/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
+        <Card className="w-full max-w-sm shadow-2xl border-slate-200/40 backdrop-blur-sm bg-background/80 relative z-10">
+          <CardContent className="pt-8 pb-6 px-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-4 shadow-lg shadow-violet-300/40">
+                <ShieldCheck className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="text-lg font-bold text-slate-800">إعداد كلمة المرور</h1>
+              <p className="text-sm text-slate-400 mt-1">مرحباً بك في طيف — أنشئ كلمة مرور لحساب المدير</p>
+            </div>
+            <form onSubmit={handleSetupSubmit} className="space-y-4">
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="كلمة المرور الجديدة" className={cn("h-11 text-sm pe-10", error && "border-rose-300 focus-visible:ring-rose-500")} autoFocus />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><Eye className={showPassword ? "hidden h-4 w-4" : "h-4 w-4"} /><EyeOff className={showPassword ? "h-4 w-4" : "hidden h-4 w-4"} /></button>
+              </div>
+              <div className="relative">
+                <Input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }} placeholder="تأكيد كلمة المرور" className={cn("h-11 text-sm pe-10", error && "border-rose-300 focus-visible:ring-rose-500")} />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><Eye className={showConfirmPassword ? "hidden h-4 w-4" : "h-4 w-4"} /><EyeOff className={showConfirmPassword ? "h-4 w-4" : "hidden h-4 w-4"} /></button>
+              </div>
+              {error && <p className="text-sm text-rose-500 text-center">{error}</p>}
+              <Button type="submit" className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-200" disabled={verifying || !password.trim() || !confirmPassword.trim()}>
+                {verifying ? <RefreshCw className="h-4 w-4 animate-spin" /> : "إنشاء كلمة المرور"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50/50 via-slate-50 to-emerald-50/30 flex items-center justify-center p-4" dir="rtl">
-      {/* Decorative blob */}
-      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-cyan-200/20 rounded-full blur-3xl pointer-events-none" />
-      {/* Decorative grid pattern */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #0d7377 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-      <Card className="w-full max-w-sm shadow-2xl border-slate-200/40 dark:border-slate-700/40 backdrop-blur-sm bg-background/80 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-slate-50 to-indigo-50 flex items-center justify-center p-4" dir="rtl">
+      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-violet-200/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
+      <Card className="w-full max-w-sm shadow-2xl border-slate-200/40 backdrop-blur-sm bg-background/80 relative z-10">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center mb-6">
-            <img src="/brand/tayf-logo.png" alt="طيف" className="w-16 h-16 mx-auto mb-4 animate-float dark:hidden" />
-            <img src="/brand/tayf-logo-dark.png" alt="طيف" className="w-16 h-16 mx-auto mb-4 animate-float hidden dark:block" />
-            <h1 className="text-lg font-bold text-slate-800"><span className="animate-fade-in inline-block">طيف</span></h1>
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-4 shadow-lg shadow-violet-300/40">
+              <Lock className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-slate-800">طيف</h1>
             <p className="text-sm text-slate-400 mt-1">منصة إدارة المطابع</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(false); }}
-                placeholder="كلمة المرور"
-                className={cn("h-11 text-sm pe-10", error && "border-rose-300 focus-visible:ring-rose-500")}
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="كلمة المرور" className={cn("h-11 text-sm pe-10", error && "border-rose-300 focus-visible:ring-rose-500")} autoFocus />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><Eye className={showPassword ? "hidden h-4 w-4" : "h-4 w-4"} /><EyeOff className={showPassword ? "h-4 w-4" : "hidden h-4 w-4"} /></button>
             </div>
-            <Button
-              type="submit"
-              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200"
-              disabled={verifying || !password.trim()}
-            >
+            {error && <p className="text-sm text-rose-500 text-center">{error}</p>}
+            <Button type="submit" className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-200" disabled={verifying || !password.trim()}>
               {verifying ? <RefreshCw className="h-4 w-4 animate-spin" /> : "دخول"}
             </Button>
           </form>

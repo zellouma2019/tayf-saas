@@ -5,8 +5,8 @@ import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   RotateCcw, LayoutGrid, Settings, Lock, Menu, Download, AlertCircle,
+  LogOut,
 } from "lucide-react";
-// XLSX dynamically imported on demand — not in the initial bundle
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -38,13 +38,36 @@ import {
 } from "@/lib/admin-utils";
 import { LoginGate } from "@/components/app/admin-login-gate";
 import { ShopManageCard } from "@/components/app/admin-shop-card";
-import { CreateShopDialog } from "@/components/app/admin-create-shop";
-import { SettingsTab } from "@/components/app/admin-settings-tab";
-import { SecurityTab } from "@/components/app/admin-security-tab";
 import dynamic from "next/dynamic";
+
+function handleAdminLogout() {
+  localStorage.removeItem("sa_auth");
+  window.location.reload();
+}
+let XLSXModule: typeof import("xlsx") | null = null;
+async function getXLSX() {
+  if (!XLSXModule) XLSXModule = await import("xlsx");
+  return XLSXModule;
+}
+
 const OverviewTab = dynamic(
   () => import("@/components/app/admin-overview-tab").then((m) => ({ default: m.OverviewTab })),
   { ssr: false, loading: () => <div className="p-6"><div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => (<div key={i} className="animate-pulse bg-slate-200 rounded-xl p-5"><div className="flex items-start justify-between"><div className="space-y-2.5 flex-1"><div className="h-8 bg-slate-300/60 rounded-lg w-24" /><div className="h-3 bg-slate-300/40 rounded w-28" /></div><div className="w-11 h-11 rounded-xl bg-slate-300/50" /></div></div>))}</div></div> },
+);
+
+const SettingsTab = dynamic(
+  () => import("@/components/app/admin-settings-tab").then((m) => ({ default: m.SettingsTab })),
+  { ssr: false, loading: () => <div className="p-8 text-center text-slate-400 text-sm">جارٍ التحميل...</div> },
+);
+
+const SecurityTab = dynamic(
+  () => import("@/components/app/admin-security-tab").then((m) => ({ default: m.SecurityTab })),
+  { ssr: false, loading: () => <div className="p-8 text-center text-slate-400 text-sm">جارٍ التحميل...</div> },
+);
+
+const CreateShopDialog = dynamic(
+  () => import("@/components/app/admin-create-shop").then((m) => ({ default: m.CreateShopDialog })),
+  { ssr: false, loading: () => <div className="p-8 text-center text-slate-400 text-sm">جارٍ التحميل...</div> },
 );
 
 export default function SuperAdminPage() {
@@ -125,7 +148,7 @@ export default function SuperAdminPage() {
   }
 
   async function exportToExcel() {
-    const XLSX = await import("xlsx");
+    const XLSX = await getXLSX();
     const rows = filteredOrders.map((o) => ({
       "رقم الطلب": o.reference, "المتجر": o.shopName, "الخدمة": o.serviceName,
       "العميل": o.customer.name, "الهاتف": o.customer.phone, "المجموع": o.total,
@@ -183,6 +206,12 @@ export default function SuperAdminPage() {
         collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)}
         logo={<div className="flex items-center gap-3"><img src="/tayf-logo-sm.png" alt="طيف" className="w-9 h-9 rounded-xl shrink-0 dark:hidden" /><img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-9 h-9 rounded-xl shrink-0 hidden dark:block" />{!sidebarCollapsed && <div className="min-w-0"><div className="font-bold text-sm text-white truncate">طيف</div><div className="text-[10px] text-slate-400 truncate">لوحة التحكم</div></div>}</div>}
+        footer={
+          <button onClick={handleAdminLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+            <LogOut className="h-4 w-4" />
+            تسجيل الخروج
+          </button>
+        }
       />
       <div className="flex-1 bg-slate-50 overflow-auto">
         <header className="bg-background border-b border-slate-200 dark:border-slate-700 h-16 sticky top-0 z-30 px-4 sm:px-6">
