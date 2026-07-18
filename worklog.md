@@ -93,3 +93,31 @@ Stage Summary:
 - Root cause was: `ensureDb()` without `await` in 38 API routes
 - Vercel Git webhook was broken (builds stuck in PENDING) - bypassed via CLI deploy
 - Cleanup: deleted accidental my-project, pushed vercel.json fix (commit 027cc54)
+
+---
+Task ID: 4
+Agent: main
+Task: Fix 3 issues: admin colors, merchant preview refresh, footer duplicate logo
+
+Work Log:
+- Investigated admin color system: CSS vars defined but never consumed by components (all hardcoded teal-*)
+- Investigated merchant preview: iframe has isolated React context, 150s HTTP cache, no refresh on save
+- Investigated footer: Printer icon in col 1 + Tayf logo in bottom bar = visual duplication
+
+Fixes Applied (commit a6307b2):
+1. **Footer logo** (app-shell.tsx): Footer col 1 now uses shopLogoUrl with Printer fallback, matching header
+2. **Merchant preview** (merchant-dashboard.tsx): Added previewKey state + onSaved callback → iframe remounts on save
+3. **Cache reduction** (shops/[slug]/route.ts): Cache-Control from 150s to 5s max
+4. **Admin colors** (globals.css + page.tsx): Added 12 da-* utility classes using CSS vars, loads accent on page init, replaced 12 hardcoded teal-* classes in page.tsx
+
+Deployment:
+- Vercel token expired during deploy, switched to Git webhook (now working after user reconnection)
+- v4 test confirmed deployment successful (health API returns ver:4)
+- All 4 shops have no contact info set in DB yet (user needs to add via merchant dashboard)
+
+Stage Summary:
+- All 3 fixes deployed and live
+- Admin color picker now persists across page loads and applies to key UI elements
+- Merchant edits appear in preview iframe immediately (forced remount) and in customer view within 5s
+- Footer shows shop logo when available, no more visual duplication
+- Vercel Git webhook is now functional (no longer need CLI deploy)
