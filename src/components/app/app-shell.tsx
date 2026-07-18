@@ -114,6 +114,16 @@ export function AppShell() {
     }
   }, [shop?.settings]);
 
+  // Parse full settings (including intro) for components that need it
+  const shopSettingsParsed = useMemo((): AppSettings | null => {
+    try {
+      const raw = (shop?.settings as string) || "{}";
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }, [shop?.settings]);
+
   const countryData = getCountry(shopCountry);
   const displayBusinessName = shopSettings.businessName || shopName;
   const displayTagline = shopSettings.tagline || "";
@@ -208,7 +218,7 @@ export function AppShell() {
 
   return (
     <>
-    {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
+    {showIntro && <Intro onFinish={() => setShowIntro(false)} introSettings={shopSettingsParsed?.intro ?? null} />}
       <div
         className="min-h-screen flex flex-col"
         style={{

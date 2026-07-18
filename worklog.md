@@ -121,3 +121,42 @@ Stage Summary:
 - Merchant edits appear in preview iframe immediately (forced remount) and in customer view within 5s
 - Footer shows shop logo when available, no more visual duplication
 - Vercel Git webhook is now functional (no longer need CLI deploy)
+---
+Task ID: 1
+Agent: Main
+Task: Fix logo upload failure, dashboard delays, and intro screen timing
+
+Work Log:
+- Analyzed screenshot showing "لا يمكن تحميل الملف، حاول مرة أخرى" error on logo upload
+- Investigated logo upload API route: `src/app/api/shops/[slug]/logo/route.ts`
+- Found root cause: API writes to filesystem (`fs.writeFileSync`) which fails on Vercel (read-only filesystem)
+- Also found that even if write succeeded, the stored URL `/uploads/logos/...` would 404 (no serving route)
+- Fixed by storing logo as data URL directly in DB (no filesystem needed, works on Vercel)
+
+- Investigated dashboard tab switching delays
+- Found 6 performance issues across merchant-dashboard.tsx and admin-panel.tsx
+- Fixed CRITICAL: `statusFilter` in `loadAll` useCallback deps caused full re-fetch on every filter click
+- Fixed CRITICAL: `changeStatus` called `loadAll()` after optimistic update (2 extra API calls per status change)
+- Fixed HIGH: admin-panel.tsx had no dynamic imports - all 6 heavy components loaded upfront (~200KB+)
+- Fixed HIGH: AdminAnalytics fetched 10K orders independently; now accepts orders as prop
+- Fixed MEDIUM: Notification polling had `lastCheck` in useEffect deps causing duplicate fetches
+- Fixed adminHeaders recreated every render - now uses ref
+
+- Fixed intro screen timing issue from previous session
+- Intro now receives settings from shop data directly (no separate API call)
+- Eliminates 1-3 second delay where shop content shows before intro overlay
+
+Stage Summary:
+- Logo upload: Root cause fixed (data URL in DB instead of filesystem)
+- Dashboard performance: 6 issues fixed, should feel significantly faster
+- Intro timing: Eliminated delay by removing API call
+- Vercel deployment BLOCKED: Token SAML scope "tona1" requires re-authentication, API returns 403
+- All code passes lint with 0 errors, dev server runs successfully
+
+Files changed:
+- src/app/api/shops/[slug]/logo/route.ts (rewritten)
+- src/components/app/intro.tsx (rewritten)
+- src/components/app/app-shell.tsx (added shopSettingsParsed, introSettings prop)
+- src/components/app/merchant-dashboard.tsx (loadAll deps fix, changeStatus fix)
+- src/components/app/admin-panel.tsx (dynamic imports, notification fix, changeStatus fix, adminHeaders ref)
+- src/components/app/admin-analytics.tsx (accept orders prop)

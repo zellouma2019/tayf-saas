@@ -409,7 +409,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         if (!r.ok) throw new Error(`stats: ${r.status}`);
         return r.json();
       }),
-      fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`).then((r) => {
+      fetch(`/api/orders?shopId=${shopId}`).then((r) => {
         if (!r.ok) throw new Error(`orders: ${r.status}`);
         return r.json();
       }),
@@ -427,7 +427,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         setLoading(false);
         refreshShop();
       });
-  }, [shopId, statusFilter, refreshShop]);
+  }, [shopId, refreshShop]);
 
   useEffect(() => {
     if (unlocked) loadAll();
@@ -483,7 +483,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         description: `${order.reference} → ${STATUS_META[status].label}`,
       });
       setRawOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
-      loadAll();
+      // تحديث الإحصائيات فقط بدون إعادة تحميل كل الطلبات
+      fetch(`/api/admin/stats?shopId=${shopId}`)
+        .then((r) => r.json())
+        .then((s) => setStats(s))
+        .catch(() => {});
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
     }
@@ -863,7 +867,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
               {/* التحليلات */}
               <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
-                <AdminAnalytics stats={stats} shopId={shopId} />
+                <AdminAnalytics stats={stats} orders={rawOrders} shopId={shopId} />
               </div>
             </div>
           )}
