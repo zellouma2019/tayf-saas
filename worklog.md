@@ -363,3 +363,24 @@ Stage Summary:
 - RESULT: 1,300x faster API responses (34s → 0.026s locally)
 - BLOCKER: Vercel auto-deploy not triggering — user needs to check Vercel dashboard
   and manually trigger "Redeploy" or reconnect GitHub integration
+---
+Task ID: 1-4
+Agent: Main Coordinator
+Task: Fix security vulnerabilities, optimize performance, remove language selector, prepare business plan
+
+Work Log:
+- Identified and fixed CRITICAL security bug: super admin auto-authenticated on first visit (anyone could access admin panel)
+- Created dedicated /verify-pin POST endpoint (was using PUT which mutated shop data)
+- Added 7-day session persistence for both admin and merchant dashboards
+- Added logout buttons to both dashboards
+- Lazy-loaded xlsx (~500KB) and made AppShell, SettingsTab, SecurityTab, CreateShopDialog dynamic imports
+- Created shared ensure-schema.ts module
+- Removed language selector from merchant settings and shop creation
+- Prepared comprehensive business plan with pricing for Arab market
+
+Stage Summary:
+- Security: No more auto-auth, dedicated verify-pin, session persistence, logout
+- Performance: ~1MB+ removed from initial bundle
+- UX: Arabic-only, country+currency selection
+- Business: 3 pricing tiers proposed (500 DZD/mo basic, 1000 DZD/mo premium)
+- Commit: fcf9c0b pushed to GitHub
