@@ -83,7 +83,14 @@ export function AppShell() {
   const [footerOpen, setFooterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { shop, hasFeature } = useShop();
-  const shopTheme = getTheme(shop?.themeId);
+  // تحميل القالب اللوني مع تجاوز primaryColor إن وُجد
+  const baseTheme = getTheme(shop?.themeId);
+  const shopTheme = useMemo(() => {
+    if (shop?.primaryColor) {
+      return { ...baseTheme, accent: shop.primaryColor, footerIcon: shop.primaryColor };
+    }
+    return baseTheme;
+  }, [baseTheme, shop?.primaryColor]);
   // تحليل إعدادات المتجر (services مأخوذة من shop.settings JSON)
   const shopServices = useMemo(() => {
     try {
@@ -422,7 +429,7 @@ export function AppShell() {
               )}
               {view === "admin" && (
                 <div key="view-admin" className="animate-in fade-in duration-200">
-                  <AdminPanel key={refreshKey} onRefresh={incrementRefresh} />
+                  <AdminPanel onRefresh={incrementRefresh} />
                 </div>
               )}
             </Suspense>
@@ -578,7 +585,10 @@ export function AppShell() {
 
                 <div className="mt-8 pt-6 border-t border-[var(--shop-footer-border)] text-center text-xs text-neutral-500">
                   © {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة
-                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1"><img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" /><img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" /> طيف</div>
+                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1">
+                    <img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4" />
+                    <span>طيف</span>
+                  </div>
                 </div>
             </div>
           </div>

@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { shopApi } from "@/lib/shop-api";
-import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -182,7 +181,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     async function fetchNotifs() {
       try {
         const res = await fetch(`/api/notifications?since=${encodeURIComponent(lastCheckRef.current)}`, {
-          headers: adminHeadersRef.currentRef.current,
+          headers: adminHeadersRef.current,
         });
         if (res.ok) {
           const data = await res.json();
@@ -239,18 +238,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     }
   }
 
-  // ===== TanStack Query: إحصائيات مع كاش تلقائي =====
-  const { data: queryStats } = useQuery({
-    queryKey: ["admin-stats"],
-    queryFn: () => shopApi("/api/admin/stats", { headers: adminHeadersRef.current }).then((r) => r.json()),
-    staleTime: 15 * 1000,
-    refetchInterval: 60 * 1000,
-  });
-
-  // مزامنة بيانات Query مع الحالة المحلية
-  useEffect(() => {
-    if (queryStats) setStats(queryStats);
-  }, [queryStats]);
+  // ===== إحصائيات: تُجلب عبر loadAll فقط (لا تكرار) =====
 
   function loadAll() {
     setLoading(true);
@@ -526,7 +514,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         </TabsList>
 
         {/* ===== تبويب الطلبات ===== */}
-        <TabsContent value="orders" className="space-y-3 mt-4">
+        <TabsContent value="orders" forceMount className={cn("space-y-3 mt-4", activeTab !== "orders" && "hidden")}>
           {/* صف الملخص */}
           <div className="flex items-center justify-between gap-2 px-1 text-xs">
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -891,7 +879,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         </TabsContent>
 
         {/* ===== تبويب سبورة الطلبات ===== */}
-        <TabsContent value="kanban" className="mt-4">
+        <TabsContent value="kanban" forceMount className={cn("mt-4", activeTab !== "kanban" && "hidden")}>
           {loading ? (
             <div className="py-16 text-center text-muted-foreground text-sm">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -903,22 +891,22 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         </TabsContent>
 
         {/* ===== تبويب الإعدادات ===== */}
-        <TabsContent value="settings" className="mt-4">
+        <TabsContent value="settings" forceMount className={cn("mt-4", activeTab !== "settings" && "hidden")}>
           <AdminSettings />
         </TabsContent>
 
         {/* ===== تبويب التحليلات ===== */}
-        <TabsContent value="analytics" className="mt-4">
+        <TabsContent value="analytics" forceMount className={cn("mt-4", activeTab !== "analytics" && "hidden")}>
           <AdminAnalytics stats={stats} orders={orders} />
         </TabsContent>
 
         {/* ===== تبويب العملاء ===== */}
-        <TabsContent value="customers" className="mt-4">
+        <TabsContent value="customers" forceMount className={cn("mt-4", activeTab !== "customers" && "hidden")}>
           <AdminCustomers />
         </TabsContent>
 
         {/* ===== تبويب المصاريف ===== */}
-        <TabsContent value="expenses" className="mt-4">
+        <TabsContent value="expenses" forceMount className={cn("mt-4", activeTab !== "expenses" && "hidden")}>
           <AdminExpenses />
         </TabsContent>
       </Tabs>

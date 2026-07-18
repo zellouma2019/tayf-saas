@@ -9,42 +9,32 @@ export async function GET(request: NextRequest) {
 
   try {
     await ensureDb();
-    await runAutoCleanup();
+    // تشغيل التنظيف في الخلفية بدون حظر الطلب
+    runAutoCleanup().catch(() => {});
     const shopId = request.nextUrl.searchParams.get("shopId");
     const baseWhere: Record<string, unknown> = {};
     if (shopId) baseWhere.shopId = shopId;
 
-    const totalOrders = await db.printOrder.count({ where: baseWhere });
-    const totalRevenue = await db.printOrder.aggregate({ _sum: { total: true }, where: baseWhere });
-    const totalExpenses = await db.expense.aggregate({ _sum: { amount: true }, where: baseWhere });
-    const expensesSum = totalExpenses._sum.amount || 0;
-    const revenueSum = totalRevenue._sum.total || 0;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayWhere: Record<string, unknown> = { ...baseWhere, createdAt: { gte: todayStart } };
-    const todayOrders = await db.printOrder.count({ where: todayWhere });
 
-    const statusCounts = await db.printOrder.groupBy({
-      by: ["status"],
-      _count: true,
-      where: baseWhere,
-    });
+    // تنفيذ جميع الاستعلامات بالتوازي لتحسين السرعة
+    const [totalOrders, totalRevenue, totalExpenses, todayOrders, statusCounts, serviceCounts, recentOrders] = await Promise.all([
+      db.printOrder.count({ where: baseWhere }),
+      db.printOrder.aggregate({ _sum: { total: true }, where: baseWhere }),
+      db.expense.aggregate({ _sum: { amount: true }, where: baseWhere }),
+      db.printOrder.count({ where: todayWhere }),
+      db.printOrder.groupBy({ by: ["status"], _count: true, where: baseWhere }),
+      db.printOrder.groupBy({ by: ["serviceType"], _count: true, _sum: { total: true }, where: baseWhere }),
+      db.printOrder.findMany({ where: baseWhere, orderBy: { createdAt: "desc" }, take: 5 }),
+    ]);
 
-    const serviceCounts = await db.printOrder.groupBy({
-      by: ["serviceType"],
-      _count: true,
-      _sum: { total: true },
-      where: baseWhere,
-    });
+    const revenueSum = totalRevenue._sum.total || 0;
+    const expensesSum = totalExpenses._sum.amount || 0;
 
     const statusMap: Record<string, number> = {};
     statusCounts.forEach((s) => (statusMap[s.status] = s._count));
-
-    const recentOrders = await db.printOrder.findMany({
-      where: baseWhere,
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
 
     return NextResponse.json({
       totalOrders,

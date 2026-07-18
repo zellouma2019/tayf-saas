@@ -160,3 +160,35 @@ Files changed:
 - src/components/app/merchant-dashboard.tsx (loadAll deps fix, changeStatus fix)
 - src/components/app/admin-panel.tsx (dynamic imports, notification fix, changeStatus fix, adminHeaders ref)
 - src/components/app/admin-analytics.tsx (accept orders prop)
+---
+Task ID: 2
+Agent: Main
+Task: Fix tab remount performance issue in merchant dashboard + add logo upload MIME validation
+
+Work Log:
+- Analyzed merchant-dashboard.tsx (2663 lines) tab rendering pattern
+- Found all 8 non-home tabs used `activeTab === "X" && <Component />` pattern causing full unmount/remount on every tab switch
+- Changed all 8 tabs to use CSS `hidden` class pattern so components stay mounted in the DOM
+
+Changes Applied:
+1. **orders tab**: Wrapped in `<div className={activeTab !== "orders" ? "hidden" : ""}>` (was `{activeTab === "orders" && (...)}`)
+2. **analytics tab**: `<div className={activeTab !== "analytics" || !hasFeature("advancedAnalytics") ? "hidden" : ""}>`
+3. **customers tab**: `<div className={activeTab !== "customers" ? "hidden" : ""}>`
+4. **expenses tab**: `<div className={activeTab !== "expenses" ? "hidden" : ""}>`
+5. **settings tab**: `<div className={activeTab !== "settings" ? "hidden" : ""}>`
+6. **advancedSettings tab**: `<div className={activeTab !== "advancedSettings" ? "hidden" : ""}>`
+7. **share tab**: `<div className={activeTab !== "share" ? "hidden" : ""}>`
+8. **preview tab**: `<div className={activeTab !== "preview" ? "hidden" : ""}>` with `{previewVisited && (...)}` inner gate to avoid loading iframe until first visit
+
+9. **previewVisited state**: Added `useState(false)` + `useEffect` that sets it to `true` when `activeTab === "preview"`
+10. **Logo upload MIME validation**: Added `file.type.startsWith("image/")` check before the existing `file.size` check in `handleLogoUpload`
+
+Notes:
+- `cn` was already imported from `@/lib/utils` (line 108)
+- "home" tab left unchanged (already always visible)
+- Lint passes with 0 errors (1 pre-existing warning in unrelated file)
+
+Stage Summary:
+- All tab components now persist in DOM across tab switches, eliminating remount overhead
+- Preview iframe only mounts once (on first visit) then stays in DOM
+- Logo upload now validates MIME type before processing

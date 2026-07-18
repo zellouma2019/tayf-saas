@@ -69,7 +69,7 @@ export function useShop() {
 
 // ذاكرة تخزين مؤقت في الذاكرة (بقاء خلال حياة التطبيق)
 const shopCache = new Map<string, { data: ShopData; timestamp: number }>();
-const CACHE_TTL = 30_000; // 30 ثانية
+const CACHE_TTL = 5_000; // 5 ثواني
 
 function getCachedShop(slug: string): ShopData | null {
   const entry = shopCache.get(slug);
