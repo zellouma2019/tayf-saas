@@ -3,7 +3,7 @@ import { formatDateTimeAr } from "@/lib/print-config";
 
 // ===== مساعدات الجلسة =====
 export const SESSION_KEY = "sa_auth";
-export const SESSION_HOURS = 24;
+export const SESSION_HOURS = 168;
 
 export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;

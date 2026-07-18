@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
+import { ensureSchema } from "@/lib/ensure-schema";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تغيير كلمة مرور المدير الأول
@@ -8,8 +9,7 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    // التأكد من وجود الجداول (singleton — runs once per process)
-    await ensureDb();
+    await ensureSchema();
 
     const { currentPassword, newPassword } = await req.json();
 
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureDb();
+    await ensureSchema();
 
     const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     const isDefault = !admin || !admin.password || admin.password === "Admin@2025";

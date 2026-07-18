@@ -55,6 +55,7 @@ import {
   Bell,
   BarChart3,
   Users,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -176,6 +177,22 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [viewMode, setViewMode] = useState<OrderViewMode>("table");
   const [selectedOrder, setSelectedOrder] = useState<PrintOrderLite | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
+
+  // استمرارية الجلسة — 7 أيام
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`shop_auth_${shopSlug}`);
+      if (raw) {
+        const { ts, pin } = JSON.parse(raw);
+        if (Date.now() - ts < 168 * 60 * 60 * 1000 && pin) {
+          verifiedPinRef.current = pin;
+          setUnlocked(true);
+        } else {
+          localStorage.removeItem(`shop_auth_${shopSlug}`);
+        }
+      }
+    } catch {}
+  }, [shopSlug]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -420,14 +437,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     if (!pin || verifying) return;
     setVerifying(true);
     try {
-      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
-        method: "PUT",
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}/verify-pin`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminPin: pin }),
+        body: JSON.stringify({ pin }),
       });
       if (res.ok) {
         toast.success("مرحباً بك في لوحة التحكم");
         verifiedPinRef.current = pin;
+        localStorage.setItem(`shop_auth_${shopSlug}`, JSON.stringify({ ts: Date.now(), pin }));
         setUnlocked(true);
         setPin("");
       } else {
@@ -468,6 +486,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
     }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(`shop_auth_${shopSlug}`);
+    verifiedPinRef.current = "";
+    setUnlocked(false);
+    toast.info("تم تسجيل الخروج");
   }
 
   // ===== شاشة كلمة المرور =====
@@ -579,6 +604,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             </div>
             <span className="font-bold text-sm text-white truncate">{shop?.name || "المتجر"}</span>
           </div>
+        }
+        footer={
+          <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+            <LogOut className="h-4 w-4" />
+            تسجيل الخروج
+          </button>
         }
       />
 

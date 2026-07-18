@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
+import { ensureSchema } from "@/lib/ensure-schema";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تسجيل دخول المدير الأول
@@ -8,8 +9,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    // التأكد من وجود الجداول (singleton — runs once per process)
-    await ensureDb();
+    await ensureSchema();
 
     const { password } = await req.json();
     if (!password) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const isFirstTime = !admin.password || admin.password === "Admin@2025";
 
     if (isFirstTime) {
-      return NextResponse.json({ success: true, isFirstTime: true });
+      return NextResponse.json({ requiresSetup: true, isFirstTime: true });
     }
 
     if (admin.password === password) {

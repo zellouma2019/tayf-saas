@@ -4,7 +4,10 @@ import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ShopProvider, useShop } from "@/lib/shop-context";
-import { AppShell } from "@/components/app/app-shell";
+const AppShell = dynamic(
+  () => import("@/components/app/app-shell").then((m) => ({ default: m.AppShell })),
+  { ssr: false, loading: () => <ShopLoader /> },
+);
 import { useAppStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Store } from "lucide-react";

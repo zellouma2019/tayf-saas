@@ -74,7 +74,6 @@ import {
   Lock,
   Check,
   Globe,
-  Languages,
   DollarSign,
   ToggleLeft,
   Megaphone,
@@ -104,7 +103,7 @@ import type {
   ServiceType,
 } from "@/lib/service-specs";
 import type { DeliveryOption } from "@/lib/print-config";
-import { ARAB_COUNTRIES, APP_LANGUAGES, getCountry, getLanguage, formatCurrency } from "@/lib/countries";
+import { ARAB_COUNTRIES, getCountry, formatCurrency } from "@/lib/countries";
 
 // ============================================================
 // Props
@@ -420,16 +419,14 @@ export function MerchantSettingsAdvanced({
   const [resetting, setResetting] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
-  // Country & Language state (Shop model fields)
+  // Country state (Shop model field)
   const [selectedCountry, setSelectedCountry] = useState(shop?.country || "DZ");
-  const [selectedLanguage, setSelectedLanguage] = useState(shop?.language || "ar");
   const [savingShopFields, setSavingShopFields] = useState(false);
 
-  // Sync country/language from shop context when it refreshes
+  // Sync country from shop context when it refreshes
   useEffect(() => {
     if (shop?.country) setSelectedCountry(shop.country);
-    if (shop?.language) setSelectedLanguage(shop.language);
-  }, [shop?.country, shop?.language]);
+  }, [shop?.country]);
 
   // ---------- Load settings ----------
   const loadSettings = useCallback(async () => {
@@ -766,19 +763,19 @@ export function MerchantSettingsAdvanced({
       const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ country: selectedCountry, language: selectedLanguage, adminPin }),
+        body: JSON.stringify({ country: selectedCountry, adminPin }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "فشل الحفظ");
       }
-      toast.success("تم حفظ اللغة والعملة", {
+      toast.success("تم حفظ الدولة والعملة", {
         description: "ستظهر التغييرات للعملاء فوراً",
         icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
       });
       refreshShop();
     } catch (e) {
-      toast.error("فشل حفظ اللغة والعملة", {
+      toast.error("فشل حفظ الدولة والعملة", {
         description: (e as Error).message,
       });
     } finally {
@@ -1103,71 +1100,42 @@ export function MerchantSettingsAdvanced({
           </Card>
 
           {/* ==========================================
-              اللغة والعملة
+              الدولة والعملة
               ========================================== */}
           <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardHeader className="pb-3">
               <SectionHeader
                 icon={Globe}
-                title="اللغة والعملة"
-                description="حدد الدولة واللغة الأساسية لمتجرك — العملة تتحدد تلقائياً"
+                title="الدولة والعملة"
+                description="حدد الدولة — العملة تتحدد تلقائياً حسب الدولة"
               />
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Country dropdown */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                    <Globe className="h-3.5 w-3.5 text-teal-500" />
-                    الدولة
-                  </Label>
-                  <Select
-                    value={selectedCountry}
-                    onValueChange={(v) => setSelectedCountry(v)}
-                  >
-                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
-                      <SelectValue placeholder="اختر الدولة" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-64 overflow-y-auto">
-                      {ARAB_COUNTRIES.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>
-                          <span className="flex items-center gap-2">
-                            <span>{c.flag}</span>
-                            <span>{c.nameAr}</span>
-                            <span className="text-[10px] text-slate-400">({c.code})</span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Language dropdown */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                    <Languages className="h-3.5 w-3.5 text-emerald-500" />
-                    اللغة
-                  </Label>
-                  <Select
-                    value={selectedLanguage}
-                    onValueChange={(v) => setSelectedLanguage(v)}
-                  >
-                    <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
-                      <SelectValue placeholder="اختر اللغة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {APP_LANGUAGES.map((l) => (
-                        <SelectItem key={l.code} value={l.code}>
-                          <span className="flex items-center gap-2">
-                            <span>{l.flag}</span>
-                            <span>{l.nameNative}</span>
-                            <span className="text-[10px] text-slate-400">({l.code})</span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-teal-500" />
+                  الدولة
+                </Label>
+                <Select
+                  value={selectedCountry}
+                  onValueChange={(v) => setSelectedCountry(v)}
+                >
+                  <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
+                    <SelectValue placeholder="اختر الدولة" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-64 overflow-y-auto">
+                    {ARAB_COUNTRIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        <span className="flex items-center gap-2">
+                          <span>{c.flag}</span>
+                          <span>{c.nameAr}</span>
+                          <span className="text-[10px] text-slate-400">({c.code})</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Currency display (read-only) */}
@@ -1196,7 +1164,7 @@ export function MerchantSettingsAdvanced({
               })()}
 
               {/* Save button for country/language */}
-              {(selectedCountry !== shop?.country || selectedLanguage !== shop?.language) && (
+              {(selectedCountry !== shop?.country) && (
                 <Button
                   size="sm"
                   onClick={handleSaveCountryLanguage}
@@ -1208,7 +1176,7 @@ export function MerchantSettingsAdvanced({
                   ) : (
                     <Save className="h-3.5 w-3.5" />
                   )}
-                  حفظ اللغة والعملة
+                  حفظ الدولة والعملة
                 </Button>
               )}
             </CardContent>

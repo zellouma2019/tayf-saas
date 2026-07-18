@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ARAB_COUNTRIES, APP_LANGUAGES } from "@/lib/countries";
+import { ARAB_COUNTRIES } from "@/lib/countries";
 import { getNextThemeId } from "@/lib/themes";
 import { robustCopy, openInNewTab } from "@/lib/admin-utils";
 import { CopyButton } from "@/components/app/admin-shop-card";
@@ -28,7 +28,6 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
   const [ownerPhone, setOwnerPhone] = useState("");
   const [trialDays, setTrialDays] = useState("");
   const [country, setCountry] = useState("DZ");
-  const [language, setLanguage] = useState("ar");
   const [submitting, setSubmitting] = useState(false);
   const [createdSlug, setCreatedSlug] = useState("");
   const [createdPin, setCreatedPin] = useState("");
@@ -62,7 +61,7 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
 
   function handleClose() {
     setCreatedSlug(""); setCreatedPin(""); setCreatedName("");
-    setName(""); setSlug(""); setAdminPin(""); setOwnerName(""); setOwnerPhone(""); setTrialDays(""); setCountry("DZ"); setLanguage("ar");
+    setName(""); setSlug(""); setAdminPin(""); setOwnerName(""); setOwnerPhone(""); setTrialDays(""); setCountry("DZ");
     onClose();
   }
 
@@ -74,7 +73,7 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
       const res = await fetch("/api/shops", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug, adminPin, ownerName, ownerPhone, trialDays: trialDays ? Number(trialDays) : undefined, country, language, themeId: getNextThemeId() }),
+        body: JSON.stringify({ name, slug, adminPin, ownerName, ownerPhone, trialDays: trialDays ? Number(trialDays) : undefined, country, themeId: getNextThemeId() }),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -213,37 +212,20 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
                   <Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="0XXX XXX XXX" className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-slate-600">الدولة والعملة</Label>
-                  <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger className="mt-1.5 rounded-lg border-slate-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {ARAB_COUNTRIES.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.flag} {c.nameAr} — {c.currencySymbol} ({c.currencyEn})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-slate-600">لغة الواجهة</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="mt-1.5 rounded-lg border-slate-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {APP_LANGUAGES.map((l) => (
-                        <SelectItem key={l.code} value={l.code}>
-                          {l.flag} {l.nameAr} ({l.nameNative})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label className="text-slate-600">الدولة والعملة</Label>
+                <Select value={country} onValueChange={setCountry}>
+                  <SelectTrigger className="mt-1.5 rounded-lg border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {ARAB_COUNTRIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.flag} {c.nameAr} — {c.currencySymbol} ({c.currencyEn})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label className="text-slate-600">مدة التجربة المجانية (أيام)</Label>
