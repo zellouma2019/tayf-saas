@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { runAutoCleanup } from "@/lib/cleanup";
 import fs from "fs";
 import path from "path";
@@ -40,6 +40,8 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
+
     // صيانة تلقائية في الخلفية (غير متزامنة — لا تبطئ الطلب)
     runAutoCleanup().catch(() => {});
 

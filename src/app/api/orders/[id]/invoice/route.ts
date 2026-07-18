@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import {
   translateOptionKey,
   translateOptionValue,
@@ -14,6 +14,7 @@ const SERVICE_ICONS: Record<string,string> = { document:"🖨️", photo:"🖼�
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const findWhere = orderFindWhere(id, shopId);

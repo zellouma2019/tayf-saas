@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { addAuditLog } from "@/lib/audit";
 import { STATUS_META, calculatePricing, estimateDeliveryHours } from "@/lib/print-config";
@@ -11,6 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = orderFindWhere(id, shopId);
@@ -42,6 +43,7 @@ export async function PUT(
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const { id } = await params;
     const body = await req.json();
     const shopId = body.shopId || req.nextUrl.searchParams.get("shopId");
@@ -204,6 +206,7 @@ export async function DELETE(
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const findWhere = orderFindWhere(id, shopId);

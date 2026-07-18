@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 
 function generateReference(): string {
   const date = new Date();
@@ -12,6 +12,7 @@ function generateReference(): string {
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
     const { searchParams } = new URL(req.url);
     const templateId = searchParams.get("templateId");
     const status = searchParams.get("status");
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureDb();
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get("shopId");
     const body = await req.json();

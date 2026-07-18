@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
@@ -37,18 +37,12 @@ import {
   TAB_TITLES,
 } from "@/lib/admin-utils";
 import { LoginGate } from "@/components/app/admin-login-gate";
-import { ShopManageCard } from "@/components/app/admin-shop-card";
 import dynamic from "next/dynamic";
 
-function handleAdminLogout() {
-  localStorage.removeItem("sa_auth");
-  window.location.reload();
-}
-let XLSXModule: typeof import("xlsx") | null = null;
-async function getXLSX() {
-  if (!XLSXModule) XLSXModule = await import("xlsx");
-  return XLSXModule;
-}
+const ShopManageCard = dynamic(
+  () => import("@/components/app/admin-shop-card").then((m) => ({ default: m.ShopManageCard })),
+  { ssr: false },
+);
 
 const OverviewTab = dynamic(
   () => import("@/components/app/admin-overview-tab").then((m) => ({ default: m.OverviewTab })),
@@ -67,15 +61,21 @@ const SecurityTab = dynamic(
 
 const CreateShopDialog = dynamic(
   () => import("@/components/app/admin-create-shop").then((m) => ({ default: m.CreateShopDialog })),
-  { ssr: false, loading: () => <div className="p-8 text-center text-slate-400 text-sm">جارٍ التحميل...</div> },
+  { ssr: false, loading: () => null },
 );
+
+function handleAdminLogout() {
+  localStorage.removeItem("sa_auth");
+  window.location.reload();
+}
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [allOrders, setAllOrders] = useState<GlobalOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -89,36 +89,65 @@ export default function SuperAdminPage() {
   const [sortField, setSortField] = useState<string>("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const ordersLoadedRef = useRef(false);
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
+  // تحميل الإحصائيات فقط (خفيف)
+  const loadStats = useCallback(async () => {
+    setLoadingStats(true);
     setLoadError(null);
     try {
-      const [statsRes, ordersRes] = await Promise.all([
-        adminFetch("/api/admin/global-stats"),
-        adminFetch("/api/orders"),
-      ]);
-      if (!statsRes.ok || !ordersRes.ok) {
-        const msg = !statsRes.ok ? `إحصائيات: ${statsRes.status}` : `طلبات: ${ordersRes.status}`;
-        setLoadError(msg);
+      const statsRes = await adminFetch("/api/admin/global-stats");
+      if (!statsRes.ok) {
+        setLoadError(`إحصائيات: ${statsRes.status}`);
         return;
       }
       const stats = await statsRes.json();
-      const orders = await ordersRes.json();
       setGlobalStats(stats);
-      setAllOrders(orders.orders || []);
       setLastUpdated("الآن");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "خطأ غير معروف";
       setLoadError(msg);
-      toast.error("خطأ في تحميل البيانات");
     } finally {
-      setLoading(false);
+      setLoadingStats(false);
     }
   }, []);
 
+  // تحميل الطلبات (يتم فقط عند فتح تبويب الطلبات)
+  const loadOrders = useCallback(async () => {
+    setLoadingOrders(true);
+    try {
+      const ordersRes = await adminFetch("/api/orders?limit=200");
+      if (!ordersRes.ok) return;
+      const data = await ordersRes.json();
+      setAllOrders(data.orders || []);
+    } catch {
+      // صامت
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
+  // تحميل الإحصائيات عند المصادقة
   useEffect(() => { setMounted(true); if (isAuthenticated()) setAuthenticated(true); }, []);
-  useEffect(() => { if (authenticated) loadAll(); }, [authenticated, loadAll]);
+  useEffect(() => { if (authenticated) loadStats(); }, [authenticated, loadStats]);
+
+  // تحميل الطلبات فقط عند التبديل إلى تبويب الطلبات
+  useEffect(() => {
+    if (authenticated && activeTab === "orders" && !ordersLoadedRef.current) {
+      ordersLoadedRef.current = true;
+      loadOrders();
+    }
+  }, [authenticated, activeTab, loadOrders]);
+
+  // إعادة تحميل كل شيء
+  const loadAll = useCallback(async () => {
+    ordersLoadedRef.current = false;
+    await loadStats();
+    if (activeTab === "orders") {
+      await loadOrders();
+      ordersLoadedRef.current = true;
+    }
+  }, [loadStats, loadOrders, activeTab]);
 
   const filteredOrders = useMemo(() => {
     let list = allOrders;
@@ -148,7 +177,7 @@ export default function SuperAdminPage() {
   }
 
   async function exportToExcel() {
-    const XLSX = await getXLSX();
+    const XLSX = await import("xlsx");
     const rows = filteredOrders.map((o) => ({
       "رقم الطلب": o.reference, "المتجر": o.shopName, "الخدمة": o.serviceName,
       "العميل": o.customer.name, "الهاتف": o.customer.phone, "المجموع": o.total,
@@ -222,17 +251,12 @@ export default function SuperAdminPage() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button onClick={() => setCreateOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-2.5 sm:px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
-              <button onClick={loadAll} className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 sm:p-2.5 text-sm transition-colors"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
+              <button onClick={loadAll} className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 sm:p-2.5 text-sm transition-colors"><RefreshCw className={`h-4 w-4 ${loadingStats ? "animate-spin" : ""}`} /></button>
             </div>
           </div>
         </header>
 
-        {loading ? (
-          <div className="p-4 sm:p-6 space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => (<div key={i} className="animate-pulse bg-slate-200 rounded-xl p-5"><div className="flex items-start justify-between"><div className="space-y-2.5 flex-1"><div className="h-8 bg-slate-300/60 rounded-lg w-24" /><div className="h-3 bg-slate-300/40 rounded w-28" /></div><div className="w-11 h-11 rounded-xl bg-slate-300/50" /></div></div>))}</div>
-            <div className="animate-pulse bg-slate-200 rounded-xl p-6"><div className="h-5 bg-slate-300/50 rounded-lg w-48 mb-5" /><div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="h-12 bg-slate-300/30 rounded-lg" />))}</div></div>
-          </div>
-        ) : loadError ? (
+        {loadError ? (
           <div className="p-4 sm:p-6 flex flex-col items-center justify-center min-h-[40vh]">
             <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
             <p className="text-sm font-medium text-slate-600 mb-1">فشل تحميل البيانات</p>
@@ -244,56 +268,67 @@ export default function SuperAdminPage() {
         ) : (
         <div className="p-4 sm:p-6 space-y-6">
           {activeTab === "overview" && stats && <OverviewTab stats={stats} lastUpdated={lastUpdated} onOpenCreate={() => setCreateOpen(true)} />}
+          {activeTab === "overview" && loadingStats && (
+            <div className="p-4 sm:p-6 space-y-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => (<div key={i} className="animate-pulse bg-slate-200 rounded-xl p-5"><div className="flex items-start justify-between"><div className="space-y-2.5 flex-1"><div className="h-8 bg-slate-300/60 rounded-lg w-24" /><div className="h-3 bg-slate-300/40 rounded w-28" /></div><div className="w-11 h-11 rounded-xl bg-slate-300/50" /></div></div>))}</div>
+            </div>
+          )}
 
           {activeTab === "orders" && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="relative md:col-span-1"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث برقم الطلب، اسم، هاتف، أو متجر..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 bg-background" /></div>
-                <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-slate-200 bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{stats?.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-slate-200 bg-background"><SelectValue placeholder="كل الحالات" /></SelectTrigger><SelectContent><SelectItem value="all">كل الحالات</SelectItem>{STATUS_FLOW.map((s) => (<SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>))}<SelectItem value="cancelled">ملغي</SelectItem></SelectContent></Select>
-                <button onClick={exportToExcel} disabled={filteredOrders.length === 0} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed bg-background"><Download className="h-4 w-4" />تصدير Excel</button>
-              </div>
-              <div className="flex items-center justify-between text-xs text-slate-400 px-1"><span>المعروض: <b className="text-slate-600">{filteredOrders.length}</b> من {allOrders.length}</span></div>
-              {/* جدول - حاسوب */}
-              <div className="hidden md:block bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-x-auto">
-                <Table>
-                  <TableHeader><TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-slate-100">
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700" onClick={() => handleSort("reference")}><span className="inline-flex items-center gap-1">رقم الطلب <SortIcon field="reference" /></span></TableHead>
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">المتجر</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">الخدمة</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">العميل</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700" onClick={() => handleSort("total")}><span className="inline-flex items-center gap-1">المجموع <SortIcon field="total" /></span></TableHead>
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">الحالة</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700" onClick={() => handleSort("date")}><span className="inline-flex items-center gap-1">التاريخ <SortIcon field="date" /></span></TableHead>
-                  </TableRow></TableHeader>
-                  <TableBody>
-                    {filteredOrders.slice(0, 100).map((o) => (
-                      <TableRow key={o.id} className="cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-50" onClick={() => setSelectedOrder(o)}>
-                        <TableCell className="font-mono text-xs font-bold text-slate-800">{o.reference}</TableCell>
-                        <TableCell className="text-xs"><span className="text-xs px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500">{o.shopName || "—"}</span></TableCell>
-                        <TableCell className="text-sm text-slate-700">{SERVICE_EMOJI[o.serviceType] || ""} {o.serviceName}</TableCell>
-                        <TableCell className="text-sm"><div className="text-slate-700">{o.customer.name}</div><div className="text-slate-400" dir="ltr">{o.customer.phone}</div></TableCell>
-                        <TableCell className="text-sm font-bold text-slate-800">{formatDA(o.total)}</TableCell>
-                        <TableCell><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span></TableCell>
-                        <TableCell className="text-sm text-slate-400">{formatDateTimeAr(o.createdAt)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {filteredOrders.length === 0 && <EmptyOrdersMessage hasOrders={allOrders.length > 0} onClear={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); }} />}
-              </div>
-              {/* بطاقات - جوال */}
-              <div className="md:hidden space-y-3">
-                {filteredOrders.slice(0, 50).map((o) => (
-                  <div key={o.id} className={cn("cursor-pointer bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow border-r-[3px]", STATUS_BORDER_COLORS[o.status] || "")} onClick={() => setSelectedOrder(o)}>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="min-w-0"><div className="flex items-center gap-2"><span className="font-mono text-xs font-bold text-slate-800">{o.reference}</span><span className="text-xs px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500">{o.shopName}</span></div><div className="text-xs text-slate-400 mt-1">{SERVICE_EMOJI[o.serviceType] || ""} {o.serviceName} · {o.customer.name}</div></div>
-                      <div className="text-left shrink-0"><div className="text-sm font-bold text-slate-800">{formatDA(o.total)}</div><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span></div>
-                    </div>
+              {loadingOrders ? (
+                <div className="text-center py-16 text-slate-400 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-teal-500" />جارٍ تحميل الطلبات...</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="relative md:col-span-1"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث برقم الطلب، اسم، هاتف، أو متجر..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 bg-background" /></div>
+                    <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-slate-200 bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{stats?.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-slate-200 bg-background"><SelectValue placeholder="كل الحالات" /></SelectTrigger><SelectContent><SelectItem value="all">كل الحالات</SelectItem>{STATUS_FLOW.map((s) => (<SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>))}<SelectItem value="cancelled">ملغي</SelectItem></SelectContent></Select>
+                    <button onClick={exportToExcel} disabled={filteredOrders.length === 0} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed bg-background"><Download className="h-4 w-4" />تصدير Excel</button>
                   </div>
-                ))}
-                {filteredOrders.length === 0 && <EmptyOrdersMessage hasOrders={allOrders.length > 0} onClear={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); }} />}
-              </div>
+                  <div className="flex items-center justify-between text-xs text-slate-400 px-1"><span>المعروض: <b className="text-slate-600">{filteredOrders.length}</b> من {allOrders.length}</span></div>
+                  {/* جدول - حاسوب */}
+                  <div className="hidden md:block bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-x-auto">
+                    <Table>
+                      <TableHeader><TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-slate-100">
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700" onClick={() => handleSort("reference")}><span className="inline-flex items-center gap-1">رقم الطلب <SortIcon field="reference" /></span></TableHead>
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">المتجر</TableHead>
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">الخدمة</TableHead>
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">العميل</TableHead>
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700" onClick={() => handleSort("total")}><span className="inline-flex items-center gap-1">المجموع <SortIcon field="total" /></span></TableHead>
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide">الحالة</TableHead>
+                        <TableHead className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700" onClick={() => handleSort("date")}><span className="inline-flex items-center gap-1">التاريخ <SortIcon field="date" /></span></TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {filteredOrders.slice(0, 100).map((o) => (
+                          <TableRow key={o.id} className="cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-50" onClick={() => setSelectedOrder(o)}>
+                            <TableCell className="font-mono text-xs font-bold text-slate-800">{o.reference}</TableCell>
+                            <TableCell className="text-xs"><span className="text-xs px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500">{o.shopName || "—"}</span></TableCell>
+                            <TableCell className="text-sm text-slate-700">{SERVICE_EMOJI[o.serviceType] || ""} {o.serviceName}</TableCell>
+                            <TableCell className="text-sm"><div className="text-slate-700">{o.customer.name}</div><div className="text-slate-400" dir="ltr">{o.customer.phone}</div></TableCell>
+                            <TableCell className="text-sm font-bold text-slate-800">{formatDA(o.total)}</TableCell>
+                            <TableCell><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span></TableCell>
+                            <TableCell className="text-sm text-slate-400">{formatDateTimeAr(o.createdAt)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {filteredOrders.length === 0 && <EmptyOrdersMessage hasOrders={allOrders.length > 0} onClear={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); }} />}
+                  </div>
+                  {/* بطاقات - جوال */}
+                  <div className="md:hidden space-y-3">
+                    {filteredOrders.slice(0, 50).map((o) => (
+                      <div key={o.id} className={cn("cursor-pointer bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow border-r-[3px]", STATUS_BORDER_COLORS[o.status] || "")} onClick={() => setSelectedOrder(o)}>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0"><div className="flex items-center gap-2"><span className="font-mono text-xs font-bold text-slate-800">{o.reference}</span><span className="text-xs px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500">{o.shopName}</span></div><div className="text-xs text-slate-400 mt-1">{SERVICE_EMOJI[o.serviceType] || ""} {o.serviceName} · {o.customer.name}</div></div>
+                          <div className="text-left shrink-0"><div className="text-sm font-bold text-slate-800">{formatDA(o.total)}</div><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span></div>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredOrders.length === 0 && <EmptyOrdersMessage hasOrders={allOrders.length > 0} onClear={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); }} />}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -308,7 +343,7 @@ export default function SuperAdminPage() {
                 <button onClick={() => setCreateOpen(true)} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر جديد</button>
               </div>
               <div className="relative"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} placeholder="ابحث في المتاجر بالاسم أو الرابط..." className="pr-10 text-sm h-10 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500 bg-background" /></div>
-              {loading ? (<div className="text-center py-16 text-slate-400 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-teal-500" />جارٍ التحميل...</div>) : (stats?.shopStats.length ?? 0) === 0 ? (
+              {loadingStats ? (<div className="text-center py-16 text-slate-400 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-teal-500" />جارٍ التحميل...</div>) : (stats?.shopStats.length ?? 0) === 0 ? (
                 <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"><div className="py-20 text-center"><div className="w-16 h-16 mx-auto rounded-2xl bg-slate-50 flex items-center justify-center mb-4"><Store className="h-8 w-8 text-slate-300" /></div><p className="font-semibold text-slate-700 mb-2">لا توجد متاجر بعد</p><p className="text-xs text-slate-400 mb-4">ابدأ بإنشاء متجرك الأول</p><button onClick={() => setCreateOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر</button></div></div>
               ) : (
                 <div className="space-y-4">

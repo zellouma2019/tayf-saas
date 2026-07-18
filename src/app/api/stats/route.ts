@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const baseWhere: Record<string, unknown> = {};
     if (shopId) baseWhere.shopId = shopId;

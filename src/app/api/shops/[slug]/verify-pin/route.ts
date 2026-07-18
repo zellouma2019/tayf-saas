@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 export async function POST(
@@ -9,6 +9,7 @@ export async function POST(
   const rl = withRateLimit(req, "shop-verify-pin");
   if (!rl.ok) return rl.response;
   try {
+    await ensureDb();
     const { slug } = await params;
     const { pin } = await req.json();
     if (!pin || !slug) return NextResponse.json({ error: "البيانات مطلوبة" }, { status: 400 });

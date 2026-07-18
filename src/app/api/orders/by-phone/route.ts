@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { runAutoCleanup } from "@/lib/cleanup";
 import { orderListWhere } from "@/lib/order-lookup";
 
 /// جلب جميع الطلبات المرتبطة برقم هاتف معين (لتكرار الطلب)
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
     await runAutoCleanup();
 
     const { searchParams } = new URL(req.url);

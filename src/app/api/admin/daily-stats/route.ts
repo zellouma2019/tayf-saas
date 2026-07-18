@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { orderListWhere } from "@/lib/order-lookup";
 
@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureDb();
     // حساب بداية آخر 7 أيام
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
