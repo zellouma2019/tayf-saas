@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { shopApi } from "@/lib/shop-api";
-import { Printer, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { IntroSettings } from "@/lib/default-settings";
 
 interface IntroProps {
   onFinish: () => void;
+  /** إعدادات الإنترو — تُمرَّر مباشرة من بيانات المتجر (لا حاجة لطلب API) */
+  introSettings: IntroSettings | null;
 }
 
 const DEFAULT_INTRO: IntroSettings = {
@@ -23,31 +24,22 @@ const DEFAULT_INTRO: IntroSettings = {
   showSpinningRing: true,
 };
 
-export function Intro({ onFinish }: IntroProps) {
+export function Intro({ onFinish, introSettings }: IntroProps) {
   const [phase, setPhase] = useState(0);
-  const [settings, setSettings] = useState<IntroSettings>(DEFAULT_INTRO);
-  const [loaded, setLoaded] = useState(false);
   const [skipping, setSkipping] = useState(false);
 
-  // تحميل إعدادات الإنترو
-  useEffect(() => {
-    shopApi("/api/settings")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.intro) setSettings({ ...DEFAULT_INTRO, ...d.intro });
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
-  }, []);
+  const settings: IntroSettings = introSettings
+    ? { ...DEFAULT_INTRO, ...introSettings }
+    : DEFAULT_INTRO;
+
+  // إذا كان الإنترو معطّل، أنهِ فوراً
+  if (!settings.enabled) {
+    return null;
+  }
+
+  const duration = settings.duration || 4200;
 
   useEffect(() => {
-    if (!loaded) return;
-    if (!settings.enabled) {
-      onFinish();
-      return;
-    }
-
-    const duration = settings.duration || 4200;
     const timers: ReturnType<typeof setTimeout>[] = [];
     timers.push(setTimeout(() => setPhase(1), 200));
     timers.push(setTimeout(() => setPhase(2), Math.min(1000, duration * 0.24)));
@@ -55,10 +47,7 @@ export function Intro({ onFinish }: IntroProps) {
     timers.push(setTimeout(() => setPhase(4), duration - 1000));
     timers.push(setTimeout(() => onFinish(), duration));
     return () => timers.forEach(clearTimeout);
-  }, [loaded, settings, onFinish]);
-
-  // إذا لم تُحمَّل الإعدادات بعد أو الإنترو معطّل، لا تعرض شيئاً
-  if (!loaded || !settings.enabled) return null;
+  }, [duration, onFinish]);
 
   const accent = settings.accentColor || "#D4AF37";
   const bg = settings.bgColor || "#1a1a1a";
