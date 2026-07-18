@@ -384,3 +384,23 @@ Stage Summary:
 - UX: Arabic-only, country+currency selection
 - Business: 3 pricing tiers proposed (500 DZD/mo basic, 1000 DZD/mo premium)
 - Commit: fcf9c0b pushed to GitHub
+
+---
+Task ID: 2
+Agent: Main Coordinator
+Task: Fix root cause of 20s load time + verify password fix + rewrite business plan
+
+Work Log:
+- Identified ROOT CAUSE of slowness: ensure-schema.ts was making HTTP self-call to /api/setup on every API request, creating cascade of Vercel serverless cold starts
+- Rewrote ensure-schema.ts to delegate to ensureDb() from db.ts (direct SQL, no HTTP)
+- Changed super-admin/auth and password routes to use fire-and-forget ensureDb() (don't await)
+- Pushed fix: commit 769225e
+- Tested on Vercel: page loads in <1 second (was 20+ seconds)
+- Password security fix confirmed in code (commit fcf9c0b) - Vercel deployment pending
+- Rewrote comprehensive business plan with: multi-country pricing, subscription management system design, payment methods per country, cost/revenue analysis
+
+Stage Summary:
+- Performance: ROOT CAUSE FIXED - ensureSchema HTTP self-call eliminated
+- Speed: <1 second on Vercel (confirmed via agent-browser)
+- Security: Code pushed, waiting for Vercel rebuild
+- Business: Complete plan with 3 tiers, multi-currency pricing, country-specific payment methods
