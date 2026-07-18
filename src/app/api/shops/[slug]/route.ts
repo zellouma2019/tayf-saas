@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
@@ -11,6 +11,7 @@ export async function GET(
   const rl = withRateLimit(req, "shop-detail");
   if (!rl.ok) return rl.response;
   try {
+    await ensureDb();
     const { slug } = await params;
     const shop = await db.shop.findUnique({ where: { slug } });
 
@@ -40,6 +41,7 @@ export async function PUT(
   const rl = withRateLimit(req, "shop-detail");
   if (!rl.ok) return rl.response;
   try {
+    await ensureDb();
     const { slug } = await params;
     const body = await req.json();
 
@@ -70,6 +72,7 @@ export async function DELETE(
   const rl = withRateLimit(req, "shop-detail");
   if (!rl.ok) return rl.response;
   try {
+    await ensureDb();
     const { slug } = await params;
     const { adminPin } = await req.json();
 

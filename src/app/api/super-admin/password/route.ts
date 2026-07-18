@@ -8,7 +8,8 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    ensureDb(); // لا ننتظر — التهيئة تحدث بالتوازي
+    // يجب انتظار تهيئة قاعدة البيانات
+    await ensureDb();
 
     const { currentPassword, newPassword } = await req.json();
 
@@ -28,7 +29,7 @@ export async function PUT(req: NextRequest) {
       admin = await db.superAdmin.create({ data: { key: "main" } });
     }
 
-    // أول مرة: لا نطلب كلمة المرور الحالية (كلمة المرور فارغة أو افتراضية)
+    // أول مرة: لا نطلب كلمة المرور الحالية
     const isFirstTime = !admin.password || admin.password === "Admin@2025";
     if (!isFirstTime) {
       if (!currentPassword) {
@@ -44,8 +45,16 @@ export async function PUT(req: NextRequest) {
       data: { password: newPassword },
     });
 
+    // التحقق من الحفظ الفعلي
+    const saved = await db.superAdmin.findUnique({ where: { key: "main" } });
+    if (!saved || saved.password !== newPassword) {
+      console.error('[super-admin/password/PUT] Password save verification failed');
+      return NextResponse.json({ error: "فشل حفظ كلمة المرور" }, { status: 500 });
+    }
+
     return NextResponse.json({ success: true, isFirstTime });
-  } catch {
+  } catch (e) {
+    console.error('[super-admin/password/PUT]', e);
     return NextResponse.json({ error: "خطأ في تحديث كلمة المرور" }, { status: 500 });
   }
 }
@@ -56,12 +65,15 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    ensureDb(); // لا ننتظر
+    // يجب انتظار تهيئة قاعدة البيانات
+    await ensureDb();
 
     const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
-    return NextResponse.json({ isDefault });
-  } catch {
+    const hasPassword = admin && admin.password && admin.password !== "Admin@2025";
+    return NextResponse.json({ isDefault, hasPassword });
+  } catch (e) {
+    console.error('[super-admin/password/GET]', e);
     return NextResponse.json({ error: "خطأ في جلب حالة كلمة المرور" }, { status: 500 });
   }
 }

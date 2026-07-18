@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    ensureDb(); // لا ننتظر — التهيئة تحدث بالتوازي
+    // يجب انتظار تهيئة قاعدة البيانات قبل أي عملية
+    await ensureDb();
 
     const { password } = await req.json();
     if (!password) {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (admin.password === password) {
-      return NextResponse.json({ success: true, isFirstTime: false });
+      return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 401 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { runAutoCleanup } from "@/lib/cleanup";
 import { requireAdmin } from "@/lib/admin-auth";
 
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     await runAutoCleanup();
     const shopId = request.nextUrl.searchParams.get("shopId");
     const baseWhere: Record<string, unknown> = {};

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تحديث متجر من طرف المالك (بدون كلمة مرور)
@@ -11,6 +11,7 @@ export async function PUT(
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
     const { slug } = await params;
     const body = await req.json();
 
@@ -73,6 +74,7 @@ export async function DELETE(
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
     const { slug } = await params;
     const shop = await db.shop.findUnique({ where: { slug } });
     if (!shop) {

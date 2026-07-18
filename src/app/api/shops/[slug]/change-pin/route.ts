@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// تغيير كلمة مرور المتجر (PIN) — نقطة نهاية مخصصة
@@ -11,6 +11,7 @@ export async function PUT(
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
     const { slug } = await params;
     const body = await req.json();
     const { currentPin, newPin } = body;

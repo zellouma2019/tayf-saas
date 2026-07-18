@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 
 export async function PUT(req: NextRequest) {
   try {
+    await ensureDb();
     const body = await req.json();
     const { reference } = body;
     if (!reference) {

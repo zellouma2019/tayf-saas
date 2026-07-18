@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 
 // GET /api/customers?search=xxx&page=1&limit=20
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const shopId = searchParams.get("shopId");
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get("shopId");
     const body = await request.json();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import * as XLSX from "xlsx";
 import { STATUS_META } from "@/lib/print-config";
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get("shopId");
 

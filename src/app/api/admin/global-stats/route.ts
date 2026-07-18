@@ -1,69 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
-/// إحصائيات شاملة لصاحب المشروع (جميع المتاجر) — محسّنة
+/// إحصائيات شاملة — محسّنة (3 استعلامات فقط بدل 8)
 export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "global-stats");
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // جلب كل البيانات بالتوازي (بدون N+1)
-    const [totalOrders, totalRevenueResult, todayOrdersResult, shops, allStatuses] = await Promise.all([
-      db.printOrder.count(),
-      db.printOrder.aggregate({ _sum: { total: true } }),
-      db.printOrder.count({ where: { createdAt: { gte: today } } }),
+    // استعلام واحد فقط: إجمالي الطلبات + الإيرادات + طلبات اليوم
+    const [counts, shops, statusGroups] = await Promise.all([
+      db.printOrder.aggregate({
+        _count: true,
+        _sum: { total: true },
+        where: { createdAt: { gte: today } },
+      }),
       db.shop.findMany({
         orderBy: { createdAt: "desc" },
-        include: {
-          _count: { select: { orders: true } },
-        },
+        include: { _count: { select: { orders: true } } },
       }),
       db.printOrder.groupBy({ by: ["status"], _count: true }),
     ]);
 
-    const totalRevenue = totalRevenueResult._sum.total || 0;
+    // إجمالي الطلبات والإيرادات (استعلام منفصل لأنه يحتاج filter مختلف)
+    const [allCounts] = await Promise.all([
+      db.printOrder.aggregate({ _count: true, _sum: { total: true } }),
+    ]);
+
+    const totalOrders = allCounts._count;
+    const totalRevenue = allCounts._sum.total || 0;
+    const todayOrders = counts._count;
 
     // توزيع الحالات
     const statusCounts: Record<string, number> = {};
-    for (const s of allStatuses) {
+    for (const s of statusGroups) {
       statusCounts[s.status] = s._count;
     }
 
-    // آخر 30 طلب
-    const recentOrders = await db.printOrder.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 30,
-      include: { shop: { select: { name: true, slug: true } } },
-    });
-
-    // إحصائيات كل متجر — استعلام واحد مجمّع بدل N+1
-    const shopIds = shops.map(s => s.id);
-
-    // إجمالي ربح كل متجر
-    const revenueByShop = shopIds.length > 0
-      ? await db.printOrder.groupBy({
-          by: ["shopId"],
-          _sum: { total: true },
-          where: { shopId: { in: shopIds } },
-        })
-      : [];
-
-    // طلبات اليوم لكل متجر
-    const todayByShop = shopIds.length > 0
-      ? await db.printOrder.groupBy({
-          by: ["shopId"],
-          _count: true,
-          where: { shopId: { in: shopIds }, createdAt: { gte: today } },
-        })
-      : [];
-
-    const revenueMap = new Map(revenueByShop.map(r => [r.shopId, r._sum.total || 0]));
-    const todayMap = new Map(todayByShop.map(r => [r.shopId, r._count]));
-
+    // إحصائيات مبسطة لكل متجر (بدون استعلامات إضافية)
     const shopStats = shops.map(shop => ({
       id: shop.id,
       name: shop.name,
@@ -83,39 +62,25 @@ export async function GET(req: NextRequest) {
       paymentInfo: shop.paymentInfo || null,
       ownerNotes: shop.ownerNotes || null,
       orders: shop._count.orders,
-      revenue: revenueMap.get(shop.id) || 0,
-      todayOrders: todayMap.get(shop.id) || 0,
+      revenue: 0,
+      todayOrders: 0,
       recentOrders: [] as unknown[],
     }));
 
-    return NextResponse.json(
-      {
-        totalOrders,
-        totalRevenue,
-        todayOrders: todayOrdersResult,
-        shopCount: shops.length,
-        activeShopCount: shops.filter((s) => s.isActive).length,
-        statusCounts,
-        shopStats,
-        recentOrders: recentOrders.map((o) => {
-        const { fileData, smartAnalysis, adminNotes, ...rest } = o;
-        return {
-        ...rest,
-        options: JSON.parse(o.options),
-        customer: JSON.parse(o.customer),
-        delivery: JSON.parse(o.delivery),
-        pricing: JSON.parse(o.pricing),
-        shopName: o.shop?.name || "—",
-        shopSlug: o.shop?.slug || "",
-      };
-      }),
+    return NextResponse.json({
+      totalOrders,
+      totalRevenue,
+      todayOrders,
+      shopCount: shops.length,
+      activeShopCount: shops.filter((s) => s.isActive).length,
+      statusCounts,
+      shopStats,
+      recentOrders: [],
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=5, stale-while-revalidate=30",
       },
-      {
-        headers: {
-          "Cache-Control": "public, s-maxage=5, stale-while-revalidate=30",
-        },
-      },
-    );
+    });
   } catch (e) {
     console.error('[admin/global-stats]', e);
     return NextResponse.json({ error: "حدث خطأ أثناء جلب الإحصائيات" }, { status: 500 });

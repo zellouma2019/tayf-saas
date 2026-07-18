@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { DEFAULT_SETTINGS, type AppSettings } from "@/lib/default-settings";
 import { requireAdmin } from "@/lib/admin-auth";
 
@@ -22,6 +22,7 @@ async function upsertSetting(key: string, value: string, shopId?: string) {
 /// الحصول على الإعدادات (يُنشئ الافتراضية إن لم تكن موجودة)
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = shopId ? { shopId } : { shopId: null as string | null };
     const rows = await db.setting.findMany({ where });
@@ -52,6 +53,7 @@ export async function PUT(req: NextRequest) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const body = await req.json();
     const { services, deliveryOptions, general, intro, shopId } = body as AppSettings & { shopId?: string };
 
@@ -82,6 +84,7 @@ export async function DELETE(req: NextRequest) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = shopId ? { shopId } : { shopId: null as string | null };
     await db.setting.deleteMany({ where });

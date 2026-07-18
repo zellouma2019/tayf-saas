@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Lock, Eye, EyeOff, RefreshCw, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,17 +18,53 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [checking, setChecking] = useState(true);
   const [isFirstSetup, setIsFirstSetup] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const checkPasswordStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/super-admin/password");
+      if (!res.ok) {
+        // API error - retry up to 2 times
+        if (retryCount < 2) {
+          setRetryCount((c) => c + 1);
+          setTimeout(checkPasswordStatus, 1000);
+          return;
+        }
+        // After retries, assume password is set (show login form)
+        setIsFirstSetup(false);
+        setChecking(false);
+        return;
+      }
+      const d = await res.json();
+      if (d.error) {
+        // API returned an error field
+        if (retryCount < 2) {
+          setRetryCount((c) => c + 1);
+          setTimeout(checkPasswordStatus, 1000);
+          return;
+        }
+        setIsFirstSetup(false);
+        setChecking(false);
+        return;
+      }
+      setIsFirstSetup(d.isDefault === true);
+      setChecking(false);
+    } catch {
+      // Network error - retry up to 2 times
+      if (retryCount < 2) {
+        setRetryCount((c) => c + 1);
+        setTimeout(checkPasswordStatus, 1500);
+        return;
+      }
+      // After retries, show login form as safe default
+      setIsFirstSetup(false);
+      setChecking(false);
+    }
+  }, [retryCount]);
 
   useEffect(() => {
-    fetch("/api/super-admin/password")
-      .then((r) => r.json())
-      .then((d) => {
-        const first = d.isDefault === true;
-        setIsFirstSetup(first);
-        setChecking(false);
-      })
-      .catch(() => setChecking(false));
-  }, []);
+    checkPasswordStatus();
+  }, [checkPasswordStatus]);
 
   async function handleSetupSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -81,7 +117,10 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   if (checking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center" dir="rtl">
-        <RefreshCw className="h-6 w-6 text-violet-500 animate-spin" />
+        <div className="text-center">
+          <RefreshCw className="h-6 w-6 text-violet-500 animate-spin mx-auto mb-2" />
+          <p className="text-sm text-slate-400">جارٍ التحقق...</p>
+        </div>
       </div>
     );
   }

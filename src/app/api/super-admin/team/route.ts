@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 interface TeamMember {
@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
     let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     if (!admin) {
       admin = await db.superAdmin.create({ data: { key: "main" } });
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
     const { email, name, role } = await req.json();
 
     if (!email || !name) {
@@ -81,6 +83,7 @@ export async function DELETE(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb();
     const { email } = await req.json();
 
     if (!email) {

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { TEMPLATE_DEFINITIONS } from "@/lib/form-templates";
 
 /// زرع قوالب النماذج في قاعدة البيانات إن لم تكن موجودة
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = shopId ? { shopId } : { shopId: null as string | null };
     const existing = await db.formTemplate.count({ where });
@@ -43,6 +44,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const body = await req.json();
     const template = await db.formTemplate.create({

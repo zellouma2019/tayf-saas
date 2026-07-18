@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: Request) {
@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   if (!authorized) return authError;
 
   try {
+    await ensureDb();
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "30"; // days
     const shopId = searchParams.get("shopId");
