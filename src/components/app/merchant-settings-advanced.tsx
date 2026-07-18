@@ -173,16 +173,16 @@ function Field({
 }: FieldProps) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label className="text-xs font-medium text-slate-500">{label}</Label>
+      <Label className="text-xs font-medium dark:text-slate-400 text-slate-500">{label}</Label>
       <Input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         dir={dir}
-        className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+        className="h-9 text-sm dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
       />
-      {hint && <p className="text-[11px] text-slate-400">{hint}</p>}
+      {hint && <p className="text-[11px] dark:text-slate-500 text-slate-400">{hint}</p>}
     </div>
   );
 }
@@ -219,9 +219,9 @@ function SectionHeader({
         <Icon className="h-4 w-4 text-teal-600" />
       </div>
       <div>
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-sm font-semibold dark:text-slate-100 text-slate-800">{title}</h3>
         {description && (
-          <p className="text-[11px] text-slate-400 mt-0.5">{description}</p>
+          <p className="text-[11px] dark:text-slate-500 text-slate-400 mt-0.5">{description}</p>
         )}
       </div>
     </div>
@@ -249,7 +249,7 @@ function FeaturesTab() {
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <SectionHeader
@@ -259,7 +259,7 @@ function FeaturesTab() {
             />
             <Badge
               variant="outline"
-              className="text-xs rounded-lg border-slate-200 text-slate-500"
+              className="text-xs rounded-lg dark:border-slate-700 border-slate-200 dark:text-slate-400 text-slate-500"
             >
               {enabledCount}/{TOTAL_FEATURES} مفعّلة
             </Badge>
@@ -271,7 +271,7 @@ function FeaturesTab() {
               ✨ الخطة المدفوعة — جميع الميزات مفعّلة ({TOTAL_FEATURES})
             </div>
           ) : (
-            <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200/60 rounded-lg p-3">
+            <div className="text-xs dark:text-slate-400 text-slate-500 dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60 rounded-lg p-3">
               الخطة المجانية — {TOTAL_FREE_FEATURES} ميزات مجانية مفعّلة + {activePaidFeatures.length} ميزات مدفوعة مفعّلة من أصل {TOTAL_PAID_FEATURES}.
               <span className="text-teal-600 font-medium"> تواصل مع الإدارة للترقية.</span>
             </div>
@@ -300,17 +300,17 @@ function FeaturesTab() {
             {freeFeatures.map((f) => (
               <div
                 key={f.key}
-                className="flex items-center gap-2.5 bg-white rounded-lg px-3 py-2.5 border border-emerald-100/80"
+                className="flex items-center gap-2.5 dark:bg-slate-800 bg-white rounded-lg px-3 py-2.5 border border-emerald-100/80"
               >
-                <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg dark:bg-emerald-900/40 bg-emerald-100 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+                  <div className="text-xs font-medium dark:text-slate-200 text-slate-700 flex items-center gap-1.5">
                     {f.label}
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 font-medium">مفعّل مجاناً</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate">{f.description}</div>
+                  <div className="text-[10px] dark:text-slate-500 text-slate-400 truncate">{f.description}</div>
                 </div>
               </div>
             ))}
@@ -340,17 +340,17 @@ function FeaturesTab() {
               {activePaidFeatures.map((f) => (
                 <div
                   key={f.key}
-                  className="flex items-center gap-2.5 bg-white rounded-lg px-3 py-2.5 border border-teal-100/80"
+                  className="flex items-center gap-2.5 dark:bg-slate-800 bg-white rounded-lg px-3 py-2.5 border border-teal-100/80"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-lg dark:bg-teal-900/40 bg-teal-100 flex items-center justify-center shrink-0">
                     <Check className="h-3.5 w-3.5 text-teal-600" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+                    <div className="text-xs font-medium dark:text-slate-200 text-slate-700 flex items-center gap-1.5">
                       {f.label}
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-600 font-medium">مفعّل</span>
                     </div>
-                    <div className="text-[10px] text-slate-400 truncate">{f.description}</div>
+                    <div className="text-[10px] dark:text-slate-500 text-slate-400 truncate">{f.description}</div>
                   </div>
                 </div>
               ))}
@@ -361,16 +361,16 @@ function FeaturesTab() {
 
       {/* Locked paid features */}
       {lockedPaidFeatures.length > 0 && (
-        <Card className="bg-slate-50/60 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <Card className="dark:bg-slate-900/60 bg-slate-50/60 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-5 rounded-full bg-slate-300" />
-              <CardTitle className="text-sm font-bold text-slate-500">
+              <div className="w-1.5 h-5 rounded-full dark:bg-slate-600 bg-slate-300" />
+              <CardTitle className="text-sm font-bold dark:text-slate-400 text-slate-500">
                 ميزات مقفلة ({lockedPaidFeatures.length})
               </CardTitle>
               <Badge
                 variant="outline"
-                className="text-[10px] rounded-md bg-slate-100 text-slate-500 border-slate-200"
+                className="text-[10px] rounded-md dark:bg-slate-800 bg-slate-100 dark:text-slate-400 text-slate-500 dark:border-slate-700 border-slate-200"
               >
                 مقفل
               </Badge>
@@ -381,17 +381,17 @@ function FeaturesTab() {
               {lockedPaidFeatures.map((f) => (
                 <div
                   key={f.key}
-                  className="flex items-center gap-2.5 bg-white/60 rounded-lg px-3 py-2.5 border border-slate-200/60 opacity-70"
+                  className="flex items-center gap-2.5 dark:bg-slate-800/60 bg-white/60 rounded-lg px-3 py-2.5 border dark:border-slate-700 border-slate-200/60 opacity-70"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                    <Lock className="h-3.5 w-3.5 text-slate-400" />
+                  <div className="w-7 h-7 rounded-lg dark:bg-slate-800 bg-slate-100 flex items-center justify-center shrink-0">
+                    <Lock className="h-3.5 w-3.5 dark:text-slate-500 text-slate-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                    <div className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                       {f.label}
-                      <span className="text-[9px] px-1 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">مقفل</span>
+                      <span className="text-[9px] px-1 py-0.5 rounded dark:bg-slate-800 bg-slate-100 dark:text-slate-400 text-slate-500 font-medium">مقفل</span>
                     </div>
-                    <div className="text-[10px] text-slate-400 truncate">{f.description}</div>
+                    <div className="text-[10px] dark:text-slate-500 text-slate-400 truncate">{f.description}</div>
                   </div>
                 </div>
               ))}
@@ -818,7 +818,7 @@ export function MerchantSettingsAdvanced({
 
   if (loading || !settings) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+      <div className="flex flex-col items-center justify-center py-24 dark:text-slate-500 text-slate-400">
         <RefreshCw className="h-8 w-8 animate-spin mb-3 text-teal-500" />
         <p className="text-sm">جارٍ تحميل الإعدادات...</p>
       </div>
@@ -838,7 +838,7 @@ export function MerchantSettingsAdvanced({
             <Settings className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2 text-slate-800">
+            <h1 className="text-xl font-bold flex items-center gap-2 dark:text-slate-100 text-slate-800">
               الإعدادات المتقدمة
               {hasChanges && (
                 <Badge
@@ -850,7 +850,7 @@ export function MerchantSettingsAdvanced({
                 </Badge>
               )}
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs dark:text-slate-500 text-slate-400 mt-0.5">
               إعدادات متقدمة: عامة، تسليم، ترحيب، خدمات
             </p>
           </div>
@@ -863,7 +863,7 @@ export function MerchantSettingsAdvanced({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-slate-500 border-slate-200/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-1.5 h-9 text-xs"
+                className="dark:text-slate-400 text-slate-500 dark:border-slate-700 border-slate-200/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-1.5 h-9 text-xs"
                 disabled={resetting}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -900,7 +900,7 @@ export function MerchantSettingsAdvanced({
               size="sm"
               onClick={handleDiscard}
               disabled={saving}
-              className="text-slate-500 border-slate-200/60 h-9 text-xs"
+              className="dark:text-slate-400 text-slate-500 dark:border-slate-700 border-slate-200/60 h-9 text-xs"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               تراجع
@@ -929,7 +929,7 @@ export function MerchantSettingsAdvanced({
         onValueChange={setActiveTab}
         className="space-y-5"
       >
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto p-1 bg-slate-100 border border-slate-200/60 rounded-xl">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto p-1 dark:bg-slate-800 bg-slate-100 border dark:border-slate-700 border-slate-200/60 rounded-xl">
           <TabsTrigger
             value="general"
             className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-lg"
@@ -971,7 +971,7 @@ export function MerchantSettingsAdvanced({
             TAB 1: General Settings (إعدادات عامة)
             ========================================== */}
         <TabsContent value="general" className="space-y-4 outline-none">
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardHeader className="pb-3">
               <SectionHeader
                 icon={Percent}
@@ -1024,7 +1024,7 @@ export function MerchantSettingsAdvanced({
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardHeader className="pb-3">
               <SectionHeader
                 icon={Clock}
@@ -1041,7 +1041,7 @@ export function MerchantSettingsAdvanced({
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                     <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
                     رقم الواتساب
                   </Label>
@@ -1051,12 +1051,12 @@ export function MerchantSettingsAdvanced({
                       updateGeneral("whatsappNumber", e.target.value)
                     }
                     dir="ltr"
-                    className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+                    className="h-9 text-sm dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                     placeholder="0560000000"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                  <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                     <Phone className="h-3.5 w-3.5 text-blue-500" />
                     رقم الهاتف
                   </Label>
@@ -1066,13 +1066,13 @@ export function MerchantSettingsAdvanced({
                       updateGeneral("phoneNumber", e.target.value)
                     }
                     dir="ltr"
-                    className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+                    className="h-9 text-sm dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                     placeholder="0560000000"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-rose-500" />
                   البريد الإلكتروني
                 </Label>
@@ -1080,19 +1080,19 @@ export function MerchantSettingsAdvanced({
                   value={settings.general.email}
                   onChange={(e) => updateGeneral("email", e.target.value)}
                   dir="ltr"
-                  className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+                  className="h-9 text-sm dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   placeholder="contact@example.com"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5 text-amber-500" />
                   العنوان
                 </Label>
                 <Textarea
                   value={settings.general.address}
                   onChange={(e) => updateGeneral("address", e.target.value)}
-                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+                  className="text-sm min-h-[60px] dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   rows={2}
                 />
               </div>
@@ -1102,7 +1102,7 @@ export function MerchantSettingsAdvanced({
           {/* ==========================================
               الدولة والعملة
               ========================================== */}
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardHeader className="pb-3">
               <SectionHeader
                 icon={Globe}
@@ -1113,7 +1113,7 @@ export function MerchantSettingsAdvanced({
             <CardContent className="space-y-4">
               {/* Country dropdown */}
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                   <Globe className="h-3.5 w-3.5 text-teal-500" />
                   الدولة
                 </Label>
@@ -1121,7 +1121,7 @@ export function MerchantSettingsAdvanced({
                   value={selectedCountry}
                   onValueChange={(v) => setSelectedCountry(v)}
                 >
-                  <SelectTrigger className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
+                  <SelectTrigger className="h-9 text-sm dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20">
                     <SelectValue placeholder="اختر الدولة" />
                   </SelectTrigger>
                   <SelectContent className="max-h-64 overflow-y-auto">
@@ -1130,7 +1130,7 @@ export function MerchantSettingsAdvanced({
                         <span className="flex items-center gap-2">
                           <span>{c.flag}</span>
                           <span>{c.nameAr}</span>
-                          <span className="text-[10px] text-slate-400">({c.code})</span>
+                          <span className="text-[10px] dark:text-slate-500 text-slate-400">({c.code})</span>
                         </span>
                       </SelectItem>
                     ))}
@@ -1142,20 +1142,20 @@ export function MerchantSettingsAdvanced({
               {(() => {
                 const country = getCountry(selectedCountry);
                 return (
-                  <div className="flex items-center gap-4 p-3 rounded-lg bg-white border border-slate-200/60">
+                  <div className="flex items-center gap-4 p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
                     <div className="flex items-center gap-2 flex-1">
                       <DollarSign className="h-4 w-4 text-amber-500 shrink-0" />
                       <div>
-                        <div className="text-xs text-slate-500">العملة</div>
-                        <div className="text-sm font-semibold text-slate-700">
+                        <div className="text-xs dark:text-slate-400 text-slate-500">العملة</div>
+                        <div className="text-sm font-semibold dark:text-slate-200 text-slate-700">
                           {country?.currencySymbol} {country?.currencyCode}
-                          <span className="text-xs text-slate-400 font-normal mr-2">({country?.nameAr})</span>
+                          <span className="text-xs dark:text-slate-500 text-slate-400 font-normal mr-2">({country?.nameAr})</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-left">
-                      <div className="text-xs text-slate-400">مثال</div>
-                      <div className="text-sm font-medium text-slate-600">
+                      <div className="text-xs dark:text-slate-500 text-slate-400">مثال</div>
+                      <div className="text-sm font-medium dark:text-slate-300 text-slate-600">
                         {formatCurrency(1500, selectedCountry)}
                       </div>
                     </div>
@@ -1185,7 +1185,7 @@ export function MerchantSettingsAdvanced({
           {/* ==========================================
               تخصيص إضافي
               ========================================== */}
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardHeader className="pb-3">
               <SectionHeader
                 icon={Sparkles}
@@ -1214,7 +1214,7 @@ export function MerchantSettingsAdvanced({
 
               {/* WhatsApp button number */}
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                   <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
                   رقم الواتساب للزر العائم
                 </Label>
@@ -1222,27 +1222,27 @@ export function MerchantSettingsAdvanced({
                   value={settings.general.whatsappButtonNumber ?? ""}
                   onChange={(e) => updateGeneral("whatsappButtonNumber", e.target.value)}
                   dir="ltr"
-                  className="h-9 text-sm border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+                  className="h-9 text-sm dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   placeholder="اتركه فارغاً لاستخدام رقم الواتساب الرئيسي"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] dark:text-slate-500 text-slate-400">
                   رقم منفصل يُستخدم لزر واتساب العائم في صفحة العملاء. إذا فارغ يُستخدم الرقم الرئيسي.
                 </p>
               </div>
 
               {/* Enable order tracking toggle */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
+              <div className="flex items-center justify-between p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
                 <div>
-                  <div className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <div className="text-sm font-medium dark:text-slate-200 text-slate-700 flex items-center gap-2">
                     <ToggleLeft className="h-4 w-4 text-teal-500" />
                     تفعيل تتبع الطلبات
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs dark:text-slate-500 text-slate-400 mt-0.5">
                     السماح للعملاء بتتبع طلباتهم عبر الرقم
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] dark:text-slate-500 text-slate-400">
                     {settings.general.enableOrderTracking ? "مفعّل" : "معطّل"}
                   </span>
                   <Switch
@@ -1254,18 +1254,18 @@ export function MerchantSettingsAdvanced({
 
               {/* Welcome message */}
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                <Label className="text-xs font-medium dark:text-slate-400 text-slate-500 flex items-center gap-1.5">
                   <Megaphone className="h-3.5 w-3.5 text-rose-500" />
                   رسالة الترحيب
                 </Label>
                 <Textarea
                   value={settings.general.welcomeMessage ?? ""}
                   onChange={(e) => updateGeneral("welcomeMessage", e.target.value)}
-                  className="text-sm min-h-[60px] border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
+                  className="text-sm min-h-[60px] dark:border-slate-700 border-slate-200/60 focus:border-teal-400 focus:ring-teal-400/20"
                   rows={2}
                   placeholder="رسالة ترحيب مخصصة تظهر للعملاء (اختياري)"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] dark:text-slate-500 text-slate-400">
                   إذا تركتها فارغة لن تظهر رسالة إضافية
                 </p>
               </div>
@@ -1286,12 +1286,12 @@ export function MerchantSettingsAdvanced({
             TAB 2: Delivery Options (خيارات التسليم)
             ========================================== */}
         <TabsContent value="delivery" className="space-y-4 outline-none">
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardContent className="p-4 flex items-start gap-3">
               <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                 <Truck className="h-4 w-4 text-teal-600" />
               </div>
-              <div className="text-xs text-slate-400 leading-relaxed">
+              <div className="text-xs dark:text-slate-500 text-slate-400 leading-relaxed">
                 تحكّم في خيارات التوصيل المعروضة للعملاء. يمكنك تفعيل أو تعطيل
                 كل خيار، وتعديل الرسوم والوقت المتوقع.
               </div>
@@ -1305,13 +1305,13 @@ export function MerchantSettingsAdvanced({
               return (
                 <Card
                   key={del.id}
-                  className={`bg-slate-50 border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-opacity ${
+                  className={`dark:bg-slate-900 bg-slate-50 border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-opacity ${
                     isEnabled
-                      ? "border-slate-200/60"
-                      : "border-slate-200/40 opacity-60"
+                      ? "dark:border-slate-700 border-slate-200/60"
+                      : "dark:border-slate-700 border-slate-200/40 opacity-60"
                   }`}
                 >
-                  <CardHeader className="pb-3 bg-white/50">
+                  <CardHeader className="pb-3 dark:bg-slate-800/50 bg-white/50">
                     <div className="flex items-center justify-between gap-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <span className="text-lg">{del.emoji}</span>
@@ -1320,14 +1320,14 @@ export function MerchantSettingsAdvanced({
                           onChange={(e) =>
                             updateDelivery(dIdx, { label: e.target.value })
                           }
-                          className="h-8 text-sm max-w-[180px] border-slate-200/60"
+                          className="h-8 text-sm max-w-[180px] dark:border-slate-700 border-slate-200/60"
                         />
                         {isEnabled ? (
                           <Badge className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
                             مفعّل
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] text-slate-400">
+                          <Badge variant="outline" className="text-[10px] dark:text-slate-500 text-slate-400">
                             معطّل
                           </Badge>
                         )}
@@ -1344,15 +1344,15 @@ export function MerchantSettingsAdvanced({
                     </div>
                     <CardDescription className="text-xs mt-1">
                       معرّف:{" "}
-                      <span dir="ltr" className="font-mono text-slate-400">
+                      <span dir="ltr" className="font-mono dark:text-slate-500 text-slate-400">
                         {del.id}
                       </span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 space-y-3">
                     {/* Enable toggle */}
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200/60">
-                      <span className="text-xs text-slate-600 font-medium">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
+                      <span className="text-xs dark:text-slate-300 text-slate-600 font-medium">
                         تفعيل / تعطيل
                       </span>
                       <Switch
@@ -1418,7 +1418,7 @@ export function MerchantSettingsAdvanced({
 
           <Button
             variant="outline"
-            className="w-full border-dashed h-11 text-sm gap-1.5 text-slate-400 hover:text-slate-600 border-slate-200/60 hover:border-teal-300 rounded-xl"
+            className="w-full border-dashed h-11 text-sm gap-1.5 dark:text-slate-500 text-slate-400 dark:hover:text-slate-300 hover:text-slate-600 dark:border-slate-700 border-slate-200/60 hover:border-teal-300 rounded-xl"
             onClick={addDelivery}
           >
             <Plus className="h-4 w-4" />
@@ -1430,12 +1430,12 @@ export function MerchantSettingsAdvanced({
             TAB 3: Intro / Welcome Screen (شاشة الترحيب)
             ========================================== */}
         <TabsContent value="intro" className="space-y-4 outline-none">
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardContent className="p-4 flex items-start gap-3">
               <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                 <Sparkles className="h-4 w-4 text-teal-600" />
               </div>
-              <div className="text-xs text-slate-400 leading-relaxed">
+              <div className="text-xs dark:text-slate-500 text-slate-400 leading-relaxed">
                 خصّص شاشة الترحيب التي تظهر عند دخول العميل. يمكنك تغيير
                 العنوان، الألوان، المدة، والمحتوى. اضغط &quot;حفظ
                 التغييرات&quot; لتثبيت التعديلات.
@@ -1443,7 +1443,7 @@ export function MerchantSettingsAdvanced({
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardHeader>
               <SectionHeader
                 icon={Palette}
@@ -1453,17 +1453,17 @@ export function MerchantSettingsAdvanced({
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Enable toggle */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
+              <div className="flex items-center justify-between p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
                 <div>
-                  <div className="text-sm font-medium text-slate-700">
+                  <div className="text-sm font-medium dark:text-slate-200 text-slate-700">
                     تفعيل شاشة الترحيب
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs dark:text-slate-500 text-slate-400">
                     إذا تم التعطيل، سيُفتح الموقع مباشرة بدون إنترو
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] dark:text-slate-500 text-slate-400">
                     {settings.intro?.enabled ? "مفعّل" : "معطّل"}
                   </span>
                   <Switch
@@ -1510,7 +1510,7 @@ export function MerchantSettingsAdvanced({
               {/* Colors */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-slate-500">
+                  <Label className="text-xs font-medium dark:text-slate-400 text-slate-500">
                     لون الخلفية
                   </Label>
                   <div className="flex items-center gap-2">
@@ -1518,7 +1518,7 @@ export function MerchantSettingsAdvanced({
                       type="color"
                       value={settings.intro?.bgColor ?? "#1a1a1a"}
                       onChange={(e) => updateIntro("bgColor", e.target.value)}
-                      className="w-10 h-10 rounded-lg border border-slate-200/60 cursor-pointer"
+                      className="w-10 h-10 rounded-lg border dark:border-slate-700 border-slate-200/60 cursor-pointer"
                     />
                     <Field
                       value={settings.intro?.bgColor ?? "#1a1a1a"}
@@ -1530,7 +1530,7 @@ export function MerchantSettingsAdvanced({
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-slate-500">
+                  <Label className="text-xs font-medium dark:text-slate-400 text-slate-500">
                     اللون المميز
                   </Label>
                   <div className="flex items-center gap-2">
@@ -1542,7 +1542,7 @@ export function MerchantSettingsAdvanced({
                       onChange={(e) =>
                         updateIntro("accentColor", e.target.value)
                       }
-                      className="w-10 h-10 rounded-lg border border-slate-200/60 cursor-pointer"
+                      className="w-10 h-10 rounded-lg border dark:border-slate-700 border-slate-200/60 cursor-pointer"
                     />
                     <Field
                       value={
@@ -1569,15 +1569,15 @@ export function MerchantSettingsAdvanced({
 
               {/* Extra toggles */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
-                  <span className="text-sm text-slate-700">شريط التحميل</span>
+                <div className="flex items-center justify-between p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
+                  <span className="text-sm dark:text-slate-200 text-slate-700">شريط التحميل</span>
                   <Switch
                     checked={settings.intro?.showProgress ?? true}
                     onCheckedChange={(v) => updateIntro("showProgress", v)}
                   />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
-                  <span className="text-sm text-slate-700">
+                <div className="flex items-center justify-between p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
+                  <span className="text-sm dark:text-slate-200 text-slate-700">
                     الحلقة الدوارة
                   </span>
                   <Switch
@@ -1590,8 +1590,8 @@ export function MerchantSettingsAdvanced({
               </div>
 
               {/* Live preview */}
-              <div className="rounded-xl border border-slate-200/60 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                <div className="px-4 py-2 bg-teal-50 border-b border-slate-200/60 text-xs font-bold text-teal-700">
+              <div className="rounded-xl border dark:border-slate-700 border-slate-200/60 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="px-4 py-2 bg-teal-50 border-b dark:border-slate-700 border-slate-200/60 text-xs font-bold text-teal-700">
                   معاينة مباشرة
                 </div>
                 <div
@@ -1658,12 +1658,12 @@ export function MerchantSettingsAdvanced({
             TAB 4: Advanced Service Specs (الخدمات المتقدمة)
             ========================================== */}
         <TabsContent value="services" className="space-y-4 outline-none">
-          <Card className="bg-slate-50 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <Card className="dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <CardContent className="p-4 flex items-start gap-3">
               <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
                 <Layers className="h-4 w-4 text-teal-600" />
               </div>
-              <div className="text-xs text-slate-400 leading-relaxed">
+              <div className="text-xs dark:text-slate-500 text-slate-400 leading-relaxed">
                 اضغط على أي خدمة لتوسيعها وتعديل أقسامها وخياراتها.
                 تذكر أن الحقول الرقمية مثل المضاعف تؤثر مباشرة
                 في حساب الأسعار.
@@ -1676,21 +1676,21 @@ export function MerchantSettingsAdvanced({
               <AccordionItem
                 key={service.type}
                 value={`service-${service.type}`}
-                className="border border-slate-200/60 rounded-xl bg-white overflow-hidden px-0 data-[state=open]:shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                className="border dark:border-slate-700 border-slate-200/60 rounded-xl dark:bg-slate-800 bg-white overflow-hidden px-0 data-[state=open]:shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               >
-                <AccordionTrigger className="px-4 hover:no-underline hover:bg-slate-50">
+                <AccordionTrigger className="px-4 hover:no-underline dark:hover:bg-slate-700 hover:bg-slate-50">
                   <div className="flex items-center gap-3 w-full pr-2">
-                    <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center text-xl shrink-0">
+                    <div className="w-10 h-10 rounded-lg dark:bg-teal-900/40 bg-teal-100 flex items-center justify-center text-xl shrink-0">
                       {service.emoji}
                     </div>
                     <div className="flex-1 text-right">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm text-slate-800">
+                        <span className="font-semibold text-sm dark:text-slate-100 text-slate-800">
                           {service.name}
                         </span>
                         <Badge
                           variant="outline"
-                          className="text-xs bg-slate-50 text-slate-500 border-slate-200/60"
+                          className="text-xs dark:bg-slate-900 bg-slate-50 dark:text-slate-400 text-slate-500 dark:border-slate-700 border-slate-200/60"
                         >
                           {SERVICE_TYPE_LABELS[service.type] || service.type}
                         </Badge>
@@ -1701,7 +1701,7 @@ export function MerchantSettingsAdvanced({
                           </Badge>
                         )}
                       </div>
-                      <div className="text-xs text-slate-400 mt-0.5">
+                      <div className="text-xs dark:text-slate-500 text-slate-400 mt-0.5">
                         {service.description} · {service.sections.length} قسم
                       </div>
                     </div>
@@ -1743,7 +1743,7 @@ export function MerchantSettingsAdvanced({
                         <div className="text-sm font-bold text-teal-600">
                           {service.basePricePerPage} د.ج
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs dark:text-slate-500 text-slate-400">
                           لكل صفحة
                         </div>
                       </div>
@@ -1753,7 +1753,7 @@ export function MerchantSettingsAdvanced({
 
                 <AccordionContent className="px-4 pb-4 space-y-4">
                   {/* Service basic properties */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200/60">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60">
                     <Field
                       label="اسم الخدمة"
                       value={service.name}
@@ -1810,19 +1810,19 @@ export function MerchantSettingsAdvanced({
                           }
                           className="w-4 h-4 rounded accent-teal-600"
                         />
-                        <span className="text-slate-500">خدمة شائعة</span>
+                        <span className="dark:text-slate-400 text-slate-500">خدمة شائعة</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Service flags */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
+                    <div className="flex items-center justify-between p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
                       <div>
-                        <div className="text-xs font-medium text-slate-600">
+                        <div className="text-xs font-medium dark:text-slate-300 text-slate-600">
                           تعتمد على عدد الصفحات
                         </div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[11px] dark:text-slate-500 text-slate-400">
                           hasPageCount
                         </div>
                       </div>
@@ -1833,12 +1833,12 @@ export function MerchantSettingsAdvanced({
                         }
                       />
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200/60">
+                    <div className="flex items-center justify-between p-3 rounded-lg dark:bg-slate-800 bg-white border dark:border-slate-700 border-slate-200/60">
                       <div>
-                        <div className="text-xs font-medium text-slate-600">
+                        <div className="text-xs font-medium dark:text-slate-300 text-slate-600">
                           نطاق الطباعة
                         </div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[11px] dark:text-slate-500 text-slate-400">
                           hasPrintRange
                         </div>
                       </div>
@@ -1868,10 +1868,10 @@ export function MerchantSettingsAdvanced({
                   {/* Sections */}
                   <div className="space-y-3">
                     <div className="border-r-4 border-teal-500 pr-3">
-                      <h4 className="text-sm font-semibold text-slate-700">
+                      <h4 className="text-sm font-semibold dark:text-slate-200 text-slate-700">
                         الأقسام ({service.sections.length})
                       </h4>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] dark:text-slate-500 text-slate-400">
                         أقسام خيارات الخدمة
                       </p>
                     </div>
@@ -1879,13 +1879,13 @@ export function MerchantSettingsAdvanced({
                     {service.sections.map((section, secIdx) => (
                       <div
                         key={section.id}
-                        className="rounded-lg border border-slate-200/60 bg-white overflow-hidden"
+                        className="rounded-lg border dark:border-slate-700 border-slate-200/60 dark:bg-slate-800 bg-white overflow-hidden"
                       >
                         {/* Section header */}
-                        <div className="flex items-center justify-between gap-2 p-3 border-b border-slate-200/60 bg-slate-50/50">
+                        <div className="flex items-center justify-between gap-2 p-3 border-b dark:border-slate-700 border-slate-200/60 dark:bg-slate-900/50 bg-slate-50/50">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <ChevronLeft className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                            <span className="text-xs font-medium text-slate-400 shrink-0">
+                            <ChevronLeft className="h-3.5 w-3.5 dark:text-slate-500 text-slate-400 shrink-0" />
+                            <span className="text-xs font-medium dark:text-slate-500 text-slate-400 shrink-0">
                               القسم {secIdx + 1}
                             </span>
                             <Input
@@ -1895,7 +1895,7 @@ export function MerchantSettingsAdvanced({
                                   title: e.target.value,
                                 })
                               }
-                              className="h-8 text-sm flex-1 min-w-0 border-slate-200/60"
+                              className="h-8 text-sm flex-1 min-w-0 dark:border-slate-700 border-slate-200/60"
                             />
                           </div>
                           <Button
@@ -1930,7 +1930,7 @@ export function MerchantSettingsAdvanced({
                               dir="ltr"
                             />
                             <div className="space-y-1.5">
-                              <Label className="text-xs font-medium text-slate-500">
+                              <Label className="text-xs font-medium dark:text-slate-400 text-slate-500">
                                 نوع الاختيار
                               </Label>
                               <Select
@@ -1943,7 +1943,7 @@ export function MerchantSettingsAdvanced({
                                   })
                                 }
                               >
-                                <SelectTrigger className="h-9 text-sm border-slate-200/60">
+                                <SelectTrigger className="h-9 text-sm dark:border-slate-700 border-slate-200/60">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1961,13 +1961,13 @@ export function MerchantSettingsAdvanced({
                           {/* Options */}
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                              <Label className="text-xs font-medium text-slate-500">
+                              <Label className="text-xs font-medium dark:text-slate-400 text-slate-500">
                                 الخيارات ({section.options.length})
                               </Label>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 text-xs gap-1 border-slate-200/60 text-teal-600 hover:bg-teal-50 hover:border-teal-200"
+                                className="h-7 text-xs gap-1 dark:border-slate-700 border-slate-200/60 text-teal-600 dark:hover:bg-teal-900/30 hover:bg-teal-50 hover:border-teal-200"
                                 onClick={() => addOption(sIdx, secIdx)}
                               >
                                 <Plus className="h-3 w-3" />
@@ -1976,7 +1976,7 @@ export function MerchantSettingsAdvanced({
                             </div>
 
                             {section.options.length === 0 ? (
-                              <div className="text-center py-4 text-xs text-slate-400 border border-dashed border-slate-200/60 rounded-lg">
+                              <div className="text-center py-4 text-xs dark:text-slate-500 text-slate-400 border border-dashed dark:border-slate-700 border-slate-200/60 rounded-lg">
                                 لا توجد خيارات. اضغط &quot;خيار&quot;
                                 للإضافة.
                               </div>
@@ -1985,7 +1985,7 @@ export function MerchantSettingsAdvanced({
                                 {section.options.map((opt, oIdx) => (
                                   <div
                                     key={opt.id}
-                                    className="rounded-lg border border-slate-200/60 p-3 bg-slate-50/50 space-y-2"
+                                    className="rounded-lg border dark:border-slate-700 border-slate-200/60 p-3 dark:bg-slate-900/50 bg-slate-50/50 space-y-2"
                                   >
                                     <div className="flex items-center gap-2">
                                       <span className="text-base shrink-0">
@@ -2001,7 +2001,7 @@ export function MerchantSettingsAdvanced({
                                             { label: e.target.value },
                                           )
                                         }
-                                        className="h-8 text-sm font-medium flex-1 border-slate-200/60"
+                                        className="h-8 text-sm font-medium flex-1 dark:border-slate-700 border-slate-200/60"
                                       />
                                       <Button
                                         variant="ghost"
@@ -2113,7 +2113,7 @@ export function MerchantSettingsAdvanced({
                     {/* Add section button */}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed h-10 text-sm gap-1.5 text-slate-400 hover:text-slate-600 hover:border-teal-300 rounded-lg"
+                      className="w-full border-dashed h-10 text-sm gap-1.5 dark:text-slate-500 text-slate-400 dark:hover:text-slate-300 hover:text-slate-600 hover:border-teal-300 rounded-lg"
                       onClick={() => addSection(sIdx)}
                     >
                       <Plus className="h-4 w-4" />
@@ -2128,7 +2128,7 @@ export function MerchantSettingsAdvanced({
           {/* Add service button */}
           <Button
             variant="outline"
-            className="w-full border-dashed border-2 border-teal-200 text-teal-600 hover:bg-teal-50 hover:border-teal-300 gap-2 h-12 rounded-xl"
+            className="w-full border-dashed border-2 border-teal-200 text-teal-600 dark:hover:bg-teal-900/30 hover:bg-teal-50 hover:border-teal-300 gap-2 h-12 rounded-xl"
             onClick={addService}
           >
             <Plus className="h-5 w-5" />
