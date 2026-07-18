@@ -45,6 +45,7 @@ import {
   STATUS_COLORS,
 } from "@/lib/admin-utils";
 import type { ShopStat } from "@/lib/admin-types";
+import { SHOP_THEMES } from "@/lib/themes";
 
 // ===== زر نسخ مع تأكيد بصري =====
 export function CopyButton({ text, label, className }: { text: string; label: string; className?: string }) {
@@ -398,6 +399,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
     ownerPhone: shop.ownerPhone || "",
     adminPin: shop.adminPin || "",
     primaryColor: shop.primaryColor || "",
+    themeId: shop.themeId || 1,
     trialDays: shop.trialDays ?? "",
     trialStartsAt: shop.trialStartsAt ? shop.trialStartsAt.slice(0, 10) : "",
   });
@@ -487,6 +489,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
         ownerPhone: form.ownerPhone || null,
         adminPin: form.adminPin,
         primaryColor: form.primaryColor || null,
+        themeId: form.themeId,
         trialDays: form.trialDays ? Number(form.trialDays) : "",
         trialStartsAt: form.trialStartsAt || null,
         plan,
@@ -592,7 +595,25 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
               <Settings className="h-4 w-4 text-teal-500" /> المظهر
             </h4>
             <div>
-              <Label className="text-slate-600">اللون الرئيسي</Label>
+              <Label className="text-slate-600">القالب اللوني</Label>
+              <Select value={String(form.themeId)} onValueChange={(v) => updateField("themeId", Number(v))}>
+                <SelectTrigger className="mt-1.5 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SHOP_THEMES.map((t) => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      <span className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full border border-slate-200" style={{ backgroundColor: t.accent }} />
+                        {t.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-slate-600">اللون الرئيسي (تجاوز القالب)</Label>
               <div className="flex gap-3 mt-1.5">
                 <Input value={form.primaryColor} onChange={(e) => updateField("primaryColor", e.target.value)} className="flex-1 rounded-lg border-slate-200 focus:ring-teal-500/20 focus:border-teal-500" dir="ltr" placeholder="#0d7377" />
                 {form.primaryColor && (

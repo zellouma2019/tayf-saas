@@ -243,6 +243,24 @@ export function ensureDb(): Promise<void> {
           } catch {
             // المدير موجود بالفعل
           }
+
+          // ترحيل الأعمدة المفقودة (للجداول الموجودة مسبقاً)
+          const MIGRATION_COLUMNS = [
+            { table: 'Shop', column: 'logoUrl', type: 'TEXT' },
+            { table: 'Shop', column: 'primaryColor', type: 'TEXT' },
+            { table: 'Shop', column: 'themeId', type: 'INTEGER NOT NULL DEFAULT 1' },
+            { table: 'Shop', column: 'ownerNotes', type: 'TEXT' },
+            { table: 'Shop', column: 'paymentInfo', type: 'TEXT' },
+            { table: 'Shop', column: 'trialDays', type: 'INTEGER' },
+            { table: 'Shop', column: 'trialStartsAt', type: 'DATETIME' },
+          ];
+          for (const col of MIGRATION_COLUMNS) {
+            try {
+              await db.$executeRawUnsafe(`ALTER TABLE "${col.table}" ADD COLUMN "${col.column}" ${col.type}`)
+            } catch {
+              // العمود موجود بالفعل — تجاهل
+            }
+          }
           console.log('[DB] ✓ Database initialized successfully')
         } catch (e) {
           console.error('[DB] Direct initialization failed:', e)

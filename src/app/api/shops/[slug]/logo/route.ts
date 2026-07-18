@@ -26,7 +26,7 @@ export async function POST(
     }
 
     // استخراج البيانات من Data URL للتحقق من الصيغة والحجم
-    const matches = logoDataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+    const matches = logoDataUrl.match(/^data:image\/([\w+]+);base64,(.+)$/);
     if (!matches) {
       return NextResponse.json({ error: "صيغة الصورة غير صالحة" }, { status: 400 });
     }

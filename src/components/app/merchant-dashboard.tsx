@@ -162,6 +162,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
+  const [previewVisited, setPreviewVisited] = useState(false);
 
   // حالة الطلبات والإحصائيات
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -212,6 +213,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       if (pendingIntervalRef.current) clearInterval(pendingIntervalRef.current);
     };
   }, [fetchPendingCount]);
+
+  // تتبع زيارة تبويب المعاينة (لمنع تحميل iframe قبل الزيارة الأولى)
+  useEffect(() => {
+    if (activeTab === "preview") setPreviewVisited(true);
+  }, [activeTab]);
 
   // فلترة + ترتيب الطلبات بالذاكرة
   const orders = useMemo(() => {
@@ -873,7 +879,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
           )}
 
           {/* ===== تبويب الطلبات ===== */}
-          {activeTab === "orders" && (
+          <div className={activeTab !== "orders" ? "hidden" : ""}>
             <div className="space-y-5">
               {/* أزرار التبديل بين جدول ولوحة كانبان */}
               <div className="flex items-center gap-2">
@@ -1212,77 +1218,79 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-          )}
+          </div>
           {/* ===== تبويب التحليلات ===== */}
-          {activeTab === "analytics" && hasFeature("advancedAnalytics") && (
+          <div className={activeTab !== "analytics" || !hasFeature("advancedAnalytics") ? "hidden" : ""}>
             <div className="bg-white rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
               <div className="p-4 sm:p-6">
                 <MerchantAnalytics stats={stats} orders={rawOrders} />
               </div>
             </div>
-          )}
+          </div>
 
           {/* ===== تبويب العملاء ===== */}
-          {activeTab === "customers" && (
+          <div className={activeTab !== "customers" ? "hidden" : ""}>
             <MerchantCustomers />
-          )}
+          </div>
 
           {/* ===== تبويب المصاريف ===== */}
-          {activeTab === "expenses" && (
+          <div className={activeTab !== "expenses" ? "hidden" : ""}>
             <MerchantExpenses />
-          )}
+          </div>
 
           {/* ===== تبويب إعدادات المتجر ===== */}
-          {activeTab === "settings" && (
+          <div className={activeTab !== "settings" ? "hidden" : ""}>
             <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} onSaved={() => setPreviewKey(k => k + 1)} />
-          )}
+          </div>
 
           {/* ===== تبويب الإعدادات المتقدمة ===== */}
-          {activeTab === "advancedSettings" && (
+          <div className={activeTab !== "advancedSettings" ? "hidden" : ""}>
             <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
-          )}
+          </div>
 
           {/* ===== تبويب مشاركة الرابط ===== */}
-          {activeTab === "share" && (
+          <div className={activeTab !== "share" ? "hidden" : ""}>
             <ShareLinkTab shopName={shop?.name || ""} shopSlug={shopSlug} customerLink={customerLink} />
-          )}
+          </div>
 
           {/* ===== تبويب المعاينة ===== */}
-          {activeTab === "preview" && (
-            <div className="space-y-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-bold text-lg text-slate-800">معاينة متجرك</h2>
-                  <p className="text-sm text-slate-500 mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
-                </div>
-                <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg shrink-0">
-                  <ExternalLink className="h-4 w-4" />
-                  فتح في نافذة جديدة
-                </Button>
-              </div>
-              <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
-                <div className="p-0">
-                  <div className="bg-slate-100 p-3 flex items-center gap-2.5 border-b border-slate-200/60">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-rose-400" />
-                      <div className="w-3 h-3 rounded-full bg-amber-400" />
-                      <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <div className="flex-1 bg-white rounded-lg px-4 py-1.5 text-xs text-slate-400 text-center shadow-sm border border-slate-200/60" dir="ltr">
-                      {customerLink}
-                    </div>
+          <div className={activeTab !== "preview" ? "hidden" : ""}>
+            {previewVisited && (
+              <div className="space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="font-bold text-lg text-slate-800">معاينة متجرك</h2>
+                    <p className="text-sm text-slate-500 mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
                   </div>
-                  <iframe
-                    key={previewKey}
-                    src={customerLink}
-                    className="w-full border-0"
-                    style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}
-                    title="معاينة المتجر"
-                  />
+                  <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg shrink-0">
+                    <ExternalLink className="h-4 w-4" />
+                    فتح في نافذة جديدة
+                  </Button>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+                  <div className="p-0">
+                    <div className="bg-slate-100 p-3 flex items-center gap-2.5 border-b border-slate-200/60">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-rose-400" />
+                        <div className="w-3 h-3 rounded-full bg-amber-400" />
+                        <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                      </div>
+                      <div className="flex-1 bg-white rounded-lg px-4 py-1.5 text-xs text-slate-400 text-center shadow-sm border border-slate-200/60" dir="ltr">
+                        {customerLink}
+                      </div>
+                    </div>
+                    <iframe
+                      key={previewKey}
+                      src={`${customerLink}?_t=${previewKey}`}
+                      className="w-full border-0"
+                      style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}
+                      title="معاينة المتجر"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </div>
 
@@ -1579,6 +1587,10 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved }: { shopId:
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("يرجى اختيار ملف صورة (PNG, JPG, GIF, WebP)");
+      return;
+    }
     if (file.size > 2 * 1024 * 1024) {
       toast.error("حجم الملف كبير جداً", { description: "الحد الأقصى 2 م.ب" });
       return;
@@ -1756,7 +1768,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved }: { shopId:
       </ProLock>
 
       {/* ===== 3. القالب اللوني (customLogo) ===== */}
-      <ThemePickerSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} />
+      <ThemePickerSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} onSaved={() => setPreviewKey(k => k + 1)} />
 
       {/* ===== 4. معلومات المتجر (مجاني) ===== */}
       <form onSubmit={handleSave} className="space-y-5">
@@ -1915,10 +1927,12 @@ function ThemePickerSection({
   shopSlug,
   shop,
   adminPin,
+  onSaved,
 }: {
   shopSlug: string;
   shop: { themeId?: number } | null;
   adminPin: string;
+  onSaved?: () => void;
 }) {
   const { hasFeature, refreshShop } = useShop();
   const canCustomize = hasFeature("customTheme");
@@ -1944,6 +1958,7 @@ function ThemePickerSection({
       if (!res.ok) throw new Error("فشل الحفظ");
       toast.success("تم تغيير القالب اللوني");
       refreshShop();
+      onSaved?.();
     } catch (err) {
       toast.error("فشل الحفظ", { description: (err as Error).message });
     } finally {
