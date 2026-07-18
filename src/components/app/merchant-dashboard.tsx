@@ -161,6 +161,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [activeTab, setActiveTab] = useState<MerchantTab>("home");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [previewKey, setPreviewKey] = useState(0);
 
   // حالة الطلبات والإحصائيات
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -1229,7 +1230,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
           {/* ===== تبويب إعدادات المتجر ===== */}
           {activeTab === "settings" && (
-            <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} onSaved={() => setPreviewKey(k => k + 1)} />
           )}
 
           {/* ===== تبويب الإعدادات المتقدمة ===== */}
@@ -1268,6 +1269,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   </div>
                   <iframe
+                    key={previewKey}
                     src={customerLink}
                     className="w-full border-0"
                     style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}
@@ -1407,7 +1409,7 @@ const DEFAULT_SERVICES = [
 ];
 
 // ===== إعدادات المتجر (داخل لوحة التاجر) =====
-function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; shopSlug: string; adminPin: string }) {
+function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved }: { shopId: string; shopSlug: string; adminPin: string; onSaved?: () => void }) {
   const { shop, hasFeature, refreshShop } = useShop();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -1477,6 +1479,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       }
       toast.success("تم حفظ الإعدادات بنجاح");
       refreshShop();
+      onSaved?.();
     } catch (err) {
       toast.error("فشل الحفظ", { description: (err as Error).message });
     } finally {

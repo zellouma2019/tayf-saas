@@ -453,9 +453,13 @@ export function AppShell() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: shopTheme.footerIcon }}>
-                        <Printer className="h-5 w-5 text-neutral-900" />
-                      </div>
+                      {shopLogoUrl ? (
+                        <img src={shopLogoUrl} alt={displayBusinessName} className="w-9 h-9 rounded-lg shrink-0 object-cover ring-2 ring-white/10" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: shopTheme.footerIcon }}>
+                          <Printer className="h-5 w-5 text-neutral-900" />
+                        </div>
+                      )}
                       <div>
                         <div className="font-bold text-white">{displayBusinessName}</div>
                         <div className="text-xs text-neutral-400">{displayTagline || "اطبع بسهولة"}</div>

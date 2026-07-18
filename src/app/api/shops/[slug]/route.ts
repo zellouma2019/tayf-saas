@@ -24,7 +24,7 @@ export async function GET(
       { shop: safeShop },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+          "Cache-Control": "private, max-age=0, s-maxage=5",
         },
       },
     );

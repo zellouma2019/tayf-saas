@@ -89,6 +89,20 @@
   --sidebar-ring: oklch(0.78 0.13 85);
 }
 
+/* Admin dashboard accent utilities - uses CSS vars set at runtime */
+.da-bg { background-color: var(--dashboard-accent) !important; }
+.da-bg-light { background-color: var(--dashboard-accent-light) !important; }
+.da-bg-dark { background-color: var(--dashboard-accent-dark) !important; }
+.da-bg-50 { background-color: var(--dashboard-accent-50) !important; }
+.da-bg-100 { background-color: var(--dashboard-accent-100) !important; }
+.da-text { color: var(--dashboard-accent) !important; }
+.da-text-light { color: var(--dashboard-accent-light) !important; }
+.da-border { border-color: var(--dashboard-accent) !important; }
+.da-ring { --tw-ring-color: var(--dashboard-accent) !important; }
+.da-gradient { background: linear-gradient(135deg, var(--dashboard-accent), var(--dashboard-accent-dark)) !important; }
+.da-shadow { box-shadow: 0 4px 14px -3px color-mix(in srgb, var(--dashboard-accent) 40%, transparent) !important; }
+.da-hover:hover { background-color: var(--dashboard-accent-dark) !important; }
+
 .dark {
   --background: oklch(0.16 0.01 60);
   --foreground: oklch(0.96 0.01 85);
