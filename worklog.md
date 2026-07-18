@@ -36,3 +36,28 @@ User Action Required:
 - Check Deployments tab for recent build errors
 - Click "Redeploy" on the latest successful commit
 - OR reconnect the GitHub integration if disconnected
+
+---
+Task ID: 2
+Agent: main
+Task: Verify Vercel deployment after user reconnected Git
+
+Work Log:
+- User reconnected Git and shared deploy hook URL
+- Triggered deploy via POST to hook (Job ID: 1FvfnC96XR5EqbB9QzHs) - returned PENDING
+- Pushed new commit 988f72a to trigger Git webhook
+- Waited 90+ seconds, build ID still ds02G7_SNtIgv2aUgtyx8 (unchanged)
+- Deploy hook returns 201 but builds never complete (stuck in PENDING)
+- /api/health returns 404 (route doesn't exist in deployed code = old code)
+- /api/admin/global-stats still times out (60+ seconds)
+- /api/super-admin/password responds in 0.5s (simple query works even in old code)
+- Agent-browser test: page loads dashboard WITHOUT password prompt even with cleared localStorage
+- Old LoginGate calls /api/super-admin/password, gets {isDefault:true}, shows dashboard directly
+
+Stage Summary:
+- Vercel deployment is COMPLETELY BROKEN - builds are queued but never execute
+- Deploy hook accepts requests (201) but jobs stay PENDING indefinitely
+- Code is 100% ready on GitHub (commit 988f72a, 0 lint errors)
+- ROOT CAUSE of Vercel issue: unknown - possibly project paused, plan limit, or billing issue
+- User MUST check Vercel dashboard > Deployments to see build errors
+- Alternative: User can provide VERCEL_TOKEN for CLI deployment from this environment
