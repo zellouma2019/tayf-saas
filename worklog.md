@@ -61,3 +61,35 @@ Stage Summary:
 - ROOT CAUSE of Vercel issue: unknown - possibly project paused, plan limit, or billing issue
 - User MUST check Vercel dashboard > Deployments to see build errors
 - Alternative: User can provide VERCEL_TOKEN for CLI deployment from this environment
+
+---
+Task ID: 3
+Agent: main
+Task: Deploy to Vercel via CLI with user-provided token
+
+Work Log:
+- User provided Vercel token
+- First deploy failed: vercel.json had invalid route pattern `/favicon\.?(.*)` → fixed to `/favicon(.*)`
+- First two deploys went to wrong project (my-project instead of tayf-saas)
+- Used Vercel API to get tayf-saas project ID: prj_x4YwyPDHz0OSBFcaoH7cTZ3C2OJA
+- Updated .vercel/project.json to point to correct project
+- Successfully deployed to tona1/tayf-saas → https://tayf-saas.vercel.app
+
+Verification Results (ALL PASSED):
+1. /api/health → {"ok":true,"ver":"3"} ✅ (was 404 before)
+2. /api/admin/global-stats → 3.9 seconds ✅ (was 60+ seconds timeout)
+3. /api/super-admin/password → {"isDefault":true,"hasPassword":false} ✅ (new format)
+4. Agent-browser test: Fresh visit → "Set Password" form shown ✅
+5. Set password "Test@123" → Dashboard loaded ✅
+6. Clear localStorage, reload → "Login" form shown (NOT dashboard) ✅
+7. Wrong password "WrongPass" → Rejected, stays on login form ✅
+8. Correct password "Test@123" → Dashboard loaded ✅
+9. Reset password to default → User gets clean experience ✅
+
+Stage Summary:
+- BOTH BUGS FULLY FIXED AND VERIFIED ON LIVE SITE
+- Password protection works across browsers/sessions
+- Page loads in under 5 seconds (was 20+ seconds)
+- Root cause was: `ensureDb()` without `await` in 38 API routes
+- Vercel Git webhook was broken (builds stuck in PENDING) - bypassed via CLI deploy
+- Cleanup: deleted accidental my-project, pushed vercel.json fix (commit 027cc54)
