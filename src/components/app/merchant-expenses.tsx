@@ -263,7 +263,7 @@ function MerchantExpensesInner() {
       </div>
 
       {/* ===== نموذج الإضافة ===== */}
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm font-semibold flex items-center gap-1.5 mb-1">
             <Plus className="h-4 w-4 text-teal-600" />
@@ -335,14 +335,14 @@ function MerchantExpensesInner() {
 
       {/* ===== ملخص المصاريف ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
           <div className="flex items-center gap-2 mb-1">
             <CalendarDays className="h-4 w-4 text-teal-600" />
             <span className="text-xs text-muted-foreground">مصاريف الشهر</span>
           </div>
           <p className="text-xl font-bold">{formatDA(monthTotal ?? 0)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingDown className="h-4 w-4 text-rose-600" />
             <span className="text-xs text-muted-foreground">إجمالي المصاريف</span>
@@ -389,7 +389,7 @@ function MerchantExpensesInner() {
 
       {/* ===== قائمة فارغة ===== */}
       {!isLoading && expenses.length === 0 && (
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
           <Receipt className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
             {categoryFilter
@@ -403,7 +403,7 @@ function MerchantExpensesInner() {
       {!isLoading && expenses.length > 0 && (
         <>
           {/* ===== جدول سطح المكتب ===== */}
-          <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
@@ -555,7 +555,7 @@ function MerchantExpensesInner() {
               return (
                 <div
                   key={exp.id}
-                  className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
+                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
                 >
                   {isEditing ? (
                     <div className="space-y-3">

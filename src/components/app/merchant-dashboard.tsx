@@ -1552,30 +1552,75 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
   }
 
   // ===== ضغط الصورة قبل الرفع =====
-  async function compressLogo(dataUrl: string, maxSize = 512): Promise<string> {
+  function compressImageToDataUrl(file: File, maxSize = 512): Promise<string> {
     return new Promise((resolve, reject) => {
+      // استخدم URL.createObjectURL بدل FileReader — أكثر ثباتاً
+      const objectUrl = URL.createObjectURL(file);
       const img = new Image();
+      const timeout = setTimeout(() => {
+        img.src = "";
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("انتهت مهلة تحميل الصورة"));
+      }, 15000);
+
       img.onload = () => {
-        let { width, height } = img;
-        if (width > maxSize || height > maxSize) {
-          if (width > height) {
-            height = Math.round((height / width) * maxSize);
-            width = maxSize;
-          } else {
-            width = Math.round((width / height) * maxSize);
-            height = maxSize;
+        clearTimeout(timeout);
+        URL.revokeObjectURL(objectUrl);
+        try {
+          let { width, height } = img;
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = Math.round((height / width) * maxSize);
+              width = maxSize;
+            } else {
+              width = Math.round((width / height) * maxSize);
+              height = maxSize;
+            }
           }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("فشل إنشاء سياق الرسم"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        } catch (err) {
+          reject(new Error("فشل ضغط الصورة"));
         }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { reject(new Error("فشل إنشاء سياق الرسم")); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
       };
-      img.onerror = () => reject(new Error("فشل تحميل الصورة"));
-      img.src = dataUrl;
+      img.onerror = () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("فشل تحميل الصورة — تأكد من صلاحية الملف"));
+      };
+      img.src = objectUrl;
+    });
+  }
+
+  // ===== قراءة الملف كـ Data URL (للملفات التي لا يمكن ضغطها مثل SVG) =====
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      const timeout = setTimeout(() => {
+        reader.abort();
+        reject(new Error("انتهت مهلة قراءة الملف"));
+      }, 15000);
+      reader.onload = () => {
+        clearTimeout(timeout);
+        resolve(reader.result as string);
+      };
+      reader.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error("فشل قراءة الملف — حاول ملفاً آخر"));
+      };
+      reader.onabort = () => {
+        clearTimeout(timeout);
+        reject(new Error("تم إلغاء قراءة الملف"));
+      };
+      reader.readAsDataURL(file);
     });
   }
 
@@ -1584,7 +1629,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("يرجى اختيار ملف صورة (PNG, JPG, GIF, WebP)");
+      toast.error("يرجى اختيار ملف صورة (PNG, JPG, GIF, WebP, SVG)");
       e.target.value = "";
       return;
     }
@@ -1595,14 +1640,14 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
     }
     setUploading(true);
     try {
-      const rawDataUrl: string = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("فشل قراءة الملف"));
-        reader.readAsDataURL(file);
-      });
-      // ضغط الصورة إلى 512x512 كحد أقصى بصيغة JPEG
-      const dataUrl = await compressLogo(rawDataUrl);
+      let dataUrl: string;
+      // SVG لا يُضغط — نقرؤه مباشرة كـ Data URL
+      if (file.type === "image/svg+xml") {
+        dataUrl = await readFileAsDataUrl(file);
+      } else {
+        // ضغط الصورة باستخدام Canvas بدل FileReader
+        dataUrl = await compressImageToDataUrl(file);
+      }
       // حفظ الشعار في قاعدة البيانات
       const saveRes = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}/logo`, {
         method: "POST",
@@ -1611,7 +1656,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
       });
       if (!saveRes.ok) {
         const errData = await saveRes.json().catch(() => ({}));
-        throw new Error(errData.error || "فشل حفظ الشعار");
+        throw new Error(errData.error || "فشل حفظ الشعار في الخادم");
       }
       const result = await saveRes.json();
       setLogoUrl(result.logoUrl);
@@ -1704,7 +1749,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
                 <label className="cursor-pointer">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
                     className="hidden"
                     onChange={handleLogoUpload}
                     disabled={uploading}

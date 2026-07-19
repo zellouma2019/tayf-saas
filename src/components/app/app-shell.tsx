@@ -306,10 +306,7 @@ export function AppShell() {
             {shopLogoUrl ? (
               <img src={shopLogoUrl} alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 object-cover ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300" />
             ) : (
-              <>
-                <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 dark:hidden" />
-                <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300 hidden dark:block" />
-              </>
+                <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300" />
             )}
             <div className="text-right min-w-0">
               <div className="font-bold text-sm md:text-base leading-tight truncate text-slate-800">{displayBusinessName}</div>

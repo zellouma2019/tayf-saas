@@ -280,7 +280,7 @@ function MerchantCustomersInner() {
 
       {/* ===== بطاقات الإحصائيات ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
           <div className="flex items-center gap-2 mb-1">
             <Users className="h-4 w-4 text-teal-500" />
             <span className="text-xs text-muted-foreground">
@@ -289,7 +289,7 @@ function MerchantCustomersInner() {
           </div>
           <p className="text-xl font-bold">{allCustomersTotal}</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="h-4 w-4 text-emerald-500" />
             <span className="text-xs text-muted-foreground">
@@ -298,7 +298,7 @@ function MerchantCustomersInner() {
           </div>
           <p className="text-xl font-bold">{formatDA(totalSpent)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
           <div className="flex items-center gap-2 mb-1">
             <FileText className="h-4 w-4 text-amber-500" />
             <span className="text-xs text-muted-foreground">
@@ -319,7 +319,7 @@ function MerchantCustomersInner() {
 
       {/* ===== القائمة فارغة ===== */}
       {!isLoading && customers.length === 0 && (
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
           <Users className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm mb-3">
             {search
@@ -348,7 +348,7 @@ function MerchantCustomersInner() {
       {!isLoading && customers.length > 0 && (
         <>
           {/* --- جدول سطح المكتب --- */}
-          <div className="hidden md:block bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/80">
@@ -445,7 +445,7 @@ function MerchantCustomersInner() {
             {customers.map((c) => (
               <div
                 key={c.id}
-                className="bg-white rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
+                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="min-w-0 flex-1">
