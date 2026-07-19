@@ -26,16 +26,17 @@ export async function POST(
     }
 
     // استخراج البيانات من Data URL للتحقق من الصيغة والحجم
-    const matches = logoDataUrl.match(/^data:image\/([\w+]+);base64,(.+)$/);
-    if (!matches) {
+    const dataUrlParts = logoDataUrl.split(",");
+    if (dataUrlParts.length < 2 || !dataUrlParts[0].startsWith("data:image/")) {
       return NextResponse.json({ error: "صيغة الصورة غير صالحة" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(matches[2], "base64");
+    const base64Data = dataUrlParts.slice(1).join(",");
+    const buffer = Buffer.from(base64Data, "base64");
 
-    // حد أقصى 500KB
-    if (buffer.length > 500 * 1024) {
-      return NextResponse.json({ error: "حجم الصورة كبير جداً (الحد 500 ك.ب)" }, { status: 400 });
+    // حد أقصى 1.5 م.ب (بعد الضغط)
+    if (buffer.length > 1500 * 1024) {
+      return NextResponse.json({ error: "حجم الصورة كبير جداً (الحد 1.5 م.ب)" }, { status: 400 });
     }
 
     // تخزين Data URL مباشرة في قاعدة البيانات (يعمل على Vercel وكل البيئات)
