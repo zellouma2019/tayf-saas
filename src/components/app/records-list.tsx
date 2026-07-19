@@ -82,8 +82,8 @@ export function RecordsList({ templates, onEdit, onPrint, refreshKey }: RecordsL
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (search) params.set("search", search);
     fetch(`/api/records?${params.toString()}`)
-      .then((r) => r.json())
-      .then((d) => setRecords(d.records || []))
+      .then(async r => { if (!r.ok) return null; return r.json(); })
+      .then((d) => setRecords(d?.records || []))
       .catch(() => setRecords([]))
       .finally(() => setLoading(false));
   }, [statusFilter, search, refreshKey]);
@@ -142,8 +142,8 @@ export function RecordsList({ templates, onEdit, onPrint, refreshKey }: RecordsL
           onClick={() => {
             setLoading(true);
             fetch(`/api/records`)
-              .then((r) => r.json())
-              .then((d) => setRecords(d.records || []))
+              .then(async r => { if (!r.ok) return null; return r.json(); })
+              .then((d) => setRecords(d?.records || []))
               .finally(() => setLoading(false));
           }}
         >

@@ -243,11 +243,11 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   function loadAll() {
     setLoading(true);
     Promise.all([
-      shopApi("/api/admin/stats", { headers: adminHeadersRef.current }).then((r) => r.json()).catch(() => null),
+      shopApi("/api/admin/stats", { headers: adminHeadersRef.current }).then(async r => { if (!r.ok) return null; return r.json(); }).catch(() => null),
       shopApi("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
       .then(([s, o]) => {
-        if (s) setStats(s);
+        if (s && typeof s.totalOrders === 'number') setStats(s);
         const rawOrders = Array.isArray(o?.orders) ? o.orders : [];
         // تأمين بيانات العميل لكل طلب
         const safeOrders = rawOrders.map((order: Record<string, unknown>) => ({

@@ -48,14 +48,14 @@ export function SecurityTab() {
   useEffect(() => {
     // تحقق من حالة كلمة المرور
     fetch("/api/super-admin/password")
-      .then((r) => r.json())
-      .then((d) => setIsDefaultPwd(d.isDefault ?? true))
+      .then(async r => { if (!r.ok) return null; return r.json(); })
+      .then((d) => { if (d) setIsDefaultPwd(d.isDefault ?? true); })
       .catch(() => {});
 
     // تحميل أعضاء الفريق
     fetch("/api/super-admin/team")
-      .then((r) => r.json())
-      .then((d) => setMembers(d.members || []))
+      .then(async r => { if (!r.ok) return null; return r.json(); })
+      .then((d) => { if (d) setMembers(d.members || []); })
       .catch(() => {})
       .finally(() => setLoadingTeam(false));
   }, []);

@@ -46,6 +46,7 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
     setSearched(true);
     try {
       const res = await shopApi(`/api/orders/by-phone?phone=${encodeURIComponent(clean)}`);
+      if (!res.ok) throw new Error("فشل في جلب البيانات");
       const d = await res.json();
       setOrders(d.orders || []);
       if ((d.orders || []).length === 0) {

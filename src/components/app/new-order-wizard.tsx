@@ -177,9 +177,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
   useEffect(() => {
     shopApi("/api/settings")
-      .then((r) => r.json())
+      .then(async r => { if (!r.ok) return null; return r.json(); })
       .then((data: AppSettings) => {
-        if (data.services?.length) {
+        if (data?.services?.length) {
           const map: Record<string, ServiceSpec> = {};
           for (const s of data.services) {
             map[s.type] = s;
