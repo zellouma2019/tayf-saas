@@ -162,3 +162,36 @@
 1. **Low**: setTimeout leaks in copy-to-clipboard handlers (4 files)
 2. **Low**: Chart tooltip low contrast in dark mode (admin-analytics.tsx)
 3. **Medium**: Footer uses hardcoded `text-neutral-*` colors (not affected by theme toggle — intentional for always-dark footer)
+
+---
+## Date: 2025-07-19 (Session 4) — Iframe Preview Fix + Dark Mode Polish
+
+### Bug Fixes Applied
+
+#### 1. Preview Iframe Shows Broken Page Icon (CRITICAL)
+- **Root Cause**: Vercel automatically adds `X-Frame-Options: DENY` header to ALL pages, blocking iframe embedding entirely. The `next.config.ts` `headers()` config was NOT overriding Vercel's platform-level header.
+- **Fix**: Created `src/middleware.ts` that intercepts `/s/:path*` requests and overrides:
+  - `X-Frame-Options: SAMEORIGIN` (allows same-origin iframe embedding)
+  - `Content-Security-Policy: frame-ancestors 'self'` (modern equivalent)
+- **Also**: Added `headers()` config in `next.config.ts` as defense-in-depth
+- **Verification**: `curl -sI` confirmed `x-frame-options` changed from `DENY` to `SAMEORIGIN` on live Vercel deployment
+
+#### 2. Dark Mode Text/Headings Inconsistency
+- **Root Cause**: Top bar and header used theme-specific inline colors (`shopTheme.topBar.bg`, `shopTheme.header.bg`) that are always light, while the content area CSS variables switched to dark. This created a jarring white header + dark content mismatch.
+- **Fix**: Added `darkOverrides` computed values in `app-shell.tsx` that provide dark alternatives for:
+  - Top bar: `#0f172a` background, `#94a3b8` text
+  - Header: `#1e293b` background, `#334155` border
+- These override theme colors ONLY in dark mode, preserving the shop's accent color
+
+### Files Modified
+1. `src/middleware.ts` — NEW: Override X-Frame-Options for `/s/*` routes
+2. `next.config.ts` — Added headers() config for `/s/:path*` (defense-in-depth)
+3. `src/components/app/app-shell.tsx` — Dark mode header/topbar color adaptation
+
+### Verification (agent-browser on live Vercel site)
+- ✅ `x-frame-options: SAMEORIGIN` confirmed on live deployment
+- ✅ Shop page loads correctly at `https://tayf-saas.vercel.app/s/aalm-almrh`
+- ✅ Dark mode toggle: ALL text visible, consistent colors, header matches content
+- ✅ VLM confirms: "All text appears readable with sufficient contrast", "header uses the same dark theme and light text as the rest of the page", "no major issues"
+- ✅ `bun run lint` — 0 errors
+- ✅ Pushed to GitHub (commits dc53091, 425c5d4)
