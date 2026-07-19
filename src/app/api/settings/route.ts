@@ -19,6 +19,31 @@ async function upsertSetting(key: string, value: string, shopId?: string) {
   return db.setting.create({ data: { key, value } });
 }
 
+/// مزامنة الإعدادات إلى حقل shop.settings على نموذج Shop
+/// هذا يضمن أن صفحة الزبون (التي تقرأ من shop.settings) تحصل على أحدث البيانات
+async function syncSettingsToShop(shopId: string, body: { services?: unknown; deliveryOptions?: unknown; general?: unknown; intro?: unknown }) {
+  try {
+    // قراءة shop.settings الحالي
+    const shop = await db.shop.findUnique({ where: { id: shopId }, select: { settings: true } });
+    let existing: Record<string, unknown> = {};
+    if (shop?.settings) {
+      try { existing = JSON.parse(shop.settings); } catch {}
+    }
+    // دمج الحقول المحدّثة
+    const merged = { ...existing };
+    if (body.services !== undefined) merged.services = body.services;
+    if (body.deliveryOptions !== undefined) merged.deliveryOptions = body.deliveryOptions;
+    if (body.general !== undefined) merged.general = body.general;
+    if (body.intro !== undefined) merged.intro = body.intro;
+    await db.shop.update({
+      where: { id: shopId },
+      data: { settings: JSON.stringify(merged) },
+    });
+  } catch (e) {
+    console.error('[settings/syncToShop]', e);
+  }
+}
+
 /// الحصول على الإعدادات (يُنشئ الافتراضية إن لم تكن موجودة)
 export async function GET(req: NextRequest) {
   try {
@@ -55,22 +80,31 @@ export async function PUT(req: NextRequest) {
   try {
     await ensureDb();
     const body = await req.json();
-    const { services, deliveryOptions, general, intro, shopId } = body as AppSettings & { shopId?: string };
+    const { services, deliveryOptions, general, intro } = body as AppSettings;
+
+    // استخراج shopId من query params (لأن shopApi يضيفه هناك)
+    const shopId = req.nextUrl.searchParams.get("shopId");
 
     const updates: Promise<unknown>[] = [];
     if (services) {
-      updates.push(upsertSetting("services", JSON.stringify(services), shopId));
+      updates.push(upsertSetting("services", JSON.stringify(services), shopId || undefined));
     }
     if (deliveryOptions) {
-      updates.push(upsertSetting("deliveryOptions", JSON.stringify(deliveryOptions), shopId));
+      updates.push(upsertSetting("deliveryOptions", JSON.stringify(deliveryOptions), shopId || undefined));
     }
     if (general) {
-      updates.push(upsertSetting("general", JSON.stringify(general), shopId));
+      updates.push(upsertSetting("general", JSON.stringify(general), shopId || undefined));
     }
     if (intro) {
-      updates.push(upsertSetting("intro", JSON.stringify(intro), shopId));
+      updates.push(upsertSetting("intro", JSON.stringify(intro), shopId || undefined));
     }
     await Promise.all(updates);
+
+    // مزامنة إلى shop.settings لكي يراها الزبون فوراً
+    if (shopId) {
+      await syncSettingsToShop(shopId, { services, deliveryOptions, general, intro });
+    }
+
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('[settings/PUT]', e);
@@ -88,6 +122,15 @@ export async function DELETE(req: NextRequest) {
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = shopId ? { shopId } : { shopId: null as string | null };
     await db.setting.deleteMany({ where });
+
+    // مسح shop.settings أيضاً
+    if (shopId) {
+      await db.shop.update({
+        where: { id: shopId },
+        data: { settings: null },
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('[settings/DELETE]', e);
