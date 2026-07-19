@@ -1242,7 +1242,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
           {/* ===== تبويب الإعدادات المتقدمة ===== */}
           <div className={activeTab !== "advancedSettings" ? "hidden" : ""}>
-            <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} onSaved={() => setPreviewKey(k => k + 1)} />
           </div>
 
           {/* ===== تبويب مشاركة الرابط ===== */}
