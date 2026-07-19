@@ -113,6 +113,7 @@ interface MerchantSettingsAdvancedProps {
   shopId: string;
   shopSlug: string;
   adminPin: string;
+  onSaved?: () => void;
 }
 
 // ============================================================
@@ -410,6 +411,7 @@ export function MerchantSettingsAdvanced({
   shopId: _shopId,
   shopSlug,
   adminPin,
+  onSaved,
 }: MerchantSettingsAdvancedProps) {
   const { shop, refreshShop } = useShop();
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -739,6 +741,9 @@ export function MerchantSettingsAdvanced({
         throw new Error(err.error || "فشل الحفظ");
       }
       setOriginal(deepClone(settings));
+      // تحديث بيانات المتجر لنعكس التغييرات في shop.settings
+      refreshShop();
+      onSaved?.();
       toast.success("تم حفظ الإعدادات بنجاح", {
         description: "ستظهر التغييرات للعملاء فوراً",
         icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
