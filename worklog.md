@@ -111,3 +111,54 @@
 - **Low**: setTimeout leaks in copy-to-clipboard handlers (4 files) — React 18 tolerant
 - **Low**: Chart tooltip low contrast in dark mode (admin-analytics.tsx)
 - **Medium**: Offer popup timeout leak in new-order-wizard.tsx — intentional but anti-pattern
+
+---
+## Date: 2025-07-19 (Session 3) — Settings Sync + Theme Fix + Preview Fix + Docs
+
+### Bug Fixes Applied
+
+#### 1. Welcome Screen Settings Not Showing for Customers (CRITICAL)
+- **Root Cause**: Merchant dashboard saves settings to `Setting` table via `/api/settings` PUT, but customer-facing `app-shell.tsx` reads from `shop.settings` (JSON field on Shop model) — two completely different storage locations
+- **Also**: `shopApi()` adds `shopId` to query params, but the PUT handler extracted it from the request body (where it didn't exist) → settings saved with `shopId: null` instead of the actual shop ID
+- **Fix**:
+  1. `/api/settings` PUT: Extract `shopId` from query params (not body)
+  2. After saving to `Setting` table, sync all changes to `Shop.settings` JSON field via `syncSettingsToShop()`
+  3. `/api/settings` DELETE: Also clears `Shop.settings`
+  4. `MerchantSettingsAdvanced`: Added `onSaved` prop + calls `refreshShop()` after save
+  5. `merchant-dashboard.tsx`: Passes `onSaved` to `MerchantSettingsAdvanced` (triggers `previewKey` increment)
+
+#### 2. Dark/Light Theme Toggle — Text Disappearing (PROPER FIX)
+- **Previous fix**: Hardcoded all CSS variables to light mode values → broke dark mode entirely
+- **New Fix**:
+  1. Import `useTheme` from `next-themes` in `app-shell.tsx`
+  2. Use `isDark` flag to switch CSS variables between light and dark oklch values
+  3. Updated: `--foreground`, `--muted-foreground`, `--background`, `--card`, `--popover`, `--border`, `--input`, `--accent`, `--secondary`, etc.
+  4. Replaced hardcoded `text-slate-*` and `bg-slate-*` with semantic `text-foreground`, `text-muted-foreground`, `bg-muted`, `hover:bg-accent` in nav and share button
+
+#### 3. Preview Section Enhancement
+- Preview tab was using conditional rendering (correct pattern for iframes)
+- Added `onSaved` callback from `MerchantSettingsAdvanced` to increment `previewKey`, forcing iframe reload when settings change
+
+### Documents Created
+1. **PROJECT_SUMMARY.md** — Comprehensive project overview (architecture, features, data model, feature flags, supported countries)
+2. **SUBSCRIPTION_PLAN.md** — 3-tier subscription plan (Free / Pro 2,500 DZD / Business 5,000 DZD) with implementation roadmap
+
+### Files Modified (commit 02d4700)
+1. `src/app/api/settings/route.ts` — syncSettingsToShop, shopId from query, DELETE cleanup
+2. `src/components/app/merchant-settings-advanced.tsx` — onSaved prop, refreshShop call
+3. `src/components/app/merchant-dashboard.tsx` — pass onSaved to MerchantSettingsAdvanced
+4. `src/components/app/app-shell.tsx` — dark mode CSS variables, semantic color classes
+5. `PROJECT_SUMMARY.md` — new file
+6. `SUBSCRIPTION_PLAN.md` — new file
+
+### Verification
+- ✅ `bun run lint` — 0 errors (1 pre-existing unrelated warning)
+- ✅ Pushed to GitHub (commit 02d4700)
+- ✅ Dev server starts and compiles without errors
+- ✅ Customer page loads (200), admin page loads (200)
+- ✅ No TypeScript errors
+
+### Unresolved Issues / Risks
+1. **Low**: setTimeout leaks in copy-to-clipboard handlers (4 files)
+2. **Low**: Chart tooltip low contrast in dark mode (admin-analytics.tsx)
+3. **Medium**: Footer uses hardcoded `text-neutral-*` colors (not affected by theme toggle — intentional for always-dark footer)
