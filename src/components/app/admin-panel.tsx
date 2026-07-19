@@ -886,7 +886,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               جارٍ التحميل...
             </div>
           ) : (
-            <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
+            <KanbanBoard orders={filteredOrders} onStatusChange={changeStatus} onRefresh={loadAll} />
           )}
         </TabsContent>
 

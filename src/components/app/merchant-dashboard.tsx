@@ -488,7 +488,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       setRawOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
       // تحديث الإحصائيات فقط بدون إعادة تحميل كل الطلبات
       fetch(`/api/admin/stats?shopId=${shopId}`)
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
         .then((s) => setStats(s))
         .catch(() => {});
     } catch (e) {
@@ -1251,7 +1251,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
           </div>
 
           {/* ===== تبويب المعاينة ===== */}
-          <div className={activeTab !== "preview" ? "hidden" : ""}>
+          {activeTab === "preview" && (
               <div className="space-y-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -1271,7 +1271,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                         <div className="w-3 h-3 rounded-full bg-amber-400" />
                         <div className="w-3 h-3 rounded-full bg-emerald-400" />
                       </div>
-                      <div className="flex-1 dark:bg-slate-800 bg-white rounded-lg px-4 py-1.5 text-xs dark:text-slate-500 dark:text-slate-500 text-slate-400 text-center shadow-sm border dark:border-slate-700 border-slate-200/60" dir="ltr">
+                      <div className="flex-1 dark:bg-slate-800 bg-white rounded-lg px-4 py-1.5 text-xs dark:text-slate-500 text-slate-400 text-center shadow-sm border dark:border-slate-700 border-slate-200/60" dir="ltr">
                         {customerLink}
                       </div>
                     </div>
@@ -1285,7 +1285,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </div>
                 </div>
               </div>
-          </div>
+          )}
         </main>
       </div>
 
@@ -1583,13 +1583,14 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    e.target.value = "";
     if (!file.type.startsWith("image/")) {
       toast.error("يرجى اختيار ملف صورة (PNG, JPG, GIF, WebP)");
+      e.target.value = "";
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
       toast.error("حجم الملف كبير جداً", { description: "الحد الأقصى 2 م.ب" });
+      e.target.value = "";
       return;
     }
     setUploading(true);
@@ -1602,7 +1603,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
       });
       // ضغط الصورة إلى 512x512 كحد أقصى بصيغة JPEG
       const dataUrl = await compressLogo(rawDataUrl);
-      // حفظ الشعار كملف (وليس data URL في قاعدة البيانات)
+      // حفظ الشعار في قاعدة البيانات
       const saveRes = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}/logo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1621,6 +1622,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin, onSaved, onPinChange
       toast.error("فشل رفع الشعار", { description: (err as Error).message });
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
 

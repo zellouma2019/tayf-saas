@@ -253,6 +253,8 @@ export function ensureDb(): Promise<void> {
             { table: 'Shop', column: 'paymentInfo', type: 'TEXT' },
             { table: 'Shop', column: 'trialDays', type: 'INTEGER' },
             { table: 'Shop', column: 'trialStartsAt', type: 'DATETIME' },
+            { table: 'Shop', column: 'country', type: "TEXT NOT NULL DEFAULT 'DZ'" },
+            { table: 'Shop', column: 'language', type: "TEXT NOT NULL DEFAULT 'ar'" },
           ];
           for (const col of MIGRATION_COLUMNS) {
             try {
