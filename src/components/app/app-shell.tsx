@@ -94,6 +94,14 @@ export function AppShell() {
     }
     return baseTheme;
   }, [baseTheme, shop?.primaryColor]);
+
+  // ألوان الوضع الداكن للترويسة والشريط العلوي — تحافظ على اللون المميز لل متجر
+  const darkOverrides = useMemo(() => ({
+    topBarBg: isDark ? '#0f172a' : undefined,
+    topBarText: isDark ? '#94a3b8' : undefined,
+    headerBg: isDark ? '#1e293b' : undefined,
+    headerBorder: isDark ? '#334155' : undefined,
+  }), [isDark]);
   // تحليل إعدادات المتجر (services مأخوذة من shop.settings JSON)
   const shopServices = useMemo(() => {
     try {
@@ -256,9 +264,9 @@ export function AppShell() {
         } as React.CSSProperties}
         dir="rtl"
       >
-      {/* ===== الشريط العلوي الأسود ===== */}
+      {/* ===== الشريط العلوي ===== */}
       {view !== "new" && (
-      <div style={{ backgroundColor: shopTheme.topBar.bg, color: shopTheme.topBar.text }}>
+      <div style={{ backgroundColor: darkOverrides.topBarBg || shopTheme.topBar.bg, color: darkOverrides.topBarText || shopTheme.topBar.text }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-8 sm:h-9 flex items-center justify-between gap-2">
           {/* الجوال: معلومة واحدة واضحة */}
           <div className="flex sm:hidden items-center gap-1.5 text-xs min-w-0">
@@ -297,7 +305,7 @@ export function AppShell() {
       {/* ===== الترويسة الرئيسية ===== */}
       <header
         className={`border-b sticky top-0 z-40 no-print transition-shadow duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[var(--shop-accent)] ${scrolled ? 'shadow-sm' : ''}`}
-        style={{ backgroundColor: shopTheme.header.bg, borderColor: shopTheme.header.border }}
+        style={{ backgroundColor: darkOverrides.headerBg || shopTheme.header.bg, borderColor: darkOverrides.headerBorder || shopTheme.header.border }}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
           {/* الشعار */}
