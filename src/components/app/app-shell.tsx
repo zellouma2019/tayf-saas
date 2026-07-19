@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Suspense, useCallback, useState, useMemo, useEffect } from "react";
 import { shopApi } from "@/lib/shop-api";
 import { useShop } from "@/lib/shop-context";
+import { useTheme } from "next-themes";
 import {
   LayoutGrid,
   Plus,
@@ -83,6 +84,8 @@ export function AppShell() {
   const [footerOpen, setFooterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { shop, hasFeature } = useShop();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   // تحميل القالب اللوني مع تجاوز primaryColor إن وُجد
   const baseTheme = getTheme(shop?.themeId);
   const shopTheme = useMemo(() => {
@@ -229,27 +232,26 @@ export function AppShell() {
       <div
         className="min-h-screen flex flex-col"
         style={{
-          backgroundColor: shopTheme.contentBg,
+          backgroundColor: isDark ? '#0f172a' : shopTheme.contentBg,
           '--shop-accent': shopTheme.accent,
           '--shop-footer-hover': shopTheme.footer.linkHover,
           '--shop-footer-border': shopTheme.footer.border,
           '--shop-footer-icon': shopTheme.footerIcon,
-          // تجاوز متغيرات الوضع الداكن — واجهة الزبون تتحكم بألوانها عبر القوالب اللونية
-          '--foreground': 'oklch(0.18 0.01 60)',
-          '--muted-foreground': 'oklch(0.5 0.015 60)',
-          '--background': 'oklch(0.985 0.008 85)',
-          '--card': 'oklch(1 0 0)',
-          '--card-foreground': 'oklch(0.18 0.01 60)',
-          '--popover': 'oklch(1 0 0)',
-          '--popover-foreground': 'oklch(0.18 0.01 60)',
-          '--muted': 'oklch(0.96 0.008 85)',
-          '--border': 'oklch(0.91 0.005 85)',
-          '--input': 'oklch(0.91 0.005 85)',
-          '--ring': 'oklch(0.82 0.13 85)',
-          '--accent': 'oklch(0.96 0.008 85)',
-          '--accent-foreground': 'oklch(0.18 0.01 60)',
-          '--secondary': 'oklch(0.96 0.008 85)',
-          '--secondary-foreground': 'oklch(0.25 0.03 60)',
+          '--foreground': isDark ? 'oklch(0.92 0.005 60)' : 'oklch(0.18 0.01 60)',
+          '--muted-foreground': isDark ? 'oklch(0.6 0.015 60)' : 'oklch(0.5 0.015 60)',
+          '--background': isDark ? 'oklch(0.15 0.01 250)' : 'oklch(0.985 0.008 85)',
+          '--card': isDark ? 'oklch(0.2 0.01 250)' : 'oklch(1 0 0)',
+          '--card-foreground': isDark ? 'oklch(0.92 0.005 60)' : 'oklch(0.18 0.01 60)',
+          '--popover': isDark ? 'oklch(0.2 0.01 250)' : 'oklch(1 0 0)',
+          '--popover-foreground': isDark ? 'oklch(0.92 0.005 60)' : 'oklch(0.18 0.01 60)',
+          '--muted': isDark ? 'oklch(0.25 0.01 250)' : 'oklch(0.96 0.008 85)',
+          '--border': isDark ? 'oklch(0.3 0.01 250)' : 'oklch(0.91 0.005 85)',
+          '--input': isDark ? 'oklch(0.3 0.01 250)' : 'oklch(0.91 0.005 85)',
+          '--ring': shopTheme.accent,
+          '--accent': isDark ? 'oklch(0.25 0.01 250)' : 'oklch(0.96 0.008 85)',
+          '--accent-foreground': isDark ? 'oklch(0.92 0.005 60)' : 'oklch(0.18 0.01 60)',
+          '--secondary': isDark ? 'oklch(0.25 0.01 250)' : 'oklch(0.96 0.008 85)',
+          '--secondary-foreground': isDark ? 'oklch(0.85 0.01 60)' : 'oklch(0.25 0.03 60)',
           '--destructive': 'oklch(0.65 0.2 22)',
         } as React.CSSProperties}
         dir="rtl"
@@ -309,8 +311,8 @@ export function AppShell() {
                 <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-[var(--shop-accent)] transition-all duration-300" />
             )}
             <div className="text-right min-w-0">
-              <div className="font-bold text-sm md:text-base leading-tight truncate text-slate-800">{displayBusinessName}</div>
-              <div className="text-xs md:text-xs text-slate-500 leading-tight truncate">
+              <div className="font-bold text-sm md:text-base leading-tight truncate text-foreground">{displayBusinessName}</div>
+              <div className="text-xs md:text-xs text-muted-foreground leading-tight truncate">
                 <span className="sm:hidden">{displayTagline || "اطبع بسهولة"}</span>
                 <span className="hidden sm:inline">{displayTagline || "اطبع بسهولة — أسرع من واتساب"}</span>
               </div>
@@ -318,7 +320,7 @@ export function AppShell() {
           </button>
 
           {/* التنقل - حاسوب */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 rounded-full p-1">
+          <nav className="hidden md:flex items-center gap-1 bg-muted rounded-full p-1">
             {navItems.map((item) => (
               <button
                 key={item.key}
@@ -326,7 +328,7 @@ export function AppShell() {
                 className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   view === item.key
                     ? ""
-                    : "text-slate-600 hover:bg-slate-50"
+                    : "text-muted-foreground hover:bg-accent"
                 }`}
                 style={view === item.key ? { color: shopTheme.nav.activeText } : undefined}
               >
@@ -346,7 +348,7 @@ export function AppShell() {
           </nav>
 
           {/* التنقل - الجوال (أيقونات واضحة) */}
-          <nav className="flex md:hidden items-center gap-1 bg-slate-100/80 rounded-full p-1 shrink-0">
+          <nav className="flex md:hidden items-center gap-1 bg-muted rounded-full p-1 shrink-0">
             {navItems.filter((item) => !item.desktopOnly).map((item) => (
               <button
                 key={item.key}
@@ -354,7 +356,7 @@ export function AppShell() {
                 className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
                   view === item.key
                     ? ""
-                    : "text-slate-600 hover:bg-slate-50"
+                    : "text-muted-foreground hover:bg-accent"
                 }`}
                 style={view === item.key ? { color: shopTheme.nav.activeText } : undefined}
                 aria-label={item.label}
@@ -383,7 +385,7 @@ export function AppShell() {
                 navigator.clipboard.writeText(url).then(() => toast.success("تم نسخ الرابط", { description: "شاركه مع أصدقائك" }));
               }
             }}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100/80 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-lg hover:bg-accent transition-colors"
             title="مشاركة رابط المتجر"
           >
             <Share2 className="h-4 w-4" />
