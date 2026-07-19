@@ -3,54 +3,6 @@
 ## Date: 2025-06-19
 
 ## Summary
-Added dark mode support (`dark:` Tailwind variants) to 3 files:
-1. `src/components/app/merchant-dashboard.tsx`
-2. `src/components/app/merchant-order-detail.tsx`
-3. `src/components/app/merchant-settings-advanced.tsx`
-
-## Approach
-- Applied systematic color mappings per the provided table
-- Used `replace_all` for bulk patterns where safe
-- Used `MultiEdit` for targeted/context-specific changes
-- Used placeholder technique to prevent cross-pattern conflicts (e.g., `hover:text-slate-700` containing `text-slate-700`)
-- Manually fixed edge cases (gradient backgrounds, opacity variants, doubled dark variants)
-
-## Color Mappings Applied
-
-| Light Mode | Dark Mode |
-|---|---|
-| `bg-white` | `dark:bg-slate-800` |
-| `bg-slate-50` | `dark:bg-slate-900` |
-| `bg-slate-100` | `dark:bg-slate-800` |
-| `text-slate-800` | `dark:text-slate-100` |
-| `text-slate-700` | `dark:text-slate-200` |
-| `text-slate-600` | `dark:text-slate-300` |
-| `text-slate-500` | `dark:text-slate-400` |
-| `text-slate-400` | `dark:text-slate-500` |
-| `border-slate-200` | `dark:border-slate-700` |
-| `hover:bg-slate-50` | `dark:hover:bg-slate-700` |
-| `hover:bg-slate-100` | `dark:hover:bg-slate-700` |
-| `hover:text-slate-700` | `dark:hover:text-slate-200` |
-| `hover:text-slate-600` | `dark:hover:text-slate-300` |
-| `hover:bg-rose-50` | `dark:hover:bg-rose-900/30` |
-| `hover:bg-teal-50` | `dark:hover:bg-teal-900/30` |
-| `bg-white/80` | `dark:bg-slate-900/80` |
-
-## Additional Patterns Handled
-- Gradient backgrounds (stat cards, page backgrounds, banners)
-- Opacity variants (`bg-slate-50/50`, `bg-slate-50/60`, `bg-slate-50/80`, `bg-white/60`)
-- Colored accent backgrounds (`bg-emerald-100`, `bg-teal-100`, `bg-slate-300`)
-- `border-slate-100` → `dark:border-slate-700`
-
-## Special Cases
-- Preserved existing `dark:border-slate-700/60` on dashboard line 1221
-- Excluded `bg-white/N` decorative elements on colored/gradient backgrounds
-- Handled `group-hover:text-slate-800` without adding incorrect dark prefix
-- Fixed race condition in batch Edit operations causing `dark:dark:` doubles
-
-## Verification
-- `bun run lint` passes with 0 errors (1 pre-existing unrelated warning)
-- No leftover placeholders or malformed `dark:dark:` patterns
 
 ---
 ## Date: 2025-07-19 — Critical Bug Fixes & Audit
@@ -105,6 +57,57 @@ Added dark mode support (`dark:` Tailwind variants) to 3 files:
 - Code is pushed to GitHub, Vercel should auto-deploy if configured
 
 ### Unresolved Issues / Risks
-1. **Vercel Deployment**: Deployment token expired. User needs to trigger manual deploy from Vercel dashboard or re-authenticate
-2. **Timezone in Stats API**: `admin/stats/route.ts` uses `new Date()` for "today" which uses server timezone (UTC on Vercel). Off by 1 hour for Algeria (UTC+1)
-3. **Home Tab Conditional Rendering**: Uses `{activeTab === "home" && (...)}` which causes re-mount on every tab switch (stats re-fetch). Low priority — could use `hidden` pattern like other tabs
+1. **Timezone in Stats API**: `admin/stats/route.ts` uses `new Date()` for "today" which uses server timezone (UTC on Vercel). Off by 1 hour for Algeria (UTC+1)
+2. **Home Tab Conditional Rendering**: Uses `{activeTab === "home" && (...)}` which causes re-mount on every tab switch (stats re-fetch). Low priority — could use `hidden` pattern like other tabs
+
+---
+## Date: 2025-07-19 (Session 2) — Robust Logo Upload + Full Audit
+
+### Bug Fixes Applied
+
+#### 1. Logo Upload "failed to read file" — Complete Rewrite (merchant-dashboard.tsx)
+- **Root Cause**: FileReader API can fail in certain browser/OS combinations, especially on mobile
+- **Fix**: Replaced FileReader with `URL.createObjectURL()` + `Image` + `Canvas` for ALL non-SVG images
+  - `compressImageToDataUrl(file)`: Creates blob URL → loads into Image → draws on Canvas → returns dataURL
+  - No FileReader needed for the compression path at all
+  - `readFileAsDataUrl(file)`: FileReader kept ONLY as fallback for SVG files
+  - Added 15-second timeout on both functions
+  - Added `onabort` handler for FileReader
+  - `e.target.value = ""` stays in `finally` block
+  - `accept` attribute updated to explicit MIME types: `image/png,image/jpeg,image/gif,image/webp,image/svg+xml`
+
+#### 2. Dark Mode Logo Invisible on White Header (app-shell.tsx)
+- **Root Cause**: `dark:hidden`/`hidden dark:block` pattern showed dark logo variant when system dark mode was active, but customer view header is always white (from theme system)
+- **Fix**: Removed dark logo variant entirely from header — always shows light logo since customer view is forced to light mode via CSS variable overrides
+
+#### 3. Missing r.ok Checks Before .json() — 5 Files
+- **Files**: admin-security-tab.tsx, new-order-wizard.tsx, records-list.tsx, repeat-order.tsx, admin-panel.tsx
+- **Fix**: Added `if (!r.ok)` guards before all `.json()` calls
+- **Admin panel stats**: Added shape validation `typeof s.totalOrders === 'number'` to prevent error objects being rendered as stats
+
+#### 4. Missing dark:bg-slate-800 on Merchant Sub-components
+- **Files**: merchant-expenses.tsx (6 occurrences), merchant-customers.tsx (6 occurrences)
+- **Fix**: Replaced all `bg-white` with `bg-white dark:bg-slate-800`
+
+### Files Modified (commit cde2190)
+1. `src/components/app/merchant-dashboard.tsx` — complete logo upload rewrite
+2. `src/components/app/app-shell.tsx` — dark logo fix
+3. `src/components/app/admin-security-tab.tsx` — r.ok check
+4. `src/components/app/new-order-wizard.tsx` — r.ok check
+5. `src/components/app/records-list.tsx` — r.ok check
+6. `src/components/app/repeat-order.tsx` — r.ok check
+7. `src/components/app/admin-panel.tsx` — r.ok check + stats validation
+8. `src/components/app/merchant-expenses.tsx` — dark mode bg
+9. `src/components/app/merchant-customers.tsx` — dark mode bg
+
+### Verification
+- ✅ `bun run lint` — 0 errors (1 pre-existing unrelated warning)
+- ✅ Pushed to GitHub (commit cde2190)
+- ✅ Vercel auto-deployed — confirmed `createObjectURL` present in deployed JS chunks
+- ✅ Customer page loads correctly with all text/icons visible (VLM verified)
+- ✅ Footer visible with correct dark background and light text colors
+
+### Audit Findings (additional, not yet fixed)
+- **Low**: setTimeout leaks in copy-to-clipboard handlers (4 files) — React 18 tolerant
+- **Low**: Chart tooltip low contrast in dark mode (admin-analytics.tsx)
+- **Medium**: Offer popup timeout leak in new-order-wizard.tsx — intentional but anti-pattern
