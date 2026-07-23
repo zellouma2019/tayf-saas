@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
+import { runMigrations } from "@/lib/db-migrations";
 
 interface TeamMember {
   email: string;
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await runMigrations();
     let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     if (!admin) {
       admin = await db.superAdmin.create({ data: { key: "main" } });
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "إيميل غير صالح" }, { status: 400 });
     }
 
+    await runMigrations();
     let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     if (!admin) {
       admin = await db.superAdmin.create({ data: { key: "main" } });
@@ -87,6 +90,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "الإيميل مطلوب" }, { status: 400 });
     }
 
+    await runMigrations();
     let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     if (!admin) {
       return NextResponse.json({ error: "لا توجد بيانات" }, { status: 404 });

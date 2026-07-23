@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
+import { runMigrations } from "@/lib/db-migrations";
 
 const DEFAULT_PLATFORM_SETTINGS = {
   platformName: "طيف",
@@ -44,6 +45,7 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await runMigrations();
     let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     if (!admin) {
       admin = await db.superAdmin.create({ data: { key: "main" } });
@@ -62,6 +64,7 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await runMigrations();
     const body = await req.json();
 
     let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
