@@ -357,7 +357,7 @@ export function AdminCustomers() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                           onClick={() => confirmDelete(c.id)}
                           disabled={deletingId === c.id}
                         >

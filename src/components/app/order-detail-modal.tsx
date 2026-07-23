@@ -222,7 +222,7 @@ export function OrderDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll" dir="rtl">
+      <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto custom-scroll" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <span className="text-xl">{serviceEmoji}</span>

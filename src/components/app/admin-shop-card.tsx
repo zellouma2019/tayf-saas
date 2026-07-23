@@ -59,7 +59,7 @@ export function CopyButton({ text, label, className }: { text: string; label: st
       className={
         "shrink-0 border rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 " +
         (copied
-          ? "border-emerald-300 bg-emerald-50 text-emerald-600"
+          ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
           : "border-border text-foreground/80 hover:bg-accent" +
             (className ? " " + className : ""))
       }
@@ -94,8 +94,8 @@ export function ShopOverviewCard({ shop, onRefresh }: {
           </div>
           <span className={`text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium ${
             shop.isActive
-              ? "bg-emerald-50 text-emerald-600"
-              : "bg-rose-50 text-rose-600"
+              ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+              : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
           }`}>
             {shop.isActive ? "نشط" : "متوقف"}
           </span>
@@ -104,7 +104,7 @@ export function ShopOverviewCard({ shop, onRefresh }: {
               <Crown className="h-3 w-3" /> PRO
             </span>
           ) : (
-            <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-emerald-50 text-emerald-600">
+            <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600">
               مجاني
             </span>
           )}
@@ -164,17 +164,17 @@ export function ShopOverviewCard({ shop, onRefresh }: {
 // ===== حساب حالة التجربة =====
 function getTrialInfo(shop: ShopStat): { label: string; color: string; daysLeft: number | null } {
   if (!shop.trialDays || !shop.trialStartsAt) {
-    return { label: "بلا حدود", color: "bg-emerald-50 text-emerald-600", daysLeft: null };
+    return { label: "بلا حدود", color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600", daysLeft: null };
   }
   const start = new Date(shop.trialStartsAt);
   const end = new Date(start.getTime() + shop.trialDays * 86400000);
   const now = new Date();
   const daysLeft = Math.ceil((end.getTime() - now.getTime()) / 86400000);
   if (daysLeft <= 0) {
-    return { label: "انتهت", color: "bg-rose-50 text-rose-600", daysLeft: 0 };
+    return { label: "انتهت", color: "bg-rose-50 dark:bg-rose-950/30 text-rose-600", daysLeft: 0 };
   }
   if (daysLeft <= 3) {
-    return { label: `${daysLeft} يوم متبقي`, color: "bg-amber-50 text-amber-600", daysLeft };
+    return { label: `${daysLeft} يوم متبقي`, color: "bg-amber-50 dark:bg-amber-950/30 text-amber-600", daysLeft };
   }
   return { label: `${daysLeft} يوم متبقي`, color: "bg-primary/10 text-primary", daysLeft };
 }
@@ -271,8 +271,8 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
               <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
                 shop.isActive
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-rose-50 text-rose-600"
+                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+                  : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
               }`}>
                 {shop.isActive ? "نشط" : "متوقف"}
               </span>
@@ -289,7 +289,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
               </span>
               <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
                 shop.paymentInfo
-                  ? "bg-emerald-50 text-emerald-600"
+                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
                   : "bg-muted/50 text-muted-foreground/70"
               }`}>
                 {shop.paymentInfo ? "✓ مدفوع" : "غير مدفوع"}
@@ -315,7 +315,7 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
               {/* قائمة التجربة السريعة */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="border border-amber-200 text-amber-600 hover:bg-amber-50 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5">
+                  <button className="border border-amber-200 dark:border-amber-800/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5">
                     <Hourglass className="h-3.5 w-3.5" /> تفعيل تجربة
                   </button>
                 </DropdownMenuTrigger>
@@ -425,9 +425,9 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
   }, [plan, form.trialDays, form.trialStartsAt]);
 
   const STATUS_BADGE_STYLE: Record<string, string> = {
-    paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    trial: "bg-amber-50 text-amber-700 border-amber-200",
-    expired: "bg-rose-50 text-rose-700 border-rose-200",
+    paid: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
+    trial: "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
+    expired: "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
     free: "bg-muted/50 text-muted-foreground border-border",
   };
 
@@ -689,12 +689,12 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
               </div>
             </div>
             {form.trialDays && trialStatus.type === "trial" && (
-              <div className="bg-amber-50 border border-amber-200/80 rounded-lg p-4 text-xs text-amber-700">
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-700 dark:text-amber-400">
                 ⏰ متبقي <strong>{trialStatus.daysLeft} يوم</strong> على انتهاء فترة التجربة
               </div>
             )}
             {trialStatus.type === "expired" && (
-              <div className="bg-rose-50 border border-rose-200/80 rounded-lg p-4 text-xs text-rose-700">
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/40 rounded-lg p-4 text-xs text-rose-700 dark:text-rose-400">
                 ⛔ انتهت فترة التجربة — المتجر لا يستطيع استخدام الميزات المدفوعة
               </div>
             )}
@@ -772,7 +772,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
               </div>
             )}
             {!isPaidPlan && (
-              <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg p-3">
+              <div className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-lg p-3">
                 ✅ الميزات المجانية (7) مفتوحة تلقائياً لكل متجر. يمكنك تفعيل ميزات مدفوعة يدوياً.
               </div>
             )}
@@ -819,7 +819,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
                         <button type="button" className="text-[11px] h-6 px-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition-colors" onClick={() => enableAllForGroup(paidFeatures)}>
                           تفعيل الكل
                         </button>
-                        <button type="button" className="text-[11px] h-6 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors" onClick={() => disableAllForGroup(paidFeatures)}>
+                        <button type="button" className="text-[11px] h-6 px-2 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors" onClick={() => disableAllForGroup(paidFeatures)}>
                           تعطيل الكل
                         </button>
                       </div>

@@ -489,7 +489,7 @@ export function AdminExpenses() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                                 onClick={() => handleSaveEdit(exp.id)}
                                 disabled={savingId === exp.id}
                               >
@@ -514,7 +514,7 @@ export function AdminExpenses() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                className="h-8 w-8 text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                                 onClick={() => startEdit(exp)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
@@ -522,7 +522,7 @@ export function AdminExpenses() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                                className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                                 onClick={() => handleDelete(exp.id)}
                                 disabled={deletingId === exp.id}
                               >

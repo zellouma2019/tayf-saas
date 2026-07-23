@@ -142,7 +142,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               <div className="rounded-xl border bg-card p-4">
                 <div className="text-xs text-muted-foreground mb-1">رقم المعاملة</div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xl font-bold text-neutral-900 font-mono tracking-wider">
+                  <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100 font-mono tracking-wider">
                     {order.reference}
                   </span>
                   <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={copyRef}>
@@ -152,7 +152,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               </div>
               <div className="rounded-xl border bg-card p-4">
                 <div className="text-xs text-muted-foreground mb-1">السعر التقديري</div>
-                <div className="text-xl font-bold text-amber-700">{formatDA(order.total)}</div>
+                <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{formatDA(order.total)}</div>
               </div>
             </div>
 
@@ -201,7 +201,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 <p className="text-xs text-muted-foreground mt-3">
                   اعرض هذا الرمز في المطبعة لاستلام طلبك بسرعة
                 </p>
-                <p className="text-xs font-mono font-bold text-neutral-900 mt-1">{order.reference}</p>
+                <p className="text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100 mt-1">{order.reference}</p>
               </div>
             )}
 
@@ -222,7 +222,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             </div>
 
             {/* ===== ملاحظة المكالمة ===== */}
-            <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+            <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center gap-2 mb-1">
                 <Phone className="h-4 w-4 text-amber-600" />
                 <span className="font-bold text-sm">سنتواصل معك قبل بدء الطباعة</span>
@@ -267,10 +267,10 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                         )}
                       </div>
                       <div className="pt-1.5 pb-8">
-                        <div className={`font-semibold text-sm ${isCurrent ? "text-amber-700" : isDone ? "text-emerald-700" : "text-muted-foreground"}`}>
+                        <div className={`font-semibold text-sm ${isCurrent ? "text-amber-700 dark:text-amber-400" : isDone ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground"}`}>
                           {meta.label}
                           {isCurrent && (
-                            <span className="mr-2 text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+                            <span className="mr-2 text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
                               الحالة الحالية
                             </span>
                           )}

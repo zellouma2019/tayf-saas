@@ -214,10 +214,10 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
     <Card className="overflow-hidden shadow-lg shadow-slate-200/40 dark:shadow-slate-900/40 hover:shadow-xl dark:hover:shadow-slate-800/50 transition-shadow duration-300">
       <CardContent className="p-0">
         {/* الرأس */}
-        <div className="px-5 py-4 border-b flex items-center justify-between bg-neutral-900 text-white">
+        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 bg-neutral-900 text-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center">
-              <Package className="h-5 w-5 text-neutral-900" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400 flex items-center justify-center">
+              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-900" />
             </div>
             <div>
               <div className="font-mono font-bold text-sm text-amber-400">{order.reference}</div>
@@ -226,7 +226,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-2">
             {order.status === "pending" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -274,7 +274,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
           </div>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-3 sm:p-5 space-y-4">
             {/* نسبة الإنجاز */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -296,12 +296,12 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
           </motion.div>
 
             {/* خط الزمن المحسّن */}
-          <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-4 border border-dark-200/60 dark:border-dark-700/60">
-            <div className="flex items-center justify-between relative">
+          <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-3 sm:p-4 border border-dark-200/60 dark:border-dark-700/60">
+            <div className="flex items-start sm:items-center justify-between relative gap-2 sm:gap-0">
               {/* خط الربط الخلفي */}
-              <div className="absolute top-4 right-6 left-6 h-1 bg-dark-200 dark:bg-dark-700 rounded-full" />
+              <div className="absolute top-4 right-6 left-6 h-1 bg-dark-200 dark:bg-dark-700 rounded-full hidden sm:block" />
               <div
-                className="absolute top-4 right-6 h-1 bg-gradient-to-l from-emerald-400 to-teal-500 rounded-full transition-all duration-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30"
+                className="absolute top-4 right-6 h-1 bg-gradient-to-l from-emerald-400 to-teal-500 rounded-full transition-all duration-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30 hidden sm:block"
                 style={{ width: `${Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100)}%` }}
               />
               {STATUS_FLOW.map((s, i) => {
@@ -309,7 +309,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                 const active = i === currentStep - 1;
                 const m = STATUS_META[s];
                 return (
-                  <div key={s} className="flex-1 flex flex-col items-center relative z-10">
+                  <div key={s} className="flex-1 flex flex-col items-center relative z-10 min-w-0">
                     <motion.div
                       animate={active ? { scale: [1, 1.15, 1], boxShadow: [
                         "0 0 0 0 rgba(245,158,11,0.4)",
@@ -317,7 +317,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                         "0 0 0 0 rgba(245,158,11,0.4)",
                       ]} : {}}
                       transition={active ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-colors duration-300 ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm border-2 transition-colors duration-300 ${
                         done
                           ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-200 dark:shadow-emerald-900/30"
                           : active
@@ -325,10 +325,10 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                             : "bg-card border border-gold-500/8 text-dark-400"
                       }`}
                     >
-                      {done ? <CheckCircle2 className="h-4 w-4" /> : <span>{m.emoji}</span>}
+                      {done ? <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <span>{m.emoji}</span>}
                     </motion.div>
                     <div
-                      className={`text-[11px] mt-1.5 text-center leading-tight ${
+                      className={`text-[9px] sm:text-[11px] mt-1 sm:mt-1.5 text-center leading-tight ${
                         done || active ? "font-semibold text-foreground" : "text-muted-foreground/60"
                       }`}
                     >

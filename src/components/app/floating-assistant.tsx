@@ -461,7 +461,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
             <MessageCircle className="h-6 w-6 text-white" />
           )}
           {!menuOpen && isAiEnabled && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white dark:border-background" />
           )}
         </button>
       </div>
@@ -602,7 +602,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                         />
                         <button
                           onClick={() => downloadImage(msg.generatedImage!)}
-                          className="w-full flex items-center justify-center gap-1.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition-colors"
+                          className="w-full flex items-center justify-center gap-1.5 py-2 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 text-xs font-medium transition-colors"
                         >
                           <Download className="h-3.5 w-3.5" />
                           تنزيل التصميم
@@ -619,9 +619,9 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                             href={r.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block text-right bg-white hover:bg-amber-50 border border-amber-200 hover:border-amber-400 rounded-lg px-3 py-2 transition-colors"
+                            className="block text-right bg-white dark:bg-neutral-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 hover:border-amber-400 dark:hover:border-amber-600 rounded-lg px-3 py-2 transition-colors"
                           >
-                            <div className="text-xs font-medium text-neutral-900 flex items-center gap-1.5">
+                            <div className="text-xs font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
                               <Globe className="h-3 w-3 text-amber-500 shrink-0" />
                               <span className="truncate">{r.title}</span>
                             </div>
@@ -641,7 +641,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                           <button
                             key={s.id}
                             onClick={() => handleSuggestion(s)}
-                            className="block w-full text-right text-xs bg-white hover:bg-amber-50 border border-amber-200 hover:border-amber-400 rounded-lg px-3 py-2 transition-colors"
+                            className="block w-full text-right text-xs bg-white dark:bg-neutral-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 hover:border-amber-400 dark:hover:border-amber-600 rounded-lg px-3 py-2 transition-colors"
                           >
                             <span className="text-amber-600">💬</span> {s.question}
                           </button>
@@ -655,7 +655,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
               {/* مؤشر الكتابة */}
               {typing && (
                 <div className="flex justify-end">
-                  <div className="bg-white border border-amber-100 rounded-2xl rounded-br-sm px-4 py-3 shadow-sm">
+                  <div className="bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 rounded-2xl rounded-br-sm px-4 py-3 shadow-sm">
                     <div className="flex items-center gap-2">
                       <Bot className="h-3.5 w-3.5 text-amber-500" />
                       <div className="flex gap-1">
@@ -672,7 +672,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
             </div>
 
             {/* إدخال + ميكروفون */}
-            <div className="border-t bg-white p-3">
+            <div className="border-t bg-white dark:bg-neutral-800 p-3">
               <form
                 onSubmit={(e) => { e.preventDefault(); askQuestion(input); }}
                 className="flex gap-2"
@@ -690,10 +690,10 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                   disabled={asrLoading}
                   className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
                     recording
-                      ? "bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-200"
+                      ? "bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-200 dark:shadow-rose-900/40"
                       : asrLoading
                         ? "bg-muted text-muted-foreground"
-                        : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600"
+                        : "bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 text-neutral-600 dark:text-neutral-400"
                   } disabled:opacity-40`}
                   title={recording ? "إيقاف التسجيل" : "تحدث بالصوت"}
                 >
@@ -702,7 +702,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                 <Button
                   type="submit"
                   size="icon"
-                  className="bg-amber-400 hover:bg-amber-500 text-neutral-900 shrink-0"
+                  className="bg-amber-400 hover:bg-amber-500 text-neutral-900 dark:text-neutral-900 shrink-0"
                   disabled={!input.trim() || isDisabled}
                 >
                   <Send className="h-4 w-4" />

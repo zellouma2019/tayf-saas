@@ -485,7 +485,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   placeholder="• • • •"
                   className={cn(
                     "text-center text-2xl tracking-[0.5em] h-12 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 shadow-sm bg-dark-50 transition-shadow",
-                    pinError && "ring-2 ring-rose-400 bg-rose-50/50 shadow-rose-100",
+                    pinError && "ring-2 ring-rose-400 bg-rose-50/50 dark:bg-rose-950/20 shadow-rose-100",
                   )}
                   autoFocus
                   dir="ltr"
@@ -2275,7 +2275,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
               dir="ltr"
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button onClick={copyAdminLink} variant="outline" size="icon" className={cn("shrink-0 rounded-lg border-dark-200 transition-all duration-200 h-11 w-11", adminCopied ? "bg-emerald-50 border-emerald-300 text-emerald-600 hover:bg-emerald-50" : "hover:bg-gold-500/5")}>
+            <Button onClick={copyAdminLink} variant="outline" size="icon" className={cn("shrink-0 rounded-lg border-dark-200 transition-all duration-200 h-11 w-11", adminCopied ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" : "hover:bg-gold-500/5")}>
               {adminCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
@@ -2436,13 +2436,13 @@ function MobileOrderCard({
                     تنزيل
                   </Button>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-full shrink-0">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-2 py-0.5 rounded-full shrink-0">
                     <Crown className="h-2.5 w-2.5" />
                     PRO
                   </span>
                 )}
               </div>
-              <div className="mt-1.5 flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50/80 border border-amber-200/40 rounded-lg p-2">
+              <div className="mt-1.5 flex items-start gap-1.5 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/40 dark:border-amber-800/40 rounded-lg p-2">
                 <AlertCircle className="h-3 w-3 shrink-0 mt-0.5 text-amber-500" />
                 <span>الملفات لا تُحفظ على السيرفر. يُرجى تنزيل الملف وحفظه على جهازك فوراً بعد استلام الطلب.</span>
               </div>
@@ -2468,7 +2468,7 @@ function MobileOrderCard({
           {order.adminNotes && (
             <div>
               <div className="text-xs font-bold text-dark-700 mb-2">ملاحظات داخلية</div>
-              <div className="rounded-xl bg-amber-50 border border-amber-200/60 p-2.5">
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 p-2.5">
                 <div className="flex items-start gap-1.5">
                   <StickyNote className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
                   <span className="text-xs text-amber-800">{order.adminNotes}</span>

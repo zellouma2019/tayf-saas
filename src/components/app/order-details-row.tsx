@@ -165,9 +165,9 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
         <tr className="bg-amber-50/40 dark:bg-amber-950/20">
           <td colSpan={11} className="p-0">
             <div className="p-4 md:p-6 border-t border-amber-200 dark:border-amber-800/40">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
                 {/* ===== مواصفات الطباعة ===== */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="md:col-span-2 space-y-4">
                   <div>
                     <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
                       <Package className="h-4 w-4 text-amber-600" />

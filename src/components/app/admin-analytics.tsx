@@ -156,15 +156,15 @@ function ArabicTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-border rounded-lg shadow-lg px-3 py-2 text-sm min-w-[140px]" dir="rtl">
-      <div className="font-bold text-neutral-800 mb-1">{label}</div>
+    <div className="bg-white dark:bg-neutral-800 border border-border rounded-lg shadow-lg px-3 py-2 text-sm min-w-[140px]" dir="rtl">
+      <div className="font-bold text-neutral-800 dark:text-neutral-200 mb-1">{label}</div>
       {payload.map((entry, i) => (
         <div key={i} className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: entry.color }} />
             {entry.dataKey === "revenue" ? valueLabel || "الإيرادات" : countLabel || "الطلبات"}
           </span>
-          <span className="font-bold tabular-nums text-neutral-900">
+          <span className="font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
             {entry.dataKey === "revenue"
               ? entry.value.toLocaleString("ar-SA-u-nu-latn")
               : entry.value + " طلب"}
@@ -185,12 +185,12 @@ function PieTooltip({
   if (!active || !payload?.length) return null;
   const d = payload[0];
   return (
-    <div className="bg-white border border-border rounded-lg shadow-lg px-3 py-2 text-sm" dir="rtl">
+    <div className="bg-white dark:bg-neutral-800 border border-border rounded-lg shadow-lg px-3 py-2 text-sm" dir="rtl">
       <div className="flex items-center gap-1.5">
         <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.payload.fill }} />
-        <span className="font-medium text-neutral-800">{d.name}</span>
+        <span className="font-medium text-neutral-800 dark:text-neutral-200">{d.name}</span>
       </div>
-      <div className="font-bold tabular-nums text-neutral-900 mt-0.5">
+      <div className="font-bold tabular-nums text-neutral-900 dark:text-neutral-100 mt-0.5">
         {d.value} طلب {d.payload.percent ? `(${(d.payload.percent * 100).toFixed(0)}%)` : ""}
       </div>
     </div>
@@ -639,10 +639,10 @@ function MonthlyCard({
   color: "emerald" | "amber" | "cyan" | "rose";
 }) {
   const colorMap = {
-    emerald: { text: "text-emerald-600", bg: "bg-emerald-50" },
-    amber: { text: "text-amber-600", bg: "bg-amber-50" },
-    cyan: { text: "text-cyan-600", bg: "bg-cyan-50" },
-    rose: { text: "text-rose-600", bg: "bg-rose-50" },
+    emerald: { text: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+    amber: { text: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30" },
+    cyan: { text: "text-cyan-600", bg: "bg-cyan-50 dark:bg-cyan-950/30" },
+    rose: { text: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30" },
   };
   const c = colorMap[color];
   const hasTrend = typeof trend === "number" && isFinite(trend);
@@ -660,7 +660,7 @@ function MonthlyCard({
               <div
                 className={cn(
                   "text-xs mt-1 flex items-center gap-0.5 tabular-nums",
-                  isUp ? "text-emerald-600" : "text-rose-600",
+                  isUp ? "text-emerald-600" : "text-rose-600 dark:text-rose-400",
                 )}
               >
                 {isUp ? (
@@ -712,7 +712,7 @@ function TopCustomers({ customers }: { customers: TopCustomer[] }) {
             <div className="text-xs text-muted-foreground tabular-nums">
               {c.count} طلب
             </div>
-            <div className="font-bold text-sm text-amber-700 tabular-nums">
+            <div className="font-bold text-sm text-amber-700 dark:text-amber-400 tabular-nums">
               {formatDA(c.total)}
             </div>
           </div>
@@ -733,9 +733,9 @@ function WeeklyHeatmap({ weeks }: { weeks: WeekBucket[] }) {
     if (count === 0) return "bg-muted/60";
     const intensity = count / maxCount;
     if (intensity > 0.75) return "bg-amber-500 text-white";
-    if (intensity > 0.5) return "bg-amber-400 text-neutral-900";
-    if (intensity > 0.25) return "bg-amber-300 text-neutral-900";
-    return "bg-amber-200 text-neutral-900";
+    if (intensity > 0.5) return "bg-amber-400 text-neutral-900 dark:text-neutral-900";
+    if (intensity > 0.25) return "bg-amber-300 text-neutral-900 dark:text-neutral-900";
+    return "bg-amber-200 text-neutral-900 dark:text-neutral-900";
   }
 
   return (
@@ -793,7 +793,7 @@ function WeeklyHeatmap({ weeks }: { weeks: WeekBucket[] }) {
         {weeks.map((w, i) => (
           <div
             key={i}
-            className="flex-1 text-center text-xs font-bold text-neutral-900 tabular-nums py-1 rounded bg-muted/40"
+            className="flex-1 text-center text-xs font-bold text-neutral-900 dark:text-neutral-100 tabular-nums py-1 rounded bg-muted/40"
           >
             {w.total}
           </div>
