@@ -440,8 +440,7 @@ export function MerchantOrderDetail({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 text-xs rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 transition-all duration-200"
-                onClick={() => handleStatusChange("cancelled")}
+                className="h-8 text-xs rounded-lg border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all duration-200"
               >
                 ❌ إلغاء
               </Button>
@@ -714,7 +713,7 @@ export function MerchantOrderDetail({
             {/* الربح */}
             <div className="mt-2.5 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200/60">
               <span className="text-xs text-emerald-600">الربح:</span>
-              <span className={cn("text-sm font-bold", profit >= 0 ? "text-emerald-700" : "text-rose-600")}>
+              <span className={cn("text-sm font-bold", profit >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
                 {formatDA(profit)}
               </span>
               <span className="text-[10px] text-dark-400 mr-auto">
@@ -1013,7 +1012,7 @@ export function MerchantOrderDetail({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-xs rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 transition-all duration-200"
+                  className="text-xs rounded-lg border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all duration-200"
                 >
                   <Trash2 className="h-3.5 w-3.5 ml-1" />
                   حذف

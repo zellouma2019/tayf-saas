@@ -100,11 +100,11 @@ export function PremiumLockDialog({
         <DialogTitle className="sr-only">ميزة مدفوعة</DialogTitle>
 
         {/* رأس ذهبي */}
-        <div className="bg-gradient-to-bl from-amber-50 to-white p-6 text-center border-b border-amber-200/50">
+        <div className="bg-gradient-to-bl from-amber-50 to-white dark:from-amber-950/40 dark:to-background p-6 text-center border-b border-amber-200/50 dark:border-amber-800/40">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-bl from-amber-400 to-amber-500 flex items-center justify-center mb-3 shadow-lg shadow-amber-200">
             <Crown className="h-8 w-8 text-white" />
           </div>
-          <h2 className="text-lg font-bold text-neutral-900">{feature.label}</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{feature.label}</h2>
           <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
             {feature.description}
           </p>
@@ -113,8 +113,8 @@ export function PremiumLockDialog({
         {/* المحتوى */}
         <div className="p-5 space-y-4">
           {/* لماذا هذه الميزة؟ */}
-          <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3">
-            <p className="text-xs text-amber-800 leading-relaxed">
+          <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-3">
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
               <strong>💡 لماذا تحتاجها؟</strong> هذه الميزة متاحة في النسخة المدفوعة فقط.
               تواصل معنا لتفعيلها والحصول على تجربة أفضل لزبائنك.
             </p>
@@ -213,21 +213,21 @@ export function PremiumFeature({
             </div>
             {/* الغطاء */}
             <div
-              className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-xl
+              className="absolute inset-0 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-[1px] rounded-xl
                 flex flex-col items-center justify-center gap-2 cursor-pointer
-                hover:bg-white/70 transition-colors"
+                hover:bg-white/70 dark:hover:bg-neutral-900/70 transition-colors"
               onClick={() => setDialogOpen(true)}
             >
               {lockedView || (
                 <div className="text-center p-4">
-                  <div className="w-10 h-10 mx-auto rounded-full bg-amber-100 flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 mx-auto rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2">
                     <Lock className="h-5 w-5 text-amber-600" />
                   </div>
-                  <p className="text-sm font-bold text-neutral-900">{feature.label}</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{feature.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     <PremiumBadge size="md" /> نسخة مدفوعة
                   </p>
-                  <p className="text-[10px] text-amber-600 mt-2 font-medium">
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-medium">
                     اضغط لتفعيلها
                   </p>
                 </div>
@@ -239,22 +239,22 @@ export function PremiumFeature({
           <>
             {lockedView || (
               <div
-                className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/30 p-4
-                  cursor-pointer hover:border-amber-300 hover:bg-amber-50/60 transition-all
+                className="rounded-xl border-2 border-dashed border-amber-200 dark:border-amber-800/40 bg-amber-50/30 dark:bg-amber-950/10 p-4
+                  cursor-pointer hover:border-amber-300 dark:hover:border-amber-700/40 hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-all
                   flex items-center gap-3"
                 onClick={() => setDialogOpen(true)}
               >
-                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                   <Lock className="h-5 w-5 text-amber-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-neutral-900">{feature.label}</span>
+                    <span className="font-bold text-sm text-neutral-900 dark:text-neutral-100">{feature.label}</span>
                     <PremiumBadge />
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">{feature.description}</p>
                 </div>
-                <span className="text-[10px] text-amber-600 font-medium shrink-0">اضغط</span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium shrink-0">اضغط</span>
               </div>
             )}
           </>

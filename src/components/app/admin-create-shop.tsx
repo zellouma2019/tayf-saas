@@ -120,7 +120,7 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
             {/* رابط الزبائن */}
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 text-sm font-bold text-foreground/80">
-                <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
                   <Link2 className="h-3.5 w-3.5 text-emerald-500" />
                 </div>
                 رابط الزبائن (أعطه للعميل)

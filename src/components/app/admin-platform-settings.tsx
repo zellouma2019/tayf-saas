@@ -211,7 +211,7 @@ function Toggle({ checked, onChange, label, description }: {
         )}
       >
         <span className={cn(
-          "absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all",
+          "absolute top-0.5 w-5 h-5 bg-white dark:bg-neutral-200 rounded-full shadow-sm transition-all",
           checked ? "left-0.5" : "left-[22px]"
         )} />
       </button>

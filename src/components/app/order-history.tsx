@@ -17,7 +17,7 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; b
   confirmed: { label: "مؤكّد",          bg: "bg-gold-500/10 dark:bg-gold-500/10",      text: "text-gold-400 dark:text-gold-300",      border: "border-gold-500/20 dark:border-gold-500/20" },
   printing:  { label: "جارٍ الطباعة",    bg: "bg-gold-50 dark:bg-gold-500/10",   text: "text-gold-600 dark:text-gold-200",  border: "border-gold-200 dark:border-gold-500/20" },
   ready:     { label: "جاهز للاستلام",  bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-800" },
-  delivered: { label: "تم التسليم",      bg: "bg-dark-100 dark:bg-card border-gold-500/8 dark:border-dark-700" },
+  delivered: { label: "تم التسليم",      bg: "bg-dark-100 dark:bg-card border-gold-500/8 dark:border-dark-700", text: "text-dark-600 dark:text-dark-300", border: "border-gold-500/8 dark:border-dark-700" },
   cancelled: { label: "ملغي",           bg: "bg-rose-50 dark:bg-rose-950/40",      text: "text-rose-700 dark:text-rose-300",      border: "border-rose-200 dark:border-rose-800" },
 };
 
@@ -64,10 +64,10 @@ export function OrderHistory() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* المنطقة الترويسية */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 to-violet-50/40 border border-dark-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 dark:from-slate-900/50 to-violet-50/40 dark:to-violet-950/30 border border-dark-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(139,92,246,0.06),transparent_50%)]" />
         <div className="relative">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-100 to-violet-100 flex items-center justify-center mb-3 shadow-sm">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-violet-100 dark:to-violet-900/40 flex items-center justify-center mb-3 shadow-sm">
             <History className="h-7 w-7 text-gold-500" />
           </div>
           <h1 className="text-2xl font-bold mb-1">سجل الطلبات</h1>
@@ -166,7 +166,7 @@ function HistoryCard({ order }: { order: PrintOrderLite }) {
         <div className="flex items-start justify-between gap-3">
           {/* الجانب الأيمن: الرمز + المعلومات */}
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-violet-50 flex items-center justify-center shrink-0 text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-violet-50 dark:to-violet-900/40 flex items-center justify-center shrink-0 text-lg">
               {emoji}
             </div>
             <div className="min-w-0 flex-1">

@@ -405,28 +405,28 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       value: formatDA(stats?.totalRevenue ?? 0),
       icon: DollarSign,
       color: "text-emerald-600",
-      bg: "bg-emerald-50",
+      bg: "bg-emerald-50 dark:bg-emerald-950/30",
     },
     {
       title: "طلبات اليوم",
       value: stats?.todayOrders ?? 0,
       icon: TrendingUp,
       color: "text-amber-600",
-      bg: "bg-amber-50",
+      bg: "bg-amber-50 dark:bg-amber-950/30",
     },
     {
       title: "قيد الطباعة",
       value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0),
       icon: Clock,
       color: "text-rose-600",
-      bg: "bg-rose-50",
+      bg: "bg-rose-50 dark:bg-rose-950/30",
     },
     {
       title: "صافي الربح",
       value: formatDA(stats?.profit ?? 0),
       icon: DollarSign,
-      color: (stats?.profit ?? 0) >= 0 ? "text-emerald-700" : "text-red-600",
-      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50" : "bg-red-50",
+      color: (stats?.profit ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600",
+      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-red-50",
     },
   ];
 
@@ -647,7 +647,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                               }}
                               className={cn(
                                 "w-full text-right px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/50 transition-colors",
-                                !n.read && "bg-rose-50/40",
+                                !n.read && "bg-rose-50/40 dark:bg-rose-950/20",
                               )}
                             >
                               <div className="flex items-start gap-2">
@@ -938,7 +938,7 @@ function MobileOrderCard({
   const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
 
   return (
-    <div className={`rounded-xl border bg-card overflow-hidden transition-all ${selected ? "border-rose-400 bg-rose-50/30 ring-1 ring-rose-200" : ""}`}>
+    <div className={`rounded-xl border bg-card overflow-hidden transition-all ${selected ? "border-rose-400 bg-rose-50/30 dark:bg-rose-950/20 ring-1 ring-rose-200 dark:ring-rose-800/40" : ""}`}>
       {/* رأس البطاقة - قابل للنقر */}
       <div className="w-full p-3 flex items-start gap-2">
         {/* مربع الاختيار */}
@@ -960,7 +960,7 @@ function MobileOrderCard({
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl shrink-0">{serviceEmoji}</span>
             <div className="min-w-0">
-              <div className="font-mono text-xs font-bold text-neutral-900">{order.reference}</div>
+              <div className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">{order.reference}</div>
               <div className="text-xs text-muted-foreground">{order.serviceName}</div>
             </div>
           </div>
@@ -974,7 +974,7 @@ function MobileOrderCard({
             <div className="text-xs text-muted-foreground" dir="ltr">{order.customer?.phone || "—"}</div>
           </div>
           <div className="text-left shrink-0">
-            <div className="font-bold text-amber-700 text-sm">{formatDA(order.total)}</div>
+            <div className="font-bold text-amber-700 dark:text-amber-400 text-sm">{formatDA(order.total)}</div>
             <div className="text-xs text-muted-foreground">{order.pages}ص × {order.copies}ن</div>
           </div>
         </div>
@@ -990,17 +990,17 @@ function MobileOrderCard({
 
       {/* التفاصيل المنسدلة */}
       {expanded && (
-        <div className="border-t bg-amber-50/40 p-3 space-y-3">
+        <div className="border-t bg-amber-50/40 dark:bg-amber-950/10 p-3 space-y-3">
           {/* مواصفات الطباعة */}
           <div>
-            <div className="text-xs font-bold text-neutral-700 mb-1.5">مواصفات الطباعة</div>
+            <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">مواصفات الطباعة</div>
             <div className="grid grid-cols-2 gap-1.5">
               {Object.entries(order.options)
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
                 .map(([k, v]) => (
-                  <div key={k} className="rounded bg-white border border-amber-100 px-2 py-1">
+                  <div key={k} className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 px-2 py-1">
                     <div className="text-xs text-muted-foreground">{translateOptionKey(k)}</div>
-                    <div className="text-xs font-semibold text-neutral-900">{translateOptionValue(String(v))}</div>
+                    <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">{translateOptionValue(String(v))}</div>
                   </div>
                 ))}
             </div>
@@ -1009,8 +1009,8 @@ function MobileOrderCard({
           {/* الملف + معاينة حقيقية */}
           {order.fileName && (
             <div>
-              <div className="text-xs font-bold text-neutral-700 mb-1.5">ملف الزبون</div>
-              <div className="rounded-lg bg-white border border-amber-100 p-2.5">
+              <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">ملف الزبون</div>
+              <div className="rounded-lg bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2.5">
                 <div className="flex items-start gap-2.5">
                   {/* معاينة الملف */}
                   <div className="shrink-0">
@@ -1034,10 +1034,10 @@ function MobileOrderCard({
                         </div>
                       </div>
                     ) : order.fileData && order.fileData.startsWith("file_") ? (
-                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm bg-neutral-50 flex items-center justify-center">
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 dark:border-amber-800/40 shadow-sm bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center">
                         <div className="text-center">
                           <FileText className="h-5 w-5 text-amber-500 mx-auto" />
-                          <span className="text-[8px] font-bold text-neutral-600 mt-0.5 block">{order.fileType}</span>
+                          <span className="text-[8px] font-bold text-neutral-600 dark:text-neutral-400 mt-0.5 block">{order.fileType}</span>
                         </div>
                       </div>
                     ) : (
@@ -1052,7 +1052,7 @@ function MobileOrderCard({
                     <div className="text-xs font-medium truncate break-all">{order.fileName}</div>
                     <div className="flex flex-wrap gap-1 mt-1 text-[10px]">
                       {order.fileType && (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-700">
+                        <span className="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/40 text-amber-700 dark:text-amber-400">
                           {order.fileType}
                         </span>
                       )}
@@ -1085,8 +1085,8 @@ function MobileOrderCard({
 
           {/* معلومات العميل */}
           <div>
-            <div className="text-xs font-bold text-neutral-700 mb-1.5">معلومات العميل</div>
-            <div className="rounded bg-white border border-amber-100 p-2 space-y-1.5 text-xs">
+            <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">معلومات العميل</div>
+            <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2 space-y-1.5 text-xs">
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">الاسم</span>
                 <span className="font-medium">{order.customer?.name || "—"}</span>
@@ -1118,11 +1118,11 @@ function MobileOrderCard({
 
           {/* العميل والتسليم */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded bg-white border border-amber-100 p-2">
+            <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2">
               <div className="text-muted-foreground mb-0.5">الاستلام</div>
               <div className="font-medium">{order.customer?.deliveryMethod === "delivery" ? "توصيل" : "من المطبعة"}</div>
             </div>
-            <div className="rounded bg-white border border-amber-100 p-2">
+            <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2">
               <div className="text-muted-foreground mb-0.5">الوقت المتوقع</div>
               <div className="font-medium">{order.estimatedHours} ساعة</div>
             </div>
@@ -1131,8 +1131,8 @@ function MobileOrderCard({
           {/* ملاحظات */}
           {order.options.notes && (
             <div>
-              <div className="text-xs font-bold text-neutral-700 mb-1">ملاحظات</div>
-              <div className="rounded bg-white border border-amber-100 p-2 text-xs text-neutral-700 whitespace-pre-wrap">
+              <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">ملاحظات</div>
+              <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2 text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                 {order.options.notes}
               </div>
             </div>
