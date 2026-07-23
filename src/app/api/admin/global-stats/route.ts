@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
@@ -10,7 +10,6 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureDb();
     const todayStr = new Date().toISOString().slice(0, 10);
 
     // 3 استعلامات raw SQL متوازية
