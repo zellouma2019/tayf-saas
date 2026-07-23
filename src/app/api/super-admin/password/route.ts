@@ -40,6 +40,21 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    await runMigrations();
+    // إعادة تعيين كلمة المرور للافتراضية (طوارئ فقط)
+    await db.superAdmin.update({
+      where: { key: "main" },
+      data: { password: "Admin@2025" },
+    });
+    return NextResponse.json({ success: true, message: "تم إعادة تعيين كلمة المرور" });
+  } catch (e) {
+    console.error('[password/PATCH]', e);
+    return NextResponse.json({ error: "فشل إعادة التعيين" }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "super-admin-password-get");
   if (!rl.ok) return rl.response;
