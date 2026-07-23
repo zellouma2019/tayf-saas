@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
-import { runMigrations } from "@/lib/db-migrations";
+import { getSuperAdmin } from "@/lib/db-migrations";
 
 const APP_SECRET = "tayf_admin_session_2025";
 
@@ -15,13 +14,11 @@ async function simpleHash(str: string): Promise<string> {
 }
 
 /// التحقق من صلاحية جلسة المدير
-/// يتحقق أن الرمز المُخزَّن يطابق كلمة المرور الحالية
 export async function POST(req: NextRequest) {
   const rl = withRateLimit(req, "super-admin-verify");
   if (!rl.ok) return rl.response;
 
   try {
-    await runMigrations();
     const { ts, token } = await req.json();
     if (!ts || !token) {
       return NextResponse.json({ valid: false }, { status: 200 });
@@ -33,20 +30,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, reason: "expired" }, { status: 200 });
     }
 
-    // جلب كلمة المرور الحالية
-    const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+    // جلب كلمة المرور الحالية بأمان
+    const admin = await getSuperAdmin({ id: true, key: true, password: true }) as { password: string } | null;
     if (!admin || !admin.password) {
       return NextResponse.json({ valid: false }, { status: 200 });
     }
 
-    // إعادة إنشاء الرمز المتوقع من كلمة المرور الحالية + الطابع الزمني
     const expectedToken = await simpleHash(`${admin.password}:${ts}:${APP_SECRET}`);
-
     if (token === expectedToken) {
       return NextResponse.json({ valid: true }, { status: 200 });
     }
 
-    // كلمة المرور تغيّرت — الجلسة غير صالحة
     return NextResponse.json({ valid: false, reason: "password_changed" }, { status: 200 });
   } catch {
     return NextResponse.json({ valid: false }, { status: 200 });
