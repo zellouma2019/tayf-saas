@@ -71,12 +71,12 @@ const ACCEPTED_TYPES = [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg: string; label: string }> = {
-  PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 border-red-200", label: "PDF" },
+  PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/40", label: "PDF" },
   DOCX: { icon: FileSpreadsheet, color: "text-gold-400", bg: "bg-gold-500/10 border-gold-500/20", label: "DOCX" },
-  JPG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 border-emerald-200", label: "JPG" },
-  JPEG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 border-emerald-200", label: "JPEG" },
-  PNG: { icon: ImageIcon, color: "text-gold-400", bg: "bg-gold-50 border-gold-200", label: "PNG" },
-  WEBP: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 border-amber-200", label: "WEBP" },
+  JPG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "JPG" },
+  JPEG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "JPEG" },
+  PNG: { icon: ImageIcon, color: "text-gold-400", bg: "bg-gold-50 dark:bg-gold-500/10 border-gold-200 dark:border-gold-500/20", label: "PNG" },
+  WEBP: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40", label: "WEBP" },
 };
 
 const PHASE_CONFIG: Record<
@@ -257,7 +257,7 @@ function InfoChip({
   const content = (
     <motion.div
       variants={itemVariants}
-      className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 py-2.5 hover:shadow-sm transition-shadow border-r-[3px] border-r-violet-300"
+      className="flex items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 py-2.5 hover:shadow-sm transition-shadow border-r-[3px] border-r-violet-300 dark:border-r-violet-500/50"
     >
       <span className={`shrink-0 ${colorClass || "text-gold-400"}`}>{icon}</span>
       <div className="min-w-0 flex-1">
@@ -304,7 +304,7 @@ function SuggestionPill({
     <motion.span
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/60"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40"
     >
       {icon}
       {label}
@@ -463,7 +463,7 @@ export default function UploadStep({
         >
           <h3 className="text-base font-semibold mb-1">ارفع ملفك هنا</h3>
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Brain className="h-3.5 w-3.5 text-amber-600" />
+            <Brain className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
             نظام ذكي سيحلل ملفك فعلياً ويستخرج كل المعلومات الحقيقية
           </p>
         </motion.div>
@@ -492,8 +492,8 @@ export default function UploadStep({
             relative cursor-pointer rounded-2xl border-2 border-dashed p-6 md:p-8 text-center
             transition-all duration-300 overflow-hidden
             ${isDragOver
-              ? "bg-gold-50/80 border-gold-400 shadow-lg shadow-violet-100"
-              : "bg-amber-50/30 border-amber-300/70 animate-border-dance hover:bg-gradient-to-br hover:from-violet-50/50 hover:to-indigo-50/50 hover:shadow-md"
+              ? "bg-gold-50/80 dark:bg-gold-500/10 border-gold-400 shadow-lg shadow-violet-100 dark:shadow-violet-900/20"
+              : "bg-amber-50/30 dark:bg-amber-950/20 border-amber-300/70 dark:border-amber-500/30 animate-border-dance hover:bg-gradient-to-br hover:from-violet-50/50 hover:to-indigo-50/50 hover:shadow-md"
             }
           `}
           onClick={() => fileInputRef.current?.click()}
@@ -505,7 +505,7 @@ export default function UploadStep({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-100/40 to-indigo-100/40 pointer-events-none"
+                className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-100/40 dark:from-violet-900/20 to-indigo-100/40 dark:to-indigo-900/20 pointer-events-none"
                 style={{
                   boxShadow: "inset 0 0 50px rgba(139, 92, 246, 0.12)",
                 }}
@@ -568,7 +568,7 @@ export default function UploadStep({
                       جارٍ المعالجة...
                     </span>
                   ) : isDone ? (
-                    <span className="flex items-center justify-center gap-1.5 text-emerald-600 font-medium">
+                    <span className="flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       اكتمل التحليل — انقر لتغيير الملف
                     </span>
@@ -621,7 +621,7 @@ export default function UploadStep({
                   )}
                 </motion.div>
                 {isDragOver ? (
-                  <div className="font-bold text-base text-gold-600">
+                  <div className="font-bold text-base text-gold-600 dark:text-gold-400">
                     أفلت الملف هنا الآن
                   </div>
                 ) : (
@@ -659,7 +659,7 @@ export default function UploadStep({
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="أدخل رابطاً لملف أو صورة هنا"
               dir="ltr"
-              className="w-full h-11 pr-10 pl-4 rounded-xl border border-border bg-card text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 transition-all"
+              className="w-full h-11 pr-10 pl-4 rounded-xl border border-border bg-card text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 dark:focus:border-amber-500/30 transition-all"
             />
             {urlInput.trim() && (
               <button
@@ -693,9 +693,9 @@ export default function UploadStep({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
+            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 dark:hover:border-amber-500/30 transition-all active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
               {isMobile ? (
                 <Smartphone className="h-4.5 w-4.5 text-amber-600" />
               ) : (
@@ -723,10 +723,10 @@ export default function UploadStep({
                 };
                 cameraInput.click();
               }}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 dark:hover:border-amber-500/30 transition-all active:scale-[0.97]"
             >
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <Camera className="h-4.5 w-4.5 text-emerald-600" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+                <Camera className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
                 التقط صورة
@@ -753,9 +753,9 @@ export default function UploadStep({
                 // Clipboard API might be blocked — ignore
               });
             }}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
+            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 dark:hover:border-amber-500/30 transition-all active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-xl bg-gold-50 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-gold-50 dark:bg-gold-500/10 flex items-center justify-center">
               <Copy className="h-4.5 w-4.5 text-gold-400" />
             </div>
             <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
@@ -812,7 +812,7 @@ export default function UploadStep({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="rounded-2xl border-2 border-amber-200 bg-white p-4 space-y-3">
+            <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800/40 bg-white dark:bg-neutral-800 p-4 space-y-3">
               {/* Phase indicators */}
               <div className="flex items-center gap-3">
                 {phases.map((phase, i) => {
@@ -839,7 +839,7 @@ export default function UploadStep({
                           }
                           className={`
                             w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300
-                            ${isComplete ? "bg-emerald-100" : isActive ? "bg-amber-100" : "bg-muted"}
+                            ${isComplete ? "bg-emerald-100 dark:bg-emerald-900/40" : isActive ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"}
                           `}
                         >
                           {isComplete ? (
@@ -853,9 +853,9 @@ export default function UploadStep({
                         <span
                           className={`text-[10px] font-medium text-center leading-tight ${
                             isActive
-                              ? "text-amber-700"
+                              ? "text-amber-700 dark:text-amber-400"
                               : isComplete
-                                ? "text-emerald-600"
+                                ? "text-emerald-600 dark:text-emerald-400"
                                 : "text-muted-foreground/50"
                           }`}
                         >
@@ -883,14 +883,14 @@ export default function UploadStep({
               {analysisPhase === "uploading" && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-amber-700 font-medium">
+                    <span className="text-amber-700 dark:text-amber-400 font-medium">
                       {PHASE_CONFIG.uploading.description}
                     </span>
-                    <span className="text-amber-700 font-bold tabular-nums" dir="ltr">
+                    <span className="text-amber-700 dark:text-amber-400 font-bold tabular-nums" dir="ltr">
                       {uploadProgress}%
                     </span>
                   </div>
-                  <div className="h-2 bg-amber-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-amber-100 dark:bg-amber-900/40 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-l from-amber-500 to-amber-400"
                       initial={{ width: 0 }}
@@ -913,12 +913,12 @@ export default function UploadStep({
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="w-8 h-8 rounded-full border-2 border-gold-200 border-t-violet-500"
+                      className="w-8 h-8 rounded-full border-2 border-gold-200 dark:border-gold-500/20 border-t-violet-500"
                     />
                     <Sparkles className="h-3.5 w-3.5 text-gold-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                   </div>
                   <div>
-                    <span className="font-bold text-sm text-gold-600">
+                    <span className="font-bold text-sm text-gold-600 dark:text-gold-400">
                       جارٍ التحليل الذكي...
                     </span>
                     <span className="block text-xs text-gold-400 mt-0.5">
@@ -939,18 +939,18 @@ export default function UploadStep({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 flex items-start gap-3"
+            className="rounded-2xl border-2 border-rose-200 dark:border-rose-800/40 bg-rose-50 dark:bg-rose-950/30 p-4 flex items-start gap-3"
           >
             <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm text-rose-700">تعذّر معالجة الملف</div>
-              <div className="text-xs text-rose-600 mt-0.5">
+              <div className="font-bold text-sm text-rose-700 dark:text-rose-400">تعذّر معالجة الملف</div>
+              <div className="text-xs text-rose-600 dark:text-rose-400 mt-0.5">
                 {errorMessage || "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."}
               </div>
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 text-xs font-medium text-rose-600 hover:text-rose-800 underline underline-offset-2"
+              className="shrink-0 text-xs font-medium text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 underline underline-offset-2"
             >
               إعادة المحاولة
             </button>
@@ -1141,12 +1141,12 @@ export default function UploadStep({
                                 <span
                                   className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium border ${
                                     analysis.dpiCategory === "جاهزة للطباعة"
-                                      ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
                                       : analysis.dpiCategory === "عالية"
                                         ? "bg-gold-500/10 text-gold-500 border-gold-500/20"
                                         : analysis.dpiCategory === "متوسطة"
-                                          ? "bg-amber-50 text-amber-600 border-amber-200"
-                                          : "bg-rose-50 text-rose-600 border-rose-200"
+                                          ? "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40"
+                                          : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/40"
                                   }`}
                                 >
                                   {analysis.dpiCategory}
@@ -1208,7 +1208,7 @@ export default function UploadStep({
                                   initial={{ opacity: 0, scale: 0 }}
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: 0.5 + i * 0.08, type: "spring", stiffness: 400 }}
-                                  className="inline-block h-6 w-6 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
+                                  className="inline-block h-6 w-6 rounded-full border-2 border-white dark:border-neutral-700 shadow-sm cursor-pointer hover:scale-125 transition-transform"
                                   style={{ backgroundColor: color }}
                                 />
                               </TooltipTrigger>
@@ -1232,14 +1232,14 @@ export default function UploadStep({
                     </div>
 
                     {/* Detected service */}
-                    <div className="flex items-center justify-between mb-2.5 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                    <div className="flex items-center justify-between mb-2.5 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-100 dark:border-amber-800/40">
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500" />
-                        <span className="text-sm font-semibold text-amber-800">
+                        <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
                           {analysis.detectedServiceName}
                         </span>
                       </div>
-                      <span className="text-amber-600 text-sm font-bold" dir="ltr">
+                      <span className="text-amber-600 dark:text-amber-400 text-sm font-bold" dir="ltr">
                         <AnimatedCounter value={confidencePercent} suffix="%" />
                       </span>
                     </div>
@@ -1307,7 +1307,7 @@ export default function UploadStep({
                       </span>
                     </div>
                     <motion.div
-                      className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full"
+                      className="relative rounded-xl overflow-hidden border border-border bg-white dark:bg-neutral-800 shadow-sm w-full"
                       whileHover={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
@@ -1357,16 +1357,16 @@ export default function UploadStep({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="rounded-2xl border-2 border-dashed border-amber-200/60 bg-amber-50/20 p-6 text-center"
+            className="rounded-2xl border-2 border-dashed border-amber-200/60 dark:border-amber-800/40 bg-amber-50/20 dark:bg-amber-950/20 p-6 text-center"
           >
             <motion.div
               animate={{ y: [0, -4, 0] }}
               transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              className="w-14 h-14 mx-auto rounded-2xl bg-amber-100/60 flex items-center justify-center mb-3"
+              className="w-14 h-14 mx-auto rounded-2xl bg-amber-100/60 dark:bg-amber-900/30 flex items-center justify-center mb-3"
             >
               <Brain className="h-7 w-7 text-amber-500" />
             </motion.div>
-            <div className="font-bold text-sm text-amber-800 mb-1">
+            <div className="font-bold text-sm text-amber-800 dark:text-amber-300 mb-1">
               التحليل الذكي ينتظر ملفك
             </div>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">

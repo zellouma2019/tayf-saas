@@ -516,14 +516,14 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Package className="h-3.5 w-3.5" />
                 الإجمالي:
-                <span className="font-bold text-neutral-900 tabular-nums">
+                <span className="font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
                   {stats?.totalOrders ?? 0}
                 </span>
               </span>
               <span className="text-muted-foreground/40">|</span>
               <span className="text-muted-foreground">
                 المعروض:
-                <span className="font-bold text-neutral-900 tabular-nums mr-1">
+                <span className="font-bold text-neutral-900 dark:text-neutral-100 tabular-nums mr-1">
                   {filteredOrders.length}
                 </span>
               </span>
@@ -535,7 +535,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             <button
               onClick={exportXLSX}
               disabled={exporting}
-              className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 border border-emerald-200 disabled:border-emerald-100"
+              className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 disabled:border-emerald-100"
               title="تصدير ملف Excel"
             >
               {exporting ? (
@@ -1181,7 +1181,7 @@ function ChangeStatusSelect({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="text-sm h-9 bg-neutral-900 hover:bg-neutral-800 text-white">
+        <Button size="sm" className="text-sm h-9 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white">
           <MoreHorizontal className="h-3.5 w-3.5" />
           تغيير الحالة
         </Button>

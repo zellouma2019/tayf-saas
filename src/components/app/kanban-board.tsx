@@ -46,11 +46,11 @@ function timeAgo(date: Date | string): string {
 }
 
 const COLUMNS = [
-  { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-400" },
-  { key: "printing", label: "جارٍ الطباعة", icon: Loader2, color: "bg-gold-500/10 text-gold-400 border-gold-500/20", dot: "bg-gold-300" },
-  { key: "ready", label: "جاهز", icon: Package, color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
-  { key: "delivered", label: "تم التسليم", icon: CheckCircle2, color: "bg-neutral-50 text-neutral-600 border-neutral-200", dot: "bg-neutral-400" },
-  { key: "cancelled", label: "ملغى", icon: XCircle, color: "bg-rose-50 text-rose-600 border-rose-200", dot: "bg-rose-400" },
+  { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40", dot: "bg-amber-400" },
+  { key: "printing", label: "جارٍ الطباعة", icon: Loader2, color: "bg-gold-500/10 dark:bg-gold-500/5 text-gold-400 border-gold-500/20", dot: "bg-gold-300" },
+  { key: "ready", label: "جاهز", icon: Package, color: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40", dot: "bg-emerald-400" },
+  { key: "delivered", label: "تم التسليم", icon: CheckCircle2, color: "bg-neutral-50 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700/50", dot: "bg-neutral-400" },
+  { key: "cancelled", label: "ملغى", icon: XCircle, color: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/40", dot: "bg-rose-400" },
 ] as const;
 
 const SERVICE_EMOJI: Record<string, string> = {
@@ -102,7 +102,7 @@ function SortableOrderCard({
         isDragging
           ? "shadow-lg ring-2 ring-primary/30 z-50 opacity-90"
           : "hover:shadow-sm"
-      } ${isStale ? "border-amber-300 bg-amber-50/30" : ""}`}
+      } ${isStale ? "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20" : ""}`}
     >
       <div className="flex items-start gap-2">
         {/* مقبض السحب */}
@@ -116,7 +116,7 @@ function SortableOrderCard({
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className="text-xs font-bold font-mono text-neutral-900">
+            <span className="text-xs font-bold font-mono text-neutral-900 dark:text-neutral-100">
               {order.reference}
             </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-muted text-muted-foreground shrink-0">
@@ -127,7 +127,7 @@ function SortableOrderCard({
             {order.customer?.name || "—"}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-700">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
               {formatDA(order.total)}
             </span>
             <div className="flex items-center gap-1.5">
@@ -153,8 +153,8 @@ function CancelDropZone({ isOver }: { isOver: boolean }) {
     <div
       className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed transition-colors text-xs font-medium ${
         isOver
-          ? "border-rose-400 bg-rose-50 text-rose-600 scale-[1.02]"
-          : "border-rose-200 text-rose-400"
+          ? "border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 scale-[1.02]"
+          : "border-rose-200 dark:border-rose-800 text-rose-400 dark:text-rose-500"
       }`}
     >
       <XCircle className="h-4 w-4" />
@@ -252,9 +252,9 @@ export function KanbanBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 min-h-[400px]">
+      <div className="flex gap-3 min-h-[400px] overflow-x-auto pb-2 sm:overflow-visible sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:gap-3 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0">
         {columnOrders.map((col) => (
-          <div key={col.key} className="flex flex-col">
+          <div key={col.key} className="flex flex-col min-w-[200px] sm:min-w-0 sm:flex-1">
             {/* رأس العمود */}
             <div
               className={`flex flex-col px-3 py-2 rounded-t-lg border border-b-0 ${col.color}`}
@@ -263,7 +263,7 @@ export function KanbanBoard({
                 <col.icon className="h-3.5 w-3.5" />
                 <span className="font-medium text-xs">{col.label}</span>
                 <span className="mr-auto flex items-center gap-1">
-                  <span className="text-[10px] font-bold bg-white/60 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 px-1.5 py-0.5 rounded-full">
                     {col.orders.length}
                   </span>
                 </span>

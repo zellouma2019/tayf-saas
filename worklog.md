@@ -83,3 +83,76 @@ Prisma كان يولد `SELECT *` يشمل هذا العمود → فشل الا
 2. اختبار تحكم التاجر في نسخة الزبون (تعديل النصوص/الشعار/الأسعار/الألوان)
 3. اختبار سرعة التحميل (الهدف < 2 ثانية)
 4. تغيير كلمة المرور الافتراضية فوراً من الإعدادات ← الأمان
+---
+Task ID: 4
+Agent: Dark Mode Fix Agent
+Task: Fix dark mode in new-order-wizard.tsx
+
+Work Log:
+- Added 41 dark: variant classes across the entire file
+- Fixed bg-neutral-900 review header and sidebar header with dark:bg-neutral-100 dark:text-neutral-900
+- Fixed text-neutral-900 dark:text-neutral-100 for file name, delivery title, phone display
+- Fixed text-neutral-600 dark:text-neutral-400 for delivery estimate text
+- Fixed text-neutral-300 dark:text-neutral-600 for header descriptions
+- Fixed text-neutral-400 dark:text-neutral-500 for strikethrough pricing
+- Fixed 7x bg-white dark:bg-neutral-800 for file chips, thumbnail, analysis chip
+- Fixed bg-emerald-50/30 dark:bg-emerald-950/20 for valid phone inputs (2x)
+- Fixed bg-emerald-50 dark:bg-emerald-950/30 for page range info box
+- Fixed bg-emerald-100 dark:bg-emerald-900/30 for discount badge and delivery icons
+- Fixed border-emerald-200 dark:border-emerald-800/40 for info boxes and analysis chip
+- Fixed bg-rose-50 dark:bg-rose-950/30 and bg-rose-100 dark:bg-rose-900/30 for urgent delivery
+- Fixed text-emerald-700/600 dark:text-emerald-400 across 8 locations
+- Fixed text-rose-600 dark:text-rose-400 for delivery surcharge and zap icon
+- Fixed shadow-emerald-200 dark:shadow-emerald-900/40 and shadow-violet-300 dark:shadow-violet-800/30
+- Fixed hover:bg-muted/30 dark:hover:bg-muted/50 for collapsible sections
+- Fixed bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 for phone box
+
+Stage Summary:
+- new-order-wizard.tsx now has 41 dark: variant classes providing full dark mode support
+- All hardcoded light backgrounds, dark text, and light borders now have appropriate dark alternatives
+- Bright status indicators (bg-emerald-500, bg-rose-500 dots) left unchanged as they work in both modes
+
+---
+Task ID: 5
+Agent: Dark Mode Fix Agent
+Task: Fix dark mode in admin-settings.tsx + remove extra bottom spacing
+
+Work Log:
+- Added dark: variants to all hardcoded light colors
+- Removed extra bottom spacing in settings container
+
+Stage Summary:
+- admin-settings.tsx now has full dark mode support
+---
+Task ID: 6
+Agent: Dark Mode Fix Agent
+Task: Fix dark mode in upload-step.tsx
+
+Work Log:
+- Added 45 dark: variant classes across the entire file (1380 lines)
+- Fixed FILE_TYPE_META constant: bg-red-50, bg-emerald-50, bg-gold-50, bg-amber-50 all got dark:bg-*-950/30 variants
+- Fixed file type badge borders: border-red-200, border-emerald-200, border-gold-200, border-amber-200 all got dark:border-*-800/40
+- Fixed InfoChip border-r-violet-300 -> dark:border-r-violet-500/50
+- Fixed SuggestionPill bg-amber-50/text-amber-700/border-amber-200/60 -> dark variants
+- Fixed dropzone: bg-gold-50/80, shadow-violet-100, bg-amber-50/30, border-amber-300/70 -> dark variants
+- Fixed drag overlay gradient: from-violet-100/40 to-indigo-100/40 -> dark:from-violet-900/20 dark:to-indigo-900/20
+- Fixed quick action buttons: bg-amber-50, bg-emerald-50, bg-gold-50 -> dark:bg-*-950/30 or dark:bg-gold-500/10
+- Fixed icon text colors: text-amber-600, text-emerald-600 -> dark:text-amber-400, dark:text-emerald-400
+- Fixed progress panel: bg-white -> dark:bg-neutral-800, border-amber-200 -> dark:border-amber-800/40
+- Fixed phase indicators: bg-emerald-100, bg-amber-100 -> dark:bg-emerald-900/40, dark:bg-amber-900/40
+- Fixed phase text: text-amber-700, text-emerald-600 -> dark:text-amber-400, dark:text-emerald-400
+- Fixed progress bar: bg-amber-100 -> dark:bg-amber-900/40
+- Fixed error state: border-rose-200, bg-rose-50 -> dark:border-rose-800/40, dark:bg-rose-950/30
+- Fixed error text: text-rose-700, text-rose-600 -> dark:text-rose-400
+- Fixed DPI category badges: bg-emerald-50, bg-amber-50, bg-rose-50 with borders -> all dark variants
+- Fixed AI recommendations: bg-amber-50, border-amber-100, text-amber-800, text-amber-600 -> dark variants
+- Fixed preview: bg-white -> dark:bg-neutral-800, border-white -> dark:border-neutral-700
+- Fixed empty state: border-amber-200/60, bg-amber-50/20, bg-amber-100/60, text-amber-800 -> dark variants
+- Fixed hover:border-amber-200 on 3 buttons -> dark:hover:border-amber-500/30
+- Fixed focus:border-amber-300 on URL input -> dark:focus:border-amber-500/30
+- Fixed gold colors: text-gold-600 -> dark:text-gold-400, border-gold-200 -> dark:border-gold-500/20
+
+Stage Summary:
+- upload-step.tsx now has 45 dark: variant classes providing full dark mode support
+- All hardcoded light backgrounds, text colors, and borders now have appropriate dark alternatives
+---
