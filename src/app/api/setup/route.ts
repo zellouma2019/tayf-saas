@@ -5,19 +5,26 @@ import { db } from '@/lib/db'
 // هذا المسار يُستدعى مرة واحدة فقط بعد النشر على Vercel
 export async function POST() {
   try {
-    // === Migrations: تشغيل دائماً (حتى على قواعد بيانات موجودة) ===
+    // === Migrations: إضافة الأعمدة الناقصة ===
+    // SuperAdmin
     try {
-      const cols = await db.$queryRaw<Array<{ name: string }>>`
-        PRAGMA table_info("SuperAdmin")
-      `
-      const colNames = cols.map(c => c.name)
-      if (!colNames.includes('platformSettings')) {
-        await db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`)
-        console.log('[setup/migration] Added platformSettings column to SuperAdmin')
-      }
-    } catch (e) {
-      console.warn('[setup/migration] Migration check failed:', e)
-    }
+      await db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`)
+      console.log('[setup/migration] Added platformSettings column to SuperAdmin')
+    } catch { /* موجود */ }
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]'`)
+      console.log('[setup/migration] Added teamMembers column to SuperAdmin')
+    } catch { /* موجود */ }
+    // Shop
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`)
+      console.log('[setup/migration] Added customCurrency column to Shop')
+    } catch { /* موجود */ }
+    // Customer
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`)
+      console.log('[setup/migration] Added lastOrderAt column to Customer')
+    } catch { /* موجود */ }
 
     // التحقق من وجود الجداول بالفعل
     try {
@@ -57,6 +64,7 @@ export async function POST() {
         "themeId" INTEGER NOT NULL DEFAULT 1,
         "country" TEXT NOT NULL DEFAULT 'DZ',
         "language" TEXT NOT NULL DEFAULT 'ar',
+        "customCurrency" TEXT,
         "settings" TEXT,
         "ownerName" TEXT,
         "ownerPhone" TEXT,
@@ -156,6 +164,7 @@ export async function POST() {
         "notes" TEXT,
         "totalOrders" INTEGER NOT NULL DEFAULT 0,
         "totalSpent" INTEGER NOT NULL DEFAULT 0,
+        "lastOrderAt" DATETIME,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL,
         CONSTRAINT "Customer_shopId_phone_key" UNIQUE ("shopId", "phone"),

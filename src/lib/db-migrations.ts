@@ -29,6 +29,18 @@ export async function runMigrations(): Promise<void> {
       // العمود موجود مسبقاً — هذا طبيعي
     }
 
+    // Shop: customCurrency
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`)
+      console.log('[migration] Added customCurrency to Shop')
+    } catch { /* موجود */ }
+
+    // Customer: lastOrderAt
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`)
+      console.log('[migration] Added lastOrderAt to Customer')
+    } catch { /* موجود */ }
+
     migrationsRan = true
   } catch (e) {
     console.warn('[migration] Failed:', e)

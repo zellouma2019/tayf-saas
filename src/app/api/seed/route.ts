@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { TEMPLATE_DEFINITIONS } from "@/lib/form-templates";
+import { getSuperAdmin } from "@/lib/db-migrations";
 
 /// إعادة زرع القوالب (في حال الحاجة) — محمي بكلمة سر المدير العام
 export async function POST(req: NextRequest) {
   try {
     // تحقق من صلاحية المدير العام
     const authHeader = req.headers.get("authorization");
-    const admin = await db.superAdmin.findFirst();
+    const admin = await getSuperAdmin({ id: true, key: true, password: true }) as { password: string } | null;
     if (!admin) return NextResponse.json({ error: "المدير العام غير موجود" }, { status: 500 });
 
     const expectedAuth = `Bearer ${admin.password}`;
