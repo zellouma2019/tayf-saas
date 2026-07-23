@@ -31,6 +31,7 @@ export interface ShopData {
   trialStartsAt: string | null;
   country: string;
   language: string;
+  customCurrency: string | null;
 }
 
 interface ShopContextValue {
@@ -40,7 +41,7 @@ interface ShopContextValue {
   /** ميزات المتجر المحلّلة */
   parsedFeatures: ShopFeatures;
   /** هل ميزة معينة مفعّلة؟ */
-  hasFeature: (key: FeatureKey) => boolean;
+  hasFeature: (key: string) => boolean;
   /** هل المتجر خطة مدفوعة؟ */
   isPaid: boolean;
   /** هل المتجر في فترة تجربة؟ */
@@ -56,7 +57,7 @@ const ShopContext = createContext<ShopContextValue>({
   loading: true,
   error: null,
   parsedFeatures: {},
-  hasFeature: () => false,
+  hasFeature: () => false as boolean,
   isPaid: false,
   isTrial: false,
   trialDaysLeft: null,
@@ -65,24 +66,6 @@ const ShopContext = createContext<ShopContextValue>({
 
 export function useShop() {
   return useContext(ShopContext);
-}
-
-// ذاكرة تخزين مؤقت في الذاكرة (بقاء خلال حياة التطبيق)
-const shopCache = new Map<string, { data: ShopData; timestamp: number }>();
-const CACHE_TTL = 5_000; // 5 ثواني
-
-function getCachedShop(slug: string): ShopData | null {
-  const entry = shopCache.get(slug);
-  if (!entry) return null;
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
-    shopCache.delete(slug);
-    return null;
-  }
-  return entry.data;
-}
-
-function setCachedShop(slug: string, data: ShopData) {
-  shopCache.set(slug, { data, timestamp: Date.now() });
 }
 
 export function ShopProvider({
@@ -106,25 +89,13 @@ export function ShopProvider({
 
   const activeRef = useRef(true);
 
-  const fetchShop = useCallback((currentSlug: string, useCache = true) => {
-    // تحقق من الذاكرة المؤقتة أولاً
-    if (useCache) {
-      const cached = getCachedShop(currentSlug);
-      if (cached) {
-        if (activeRef.current) setState({ shop: cached, loading: false, error: null });
-        return Promise.resolve();
-      }
-    }
-
-    return fetch(`/api/shops/${encodeURIComponent(currentSlug)}`, {
-      priority: 'high',
-    })
+  const fetchShop = useCallback((currentSlug: string) => {
+    return fetch(`/api/shops/${encodeURIComponent(currentSlug)}`)
       .then((r) => {
         if (!r.ok) throw new Error("المتجر غير موجود");
         return r.json();
       })
       .then((d) => {
-        setCachedShop(currentSlug, d.shop);
         if (activeRef.current) setState({ shop: d.shop, loading: false, error: null });
       })
       .catch((e) => {
@@ -140,14 +111,15 @@ export function ShopProvider({
   }, [slug, fetchShop]);
 
   const refreshShop = useCallback(async () => {
-    // تجاوز الذاكرة المؤقتة عند التحديث اليدوي
-    shopCache.delete(slugRef.current);
-    await fetchShop(slugRef.current, false);
+    await fetchShop(slugRef.current);
   }, [fetchShop]);
 
-  const parsedFeatures = parseFeatures(state.shop?.features, state.shop?.plan || "free");
-  const isPaid = state.shop?.plan === "paid";
+  const shopPlan = state.shop?.plan || "free";
+  // دعم كل قيم الخطة المدفوعة: paid, pro, premium
+  const isPaid = shopPlan === "paid" || shopPlan === "pro" || shopPlan === "premium";
+  const parsedFeatures = parseFeatures(state.shop?.features, isPaid ? "paid" : shopPlan);
 
+  // حساب أيام التجربة المتبقية
   let trialDaysLeft: number | null = null;
   let isTrial = false;
   if (state.shop?.trialDays && state.shop?.trialStartsAt && !isPaid) {
@@ -159,7 +131,11 @@ export function ShopProvider({
     if (trialDaysLeft < 0) trialDaysLeft = 0;
   }
 
-  const hasFeature = (key: FeatureKey) => isFeatureEnabled(parsedFeatures, key);
+  const hasFeature = (key: string) => {
+    // في الخطة المدفوعة: كل الميزات مفعّلة حتى لو لم تكن معرّفة بعد
+    if (isPaid) return true;
+    return isFeatureEnabled(parsedFeatures, key as FeatureKey);
+  };
 
   return (
     <ShopContext.Provider value={{ ...state, parsedFeatures, hasFeature, isPaid, isTrial, trialDaysLeft, refreshShop }}>

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import * as XLSX from "xlsx";
 import { STATUS_META } from "@/lib/print-config";
 
-// Translation map for service types
+export const maxDuration = 60;
+
 const SERVICE_NAMES: Record<string, string> = {
   document: "وثائق",
   photo: "صور",
@@ -19,16 +20,22 @@ export async function POST(request: Request) {
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get("shopId");
 
     const where: Record<string, unknown> = {};
     if (shopId) where.shopId = shopId;
 
+    // استثناء fileData و smartAnalysis من التصدير
     const orders = await db.printOrder.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true, reference: true, serviceType: true, serviceName: true,
+        fileName: true, fileType: true, pages: true, copies: true,
+        total: true, status: true, createdAt: true, adminNotes: true,
+        customer: true,
+      },
     });
 
     // === Sheet 1: Orders ===
@@ -80,32 +87,20 @@ export async function POST(request: Request) {
       })),
     ];
 
-    // Create workbook
     const wb = XLSX.utils.book_new();
 
-    // Orders sheet
     const ws1 = XLSX.utils.json_to_sheet(orderRows);
-    // Set column widths
     ws1["!cols"] = [
-      { wch: 12 }, // المرجع
-      { wch: 14 }, // الخدمة
-      { wch: 20 }, // العميل
-      { wch: 14 }, // الهاتف
-      { wch: 8 },  // الصفحات
-      { wch: 8 },  // النسخ
-      { wch: 14 }, // المبلغ
-      { wch: 12 }, // الحالة
-      { wch: 14 }, // التاريخ
-      { wch: 20 }, // ملاحظات
+      { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 14 },
+      { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 12 },
+      { wch: 14 }, { wch: 20 },
     ];
     XLSX.utils.book_append_sheet(wb, ws1, "الطلبات");
 
-    // Stats sheet
     const ws2 = XLSX.utils.json_to_sheet(statsRows);
     ws2["!cols"] = [{ wch: 25 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, ws2, "إحصائيات");
 
-    // Generate buffer
     const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
     return new NextResponse(buffer, {

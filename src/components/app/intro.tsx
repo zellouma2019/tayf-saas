@@ -1,46 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Sparkles } from "lucide-react";
-import type { IntroSettings } from "@/lib/default-settings";
+import { useShop } from "@/lib/shop-context";
+import { DEFAULT_SETTINGS, type IntroSettings } from "@/lib/default-settings";
 
 interface IntroProps {
   onFinish: () => void;
-  /** إعدادات الإنترو — تُمرَّر مباشرة من بيانات المتجر (لا حاجة لطلب API) */
-  introSettings: IntroSettings | null;
 }
 
-const DEFAULT_INTRO: IntroSettings = {
-  enabled: true,
-  title: "طيف",
-  subtitle: "اطبع بسهولة — أسرع من واتساب",
-  emoji: "🖨️",
-  bgIcon: "Printer",
-  duration: 4200,
-  footerText: "طيف — منصة إدارة المطابع",
-  bgColor: "#1a1a1a",
-  accentColor: "#D4AF37",
-  showProgress: true,
-  showSpinningRing: true,
-};
+// مواقع ثابتة للنقاط بدلاً من Math.random() لتجنب مشاكل الـ hydration
+const DOT_POSITIONS = [
+  { top: 12, left: 8 },
+  { top: 25, left: 85 },
+  { top: 45, left: 15 },
+  { top: 60, left: 92 },
+  { top: 78, left: 25 },
+  { top: 15, left: 55 },
+  { top: 35, left: 70 },
+  { top: 55, left: 40 },
+  { top: 72, left: 60 },
+  { top: 88, left: 10 },
+  { top: 90, left: 78 },
+  { top: 5, left: 35 },
+];
 
-export function Intro({ onFinish, introSettings }: IntroProps) {
+export function Intro({ onFinish }: IntroProps) {
+  const { shop } = useShop();
   const [phase, setPhase] = useState(0);
   const [skipping, setSkipping] = useState(false);
 
-  const settings: IntroSettings = introSettings
-    ? { ...DEFAULT_INTRO, ...introSettings }
-    : DEFAULT_INTRO;
-
-  const duration = settings.duration || 4200;
-  const enabled = settings.enabled;
+  // قراءة إعدادات الإنترو من سياق المتجر (بدلاً من API مباشرة)
+  const introSettings = useMemo((): IntroSettings => {
+    try {
+      const raw = (shop?.settings as string) || "{}";
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULT_SETTINGS.intro, ...(parsed.intro ?? {}) };
+    } catch {
+      return DEFAULT_SETTINGS.intro;
+    }
+  }, [shop?.settings]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!introSettings.enabled) {
       onFinish();
       return;
     }
 
+    const duration = introSettings.duration || 4200;
     const timers: ReturnType<typeof setTimeout>[] = [];
     timers.push(setTimeout(() => setPhase(1), 200));
     timers.push(setTimeout(() => setPhase(2), Math.min(1000, duration * 0.24)));
@@ -48,13 +55,13 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
     timers.push(setTimeout(() => setPhase(4), duration - 1000));
     timers.push(setTimeout(() => onFinish(), duration));
     return () => timers.forEach(clearTimeout);
-  }, [enabled, duration, onFinish]);
+  }, [introSettings, onFinish]);
 
-  // إذا كان الإنترو معطّل، لا تعرض شيئاً
-  if (!enabled) return null;
+  // إذا الإنترو معطّل، لا تعرض شيئاً
+  if (!introSettings.enabled) return null;
 
-  const accent = settings.accentColor || "#D4AF37";
-  const bg = settings.bgColor || "#1a1a1a";
+  const accent = introSettings.accentColor || "#D4AF37";
+  const bg = introSettings.bgColor || "#1a1a1a";
 
   return (
     <div
@@ -74,16 +81,16 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
           className="absolute -bottom-1/4 -left-1/4 w-[500px] h-[500px] rounded-full blur-3xl animate-pulse"
           style={{ backgroundColor: accent + "14", animationDelay: "0.5s" }}
         />
-        {/* نقاط متفرقة */}
-        {Array.from({ length: 12 }).map((_, i) => (
+        {/* نقاط متفرقة — مواقع ثابتة لتجنب مشاكل الـ hydration */}
+        {DOT_POSITIONS.map((pos, i) => (
           <span
             key={i}
             className="absolute w-1 h-1 rounded-full"
             style={{
               backgroundColor: accent + "4D",
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `pulse 2s ease-in-out ${Math.random() * 2}s infinite`,
+              top: `${pos.top}%`,
+              left: `${pos.left}%`,
+              animation: `pulse 2s ease-in-out ${(i * 0.18) % 2}s infinite`,
             }}
           />
         ))}
@@ -103,7 +110,7 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
           <img src="/brand/tayf-logo.png" alt="طيف" className="w-20 h-20 sm:w-24 sm:h-24 dark:hidden" />
           <img src="/brand/tayf-logo-dark.png" alt="طيف" className="w-20 h-20 sm:w-24 sm:h-24 hidden dark:block" />
           {/* حلقة دوارة */}
-          {settings.showSpinningRing && (
+          {introSettings.showSpinningRing && (
             <div
               className="absolute inset-0 -m-2 rounded-2xl border-2 animate-spin"
               style={{
@@ -123,12 +130,12 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
           style={{ transitionDelay: "0.1s" }}
         >
           <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            {settings.title}
+            {introSettings.title}
           </h1>
         </div>
 
         {/* الشعار السفلي */}
-        {settings.subtitle && (
+        {introSettings.subtitle && (
           <div
             className={`flex items-center gap-2 transition-all duration-500 ${
               phase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
@@ -137,14 +144,14 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
           >
             <Sparkles className="h-3.5 w-3.5" style={{ color: accent }} />
             <p className={`text-sm sm:text-base font-medium ${phase >= 3 ? 'animate-text-shimmer' : ''}`} style={{ color: phase >= 3 ? undefined : accent + "E6" }}>
-              {settings.subtitle}
+              {introSettings.subtitle}
             </p>
             <Sparkles className="h-3.5 w-3.5" style={{ color: accent }} />
           </div>
         )}
 
         {/* شريط التحميل */}
-        {settings.showProgress && (
+        {introSettings.showProgress && (
           <div
             className={`mt-2 w-32 h-1 rounded-full overflow-hidden transition-all duration-500 ${
               phase >= 3 ? "opacity-100" : "opacity-0"
@@ -152,10 +159,9 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
             style={{ transitionDelay: "0.2s", backgroundColor: bg === "#1a1a1a" ? "#404040" : "#ffffff20" }}
           >
             <div
-              className="h-full rounded-full"
+              className="h-full rounded-full animate-intro-progress"
               style={{
                 background: `linear-gradient(to right, ${accent}AA, ${accent})`,
-                animation: "introProgress 3s ease-out forwards",
               }}
             />
           </div>
@@ -163,13 +169,13 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
       </div>
 
       {/* ===== تذييل ===== */}
-      {settings.footerText && (
+      {introSettings.footerText && (
         <div
           className={`absolute bottom-6 text-center transition-opacity duration-500 ${
             phase >= 3 ? "opacity-60" : "opacity-0"
           }`}
         >
-          <p className="text-xs text-neutral-500">{settings.footerText}</p>
+          <p className="text-xs text-neutral-500">{introSettings.footerText}</p>
         </div>
       )}
 
@@ -185,14 +191,6 @@ export function Intro({ onFinish, introSettings }: IntroProps) {
           تخطي ←
         </button>
       )}
-
-      {/* ===== أنيميشن CSS ===== */}
-      <style jsx>{`
-        @keyframes introProgress {
-          0% { width: 0%; }
-          100% { width: 100%; }
-        }
-      `}</style>
     </div>
   );
 }

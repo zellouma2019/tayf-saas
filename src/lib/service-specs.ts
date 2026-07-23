@@ -140,10 +140,10 @@ export const DOCUMENT_SPEC: ServiceSpec = {
       hint: "كيفية قص الورق بعد الطباعة",
       optionKey: "bleedCut",
       options: [
-        { id: "auto-cut", label: "قص تلقائي", emoji: "✂️", description: "قص دقيق للحجم المطلوب", price: 10 },
-        { id: "margin-5", label: "مع هامش 5 مم", emoji: "📐", description: "مساحة بيضاء حول المحتوى", price: 0 },
-        { id: "bleed", label: "بدون حواف", emoji: "⬜", description: "الطباعة تمتد حتى حواف الورقة", price: 15, note: "للتصاميم" },
         { id: "safe-margin", label: "حواف آمنة 10 مم", emoji: "🛡️", description: "للمستندات المهمة", price: 0 },
+        { id: "margin-5", label: "مع هامش 5 مم", emoji: "📐", description: "مساحة بيضاء حول المحتوى", price: 0 },
+        { id: "auto-cut", label: "قص تلقائي", emoji: "✂️", description: "قص دقيق للحجم المطلوب", price: 10 },
+        { id: "bleed", label: "بدون حواف", emoji: "⬜", description: "الطباعة تمتد حتى حواف الورقة", price: 15, note: "للتصاميم" },
       ],
     },
     {

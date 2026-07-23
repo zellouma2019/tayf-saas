@@ -29,8 +29,7 @@ export const metadata: Metadata = {
       { url: "/favicon.png", sizes: "32x32", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.svg", type: "image/svg+xml" },
-      { url: "/brand/tayf-logo.png", sizes: "512x512", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
   openGraph: {
@@ -52,8 +51,9 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png" />
-        <link rel="apple-touch-icon" href="/brand/tayf-logo.png" sizes="512x512" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" type="image/png" />
         <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#d4a853" />
         <meta property="og:title" content="طيف — منصة إدارة المطابع" />
         <meta property="og:description" content="منصة متكاملة لإدارة المطابع والخدمات الطباعية" />
         <meta property="og:type" content="website" />
@@ -69,10 +69,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
         {children}
-        </ThemeProvider>
         <SonnerToaster position="top-center" dir="rtl" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

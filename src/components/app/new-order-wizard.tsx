@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   SERVICES as STATIC_SERVICES,
@@ -48,10 +49,9 @@ import {
   type ServiceSpec,
   type SpecOption,
 } from "@/lib/service-specs";
-import type { AppSettings } from "@/lib/default-settings";
 import { analyzeFileReal, analyzeFileWithAI, parsePageRange, type RealFileAnalysis } from "@/lib/file-analyzer";
 import UploadStep, { type AnalysisPhase } from "@/components/app/upload-step";
-import { isValidPhone, getPhoneErrorMessage, getPhoneValidationInfo } from "@/lib/phone-validation";
+import { isValidPhone as isValidAlgerianPhone, getPhoneErrorMessage } from "@/lib/phone-validation";
 import { selectOffer, type Offer } from "@/lib/offers";
 import { shopApi } from "@/lib/shop-api";
 import { OfferPopup } from "@/components/app/offer-popup";
@@ -98,7 +98,6 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   const [deliveryTimeSlot, setDeliveryTimeSlot] = useState<string>(""); // فترة زمنية: morning/noon/evening
   const [custName, setCustName] = useState("");
   const [custPhone, setCustPhone] = useState("");
-  const phoneInfo = useMemo(() => getPhoneValidationInfo(custPhone, shop?.country), [custPhone, shop?.country]);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [custWhatsapp, setCustWhatsapp] = useState("");
   const [whatsappTouched, setWhatsappTouched] = useState(false);
@@ -170,27 +169,24 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     }
   }, [prefillOrder]);
 
-  // ═══ تحميل المواصفات ديناميكياً من الإعدادات ═══
-  const [dynamicSpecs, setDynamicSpecs] = useState<Record<string, ServiceSpec>>(
-    () => Object.fromEntries(Object.entries(STATIC_SERVICE_SPECS).map(([k, v]) => [k, v]))
-  );
+  // ═══ قراءة المواصفات ديناميكياً من سياق المتجر (بدلاً من API مباشرة) ═══
 
-  useEffect(() => {
-    shopApi("/api/settings")
-      .then(async r => { if (!r.ok) return null; return r.json(); })
-      .then((data: AppSettings) => {
-        if (data?.services?.length) {
-          const map: Record<string, ServiceSpec> = {};
-          for (const s of data.services) {
-            map[s.type] = s;
-          }
-          setDynamicSpecs(map);
+  const dynamicSpecs = useMemo<Record<string, ServiceSpec>>(() => {
+    try {
+      const raw = (shop?.settings as string) || "{}";
+      const parsed = JSON.parse(raw);
+      const services = parsed?.services;
+      if (Array.isArray(services) && services.length > 0) {
+        const map: Record<string, ServiceSpec> = {};
+        for (const s of services) {
+          map[s.type] = s;
         }
-      })
-      .catch(() => {
-        // فشل التحميل — نستخدم الافتراضي
-      });
-  }, []);
+        return map;
+      }
+    } catch {}
+    // Fall back to static specs
+    return Object.fromEntries(Object.entries(STATIC_SERVICE_SPECS).map(([k, v]) => [k, v]));
+  }, [shop?.settings]);
 
   const selectedService = useMemo(
     () => dynamicSpecs[serviceType || ""] || STATIC_SERVICES.find((s) => s.type === serviceType) || null,
@@ -441,8 +437,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     }
     if (step === 3) {
       if (!custName.trim() || !custPhone.trim()) return false;
-      if (!isValidPhone(custPhone, shop?.country)) return false;
-      if (custWhatsapp.trim() && !isValidPhone(custWhatsapp, shop?.country)) return false;
+      if (!isValidAlgerianPhone(custPhone)) return false;
+      if (custWhatsapp.trim() && !isValidAlgerianPhone(custWhatsapp)) return false;
       if (custDelivery === "delivery" && !custAddress.trim()) return false;
       return true;
     }
@@ -837,15 +833,21 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 <div key={i} className="flex items-center">
                   {/* Step circle */}
                   <div className="flex flex-col items-center gap-1.5">
-                    <div
+                    <motion.div
+                      animate={isActive ? { scale: [1, 1.12, 1], boxShadow: [
+                        "0 0 0 0 rgba(124,58,237,0.4)",
+                        "0 0 12px 4px rgba(124,58,237,0.15)",
+                        "0 0 0 0 rgba(124,58,237,0.4)",
+                      ]} : {}}
+                      transition={isActive ? { repeat: Infinity, duration: 2.5, ease: "easeInOut" } : {}}
                       className={`
                         rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
-                        ${isActive ? "w-11 h-11 animate-pulse" : "w-9 h-9"}
+                        ${isActive ? "w-11 h-11" : "w-9 h-9"}
                         ${isCompleted
                           ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
                           : isActive
-                            ? "bg-gradient-to-br from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-300"
-                            : "bg-slate-100 text-slate-400"
+                            ? "bg-gradient-to-br from-primary to-primary text-white shadow-lg shadow-violet-300"
+                            : "bg-muted text-muted-foreground"
                         }
                       `}
                     >
@@ -857,15 +859,15 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       ) : (
                         <span>{i + 1}</span>
                       )}
-                    </div>
+                    </motion.div>
                     <div className="text-center">
                       <span className={`text-[11px] font-semibold leading-tight block ${
-                        isActive ? "text-teal-700" : isCompleted ? "text-emerald-600" : "text-muted-foreground/50"
+                        isActive ? "text-gold-600" : isCompleted ? "text-emerald-600" : "text-muted-foreground/50"
                       }`}>
                         {label}
                       </span>
                       <span className={`text-[10px] leading-tight block mt-0.5 ${
-                        isActive ? "text-teal-400" : "text-muted-foreground/40"
+                        isActive ? "text-gold-300" : "text-muted-foreground/40"
                       }`}>
                         {STEP_DURATIONS[i]}
                       </span>
@@ -873,10 +875,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   </div>
                   {/* Connecting line */}
                   {i < STEP_LABELS.length - 1 && (
-                    <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-1.5 sm:mx-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden relative -mt-5">
-                      <div
-                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-teal-500 to-teal-600 transition-all duration-600 ease-out"
-                        style={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
+                    <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-1.5 sm:mx-2 rounded-full bg-muted dark:bg-muted overflow-hidden relative -mt-5">
+                      <motion.div
+                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-violet-500 to-indigo-500"
+                        initial={{ width: "0%" }}
+                        animate={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                       />
                     </div>
                   )}
@@ -887,7 +891,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-teal-700 bg-teal-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span className="text-xs font-medium text-gold-600 bg-gold-100 px-2.5 py-1 rounded-full flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {STEP_DURATIONS[step]}
               </span>
@@ -896,7 +900,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
               </span>
             </div>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-teal-500" />
+              <Sparkles className="h-3 w-3 text-gold-400" />
               المجموع ≈ دقيقة واحدة
             </span>
           </div>
@@ -908,40 +912,44 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           <div className="space-y-6">
             {/* Service Selection Cards */}
             {!serviceType && (
-              <div
-                className="animate-in fade-in slide-in-from-bottom-3 duration-400"
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
               >
                 <div className="flex items-center gap-1.5 mb-3">
-                  <Zap className="h-4 w-4 text-teal-500" />
+                  <Zap className="h-4 w-4 text-gold-400" />
                   <span className="text-sm font-bold">اختر نوع الخدمة</span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {visibleServices.map((spec) => {
                     const isPopular = spec.popularity >= 90;
                     return (
-                      <button
+                      <motion.button
                         key={spec.type}
                         type="button"
                         onClick={() => handleServiceSelect(spec.type)}
-                        className="relative p-4 rounded-2xl border-2 text-right transition-all duration-200 bg-card hover:shadow-lg hover:shadow-teal-100/50 dark:hover:shadow-teal-900/20 hover:scale-[1.02] hover:-translate-y-1 border-border hover:border-teal-300 dark:hover:border-teal-600 group hover:bg-gradient-to-br hover:from-teal-50/80 hover:to-teal-50/50 dark:hover:from-teal-950/30 dark:hover:to-teal-950/20 active:scale-[0.97]"
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="relative p-4 rounded-2xl border-2 text-right transition-all duration-200 bg-card hover:shadow-lg hover:shadow-violet-100/50 dark:hover:shadow-violet-900/20 hover:scale-[1.02] hover:-translate-y-1 border-border hover:border-primary dark:hover:border-primary group hover:bg-gradient-to-br hover:from-violet-50/80 hover:to-indigo-50/50 dark:hover:from-violet-950/30 dark:hover:to-indigo-950/20"
                       >
                         {isPopular && (
-                          <span className="absolute -top-2.5 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white text-[10px] font-bold shadow-sm animate-pulse">
+                          <span className="absolute -top-2.5 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-[10px] font-bold shadow-sm animate-pulse">
                             <Flame className="h-3 w-3" />
                             الأكثر طلباً
                           </span>
                         )}
                         <div className="text-3xl mb-2">{spec.emoji}</div>
-                        <div className="font-bold text-sm group-hover:text-teal-700 transition-colors">{spec.name}</div>
+                        <div className="font-bold text-sm group-hover:text-gold-600 transition-colors">{spec.name}</div>
                         <div className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
                           {spec.description}
                         </div>
                         {spec.basePricePerPage > 0 && (
-                          <div className="mt-2 text-xs font-bold text-teal-600">
+                          <div className="mt-2 text-xs font-bold text-primary">
                             ابتداءً من {spec.basePricePerPage}/صفحة
                           </div>
                         )}
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -949,33 +957,35 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   <button
                     type="button"
                     onClick={() => setShowAllServices(!showAllServices)}
-                    className="mt-3 text-xs font-medium text-teal-600 hover:text-teal-800 transition-colors flex items-center gap-1"
+                    className="mt-3 text-xs font-medium text-primary hover:text-foreground transition-colors flex items-center gap-1"
                   >
                     {showAllServices ? "عرض الخدمات الأساسية فقط" : `عرض جميع الخدمات (${Object.values(dynamicSpecs).length})`}
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAllServices ? "rotate-180" : ""}`} />
                   </button>
                 )}
-              </div>
+              </motion.div>
             )}
 
             {/* Selected service banner */}
             {serviceType && selectedService && (
-              <div
-                className="flex items-center gap-3 p-3 rounded-xl bg-teal-50 border-2 border-teal-200 ring-2 ring-teal-500 animate-in fade-in zoom-in-95 duration-300"
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border-2 border-primary/20 ring-2 ring-primary/20"
               >
                 <div className="text-3xl">{selectedService.emoji}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm text-teal-800">{selectedService.name}</div>
-                  <div className="text-xs text-teal-600">{selectedService.description}</div>
+                  <div className="font-bold text-sm text-foreground">{selectedService.name}</div>
+                  <div className="text-xs text-primary">{selectedService.description}</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setServiceType(null)}
-                  className="text-xs text-teal-500 hover:text-teal-800 font-medium transition-colors"
+                  className="text-xs text-gold-400 hover:text-foreground font-medium transition-colors"
                 >
                   تغيير
                 </button>
-              </div>
+              </motion.div>
             )}
 
             {/* Upload Step (only shown after service is selected) */}
@@ -999,7 +1009,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {/* ===== الخطوة 1: إعدادات الطباعة ===== */}
         {step === 1 && selectedService && (
           <div className="space-y-6">
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
               <div className="text-2xl md:text-3xl">{selectedService.emoji}</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-sm">{selectedService.name}</div>
@@ -1007,12 +1017,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
               </div>
               <div className="text-left shrink-0">
                 <div className="text-xs text-muted-foreground">السعر التقديري</div>
-                <div className="font-bold text-amber-700">{pricing ? formatDA(pricing.total) : formatDA(selectedService.basePricePerPage)}</div>
+                <div className="font-bold text-primary">{pricing ? formatDA(pricing.total) : formatDA(selectedService.basePricePerPage)}</div>
               </div>
             </div>
 
             {analysis && (
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 flex items-start gap-2">
+              <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-xs text-primary flex items-start gap-2">
                 <Zap className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>الإعدادات الحالية مُطبّقة من التحليل الحقيقي للملف — يمكنك تعديلها بحرية</span>
               </div>
@@ -1034,7 +1044,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   ))}
                 </div>
                 {printRange === "custom" && (
-                  <div className="mt-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                  <div className="mt-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
                     <Label className="text-sm font-medium">أدخل أرقام الصفحات</Label>
                     <Input
                       value={pageRange}
@@ -1076,7 +1086,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 <Button variant="outline" size="icon" onClick={() => setPages(pages + 1)} disabled={printRange === "custom"}>+</Button>
                 <span className="text-sm text-muted-foreground">{currentSpec?.unit || "صفحة"}</span>
                 {printRange === "custom" && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                  <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
                     من نطاق محدد
                   </span>
                 )}
@@ -1173,35 +1183,35 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {step === 2 && (
           <div className="space-y-5">
             {/* شريط حالة اليوم والتقدم */}
-            <div className="rounded-2xl bg-gradient-to-l from-amber-50 to-orange-50 border border-amber-200 p-4">
+            <div className="rounded-2xl bg-gradient-to-l from-primary/5 to-primary/10 border border-primary/20 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 rounded-full ${deliveryEstimate.isWorkingHours ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-                  <span className="text-xs font-medium text-amber-900">
+                  <span className="text-xs font-medium text-foreground">
                     {deliveryEstimate.isWorkingHours ? "مفتوح الآن" : "مغلق — يبدأ من 8 صباحاً"}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-amber-800">
+                <div className="flex items-center gap-1.5 text-xs text-foreground">
                   <Timer className="h-3.5 w-3.5" />
                   <span>الآن {deliveryEstimate.currentStr}</span>
                 </div>
               </div>
-              <div className="relative h-2 rounded-full bg-amber-200/60 overflow-hidden">
+              <div className="relative h-2 rounded-full bg-primary/20 overflow-hidden">
                 <div
-                  className="absolute inset-y-0 right-0 bg-gradient-to-l from-amber-500 to-amber-400 rounded-full transition-all duration-700"
+                  className="absolute inset-y-0 right-0 bg-gradient-to-l from-primary to-primary/80 rounded-full transition-all duration-700"
                   style={{ width: `${deliveryEstimate.dayProgress}%` }}
                 />
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-[10px] text-amber-700">{deliveryEstimate.workStart}</span>
-                <span className="text-[10px] text-amber-700">{deliveryEstimate.workEnd}</span>
+                <span className="text-[10px] text-primary">{deliveryEstimate.workStart}</span>
+                <span className="text-[10px] text-primary">{deliveryEstimate.workEnd}</span>
               </div>
             </div>
 
             {/* خيارات سرعة التسليم */}
             <div>
               <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-600" />
+                <Zap className="h-4 w-4 text-primary" />
                 متى تحتاج طلبك؟
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -1226,8 +1236,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         isDisabled
                           ? "border-border bg-muted/40 opacity-50 cursor-not-allowed"
                           : isSelected
-                          ? "border-amber-500 bg-amber-50 shadow-md shadow-amber-200/50 scale-[1.02]"
-                          : "border-border bg-card hover:border-amber-300 hover:shadow-sm"
+                          ? "border-primary bg-primary/5 shadow-md shadow-primary/20 scale-[1.02]"
+                          : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
                       }`}
                       disabled={isDisabled}
                     >
@@ -1246,7 +1256,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       {isDisabled ? (
                         <div className="text-[11px] mt-1 text-rose-500 font-medium">غير متاح الآن</div>
                       ) : (
-                        <div className={`text-[11px] mt-1 font-semibold ${isSelected ? "text-amber-700" : "text-muted-foreground"}`}>
+                        <div className={`text-[11px] mt-1 font-semibold ${isSelected ? "text-primary" : "text-muted-foreground"}`}>
                           ≈ {readyStr}
                         </div>
                       )}
@@ -1269,7 +1279,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             {(deliveryMode === "today" || deliveryMode === "tomorrow" || deliveryMode === "hour") && (
               <div>
                 <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-amber-600" />
+                  <CalendarDays className="h-4 w-4 text-primary" />
                   اختر الفترة الزمنية المفضلة
                 </h3>
                 <div className="grid grid-cols-3 gap-2.5">
@@ -1282,15 +1292,15 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         onClick={() => setDeliveryTimeSlot(slot.id)}
                         className={`p-3.5 rounded-xl border-2 text-center transition-all duration-200 ${
                           isSelected
-                            ? "border-amber-500 bg-amber-50 shadow-sm"
+                            ? "border-primary bg-primary/5 shadow-sm"
                             : slot.available
-                            ? "border-border bg-card hover:border-amber-300"
+                            ? "border-border bg-card hover:border-primary/30"
                             : "border-border bg-muted/50 opacity-50 cursor-not-allowed"
                         }`}
                         disabled={!slot.available}
                       >
-                        <SlotIcon className={`h-5 w-5 mx-auto mb-1.5 ${isSelected ? "text-amber-600" : "text-muted-foreground"}`} />
-                        <div className={`text-xs font-bold ${isSelected ? "text-amber-800" : ""}`}>{slot.label}</div>
+                        <SlotIcon className={`h-5 w-5 mx-auto mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                        <div className={`text-xs font-bold ${isSelected ? "text-foreground" : ""}`}>{slot.label}</div>
                         <div className="text-[10px] text-muted-foreground mt-0.5">{slot.time}</div>
                       </button>
                     );
@@ -1301,9 +1311,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
             {/* اختيار تاريخ محدد */}
             {deliveryMode === "scheduled" && (
-              <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200">
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                 <Label className="text-sm font-medium flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-amber-600" />
+                  <CalendarDays className="h-4 w-4 text-primary" />
                   اختر تاريخ التسليم
                 </Label>
                 <Input
@@ -1350,7 +1360,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   )}
                 </div>
                 {deliveryTimeSlot && (
-                  <div className="text-xs text-amber-700 font-medium mt-1">
+                  <div className="text-xs text-primary font-medium mt-1">
                     الفترة المفضلة: {deliveryEstimate.timeSlots.find(s => s.id === deliveryTimeSlot)?.label}
                   </div>
                 )}
@@ -1384,37 +1394,22 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   onBlur={() => setPhoneTouched(true)}
                   placeholder={phonePlaceholder}
                   className={`mt-1.5 font-mono tracking-wider ${
-                    phoneTouched && custPhone && !phoneInfo.isValid && phoneInfo.digitCount > 0
+                    phoneTouched && custPhone && !isValidAlgerianPhone(custPhone)
                       ? "border-destructive bg-destructive/5"
-                      : phoneTouched && phoneInfo.isValid
+                      : phoneTouched && isValidAlgerianPhone(custPhone)
                         ? "border-emerald-400 bg-emerald-50/30"
                         : ""
                   }`}
                   dir="ltr"
                 />
                 <div className="flex items-center justify-between mt-1">
-                  {phoneInfo.isValid ? (
-                    <p className="text-xs text-emerald-600 flex items-center gap-1">
-                      <span>✓</span> رقم صحيح ({phoneInfo.digitCount} أرقام)
-                    </p>
-                  ) : phoneTouched && custPhone && phoneInfo.digitCount > 0 && !/[^\d+\-\s()]/.test(custPhone) && phoneInfo.digitCount < phoneInfo.expectedMax ? (
-                    <p className="text-xs text-amber-600 flex items-center gap-1.5">
-                      <span>⏳</span>
-                      <span>أدخلت {phoneInfo.digitCount} من {phoneInfo.expectedMax} رقماً</span>
-                      <span className="inline-flex items-center gap-0.5 mr-1">
-                        {[...Array(phoneInfo.expectedMax)].map((_, i) => (
-                          <span
-                            key={i}
-                            className={`inline-block w-1.5 h-3 rounded-full transition-colors ${
-                              i < phoneInfo.digitCount ? "bg-amber-400" : "bg-slate-200 dark:bg-slate-600"
-                            }`}
-                          />
-                        ))}
-                      </span>
-                    </p>
-                  ) : phoneTouched && custPhone && phoneInfo.digitCount > 0 ? (
+                  {phoneTouched && custPhone && !isValidAlgerianPhone(custPhone) ? (
                     <p className="text-xs text-destructive flex items-center gap-1">
-                      <span>✗</span> {phoneInfo.message}
+                      <span>✗</span> {getPhoneErrorMessage(custPhone)}
+                    </p>
+                  ) : phoneTouched && isValidAlgerianPhone(custPhone) ? (
+                    <p className="text-xs text-emerald-600 flex items-center gap-1">
+                      <span>✓</span> رقم صحيح
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">أدخل رقم هاتفك الصحيح</p>
@@ -1433,17 +1428,17 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   onBlur={() => setWhatsappTouched(true)}
                   placeholder="اتركه فارغاً إذا كان نفس رقم الهاتف"
                   className={`mt-1.5 font-mono tracking-wider ${
-                    whatsappTouched && custWhatsapp && !isValidPhone(custWhatsapp, shop?.country)
+                    whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp)
                       ? "border-destructive bg-destructive/5"
-                      : whatsappTouched && custWhatsapp && isValidPhone(custWhatsapp, shop?.country)
+                      : whatsappTouched && custWhatsapp && isValidAlgerianPhone(custWhatsapp)
                         ? "border-emerald-400 bg-emerald-50/30"
                         : ""
                   }`}
                   dir="ltr"
                 />
-                {whatsappTouched && custWhatsapp && !isValidPhone(custWhatsapp, shop?.country) && (
+                {whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp) && (
                   <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                    <span>✗</span> {getPhoneErrorMessage(custWhatsapp, shop?.country)}
+                    <span>✗</span> {getPhoneErrorMessage(custWhatsapp)}
                   </p>
                 )}
               </div>
@@ -1513,13 +1508,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
                     <div>
                       <div className="text-xs text-neutral-400 line-through">{formatDA(pricing.total)}</div>
-                      <div className="text-2xl font-bold text-amber-400">{formatDA(finalPricing.total)}</div>
+                      <div className="text-2xl font-bold text-primary">{formatDA(finalPricing.total)}</div>
                       <div className="text-xs text-emerald-400 font-medium">
                         {finalPricing.appliedOfferNote}
                       </div>
                     </div>
                   ) : (
-                    <div className="text-2xl font-bold text-amber-400">{formatDA(pricing.total)}</div>
+                    <div className="text-2xl font-bold text-primary">{formatDA(pricing.total)}</div>
                   )}
                 </div>
               </div>
@@ -1528,11 +1523,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
                 {/* ===== معاينة الملف المرفوع ===== */}
                 {fileName && (
-                  <div className="mb-4 flex gap-3 p-3 rounded-xl bg-amber-50/50 border border-amber-100">
+                  <div className="mb-4 flex gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
                     {/* صورة المعاينة */}
                     {analysis?.thumbnailUrl ? (
                       <div className="shrink-0 relative">
-                        <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-amber-200 bg-white shadow-sm">
+                        <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-primary/20 bg-white shadow-sm">
                           
                           <img
                             src={analysis.thumbnailUrl}
@@ -1555,33 +1550,33 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="text-xs font-bold text-neutral-900 break-all">{fileName}</div>
                       {analysis?.fileNature && (
-                        <div className="inline-block text-xs font-medium text-amber-800 bg-white border border-amber-200 rounded-full px-2 py-0.5">
+                        <div className="inline-block text-xs font-medium text-foreground bg-white border border-primary/20 rounded-full px-2 py-0.5">
                           {analysis.fileNature}
                         </div>
                       )}
                       <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
                         {analysis?.fileType && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
                             {analysis.fileType}
                           </span>
                         )}
                         {analysis?.fileSizeKB && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
                             📦 {analysis.fileSizeKB} ك.ب
                           </span>
                         )}
                         {analysis?.pageCount && analysis.pageCount > 0 && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
                             📄 {analysis.pageCount} صفحة
                           </span>
                         )}
                         {analysis?.imageDimensions && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
                             📐 {analysis.imageDimensions.width}×{analysis.imageDimensions.height}
                           </span>
                         )}
                         {analysis?.isPortrait !== undefined && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
                             {analysis.isPortrait ? "↕ عمودي" : "↔ أفقي"}
                           </span>
                         )}
@@ -1623,13 +1618,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   <ReviewRow label="العميل" value={custName} />
                 </div>
 
-                <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground">
                   ℹ️ سيتم تأكيد السعر النهائي بعد مراجعة الملف
                 </div>
 
                 <div className="mt-3 p-4 rounded-lg bg-neutral-50 border border-neutral-200">
                   <div className="font-bold text-sm mb-1 flex items-center gap-2">
-                    <PhoneIcon className="h-4 w-4 text-amber-600" />
+                    <PhoneIcon className="h-4 w-4 text-primary" />
                     سنتواصل معك قبل بدء الطباعة
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1657,7 +1652,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           <Button
             onClick={next}
             disabled={!canProceed() || submitting}
-            className="bg-gradient-to-l from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-teal-900/30 transition-all duration-200"
+            className="bg-gradient-to-l from-primary hover:from-primary/80 hover:to-primary text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/30 transition-all duration-200"
           >
             {submitting ? (
               <span className="animate-pulse">جارٍ الإرسال...</span>
@@ -1745,7 +1740,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   <SummaryRow label="توفير الوجهين" value={`−${formatDA(pricing.sidesSaving)}`} green />
                 )}
                 {pricing.finishingCost > 0 && (
-                  <SummaryRow label="التشطيب/التجليد" value={formatDA(pricing.finishingCost)} />
+                  <SummaryRow label="إضافات (قص/تشطيب)" value={formatDA(pricing.finishingCost)} />
                 )}
                 {pricing.deliveryCost > 0 && (
                   <SummaryRow label="التوصيل العاجل" value={formatDA(pricing.deliveryCost)} />
@@ -1765,12 +1760,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
                     <div className="text-left">
                       <span className="text-xs text-muted-foreground line-through block">{formatDA(pricing.total)}</span>
-                      <span className="text-2xl font-bold text-amber-700">
+                      <span className="text-2xl font-bold text-primary">
                         {formatDA(finalPricing.total)}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-2xl font-bold text-amber-700">
+                    <span className="text-2xl font-bold text-primary">
                       {formatDA(pricing.total)}
                     </span>
                   )}
@@ -1847,7 +1842,7 @@ function Section({
           <Label className="text-base font-semibold">{title}</Label>
           <div className="flex items-center gap-2">
             {badge && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
                 {badge}
               </span>
             )}
@@ -1871,7 +1866,7 @@ function Section({
         <div className="flex items-center gap-2">
           <Label className="text-sm font-semibold cursor-pointer">{title}</Label>
           {badge && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
               {badge}
             </span>
           )}
@@ -1924,12 +1919,12 @@ function OptionCard({
       onClick={onClick}
       className={`relative p-4 rounded-xl border-2 text-right transition-all ${
         selected
-          ? "border-amber-400 bg-amber-50 shadow-sm"
-          : "border-border bg-card hover:border-amber-300"
+          ? "border-primary bg-primary/5 shadow-sm"
+          : "border-border bg-card hover:border-primary/30"
       }`}
     >
       {selected && (
-        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center">
+        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
           <Check className="h-3 w-3 text-white" />
         </span>
       )}
@@ -1937,11 +1932,11 @@ function OptionCard({
       <div className="font-semibold text-sm">{label}</div>
       {description && <div className="text-xs text-muted-foreground mt-0.5">{description}</div>}
       {price && (
-        <div className={`text-xs font-bold mt-1 ${selected ? "text-amber-700" : "text-muted-foreground"}`}>
+        <div className={`text-xs font-bold mt-1 ${selected ? "text-primary" : "text-muted-foreground"}`}>
           {price}
         </div>
       )}
-      {note && <div className="text-xs text-amber-700 mt-1">{note}</div>}
+      {note && <div className="text-xs text-primary mt-1">{note}</div>}
     </button>
   );
 }

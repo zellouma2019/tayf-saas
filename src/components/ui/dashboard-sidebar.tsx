@@ -1,6 +1,6 @@
 'use client';
 
-import { type LucideIcon, PanelRightClose, PanelRightOpen, X } from 'lucide-react';
+import { type LucideIcon, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   useCallback,
@@ -124,36 +124,39 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'relative flex w-full items-center gap-3 rounded-md',
+        'relative flex w-full items-center gap-3 rounded-lg',
         collapsed ? 'justify-center px-0 py-2.5' : 'px-4 py-2.5',
-        'transition-colors duration-150 ease-in-out',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800',
+        'transition-all duration-200 ease-in-out',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         isActive
-          ? 'bg-slate-700 text-white'
-          : 'text-slate-300 hover:bg-slate-700/60 hover:text-slate-100',
+          ? 'bg-sidebar-accent text-sidebar-primary font-medium'
+          : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
       )}
     >
+      {/* Active indicator bar */}
       <span
         className={cn(
-          'absolute right-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-150',
-          isActive ? 'bg-teal-600 opacity-100' : 'bg-transparent opacity-0',
+          'absolute right-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-200',
+          isActive
+            ? 'bg-sidebar-primary opacity-100 shadow-[0_0_8px_rgba(212,168,83,0.5)]'
+            : 'bg-transparent opacity-0',
         )}
       />
 
       <Icon
         size={20}
         className={cn(
-          'shrink-0 transition-colors duration-150',
-          isActive ? 'text-white' : 'text-slate-400',
+          'shrink-0 transition-colors duration-200',
+          isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/60',
         )}
       />
 
       {!collapsed && (
-        <span className="flex flex-1 items-center justify-between gap-2 truncate text-sm font-medium">
+        <span className="flex flex-1 items-center justify-between gap-2 truncate text-sm">
           <span className="truncate">{item.label}</span>
 
           {item.badge != null && (
-            <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-teal-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+            <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-sidebar-primary">
               {item.badge}
             </span>
           )}
@@ -161,7 +164,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       )}
 
       {collapsed && item.badge != null && (
-        <span className="absolute -left-0.5 -top-0.5 h-2 w-2 rounded-full bg-teal-500" />
+        <span className="absolute -left-0.5 -top-0.5 h-2 w-2 rounded-full bg-sidebar-primary shadow-[0_0_6px_rgba(212,168,83,0.6)]" />
       )}
     </button>
   );
@@ -192,14 +195,20 @@ export function DashboardSidebar({
     ? () => onMobileToggle()
     : (v: boolean) => setInternalMobileOpen(v);
 
-  // Close mobile on viewport change
-  const prevIsMobileRef = useRef(true);
+  // Close mobile drawer when viewport changes from mobile → desktop
+  const prevIsMobileRef = useRef<boolean | null>(null);
+  const isFirstEffectRef = useRef(true);
   useEffect(() => {
-    if (prevIsMobileRef.current && !isMobile) {
+    if (isFirstEffectRef.current) {
+      isFirstEffectRef.current = false;
+      prevIsMobileRef.current = isMobile;
+      return;
+    }
+    if (prevIsMobileRef.current && !isMobile && mobileOpen) {
       setMobileOpen(false);
     }
     prevIsMobileRef.current = isMobile;
-  }, [isMobile, setMobileOpen]);
+  }, [isMobile, mobileOpen, setMobileOpen]);
 
   const mobileVisible = isMobile && mobileOpen;
 
@@ -232,13 +241,13 @@ export function DashboardSidebar({
       sections.map((section, sIdx) => (
         <div key={sIdx} className="flex flex-col gap-1">
           {section.title && !effectiveCollapsed && (
-            <h4 className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <h4 className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
               {section.title}
             </h4>
           )}
 
           {section.title && effectiveCollapsed && (
-            <div className="mx-3 my-2 h-px bg-slate-700" />
+            <div className="mx-3 my-2 h-px bg-sidebar-border" />
           )}
 
           {section.items.map((item) => (
@@ -266,8 +275,7 @@ export function DashboardSidebar({
     return (
       <aside
         dir="rtl"
-        className="relative flex h-full flex-col shrink-0 overflow-hidden bg-slate-800 transition-all duration-300 ease-in-out w-[260px]"
-        style={{ backgroundColor: '#1e293b' }}
+        className="relative flex h-full flex-col shrink-0 overflow-hidden bg-sidebar border-l border-sidebar-border transition-all duration-300 ease-in-out w-[260px]"
       >
         {logo && (
           <div className="mt-6 flex shrink-0 items-center px-4 pb-4">
@@ -282,7 +290,7 @@ export function DashboardSidebar({
   }
 
   // -----------------------------------------------------------------------
-  // Mobile: overlay drawer (renders backdrop + aside, no wrapper)
+  // Mobile: overlay drawer
   // -----------------------------------------------------------------------
   if (isMobile) {
     return (
@@ -290,7 +298,7 @@ export function DashboardSidebar({
         {/* Backdrop */}
         <div
           className={cn(
-            'fixed inset-0 z-50 bg-black/50 transition-opacity duration-200',
+            'fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-200',
             mobileVisible
               ? 'pointer-events-auto opacity-100'
               : 'pointer-events-none opacity-0',
@@ -303,31 +311,23 @@ export function DashboardSidebar({
         <aside
           dir="rtl"
           className={cn(
-            'fixed inset-y-0 right-0 z-50 flex flex-col overflow-hidden bg-slate-800 shadow-2xl transition-transform duration-300 ease-in-out',
+            'fixed inset-y-0 right-0 z-50 flex flex-col overflow-hidden bg-sidebar border-l border-sidebar-border shadow-2xl shadow-black/50 transition-transform duration-300 ease-in-out',
             mobileVisible ? 'translate-x-0' : 'translate-x-full',
           )}
-          style={{ width: 260, backgroundColor: '#1e293b' }}
+          style={{ width: 280 }}
         >
-          <div className="flex items-center justify-between px-4 pt-5 pb-3">
-            <div className="min-w-0 flex-1">
+          {logo && (
+            <div className="mt-6 flex shrink-0 items-center justify-center px-4 pb-4">
               {logo}
             </div>
-            <button
-              type="button"
-              onClick={() => setMobileOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-700/60 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 shrink-0"
-              aria-label="إغلاق القائمة"
-            >
-              <X size={18} />
-            </button>
-          </div>
+          )}
 
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
             {renderedSections}
           </nav>
 
           {footer && (
-            <div className="shrink-0 border-t border-slate-700/60 px-4 py-3">
+            <div className="shrink-0 border-t border-sidebar-border px-4 py-3">
               {footer}
             </div>
           )}
@@ -343,10 +343,9 @@ export function DashboardSidebar({
     <aside
       dir="rtl"
       className={cn(
-        'relative flex h-full flex-col shrink-0 overflow-hidden bg-slate-800 transition-all duration-300 ease-in-out',
+        'relative flex h-full flex-col shrink-0 overflow-hidden bg-sidebar border-l border-sidebar-border transition-all duration-300 ease-in-out',
         effectiveCollapsed ? 'w-[72px]' : 'w-[260px]',
       )}
-      style={{ backgroundColor: '#1e293b' }}
     >
       {logo && (
         <div
@@ -368,7 +367,7 @@ export function DashboardSidebar({
           type="button"
           onClick={onToggleCollapse}
           className={cn(
-            'flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium text-slate-400 transition-colors duration-150 hover:bg-slate-700/60 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500',
+            'flex items-center gap-3 rounded-lg px-4 py-2 text-sm text-sidebar-foreground/60 transition-colors duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             effectiveCollapsed && 'justify-center px-0',
           )}
           aria-label={effectiveCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
@@ -379,7 +378,7 @@ export function DashboardSidebar({
       )}
 
       {footer && (
-        <div className="shrink-0 border-t border-slate-700/60 px-4 py-3">
+        <div className="shrink-0 border-t border-sidebar-border px-4 py-3">
           {footer}
         </div>
       )}

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { authorized, error: authError } = await requireAdmin(req);
   if (!authorized) return authError;
   try {
-    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const findWhere: Record<string, unknown> = { id };
@@ -32,7 +31,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { authorized, error: authError } = await requireAdmin(req);
   if (!authorized) return authError;
   try {
-    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const findWhere: Record<string, unknown> = { id };

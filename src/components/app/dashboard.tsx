@@ -35,8 +35,8 @@ interface Stats {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: "مسودة", color: "text-slate-600", bg: "bg-slate-100" },
-  submitted: { label: "مُقدّم", color: "text-slate-700", bg: "bg-blue-100 text-blue-700" },
+  draft: { label: "مسودة", color: "text-dark-600", bg: "bg-dark-100" },
+  submitted: { label: "مُقدّم", color: "text-dark-700", bg: "bg-gold-500/15 text-gold-400" },
   under_review: { label: "قيد المراجعة", color: "text-amber-700", bg: "bg-amber-100" },
   approved: { label: "معتمد", color: "text-emerald-700", bg: "bg-emerald-100" },
   rejected: { label: "مرفوض", color: "text-rose-700", bg: "bg-rose-100" },

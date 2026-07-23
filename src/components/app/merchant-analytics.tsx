@@ -56,7 +56,7 @@ const STATUS_PIE_COLORS: Record<string, string> = {
 };
 
 const SERVICE_BAR_COLORS = [
-  "#0d7377",
+  "#7C3AED",
   "#D97706",
   "#059669",
   "#0891B2",
@@ -104,13 +104,13 @@ function ArabicTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 shadow-lg text-sm" dir="rtl">
-      {label && <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5">{label}</p>}
+    <div className="bg-card border border-gold-500/8 rounded-xl px-3 py-2.5 shadow-lg text-sm" dir="rtl">
+      {label && <p className="text-dark-500 dark:text-dark-400 text-xs font-medium mb-1.5">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="flex items-center gap-2 text-xs">
-          <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: p.fill || "#0d7377" }} />
-          <span className="text-slate-600 dark:text-slate-300">{p.name}:</span>
-          <span className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">{valueLabel === "إيرادات" ? formatDA(p.value) : p.value}</span>
+          <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: p.fill || "#7C3AED" }} />
+          <span className="text-dark-600 dark:text-dark-300">{p.name}:</span>
+          <span className="font-bold text-dark-800 dark:text-dark-100 tabular-nums">{valueLabel === "إيرادات" ? formatDA(p.value) : p.value}</span>
         </p>
       ))}
     </div>
@@ -133,7 +133,7 @@ function RevenueTooltip({
 // ===== عنوان القسم =====
 function SectionHeader({ title }: { title: string }) {
   return (
-    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 border-r-4 border-teal-500 pr-3 mb-4">
+    <h3 className="text-sm font-semibold text-dark-800 dark:text-dark-100 border-r-4 border-gold-500 pr-3 mb-4">
       {title}
     </h3>
   );
@@ -293,22 +293,22 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
         <SectionHeader title="نظرة عامة على الإيرادات" />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* إجمالي الإيرادات */}
-          <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+          <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/60 flex items-center justify-center">
                   <DollarSign className="h-5 w-5 text-emerald-600" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+              <div className="text-2xl font-bold text-dark-800 dark:text-dark-100 tabular-nums">
                 {formatDA(totalRevenue)}
               </div>
-              <p className="text-xs text-slate-400 mt-1">إجمالي الإيرادات</p>
+              <p className="text-xs text-dark-400 mt-1">إجمالي الإيرادات</p>
             </CardContent>
           </Card>
 
           {/* إيراد اليوم */}
-          <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+          <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-50 to-sky-100/60 flex items-center justify-center">
@@ -332,19 +332,19 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                   </span>
                 )}
               </div>
-              <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+              <div className="text-2xl font-bold text-dark-800 dark:text-dark-100 tabular-nums">
                 {formatDA(todayRevenue)}
               </div>
-              <p className="text-xs text-slate-400 mt-1">إيرادات اليوم</p>
+              <p className="text-xs text-dark-400 mt-1">إيرادات اليوم</p>
             </CardContent>
           </Card>
 
           {/* إيراد الأسبوع */}
-          <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+          <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100/60 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-teal-600" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/60 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-gold-500" />
                 </div>
                 {weekTrendPercent !== 0 && (
                   <span
@@ -364,10 +364,10 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                   </span>
                 )}
               </div>
-              <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+              <div className="text-2xl font-bold text-dark-800 dark:text-dark-100 tabular-nums">
                 {formatDA(weekRevenue)}
               </div>
-              <p className="text-xs text-slate-400 mt-1">إيرادات هذا الأسبوع</p>
+              <p className="text-xs text-dark-400 mt-1">إيرادات هذا الأسبوع</p>
             </CardContent>
           </Card>
         </div>
@@ -376,13 +376,13 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       {/* ===== 2. الطلبات حسب الحالة + الطلبات اليومية ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* الطلبات حسب الحالة - دائري */}
-        <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+        <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
           <CardContent className="p-5">
             <SectionHeader title="الطلبات حسب الحالة" />
             {statusPieData.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <Package className="h-10 w-10 text-slate-200 dark:text-slate-700 mb-3" />
-                <p className="text-sm text-slate-400">لا توجد بيانات كافية</p>
+                <Package className="h-10 w-10 text-dark-200 dark:text-dark-700 mb-3" />
+                <p className="text-sm text-dark-400">لا توجد بيانات كافية</p>
               </div>
             ) : (
               <div className="flex flex-col items-center">
@@ -421,8 +421,8 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                         className="w-2.5 h-2.5 rounded-sm shrink-0"
                         style={{ backgroundColor: STATUS_PIE_COLORS[entry.status] || "#94A3B8" }}
                       />
-                      <span className="text-slate-500 dark:text-slate-400">{entry.name}</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-200 tabular-nums">
+                      <span className="text-dark-500 dark:text-dark-400">{entry.name}</span>
+                      <span className="font-bold text-dark-700 dark:text-dark-200 tabular-nums">
                         {entry.value}
                       </span>
                     </div>
@@ -434,7 +434,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
         </Card>
 
         {/* الطلبات اليومية - أعمدة */}
-        <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+        <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
           <CardContent className="p-5">
             <SectionHeader title="الطلبات اليومية (آخر 7 أيام)" />
             <div className="h-[300px]">
@@ -457,7 +457,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                   <Bar
                     dataKey="orders"
                     name="عدد الطلبات"
-                    fill="#0d7377"
+                    fill="#7C3AED"
                     radius={[6, 6, 0, 0]}
                     maxBarSize={40}
                   />
@@ -469,13 +469,13 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       </div>
 
       {/* ===== 3. أفضل الخدمات ===== */}
-      <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+      <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
         <CardContent className="p-5">
           <SectionHeader title="أكثر الخدمات طلباً" />
           {topServicesData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <Package className="h-10 w-10 text-slate-200 dark:text-slate-700 mb-3" />
-              <p className="text-sm text-slate-400">لا توجد بيانات كافية</p>
+              <Package className="h-10 w-10 text-dark-200 dark:text-dark-700 mb-3" />
+              <p className="text-sm text-dark-400">لا توجد بيانات كافية</p>
             </div>
           ) : (
             <div className="h-[50 + topServicesData.length * 44]px min-h-[200px] max-h-[400px]">
@@ -520,7 +520,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       </Card>
 
       {/* ===== 4. الإيرادات اليومية - مخطط مساحي ===== */}
-      <Card className="rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+      <Card className="rounded-xl border border-dark-200/60 dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-dark-900">
         <CardContent className="p-5">
           <SectionHeader title="الإيرادات اليومية (آخر 7 أيام)" />
           <div className="h-[280px]">
@@ -528,8 +528,8 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
               <AreaChart data={dailyRevenueData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0d7377" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#0d7377" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -547,7 +547,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                 />
                 <Tooltip content={<RevenueTooltip />} />
                 <Legend
-                  formatter={() => <span className="text-xs text-slate-500">الإيرادات</span>}
+                  formatter={() => <span className="text-xs text-dark-500">الإيرادات</span>}
                   iconType="circle"
                   iconSize={8}
                   wrapperStyle={{ paddingTop: "8px" }}
@@ -555,11 +555,11 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
                 <Area
                   type="monotone"
                   dataKey="إيرادات"
-                  stroke="#0d7377"
+                  stroke="#7C3AED"
                   strokeWidth={2.5}
                   fill="url(#revenueGradient)"
-                  dot={{ r: 4, fill: "#0d7377", stroke: "#fff", strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: "#0d7377", stroke: "#fff", strokeWidth: 2 }}
+                  dot={{ r: 4, fill: "#7C3AED", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: "#7C3AED", stroke: "#fff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

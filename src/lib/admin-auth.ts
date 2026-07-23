@@ -2,32 +2,33 @@ import { db } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/default-settings";
 import { NextRequest } from "next/server";
 
-let cachedCode: string | null = null;
-let cacheTime = 0;
+const codeCache = new Map<string, { code: string; time: number }>();
 const CACHE_TTL = 30_000; // 30 seconds
 
 export async function getAdminCode(shopId?: string | null): Promise<string> {
   const now = Date.now();
   const cacheKey = shopId || "__global__";
 
-  if (cachedCode && now - cacheTime < CACHE_TTL) return cachedCode;
+  const cached = codeCache.get(cacheKey);
+  if (cached && now - cached.time < CACHE_TTL) return cached.code;
 
   try {
     const where = shopId
       ? { shopId_key: { shopId, key: "general" } }
       : { shopId_key: { shopId: null as string | null, key: "general" } };
     const setting = await db.setting.findFirst({ where });
+    let code: string;
     if (setting) {
       const parsed = JSON.parse(setting.value);
-      cachedCode = parsed.adminCode || DEFAULT_SETTINGS.general.adminCode;
+      code = parsed.adminCode || DEFAULT_SETTINGS.general.adminCode;
     } else {
-      cachedCode = DEFAULT_SETTINGS.general.adminCode;
+      code = DEFAULT_SETTINGS.general.adminCode;
     }
+    codeCache.set(cacheKey, { code, time: now });
+    return code;
   } catch {
-    cachedCode = DEFAULT_SETTINGS.general.adminCode;
+    return DEFAULT_SETTINGS.general.adminCode;
   }
-  cacheTime = now;
-  return cachedCode;
 }
 
 /**

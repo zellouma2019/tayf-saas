@@ -3,27 +3,68 @@ import { formatDateTimeAr } from "@/lib/print-config";
 
 // ===== مساعدات الجلسة =====
 export const SESSION_KEY = "sa_auth";
-export const SESSION_HOURS = 168;
+export const SESSION_HOURS = 4; // 4 ساعات فقط (كانت 24)
+
+/** إنشاء تجزئة بسيطة من نص */
+async function simpleHash(str: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return false;
-    const { ts } = JSON.parse(raw);
-    // صلاحية 24 ساعة
+    const { ts, token } = JSON.parse(raw);
+    // صلاحية 4 ساعات
     if (Date.now() - ts > SESSION_HOURS * 60 * 60 * 1000) {
       localStorage.removeItem(SESSION_KEY);
       return false;
     }
+    // يجب وجود الرمز المُصدَّق من الخادم
+    if (!token) return false;
     return true;
   } catch {
     return false;
   }
 }
 
-export function markAuthenticated() {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+/** التحقق من الجلسة مع الخادم (يُستدعى عند تحميل الصفحة) */
+export async function verifySession(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const { ts, token } = JSON.parse(raw);
+    if (!token) return false;
+
+    const res = await fetch("/api/super-admin/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ts, token }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.valid === true;
+    }
+    return false;
+  } catch {
+    // في حالة فشل الشبكة، نسمح بالوصول مؤقتاً (التحقق السابق يكفي)
+    return isAuthenticated();
+  }
+}
+
+export function markAuthenticated(token: string, ts?: number) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ ts: ts || Date.now(), token: token || "" }));
+}
+
+/** مسح الجلسة */
+export function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
 }
 
 // طلبات بسيطة بدون مفتاح (بعد التحقق من الجلسة)
@@ -113,7 +154,7 @@ export const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800",
   printing: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
   ready: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
-  delivered: "bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
+  delivered: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
   cancelled: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800",
 };
 
@@ -121,7 +162,7 @@ export const STATUS_BORDER_COLORS: Record<string, string> = {
   pending: "border-r-amber-400",
   printing: "border-r-blue-400",
   ready: "border-r-emerald-400",
-  delivered: "border-r-slate-300",
+  delivered: "border-r-emerald-400",
   cancelled: "border-r-rose-400",
 };
 
@@ -130,6 +171,7 @@ export const TAB_TITLES: Record<string, string> = {
   overview: "نظرة عامة",
   orders: "الطلبات",
   shops: "المتاجر",
-  settings: "الإعدادات",
+  platformSettings: "إعدادات المنصة",
+  settings: "إعدادات المتاجر",
   security: "الأمان والفريق",
 };

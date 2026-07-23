@@ -287,22 +287,9 @@ export function MerchantOrderDetail({
       onStatusChange(order, "printing");
       onUpdated();
 
-      // 2) Print the actual uploaded file (not the receipt)
-      const fileUrl = order.fileData;
-      if (fileUrl) {
-        const win = window.open(fileUrl, "_blank");
-        if (win) {
-          setTimeout(() => {
-            try { win.print(); } catch {}
-          }, 1000);
-        } else {
-          toast.error("يرجى السماح بالنوافذ المنبثقة لطباعة الملف");
-        }
-      } else {
-        // Fallback to receipt if no file attached
-        await new Promise((r) => setTimeout(r, 300));
-        window.print();
-      }
+      // 2) Wait a tick for the DOM to settle, then trigger print
+      await new Promise((r) => setTimeout(r, 300));
+      window.print();
 
       // 3) After print dialog closes, change to "ready"
       const readyRes = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
@@ -400,27 +387,6 @@ export function MerchantOrderDetail({
     }
   }
 
-  function handlePrintFile() {
-    if (!order) return;
-    const fileUrl = order.fileData;
-    if (!fileUrl) {
-      toast.error("لا يوجد ملف مرفق لطباعته");
-      return;
-    }
-    // Open the file in a new window for printing
-    const win = window.open(fileUrl, "_blank");
-    if (win) {
-      // For PDFs, the browser will show the PDF viewer with print button
-      // For images, the user can right-click and print
-      // Auto-trigger print after a short delay for PDFs
-      setTimeout(() => {
-        try { win.print(); } catch {}
-      }, 1000);
-    } else {
-      toast.error("يرجى السماح بالنوافذ المنبثقة لطباعة الملف");
-    }
-  }
-
   function openInvoice() {
     if (!order) return;
     window.open(`/api/orders/${order.id}/invoice?shopId=${shopId}`, "_blank");
@@ -437,23 +403,23 @@ export function MerchantOrderDetail({
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll dark:bg-slate-900 bg-slate-50 dark:border-slate-700 border-slate-200/60"
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-dark-50 border-dark-200/60"
         dir="rtl"
       >
         <DialogHeader className="pb-2">
-          <DialogTitle className="flex items-center gap-2 text-lg dark:text-slate-100 text-slate-800">
+          <DialogTitle className="flex items-center gap-2 text-lg text-dark-800">
             <span className="text-xl">{serviceEmoji}</span>
             <span className="font-mono">{order.reference}</span>
             <span className="text-muted-foreground font-normal text-sm">— {order.serviceName}</span>
           </DialogTitle>
-          <DialogDescription className="text-xs dark:text-slate-400 text-slate-500">
+          <DialogDescription className="text-xs text-dark-500">
             {formatDateTimeAr(order.createdAt)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* ===== شريط الحالة + أزرار الطباعة ===== */}
-          <div className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
             <div className="flex items-center gap-2 flex-wrap mb-3">
               <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium", meta.bg)}>
                 {meta.emoji} {meta.label}
@@ -465,7 +431,7 @@ export function MerchantOrderDetail({
                     key={s}
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs rounded-lg dark:border-slate-700 border-slate-200 dark:hover:bg-slate-700 hover:bg-slate-50 transition-all duration-200"
+                    className="h-8 text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
                     onClick={() => handleStatusChange(s)}
                   >
                     {STATUS_META[s].emoji} {STATUS_META[s].label}
@@ -474,7 +440,7 @@ export function MerchantOrderDetail({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 text-xs rounded-lg border-rose-200 text-rose-600 dark:hover:bg-rose-900/30 hover:bg-rose-50 transition-all duration-200"
+                className="h-8 text-xs rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 transition-all duration-200"
                 onClick={() => handleStatusChange("cancelled")}
               >
                 ❌ إلغاء
@@ -483,13 +449,13 @@ export function MerchantOrderDetail({
 
             {/* أزرار الطباعة */}
             {order.status !== "cancelled" && (
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2 pt-2 border-t border-dark-100">
                 {!order.startedPrintingAt && order.status !== "ready" && order.status !== "delivered" && (
                   <Button
                     size="sm"
                     onClick={() => handlePrintingAction("start")}
                     disabled={printingAction !== null}
-                    className="h-9 text-xs bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+                    className="h-9 text-xs bg-gold-500 hover:bg-gold-600 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
                   >
                     <Printer className="h-3.5 w-3.5 ml-1" />
                     {printingAction === "start" ? "جارٍ..." : "بدأ الطباعة"}
@@ -507,10 +473,10 @@ export function MerchantOrderDetail({
                   </Button>
                 )}
                 {(order.startedPrintingAt || order.completedPrintingAt) && (
-                  <div className="flex items-center gap-3 text-xs dark:text-slate-400 text-slate-500 mr-auto">
+                  <div className="flex items-center gap-3 text-xs text-dark-500 mr-auto">
                     {order.startedPrintingAt && (
                       <span className="flex items-center gap-1">
-                        <Printer className="h-3 w-3 text-blue-500" />
+                        <Printer className="h-3 w-3 text-gold-400" />
                         بدأ: {formatDateTimeAr(order.startedPrintingAt)}
                       </span>
                     )}
@@ -527,7 +493,7 @@ export function MerchantOrderDetail({
 
             {/* ===== طباعة مباشرة ===== */}
             {order.status !== "cancelled" && order.status !== "delivered" && (
-              <div className="pt-2 mt-2 border-t border-slate-100">
+              <div className="pt-2 mt-2 border-t border-dark-100">
                 {hasDirectPrinting ? (
                   <Button
                     size="sm"
@@ -552,10 +518,10 @@ export function MerchantOrderDetail({
                     )}
                   </Button>
                 ) : (
-                  <div className="flex items-center gap-2 text-xs dark:text-slate-500 text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
                     <Lock className="h-3.5 w-3.5" />
                     <span>الطباعة المباشرة ميزة مدفوعة</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full dark:bg-slate-800 bg-slate-100 border dark:border-slate-700 border-slate-200 dark:text-slate-400 text-slate-500 font-medium">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-dark-100 border border-dark-200 text-dark-500 font-medium">
                       تفعيل الميزة
                     </span>
                   </div>
@@ -566,7 +532,7 @@ export function MerchantOrderDetail({
 
           {/* ===== شريط تقدم الحالة ===== */}
           {order.status !== "cancelled" && (
-            <div className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
+            <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
               <div className="flex items-center justify-between">
                 {STATUS_FLOW.map((step, idx) => {
                   const stepMeta = STATUS_META[step];
@@ -577,35 +543,35 @@ export function MerchantOrderDetail({
 
                   const dotColorMap: Record<string, string> = {
                     pending: "bg-amber-500",
-                    printing: "bg-blue-500",
+                    printing: "bg-gold-500",
                     ready: "bg-emerald-500",
                     delivered: "bg-emerald-600",
                   };
 
                   return (
                     <div key={step} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex flex-col items-center gap-1 sm:gap-1.5">
+                      <div className="flex flex-col items-center gap-1.5">
                         <div className="relative">
                           {isCompleted ? (
-                            <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])}>
-                              <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={3} />
+                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])}>
+                              <Check className="h-4 w-4" strokeWidth={3} />
                             </div>
                           ) : isCurrent ? (
                             <div className="relative">
-                              <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])} />
-                              <div className={cn("absolute inset-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
+                              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])} />
+                              <div className={cn("absolute inset-0 w-8 h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
                             </div>
                           ) : (
-                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-slate-300 dark:bg-slate-800 bg-white" />
+                            <div className="w-8 h-8 rounded-full border-2 border-dark-300 bg-white" />
                           )}
                         </div>
-                        <span className={cn("text-[9px] sm:text-[10px] font-medium leading-tight text-center max-w-[60px] sm:max-w-none", isFuture ? "dark:text-slate-500 text-slate-400" : isCurrent ? "dark:text-slate-100 text-slate-800" : "dark:text-slate-300 text-slate-600")}>
+                        <span className={cn("text-[10px] font-medium", isFuture ? "text-dark-400" : isCurrent ? "text-dark-800" : "text-dark-600")}>
                           {stepMeta.label}
                         </span>
                       </div>
                       {idx < STATUS_FLOW.length - 1 && (
-                        <div className="flex-1 h-0.5 mx-1 sm:mx-2 mt-[-16px] sm:mt-[-18px]">
-                          <div className={cn("h-full rounded-full", idx < currentIdx ? "bg-slate-400" : "bg-slate-200")} />
+                        <div className="flex-1 h-0.5 mx-2 mt-[-18px]">
+                          <div className={cn("h-full rounded-full", idx < currentIdx ? "bg-dark-400" : "bg-dark-200")} />
                         </div>
                       )}
                     </div>
@@ -616,8 +582,8 @@ export function MerchantOrderDetail({
           )}
 
           {/* ===== معلومات العميل ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               معلومات العميل
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -626,7 +592,7 @@ export function MerchantOrderDetail({
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                 />
               </div>
               <div className="space-y-1">
@@ -634,7 +600,7 @@ export function MerchantOrderDetail({
                 <Input
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                   dir="ltr"
                 />
               </div>
@@ -643,7 +609,7 @@ export function MerchantOrderDetail({
                 <Input
                   value={editWhatsApp}
                   onChange={(e) => setEditWhatsApp(e.target.value)}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                   dir="ltr"
                   placeholder="اختياري"
                 />
@@ -653,7 +619,7 @@ export function MerchantOrderDetail({
                 <Input
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                   dir="ltr"
                   placeholder="اختياري"
                 />
@@ -663,7 +629,7 @@ export function MerchantOrderDetail({
                 <Input
                   value={editAddress}
                   onChange={(e) => setEditAddress(e.target.value)}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                   placeholder="اختياري"
                 />
               </div>
@@ -671,8 +637,8 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== مواصفات الطباعة ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               مواصفات الطباعة
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -687,12 +653,12 @@ export function MerchantOrderDetail({
                 .map(([k, v]) => (
                   <div
                     key={k}
-                    className="rounded-xl dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60 px-3 py-2"
+                    className="rounded-xl bg-dark-50 border border-dark-200/60 px-3 py-2"
                   >
-                    <div className="text-[11px] dark:text-slate-500 text-slate-400">
+                    <div className="text-[11px] text-dark-400">
                       {translateOptionKey(k)}
                     </div>
-                    <div className="text-xs font-semibold dark:text-slate-100 text-slate-800">
+                    <div className="text-xs font-semibold text-dark-800">
                       {translateOptionValue(String(v))}
                     </div>
                   </div>
@@ -701,8 +667,8 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== الكميات والأسعار ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               الكميات والأسعار
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -713,7 +679,7 @@ export function MerchantOrderDetail({
                   min={1}
                   value={editPages}
                   onChange={(e) => setEditPages(Number(e.target.value))}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                 />
               </div>
               <div className="space-y-1">
@@ -723,7 +689,7 @@ export function MerchantOrderDetail({
                   min={1}
                   value={editCopies}
                   onChange={(e) => setEditCopies(Number(e.target.value))}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                 />
               </div>
               <div className="space-y-1">
@@ -733,13 +699,13 @@ export function MerchantOrderDetail({
                   min={0}
                   value={editCost}
                   onChange={(e) => setEditCost(Number(e.target.value))}
-                  className="h-9 text-sm rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+                  className="h-9 text-sm rounded-lg border-dark-200 bg-dark-50/50"
                   placeholder="0"
                 />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">المجموع</Label>
-                <div className="h-9 flex items-center px-3 rounded-lg border dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50 text-sm font-bold text-amber-700">
+                <div className="h-9 flex items-center px-3 rounded-lg border border-dark-200 bg-dark-50/50 text-sm font-bold text-amber-700">
                   {formatDA(order.total)}
                 </div>
               </div>
@@ -751,13 +717,13 @@ export function MerchantOrderDetail({
               <span className={cn("text-sm font-bold", profit >= 0 ? "text-emerald-700" : "text-rose-600")}>
                 {formatDA(profit)}
               </span>
-              <span className="text-[10px] dark:text-slate-500 text-slate-400 mr-auto">
+              <span className="text-[10px] text-dark-400 mr-auto">
                 المجموع − التكلفة
               </span>
             </div>
 
             {/* تفاصيل التسعير */}
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs dark:text-slate-500 text-slate-400">
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-dark-400">
               <div>سعر الصفحة: {formatDA(order.pricing.perPage)}</div>
               <div>تكلفة الصفحات: {formatDA(order.pricing.pagesCost)}</div>
               <div>تكلفة النسخ: {formatDA(order.pricing.copiesCost)}</div>
@@ -780,21 +746,21 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== ملاحظات إدارية ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               ملاحظات إدارية
             </h3>
             <Textarea
               value={editAdminNotes}
               onChange={(e) => setEditAdminNotes(e.target.value)}
-              className="text-sm min-h-[60px] rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50"
+              className="text-sm min-h-[60px] rounded-lg border-dark-200 bg-dark-50/50"
               placeholder="أضف ملاحظة داخلية..."
             />
           </section>
 
           {/* ===== الوسوم ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               <Tag className="h-3.5 w-3.5" />
               الوسوم
             </h3>
@@ -807,8 +773,8 @@ export function MerchantOrderDetail({
                   className={cn(
                     "cursor-pointer select-none text-xs rounded-lg transition-all duration-150",
                     editTags.includes(tag)
-                      ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
-                      : "dark:border-slate-700 border-slate-200 dark:text-slate-300 text-slate-600 dark:hover:bg-slate-700 hover:bg-slate-50",
+                      ? "bg-gold-500 hover:bg-gold-600 text-white border-gold-500"
+                      : "border-dark-200 text-dark-600 hover:bg-gold-500/5",
                   )}
                   onClick={() => togglePresetTag(tag)}
                 >
@@ -828,13 +794,13 @@ export function MerchantOrderDetail({
                   }
                 }}
                 placeholder="وسم مخصص..."
-                className="h-8 text-xs rounded-lg dark:border-slate-700 border-slate-200 dark:bg-slate-900/50 bg-slate-50/50 flex-1"
+                className="h-8 text-xs rounded-lg border-dark-200 bg-dark-50/50 flex-1"
               />
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-8 px-2.5 rounded-lg dark:border-slate-700 border-slate-200 dark:hover:bg-slate-700 hover:bg-slate-50 transition-all duration-200"
+                className="h-8 px-2.5 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
                 onClick={addCustomTag}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -846,13 +812,13 @@ export function MerchantOrderDetail({
                 {editTags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60"
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-gold-50 text-gold-600 border border-gold-200/60"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="hover:text-teal-900 transition-colors"
+                      className="hover:text-foreground transition-colors"
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -864,15 +830,15 @@ export function MerchantOrderDetail({
 
           {/* ===== معلومات الملف ===== */}
           {order.fileName && (
-            <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-              <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+            <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
                 الملف المرفق
               </h3>
-              <div className="flex items-center gap-3 rounded-xl dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60 p-3">
-                <FileText className="h-8 w-8 text-teal-500 shrink-0" />
+              <div className="flex items-center gap-3 rounded-xl bg-dark-50 border border-dark-200/60 p-3">
+                <FileText className="h-8 w-8 text-gold-400 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate dark:text-slate-100 text-slate-800">{order.fileName}</div>
-                  <div className="text-xs dark:text-slate-500 text-slate-400">
+                  <div className="text-sm font-medium truncate text-dark-800">{order.fileName}</div>
+                  <div className="text-xs text-dark-400">
                     {order.fileType || "—"}{" "}
                     {order.fileSize ? `• ${Math.round(order.fileSize / 1024)} ك.ب` : ""}
                   </div>
@@ -880,7 +846,7 @@ export function MerchantOrderDetail({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 text-xs shrink-0 rounded-lg dark:border-slate-700 border-slate-200 dark:hover:bg-slate-700 hover:bg-slate-50 transition-all duration-200"
+                  className="h-8 text-xs shrink-0 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
                   onClick={downloadFile}
                 >
                   <Download className="h-3.5 w-3.5 ml-1" />
@@ -891,20 +857,20 @@ export function MerchantOrderDetail({
           )}
 
           {/* ===== التسليم ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               التسليم
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60 px-3 py-2">
-                <div className="text-[11px] dark:text-slate-500 text-slate-400">الطريقة</div>
-                <div className="text-xs font-semibold dark:text-slate-100 text-slate-800">
+              <div className="rounded-xl bg-dark-50 border border-dark-200/60 px-3 py-2">
+                <div className="text-[11px] text-dark-400">الطريقة</div>
+                <div className="text-xs font-semibold text-dark-800">
                   {order.delivery.mode === "pickup" ? "استلام من المحل" : "توصيل"}
                 </div>
               </div>
-              <div className="rounded-xl dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60 px-3 py-2">
-                <div className="text-[11px] dark:text-slate-500 text-slate-400">الموعد</div>
-                <div className="text-xs font-semibold dark:text-slate-100 text-slate-800">
+              <div className="rounded-xl bg-dark-50 border border-dark-200/60 px-3 py-2">
+                <div className="text-[11px] text-dark-400">الموعد</div>
+                <div className="text-xs font-semibold text-dark-800">
                   {order.delivery.date || "—"} (≈{order.estimatedHours} س)
                 </div>
               </div>
@@ -912,21 +878,21 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== سجل التغييرات ===== */}
-          <section className="dark:bg-slate-800 bg-white rounded-xl border dark:border-slate-700 border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
             <button
               type="button"
               className="flex items-center gap-2 w-full text-right"
               onClick={() => setShowAudit(!showAudit)}
             >
-              <h3 className="text-sm font-semibold flex items-center gap-2.5 dark:text-slate-100 text-slate-800 border-r-4 border-teal-500 pr-3 mb-0">
+              <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-0">
                 سجل التغييرات
                 {auditLogs.length > 0 && (
-                  <span className="text-xs font-normal dark:text-slate-500 text-slate-400">
+                  <span className="text-xs font-normal text-dark-400">
                     ({auditLogs.length})
                   </span>
                 )}
               </h3>
-              <span className="mr-auto dark:text-slate-500 text-slate-400">
+              <span className="mr-auto text-dark-400">
                 {showAudit ? (
                   <ChevronUp className="h-4 w-4" />
                 ) : (
@@ -937,12 +903,12 @@ export function MerchantOrderDetail({
             {showAudit && (
               <div className="mt-3">
                 {auditLoading ? (
-                  <div className="text-xs dark:text-slate-500 text-slate-400 py-3 text-center">
+                  <div className="text-xs text-dark-400 py-3 text-center">
                     <RefreshCw className="h-3 w-3 animate-spin inline-block ml-1" />
                     جارٍ التحميل...
                   </div>
                 ) : auditLogs.length === 0 ? (
-                  <p className="text-xs dark:text-slate-500 text-slate-400 py-3 text-center">
+                  <p className="text-xs text-dark-400 py-3 text-center">
                     لا يوجد سجل تغييرات
                   </p>
                 ) : (
@@ -971,20 +937,20 @@ export function MerchantOrderDetail({
                       return (
                         <div
                           key={log.id}
-                          className="flex items-start gap-2 text-xs py-1.5 px-2.5 rounded-lg dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200/60"
+                          className="flex items-start gap-2 text-xs py-1.5 px-2.5 rounded-lg bg-dark-50 border border-dark-200/60"
                         >
                           <span className="shrink-0 mt-0.5">{icon}</span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-medium dark:text-slate-100 text-slate-800">
+                              <span className="font-medium text-dark-800">
                                 {actionLabel}
                               </span>
                               {log.field && (
-                                <span className="dark:text-slate-500 text-slate-400">— {log.field}</span>
+                                <span className="text-dark-400">— {log.field}</span>
                               )}
                             </div>
                             {log.oldValue != null && log.newValue != null && (
-                              <div className="dark:text-slate-400 text-slate-500 mt-0.5">
+                              <div className="text-dark-500 mt-0.5">
                                 <span className="text-rose-500 line-through">
                                   {log.oldValue}
                                 </span>
@@ -995,10 +961,10 @@ export function MerchantOrderDetail({
                               </div>
                             )}
                             {log.details && (
-                              <div className="dark:text-slate-400 text-slate-500 mt-0.5">{log.details}</div>
+                              <div className="text-dark-500 mt-0.5">{log.details}</div>
                             )}
                           </div>
-                          <span className="text-[10px] dark:text-slate-500 text-slate-400/60 whitespace-nowrap shrink-0">
+                          <span className="text-[10px] text-dark-400/60 whitespace-nowrap shrink-0">
                             {formatDateTimeAr(log.createdAt)}
                           </span>
                         </div>
@@ -1011,55 +977,35 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== أزرار الحفظ والإجراءات ===== */}
-          <div className="flex flex-col gap-2 pt-2 border-t dark:border-slate-700 border-slate-200/60">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2 border-t border-dark-200/60">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-xs dark:text-slate-400 text-slate-500 dark:hover:text-slate-200 hover:text-slate-700 rounded-lg"
+                className="text-xs text-dark-500 hover:text-dark-700 rounded-lg"
               >
                 <X className="h-3.5 w-3.5 ml-1" />
                 إغلاق
               </Button>
               <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={saving}
-                className="text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
-              >
-                <Save className="h-3.5 w-3.5 ml-1" />
-                {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
-              </Button>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Button
                 variant="outline"
                 size="sm"
                 onClick={openInvoice}
-                className="text-xs rounded-lg dark:border-slate-700 border-slate-200 dark:hover:bg-slate-700 hover:bg-slate-50 transition-all duration-200"
+                className="text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
               >
                 <FileCheck className="h-3.5 w-3.5 ml-1" />
                 فاتورة
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrintFile}
-                className="text-xs rounded-lg dark:border-slate-700 border-slate-200 dark:hover:bg-slate-700 hover:bg-slate-50 transition-all duration-200"
-              >
-                <Download className="h-3.5 w-3.5 ml-1" />
-                طباعة الملف
               </Button>
               {hasReceiptPrinting && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => { if (order) printReceipt(order, shopName, shopPhone, shopAddress); }}
-                  className="text-xs rounded-lg dark:border-slate-700 border-slate-200 dark:hover:bg-slate-700 hover:bg-slate-50 transition-all duration-200"
+                  className="text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
                 >
                   <Printer className="h-3.5 w-3.5 ml-1" />
-                  إيصال
+                  طباعة إيصال
                 </Button>
               )}
               {!showDeleteConfirm ? (
@@ -1067,7 +1013,7 @@ export function MerchantOrderDetail({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-xs rounded-lg border-rose-200 text-rose-600 dark:hover:bg-rose-900/30 hover:bg-rose-50 transition-all duration-200"
+                  className="text-xs rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 transition-all duration-200"
                 >
                   <Trash2 className="h-3.5 w-3.5 ml-1" />
                   حذف
@@ -1091,13 +1037,22 @@ export function MerchantOrderDetail({
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowDeleteConfirm(false)}
-                    className="h-8 text-xs dark:text-slate-400 text-slate-500 rounded-lg"
+                    className="h-8 text-xs text-dark-500 rounded-lg"
                   >
                     إلغاء
                   </Button>
                 </div>
               )}
             </div>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={saving}
+              className="text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+            >
+              <Save className="h-3.5 w-3.5 ml-1" />
+              {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
+            </Button>
           </div>
         </div>
       </DialogContent>

@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, ensureDb } from "@/lib/db";
-import { runAutoCleanup } from "@/lib/cleanup";
 import fs from "fs";
 import path from "path";
 import { orderListWhere } from "@/lib/order-lookup";
+
+export const maxDuration = 30;
 
 /// قراءة ملف مخزَّن على القرص وتحويله إلى Data URL (للصور فقط)
 function getFilePreview(storedName: string, fileType: string | null): string | null {
   try {
     if (!storedName || !storedName.startsWith("file_")) return null;
-    // فقط للصور — لا نعيد PDFs كـ Data URL (حجم كبير)
     const imageTypes = ["PNG", "JPG", "JPEG", "WEBP", "GIF"];
     if (fileType && !imageTypes.includes(fileType.toUpperCase())) return null;
 
@@ -38,13 +38,69 @@ import {
   type ServiceType,
 } from "@/lib/print-config";
 
+// استثناء fileData و smartAnalysis من قوائم الطلبات لتجنب 504
+const ORDER_LIST_SELECT = {
+  id: true,
+  reference: true,
+  serviceType: true,
+  serviceName: true,
+  fileName: true,
+  fileType: true,
+  fileSize: true,
+  options: true,
+  customer: true,
+  delivery: true,
+  pricing: true,
+  estimatedHours: true,
+  status: true,
+  pages: true,
+  copies: true,
+  total: true,
+  createdAt: true,
+  updatedAt: true,
+  readyAt: true,
+  deliveredAt: true,
+  startedPrintingAt: true,
+  completedPrintingAt: true,
+  cost: true,
+  tags: true,
+  adminNotes: true,
+  shopId: true,
+  shop: { select: { name: true, slug: true } },
+} as const;
+
+type OrderListRow = {
+  id: string;
+  reference: string;
+  serviceType: string;
+  serviceName: string;
+  fileName: string | null;
+  fileType: string | null;
+  fileSize: number | null;
+  options: string;
+  customer: string;
+  delivery: string;
+  pricing: string;
+  estimatedHours: number;
+  status: string;
+  pages: number;
+  copies: number;
+  total: number;
+  createdAt: Date;
+  updatedAt: Date;
+  readyAt: Date | null;
+  deliveredAt: Date | null;
+  startedPrintingAt: Date | null;
+  completedPrintingAt: Date | null;
+  cost: number;
+  tags: string;
+  adminNotes: string | null;
+  shopId: string | null;
+  shop?: { name: string; slug: string } | null;
+};
+
 export async function GET(req: NextRequest) {
   try {
-    await ensureDb();
-
-    // صيانة تلقائية في الخلفية (غير متزامنة — لا تبطئ الطلب)
-    runAutoCleanup().catch(() => {});
-
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const search = searchParams.get("search");
@@ -53,12 +109,11 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const rawLimit = parseInt(searchParams.get("limit") || "50", 10);
     const limit = Math.min(10000, Math.max(1, rawLimit));
-    const noPreview = searchParams.get("noPreview") !== "false"; // default: no previews (fast)
+    const noPreview = searchParams.get("noPreview") === "true";
 
     const baseWhere: Record<string, unknown> = {};
     if (status && status !== "all") baseWhere.status = status;
     if (phone) {
-      // البحث برقم الهاتف في حقل customer (JSON)
       baseWhere.customer = { contains: phone };
     }
     if (search) {
@@ -69,8 +124,9 @@ export async function GET(req: NextRequest) {
     }
     const where = orderListWhere(shopId, baseWhere);
 
-    // عند عدم تحديد shopId (صفحة المدير العام)، أضف بيانات المتجر
-    const includeShop = !shopId ? { include: { shop: { select: { name: true, slug: true } } } } : {};
+    const selectForQuery = shopId
+      ? { ...ORDER_LIST_SELECT, shop: false as const }
+      : ORDER_LIST_SELECT;
 
     const [orders, total] = await Promise.all([
       db.printOrder.findMany({
@@ -78,19 +134,16 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
-        ...includeShop,
+        select: selectForQuery,
       }),
       db.printOrder.count({ where }),
     ]);
 
-    return NextResponse.json(
-      {
-        orders: orders.map((o) => {
-        // للصور فقط، أضف filePreview كـ Data URL للمعاينة
-        const filePreview = noPreview ? null : o.fileData ? getFilePreview(o.fileData, o.fileType) : null;
+    return NextResponse.json({
+      orders: (orders as OrderListRow[]).map((o) => {
+        const filePreview = noPreview ? null : o.fileName ? getFilePreview(o.fileName, o.fileType) : null;
         let parsedTags: string[] = [];
         try { parsedTags = JSON.parse(o.tags || "[]"); } catch { parsedTags = []; }
-        // تأمين تحليل JSON مع قيم افتراضية
         let parsedCustomer = { name: "", phone: "", deliveryMethod: "pickup" };
         try { parsedCustomer = { ...parsedCustomer, ...JSON.parse(o.customer || "{}") }; } catch { /* keep default */ }
         let parsedOptions = { pages: 1, copies: 1, color: "", paperSize: "", sides: "", binding: "", paperType: "", printRange: "all" };
@@ -100,35 +153,13 @@ export async function GET(req: NextRequest) {
         let parsedPricing = { perPage: 0, pagesCost: 0, copiesCost: 0, sidesSaving: 0, deliveryCost: 0, discount: 0, total: 0 };
         try { parsedPricing = { ...parsedPricing, ...JSON.parse(o.pricing || "{}") }; } catch { /* keep default */ }
         return {
-          id: o.id,
-          reference: o.reference,
-          serviceType: o.serviceType,
-          serviceName: o.serviceName,
-          fileName: o.fileName,
-          fileType: o.fileType,
-          fileSize: o.fileSize,
-          // fileData يتم استبعاده — يُجلَب فقط عند الحاجة عبر /api/orders/[id]/file
+          ...o,
           options: parsedOptions,
           customer: parsedCustomer,
           delivery: parsedDelivery,
           pricing: parsedPricing,
-          estimatedHours: o.estimatedHours,
-          status: o.status,
-          pages: o.pages,
-          copies: o.copies,
-          total: o.total,
-          createdAt: o.createdAt,
-          updatedAt: o.updatedAt,
-          readyAt: o.readyAt,
-          deliveredAt: o.deliveredAt,
-          startedPrintingAt: o.startedPrintingAt,
-          completedPrintingAt: o.completedPrintingAt,
-          cost: o.cost,
           tags: parsedTags,
-          adminNotes: o.adminNotes,
-          shopId: o.shopId,
           filePreview,
-          // عند وجود علاقة المتجر (صفحة المدير العام)
           ...(o.shop ? { shopName: o.shop.name, shopSlug: o.shop.slug } : {}),
         };
       }),
@@ -138,13 +169,7 @@ export async function GET(req: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit),
       },
-      },
-      {
-        headers: {
-          "Cache-Control": "private, max-age=3, stale-while-revalidate=15",
-        },
-      },
-    );
+    });
   } catch (e) {
     console.error('[orders/GET]', e);
     return NextResponse.json({ error: "حدث خطأ أثناء جلب الطلبات" }, { status: 500 });
@@ -153,6 +178,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureDb();
     const body = await req.json();
     const {
       serviceType,
@@ -186,6 +212,12 @@ export async function POST(req: NextRequest) {
       paperType: options.paperType,
       delivery: delivery.mode,
     });
+    const clientTotal = typeof body.finalTotal === 'number' ? body.finalTotal : null;
+    const finalTotal = clientTotal && clientTotal > 0 ? clientTotal : pricing.total;
+    if (clientTotal && clientTotal > 0) {
+      pricing.total = finalTotal;
+      pricing.extrasCost = Math.max(0, finalTotal - pricing.copiesCost - (pricing.bindingCost || 0) - pricing.deliveryCost + (pricing.discount || 0));
+    }
     const estimatedHours = estimateDeliveryHours(delivery.mode, pages, copies);
 
     let reference = generateReference();

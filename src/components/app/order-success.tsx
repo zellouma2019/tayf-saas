@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import {
   CheckCircle2,
   Copy,
@@ -103,7 +104,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                   key={i}
                   className="confetti-dot absolute w-2 h-2 rounded-full"
                   style={{
-                    backgroundColor: ['#0d7377', '#f59e0b', '#10b981', '#ec4899', '#3b82f6'][i % 5],
+                    backgroundColor: ['#8b5cf6', '#f59e0b', '#10b981', '#ec4899', '#3b82f6'][i % 5],
                     top: `${50 + Math.random() * 40}%`,
                     left: `${10 + Math.random() * 80}%`,
                     '--x': `${(Math.random() - 0.5) * 120}px`,
@@ -115,14 +116,20 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 />
               ))}
             </div>
-            <div
-              className="text-3xl mb-3 tracking-widest animate-in fade-in zoom-in duration-500"
-            >🎉 ✨ 🎊</div>
-            <div
-              className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-200 via-emerald-300 to-teal-400 flex items-center justify-center mb-4 ring-4 ring-emerald-100 dark:ring-emerald-900/50 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-800/30 animate-pulse-glow animate-in fade-in zoom-in duration-500"
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="text-3xl mb-3 tracking-widest"
+            >🎉 ✨ 🎊</motion.div>
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
+              className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-200 via-emerald-300 to-teal-400 flex items-center justify-center mb-4 ring-4 ring-emerald-100 dark:ring-emerald-900/50 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-800/30 animate-pulse-glow"
             >
               <CheckCircle2 className="h-12 w-12 text-emerald-600" />
-            </div>
+            </motion.div>
             <h2 className="text-2xl font-bold mb-2">تم استلام طلبك بنجاح</h2>
             <p className="text-sm text-muted-foreground">
               طلبك الآن في النظام — سنتواصل معك قريباً لتأكيد التفاصيل
@@ -199,17 +206,17 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             )}
 
             {/* ===== الوقت المتوقع للتسليم ===== */}
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
-              <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-gold-500/10 border border-gold-500/20">
+              <div className="w-10 h-10 rounded-lg bg-gold-500 flex items-center justify-center shrink-0">
                 <Clock className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1">
                 <div className="text-xs text-muted-foreground">الوقت المتوقع للتسليم</div>
-                <div className="font-bold text-blue-700">
+                <div className="font-bold text-gold-400">
                   {order.estimatedHours} {order.estimatedHours === 1 ? "ساعة" : "ساعة"}
                 </div>
               </div>
-              <div className="text-xs text-blue-600 text-left">
+              <div className="text-xs text-gold-500 text-left">
                 سيصلك إشعار<br />عند الجاهزية
               </div>
             </div>
@@ -305,7 +312,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               </Button>
               <Button
                 variant="outline"
-                className="w-full border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-950/50 hover:border-teal-400 dark:hover:border-teal-600 text-teal-800 dark:text-teal-300 transition-all duration-200"
+                className="w-full border-gold-300 dark:border-gold-500/20 bg-gold-50 dark:bg-gold-500/8 hover:bg-gold-100 dark:hover:bg-gold-500/15 hover:border-gold-400 dark:hover:border-gold-500 text-foreground dark:text-gold-200 transition-all duration-200"
                 onClick={() => {
                   onClose();
                   onNavigate("track");

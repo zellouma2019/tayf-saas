@@ -1,85 +1,94 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
-/// إحصائيات شاملة — محسّنة (3 استعلامات فقط بدل 8)
+export const maxDuration = 30;
+
+/// إحصائيات شاملة لصاحب المشروع (جميع المتاجر)
 export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "global-stats");
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureDb();
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // استعلام واحد فقط: إجمالي الطلبات + الإيرادات + طلبات اليوم
-    const [counts, shops, statusGroups] = await Promise.all([
-      db.printOrder.aggregate({
-        _count: true,
-        _sum: { total: true },
-        where: { createdAt: { gte: today } },
-      }),
+    // 3 استعلامات متوازية بدلاً من N+1
+    const [totalOrders, totalRevenueResult, todayOrdersResult, shops] = await Promise.all([
+      db.printOrder.count(),
+      db.printOrder.aggregate({ _sum: { total: true } }),
+      db.printOrder.count({ where: { createdAt: { gte: today } } }),
       db.shop.findMany({
         orderBy: { createdAt: "desc" },
-        include: { _count: { select: { orders: true } } },
+        select: {
+          id: true, name: true, slug: true, ownerName: true, ownerPhone: true,
+          phone: true, whatsapp: true, email: true, address: true, primaryColor: true,
+          isActive: true, trialDays: true, trialStartsAt: true, plan: true,
+          features: true, paymentInfo: true, ownerNotes: true,
+          _count: { select: { orders: true } },
+        },
       }),
-      db.printOrder.groupBy({ by: ["status"], _count: true }),
     ]);
 
-    // إجمالي الطلبات والإيرادات (استعلام منفصل لأنه يحتاج filter مختلف)
-    const [allCounts] = await Promise.all([
-      db.printOrder.aggregate({ _count: true, _sum: { total: true } }),
-    ]);
+    const totalRevenue = totalRevenueResult._sum.total || 0;
 
-    const totalOrders = allCounts._count;
-    const totalRevenue = allCounts._sum.total || 0;
-    const todayOrders = counts._count;
+    // إحصائيات لكل متجر (استعلامات متوازية)
+    const shopStats = await Promise.all(
+      shops.map(async (shop) => {
+        const [shopRevenue, shopToday] = await Promise.all([
+          db.printOrder.aggregate({
+            where: { shopId: shop.id },
+            _sum: { total: true },
+          }),
+          db.printOrder.count({
+            where: { shopId: shop.id, createdAt: { gte: today } },
+          }),
+        ]);
+
+        return {
+          id: shop.id,
+          name: shop.name,
+          slug: shop.slug,
+          ownerName: shop.ownerName,
+          ownerPhone: shop.ownerPhone,
+          phone: shop.phone,
+          whatsapp: shop.whatsapp,
+          email: shop.email,
+          address: shop.address,
+          primaryColor: shop.primaryColor,
+          isActive: shop.isActive,
+          trialDays: shop.trialDays,
+          trialStartsAt: shop.trialStartsAt?.toISOString() || null,
+          plan: shop.plan || "free",
+          features: shop.features || null,
+          paymentInfo: shop.paymentInfo || null,
+          ownerNotes: shop.ownerNotes || null,
+          orders: shop._count.orders,
+          revenue: shopRevenue._sum.total || 0,
+          todayOrders: shopToday,
+        };
+      })
+    );
 
     // توزيع الحالات
+    const statusDistribution = await db.printOrder.groupBy({
+      by: ["status"],
+      _count: true,
+    });
+
     const statusCounts: Record<string, number> = {};
-    for (const s of statusGroups) {
+    for (const s of statusDistribution) {
       statusCounts[s.status] = s._count;
     }
-
-    // إحصائيات مبسطة لكل متجر (بدون استعلامات إضافية)
-    const shopStats = shops.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      slug: shop.slug,
-      ownerName: shop.ownerName,
-      ownerPhone: shop.ownerPhone,
-      phone: shop.phone,
-      whatsapp: shop.whatsapp,
-      email: shop.email,
-      address: shop.address,
-      primaryColor: shop.primaryColor,
-      isActive: shop.isActive,
-      trialDays: shop.trialDays,
-      trialStartsAt: shop.trialStartsAt?.toISOString() || null,
-      plan: shop.plan || "free",
-      features: shop.features || null,
-      paymentInfo: shop.paymentInfo || null,
-      ownerNotes: shop.ownerNotes || null,
-      orders: shop._count.orders,
-      revenue: 0,
-      todayOrders: 0,
-      recentOrders: [] as unknown[],
-    }));
 
     return NextResponse.json({
       totalOrders,
       totalRevenue,
-      todayOrders,
+      todayOrders: todayOrdersResult,
       shopCount: shops.length,
       activeShopCount: shops.filter((s) => s.isActive).length,
       statusCounts,
       shopStats,
-      recentOrders: [],
-    }, {
-      headers: {
-        "Cache-Control": "public, s-maxage=5, stale-while-revalidate=30",
-      },
     });
   } catch (e) {
     console.error('[admin/global-stats]', e);

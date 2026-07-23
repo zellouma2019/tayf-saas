@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { orderListWhere } from "@/lib/order-lookup";
 
 export async function GET(req: NextRequest) {
   try {
-    await ensureDb();
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get("shopId");
 

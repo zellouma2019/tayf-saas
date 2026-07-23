@@ -72,11 +72,17 @@ export function getDefaultCountry(): ArabCountry {
   return ARAB_COUNTRIES[0];
 }
 
-/// تنسيق المبلغ بالعملة حسب البلد
+/// تنسيق المبلغ بالعملة حسب البلد أو عملة مخصصة
 export function formatCurrency(
   amount: number | undefined | null,
   countryCode?: string | null,
+  customCurrencyCode?: string | null,
 ): string {
+  // إذا كانت هناك عملة مخصصة، استخدمها
+  if (customCurrencyCode) {
+    return formatCustomCurrency(amount, customCurrencyCode);
+  }
+
   const defaultCountry = getDefaultCountry();
   if (amount == null || isNaN(amount)) {
     const c = getCountry(countryCode) || defaultCountry;
@@ -92,8 +98,8 @@ export function formatCurrency(
 }
 
 /// بديل متوافق مع formatDA القديم
-export function formatDA(n: number | undefined | null, countryCode?: string | null): string {
-  return formatCurrency(n, countryCode);
+export function formatDA(n: number | undefined | null, countryCode?: string | null, customCurrencyCode?: string | null): string {
+  return formatCurrency(n, countryCode, customCurrencyCode);
 }
 
 /// اللغات المدعومة
@@ -120,4 +126,73 @@ export function getLanguage(code: string | null | undefined): AppLanguage | unde
 
 export function getDefaultLanguage(): AppLanguage {
   return APP_LANGUAGES[0]; // العربية
+}
+
+// ============================================================
+// عملات أجنبية إضافية
+// ============================================================
+
+export interface ForeignCurrency {
+  code: string;
+  symbol: string;
+  nameAr: string;
+  nameEn: string;
+  flag: string;
+  decimals: number;
+  numberFormat: "en" | "fr" | "ar";
+}
+
+export const FOREIGN_CURRENCIES: ForeignCurrency[] = [
+  { code: "USD", symbol: "$", nameAr: "دولار أمريكي", nameEn: "US Dollar", flag: "🇺🇸", decimals: 2, numberFormat: "en" },
+  { code: "EUR", symbol: "€", nameAr: "يورو", nameEn: "Euro", flag: "🇪🇺", decimals: 2, numberFormat: "fr" },
+  { code: "GBP", symbol: "£", nameAr: "جنيه إسترليني", nameEn: "British Pound", flag: "🇬🇧", decimals: 2, numberFormat: "en" },
+  { code: "TRY", symbol: "₺", nameAr: "ليرة تركية", nameEn: "Turkish Lira", flag: "🇹🇷", decimals: 2, numberFormat: "en" },
+  { code: "CNY", symbol: "¥", nameAr: "يوان صيني", nameEn: "Chinese Yuan", flag: "🇨🇳", decimals: 2, numberFormat: "en" },
+  { code: "INR", symbol: "₹", nameAr: "روبية هندية", nameEn: "Indian Rupee", flag: "🇮🇳", decimals: 2, numberFormat: "en" },
+  { code: "JPY", symbol: "¥", nameAr: "ين ياباني", nameEn: "Japanese Yen", flag: "🇯🇵", decimals: 0, numberFormat: "en" },
+  { code: "CAD", symbol: "C$", nameAr: "دولار كندي", nameEn: "Canadian Dollar", flag: "🇨🇦", decimals: 2, numberFormat: "en" },
+  { code: "AUD", symbol: "A$", nameAr: "دولار أسترالي", nameEn: "Australian Dollar", flag: "🇦🇺", decimals: 2, numberFormat: "en" },
+  { code: "CHF", symbol: "Fr", nameAr: "فرنك سويسري", nameEn: "Swiss Franc", flag: "🇨🇭", decimals: 2, numberFormat: "en" },
+  { code: "MAD", symbol: "د.م", nameAr: "درهم مغربي", nameEn: "Moroccan Dirham", flag: "🇲🇦", decimals: 2, numberFormat: "fr" },
+  { code: "TND", symbol: "د.ت", nameAr: "دينار تونسي", nameEn: "Tunisian Dinar", flag: "🇹🇳", decimals: 3, numberFormat: "fr" },
+  { code: "LYD", symbol: "د.ل", nameAr: "دينار ليبي", nameEn: "Libyan Dinar", flag: "🇱🇾", decimals: 3, numberFormat: "ar" },
+  { code: "SAR", symbol: "ر.س", nameAr: "ريال سعودي", nameEn: "Saudi Riyal", flag: "🇸🇦", decimals: 2, numberFormat: "ar" },
+  { code: "AED", symbol: "د.إ", nameAr: "درهم إماراتي", nameEn: "UAE Dirham", flag: "🇦🇪", decimals: 2, numberFormat: "ar" },
+  { code: "QAR", symbol: "ر.ق", nameAr: "ريال قطري", nameEn: "Qatari Riyal", flag: "🇶🇦", decimals: 2, numberFormat: "ar" },
+  { code: "KWD", symbol: "د.ك", nameAr: "دينار كويتي", nameEn: "Kuwaiti Dinar", flag: "🇰🇼", decimals: 3, numberFormat: "ar" },
+  { code: "BHD", symbol: "د.ب", nameAr: "دينار بحريني", nameEn: "Bahraini Dinar", flag: "🇧🇭", decimals: 3, numberFormat: "ar" },
+  { code: "OMR", symbol: "ر.ع", nameAr: "ريال عماني", nameEn: "Omani Rial", flag: "🇴🇲", decimals: 3, numberFormat: "ar" },
+  { code: "JOD", symbol: "د.أ", nameAr: "دينار أردني", nameEn: "Jordanian Dinar", flag: "🇯🇴", decimals: 3, numberFormat: "ar" },
+  { code: "EGP", symbol: "ج.م", nameAr: "جنيه مصري", nameEn: "Egyptian Pound", flag: "🇪🇬", decimals: 2, numberFormat: "ar" },
+  { code: "IQD", symbol: "د.ع", nameAr: "دينار عراقي", nameEn: "Iraqi Dinar", flag: "🇮🇶", decimals: 3, numberFormat: "ar" },
+  { code: "LBP", symbol: "ل.ل", nameAr: "ليرة لبنانية", nameEn: "Lebanese Pound", flag: "🇱🇧", decimals: 0, numberFormat: "ar" },
+  { code: "SYP", symbol: "ل.س", nameAr: "ليرة سورية", nameEn: "Syrian Pound", flag: "🇸🇾", decimals: 0, numberFormat: "ar" },
+  { code: "YER", symbol: "ر.ي", nameAr: "ريال يمني", nameEn: "Yemeni Rial", flag: "🇾🇪", decimals: 0, numberFormat: "ar" },
+  { code: "SDG", symbol: "ج.س", nameAr: "جنيه سوداني", nameEn: "Sudanese Pound", flag: "🇸🇩", decimals: 2, numberFormat: "ar" },
+  { code: "DZD", symbol: "د.ج", nameAr: "دينار جزائري", nameEn: "Algerian Dinar", flag: "🇩🇿", decimals: 2, numberFormat: "fr" },
+  { code: "MRU", symbol: "أ.م", nameAr: "أوقية موريتانية", nameEn: "Mauritanian Ouguiya", flag: "🇲🇷", decimals: 2, numberFormat: "fr" },
+  { code: "SOS", symbol: "ش.ص", nameAr: "شلن صومالي", nameEn: "Somali Shilling", flag: "🇸🇴", decimals: 0, numberFormat: "en" },
+  { code: "XAF", symbol: "ف.ج", nameAr: "فرنك أفريقي", nameEn: "CFA Franc", flag: "🌍", decimals: 0, numberFormat: "fr" },
+];
+
+export function getForeignCurrency(code: string): ForeignCurrency | undefined {
+  return FOREIGN_CURRENCIES.find((c) => c.code === code);
+}
+
+/// تنسيق المبلغ بعملة مخصصة
+export function formatCustomCurrency(
+  amount: number | undefined | null,
+  currencyCode: string,
+): string {
+  if (amount == null || isNaN(amount)) {
+    const fc = getForeignCurrency(currencyCode);
+    return `0 ${fc?.symbol || currencyCode}`;
+  }
+  const fc = getForeignCurrency(currencyCode);
+  if (!fc) return `${amount} ${currencyCode}`;
+  const formatted = amount.toLocaleString(
+    fc.numberFormat === "ar" ? "ar-SA-u-nu-latn" : fc.numberFormat === "fr" ? "fr-FR" : "en-US",
+    { minimumFractionDigits: fc.decimals > 0 ? Math.min(fc.decimals, 2) : 0, maximumFractionDigits: fc.decimals > 0 ? Math.min(fc.decimals, 2) : 0 },
+  );
+  return `${formatted} ${fc.symbol}`;
 }

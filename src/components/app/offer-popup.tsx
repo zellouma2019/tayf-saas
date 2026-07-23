@@ -26,7 +26,9 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
     if (open) {
       setShowConfetti(true);
       const t = setTimeout(() => setShowConfetti(false), 2000);
-      return () => clearTimeout(t);
+      // إغلاق تلقائي بعد 12 ثانية حتى لا تعيق المستخدم
+      const autoClose = setTimeout(() => onClose(), 12000);
+      return () => { clearTimeout(t); clearTimeout(autoClose); };
     }
   }, [open]);
 
@@ -51,7 +53,7 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden border-0" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden border-0" dir="rtl">
         <DialogTitle className="sr-only">عرض خاص لك</DialogTitle>
 
         {/* ===== الخلفية المتدرجة + الكونفيتي ===== */}

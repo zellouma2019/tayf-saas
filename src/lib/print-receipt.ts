@@ -77,9 +77,9 @@ export function printReceipt(
   <div class="sep"></div>
 
   <div class="row"><span>الصفحات:</span><span>${order.pages} × ${order.copies} نسخة</span></div>
-  ${order.pricing.discount ? `<div class="row"><span>الخصم:</span><span>-${order.pricing.discount} ر.س</span></div>` : ""}
-  ${order.pricing.deliveryCost ? `<div class="row"><span>التوصيل:</span><span>${order.pricing.deliveryCost} ر.س</span></div>` : ""}
-  <div class="row bold"><span>الإجمالي:</span><span>${order.total} ر.س</span></div>
+  ${order.pricing.discount ? `<div class="row"><span>الخصم:</span><span>-${order.pricing.discount} د.ج</span></div>` : ""}
+  ${order.pricing.deliveryCost ? `<div class="row"><span>التوصيل:</span><span>${order.pricing.deliveryCost} د.ج</span></div>` : ""}
+  <div class="row bold"><span>الإجمالي:</span><span>${order.total} د.ج</span></div>
   <div class="sep"></div>
 
   <div class="center">

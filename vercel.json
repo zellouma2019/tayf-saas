@@ -1,35 +1,43 @@
 {
-  "framework": "nextjs",
   "functions": {
-    "src/app/api/**": {
-      "maxDuration": 15
-    },
-    "src/app/api/orders/export/route.ts": {
+    "src/app/api/orders/route.ts": {
       "maxDuration": 30
     },
-    "src/app/api/ai/**": {
+    "src/app/api/orders/export/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/orders/bulk/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/admin/global-stats/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/admin/analytics/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/admin/stats/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/admin/daily-stats/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/shops/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/seed/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/setup/route.ts": {
       "maxDuration": 30
     }
   },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    },
-    {
-      "source": "/_next/static/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/favicon(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
   ]
