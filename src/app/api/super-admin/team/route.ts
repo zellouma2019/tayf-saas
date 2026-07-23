@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
-import { runMigrations } from "@/lib/db-migrations";
+import { getSuperAdmin, createSuperAdmin, updateSuperAdmin } from "@/lib/db-migrations";
 
 interface TeamMember {
   email: string;
@@ -16,12 +15,10 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await runMigrations();
-    let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+    let admin = await getSuperAdmin({ id: true, key: true, teamMembers: true }) as { teamMembers: string | null } | null;
     if (!admin) {
-      admin = await db.superAdmin.create({ data: { key: "main" } });
+      admin = await createSuperAdmin() as { teamMembers: string | null };
     }
-
     const members: TeamMember[] = JSON.parse(admin.teamMembers || "[]");
     return NextResponse.json({ members });
   } catch {
@@ -36,26 +33,22 @@ export async function POST(req: NextRequest) {
 
   try {
     const { email, name, role } = await req.json();
-
     if (!email || !name) {
       return NextResponse.json({ error: "الإيميل والاسم مطلوبان" }, { status: 400 });
     }
 
-    // تحقق من صحة الإيميل
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: "إيميل غير صالح" }, { status: 400 });
     }
 
-    await runMigrations();
-    let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+    let admin = await getSuperAdmin({ id: true, key: true, teamMembers: true }) as { teamMembers: string | null } | null;
     if (!admin) {
-      admin = await db.superAdmin.create({ data: { key: "main" } });
+      admin = await createSuperAdmin() as { teamMembers: string | null };
     }
 
     const members: TeamMember[] = JSON.parse(admin.teamMembers || "[]");
 
-    // تحقق من عدم التكرار
     if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) {
       return NextResponse.json({ error: "هذا الإيميل مضاف مسبقاً" }, { status: 409 });
     }
@@ -67,11 +60,7 @@ export async function POST(req: NextRequest) {
       addedAt: new Date().toISOString(),
     });
 
-    await db.superAdmin.update({
-      where: { key: "main" },
-      data: { teamMembers: JSON.stringify(members) },
-    });
-
+    await updateSuperAdmin({ teamMembers: JSON.stringify(members) });
     return NextResponse.json({ success: true, members });
   } catch {
     return NextResponse.json({ error: "خطأ في إضافة العضو" }, { status: 500 });
@@ -85,13 +74,11 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const { email } = await req.json();
-
     if (!email) {
       return NextResponse.json({ error: "الإيميل مطلوب" }, { status: 400 });
     }
 
-    await runMigrations();
-    let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+    const admin = await getSuperAdmin({ id: true, key: true, teamMembers: true }) as { teamMembers: string | null } | null;
     if (!admin) {
       return NextResponse.json({ error: "لا توجد بيانات" }, { status: 404 });
     }
@@ -103,11 +90,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
 
-    await db.superAdmin.update({
-      where: { key: "main" },
-      data: { teamMembers: JSON.stringify(filtered) },
-    });
-
+    await updateSuperAdmin({ teamMembers: JSON.stringify(filtered) });
     return NextResponse.json({ success: true, members: filtered });
   } catch {
     return NextResponse.json({ error: "خطأ في حذف العضو" }, { status: 500 });

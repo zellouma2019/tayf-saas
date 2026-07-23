@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
-import { runMigrations } from "@/lib/db-migrations";
+import { getSuperAdmin, createSuperAdmin, updateSuperAdmin } from "@/lib/db-migrations";
 
 const DEFAULT_PLATFORM_SETTINGS = {
   platformName: "طيف",
@@ -45,10 +44,9 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await runMigrations();
-    let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+    let admin = await getSuperAdmin() as { platformSettings: string | null } | null;
     if (!admin) {
-      admin = await db.superAdmin.create({ data: { key: "main" } });
+      admin = await createSuperAdmin() as { platformSettings: string | null };
     }
     const settings = admin.platformSettings
       ? { ...DEFAULT_PLATFORM_SETTINGS, ...JSON.parse(admin.platformSettings) }
@@ -64,31 +62,23 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    await runMigrations();
     const body = await req.json();
 
-    let admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+    let admin = await getSuperAdmin() as { platformSettings: string | null } | null;
     if (!admin) {
-      admin = await db.superAdmin.create({ data: { key: "main" } });
+      admin = await createSuperAdmin() as { platformSettings: string | null };
     }
 
     const current = admin.platformSettings
       ? { ...DEFAULT_PLATFORM_SETTINGS, ...JSON.parse(admin.platformSettings) }
       : DEFAULT_PLATFORM_SETTINGS;
 
-    // Merge updates
     const updated = { ...current, ...body };
-
-    // Clean - remove undefined values
     for (const key of Object.keys(body)) {
       if (body[key] === undefined) delete updated[key];
     }
 
-    await db.superAdmin.update({
-      where: { key: "main" },
-      data: { platformSettings: JSON.stringify(updated) },
-    });
-
+    await updateSuperAdmin({ platformSettings: JSON.stringify(updated) });
     return NextResponse.json({ success: true, settings: updated });
   } catch {
     return NextResponse.json({ error: "خطأ في تحديث الإعدادات" }, { status: 500 });
