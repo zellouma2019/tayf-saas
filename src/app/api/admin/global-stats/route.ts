@@ -4,97 +4,55 @@ import { withRateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
-/// إحصائيات شاملة لصاحب المشروع (جميع المتاجر) — محسّنة بـ Raw SQL
+/// إحصائيات شاملة — 3 استعلامات فقط
 export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "global-stats");
   if (!rl.ok) return rl.response;
 
   try {
     await ensureDb();
-    const today = new Date();
-    const todayStr = today.toISOString().slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
 
-    // استعلامان raw SQL متوازيان بدلاً من 18 استعلام Prisma
-    const [statsResult, shopsResult] = await Promise.all([
-      // استعلام واحد يجلب: الإجماليات + توزيع الحالات + آخر 20 طلب
-      db.$queryRaw<Array<{
-        total_orders: number;
-        total_revenue: number;
-        today_orders: number;
-        status: string | null;
-        status_count: number;
-        order_id: string | null;
-        order_ref: string | null;
-        order_service_type: string | null;
-        order_service_name: string | null;
-        order_status: string | null;
-        order_total: number | null;
-        order_customer: string | null;
-        order_created_at: string | null;
-        order_shop_name: string | null;
-      }>>`
-        WITH counts AS (
-          SELECT
-            (SELECT COUNT(*) FROM "PrintOrder") AS total_orders,
-            (SELECT COALESCE(SUM("total"), 0) FROM "PrintOrder") AS total_revenue,
-            (SELECT COUNT(*) FROM "PrintOrder" WHERE "createdAt" >= ${todayStr}) AS today_orders
-        ),
-        status_dist AS (
-          SELECT "status", COUNT(*) AS status_count
-          FROM "PrintOrder"
-          GROUP BY "status"
-        ),
-        recent AS (
-          SELECT
-            po.id AS order_id,
-            po.reference AS order_ref,
-            po."serviceType" AS order_service_type,
-            po."serviceName" AS order_service_name,
-            po.status AS order_status,
-            po.total AS order_total,
-            po.customer AS order_customer,
-            po."createdAt" AS order_created_at,
-            s.name AS order_shop_name
-          FROM "PrintOrder" po
-          LEFT JOIN "Shop" s ON po."shopId" = s.id
-          ORDER BY po."createdAt" DESC
-          LIMIT 20
-        )
+    // 3 استعلامات raw SQL متوازية
+    const [countRows, statusRows, recentRows, shopRows] = await Promise.all([
+      // 1) الإجماليات
+      db.$queryRaw<Array<{ total_orders: number; total_revenue: number; today_orders: number }>>`
         SELECT
-          c.total_orders, c.total_revenue, c.today_orders,
-          sd.status, sd.status_count,
-          r.order_id, r.order_ref, r.order_service_type, r.order_service_name,
-          r.order_status, r.order_total, r.order_customer, r.order_created_at, r.order_shop_name
-        FROM counts c
-        CROSS JOIN status_dist sd
-        LEFT JOIN recent r ON TRUE
+          (SELECT COUNT(*) FROM "PrintOrder") AS total_orders,
+          (SELECT COALESCE(SUM("total"), 0) FROM "PrintOrder") AS total_revenue,
+          (SELECT COUNT(*) FROM "PrintOrder" WHERE "createdAt" >= ${todayStr}) AS today_orders
       `,
 
-      // استعلام واحد للمتاجر مع عدد الطلبات والإيرادات
+      // 2) توزيع الحالات
+      db.$queryRaw<Array<{ status: string; cnt: number }>>`
+        SELECT "status", COUNT(*) AS cnt FROM "PrintOrder" GROUP BY "status"
+      `,
+
+      // 3) آخر 20 طلب مع اسم المتجر
       db.$queryRaw<Array<{
-        id: string;
-        name: string;
-        slug: string;
-        "ownerName": string | null;
-        "ownerPhone": string | null;
-        phone: string | null;
-        whatsapp: string | null;
-        email: string | null;
-        address: string | null;
-        "primaryColor": string | null;
-        "isActive": number;
-        "trialDays": number | null;
-        "trialStartsAt": string | null;
-        plan: string | null;
-        features: string | null;
-        "paymentInfo": string | null;
-        "ownerNotes": string | null;
-        "adminPin": string | null;
-        country: string | null;
-        language: string | null;
-        order_count: number;
-        revenue: number;
-        today_orders: number;
+        id: string; reference: string; "serviceType": string; "serviceName": string;
+        status: string; total: number; customer: string; "createdAt": string;
+        shop_name: string;
+      }>>`
+        SELECT
+          po.id, po.reference, po."serviceType", po."serviceName",
+          po.status, po.total, po.customer, po."createdAt",
+          COALESCE(s.name, '—') AS shop_name
+        FROM "PrintOrder" po
+        LEFT JOIN "Shop" s ON po."shopId" = s.id
+        ORDER BY po."createdAt" DESC
+        LIMIT 20
+      `,
+
+      // 4) المتاجر مع إحصائيات
+      db.$queryRaw<Array<{
+        id: string; name: string; slug: string; "ownerName": string | null;
+        "ownerPhone": string | null; phone: string | null; whatsapp: string | null;
+        email: string | null; address: string | null; "primaryColor": string | null;
+        "isActive": number; "trialDays": number | null; "trialStartsAt": string | null;
+        plan: string | null; features: string | null; "paymentInfo": string | null;
+        "ownerNotes": string | null; "adminPin": string | null; country: string | null;
+        language: string | null; order_count: number; revenue: number; today_orders: number;
       }>>`
         SELECT
           s.id, s.name, s.slug, s."ownerName", s."ownerPhone",
@@ -113,80 +71,45 @@ export async function GET(req: NextRequest) {
       `,
     ]);
 
-    // معالجة النتائج
-    const totalOrders = statsResult[0]?.total_orders ?? 0;
-    const totalRevenue = statsResult[0]?.total_revenue ?? 0;
-    const todayOrders = statsResult[0]?.today_orders ?? 0;
+    const totalOrders = countRows[0]?.total_orders ?? 0;
+    const totalRevenue = countRows[0]?.total_revenue ?? 0;
+    const todayOrders = countRows[0]?.today_orders ?? 0;
 
-    // توزيع الحالات
     const statusCounts: Record<string, number> = {};
-    for (const row of statsResult) {
-      if (row.status) {
-        statusCounts[row.status] = row.status_count;
-      }
+    for (const r of statusRows) {
+      statusCounts[r.status] = r.cnt;
     }
 
-    // آخر الطلبات (فقط الصفوف الفريدة)
-    const seenIds = new Set<string>();
-    const recentOrders: Array<{
-      id: string; reference: string; serviceType: string; serviceName: string;
-      status: string; total: number; customer: unknown; createdAt: string; shopName: string;
-    }> = [];
-    for (const row of statsResult) {
-      if (row.order_id && !seenIds.has(row.order_id)) {
-        seenIds.add(row.order_id);
-        let parsedCustomer: unknown = {};
-        try { parsedCustomer = JSON.parse(row.order_customer || "{}"); } catch { /* */ }
-        recentOrders.push({
-          id: row.order_id,
-          reference: row.order_ref || "",
-          serviceType: row.order_service_type || "",
-          serviceName: row.order_service_name || "",
-          status: row.order_status || "",
-          total: row.order_total || 0,
-          customer: parsedCustomer,
-          createdAt: row.order_created_at || "",
-          shopName: row.order_shop_name || "—",
-        });
-      }
-    }
+    const recentOrders = recentRows.map((r) => {
+      let customer: unknown = {};
+      try { customer = JSON.parse(r.customer || "{}"); } catch { /* */ }
+      return {
+        id: r.id, reference: r.reference,
+        serviceType: r.serviceType, serviceName: r.serviceName,
+        status: r.status, total: r.total, customer,
+        createdAt: r.createdAt, shopName: r.shop_name,
+      };
+    });
 
-    // إحصائيات المتاجر
-    const shopStats = shopsResult.map((s) => ({
-      id: s.id,
-      name: s.name,
-      slug: s.slug,
-      ownerName: s.ownerName,
-      ownerPhone: s.ownerPhone,
-      phone: s.phone,
-      whatsapp: s.whatsapp,
-      email: s.email,
-      address: s.address,
-      primaryColor: s.primaryColor,
+    const shopStats = shopRows.map((s) => ({
+      id: s.id, name: s.name, slug: s.slug,
+      ownerName: s.ownerName, ownerPhone: s.ownerPhone,
+      phone: s.phone, whatsapp: s.whatsapp, email: s.email,
+      address: s.address, primaryColor: s.primaryColor,
       isActive: Boolean(s.isActive),
-      trialDays: s.trialDays,
-      trialStartsAt: s.trialStartsAt || null,
+      trialDays: s.trialDays, trialStartsAt: s.trialStartsAt || null,
       plan: s.plan || "free",
-      features: s.features || null,
-      paymentInfo: s.paymentInfo || null,
-      ownerNotes: s.ownerNotes || null,
-      adminPin: s.adminPin,
-      country: s.country,
-      language: s.language,
-      orders: s.order_count,
-      revenue: s.revenue,
-      todayOrders: s.today_orders,
+      features: s.features || null, paymentInfo: s.paymentInfo || null,
+      ownerNotes: s.ownerNotes || null, adminPin: s.adminPin,
+      country: s.country, language: s.language,
+      orders: s.order_count, revenue: s.revenue, todayOrders: s.today_orders,
     }));
 
     return NextResponse.json({
-      totalOrders,
-      totalRevenue,
-      todayOrders,
-      shopCount: shopsResult.length,
-      activeShopCount: shopsResult.filter((s) => s.isActive).length,
-      statusCounts,
-      shopStats,
-      recentOrders,
+      totalOrders, totalRevenue, todayOrders,
+      shopCount: shopRows.length,
+      activeShopCount: shopRows.filter((s) => s.isActive).length,
+      statusCounts, shopStats, recentOrders,
     });
   } catch (e) {
     console.error("[admin/global-stats]", e);
