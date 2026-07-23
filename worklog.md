@@ -193,3 +193,23 @@ Stage Summary:
 - Commit: 546ee6a pushed to GitHub and deployed on Vercel
 - Dark mode comprehensively fixed across all remaining components
 - Mobile responsiveness improved in order tracking area
+
+---
+Task ID: 8
+Agent: Main Agent
+Task: Fix 504 timeout on global-stats + dashboard overview blank
+
+Work Log:
+- Diagnosed: global-stats API returning 504 FUNCTION_INVOCATION_TIMEOUT on Vercel
+- Root cause: 18 Prisma queries + ensureDb migrations = ~22 DB calls per cold start
+- Attempted raw SQL optimization (still 504 - raw SQL with Turso adapter also slow)
+- Discovered: Turso/PrismaLibSQL $queryRaw has high overhead vs ORM
+- Discovered: Promise.all with multiple queries causes Turso connection contention
+- Final fix: 3 queries only (1 aggregate, 1 groupBy, 2 parallel findMany)
+- Also: removed ensureDb() from global-stats (migrations not needed for PrintOrder/Shop)
+- Also: made ensureDb() accept {runMigrations} option to skip migrations for non-admin routes
+
+Stage Summary:
+- global-stats reduced from 22 DB calls to 3
+- Dashboard overview should now load within Vercel 10s function timeout
+- Commit: f1654c8 pushed, awaiting Vercel deployment
