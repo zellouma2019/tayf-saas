@@ -86,10 +86,22 @@ export async function GET(req: NextRequest) {
     );
 
     // توزيع الحالات
-    const statusDistribution = await db.printOrder.groupBy({
-      by: ["status"],
-      _count: true,
-    });
+    const [statusDistribution, allRecentOrders] = await Promise.all([
+      db.printOrder.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
+      db.printOrder.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: {
+          id: true, reference: true, serviceType: true, serviceName: true,
+          status: true, total: true, createdAt: true,
+          customer: true,
+          shop: { select: { name: true } },
+        },
+      }),
+    ]);
 
     const statusCounts: Record<string, number> = {};
     for (const s of statusDistribution) {
@@ -104,6 +116,17 @@ export async function GET(req: NextRequest) {
       activeShopCount: shops.filter((s) => s.isActive).length,
       statusCounts,
       shopStats,
+      recentOrders: allRecentOrders.map((o) => ({
+        id: o.id,
+        reference: o.reference,
+        serviceType: o.serviceType,
+        serviceName: o.serviceName,
+        status: o.status,
+        total: o.total,
+        customer: JSON.parse(o.customer),
+        createdAt: o.createdAt.toISOString(),
+        shopName: o.shop?.name || "—",
+      })),
     });
   } catch (e) {
     console.error('[admin/global-stats]', e);
