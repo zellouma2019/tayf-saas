@@ -8,24 +8,13 @@ let migrationsRan = false
 export async function runMigrations(): Promise<void> {
   if (migrationsRan) return
   try {
-    // تجربة واحدة تجمع كل الميجريشنات
-    await db.$executeRawUnsafe(`
-      -- SuperAdmin columns
-      ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}';
-      ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]';
-      -- Shop columns
-      ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT;
-      -- Customer columns
-      ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME;
-    `).catch(() => {
-      // بعض الأعمدة موجودة مسبقاً — نحاول كل واحد على حدة
-      return Promise.allSettled([
-        db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`).catch(() => {}),
-        db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]'`).catch(() => {}),
-        db.$executeRawUnsafe(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`).catch(() => {}),
-        db.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`).catch(() => {}),
-      ]);
-    });
+    // تشغيل كل ميجريشن بالتوازي (فشل أي منها = العمود موجود مسبقاً)
+    await Promise.allSettled([
+      db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`).catch(() => {}),
+      db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]'`).catch(() => {}),
+      db.$executeRawUnsafe(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`).catch(() => {}),
+      db.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`).catch(() => {}),
+    ])
     migrationsRan = true
   } catch (e) {
     console.warn('[migration] Failed:', e)
