@@ -65,14 +65,14 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
   return (
     <div className="max-w-3xl mx-auto">
       {/* ترويسة محسّنة */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/30 border border-amber-200/60 p-6 mb-8 text-center overflow-hidden">
+      <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/30 dark:from-amber-950/30 dark:to-amber-900/10 border border-amber-200/60 dark:border-amber-800/40 p-6 mb-8 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(212,175,55,0.08),transparent_50%)]" />
         <div className="relative">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-3 shadow-lg shadow-amber-200/50"
+            className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-3 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20"
           >
             <motion.div
               animate={{ rotate: [0, 360] }}
@@ -101,7 +101,7 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
             type="tel"
           />
         </div>
-        <Button type="submit" size="lg" className="h-12 px-6 bg-neutral-900 hover:bg-neutral-800 text-white" disabled={loading}>
+        <Button type="submit" size="lg" className="h-12 px-6 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white" disabled={loading}>
           {loading ? (
             <span className="animate-pulse">بحث...</span>
           ) : (
@@ -156,7 +156,7 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
         <div className="text-center mt-6">
           <button
             onClick={() => onRepeat(null)}
-            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-amber-600 transition-colors"
+            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             لا توجد طلبات؟ ابدأ طلب جديد
@@ -189,7 +189,7 @@ function RepeatOrderCard({
     <Card className={`hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden border-r-[3px] ${borderClass}`}>
       <CardContent className="p-0">
         <div className="p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center shrink-0">
             <span className="text-xl">{serviceEmoji[order.serviceType] || "🖨️"}</span>
           </div>
           <div className="flex-1 min-w-0">
@@ -224,11 +224,11 @@ function RepeatOrderCard({
           </div>
           <div className="text-left shrink-0">
             <div className="text-xs text-muted-foreground">المجموع</div>
-            <div className="font-bold text-amber-700">{formatDA(order.total)}</div>
+            <div className="font-bold text-amber-700 dark:text-amber-400">{formatDA(order.total)}</div>
           </div>
           <Button
             size="sm"
-            className="shrink-0 bg-neutral-900 hover:bg-neutral-800 text-white"
+            className="shrink-0 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white"
             onClick={() => {
               onRepeat(order);
               toast.success("تم تحميل الطلب للتعديل", {

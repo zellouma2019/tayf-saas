@@ -91,7 +91,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
       <Card className="max-w-sm mx-auto mt-12">
         <CardContent className="p-6">
           <div className="text-center mb-5">
-            <div className="w-12 h-12 rounded-xl bg-neutral-900 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-xl bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center mx-auto mb-3">
               <Store className="h-6 w-6 text-amber-400" />
             </div>
             <h2 className="font-bold text-lg">إعدادات المتجر</h2>
@@ -107,7 +107,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
               className="text-center text-lg tracking-widest"
               required
             />
-            <Button type="submit" className="w-full bg-neutral-900 hover:bg-neutral-800 text-white">
+            <Button type="submit" className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white">
               دخول
             </Button>
           </form>
@@ -119,7 +119,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center">
           <Store className="h-5 w-5 text-amber-400" />
         </div>
         <div>
@@ -133,7 +133,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
         <Card>
           <CardContent className="p-5 space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2">
-              <Store className="h-4 w-4 text-amber-600" />
+              <Store className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               معلومات المتجر
             </h3>
             <div>
@@ -165,7 +165,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
         <Card>
           <CardContent className="p-5 space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2">
-              <Palette className="h-4 w-4 text-amber-600" />
+              <Palette className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               المظهر
             </h3>
             <div>
@@ -193,7 +193,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
         <Card>
           <CardContent className="p-5 space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2">
-              <User className="h-4 w-4 text-amber-600" />
+              <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               معلومات المالك
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -209,7 +209,7 @@ export function ShopSettings({ slug, onSaved, initiallyUnlocked, verifiedPin }: 
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full bg-neutral-900 hover:bg-neutral-800 text-white" disabled={saving}>
+        <Button type="submit" className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white" disabled={saving}>
           <Save className="h-4 w-4" />
           {saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
         </Button>

@@ -423,23 +423,23 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={openWhatsApp}
-                className="flex items-center gap-2 bg-white border border-emerald-200 shadow-lg rounded-full px-3 py-2 hover:bg-emerald-50 transition-colors group"
+                className="flex items-center gap-2 bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800 shadow-lg rounded-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors group"
               >
                 <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
                   <MessageCircle className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-medium text-sm text-neutral-900">واتساب</span>
+                <span className="font-medium text-sm text-neutral-900 dark:text-neutral-100">واتساب</span>
               </button>
 
               {isAiEnabled && (
               <button
                 onClick={openAssistant}
-                className="flex items-center gap-2 bg-white border border-amber-200 shadow-lg rounded-full px-3 py-2 hover:bg-amber-50 transition-colors group"
+                className="flex items-center gap-2 bg-white dark:bg-neutral-800 border border-amber-200 dark:border-amber-800 shadow-lg rounded-full px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors group"
               >
                 <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-4 w-4 text-neutral-900" />
+                  <Sparkles className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
                 </div>
-                <span className="font-medium text-sm text-neutral-900">المساعد الذكي</span>
+                <span className="font-medium text-sm text-neutral-900 dark:text-neutral-100">المساعد الذكي</span>
               </button>
               )}
             </div>
@@ -511,8 +511,8 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
 
             {/* لوحة توليد الصور */}
             {showImageGen && (
-              <div className="border-b border-amber-100 bg-amber-50/50 p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+              <div className="border-b border-amber-100 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
                   <ImagePlus className="h-3.5 w-3.5" />
                   توليد تصميم بالذكاء الاصطناعي
                 </div>
@@ -546,7 +546,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
             )}
 
             {/* الرسائل */}
-            <div className="flex-1 overflow-y-auto custom-scroll p-4 space-y-3 bg-amber-50/30">
+            <div className="flex-1 overflow-y-auto custom-scroll p-4 space-y-3 bg-amber-50/30 dark:bg-amber-950/10">
               {messages.map((msg, i) => (
                 <div key={i} className={msg.role === "user" ? "flex justify-start" : "flex justify-end"}>
                   <div className="max-w-[85%]">
@@ -557,7 +557,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                           onClick={() => toggleTTS(i, msg.text)}
                           disabled={playingMsgIndex !== null && playingMsgIndex !== i}
                           className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                            playingMsgIndex === i ? "bg-amber-500 text-white scale-110 shadow-md" : "hover:bg-amber-100 text-amber-600"
+                            playingMsgIndex === i ? "bg-amber-500 text-white scale-110 shadow-md" : "hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400"
                           } disabled:opacity-40`}
                           title={playingMsgIndex === i ? "إيقاف الصوت" : "استمع للرد"}
                         >
@@ -570,8 +570,8 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
                     <div
                       className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed chat-markdown ${
                         msg.role === "user"
-                          ? "bg-neutral-900 text-white rounded-bl-sm"
-                          : "bg-white border border-amber-100 text-neutral-800 rounded-br-sm shadow-sm"
+                          ? "bg-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 text-white rounded-bl-sm"
+                          : "bg-white dark:bg-card border border-amber-100 dark:border-amber-800/40 text-neutral-800 dark:text-neutral-200 rounded-br-sm shadow-sm"
                       }`}
                     >
                       {msg.role === "user" ? (
@@ -593,7 +593,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
 
                     {/* صورة مُولَّدة */}
                     {msg.generatedImage && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
+                      <div className="mt-2 rounded-xl overflow-hidden border border-amber-200 dark:border-amber-800/40 shadow-sm">
                         <img
                           src={`data:image/png;base64,${msg.generatedImage}`}
                           alt="تصميم مُولَّد"

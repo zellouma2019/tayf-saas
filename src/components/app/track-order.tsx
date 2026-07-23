@@ -64,10 +64,10 @@ export function TrackOrder() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* منطقة البحث مع خلفية محسّنة */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-violet-50 to-slate-50 border border-dark-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
+      <div className="relative rounded-2xl bg-gradient-to-br from-violet-50 to-slate-50 dark:from-violet-950/30 dark:to-slate-900/30 border border-dark-200/60 dark:border-dark-700/40 p-6 md:p-8 mb-8 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.06),transparent_50%)]" />
         <div className="relative">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center mb-3 shadow-sm">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-900/40 dark:to-indigo-900/40 flex items-center justify-center mb-3 shadow-sm">
             <Search className="h-7 w-7 text-gold-500" />
           </div>
           <h1 className="text-2xl font-bold mb-1">تتبّع طلبك</h1>
@@ -88,7 +88,7 @@ export function TrackOrder() {
             dir="ltr"
           />
         </div>
-        <Button type="submit" size="lg" className="h-12 px-6 bg-neutral-900 hover:bg-neutral-800 text-white">
+        <Button type="submit" size="lg" className="h-12 px-6 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white">
           تتبّع
         </Button>
       </form>
@@ -346,10 +346,10 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
           {/* QR + الفاتورة + التسليم */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {qrUrl && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/30 border border-amber-200/60">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/60 dark:border-amber-800/30">
                 <img src={qrUrl} alt="QR code" className="w-14 h-14 rounded-lg" />
                 <div>
-                  <div className="text-xs font-bold text-amber-800">رمز QR</div>
+                  <div className="text-xs font-bold text-amber-800 dark:text-amber-400">رمز QR</div>
                   <div className="text-[11px] text-muted-foreground">أظهره عند الاستلام</div>
                 </div>
               </div>
@@ -357,7 +357,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
             <button
               onClick={downloadInvoice}
               disabled={pdfLoading}
-              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/30 border border-gold-200/60 hover:from-violet-100 hover:to-violet-100/50 transition-all text-right disabled:opacity-60"
+              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/30 dark:from-violet-950/20 dark:to-violet-900/10 border border-gold-200/60 dark:border-gold-500/20 hover:from-violet-100 hover:to-violet-100/50 dark:hover:from-violet-900/30 dark:hover:to-violet-900/20 transition-all text-right disabled:opacity-60"
             >
               {pdfLoading ? (
                 <Loader2 className="h-5 w-5 text-gold-500 shrink-0 animate-spin" />
@@ -407,7 +407,7 @@ function Detail({ label, value, highlight }: { label: string; value: string; hig
   return (
     <div className="rounded-lg bg-muted/30 p-3 border-r-[3px] border-r-amber-400/60">
       <div className="text-xs text-muted-foreground mb-0.5">{label}</div>
-      <div className={`text-sm font-semibold truncate ${highlight ? "text-amber-700 font-bold" : ""}`} dir="auto">
+      <div className={`text-sm font-semibold truncate ${highlight ? "text-amber-700 dark:text-amber-400 font-bold" : ""}`} dir="auto">
         {value}
       </div>
     </div>

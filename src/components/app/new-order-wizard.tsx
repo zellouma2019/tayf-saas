@@ -844,9 +844,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
                         ${isActive ? "w-11 h-11" : "w-9 h-9"}
                         ${isCompleted
-                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
+                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40"
                           : isActive
-                            ? "bg-gradient-to-br from-primary to-primary text-white shadow-lg shadow-violet-300"
+                            ? "bg-gradient-to-br from-primary to-primary text-white shadow-lg shadow-violet-300 dark:shadow-violet-800/30"
                             : "bg-muted text-muted-foreground"
                         }
                       `}
@@ -862,7 +862,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     </motion.div>
                     <div className="text-center">
                       <span className={`text-[11px] font-semibold leading-tight block ${
-                        isActive ? "text-gold-600" : isCompleted ? "text-emerald-600" : "text-muted-foreground/50"
+                        isActive ? "text-gold-600" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground/50"
                       }`}>
                         {label}
                       </span>
@@ -1057,7 +1057,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       استخدم شرطة (-) للنطاق وفاصلة (,) للفصل. إجمالي صفحات الملف: {totalPages}
                     </p>
                     {pageRange.trim() && (
-                      <div className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+                      <div className="mt-2 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-lg px-3 py-1.5">
                         ✓ سيتم طباعة <strong>{pages}</strong> صفحة من أصل {totalPages}
                       </div>
                     )}
@@ -1161,7 +1161,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 <Button variant="outline" size="icon" onClick={() => setCopies(copies + 1)}>+</Button>
                 <span className="text-sm text-muted-foreground">نسخة</span>
                 {copies >= 10 && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium">
                     خصم {copies >= 50 ? "15%" : "10%"}
                   </span>
                 )}
@@ -1261,7 +1261,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         </div>
                       )}
                       {d.surcharge > 0 && !isDisabled && (
-                        <div className="text-[11px] text-rose-600 font-bold mt-0.5">+{formatDA(d.surcharge)}</div>
+                        <div className="text-[11px] text-rose-600 dark:text-rose-400 font-bold mt-0.5">+{formatDA(d.surcharge)}</div>
                       )}
                     </button>
                   );
@@ -1329,26 +1329,26 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             {/* ملخص التسليم المتوقع */}
             <div className={`rounded-xl border p-4 flex items-start gap-3 ${
               deliveryMode === "hour"
-                ? "bg-rose-50 border-rose-200"
-                : "bg-emerald-50 border-emerald-200"
+                ? "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/40"
+                : "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40"
             }`}>
               <div className={`mt-0.5 p-2 rounded-lg ${
-                deliveryMode === "hour" ? "bg-rose-100" : "bg-emerald-100"
+                deliveryMode === "hour" ? "bg-rose-100 dark:bg-rose-900/30" : "bg-emerald-100 dark:bg-emerald-900/30"
               }`}>
                 {deliveryMode === "hour" ? (
-                  <Zap className={`h-4 w-4 ${deliveryMode === "hour" ? "text-rose-600" : "text-emerald-600"}`} />
+                  <Zap className={`h-4 w-4 ${deliveryMode === "hour" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`} />
                 ) : (
-                  <Clock className={`h-4 w-4 text-emerald-600`} />
+                  <Clock className={`h-4 w-4 text-emerald-600 dark:text-emerald-400`} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-neutral-900">
+                <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
                   {deliveryMode === "hour" && "تسليم عاجل"}
                   {deliveryMode === "today" && "تسليم اليوم"}
                   {deliveryMode === "tomorrow" && "تسليم غداً"}
                   {deliveryMode === "scheduled" && "تسليم في تاريخ محدد"}
                 </div>
-                <div className="text-xs text-neutral-600 mt-1">
+                <div className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
                   {deliveryMode === "scheduled" && deliveryDate ? (
                     <>الاستلام: <strong>{deliveryDate}</strong></>
                   ) : (
@@ -1397,7 +1397,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     phoneTouched && custPhone && !isValidAlgerianPhone(custPhone)
                       ? "border-destructive bg-destructive/5"
                       : phoneTouched && isValidAlgerianPhone(custPhone)
-                        ? "border-emerald-400 bg-emerald-50/30"
+                        ? "border-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20"
                         : ""
                   }`}
                   dir="ltr"
@@ -1408,7 +1408,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       <span>✗</span> {getPhoneErrorMessage(custPhone)}
                     </p>
                   ) : phoneTouched && isValidAlgerianPhone(custPhone) ? (
-                    <p className="text-xs text-emerald-600 flex items-center gap-1">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                       <span>✓</span> رقم صحيح
                     </p>
                   ) : (
@@ -1431,7 +1431,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp)
                       ? "border-destructive bg-destructive/5"
                       : whatsappTouched && custWhatsapp && isValidAlgerianPhone(custWhatsapp)
-                        ? "border-emerald-400 bg-emerald-50/30"
+                        ? "border-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20"
                         : ""
                   }`}
                   dir="ltr"
@@ -1495,19 +1495,19 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {step === 4 && selectedService && pricing && (
           <div className="space-y-4">
             <div className="rounded-2xl border bg-card overflow-hidden">
-              <div className="px-5 py-5 bg-neutral-900 text-white flex items-center justify-between">
+              <div className="px-5 py-5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{selectedService.emoji}</span>
                   <div>
                     <div className="font-bold">{selectedService.name}</div>
-                    <div className="text-xs text-neutral-300">{selectedService.description}</div>
+                    <div className="text-xs text-neutral-300 dark:text-neutral-600">{selectedService.description}</div>
                   </div>
                 </div>
                 <div className="text-left">
-                  <div className="text-xs text-neutral-300">المجموع</div>
+                  <div className="text-xs text-neutral-300 dark:text-neutral-600">المجموع</div>
                   {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
                     <div>
-                      <div className="text-xs text-neutral-400 line-through">{formatDA(pricing.total)}</div>
+                      <div className="text-xs text-neutral-400 dark:text-neutral-500 line-through">{formatDA(pricing.total)}</div>
                       <div className="text-2xl font-bold text-primary">{formatDA(finalPricing.total)}</div>
                       <div className="text-xs text-emerald-400 font-medium">
                         {finalPricing.appliedOfferNote}
@@ -1527,7 +1527,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     {/* صورة المعاينة */}
                     {analysis?.thumbnailUrl ? (
                       <div className="shrink-0 relative">
-                        <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-primary/20 bg-white shadow-sm">
+                        <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-primary/20 bg-white dark:bg-neutral-800 shadow-sm">
                           
                           <img
                             src={analysis.thumbnailUrl}
@@ -1542,47 +1542,47 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         )}
                       </div>
                     ) : (
-                      <div className="shrink-0 w-16 h-20 rounded-lg bg-neutral-900 flex items-center justify-center text-2xl">
+                      <div className="shrink-0 w-16 h-20 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-2xl">
                         {analysis?.fileType === "PDF" ? "📄" : analysis?.fileType === "DOCX" ? "📝" : selectedService.emoji}
                       </div>
                     )}
                     {/* معلومات الملف */}
                     <div className="flex-1 min-w-0 space-y-1">
-                      <div className="text-xs font-bold text-neutral-900 break-all">{fileName}</div>
+                      <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 break-all">{fileName}</div>
                       {analysis?.fileNature && (
-                        <div className="inline-block text-xs font-medium text-foreground bg-white border border-primary/20 rounded-full px-2 py-0.5">
+                        <div className="inline-block text-xs font-medium text-foreground bg-white dark:bg-neutral-800 border border-primary/20 rounded-full px-2 py-0.5">
                           {analysis.fileNature}
                         </div>
                       )}
                       <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
                         {analysis?.fileType && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
+                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
                             {analysis.fileType}
                           </span>
                         )}
                         {analysis?.fileSizeKB && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
+                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
                             📦 {analysis.fileSizeKB} ك.ب
                           </span>
                         )}
                         {analysis?.pageCount && analysis.pageCount > 0 && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
+                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
                             📄 {analysis.pageCount} صفحة
                           </span>
                         )}
                         {analysis?.imageDimensions && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
+                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
                             📐 {analysis.imageDimensions.width}×{analysis.imageDimensions.height}
                           </span>
                         )}
                         {analysis?.isPortrait !== undefined && (
-                          <span className="px-1.5 py-0.5 rounded bg-white border border-primary/10">
+                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
                             {analysis.isPortrait ? "↕ عمودي" : "↔ أفقي"}
                           </span>
                         )}
                       </div>
                       {analysis?.confidence && (
-                        <div className="text-xs text-emerald-600 flex items-center gap-1">
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                           <span>✓</span> تحليل ذكي بدقة {analysis.confidence}%
                         </div>
                       )}
@@ -1622,7 +1622,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   ℹ️ سيتم تأكيد السعر النهائي بعد مراجعة الملف
                 </div>
 
-                <div className="mt-3 p-4 rounded-lg bg-neutral-50 border border-neutral-200">
+                <div className="mt-3 p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
                   <div className="font-bold text-sm mb-1 flex items-center gap-2">
                     <PhoneIcon className="h-4 w-4 text-primary" />
                     سنتواصل معك قبل بدء الطباعة
@@ -1631,7 +1631,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     سنتصل بك على الرقم أدناه لتأكيد الطلب والتفاصيل النهائية قبل تنفيذ الطباعة.
                     تأكد من توفّرك لاستقبال المكالمة.
                   </p>
-                  <div className="mt-2 flex items-center gap-2 text-sm font-bold text-neutral-900" dir="ltr">
+                  <div className="mt-2 flex items-center gap-2 text-sm font-bold text-neutral-900 dark:text-neutral-100" dir="ltr">
                     📞 {custPhone}
                   </div>
                 </div>
@@ -1674,7 +1674,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       {/* ===== الشريط الجانبي: ملخص الطلب ===== */}
       <aside className="lg:sticky lg:top-24 h-fit">
         <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
-          <div className="px-5 py-4 border-b bg-neutral-900 text-white">
+          <div className="px-5 py-4 border-b bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
             <div className="flex items-center gap-2">
               <span className="text-lg">🧾</span>
               <span className="font-bold text-sm">طلبك</span>
@@ -1859,7 +1859,7 @@ function Section({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 dark:hover:bg-muted/50 transition-colors"
         aria-expanded={open}
         aria-controls={contentId}
       >
@@ -1874,7 +1874,7 @@ function Section({
         </div>
         <div className="flex items-center gap-2">
           {priceImpact && (
-            <span className="text-xs font-bold text-emerald-600">{priceImpact}</span>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{priceImpact}</span>
           )}
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
         </div>
@@ -1890,9 +1890,9 @@ function Section({
 
 function AnalysisChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white border border-emerald-200 p-2 text-center">
+    <div className="rounded-lg bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800/40 p-2 text-center">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-xs font-bold text-emerald-700 truncate">{value}</div>
+      <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 truncate">{value}</div>
     </div>
   );
 }
@@ -1954,7 +1954,7 @@ function SummaryRow({ label, value, green }: { label: string; value: string; gre
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span className={`font-medium ${green ? "text-emerald-600" : ""}`}>{value}</span>
+      <span className={`font-medium ${green ? "text-emerald-600 dark:text-emerald-400" : ""}`}>{value}</span>
     </div>
   );
 }

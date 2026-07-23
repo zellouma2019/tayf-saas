@@ -61,10 +61,10 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
           {/* زر الإغلاق */}
           <button
             onClick={onClose}
-            className="absolute top-3 left-3 z-20 w-8 h-8 rounded-full bg-white/60 hover:bg-white flex items-center justify-center transition-colors"
+            className="absolute top-3 left-3 z-20 w-8 h-8 rounded-full bg-white/60 dark:bg-neutral-800/60 hover:bg-white dark:hover:bg-neutral-700 flex items-center justify-center transition-colors"
             aria-label="إغلاق"
           >
-            <X className="h-4 w-4 text-neutral-700" />
+            <X className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
           </button>
 
           {/* الكونفيتي */}
@@ -114,9 +114,9 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
             </p>
 
             {/* كود الخصم */}
-            <div className={`inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2.5 border-2 ${theme.border} mb-4 animate-in zoom-in duration-500`} style={{ animationDelay: "0.4s" }}>
+            <div className={`inline-flex items-center gap-2 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm rounded-xl px-4 py-2.5 border-2 ${theme.border} mb-4 animate-in zoom-in duration-500`} style={{ animationDelay: "0.4s" }}>
               <span className="text-xs text-muted-foreground">الكود:</span>
-              <span className="font-mono font-bold text-base text-neutral-900 tracking-wider">{offer.code}</span>
+              <span className="font-mono font-bold text-base text-neutral-900 dark:text-neutral-100 tracking-wider">{offer.code}</span>
               <button
                 onClick={copyCode}
                 className="w-7 h-7 rounded-lg bg-neutral-900 hover:bg-neutral-800 flex items-center justify-center transition-colors"
@@ -160,7 +160,7 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
         </div>
 
         {/* تذييل صغير */}
-        <div className="bg-neutral-900 text-neutral-400 text-xs text-center py-2">
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-neutral-400 text-xs text-center py-2">
           🎁 عرض حصري من طيف · يُطبّق على طلبك القادم
         </div>
       </DialogContent>

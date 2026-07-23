@@ -257,7 +257,7 @@ export function OrderDetailModal({
 
           {/* معلومات العميل — قابل للتعديل */}
           <section>
-            <h3 className="text-sm font-bold text-neutral-700 mb-2">معلومات العميل</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">معلومات العميل</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">الاسم</Label>
@@ -310,7 +310,7 @@ export function OrderDetailModal({
 
           {/* مواصفات الطباعة — للقراءة فقط */}
           <section>
-            <h3 className="text-sm font-bold text-neutral-700 mb-2">مواصفات الطباعة</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">مواصفات الطباعة</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {Object.entries(order.options)
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
@@ -328,7 +328,7 @@ export function OrderDetailModal({
 
           {/* الكميات والأسعار — قابل للتعديل */}
           <section>
-            <h3 className="text-sm font-bold text-neutral-700 mb-2">الكميات والأسعار</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">الكميات والأسعار</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">الصفحات</Label>
@@ -363,7 +363,7 @@ export function OrderDetailModal({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">المجموع</Label>
-                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700">
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700 dark:text-amber-400">
                   {formatDA(order.total)}
                 </div>
               </div>
@@ -393,7 +393,7 @@ export function OrderDetailModal({
 
           {/* ملاحظات إدارية */}
           <section>
-            <h3 className="text-sm font-bold text-neutral-700 mb-2">ملاحظات إدارية</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">ملاحظات إدارية</h3>
             <Textarea
               value={editAdminNotes}
               onChange={(e) => setEditAdminNotes(e.target.value)}
@@ -404,7 +404,7 @@ export function OrderDetailModal({
 
           {/* الوسوم */}
           <section>
-            <h3 className="text-sm font-bold text-neutral-700 mb-2">الوسوم</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">الوسوم</h3>
             <div className="flex flex-wrap gap-2">
               {["عاجل", "VIP", "مرتجع", "خاص"].map((tag) => (
                 <Badge
@@ -426,7 +426,7 @@ export function OrderDetailModal({
           {/* معلومات الملف */}
           {order.fileName && (
             <section>
-              <h3 className="text-sm font-bold text-neutral-700 mb-2">الملف المرفق</h3>
+              <h3 className="text-sm font-bold text-foreground mb-2">الملف المرفق</h3>
               <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
                 <FileText className="h-8 w-8 text-amber-500 shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -445,7 +445,7 @@ export function OrderDetailModal({
 
           {/* التسليم */}
           <section>
-            <h3 className="text-sm font-bold text-neutral-700 mb-2">التسليم</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">التسليم</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-lg bg-muted/50 border px-3 py-2">
                 <div className="text-xs text-muted-foreground">الطريقة</div>
@@ -462,7 +462,7 @@ export function OrderDetailModal({
           <section>
             <button
               type="button"
-              className="flex items-center gap-2 text-sm font-bold text-neutral-700 w-full text-right"
+              className="flex items-center gap-2 text-sm font-bold text-foreground w-full text-right"
               onClick={() => setShowAudit(!showAudit)}
             >
               {showAudit ? (

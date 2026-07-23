@@ -535,7 +535,7 @@ export function AdminSettings() {
       {/* ===== الترويسة ===== */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center shrink-0">
             <Settings className="h-5 w-5 text-amber-400" />
           </div>
           <div>
@@ -544,7 +544,7 @@ export function AdminSettings() {
               {hasChanges && (
                 <Badge
                   variant="outline"
-                  className="bg-amber-50 text-amber-700 border-amber-200 text-xs gap-1"
+                  className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40 text-xs gap-1"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                   تغييرات غير محفوظة
@@ -573,7 +573,7 @@ export function AdminSettings() {
             size="sm"
             onClick={handleSave}
             disabled={!hasChanges || saving}
-            className="bg-neutral-900 hover:bg-neutral-800 text-white gap-1.5"
+            className="bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white gap-1.5"
           >
             {saving ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -594,35 +594,35 @@ export function AdminSettings() {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1 bg-muted/60">
           <TabsTrigger
             value="services"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
           >
             <Layers className="h-4 w-4" />
             الخدمات والأسعار
           </TabsTrigger>
           <TabsTrigger
             value="delivery"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
           >
             <Truck className="h-4 w-4" />
             خيارات التسليم
           </TabsTrigger>
           <TabsTrigger
             value="general"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
           >
             <SlidersHorizontal className="h-4 w-4" />
             الإعدادات العامة
           </TabsTrigger>
           <TabsTrigger
             value="intro"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
           >
             <Sparkles className="h-4 w-4" />
             شاشة الإنترو
           </TabsTrigger>
           <TabsTrigger
             value="reset"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
           >
             <CircleAlert className="h-4 w-4" />
             إعادة التعيين
@@ -631,7 +631,7 @@ export function AdminSettings() {
 
         {/* ===== التبويب 1: الخدمات ===== */}
         <TabsContent value="services" className="space-y-4 outline-none">
-          <Card className="border-amber-200/60 bg-gradient-to-l from-amber-50/50 to-transparent">
+          <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-l from-amber-50/50 dark:from-amber-950/20 to-transparent">
             <CardContent className="p-4 flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-muted-foreground leading-relaxed">
@@ -652,7 +652,7 @@ export function AdminSettings() {
               >
                 <AccordionTrigger className="px-4 hover:no-underline hover:bg-muted/40">
                   <div className="flex items-center gap-3 w-full pr-2">
-                    <div className="w-10 h-10 rounded-lg bg-neutral-900 flex items-center justify-center text-xl shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-xl shrink-0">
                       {service.emoji}
                     </div>
                     <div className="flex-1 text-right">
@@ -709,7 +709,7 @@ export function AdminSettings() {
                         </AlertDialogContent>
                       </AlertDialog>
                       <div>
-                        <div className="text-sm font-bold text-amber-700">
+                        <div className="text-sm font-bold text-amber-700 dark:text-amber-400">
                           {service.basePricePerPage}/صفحة
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -1023,7 +1023,7 @@ export function AdminSettings() {
           {/* زر إضافة خدمة جديدة */}
           <Button
             variant="outline"
-            className="w-full border-dashed border-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400 gap-2 h-12"
+            className="w-full border-dashed border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-400 gap-2 h-12"
             onClick={addService}
           >
             <Plus className="h-5 w-5" />
@@ -1033,7 +1033,7 @@ export function AdminSettings() {
 
         {/* ===== التبويب 2: التسليم ===== */}
         <TabsContent value="delivery" className="space-y-4 outline-none">
-          <Card className="border-amber-200/60 bg-gradient-to-l from-amber-50/50 to-transparent">
+          <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-l from-amber-50/50 dark:from-amber-950/20 to-transparent">
             <CardContent className="p-4 flex items-start gap-3">
               <Truck className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-muted-foreground leading-relaxed">
@@ -1248,7 +1248,7 @@ export function AdminSettings() {
           </Card>
 
           {/* الأمان والنظام */}
-          <Card className="border-amber-200/60">
+          <Card className="border-amber-200/60 dark:border-amber-800/40">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Lock className="h-4 w-4 text-amber-500" />
@@ -1272,7 +1272,7 @@ export function AdminSettings() {
                   maxLength={8}
                   placeholder="2514"
                 />
-                <p className="text-xs text-amber-700/80 flex items-center gap-1">
+                <p className="text-xs text-amber-700/80 dark:text-amber-400/80 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
                   تغييره سيؤثر على دخول الموظفين
                 </p>
@@ -1318,7 +1318,7 @@ export function AdminSettings() {
 
         {/* ===== التبويب: شاشة الإنترو ===== */}
         <TabsContent value="intro" className="space-y-4 outline-none">
-          <Card className="border-amber-200/60 bg-gradient-to-l from-amber-50/50 to-transparent">
+          <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-l from-amber-50/50 dark:from-amber-950/20 to-transparent">
             <CardContent className="p-4 flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-muted-foreground leading-relaxed">
@@ -1470,8 +1470,8 @@ export function AdminSettings() {
               </div>
 
               {/* معاينة مباشرة */}
-              <div className="rounded-xl border border-amber-200 overflow-hidden">
-                <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs font-bold text-amber-800">
+              <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 overflow-hidden">
+                <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-800/40 text-xs font-bold text-amber-800 dark:text-amber-400">
                   معاينة مباشرة
                 </div>
                 <div
@@ -1625,7 +1625,7 @@ export function AdminSettings() {
               </div>
 
               {hasChanges && (
-                <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-3">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   لديك تغييرات غير محفوظة حالياً. إعادة التعيين ستحل محلها
                   كلها.
@@ -1639,7 +1639,7 @@ export function AdminSettings() {
       {/* ===== شريط الحفظ السفلي العائم (يظهر فقط عند وجود تغييرات) ===== */}
       {hasChanges && (
         <div className="sticky bottom-4 z-30 mx-auto max-w-md">
-          <div className="bg-neutral-900 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-amber-500/30">
+          <div className="bg-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-amber-500/30">
             <div className="flex items-center gap-2 text-xs">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               <span>لديك تغييرات غير محفوظة</span>
@@ -1648,7 +1648,7 @@ export function AdminSettings() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-neutral-300 hover:text-white hover:bg-neutral-800 h-8"
+                className="text-neutral-300 dark:text-neutral-600 hover:text-white dark:hover:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 h-8"
                 onClick={handleDiscard}
                 disabled={saving}
               >

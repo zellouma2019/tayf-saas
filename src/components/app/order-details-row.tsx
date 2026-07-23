@@ -162,9 +162,9 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
         canPrintReceipt={canPrintReceipt}
       />
       {expanded && (
-        <tr className="bg-amber-50/40">
+        <tr className="bg-amber-50/40 dark:bg-amber-950/20">
           <td colSpan={11} className="p-0">
-            <div className="p-4 md:p-6 border-t border-amber-200">
+            <div className="p-4 md:p-6 border-t border-amber-200 dark:border-amber-800/40">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 {/* ===== مواصفات الطباعة ===== */}
                 <div className="lg:col-span-2 space-y-4">
@@ -175,17 +175,17 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                     </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {printOptions.map(({ key, label, value }) => (
-                        <div key={key} className="rounded-lg bg-white border border-amber-100 p-2.5">
+                        <div key={key} className="rounded-lg bg-white dark:bg-card border border-amber-100 dark:border-amber-800/30 p-2.5">
                           <div className="text-xs text-muted-foreground">{label}</div>
-                          <div className="text-xs font-semibold text-neutral-900 mt-0.5">
+                          <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 mt-0.5">
                             {value}
                           </div>
                         </div>
                       ))}
                       {order.options.printRange === "custom" && (
-                        <div className="rounded-lg bg-amber-100 border border-amber-300 p-2.5">
-                          <div className="text-xs text-amber-700">نطاق الطباعة</div>
-                          <div className="text-xs font-semibold text-amber-900 mt-0.5">
+                        <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 p-2.5">
+                          <div className="text-xs text-amber-700 dark:text-amber-400">نطاق الطباعة</div>
+                          <div className="text-xs font-semibold text-amber-900 dark:text-amber-300 mt-0.5">
                             صفحات: {order.options.pageRange}
                           </div>
                         </div>
@@ -200,12 +200,12 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                         <FileText className="h-4 w-4 text-amber-600" />
                         ملف الزبون
                       </h4>
-                      <div className="rounded-lg bg-white border border-amber-100 p-3">
+                      <div className="rounded-lg bg-white dark:bg-card border border-amber-100 dark:border-amber-800/30 p-3">
                         <div className="flex items-start gap-3 flex-col sm:flex-row">
                           {/* معاينة الملف الحقيقية */}
                           <div className="shrink-0 mx-auto sm:mx-0">
                             {isImageFile(order.fileType) && order.filePreview ? (
-                              <div className="relative w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm">
+                              <div className="relative w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-200 dark:border-amber-800/50 shadow-sm">
                                 <img
                                   src={order.filePreview}
                                   alt={order.fileName}
@@ -213,7 +213,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                                 />
                               </div>
                             ) : isPdfFile(order.fileType) && order.fileData ? (
-                              <div className="relative w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm bg-white">
+                              <div className="relative w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-200 dark:border-amber-800/50 shadow-sm bg-white dark:bg-card">
                                 <img
                                   src={`/api/orders/${order.id}/thumbnail${(() => { const s = useAppStore.getState().shopId; return s ? `?shopId=${encodeURIComponent(s)}` : ""; })()}`}
                                   alt={order.fileName}
@@ -224,14 +224,14 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                                 </div>
                               </div>
                             ) : order.fileData && order.fileData.startsWith("file_") ? (
-                              <div className="relative w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm bg-neutral-50 flex items-center justify-center">
+                              <div className="relative w-24 h-28 rounded-lg overflow-hidden border-2 border-amber-200 dark:border-amber-800/50 shadow-sm bg-neutral-50 dark:bg-neutral-900/50 flex items-center justify-center">
                                 <div className="text-center">
                                   <FileText className="h-8 w-8 text-amber-500 mx-auto" />
-                                  <span className="text-[9px] font-bold text-neutral-600 mt-1 block">{order.fileType}</span>
+                                  <span className="text-[9px] font-bold text-neutral-600 dark:text-neutral-400 mt-1 block">{order.fileType}</span>
                                 </div>
                               </div>
                             ) : (
-                              <div className="w-16 h-20 rounded-lg bg-neutral-900 flex flex-col items-center justify-center text-amber-400 shrink-0">
+                              <div className="w-16 h-20 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex flex-col items-center justify-center text-amber-400 shrink-0">
                                 <FileText className="h-6 w-6" />
                                 <span className="text-[9px] font-bold mt-1">{order.fileType}</span>
                               </div>
@@ -242,7 +242,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                             <div className="text-sm font-medium truncate break-all">{order.fileName}</div>
                             <div className="flex flex-wrap gap-1.5 mt-1.5 text-xs">
                               {order.fileType && (
-                                <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-700 font-medium">
+                                <span className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 font-medium">
                                   {order.fileType}
                                 </span>
                               )}
@@ -252,7 +252,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                                 </span>
                               ) : null}
                               {order.fileData && (
-                                <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-100 text-emerald-700 font-medium">
+                                <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/30 text-emerald-700 dark:text-emerald-400 font-medium">
                                   ✓ متاح للتنزيل
                                 </span>
                               )}
@@ -261,7 +261,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                               {order.fileData && (
                                 <Button
                                   size="sm"
-                                  className="bg-neutral-900 hover:bg-neutral-800 text-white h-8 text-xs"
+                                  className="bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white h-8 text-xs"
                                   onClick={() => { const s = useAppStore.getState().shopId; const fUrl = `/api/orders/${order.id}/file${s ? `?shopId=${encodeURIComponent(s)}` : ""}`; downloadFile(fUrl, order.fileName || "file"); }}
                                 >
                                   <Download className="h-3.5 w-3.5" />
@@ -288,7 +288,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                   {order.options.notes && (
                     <div>
                       <h4 className="font-bold text-sm mb-2">ملاحظات الزبون</h4>
-                      <div className="rounded-lg bg-white border border-amber-100 p-3 text-sm text-neutral-700 whitespace-pre-wrap">
+                      <div className="rounded-lg bg-white dark:bg-card border border-amber-100 dark:border-amber-800/30 p-3 text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
                         {order.options.notes}
                       </div>
                     </div>
@@ -297,7 +297,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                   {/* الأسعار التفصيلية */}
                   <div>
                     <h4 className="font-bold text-sm mb-2">تفاصيل التسعير</h4>
-                    <div className="rounded-lg bg-white border border-amber-100 p-3 space-y-1.5 text-xs">
+                    <div className="rounded-lg bg-white dark:bg-card border border-amber-100 dark:border-amber-800/30 p-3 space-y-1.5 text-xs">
                       <PriceRow label="سعر الصفحة" value={order.pricing.perPage} />
                       <PriceRow label="تكلفة الصفحات" value={order.pricing.pagesCost} />
                       <PriceRow label="تكلفة النسخ" value={order.pricing.copiesCost} />
@@ -316,9 +316,9 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                       {order.pricing.discount > 0 && (
                         <PriceRow label="خصم الكمية" value={-order.pricing.discount} green />
                       )}
-                      <div className="flex items-center justify-between pt-2 border-t border-amber-100">
+                      <div className="flex items-center justify-between pt-2 border-t border-amber-100 dark:border-amber-800/30">
                         <span className="font-bold">المجموع</span>
-                        <span className="font-bold text-amber-700 text-base">{formatDA(order.pricing.total)}</span>
+                        <span className="font-bold text-amber-700 dark:text-amber-400 text-base">{formatDA(order.pricing.total)}</span>
                       </div>
                     </div>
                   </div>
@@ -331,7 +331,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                       <User className="h-4 w-4 text-amber-600" />
                       معلومات العميل
                     </h4>
-                    <div className="rounded-lg bg-white border border-amber-100 p-3 space-y-2 text-xs">
+                    <div className="rounded-lg bg-white dark:bg-card border border-amber-100 dark:border-amber-800/30 p-3 space-y-2 text-xs">
                       <InfoRow icon={<User className="h-3.5 w-3.5" />} label="الاسم" value={order.customer?.name || "—"} />
                       <InfoRow icon={<Phone className="h-3.5 w-3.5" />} label="الهاتف" value={order.customer?.phone || "—"} ltr />
                       {order.customer?.whatsapp && (
@@ -346,9 +346,9 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                         value={order.customer?.deliveryMethod === "delivery" ? "توصيل للعنوان" : "من المطبعة"}
                       />
                       {order.customer?.address && (
-                        <div className="pt-1 border-t border-amber-50">
+                        <div className="pt-1 border-t border-amber-50 dark:border-amber-900/30">
                           <div className="text-muted-foreground mb-0.5">العنوان</div>
-                          <div className="text-neutral-700 whitespace-pre-wrap">{order.customer.address}</div>
+                          <div className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{order.customer.address}</div>
                         </div>
                       )}
                     </div>
@@ -359,7 +359,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                       <Clock className="h-4 w-4 text-amber-600" />
                       التسليم
                     </h4>
-                    <div className="rounded-lg bg-white border border-amber-100 p-3 space-y-1.5 text-xs">
+                    <div className="rounded-lg bg-white dark:bg-card border border-amber-100 dark:border-amber-800/30 p-3 space-y-1.5 text-xs">
                       <InfoRow label="الوقت" value={deliveryLabel(order.delivery.mode)} />
                       {order.delivery.date && <InfoRow label="التاريخ" value={order.delivery.date} />}
                       <InfoRow label="الوقت المتوقع" value={`${order.estimatedHours} ساعة`} />
@@ -372,7 +372,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                     {onStatusChange && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button size="sm" className="w-full bg-neutral-900 hover:bg-neutral-800 text-white">
+                          <Button size="sm" className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white">
                             <RotateCcw className="h-4 w-4" />
                             تغيير الحالة
                             <ChevronDown className="h-3 w-3 mr-auto" />
@@ -487,7 +487,7 @@ function TableRowInner({
 }) {
   return (
     <tr
-      className={`hover:bg-amber-50/30 cursor-pointer transition-colors ${expanded ? "bg-amber-50/50" : ""} ${selected ? "bg-rose-50/40" : ""}`}
+      className={`hover:bg-amber-50/30 dark:hover:bg-amber-950/20 cursor-pointer transition-colors ${expanded ? "bg-amber-50/50 dark:bg-amber-950/20" : ""} ${selected ? "bg-rose-50/40 dark:bg-rose-950/20" : ""}`}
       onClick={() => {
         if (onClick) onClick(order);
         else onToggle();
