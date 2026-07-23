@@ -35,13 +35,19 @@ export async function GET(req: NextRequest) {
     // إحصائيات لكل متجر (استعلامات متوازية)
     const shopStats = await Promise.all(
       shops.map(async (shop) => {
-        const [shopRevenue, shopToday] = await Promise.all([
+        const [shopRevenue, shopToday, recentShopOrders] = await Promise.all([
           db.printOrder.aggregate({
             where: { shopId: shop.id },
             _sum: { total: true },
           }),
           db.printOrder.count({
             where: { shopId: shop.id, createdAt: { gte: today } },
+          }),
+          db.printOrder.findMany({
+            where: { shopId: shop.id },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            select: { id: true, reference: true, serviceName: true, status: true, total: true, customer: true, createdAt: true },
           }),
         ]);
 
@@ -66,6 +72,11 @@ export async function GET(req: NextRequest) {
           orders: shop._count.orders,
           revenue: shopRevenue._sum.total || 0,
           todayOrders: shopToday,
+          recentOrders: recentShopOrders.map((o) => ({
+            ...o,
+            customer: JSON.parse(o.customer),
+            createdAt: o.createdAt.toISOString(),
+          })),
         };
       })
     );
