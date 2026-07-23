@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
       statusCounts,
       shopStats: shops.map((s) => ({ id: s.id, name: s.name, slug: s.slug, ownerName: s.ownerName, ownerPhone: s.ownerPhone, phone: s.phone, isActive: s.isActive, trialDays: s.trialDays, trialStartsAt: s.trialStartsAt?.toISOString() || null, plan: s.plan || "free", adminPin: s.adminPin, country: s.country, language: s.language, orders: 0, revenue: 0, todayOrders: 0 })),
       recentOrders,
+      _v: "3q",
     });
   } catch (e) {
     console.error("[admin/global-stats]", e);
