@@ -5,6 +5,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
   dbInitialized: boolean
   _ensureDbPromise: Promise<void> | undefined
+  _migrationsRan: boolean
 }
 
 function createPrismaClient() {
@@ -46,6 +47,16 @@ export async function ensureDb() {
 
   globalForPrisma._ensureDbPromise = (async () => {
     try {
+      // تشغيل الميجريشن أولاً (يضيف الأعمدة الناقصة)
+      if (!globalForPrisma._migrationsRan) {
+        try {
+          const { runMigrations } = await import('@/lib/db-migrations')
+          await runMigrations()
+          globalForPrisma._migrationsRan = true
+        } catch {
+          // تجاهل — ليست حرجة
+        }
+      }
       await db.shop.count()
       globalForPrisma.dbInitialized = true
     } catch {

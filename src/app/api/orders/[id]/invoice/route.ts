@@ -42,9 +42,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // جلب شعار المنصة كـ fallback
     let platformLogo = "";
     try {
-      const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
-      if (admin?.platformSettings) {
-        const s = JSON.parse(admin.platformSettings);
+      const rows = await db.$queryRawUnsafe<Array<{ platformSettings: string }>>`
+        SELECT platformSettings FROM "SuperAdmin" WHERE key = 'main' LIMIT 1
+      `;
+      if (rows[0]?.platformSettings) {
+        const s = JSON.parse(rows[0].platformSettings);
         platformLogo = s.platformLogo || "";
       }
     } catch {}
