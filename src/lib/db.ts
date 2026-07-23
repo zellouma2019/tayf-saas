@@ -39,28 +39,25 @@ export const db = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
-export async function ensureDb() {
+export async function ensureDb(options?: { runMigrations?: boolean }) {
   if (globalForPrisma.dbInitialized) return
 
-  // تجنب الاستعلامات المتكررة خلال نفس الطلب
   if (globalForPrisma._ensureDbPromise) return globalForPrisma._ensureDbPromise
 
   globalForPrisma._ensureDbPromise = (async () => {
     try {
-      // تشغيل الميجريشن مرة واحدة (مجمع في استعلام واحد)
-      if (!globalForPrisma._migrationsRan) {
+      if (options?.runMigrations && !globalForPrisma._migrationsRan) {
         try {
           const { runMigrations } = await import('@/lib/db-migrations')
           await runMigrations()
           globalForPrisma._migrationsRan = true
         } catch {
-          // تجاهل — ليست حرجة
+          // تجاهل
         }
       }
       globalForPrisma.dbInitialized = true
     } catch {
       globalForPrisma._ensureDbPromise = undefined
-      console.log('[DB] Database connection failed, will retry on next request')
     }
   })()
 
