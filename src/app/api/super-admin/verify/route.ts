@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
+import { runMigrations } from "@/lib/db-migrations";
 
 const APP_SECRET = "tayf_admin_session_2025";
 
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await runMigrations();
     const { ts, token } = await req.json();
     if (!ts || !token) {
       return NextResponse.json({ valid: false }, { status: 200 });
