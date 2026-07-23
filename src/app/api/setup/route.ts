@@ -5,6 +5,20 @@ import { db } from '@/lib/db'
 // هذا المسار يُستدعى مرة واحدة فقط بعد النشر على Vercel
 export async function POST() {
   try {
+    // === Migrations: تشغيل دائماً (حتى على قواعد بيانات موجودة) ===
+    try {
+      const cols = await db.$queryRaw<Array<{ name: string }>>`
+        PRAGMA table_info("SuperAdmin")
+      `
+      const colNames = cols.map(c => c.name)
+      if (!colNames.includes('platformSettings')) {
+        await db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`)
+        console.log('[setup/migration] Added platformSettings column to SuperAdmin')
+      }
+    } catch (e) {
+      console.warn('[setup/migration] Migration check failed:', e)
+    }
+
     // التحقق من وجود الجداول بالفعل
     try {
       const count = await db.shop.count()
@@ -111,6 +125,7 @@ export async function POST() {
         "key" TEXT NOT NULL,
         "password" TEXT NOT NULL DEFAULT 'Admin@2025',
         "teamMembers" TEXT NOT NULL DEFAULT '[]',
+        "platformSettings" TEXT NOT NULL DEFAULT '{}',
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL,
         CONSTRAINT "SuperAdmin_key_key" UNIQUE ("key")
