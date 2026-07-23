@@ -47,7 +47,7 @@ export async function ensureDb() {
 
   globalForPrisma._ensureDbPromise = (async () => {
     try {
-      // تشغيل الميجريشن أولاً (يضيف الأعمدة الناقصة)
+      // تشغيل الميجريشن مرة واحدة (مجمع في استعلام واحد)
       if (!globalForPrisma._migrationsRan) {
         try {
           const { runMigrations } = await import('@/lib/db-migrations')
@@ -57,10 +57,8 @@ export async function ensureDb() {
           // تجاهل — ليست حرجة
         }
       }
-      await db.shop.count()
       globalForPrisma.dbInitialized = true
     } catch {
-      // فشل الاتصال — إعادة تعيين للسماح بالمحاولة مرة أخرى
       globalForPrisma._ensureDbPromise = undefined
       console.log('[DB] Database connection failed, will retry on next request')
     }
