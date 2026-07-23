@@ -1,38 +1,40 @@
-"use client";
-
+/**
+ * تنزيل فاتورة كصفحة HTML قابلة للطباعة بدلاً من ملف PDF
+ *
+ * تم استبدال نهج jsPDF لأنه ينتج نصاً عربياً مشوّهاً (Mojibake)
+ * بسبب مشاكل في ترميز الخطوط. النهج الجديد يفتح صفحة HTML
+ * مصممة باحترافية مع خط Cairo العربي، ويقوم المتصفح بتحويلها
+ * لـ PDF عند الطباعة مع دعم كامل للعربية و RTL.
+ */
 import { toast } from "sonner";
-import { useAppStore } from "@/lib/store";
 
 /**
- * فتح فاتورة HTML في تبويب جديد — النص العربي يعرض بشكل صحيح مع خط Cairo
+ * فتح فاتورة HTML في نافذة جديدة للطباعة أو الحفظ كـ PDF
  */
 export async function downloadInvoicePDF(orderId: string, reference?: string): Promise<boolean> {
   try {
     toast.loading("جارٍ فتح الفاتورة...", { id: "pdf-invoice" });
-    let shopId = useAppStore.getState().shopId;
-    // Customer view: derive shopId from URL slug
-    if (!shopId) {
-      const pathMatch = window.location.pathname.match(/^\/s\/([^/]+)/);
-      if (pathMatch) {
-        try {
-          const res = await fetch(`/api/shops/${encodeURIComponent(pathMatch[1])}`);
-          if (res.ok) {
-            const data = await res.json();
-            shopId = data.shop?.id || null;
-          }
-        } catch { /* ignore */ }
-      }
-    }
-    const params = shopId ? `?shopId=${encodeURIComponent(shopId)}` : "";
-    window.open(`/api/orders/${orderId}/invoice${params}`, "_blank");
+
+    const shopId = (await import("@/lib/store")).useAppStore.getState().shopId;
+    const sep = shopId ? "?" : "";
+    const query = shopId ? `shopId=${encodeURIComponent(shopId)}` : "";
+    const url = `/api/orders/${orderId}/invoice${sep}${query}`;
+
+    window.open(url, "_blank");
+
     toast.success("تم فتح الفاتورة", {
       id: "pdf-invoice",
-      description: "استخدم زر الطباعة لحفظ كـ PDF",
+      description: "استخدم زر الطباعة في النافذة الجديدة لحفظها كـ PDF",
     });
     return true;
   } catch (error) {
-    console.error("[PDF Invoice Error]", error);
-    toast.error("فشل في فتح الفاتورة", { id: "pdf-invoice" });
+    console.error("[Invoice Error]", error);
+    toast.error("فشل في فتح الفاتورة", {
+      id: "pdf-invoice",
+    });
     return false;
   }
 }
+
+// إبقاء التصديرات القديمة لمنع أخطاء الاستيراد
+export { initArabicPdf, ar, arFont, hasArabic } from "@/lib/pdf-arabic";

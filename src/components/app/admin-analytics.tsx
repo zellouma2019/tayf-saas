@@ -54,7 +54,6 @@ interface AdminStats {
 
 interface AdminAnalyticsProps {
   stats: AdminStats | null;
-  orders?: PrintOrderLite[];
 }
 
 interface MonthBucket {
@@ -101,7 +100,7 @@ const CHART_COLORS = [
   "#D97706", // amber-600
   "#059669", // emerald-600
   "#DC2626", // red-600
-  "#0d7377", // teal-600
+  "#7C3AED", // violet-600
   "#0891B2", // cyan-600
   "#EA580C", // orange-600
 ];
@@ -199,17 +198,11 @@ function PieTooltip({
 }
 
 // ===== المكوّن الرئيسي =====
-export function AdminAnalytics({ stats, orders: propOrders }: AdminAnalyticsProps) {
+export function AdminAnalytics({ stats }: AdminAnalyticsProps) {
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // استخدم الطلبات الممررة كـ prop إذا وجدت، وإلا اجلبها
   useEffect(() => {
-    if (propOrders && propOrders.length > 0) {
-      setOrders(propOrders);
-      setLoading(false);
-      return;
-    }
     let cancelled = false;
     shopApi("/api/orders?limit=10000&noPreview=true")
       .then((r) => r.json())
@@ -223,7 +216,7 @@ export function AdminAnalytics({ stats, orders: propOrders }: AdminAnalyticsProp
     return () => {
       cancelled = true;
     };
-  }, [propOrders]);
+  }, []);
 
   const analytics = useMemo(() => computeAnalytics(orders), [orders]);
 

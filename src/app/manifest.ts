@@ -4,11 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "طيف",
     short_name: "طيف",
-    description: "خدمة طباعة احترافية وسريعة",
+    description: "منصة طيف لإدارة المطابع",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#d4af37",
+    background_color: "#0d0d0d",
+    theme_color: "#d4a853",
     icons: [
       {
         src: "/favicon.svg",

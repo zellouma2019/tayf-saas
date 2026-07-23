@@ -18,7 +18,6 @@ import { formatDateTimeAr } from "@/lib/print-config";
 import type { TeamMember } from "@/lib/admin-types";
 
 export function SecurityTab() {
-  // كلمة المرور
   const [isDefaultPwd, setIsDefaultPwd] = useState(true);
   const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
@@ -27,17 +26,20 @@ export function SecurityTab() {
   const [showNew, setShowNew] = useState(false);
   const [changingPwd, setChangingPwd] = useState(false);
 
-  // مؤشر قوة كلمة المرور — مبني على الطول فقط
   const pwdStrength = useMemo(() => {
     if (!newPwd) return { level: 0, label: "", color: "" };
-    const len = newPwd.length;
-    if (len < 10) return { level: 1, label: "قصيرة", color: "bg-rose-500" };
-    if (len <= 14) return { level: 2, label: "مقبولة", color: "bg-amber-500" };
-    if (len <= 19) return { level: 3, label: "جيدة", color: "bg-emerald-500" };
+    let score = 0;
+    if (newPwd.length >= 6) score++;
+    if (newPwd.length >= 8) score++;
+    if (/[A-Z]/.test(newPwd)) score++;
+    if (/[0-9]/.test(newPwd)) score++;
+    if (/[^A-Za-z0-9]/.test(newPwd)) score++;
+    if (score <= 1) return { level: 1, label: "ضعيفة", color: "bg-rose-500" };
+    if (score <= 2) return { level: 2, label: "متوسطة", color: "bg-amber-500" };
+    if (score <= 3) return { level: 3, label: "جيدة", color: "bg-sky-500" };
     return { level: 4, label: "قوية", color: "bg-emerald-500" };
   }, [newPwd]);
 
-  // الفريق
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
@@ -46,16 +48,14 @@ export function SecurityTab() {
   const [loadingTeam, setLoadingTeam] = useState(true);
 
   useEffect(() => {
-    // تحقق من حالة كلمة المرور
     fetch("/api/super-admin/password")
-      .then(async r => { if (!r.ok) return null; return r.json(); })
-      .then((d) => { if (d) setIsDefaultPwd(d.isDefault ?? true); })
+      .then((r) => r.json())
+      .then((d) => setIsDefaultPwd(d.isDefault ?? true))
       .catch(() => {});
 
-    // تحميل أعضاء الفريق
     fetch("/api/super-admin/team")
-      .then(async r => { if (!r.ok) return null; return r.json(); })
-      .then((d) => { if (d) setMembers(d.members || []); })
+      .then((r) => r.json())
+      .then((d) => setMembers(d.members || []))
       .catch(() => {})
       .finally(() => setLoadingTeam(false));
   }, []);
@@ -66,8 +66,8 @@ export function SecurityTab() {
       if (newPwd !== confirmPwd) toast.error("كلمة المرور الجديدة غير متطابقة");
       return;
     }
-    if (newPwd.length < 10) {
-      toast.error("كلمة المرور يجب أن تكون 10 أحرف على الأقل");
+    if (newPwd.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
     setChangingPwd(true);
@@ -79,7 +79,7 @@ export function SecurityTab() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success(isDefaultPwd ? "تم تعيين كلمة المرور بنجاح ✅" : "تم تغيير كلمة المرور بنجاح");
+        toast.success(isDefaultPwd ? "تم تعيين كلمة المرور بنجاح" : "تم تغيير كلمة المرور بنجاح");
         setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
         setIsDefaultPwd(false);
       } else {
@@ -143,51 +143,51 @@ export function SecurityTab() {
 
   return (
     <div className="space-y-5">
-      {/* بانر حماية */}
-      <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-          <ShieldCheck className="h-5 w-5 text-teal-600" />
+      {/* Security banner */}
+      <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <ShieldCheck className="h-5 w-5 text-primary" />
         </div>
-        <p className="text-sm text-teal-800 font-medium">حماية لوحة التحكم الخاصة بك — تأكد من استخدام كلمة مرور قوية</p>
+        <p className="text-sm text-foreground font-medium">حماية لوحة التحكم الخاصة بك — تأكد من استخدام كلمة مرور قوية</p>
       </div>
 
-      {/* معلومات الجلسة */}
-      <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+      {/* Session info */}
+      <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center">
-            <Timer className="h-4 w-4 text-sky-600" />
+          <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+            <Timer className="h-4 w-4 text-sky-500" />
           </div>
-          <h3 className="text-sm text-slate-700 font-semibold">معلومات الجلسة</h3>
+          <h3 className="text-sm text-foreground font-semibold">معلومات الجلسة</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 rounded-xl p-3">
-            <div className="text-xs text-slate-400 mb-0.5">تاريخ الدخول</div>
-            <div className="text-sm font-medium text-slate-800">{formatDateTimeAr(new Date().toISOString())}</div>
+          <div className="bg-secondary/50 rounded-xl p-3">
+            <div className="text-xs text-muted-foreground mb-0.5">تاريخ الدخول</div>
+            <div className="text-sm font-medium text-foreground">{formatDateTimeAr(new Date().toISOString())}</div>
           </div>
-          <div className="bg-slate-50 rounded-xl p-3">
-            <div className="text-xs text-slate-400 mb-0.5">صلاحية الجلسة</div>
-            <div className="text-sm font-medium text-slate-800">24 ساعة</div>
+          <div className="bg-secondary/50 rounded-xl p-3">
+            <div className="text-xs text-muted-foreground mb-0.5">صلاحية الجلسة</div>
+            <div className="text-sm font-medium text-foreground">4 ساعات</div>
           </div>
         </div>
       </div>
 
-      {/* ===== بطاقة كلمة المرور ===== */}
-      <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      {/* Password card */}
+      <div className="bg-card border border-border rounded-xl">
         <div className="p-5 pb-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm flex items-center gap-2 text-slate-700 font-semibold">
-              <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
-                <Lock className="h-4 w-4 text-teal-600" />
+            <h3 className="text-sm flex items-center gap-2 text-foreground font-semibold">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Lock className="h-4 w-4 text-primary" />
               </div>
               كلمة مرور لوحة التحكم
             </h3>
             {isDefaultPwd && (
-              <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                ⚠️ يجب تعيين كلمة مرور
+              <Badge variant="outline" className="border-amber-500/30 text-amber-500 text-xs">
+                يجب تعيين كلمة مرور
               </Badge>
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-1 mr-10">
+          <p className="text-xs text-muted-foreground mt-1 mr-10">
             غيّر كلمة المرور بشكل دوري لحماية لوحة التحكم
           </p>
         </div>
@@ -195,7 +195,7 @@ export function SecurityTab() {
           <form onSubmit={handleChangePassword} className="space-y-3 max-w-md">
             {!isDefaultPwd && (
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">كلمة المرور الحالية</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">كلمة المرور الحالية</Label>
               <div className="relative">
                 <Input
                   type={showCurrent ? "text" : "password"}
@@ -208,7 +208,7 @@ export function SecurityTab() {
                 <button
                   type="button"
                   onClick={() => setShowCurrent(!showCurrent)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -217,27 +217,26 @@ export function SecurityTab() {
             </div>
             )}
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">كلمة المرور الجديدة</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">كلمة المرور الجديدة</Label>
               <div className="relative">
                 <Input
                   type={showNew ? "text" : "password"}
                   value={newPwd}
                   onChange={(e) => setNewPwd(e.target.value)}
-                  placeholder="10 أحرف على الأقل"
+                  placeholder="6 أحرف على الأقل"
                   className="h-10 text-sm pe-10 rounded-lg"
                   required
-                  minLength={10}
+                  minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNew(!showNew)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {/* مؤشر القوة */}
               {newPwd && (
                 <div className="mt-2 space-y-1">
                   <div className="flex gap-1">
@@ -246,7 +245,7 @@ export function SecurityTab() {
                         key={i}
                         className={cn(
                           "h-1 flex-1 rounded-full transition-colors",
-                          i <= pwdStrength.level ? pwdStrength.color : "bg-slate-200"
+                          i <= pwdStrength.level ? pwdStrength.color : "bg-input"
                         )}
                       />
                     ))}
@@ -254,7 +253,8 @@ export function SecurityTab() {
                   <p className={cn(
                     "text-xs",
                     pwdStrength.level <= 1 ? "text-rose-500" :
-                    pwdStrength.level <= 2 ? "text-amber-500" : "text-emerald-500"
+                    pwdStrength.level <= 2 ? "text-amber-500" :
+                    pwdStrength.level <= 3 ? "text-sky-500" : "text-emerald-500"
                   )}>
                     القوة: {pwdStrength.label}
                   </p>
@@ -262,7 +262,7 @@ export function SecurityTab() {
               )}
             </div>
             <div>
-              <Label className="text-xs text-slate-500 mb-1 block">تأكيد كلمة المرور الجديدة</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">تأكيد كلمة المرور الجديدة</Label>
               <Input
                 type="password"
                 value={confirmPwd}
@@ -270,15 +270,15 @@ export function SecurityTab() {
                 placeholder="أعد إدخال كلمة المرور"
                 className="h-10 text-sm rounded-lg"
                 required
-                minLength={10}
+                minLength={6}
               />
               {confirmPwd && newPwd !== confirmPwd && (
-                <p className="text-xs text-rose-500 mt-1">كلمة المرور غير متطابقة</p>
+                <p className="text-xs text-destructive mt-1">كلمة المرور غير متطابقة</p>
               )}
             </div>
             <Button
               type="submit"
-              className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg h-10 px-5"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-10 px-5"
               disabled={changingPwd || (!isDefaultPwd && !currentPwd) || !newPwd || newPwd !== confirmPwd}
             >
               {changingPwd ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -288,21 +288,20 @@ export function SecurityTab() {
         </div>
       </div>
 
-      {/* ===== بطاقة أعضاء الفريق ===== */}
-      <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      {/* Team card */}
+      <div className="bg-card border border-border rounded-xl">
         <div className="p-5 pb-4">
-          <h3 className="text-sm flex items-center gap-2 text-slate-700 font-semibold">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-              <Users className="h-4 w-4 text-emerald-600" />
+          <h3 className="text-sm flex items-center gap-2 text-foreground font-semibold">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Users className="h-4 w-4 text-emerald-500" />
             </div>
             فريق العمل
           </h3>
-          <p className="text-xs text-slate-400 mt-1 mr-10">
+          <p className="text-xs text-muted-foreground mt-1 mr-10">
             أضف أعضاء فريقك بالإيميل ليتمكنوا من الوصول والتعديل
           </p>
         </div>
         <div className="px-5 pb-5 space-y-4">
-          {/* نموذج الإضافة */}
           <form onSubmit={handleAddMember} className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1">
               <Input
@@ -345,33 +344,32 @@ export function SecurityTab() {
             </Button>
           </form>
 
-          {/* قائمة الأعضاء */}
           {loadingTeam ? (
-            <div className="text-center py-8 text-slate-400 text-sm">
+            <div className="text-center py-8 text-muted-foreground text-sm">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
               جارٍ التحميل...
             </div>
           ) : members.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">
-              <Users className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              <Users className="h-10 w-10 mx-auto mb-2 opacity-40" />
               لا يوجد أعضاء في الفريق بعد
             </div>
           ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
+            <div className="space-y-2 max-h-80 overflow-y-auto custom-scroll">
               {members.map((m) => (
                 <div
                   key={m.email}
-                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-colors"
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                      <span className="text-sm font-bold text-teal-700">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-primary">
                         {m.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-800 truncate">{m.name}</div>
-                      <div className="text-xs text-slate-400 truncate flex items-center gap-1" dir="ltr">
+                      <div className="text-sm font-medium text-foreground truncate">{m.name}</div>
+                      <div className="text-xs text-muted-foreground truncate flex items-center gap-1" dir="ltr">
                         <Mail className="h-3 w-3 shrink-0" />
                         {m.email}
                       </div>
@@ -379,18 +377,19 @@ export function SecurityTab() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge
+                      variant="outline"
                       className={cn(
                         "text-xs",
-                        m.role === "admin" ? "bg-teal-50 text-teal-700 border-teal-200" :
-                        m.role === "viewer" ? "bg-slate-100 text-slate-600 border-slate-200" :
-                        "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        m.role === "admin" ? "border-primary/30 text-primary" :
+                        m.role === "viewer" ? "border-border text-muted-foreground" :
+                        "border-emerald-500/30 text-emerald-500"
                       )}
                     >
                       {m.role === "admin" ? "مدير" : m.role === "viewer" ? "مشاهد" : "عضو"}
                     </Badge>
                     <button
                       onClick={() => handleRemoveMember(m.email)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                       title="حذف"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -403,22 +402,22 @@ export function SecurityTab() {
         </div>
       </div>
 
-      {/* ===== تسجيل الخروج ===== */}
-      <div className="bg-background rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      {/* Logout */}
+      <div className="bg-card border border-border rounded-xl">
         <div className="p-5 flex items-center justify-between">
           <div>
-            <h3 className="text-sm flex items-center gap-2 text-slate-700 font-semibold">
-              <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
-                <LogOut className="h-4 w-4 text-rose-600" />
+            <h3 className="text-sm flex items-center gap-2 text-foreground font-semibold">
+              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <LogOut className="h-4 w-4 text-destructive" />
               </div>
               الجلسة الحالية
             </h3>
-            <p className="text-xs text-slate-400 mt-1 mr-10">تسجيل الخروج من لوحة التحكم</p>
+            <p className="text-xs text-muted-foreground mt-1 mr-10">تسجيل الخروج من لوحة التحكم</p>
           </div>
           <Button
             variant="outline"
             onClick={handleLogout}
-            className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-lg h-10 px-4"
+            className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive rounded-lg h-10 px-4"
           >
             <LogOut className="h-4 w-4" />
             <span className="mr-1.5">تسجيل الخروج</span>

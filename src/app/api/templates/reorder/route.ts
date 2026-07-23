@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 
 /**
  * PUT /api/templates/reorder
@@ -7,7 +7,6 @@ import { db, ensureDb } from "@/lib/db";
  */
 export async function PUT(req: NextRequest) {
   try {
-    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const { ids } = await req.json();
 

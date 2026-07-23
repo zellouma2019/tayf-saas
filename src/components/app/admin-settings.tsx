@@ -1194,7 +1194,7 @@ export function AdminSettings() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-blue-500" />
+                  <Phone className="h-3.5 w-3.5 text-gold-400" />
                   رقم الهاتف
                 </Label>
                 <Input
@@ -1279,7 +1279,7 @@ export function AdminSettings() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
+                  <CalendarClock className="h-3.5 w-3.5 text-gold-400" />
                   الحذف التلقائي (أيام)
                 </Label>
                 <Input

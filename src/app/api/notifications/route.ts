@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 
 interface Notification {
@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const { searchParams } = new URL(request.url);
     const since = searchParams.get("since");
     const shopId = searchParams.get("shopId");

@@ -256,17 +256,17 @@ function MerchantExpensesInner() {
     <div className="space-y-4" dir="rtl">
       {/* ===== العنوان ===== */}
       <div className="flex items-center gap-3">
-        <h2 className="text-lg font-bold flex items-center gap-2 border-r-4 border-teal-500 pr-3">
-          <Receipt className="h-5 w-5 text-teal-600" />
+        <h2 className="text-lg font-bold flex items-center gap-2 border-r-4 border-gold-500 pr-3">
+          <Receipt className="h-5 w-5 text-gold-500" />
           إدارة المصاريف
         </h2>
       </div>
 
       {/* ===== نموذج الإضافة ===== */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm font-semibold flex items-center gap-1.5 mb-1">
-            <Plus className="h-4 w-4 text-teal-600" />
+            <Plus className="h-4 w-4 text-gold-500" />
             إضافة مصروف جديد
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -321,7 +321,7 @@ function MerchantExpensesInner() {
             type="submit"
             disabled={submitting || !formCategory || !formAmount}
             size="sm"
-            className="gap-1.5 bg-teal-600 hover:bg-teal-700"
+            className="gap-1.5 bg-gold-500 hover:bg-gold-600"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -335,14 +335,14 @@ function MerchantExpensesInner() {
 
       {/* ===== ملخص المصاريف ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
           <div className="flex items-center gap-2 mb-1">
-            <CalendarDays className="h-4 w-4 text-teal-600" />
+            <CalendarDays className="h-4 w-4 text-gold-500" />
             <span className="text-xs text-muted-foreground">مصاريف الشهر</span>
           </div>
           <p className="text-xl font-bold">{formatDA(monthTotal ?? 0)}</p>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingDown className="h-4 w-4 text-rose-600" />
             <span className="text-xs text-muted-foreground">إجمالي المصاريف</span>
@@ -356,7 +356,7 @@ function MerchantExpensesInner() {
         <Button
           variant={!categoryFilter ? "default" : "outline"}
           size="sm"
-          className={`h-8 text-xs ${!categoryFilter ? "bg-teal-600 text-white hover:bg-teal-700" : ""}`}
+          className={`h-8 text-xs ${!categoryFilter ? "bg-gold-500 text-white hover:bg-gold-600" : ""}`}
           onClick={() => handleFilterChange("__all__")}
         >
           الكل
@@ -368,7 +368,7 @@ function MerchantExpensesInner() {
             size="sm"
             className={`h-8 text-xs gap-1 ${
               categoryFilter === cat.value
-                ? "bg-teal-600 text-white hover:bg-teal-700"
+                ? "bg-gold-500 text-white hover:bg-gold-600"
                 : ""
             }`}
             onClick={() => handleFilterChange(cat.value)}
@@ -389,7 +389,7 @@ function MerchantExpensesInner() {
 
       {/* ===== قائمة فارغة ===== */}
       {!isLoading && expenses.length === 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
           <Receipt className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
             {categoryFilter
@@ -403,10 +403,10 @@ function MerchantExpensesInner() {
       {!isLoading && expenses.length > 0 && (
         <>
           {/* ===== جدول سطح المكتب ===== */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block overflow-hidden">
+          <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-dark-50">
                   <TableHead>الفئة</TableHead>
                   <TableHead className="text-center">المبلغ</TableHead>
                   <TableHead>الوصف</TableHead>
@@ -506,7 +506,7 @@ function MerchantExpensesInner() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:bg-slate-100"
+                                className="h-8 w-8 text-muted-foreground hover:bg-gold-500/10"
                                 onClick={cancelEdit}
                                 disabled={savingId === exp.id}
                               >
@@ -518,7 +518,7 @@ function MerchantExpensesInner() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                                className="h-8 w-8 text-gold-500 hover:text-gold-600 hover:bg-gold-50"
                                 onClick={() => startEdit(exp)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
@@ -555,7 +555,7 @@ function MerchantExpensesInner() {
               return (
                 <div
                   key={exp.id}
-                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
+                  className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
                 >
                   {isEditing ? (
                     <div className="space-y-3">
@@ -609,7 +609,7 @@ function MerchantExpensesInner() {
                       <div className="flex gap-2 pt-1">
                         <Button
                           size="sm"
-                          className="gap-1.5 bg-teal-600 hover:bg-teal-700"
+                          className="gap-1.5 bg-gold-500 hover:bg-gold-600"
                           onClick={() => handleSaveEdit(exp.id)}
                           disabled={savingId === exp.id}
                         >
@@ -641,7 +641,7 @@ function MerchantExpensesInner() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-teal-600"
+                            className="h-8 w-8 text-gold-500"
                             onClick={() => startEdit(exp)}
                           >
                             <Pencil className="h-3.5 w-3.5" />

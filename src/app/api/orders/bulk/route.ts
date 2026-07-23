@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 const VALID_STATUSES = new Set(["pending", "printing", "ready", "delivered", "cancelled"]);
@@ -13,7 +13,6 @@ export async function PUT(req: NextRequest) {
   const rl = withRateLimit(req, "bulk-update");
   if (!rl.ok) return rl.response;
 
-  await ensureDb();
   const queryShopId = getShopId(req);
   let ids: string[], status: string, bodyShopId: string | undefined = undefined;
   try {
@@ -47,7 +46,6 @@ export async function DELETE(req: NextRequest) {
   const rl = withRateLimit(req, "bulk-delete");
   if (!rl.ok) return rl.response;
 
-  await ensureDb();
   const queryShopId = getShopId(req);
   let ids: string[], bodyShopId: string | undefined = undefined;
   try {

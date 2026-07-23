@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { DEFAULT_SETTINGS, type AppSettings } from "@/lib/default-settings";
 import { requireAdmin } from "@/lib/admin-auth";
+
+export const dynamic = "force-dynamic";
 
 /// Helper: upsert setting with compound unique [shopId, key]
 async function upsertSetting(key: string, value: string, shopId?: string) {
@@ -19,35 +21,9 @@ async function upsertSetting(key: string, value: string, shopId?: string) {
   return db.setting.create({ data: { key, value } });
 }
 
-/// مزامنة الإعدادات إلى حقل shop.settings على نموذج Shop
-/// هذا يضمن أن صفحة الزبون (التي تقرأ من shop.settings) تحصل على أحدث البيانات
-async function syncSettingsToShop(shopId: string, body: { services?: unknown; deliveryOptions?: unknown; general?: unknown; intro?: unknown }) {
-  try {
-    // قراءة shop.settings الحالي
-    const shop = await db.shop.findUnique({ where: { id: shopId }, select: { settings: true } });
-    let existing: Record<string, unknown> = {};
-    if (shop?.settings) {
-      try { existing = JSON.parse(shop.settings); } catch {}
-    }
-    // دمج الحقول المحدّثة
-    const merged = { ...existing };
-    if (body.services !== undefined) merged.services = body.services;
-    if (body.deliveryOptions !== undefined) merged.deliveryOptions = body.deliveryOptions;
-    if (body.general !== undefined) merged.general = body.general;
-    if (body.intro !== undefined) merged.intro = body.intro;
-    await db.shop.update({
-      where: { id: shopId },
-      data: { settings: JSON.stringify(merged) },
-    });
-  } catch (e) {
-    console.error('[settings/syncToShop]', e);
-  }
-}
-
 /// الحصول على الإعدادات (يُنشئ الافتراضية إن لم تكن موجودة)
 export async function GET(req: NextRequest) {
   try {
-    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = shopId ? { shopId } : { shopId: null as string | null };
     const rows = await db.setting.findMany({ where });
@@ -61,11 +37,7 @@ export async function GET(req: NextRequest) {
         else if (row.key === "intro") settings.intro = { ...settings.intro, ...parsed };
       } catch {}
     }
-    return NextResponse.json(settings, {
-      headers: {
-        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
-      },
-    });
+    return NextResponse.json(settings);
   } catch (e) {
     console.error('[settings/GET]', e);
     return NextResponse.json({ error: "حدث خطأ أثناء جلب الإعدادات" }, { status: 500 });
@@ -78,31 +50,45 @@ export async function PUT(req: NextRequest) {
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const body = await req.json();
     const { services, deliveryOptions, general, intro } = body as AppSettings;
-
-    // استخراج shopId من query params (لأن shopApi يضيفه هناك)
-    const shopId = req.nextUrl.searchParams.get("shopId");
+    // shopId يأتي من query params (يضيفه shopApi) أو من body
+    const shopId = req.nextUrl.searchParams.get("shopId") || (body.shopId as string) || undefined;
 
     const updates: Promise<unknown>[] = [];
     if (services) {
-      updates.push(upsertSetting("services", JSON.stringify(services), shopId || undefined));
+      updates.push(upsertSetting("services", JSON.stringify(services), shopId));
     }
     if (deliveryOptions) {
-      updates.push(upsertSetting("deliveryOptions", JSON.stringify(deliveryOptions), shopId || undefined));
+      updates.push(upsertSetting("deliveryOptions", JSON.stringify(deliveryOptions), shopId));
     }
     if (general) {
-      updates.push(upsertSetting("general", JSON.stringify(general), shopId || undefined));
+      updates.push(upsertSetting("general", JSON.stringify(general), shopId));
     }
     if (intro) {
-      updates.push(upsertSetting("intro", JSON.stringify(intro), shopId || undefined));
+      updates.push(upsertSetting("intro", JSON.stringify(intro), shopId));
     }
     await Promise.all(updates);
 
-    // مزامنة إلى shop.settings لكي يراها الزبون فوراً
+    // مزامنة الإعدادات مع عمود Shop.settings لكي يراها الزبائن فوراً
     if (shopId) {
-      await syncSettingsToShop(shopId, { services, deliveryOptions, general, intro });
+      try {
+        const rows = await db.setting.findMany({ where: { shopId } });
+        const syncedSettings: Record<string, unknown> = {};
+        for (const row of rows) {
+          try {
+            syncedSettings[row.key] = JSON.parse(row.value);
+          } catch {}
+        }
+        if (Object.keys(syncedSettings).length > 0) {
+          await db.shop.update({
+            where: { id: shopId },
+            data: { settings: JSON.stringify(syncedSettings) },
+          });
+        }
+      } catch (syncErr) {
+        console.error('[settings/PUT] Failed to sync to Shop.settings:', syncErr);
+      }
     }
 
     return NextResponse.json({ success: true });
@@ -118,17 +104,18 @@ export async function DELETE(req: NextRequest) {
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = shopId ? { shopId } : { shopId: null as string | null };
     await db.setting.deleteMany({ where });
 
-    // مسح shop.settings أيضاً
+    // مسح عمود Shop.settings عند إعادة التعيين
     if (shopId) {
-      await db.shop.update({
-        where: { id: shopId },
-        data: { settings: null },
-      });
+      try {
+        await db.shop.update({
+          where: { id: shopId },
+          data: { settings: null },
+        });
+      } catch {}
     }
 
     return NextResponse.json({ success: true });

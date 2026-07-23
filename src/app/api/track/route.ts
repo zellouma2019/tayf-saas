@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { runAutoCleanup } from "@/lib/cleanup";
 import { orderListWhere } from "@/lib/order-lookup";
 
 /// تتبّع الطلب برقم المرجع أو رقم الهاتف
 export async function GET(req: NextRequest) {
   try {
-    await ensureDb();
     await runAutoCleanup();
 
     const { searchParams } = new URL(req.url);
@@ -32,16 +31,14 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      orders: orders.map((o) => {
-        const { fileData, smartAnalysis, ...rest } = o;
-        return {
-          ...rest,
-          options: JSON.parse(o.options),
-          customer: JSON.parse(o.customer),
-          delivery: JSON.parse(o.delivery),
-          pricing: JSON.parse(o.pricing),
-        };
-      }),
+      orders: orders.map((o) => ({
+        ...o,
+        options: JSON.parse(o.options),
+        customer: JSON.parse(o.customer),
+        delivery: JSON.parse(o.delivery),
+        pricing: JSON.parse(o.pricing),
+        smartAnalysis: o.smartAnalysis ? JSON.parse(o.smartAnalysis) : null,
+      })),
     });
   } catch (e) {
     console.error('[track]', e);

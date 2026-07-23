@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
+
+/// تهيئة قاعدة البيانات إن لم تكن جاهزة
+async function ensureSchema(): Promise<boolean> {
+  try {
+    await db.shop.count();
+    return true;
+  } catch {
+    try {
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+}
 
 /// تغيير كلمة مرور المدير الأول
 export async function PUT(req: NextRequest) {
@@ -8,9 +26,6 @@ export async function PUT(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    // يجب انتظار تهيئة قاعدة البيانات
-    await ensureDb();
-
     const { currentPassword, newPassword } = await req.json();
 
     if (!newPassword) {
@@ -29,7 +44,7 @@ export async function PUT(req: NextRequest) {
       admin = await db.superAdmin.create({ data: { key: "main" } });
     }
 
-    // أول مرة: لا نطلب كلمة المرور الحالية
+    // أول مرة: لا نطلب كلمة المرور الحالية (كلمة المرور فارغة أو افتراضية)
     const isFirstTime = !admin.password || admin.password === "Admin@2025";
     if (!isFirstTime) {
       if (!currentPassword) {
@@ -45,16 +60,8 @@ export async function PUT(req: NextRequest) {
       data: { password: newPassword },
     });
 
-    // التحقق من الحفظ الفعلي
-    const saved = await db.superAdmin.findUnique({ where: { key: "main" } });
-    if (!saved || saved.password !== newPassword) {
-      console.error('[super-admin/password/PUT] Password save verification failed');
-      return NextResponse.json({ error: "فشل حفظ كلمة المرور" }, { status: 500 });
-    }
-
     return NextResponse.json({ success: true, isFirstTime });
-  } catch (e) {
-    console.error('[super-admin/password/PUT]', e);
+  } catch {
     return NextResponse.json({ error: "خطأ في تحديث كلمة المرور" }, { status: 500 });
   }
 }
@@ -65,15 +72,22 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    // يجب انتظار تهيئة قاعدة البيانات
-    await ensureDb();
-
     const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
     const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
-    const hasPassword = admin && admin.password && admin.password !== "Admin@2025";
-    return NextResponse.json({ isDefault, hasPassword });
-  } catch (e) {
-    console.error('[super-admin/password/GET]', e);
-    return NextResponse.json({ error: "خطأ في جلب حالة كلمة المرور" }, { status: 500 });
+    return NextResponse.json({ isDefault });
+  } catch {
+    // قاعدة البيانات غير جاهزة — محاولة تهيئتها
+    const ready = await ensureSchema();
+    if (!ready) {
+      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
+    }
+    // إعادة المحاولة بعد التهيئة
+    try {
+      const admin = await db.superAdmin.findUnique({ where: { key: "main" } });
+      const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
+      return NextResponse.json({ isDefault });
+    } catch {
+      return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
+    }
   }
 }

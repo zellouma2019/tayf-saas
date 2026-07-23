@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
+
+export const maxDuration = 30;
 
 export async function GET(request: Request) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period") || "30"; // days
+    const period = searchParams.get("period") || "30";
     const shopId = searchParams.get("shopId");
 
     const since = new Date();
@@ -17,19 +18,39 @@ export async function GET(request: Request) {
     since.setHours(0, 0, 0, 0);
 
     const now = new Date();
-
     const baseWhere: Record<string, unknown> = {};
     if (shopId) baseWhere.shopId = shopId;
 
-    // 1. Monthly revenue & orders (last 6 months)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourteenDaysAgo.getDate() - 28);
+    const prevSince = new Date(since);
+    prevSince.setDate(prevSince.getDate() - parseInt(period, 10));
 
-    const monthlyOrders = await db.printOrder.findMany({
-      where: { ...baseWhere, createdAt: { gte: sixMonthsAgo } },
-      select: { total: true, createdAt: true, status: true },
-    });
+    // 4 استعلامات متوازية بدلاً من 8 تسلسلية
+    const [monthlyOrders, dailyOrders, recentForHeatmap, allOrders] = await Promise.all([
+      db.printOrder.findMany({
+        where: { ...baseWhere, createdAt: { gte: sixMonthsAgo } },
+        select: { total: true, createdAt: true, status: true },
+      }),
+      db.printOrder.findMany({
+        where: { ...baseWhere, createdAt: { gte: fourteenDaysAgo } },
+        select: { total: true, createdAt: true },
+      }),
+      db.printOrder.findMany({
+        where: { ...baseWhere, createdAt: { gte: fourWeeksAgo } },
+        select: { createdAt: true },
+      }),
+      db.printOrder.findMany({
+        where: baseWhere,
+        select: { customer: true, total: true, createdAt: true, status: true, pages: true, copies: true, serviceType: true },
+      }),
+    ]);
 
+    // 1. Monthly data (in-memory from allOrders)
     const monthlyMap: Record<string, { revenue: number; count: number; delivered: number }> = {};
     monthlyOrders.forEach((o) => {
       const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, "0")}`;
@@ -43,15 +64,7 @@ export async function GET(request: Request) {
       .slice(-6)
       .map(([month, data]) => ({ month, ...data }));
 
-    // 2. Daily revenue (last 14 days)
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-    const dailyOrders = await db.printOrder.findMany({
-      where: { ...baseWhere, createdAt: { gte: fourteenDaysAgo } },
-      select: { total: true, createdAt: true },
-    });
-
+    // 2. Daily data
     const dailyMap: Record<string, number> = {};
     dailyOrders.forEach((o) => {
       const key = o.createdAt.toISOString().split("T")[0];
@@ -61,35 +74,27 @@ export async function GET(request: Request) {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, revenue]) => ({ date, revenue }));
 
-    // 3. Service distribution
-    const serviceStats = await db.printOrder.groupBy({
-      by: ["serviceType"],
-      _count: true,
-      _sum: { total: true },
-      where: baseWhere,
+    // 3. Service distribution (in-memory)
+    const serviceMap: Record<string, { count: number; revenue: number }> = {};
+    allOrders.forEach((o) => {
+      if (!serviceMap[o.serviceType]) serviceMap[o.serviceType] = { count: 0, revenue: 0 };
+      serviceMap[o.serviceType].count += 1;
+      serviceMap[o.serviceType].revenue += o.total;
     });
-    const serviceDistribution = serviceStats.map((s) => ({
-      serviceType: s.serviceType,
-      count: s._count,
-      revenue: s._sum.total || 0,
+    const serviceDistribution = Object.entries(serviceMap).map(([serviceType, d]) => ({
+      serviceType, count: d.count, revenue: d.revenue,
     }));
 
-    // 4. Status distribution
-    const statusStats = await db.printOrder.groupBy({
-      by: ["status"],
-      _count: true,
-      where: baseWhere,
+    // 4. Status distribution (in-memory)
+    const statusMap: Record<string, number> = {};
+    allOrders.forEach((o) => {
+      statusMap[o.status] = (statusMap[o.status] || 0) + 1;
     });
-    const statusDistribution = statusStats.map((s) => ({
-      status: s.status,
-      count: s._count,
+    const statusDistribution = Object.entries(statusMap).map(([status, count]) => ({
+      status, count,
     }));
 
-    // 5. Top customers
-    const allOrders = await db.printOrder.findMany({
-      where: baseWhere,
-      select: { customer: true, total: true, createdAt: true },
-    });
+    // 5. Top customers (in-memory)
     const customerMap: Record<string, { name: string; phone: string; orders: number; total: number; lastOrder: Date }> = {};
     allOrders.forEach((o) => {
       try {
@@ -101,21 +106,13 @@ export async function GET(request: Request) {
         customerMap[phone].orders += 1;
         customerMap[phone].total += o.total;
         if (o.createdAt > customerMap[phone].lastOrder) customerMap[phone].lastOrder = o.createdAt;
-      } catch {
-        /* skip bad data */
-      }
+      } catch { /* skip bad data */ }
     });
     const topCustomers = Object.values(customerMap)
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
 
-    // 6. Weekly heatmap (4 weeks × 7 days)
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-    const recentForHeatmap = await db.printOrder.findMany({
-      where: { ...baseWhere, createdAt: { gte: fourWeeksAgo } },
-      select: { createdAt: true },
-    });
+    // 6. Weekly heatmap (in-memory)
     const heatmap: number[][] = Array.from({ length: 4 }, () => Array(7).fill(0));
     recentForHeatmap.forEach((o) => {
       const diff = Math.floor((now.getTime() - o.createdAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -126,11 +123,8 @@ export async function GET(request: Request) {
       }
     });
 
-    // 7. Period summary
-    const periodOrders = await db.printOrder.findMany({
-      where: { ...baseWhere, createdAt: { gte: since } },
-      select: { total: true, status: true, pages: true, copies: true, createdAt: true },
-    });
+    // 7. Period summary (in-memory from allOrders)
+    const periodOrders = allOrders.filter((o) => o.createdAt >= since);
     const periodSummary = {
       totalRevenue: periodOrders.reduce((s, o) => s + o.total, 0),
       totalOrders: periodOrders.length,
@@ -152,13 +146,8 @@ export async function GET(request: Request) {
           : 0,
     };
 
-    // 8. Previous period for comparison
-    const prevSince = new Date(since);
-    prevSince.setDate(prevSince.getDate() - parseInt(period, 10));
-    const prevOrders = await db.printOrder.findMany({
-      where: { ...baseWhere, createdAt: { gte: prevSince, lt: since } },
-      select: { total: true, status: true },
-    });
+    // 8. Previous period comparison (in-memory)
+    const prevOrders = allOrders.filter((o) => o.createdAt >= prevSince && o.createdAt < since);
     const prevSummary = {
       totalRevenue: prevOrders.reduce((s, o) => s + o.total, 0),
       totalOrders: prevOrders.length,

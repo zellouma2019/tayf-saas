@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, Inbox, Search, RotateCcw, Clock, FileText, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   STATUS_META,
@@ -46,7 +47,6 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
     setSearched(true);
     try {
       const res = await shopApi(`/api/orders/by-phone?phone=${encodeURIComponent(clean)}`);
-      if (!res.ok) throw new Error("فشل في جلب البيانات");
       const d = await res.json();
       setOrders(d.orders || []);
       if ((d.orders || []).length === 0) {
@@ -68,13 +68,19 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
       <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/30 border border-amber-200/60 p-6 mb-8 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(212,175,55,0.08),transparent_50%)]" />
         <div className="relative">
-          <div
-            className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-3 shadow-lg shadow-amber-200/50 animate-in fade-in zoom-in duration-500"
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center mb-3 shadow-lg shadow-amber-200/50"
           >
-            <div className="[animation:spin_20s_linear_infinite]">
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
               <RotateCcw className="h-8 w-8 text-white" />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
           <h1 className="text-2xl font-bold mb-1">إعادة طلب سابق</h1>
           <p className="text-sm text-muted-foreground">
             أدخل رقم هاتفك لعرض كل طلباتك السابقة — اختر أحدها وعدّله قبل التأكيد

@@ -78,7 +78,7 @@ function PrintableDocument({
   const statusMeta = STATUS_META[record.status];
 
   return (
-    <div className="p-8 md:p-12 text-slate-800 font-amiri" dir="rtl">
+    <div className="p-8 md:p-12 text-dark-800 font-amiri" dir="rtl">
       {/* الترويسة الرسمية */}
       <div className="border-b-2 border-primary pb-4 mb-6">
         <div className="flex items-center justify-between gap-4">
@@ -154,7 +154,7 @@ function PrintableDocument({
               return (
                 <div key={field.key} className={isFull ? "col-span-2" : ""}>
                   <div className="text-[11px] text-muted-foreground mb-0.5">{field.label}</div>
-                  <div className="text-sm border-b border-dotted border-slate-300 pb-1 min-h-[1.5rem] font-medium whitespace-pre-wrap break-words">
+                  <div className="text-sm border-b border-dotted border-dark-300 pb-1 min-h-[1.5rem] font-medium whitespace-pre-wrap break-words">
                     {display || "—"}
                   </div>
                 </div>
@@ -189,7 +189,7 @@ function PrintableDocument({
                 <div className="text-[10px] text-muted-foreground mb-6">
                   {a.description || "الاسم / التوقيع / التاريخ"}
                 </div>
-                <div className="h-px bg-slate-400 mb-1" />
+                <div className="h-px bg-dark-400 mb-1" />
                 <div className="text-[9px] text-muted-foreground">التوقيع والختم</div>
               </div>
             ))}
@@ -198,7 +198,7 @@ function PrintableDocument({
       )}
 
       {/* التذييل */}
-      <div className="mt-10 pt-4 border-t border-dashed border-slate-300 text-center">
+      <div className="mt-10 pt-4 border-t border-dashed border-dark-300 text-center">
         <div className="text-[10px] text-muted-foreground">
           تم إنشاء هذا المستند بواسطة نظام إدارة النماذج الرسمية · {template?.code}
         </div>

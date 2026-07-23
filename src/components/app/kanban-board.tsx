@@ -47,7 +47,7 @@ function timeAgo(date: Date | string): string {
 
 const COLUMNS = [
   { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-400" },
-  { key: "printing", label: "جارٍ الطباعة", icon: Loader2, color: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-400" },
+  { key: "printing", label: "جارٍ الطباعة", icon: Loader2, color: "bg-gold-500/10 text-gold-400 border-gold-500/20", dot: "bg-gold-300" },
   { key: "ready", label: "جاهز", icon: Package, color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
   { key: "delivered", label: "تم التسليم", icon: CheckCircle2, color: "bg-neutral-50 text-neutral-600 border-neutral-200", dot: "bg-neutral-400" },
   { key: "cancelled", label: "ملغى", icon: XCircle, color: "bg-rose-50 text-rose-600 border-rose-200", dot: "bg-rose-400" },

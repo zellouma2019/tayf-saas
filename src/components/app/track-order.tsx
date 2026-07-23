@@ -27,6 +27,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const SERVICE_EMOJI: Record<string, string> = {
@@ -63,11 +64,11 @@ export function TrackOrder() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* منطقة البحث مع خلفية محسّنة */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-teal-50 to-slate-50 border border-slate-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(13,115,119,0.06),transparent_50%)]" />
+      <div className="relative rounded-2xl bg-gradient-to-br from-violet-50 to-slate-50 border border-dark-200/60 p-6 md:p-8 mb-8 text-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.06),transparent_50%)]" />
         <div className="relative">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-teal-50 to-teal-200 flex items-center justify-center mb-3 shadow-sm">
-            <Search className="h-7 w-7 text-teal-600" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center mb-3 shadow-sm">
+            <Search className="h-7 w-7 text-gold-500" />
           </div>
           <h1 className="text-2xl font-bold mb-1">تتبّع طلبك</h1>
           <p className="text-sm text-muted-foreground">
@@ -100,7 +101,7 @@ export function TrackOrder() {
 
       {loading && (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
-          <Loader2 className="h-6 w-6 animate-spin text-teal-500 mb-3" />
+          <Loader2 className="h-6 w-6 animate-spin text-gold-400 mb-3" />
           <p className="text-sm font-medium">جارٍ البحث عن طلبك...</p>
         </div>
       )}
@@ -118,15 +119,23 @@ export function TrackOrder() {
       )}
 
       {!loading && orders.length > 0 && (
-        <div
-          className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-400"
+        <motion.div
+          className="space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
         >
-          {orders.map((o) => (
-            <div key={o.id}>
+          {orders.map((o, i) => (
+            <motion.div
+              key={o.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: i * 0.1, ease: "easeOut" }}
+            >
               <OrderTrackingCard order={o} />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -267,25 +276,30 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
 
         <div className="p-5 space-y-4">
             {/* نسبة الإنجاز */}
-          <div
-            className="flex items-center gap-3 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-400"
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="flex items-center gap-3 mb-1"
           >
-            <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-l from-emerald-400 via-emerald-500 to-teal-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30 transition-all duration-700 ease-out"
-                style={{ width: `${Math.round(Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100))}%` }}
+            <div className="flex-1 h-2.5 bg-dark-100 dark:bg-dark-800 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-l from-emerald-400 via-emerald-500 to-teal-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30"
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round(Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100))}%` }}
+                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
               />
             </div>
             <span className="text-xs font-bold text-emerald-600 min-w-[3ch] text-left tabular-nums">
               {Math.round(Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100))}%
             </span>
-          </div>
+          </motion.div>
 
             {/* خط الزمن المحسّن */}
-          <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60">
+          <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-4 border border-dark-200/60 dark:border-dark-700/60">
             <div className="flex items-center justify-between relative">
               {/* خط الربط الخلفي */}
-              <div className="absolute top-4 right-6 left-6 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
+              <div className="absolute top-4 right-6 left-6 h-1 bg-dark-200 dark:bg-dark-700 rounded-full" />
               <div
                 className="absolute top-4 right-6 h-1 bg-gradient-to-l from-emerald-400 to-teal-500 rounded-full transition-all duration-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30"
                 style={{ width: `${Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100)}%` }}
@@ -296,17 +310,23 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                 const m = STATUS_META[s];
                 return (
                   <div key={s} className="flex-1 flex flex-col items-center relative z-10">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all duration-300 ${
+                    <motion.div
+                      animate={active ? { scale: [1, 1.15, 1], boxShadow: [
+                        "0 0 0 0 rgba(245,158,11,0.4)",
+                        "0 0 0 8px rgba(245,158,11,0)",
+                        "0 0 0 0 rgba(245,158,11,0.4)",
+                      ]} : {}}
+                      transition={active ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-colors duration-300 ${
                         done
                           ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-200 dark:shadow-emerald-900/30"
                           : active
-                            ? "bg-amber-400 border-amber-400 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/30 animate-pulse"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400"
+                            ? "bg-amber-400 border-amber-400 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/30"
+                            : "bg-card border border-gold-500/8 text-dark-400"
                       }`}
                     >
                       {done ? <CheckCircle2 className="h-4 w-4" /> : <span>{m.emoji}</span>}
-                    </div>
+                    </motion.div>
                     <div
                       className={`text-[11px] mt-1.5 text-center leading-tight ${
                         done || active ? "font-semibold text-foreground" : "text-muted-foreground/60"
@@ -337,35 +357,35 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
             <button
               onClick={downloadInvoice}
               disabled={pdfLoading}
-              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100/30 border border-teal-200/60 hover:from-teal-100 hover:to-teal-100/50 transition-all text-right disabled:opacity-60"
+              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/30 border border-gold-200/60 hover:from-violet-100 hover:to-violet-100/50 transition-all text-right disabled:opacity-60"
             >
               {pdfLoading ? (
-                <Loader2 className="h-5 w-5 text-teal-600 shrink-0 animate-spin" />
+                <Loader2 className="h-5 w-5 text-gold-500 shrink-0 animate-spin" />
               ) : (
-                <FileText className="h-5 w-5 text-teal-600 shrink-0" />
+                <FileText className="h-5 w-5 text-gold-500 shrink-0" />
               )}
               <div>
-                <div className="text-xs font-bold text-teal-800">{pdfLoading ? "جارٍ الإنشاء..." : "فاتورة PDF"}</div>
+                <div className="text-xs font-bold text-foreground">{pdfLoading ? "جارٍ الإنشاء..." : "فاتورة PDF"}</div>
                 <div className="text-[11px] text-muted-foreground">تنزيل الفاتورة</div>
               </div>
             </button>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/30 border border-blue-200/60">
-              <Truck className="h-5 w-5 text-blue-600 shrink-0" />
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-gold-500/8 to-gold-500/5 border border-gold-500/20/60">
+              <Truck className="h-5 w-5 text-gold-500 shrink-0" />
               <div>
-                <div className="text-xs font-bold text-blue-800">التسليم</div>
+                <div className="text-xs font-bold text-gold-400">التسليم</div>
                 <div className="text-[11px] text-muted-foreground">{DELIVERY_LABELS[delivery.mode] || delivery.mode}</div>
               </div>
             </div>
           </div>
 
           {/* الوقت المتوقع */}
-          <div className="flex items-center gap-2.5 text-xs text-blue-700 bg-gradient-to-l from-blue-50 to-sky-50/30 border border-blue-200/60 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-              <Clock className="h-4 w-4 text-blue-600" />
+          <div className="flex items-center gap-2.5 text-xs text-gold-400 bg-gradient-to-l from-gold-500/8 to-gold-500/5 border border-gold-500/20/60 rounded-xl p-3">
+            <div className="w-8 h-8 rounded-lg bg-gold-500/15 flex items-center justify-center shrink-0">
+              <Clock className="h-4 w-4 text-gold-500" />
             </div>
             <div>
-              <div className="text-blue-900 font-bold">{order.estimatedHours} ساعة</div>
-              <div className="text-blue-500">الوقت المتوقع للتسليم</div>
+              <div className="text-gold-500 font-bold">{order.estimatedHours} ساعة</div>
+              <div className="text-gold-400">الوقت المتوقع للتسليم</div>
             </div>
           </div>
 

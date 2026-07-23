@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
   try {
-    await ensureDb();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const from = searchParams.get("from");
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
   try {
-    await ensureDb();
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get("shopId");
     const body = await request.json();

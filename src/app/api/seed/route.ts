@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { TEMPLATE_DEFINITIONS } from "@/lib/form-templates";
 
 /// إعادة زرع القوالب (في حال الحاجة) — محمي بكلمة سر المدير العام
 export async function POST(req: NextRequest) {
   try {
-    await ensureDb();
     // تحقق من صلاحية المدير العام
     const authHeader = req.headers.get("authorization");
     const admin = await db.superAdmin.findFirst();

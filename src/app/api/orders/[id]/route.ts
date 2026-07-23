@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { addAuditLog } from "@/lib/audit";
 import { STATUS_META, calculatePricing, estimateDeliveryHours } from "@/lib/print-config";
@@ -11,7 +11,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const where = orderFindWhere(id, shopId);
@@ -19,15 +18,13 @@ export async function GET(
     if (!order) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
-    const { fileData, ...orderWithoutFile } = order;
     return NextResponse.json({
-      ...orderWithoutFile,
+      ...order,
       options: JSON.parse(order.options),
       customer: JSON.parse(order.customer),
       delivery: JSON.parse(order.delivery),
       pricing: JSON.parse(order.pricing),
       smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
-      hasFile: !!fileData,
     });
   } catch (e) {
     console.error('[orders/[id]/GET]', e);
@@ -43,7 +40,6 @@ export async function PUT(
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const { id } = await params;
     const body = await req.json();
     const shopId = body.shopId || req.nextUrl.searchParams.get("shopId");
@@ -151,9 +147,11 @@ export async function PUT(
         });
       }
 
-      const { fileData: _fd, ...updatedWithoutFile } = updated;
+      // استثناء fileData من الاستجابة
+      const { fileData: _fd, smartAnalysis: _sa, ...orderWithoutFile } = updated;
+
       return NextResponse.json({
-        ...updatedWithoutFile,
+        ...orderWithoutFile,
         options: JSON.parse(updated.options),
         customer: JSON.parse(updated.customer),
         delivery: JSON.parse(updated.delivery),
@@ -184,13 +182,15 @@ export async function PUT(
       details: `${existing.reference} → ${STATUS_META[status]?.label || status}`,
     });
 
+    // استثناء fileData من استجابة تغيير الحالة
+    const { fileData: _fd2, smartAnalysis: _sa2, ...orderWithoutFile } = order;
+
     return NextResponse.json({
-      ...order,
+      ...orderWithoutFile,
       options: JSON.parse(order.options),
       customer: JSON.parse(order.customer),
       delivery: JSON.parse(order.delivery),
       pricing: JSON.parse(order.pricing),
-      smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
     });
   } catch (e) {
     console.error('[orders/[id]/PUT]', e);
@@ -206,7 +206,6 @@ export async function DELETE(
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
     const findWhere = orderFindWhere(id, shopId);

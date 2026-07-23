@@ -33,6 +33,8 @@ model Shop {
   country        String      @default("DZ")
   /// لغة المتجر (ar, fr, en, tr, es)
   language       String      @default("ar")
+  /// عملة مخصصة (كود ISO 4217 مثل USD, EUR) — تتجاوز عملة الدولة
+  customCurrency String?
   /// إعدادات مخصصة JSON: { services, pricing, delivery, general }
   settings       String?
   /// اسم صاحب المتجر
@@ -135,15 +137,17 @@ model Setting {
   @@unique([shopId, key])
 }
 
-/// إعدادات المدير الأول - كلمة المرور وأعضاء الفريق
+/// إعدادات المدير الأول - كلمة المرور وأعضاء الفريق وإعدادات المنصة
 model SuperAdmin {
   id    String @id @default(cuid())
   /// مفتاح فريد - صف واحد فقط
   key   String @unique @default("main")
-  /// كلمة مرور لوحة التحكم الرئيسية (مشفّرة ببسيط)
+  /// كلمة مرور لوحة التحكم الرئيسية
   password String @default("Admin@2025")
   /// قائمة أعضاء الفريق JSON: [{ email, name, role, addedAt }]
   teamMembers String @default("[]")
+  /// إعدادات المنصة JSON: { platformName, platformLogo, platformTagline, maintenanceMode, defaultShopSettings, defaultFeatures, notifications }
+  platformSettings String @default("{}")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -175,10 +179,11 @@ model Customer {
   email     String?
   address   String?
   notes     String?
-  totalOrders Int     @default(0)
-  totalSpent  Int     @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  totalOrders  Int      @default(0)
+  totalSpent   Int      @default(0)
+  lastOrderAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([shopId, phone])
   @@index([shopId])
