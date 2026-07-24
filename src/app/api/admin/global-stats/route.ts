@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
@@ -9,33 +9,46 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
+    await ensureDb({ runMigrations: true });
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // تسلسلي لتجنب ضغط الاتصال على Turso
-    const totalOrders = await db.printOrder.count();
-    const totalRev = await db.printOrder.aggregate({ _sum: { total: true } });
-    const todayOrders = await db.printOrder.count({ where: { createdAt: { gte: today } } });
+    // تشغيل الاستعلامات المستقلة بالتوازي لتسريع الاستجابة
+    const [totalOrders, totalRev, todayOrders, statusDist, shops, recentOrdersRaw] =
+      await Promise.all([
+        db.printOrder.count(),
+        db.printOrder.aggregate({ _sum: { total: true } }),
+        db.printOrder.count({ where: { createdAt: { gte: today } } }),
+        db.printOrder.groupBy({ by: ["status"], _count: true }),
+        db.shop.findMany({
+          orderBy: { createdAt: "desc" },
+          select: { id: true, name: true, slug: true, ownerName: true, ownerPhone: true, phone: true, isActive: true, trialDays: true, trialStartsAt: true, plan: true, adminPin: true, country: true, language: true },
+        }),
+        db.printOrder.findMany({
+          orderBy: { createdAt: "desc" }, take: 20,
+          select: { id: true, reference: true, serviceType: true, serviceName: true, status: true, total: true, customer: true, shopId: true, shop: { select: { name: true, slug: true } } },
+        }),
+      ]);
 
-    const statusDist = await db.printOrder.groupBy({ by: ["status"], _count: true });
     const statusCounts: Record<string, number> = {};
     for (const s of statusDist) statusCounts[s.status] = s._count;
 
-    const shops = await db.shop.findMany({
-      orderBy: { createdAt: "desc" },
-      select: { id: true, name: true, slug: true, "ownerName": true, "ownerPhone": true, phone: true, "isActive": true, "trialDays": true, "trialStartsAt": true, plan: true, "adminPin": true, country: true, language: true },
+    const recentOrders = recentOrdersRaw.map((o) => {
+      let customer: { name: string; phone: string } = { name: "—", phone: "" };
+      try {
+        const parsed = o.customer ? JSON.parse(o.customer) : null;
+        if (parsed && typeof parsed === "object") {
+          customer = { name: parsed.name || "—", phone: parsed.phone || "" };
+        }
+      } catch { /* استخدم القيم الافتراضية */ }
+      return {
+        id: o.id, reference: o.reference, serviceType: o.serviceType, serviceName: o.serviceName,
+        status: o.status, total: o.total, customer,
+        createdAt: o.createdAt.toISOString(), shopName: o.shop?.name || "—",
+        shopSlug: o.shop?.slug || "", shopId: o.shopId || "",
+      };
     });
-
-    const recentOrdersRaw = await db.printOrder.findMany({
-      orderBy: { createdAt: "desc" }, take: 20,
-      select: { id: true, reference: true, "serviceType": true, "serviceName": true, status: true, total: true, customer: true, createdAt: true, shop: { select: { name: true } } },
-    });
-
-    const recentOrders = recentOrdersRaw.map((o) => ({
-      id: o.id, reference: o.reference, serviceType: o.serviceType, serviceName: o.serviceName,
-      status: o.status, total: o.total, customer: JSON.parse(o.customer),
-      createdAt: o.createdAt.toISOString(), shopName: o.shop?.name || "—",
-    }));
 
     return NextResponse.json({
       totalOrders, totalRevenue: totalRev._sum.total || 0, todayOrders,

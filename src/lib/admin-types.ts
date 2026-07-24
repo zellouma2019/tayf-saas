@@ -23,9 +23,8 @@ export interface ShopStat {
 
 export interface GlobalOrder {
   id: string; reference: string; serviceType: string; serviceName: string;
-  status: string; total: number; pages: number; copies: number;
+  status: string; total: number;
   customer: { name: string; phone: string };
-  delivery: { method: string };
   createdAt: string; shopName: string; shopSlug: string; shopId?: string;
 }
 
