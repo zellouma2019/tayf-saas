@@ -131,7 +131,7 @@ export async function POST() {
       `CREATE TABLE IF NOT EXISTS "SuperAdmin" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "key" TEXT NOT NULL,
-        "password" TEXT NOT NULL DEFAULT 'Admin@2025',
+        "password" TEXT NOT NULL DEFAULT 'Admin@2026',
         "teamMembers" TEXT NOT NULL DEFAULT '[]',
         "platformSettings" TEXT NOT NULL DEFAULT '{}',
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -249,7 +249,7 @@ export async function POST() {
       await db.superAdmin.create({
         data: {
           key: 'main',
-          password: 'Admin@2025',
+          password: 'Admin@2026',
         },
       })
     } catch {

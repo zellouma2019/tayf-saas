@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest) {
       admin = await createSuperAdmin() as { password: string };
     }
 
-    const isFirstTime = !admin.password || admin.password === "Admin@2025";
+    const isFirstTime = !admin.password || admin.password === "Admin@2026";
     if (!isFirstTime) {
       if (!currentPassword) {
         return NextResponse.json({ error: "كلمة المرور الحالية مطلوبة" }, { status: 400 });
@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    await updateSuperAdmin({ password: "Admin@2025" });
+    await updateSuperAdmin({ password: "Admin@2026" });
     return NextResponse.json({ success: true, message: "تم إعادة تعيين كلمة المرور" });
   } catch (e) {
     console.error('[password/PATCH]', e);
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const admin = await getSuperAdmin({ id: true, key: true, password: true }) as { password: string } | null;
-    const isDefault = !admin || !admin.password || admin.password === "Admin@2025";
+    const isDefault = !admin || !admin.password || admin.password === "Admin@2026";
     return NextResponse.json({ isDefault });
   } catch {
     return NextResponse.json({ error: "قاعدة البيانات غير جاهزة بعد — حاول بعد قليل" }, { status: 503 });
