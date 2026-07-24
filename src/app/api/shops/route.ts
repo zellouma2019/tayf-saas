@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, ensureDb } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 import { getNextThemeId } from "@/lib/themes";
 
@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   const rl = withRateLimit(req, "shops");
   if (!rl.ok) return rl.response;
   try {
+    await ensureDb();
     const body = await req.json();
     const { name, slug, adminPin, ownerName, ownerPhone, phone, whatsapp, email, address, trialDays, country, language } = body;
 
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "shops");
   if (!rl.ok) return rl.response;
   try {
+    await ensureDb();
     const shops = await db.shop.findMany({
       orderBy: { createdAt: "desc" },
       select: {
