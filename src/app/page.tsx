@@ -98,15 +98,17 @@ export default function SuperAdminPage() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, ordersRes] = await Promise.all([
-        adminFetch("/api/admin/global-stats"),
-        adminFetch("/api/orders"),
+      // تحميل الإحصائيات والطلبات بشكل مستقل حتى لا يفشل الكل إذا فشل أحدهما
+      const [statsRes, ordersRes] = await Promise.allSettled([
+        adminFetch("/api/admin/global-stats").then((r) => r.ok ? r.json() : null).catch(() => null),
+        adminFetch("/api/orders").then((r) => r.ok ? r.json() : null).catch(() => null),
       ]);
-      if (!statsRes.ok || !ordersRes.ok) return;
-      const stats = await statsRes.json();
-      const orders = await ordersRes.json();
-      setGlobalStats(stats);
-      setAllOrders(orders.orders || []);
+      if (statsRes.status === "fulfilled" && statsRes.value) {
+        setGlobalStats(statsRes.value);
+      }
+      if (ordersRes.status === "fulfilled" && ordersRes.value) {
+        setAllOrders(ordersRes.value.orders || []);
+      }
       setLastUpdated("الآن");
     } catch {
       toast.error("خطأ في تحميل البيانات");

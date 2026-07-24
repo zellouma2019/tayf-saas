@@ -168,7 +168,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {stats.recentOrders.slice(0, 6).map((order) => {
+              {stats.recentOrders?.slice(0, 6).map((order) => {
                 const timeAgo = getTimeAgo(order.createdAt);
                 const activityIcon = order.status === "pending" ? "📝" : order.status === "printing" ? "🖨️" : order.status === "ready" ? "✅" : order.status === "delivered" ? "📦" : "❌";
                 return (
@@ -176,12 +176,12 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
                     <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 text-sm mt-0.5">{activityIcon}</div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-foreground/80 truncate">
-                        <span className="font-semibold">{order.customer.name}</span>
+                        <span className="font-semibold">{order.customer?.name || "—"}</span>
                         <span className="text-muted-foreground mx-1">·</span>
-                        {order.serviceName}
+                        {order.serviceName || "—"}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] text-muted-foreground">{order.shopName}</span>
+                        <span className="text-[11px] text-muted-foreground">{order.shopName || "—"}</span>
                         <span className="text-[11px] text-muted-foreground/40">·</span>
                         <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
                       </div>
