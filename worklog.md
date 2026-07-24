@@ -213,3 +213,28 @@ Stage Summary:
 - global-stats reduced from 22 DB calls to 3
 - Dashboard overview should now load within Vercel 10s function timeout
 - Commit: f1654c8 pushed, awaiting Vercel deployment
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: Fix admin dashboard overview blank + slow loading + error message
+
+Work Log:
+- Diagnosed 3 root causes for dashboard overview not showing:
+  1. `loadAll` used `Promise.all` — if `/api/orders` failed, stats were never set → overview blank
+  2. `global-stats` API called `ensureDb({ runMigrations: true })` adding 4 ALTER TABLE round trips on every cold start
+  3. `/api/orders` called `fs.existsSync` for every order (slow on Vercel, filesystem is ephemeral)
+- Fix 1: Changed `loadAll` to use `Promise.allSettled` with per-promise `.catch(() => null)` — each API loads independently
+- Fix 2: Removed `ensureDb({ runMigrations: true })` from global-stats GET (schema already applied via prisma db push)
+- Fix 3: Changed `/api/orders` default to `noPreview=true` (avoids all fs calls), added `?noPreview=true&limit=100` to admin fetch
+- Fix 4: Added optional chaining (`?.`) to all `recentOrders` accesses in admin-overview-tab.tsx
+- Fix 5: Added safe JSON parsing with fallback in global-stats API
+- Fix 6: Reduced maxDuration from 30 to 15 seconds
+- Fix 7: Made GlobalOrder type match actual API response (removed unused `pages`, `copies`, `delivery` fields)
+
+Stage Summary:
+- 4 files changed, 18 insertions, 21 deletions
+- Commit: aa45890 pushed to GitHub, deploying on Vercel
+- Dashboard overview should now load even if orders API fails
+- Cold start latency reduced by removing unnecessary migration checks
+- Filesystem I/O eliminated from admin orders listing
