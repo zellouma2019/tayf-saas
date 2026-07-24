@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
   if (!rl.ok) return rl.response;
 
   try {
-    // التأكد من جاهزية قاعدة البيانات أولاً
-    await ensureDb({ runMigrations: true });
+    // التأكد من جاهزية قاعدة البيانات (بدون ميجريشن - غير مطلوب هنا)
+    await ensureDb();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
