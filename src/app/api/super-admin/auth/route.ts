@@ -27,7 +27,7 @@ async function getAdminRaw(): Promise<{ id: string; key: string; password: strin
 async function createAdminRaw(): Promise<{ id: string; key: string; password: string }> {
   await db.$executeRawUnsafe(`
     INSERT INTO "SuperAdmin" (id, key, password, teamMembers, platformSettings, createdAt, updatedAt)
-    VALUES (lower(hex(randomblob(8)) || hex(randomblob(8)) || hex(randomblob(4))), 'main', 'Admin@2025', '[]', '{}', datetime('now'), datetime('now'))
+    VALUES (lower(hex(randomblob(8)) || hex(randomblob(8)) || hex(randomblob(4))), 'main', 'Admin@2026', '[]', '{}', datetime('now'), datetime('now'))
   `);
   const created = await getAdminRaw();
   return created!;
@@ -78,11 +78,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const isFirstTime = !admin.password || admin.password === "Admin@2025";
+    const isFirstTime = !admin.password || admin.password === "Admin@2026";
 
     if (isFirstTime) {
       const ts = Date.now();
-      const token = await simpleHash(`${admin.password || "Admin@2025"}:${ts}:${APP_SECRET}`);
+      const token = await simpleHash(`${admin.password || "Admin@2026"}:${ts}:${APP_SECRET}`);
       return NextResponse.json({ success: true, isFirstTime: true, ts, token });
     }
 

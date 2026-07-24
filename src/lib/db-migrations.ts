@@ -63,12 +63,12 @@ async function getSuperAdminRaw(selectFields?: Record<string, boolean>) {
 export async function createSuperAdmin(data?: { password?: string }) {
   try {
     const result = await db.superAdmin.create({
-      data: { key: 'main', password: data?.password || 'Admin@2025' },
+      data: { key: 'main', password: data?.password || 'Admin@2026' },
       select: { id: true, key: true, password: true },
     })
     return result
   } catch {
-    const password = data?.password || 'Admin@2025'
+    const password = data?.password || 'Admin@2026'
     await db.$executeRawUnsafe(`
       INSERT INTO "SuperAdmin" (id, key, password, "teamMembers", "platformSettings", "createdAt", "updatedAt")
       VALUES (lower(hex(randomblob(8)) || hex(randomblob(8)) || hex(randomblob(4))), 'main', '${password}', '[]', '{}', datetime('now'), datetime('now'))
