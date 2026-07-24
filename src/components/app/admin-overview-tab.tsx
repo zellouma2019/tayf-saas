@@ -190,7 +190,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
                   </div>
                 );
               })}
-              {(!stats.recentOrders.length) && (
+              {!(stats.recentOrders?.length) && (
                 <div className="py-8 flex flex-col items-center">
                   <Activity className="h-8 w-8 text-muted-foreground/30 mb-2" />
                   <p className="text-muted-foreground text-xs">لا توجد نشاطات بعد</p>
@@ -209,15 +209,15 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {stats.recentOrders.slice(0, 10).map((order) => (
+              {(stats.recentOrders || []).slice(0, 10).map((order) => (
                 <div key={order.id} className="flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 hover:bg-primary/5 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-foreground">{order.reference}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">{order.shopName}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">{order.shopName || "—"}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground truncate mt-0.5">{order.customer.name} · {order.serviceName}</div>
+                      <div className="text-xs text-muted-foreground truncate mt-0.5">{order.customer?.name || "—"} · {order.serviceName || "—"}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -228,7 +228,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
                   </div>
                 </div>
               ))}
-              {(!stats.recentOrders.length) && (
+              {!(stats.recentOrders?.length) && (
                 <div className="py-14 flex flex-col items-center justify-center">
                   <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-muted-foreground text-sm font-medium">لا توجد طلبات بعد</p>

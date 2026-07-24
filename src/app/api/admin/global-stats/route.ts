@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
-export const maxDuration = 30;
+export const maxDuration = 15;
 
 export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "global-stats");
   if (!rl.ok) return rl.response;
 
   try {
-    await ensureDb({ runMigrations: true });
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // تشغيل الاستعلامات المستقلة بالتوازي لتسريع الاستجابة
+    // كل الاستعلامات بالتوازي بدون ensureDb لتسريع الاستجابة
     const [totalOrders, totalRev, todayOrders, statusDist, shops, recentOrdersRaw] =
       await Promise.all([
         db.printOrder.count(),
@@ -34,24 +32,23 @@ export async function GET(req: NextRequest) {
     const statusCounts: Record<string, number> = {};
     for (const s of statusDist) statusCounts[s.status] = s._count;
 
+    const safeJson = (str: string | null, fallback: Record<string, unknown> = {}) => {
+      try { return str ? JSON.parse(str) : fallback; } catch { return fallback; }
+    };
+
     const recentOrders = recentOrdersRaw.map((o) => {
-      let customer: { name: string; phone: string } = { name: "—", phone: "" };
-      try {
-        const parsed = o.customer ? JSON.parse(o.customer) : null;
-        if (parsed && typeof parsed === "object") {
-          customer = { name: parsed.name || "—", phone: parsed.phone || "" };
-        }
-      } catch { /* استخدم القيم الافتراضية */ }
+      const c = safeJson(o.customer, { name: "—", phone: "" });
       return {
         id: o.id, reference: o.reference, serviceType: o.serviceType, serviceName: o.serviceName,
-        status: o.status, total: o.total, customer,
+        status: o.status, total: Number(o.total) || 0,
+        customer: { name: String(c.name || "—"), phone: String(c.phone || "") },
         createdAt: o.createdAt.toISOString(), shopName: o.shop?.name || "—",
         shopSlug: o.shop?.slug || "", shopId: o.shopId || "",
       };
     });
 
     return NextResponse.json({
-      totalOrders, totalRevenue: totalRev._sum.total || 0, todayOrders,
+      totalOrders, totalRevenue: Number(totalRev._sum.total) || 0, todayOrders,
       shopCount: shops.length,
       activeShopCount: shops.filter((s) => s.isActive).length,
       statusCounts,

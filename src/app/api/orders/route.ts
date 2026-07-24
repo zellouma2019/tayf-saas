@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const rawLimit = parseInt(searchParams.get("limit") || "50", 10);
     const limit = Math.min(10000, Math.max(1, rawLimit));
-    const noPreview = searchParams.get("noPreview") === "true";
+    const noPreview = searchParams.get("noPreview") !== "false"; // الافتراضي = بدون معاينة على Vercel
 
     const baseWhere: Record<string, unknown> = {};
     if (status && status !== "all") baseWhere.status = status;
