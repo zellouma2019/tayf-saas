@@ -101,7 +101,7 @@ export default function SuperAdminPage() {
       // تحميل الإحصائيات والطلبات بشكل مستقل حتى لا يفشل الكل إذا فشل أحدهما
       const [statsRes, ordersRes] = await Promise.allSettled([
         adminFetch("/api/admin/global-stats").then((r) => r.ok ? r.json() : null).catch(() => null),
-        adminFetch("/api/orders").then((r) => r.ok ? r.json() : null).catch(() => null),
+        adminFetch("/api/orders?noPreview=true&limit=100").then((r) => r.ok ? r.json() : null).catch(() => null),
       ]);
       if (statsRes.status === "fulfilled" && statsRes.value) {
         setGlobalStats(statsRes.value);
