@@ -293,8 +293,13 @@ Work Log:
 - User needs to manually run `git push origin main` from their local machine
 
 ## Recommendations
-1. User must push changes: `git push origin main`
+1. User must push changes: `git push origin main` (5 commits ahead)
 2. Consider using Vercel CLI for direct deployment if GitHub is unreliable
 3. Run `prisma db push` on Turso to apply migrations permanently
 4. Change default password from Admin@2025 immediately
 5. Set up CI/CD pipeline to avoid manual push issues
+
+## Unpushed Commits (need manual push)
+1. `f767077` - fix: improve ensureDb to prevent migration race conditions
+2. `3614527` - fix: remove unnecessary ensureDb migrations from global-stats and orders APIs
+3. `51ca3ca` - fix: admin overview loading - remove slow middleware DB init, add ensureDb to APIs, add error fallback UI
