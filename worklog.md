@@ -238,3 +238,63 @@ Stage Summary:
 - Dashboard overview should now load even if orders API fails
 - Cold start latency reduced by removing unnecessary migration checks
 - Filesystem I/O eliminated from admin orders listing
+
+---
+Task ID: 10
+Agent: Main Agent
+Task: Deep fix of admin dashboard overview loading + verification
+
+Work Log:
+- Reviewed all previous fixes and identified remaining root cause
+- Found that `ensureDb({ runMigrations: true })` was STILL being called in global-stats and orders GET handlers
+- This caused 4 ALTER TABLE round-trips to Turso on every Vercel cold start
+- Fixed: Changed to `ensureDb()` (without migrations) in both routes
+- Migrations only needed for super-admin auth endpoints (SuperAdmin table)
+- Verified middleware is a simple pass-through (no DB calls)
+- Verified frontend uses Promise.allSettled for independent loading
+- Verified error fallback UI with retry button exists
+- Lint passed clean
+- Production build succeeded (npx next build)
+- Could not fully verify via agent-browser due to container OOM kills (4GB limit)
+- Could not push to GitHub (no SSH/HTTPS credentials available)
+- Live Vercel site has changed password (Admin@2025 no longer works)
+- All changes committed locally
+
+## Root Causes Fixed (Summary)
+
+### 1. Middleware self-referential HTTP call (FIXED - previous session)
+- Was calling `/api/setup` via HTTP on every cold start → 5-30s delay
+- Now just passes through
+
+### 2. ensureDb({runMigrations: true}) in non-admin routes (FIXED - this session)
+- global-stats and orders GET were running ALTER TABLE migrations on every cold start
+- Changed to ensureDb() without migrations
+- Removes 4 network round-trips to Turso
+
+### 3. Sequential DB queries (FIXED - previous session)
+- 6 queries ran one after another
+- Now use Promise.all with .catch() fallbacks
+
+### 4. No error handling in frontend (FIXED - previous session)
+- Overview was completely hidden when stats was null
+- Now uses Promise.allSettled with per-promise error handling
+- Shows error fallback with retry button
+
+## Files Modified
+| File | Change |
+|------|--------|
+| src/app/api/admin/global-stats/route.ts | ensureDb() instead of ensureDb({runMigrations: true}) |
+| src/app/api/orders/route.ts | ensureDb() instead of ensureDb({runMigrations: true}) |
+
+## Deployment Status
+- ⚠️ Branch is ahead of origin/main by 4+ commits
+- ❌ Cannot push to GitHub (no SSH/HTTPS credentials in container)
+- ❌ Cannot deploy to Vercel (no Vercel CLI credentials)
+- User needs to manually run `git push origin main` from their local machine
+
+## Recommendations
+1. User must push changes: `git push origin main`
+2. Consider using Vercel CLI for direct deployment if GitHub is unreliable
+3. Run `prisma db push` on Turso to apply migrations permanently
+4. Change default password from Admin@2025 immediately
+5. Set up CI/CD pipeline to avoid manual push issues
