@@ -101,6 +101,7 @@ type OrderListRow = {
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb({ runMigrations: true });
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const search = searchParams.get("search");

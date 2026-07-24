@@ -51,6 +51,7 @@ export default function SuperAdminPage() {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [allOrders, setAllOrders] = useState<GlobalOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -97,21 +98,29 @@ export default function SuperAdminPage() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       // تحميل الإحصائيات والطلبات بشكل مستقل حتى لا يفشل الكل إذا فشل أحدهما
       const [statsRes, ordersRes] = await Promise.allSettled([
         adminFetch("/api/admin/global-stats").then((r) => r.ok ? r.json() : null).catch(() => null),
         adminFetch("/api/orders?noPreview=true&limit=100").then((r) => r.ok ? r.json() : null).catch(() => null),
       ]);
-      if (statsRes.status === "fulfilled" && statsRes.value) {
+      let statsLoaded = false;
+      let ordersLoaded = false;
+      if (statsRes.status === "fulfilled" && statsRes.value && !statsRes.value.error) {
         setGlobalStats(statsRes.value);
+        statsLoaded = true;
       }
-      if (ordersRes.status === "fulfilled" && ordersRes.value) {
+      if (ordersRes.status === "fulfilled" && ordersRes.value && !ordersRes.value.error) {
         setAllOrders(ordersRes.value.orders || []);
+        ordersLoaded = true;
       }
       setLastUpdated("الآن");
+      if (!statsLoaded && !ordersLoaded) {
+        setLoadError("فشل تحميل البيانات من الخادم");
+      }
     } catch {
-      toast.error("خطأ في تحميل البيانات");
+      setLoadError("خطأ في الاتصال بالخادم");
     } finally {
       setLoading(false);
     }
@@ -246,6 +255,25 @@ export default function SuperAdminPage() {
         ) : (
         <div className="p-4 sm:p-6 space-y-6">
           {activeTab === "overview" && stats && <OverviewTab stats={stats} lastUpdated={lastUpdated} onOpenCreate={() => setCreateOpen(true)} />}
+          {activeTab === "overview" && !stats && !loading && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              {loadError ? (
+                <>
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4"><RefreshCw className="h-8 w-8 text-rose-400" /></div>
+                  <p className="font-semibold text-foreground mb-2">فشل تحميل البيانات</p>
+                  <p className="text-xs text-muted-foreground mb-4 max-w-sm">{loadError}. تحقق من اتصالك بالإنترنت وحاول مرة أخرى</p>
+                  <button onClick={loadAll} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-medium transition-colors inline-flex items-center gap-2"><RefreshCw className="h-4 w-4" />إعادة المحاولة</button>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4"><LayoutGrid className="h-8 w-8 text-primary" /></div>
+                  <p className="font-semibold text-foreground mb-2">النظرة العامة</p>
+                  <p className="text-xs text-muted-foreground mb-4 max-w-sm">لا توجد إحصائيات متاحة حالياً. سيتم عرضها عند وجود بيانات</p>
+                  <button onClick={loadAll} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-medium transition-colors inline-flex items-center gap-2"><RefreshCw className="h-4 w-4" />تحديث</button>
+                </>
+              )}
+            </div>
+          )}
 
           {activeTab === "orders" && (
             <div className="space-y-5">
