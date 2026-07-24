@@ -6,6 +6,7 @@ const globalForPrisma = globalThis as unknown as {
   dbInitialized: boolean
   _ensureDbPromise: Promise<void> | undefined
   _migrationsRan: boolean
+  _migrationsPromise: Promise<void> | undefined
 }
 
 function createPrismaClient() {
@@ -39,21 +40,47 @@ export const db = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
+/**
+ * Ensure the database is ready for queries.
+ * - Without options: just ensures Prisma client is connected
+ * - With { runMigrations: true }: also runs ALTER TABLE migrations for SuperAdmin table
+ *
+ * Important: Calls with runMigrations are tracked independently so they're never
+ * skipped even if ensureDb() was called first without migrations.
+ */
 export async function ensureDb(options?: { runMigrations?: boolean }) {
-  if (globalForPrisma.dbInitialized) return
+  // If migrations requested and already done, just ensure DB is initialized
+  if (options?.runMigrations && globalForPrisma._migrationsRan) {
+    if (globalForPrisma.dbInitialized) return
+    if (globalForPrisma._ensureDbPromise) return globalForPrisma._ensureDbPromise
+  }
 
+  // If DB already initialized and no migrations needed, return immediately
+  if (globalForPrisma.dbInitialized && !options?.runMigrations) return
+
+  // If there's already a pending init promise, return it
   if (globalForPrisma._ensureDbPromise) return globalForPrisma._ensureDbPromise
 
+  // If migrations are needed and there's a pending migrations promise, wait for it
+  if (options?.runMigrations && globalForPrisma._migrationsPromise) {
+    return globalForPrisma._migrationsPromise
+  }
+
+  // Start the initialization
   globalForPrisma._ensureDbPromise = (async () => {
     try {
       if (options?.runMigrations && !globalForPrisma._migrationsRan) {
-        try {
-          const { runMigrations } = await import('@/lib/db-migrations')
-          await runMigrations()
-          globalForPrisma._migrationsRan = true
-        } catch {
-          // تجاهل
-        }
+        globalForPrisma._migrationsPromise = (async () => {
+          try {
+            const { runMigrations } = await import('@/lib/db-migrations')
+            await runMigrations()
+            globalForPrisma._migrationsRan = true
+          } catch {
+            // Migration failed - non-critical, continue
+          }
+        })()
+        await globalForPrisma._migrationsPromise
+        globalForPrisma._migrationsPromise = undefined
       }
       globalForPrisma.dbInitialized = true
     } catch {

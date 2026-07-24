@@ -10,7 +10,7 @@
       "maxDuration": 30
     },
     "src/app/api/admin/global-stats/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 15
     },
     "src/app/api/admin/analytics/route.ts": {
       "maxDuration": 30
