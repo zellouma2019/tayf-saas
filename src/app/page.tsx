@@ -108,7 +108,8 @@ export default function SuperAdminPage() {
       let statsLoaded = false;
       let ordersLoaded = false;
       if (statsRes.status === "fulfilled" && statsRes.value && !statsRes.value.error) {
-        setGlobalStats(statsRes.value);
+        const d = statsRes.value;
+        setGlobalStats({ totalOrders: d.totalOrders ?? 0, totalRevenue: d.totalRevenue ?? 0, todayOrders: d.todayOrders ?? 0, shopCount: d.shopCount ?? 0, activeShopCount: d.activeShopCount ?? 0, statusCounts: d.statusCounts ?? {}, shopStats: d.shopStats ?? [], recentOrders: d.recentOrders ?? [] });
         statsLoaded = true;
       }
       if (ordersRes.status === "fulfilled" && ordersRes.value && !ordersRes.value.error) {

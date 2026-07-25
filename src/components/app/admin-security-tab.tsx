@@ -82,6 +82,21 @@ export function SecurityTab() {
         toast.success(isDefaultPwd ? "تم تعيين كلمة المرور بنجاح" : "تم تغيير كلمة المرور بنجاح");
         setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
         setIsDefaultPwd(false);
+
+        // تجديد الجلسة تلقائياً بكلمة المرور الجديدة
+        try {
+          const authRes = await fetch("/api/super-admin/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: newPwd }),
+          });
+          if (authRes.ok) {
+            const authData = await authRes.json();
+            if (authData.success && authData.token) {
+              localStorage.setItem("sa_auth", JSON.stringify({ ts: authData.ts || Date.now(), token: authData.token }));
+            }
+          }
+        } catch { /* تجديد الجلسة فشل — المستخدم سيعيد تسجيل الدخول */ }
       } else {
         toast.error(data.error || "فشل تغيير كلمة المرور");
       }
