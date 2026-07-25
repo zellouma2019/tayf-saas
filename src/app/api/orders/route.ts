@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import fs from "fs";
 import path from "path";
 import { orderListWhere } from "@/lib/order-lookup";
@@ -101,7 +101,6 @@ type OrderListRow = {
 
 export async function GET(req: NextRequest) {
   try {
-    await ensureDb();
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const search = searchParams.get("search");

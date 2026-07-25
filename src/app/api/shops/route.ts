@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "shops");
   if (!rl.ok) return rl.response;
   try {
-    await ensureDb();
     const shops = await db.shop.findMany({
       orderBy: { createdAt: "desc" },
       select: {

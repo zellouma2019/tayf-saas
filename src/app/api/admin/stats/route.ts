@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 
-export const maxDuration = 15;
+// Vercel: Cache response at edge for 30 seconds
+export const revalidate = 30;
 
 function toNum(v: unknown): number { return v == null ? 0 : Number(v); }
 function safeJson<T = Record<string, unknown>>(str: string, fallback: T): T {
   try { return JSON.parse(str); } catch { return fallback; }
-}
-async function safeQuery<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
-  try { return await fn(); }
-  catch (e) { console.error(`[admin/stats] ${label} failed:`, e instanceof Error ? e.message : e); return fallback; }
 }
 
 export async function GET(request: NextRequest) {
@@ -18,8 +15,7 @@ export async function GET(request: NextRequest) {
   if (!authorized) return authError;
 
   try {
-    await ensureDb();
-
+    // لا نستخدم ensureDb() — Prisma يتصل تلقائياً
     const shopId = request.nextUrl.searchParams.get("shopId");
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -27,72 +23,59 @@ export async function GET(request: NextRequest) {
 
     const shopWhere = shopId ? ` WHERE "shopId" = '${shopId}'` : "";
 
-    const [orderStats, expensesRow, revenueRow, statusRows, serviceRows, recentOrders] = await Promise.all([
-      safeQuery("order-stats", async () => {
-        const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT COUNT(*) as total, COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as today
-          FROM "PrintOrder"${shopWhere}
-        `, todayISO);
-        const r = rows[0] || {};
-        return { total: toNum(r.total), today: toNum(r.today) };
-      }, { total: 0, today: 0 }),
+    // 3 استعلامات فقط بدلاً من 6
+    const [statsRow, serviceAndStatusRows, recentOrders] = await Promise.all([
+      // الاستعلام 1: إجمالي الإحصائيات في صف واحد
+      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+        SELECT 
+          (SELECT COUNT(*) FROM "PrintOrder"${shopWhere}) as total,
+          (SELECT COUNT(*) FROM "PrintOrder"${shopWhere} WHERE "createdAt" >= ?) as today,
+          (SELECT COALESCE(SUM(total), 0) FROM "PrintOrder"${shopWhere}) as revenue,
+          (SELECT COALESCE(SUM(amount), 0) FROM "Expense"${shopWhere}) as expenses
+      `, todayISO).catch(() => [{ total: 0, today: 0, revenue: 0, expenses: 0 }]),
 
-      safeQuery("expenses", async () => {
-        const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT COALESCE(SUM(amount), 0) as total FROM "Expense"${shopWhere}
-        `);
-        return toNum(rows[0]?.total);
-      }, 0),
+      // الاستعلام 2: توزيع الحالات + أنواع الخدمات
+      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+        SELECT status, "serviceType", COUNT(*) as count, COALESCE(SUM(total), 0) as revenue
+        FROM "PrintOrder"${shopWhere}
+        GROUP BY status, "serviceType"
+      `).catch(() => []),
 
-      safeQuery("revenue", async () => {
-        const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT COALESCE(SUM(total), 0) as total FROM "PrintOrder"${shopWhere}
-        `);
-        return toNum(rows[0]?.total);
-      }, 0),
-
-      safeQuery("status-dist", async () => {
-        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT status, COUNT(*) as count FROM "PrintOrder"${shopWhere} GROUP BY status
-        `);
-      }, []),
-
-      safeQuery("service-dist", async () => {
-        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT "serviceType", COUNT(*) as count, COALESCE(SUM(total), 0) as revenue
-          FROM "PrintOrder"${shopWhere} GROUP BY "serviceType"
-        `);
-      }, []),
-
-      safeQuery("recent-orders", async () => {
-        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT id, reference, "serviceType", "serviceName", status, total, pages, copies,
-                 "createdAt", "fileName", "fileType", options, customer, delivery, pricing, "adminNotes", tags
-          FROM "PrintOrder"${shopWhere}
-          ORDER BY "createdAt" DESC LIMIT 5
-        `);
-      }, []),
+      // الاستعلام 3: آخر الطلبات
+      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+        SELECT id, reference, "serviceType", "serviceName", status, total, pages, copies,
+               "createdAt", "fileName", "fileType", options, customer, delivery, pricing, "adminNotes", tags
+        FROM "PrintOrder"${shopWhere}
+        ORDER BY "createdAt" DESC LIMIT 5
+      `).catch(() => []),
     ]);
 
-    const revenueSum = revenueRow;
-    const expensesSum = expensesRow;
+    const stats = statsRow[0] || {};
+    const total = toNum(stats.total);
+    const today = toNum(stats.today);
+    const revenueSum = toNum(stats.revenue);
+    const expensesSum = toNum(stats.expenses);
 
     const statusMap: Record<string, number> = {};
-    for (const s of statusRows) statusMap[String(s.status)] = toNum(s.count);
+    const serviceMap: Record<string, { count: number; revenue: number }> = {};
+    for (const row of serviceAndStatusRows) {
+      const st = String(row.status);
+      statusMap[st] = (statusMap[st] || 0) + toNum(row.count);
+      const svc = String(row.serviceType);
+      if (!serviceMap[svc]) serviceMap[svc] = { count: 0, revenue: 0 };
+      serviceMap[svc].count += toNum(row.count);
+      serviceMap[svc].revenue += toNum(row.revenue);
+    }
 
     return NextResponse.json({
-      totalOrders: orderStats.total,
+      totalOrders: total,
       totalRevenue: revenueSum,
       totalExpenses: expensesSum,
       profit: revenueSum - expensesSum,
-      todayOrders: orderStats.today,
+      todayOrders: today,
       statusCounts: statusMap,
-      serviceCounts: (serviceRows as Array<Record<string, unknown>>).map((s) => ({
-        serviceType: String(s.serviceType),
-        count: toNum(s.count),
-        revenue: toNum(s.revenue),
-      })),
-      recentOrders: (recentOrders as Array<Record<string, unknown>>).map((o) => ({
+      serviceCounts: Object.entries(serviceMap).map(([serviceType, v]) => ({ serviceType, ...v })),
+      recentOrders: recentOrders.map((o) => ({
         ...o,
         total: toNum(o.total),
         pages: toNum(o.pages),

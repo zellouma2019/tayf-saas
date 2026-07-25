@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, ensureDb } from "@/lib/db";
-import { withRateLimit } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
 
-export const maxDuration = 15;
+// Vercel: Cache response at edge for 30 seconds, revalidate in background
+export const revalidate = 30;
 
 // دالة مساعدة: تحويل JSON string بأمان
 function safeJson<T = Record<string, unknown>>(str: string | null, fallback: T): T {
@@ -14,92 +14,97 @@ function toNum(v: unknown): number {
   return v == null ? 0 : Number(v);
 }
 
-// دالة مساعدة: استعلام مع catch و fallback
-async function safeQuery<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
-  try { return await fn(); }
-  catch (e) {
-    console.error(`[global-stats] ${label} failed:`, e instanceof Error ? e.message : e);
-    return fallback;
-  }
-}
-
 export async function GET(req: NextRequest) {
-  const rl = withRateLimit(req, "global-stats");
-  if (!rl.ok) return rl.response;
-
   const startTime = Date.now();
 
   try {
-    await ensureDb();
-
+    // لا نستخدم ensureDb() هنا — Prisma يتصل تلقائياً
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
 
-    // === 4 استعلامات raw SQL موازية (أسرع على Turso من Prisma ORM) ===
+    // === استعلامان فقط بدلاً من أربعة — تقليل عدد جولات الاتصال بـ Turso ===
 
-    // تشغيل الاستعلامات الأربعة بالتوازي لتسريع التحميل
-    const [orderStats, statusRows, shops, recentOrdersRaw] = await Promise.all([
-      safeQuery("order-stats", async () => {
-        const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT 
-            COUNT(*) as totalOrders,
-            COALESCE(SUM(total), 0) as totalRevenue,
-            COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders
-          FROM "PrintOrder"
-        `, todayISO);
-        const r = rows[0] || {};
-        return { totalOrders: toNum(r.totalOrders), totalRevenue: toNum(r.totalRevenue), todayOrders: toNum(r.todayOrders) };
-      }, { totalOrders: 0, totalRevenue: 0, todayOrders: 0 }),
+    const [combinedStats, shopsRaw] = await Promise.all([
+      // الاستعلام 1: إحصائيات الطلبات + توزيع الحالات (استعلام واحد)
+      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+        SELECT 
+          COUNT(*) as totalOrders,
+          COALESCE(SUM(total), 0) as totalRevenue,
+          COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders,
+          NULL as status,
+          0 as statusCount,
+          'stats' as _rowType
+        FROM "PrintOrder"
+        UNION ALL
+        SELECT 
+          0, 0, 0,
+          status as status,
+          COUNT(*) as statusCount,
+          'status' as _rowType
+        FROM "PrintOrder"
+        GROUP BY status
+      `, todayISO).catch((e) => {
+        console.error("[global-stats] stats query failed:", e instanceof Error ? e.message : e);
+        return [];
+      }),
 
-      safeQuery("status-dist", async () => {
-        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status
-        `);
-      }, []),
-
-      safeQuery("shops", async () => {
-        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT 
-            s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
-            s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
-            s.country, s.language,
-            COALESCE(o.cnt, 0) as orderCount,
-            COALESCE(o.rev, 0) as shopRevenue,
-            COALESCE(o.tod, 0) as todayCount
-          FROM "Shop" s
-          LEFT JOIN (
-            SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(total), 0) as rev,
-                   COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
-            FROM "PrintOrder" GROUP BY "shopId"
-          ) o ON o."shopId" = s.id
-          ORDER BY s."createdAt" DESC
-        `, todayISO);
-      }, []),
-
-      safeQuery("recent-orders", async () => {
-        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-          SELECT 
-            o.id, o.reference, o."serviceType", o."serviceName",
-            o.status, o.total, o.customer, o."createdAt",
-            o."shopId", s.name as shopName, s.slug as shopSlug
-          FROM "PrintOrder" o
-          LEFT JOIN "Shop" s ON o."shopId" = s.id
-          ORDER BY o."createdAt" DESC LIMIT 20
-        `);
-      }, []),
+      // الاستعلام 2: المتاجر مع إحصائياتها (JOIN واحد)
+      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+        SELECT 
+          s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
+          s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
+          s.country, s.language,
+          COALESCE(o.cnt, 0) as orderCount,
+          COALESCE(o.rev, 0) as shopRevenue,
+          COALESCE(o.tod, 0) as todayCount
+        FROM "Shop" s
+        LEFT JOIN (
+          SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(total), 0) as rev,
+                 COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
+          FROM "PrintOrder" GROUP BY "shopId"
+        ) o ON o."shopId" = s.id
+        ORDER BY s."createdAt" DESC
+      `, todayISO).catch((e) => {
+        console.error("[global-stats] shops query failed:", e instanceof Error ? e.message : e);
+        return [];
+      }),
     ]);
 
-    const elapsed = Date.now() - startTime;
-    console.log(`[global-stats] loaded in ${elapsed}ms — ${shops.length} shops, ${orderStats.totalOrders} orders`);
+    // الاستعلام 3: آخر الطلبات (يبدأ بعد الأولين)
+    const recentOrdersRaw = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT 
+        o.id, o.reference, o."serviceType", o."serviceName",
+        o.status, o.total, o.customer, o."createdAt",
+        o."shopId", s.name as shopName, s.slug as shopSlug
+      FROM "PrintOrder" o
+      LEFT JOIN "Shop" s ON o."shopId" = s.id
+      ORDER BY o."createdAt" DESC LIMIT 20
+    `).catch((e) => {
+      console.error("[global-stats] recent-orders failed:", e instanceof Error ? e.message : e);
+      return [];
+    });
 
-    // تجهيز البيانات
+    const elapsed = Date.now() - startTime;
+    console.log(`[global-stats] loaded in ${elapsed}ms`);
+
+    // تحليل النتائج المجمعة
+    let totalOrders = 0;
+    let totalRevenue = 0;
+    let todayOrders = 0;
     const statusCounts: Record<string, number> = {};
-    for (const s of statusRows) {
-      statusCounts[String(s.status)] = toNum(s.count);
+
+    for (const row of combinedStats) {
+      if (row._rowType === "stats") {
+        totalOrders = toNum(row.totalOrders);
+        totalRevenue = toNum(row.totalRevenue);
+        todayOrders = toNum(row.todayOrders);
+      } else if (row._rowType === "status" && row.status) {
+        statusCounts[String(row.status)] = toNum(row.statusCount);
+      }
     }
 
-    const shopStats = shops.map((s) => ({
+    const shopStats = shopsRaw.map((s) => ({
       id: String(s.id),
       name: String(s.name),
       slug: String(s.slug),
@@ -116,10 +121,10 @@ export async function GET(req: NextRequest) {
       orders: toNum(s.orderCount),
       revenue: toNum(s.shopRevenue),
       todayOrders: toNum(s.todayCount),
-      recentOrders: [],
+      recentOrders: [] as never[],
     }));
 
-    const recentOrders = recentOrdersRaw.map((o) => {
+    const recentOrders = (recentOrdersRaw || []).map((o) => {
       const c = safeJson(String(o.customer || ""), { name: "—", phone: "" });
       return {
         id: String(o.id),
@@ -137,11 +142,11 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      totalOrders: orderStats.totalOrders,
-      totalRevenue: orderStats.totalRevenue,
-      todayOrders: orderStats.todayOrders,
-      shopCount: shops.length,
-      activeShopCount: shops.filter((s) => Boolean(s.isActive)).length,
+      totalOrders,
+      totalRevenue,
+      todayOrders,
+      shopCount: shopStats.length,
+      activeShopCount: shopStats.filter((s) => Boolean(s.isActive)).length,
       statusCounts,
       shopStats,
       recentOrders,
@@ -150,7 +155,7 @@ export async function GET(req: NextRequest) {
     const elapsed = Date.now() - startTime;
     console.error(`[global-stats] fatal error after ${elapsed}ms:`, e);
     return NextResponse.json(
-      { error: "حدث خطأ", totalOrders: 0, totalRevenue: 0, todayOrders: 0, shopCount: 0, activeShopCount: 0, statusCounts: {}, shopStats: [], recentOrders: [] },
+      { totalOrders: 0, totalRevenue: 0, todayOrders: 0, shopCount: 0, activeShopCount: 0, statusCounts: {}, shopStats: [], recentOrders: [] },
       { status: 500 }
     );
   }
