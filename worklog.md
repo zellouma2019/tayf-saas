@@ -385,3 +385,84 @@ The user is logged out without explanation and must re-login manually.
 
 ## Commit pushed
 - `db0b0c6` - fix: admin dashboard crash after password change + auto session renewal
+
+---
+Task ID: 14
+Agent: Main Agent
+Task: Fix live site 504 FUNCTION_INVOCATION_TIMEOUT + optimize loading < 1s + push to GitHub
+
+## Root Cause Analysis
+
+### Issue: Live site showing "فشل تحميل البيانات من المخدم" (504 FUNCTION_INVOCATION_TIMEOUT)
+
+**Primary cause:** `@libsql/client` with `libsql://` URL was trying WebSocket first on Vercel serverless,
+which hangs indefinitely, causing FUNCTION_INVOCATION_TIMEOUT (>15s).
+
+**Secondary cause:** `ensureDb()` added unnecessary overhead on every API call to Turso.
+**Contributing cause:** 12 commits with critical fixes (BigInt, crash fix, password update) were never pushed to GitHub!
+
+## Fixes Applied (3 commits pushed)
+
+### Commit 1: Remove ensureDb + add Vercel ISR caching
+- Removed `ensureDb()` from all read-only API routes (global-stats, admin/stats, orders GET, shops GET)
+- Removed `withRateLimit()` from global-stats (admin-only, unnecessary)
+- Added `export const revalidate = 30` for Vercel edge caching (ISR)
+- Combined orderStats + statusDist into single UNION ALL query
+- Combined stats into subqueries in admin/stats
+
+### Commit 2: Bypass Prisma entirely — use @libsql/client directly
+- Created `src/lib/turso-lite.ts`: lightweight Turso HTTP client
+- Rewrote global-stats to use tursoQueries() directly (no Prisma overhead)
+- Eliminated Prisma client initialization overhead
+
+### Commit 3: Force HTTPS mode for Turso (THE KEY FIX!)
+- **Root fix**: Convert `libsql://` URL to `https://` to force HTTP-only mode
+- `libsql://` tries WebSocket first on Vercel serverless → hangs
+- `https://` uses HTTP directly → fast (<1s)
+- Used positional args (?) instead of named params
+- Simplified queries: 3 sequential (stats, status+shops parallel, recent orders)
+
+## Files Modified
+| File | Change |
+|------|--------|
+| `src/lib/turso-lite.ts` | NEW: Lightweight Turso HTTP client with forced HTTPS |
+| `src/app/api/admin/global-stats/route.ts` | REWRITTEN: Uses turso-lite, no Prisma, revalidate=30 |
+| `src/app/api/admin/stats/route.ts` | Removed ensureDb, combined queries |
+| `src/app/api/orders/route.ts` | Removed ensureDb from GET |
+| `src/app/api/shops/route.ts` | Removed ensureDb from GET |
+
+## Verification Results (agent-browser on tayf-saas.vercel.app)
+
+| Test | Result | Details |
+|------|--------|---------|
+| global-stats API (curl) | ✅ 0.9s | 12 orders, 8,833 د.ج, 3 shops, 4 today |
+| Login (Admin@2026) | ✅ | Token generated successfully |
+| Overview tab loads | ✅ | All 4 stat cards with real data |
+| Stats: Total Orders | ✅ | 12 |
+| Stats: Revenue | ✅ | 8,833.00 د.ج |
+| Stats: Today Orders | ✅ | 4 |
+| Stats: Active Shops | ✅ | 3/3 |
+| Status distribution | ✅ | 7 pending, 1 printing, 3 ready, 1 delivered |
+| Shops tab | ✅ | 3 shops listed with details |
+| Shop: مطبعة الريان | ✅ | 4 orders, 7,895 د.ج |
+| Shop: مطبعة الساحل | ✅ | 8 orders, 938 د.م |
+| Shop: مطبعة النور | ✅ | 0 orders |
+
+## Commits Pushed to GitHub
+- `2780555` - fix: remove ensureDb from read APIs + add Vercel ISR caching
+- `308e9e2` - fix: bypass Prisma for global-stats — use @libsql/client directly
+- `823fee0` - fix: force HTTPS mode for Turso on Vercel (no WebSocket) + simplify queries
+
+## Architecture Decision: turso-lite.ts
+The `src/lib/turso-lite.ts` module provides a lightweight alternative to Prisma for read-heavy
+API routes on Vercel serverless. It forces HTTPS mode and eliminates Prisma overhead.
+
+**When to use turso-lite:**
+- Read-only API routes that need fast response times
+- Routes that benefit from Vercel ISR caching (with `export const revalidate`)
+- High-traffic endpoints (stats, public data)
+
+**When to use Prisma:**
+- Write operations (CREATE, UPDATE, DELETE) that need type safety
+- Complex queries with relations
+- Admin-only routes where speed is less critical
