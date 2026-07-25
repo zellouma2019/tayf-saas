@@ -340,3 +340,48 @@ Stage Summary:
 - API response times are fast (under 200ms)
 - No errors in dev server log
 - Vercel deployment should resolve the production issues
+
+---
+Task ID: 13
+Agent: Main Agent
+Task: Fix admin dashboard crash after password change + auto session renewal
+
+## Root Cause Analysis
+
+### Issue 1: React crash after BigInt fix (MAIN CAUSE)
+When the BigInt serialization was fixed (commit b51cc8d), the OverviewTab component was also updated
+with a `safeStats` variable for defensive defaults. However, `safeStats` was defined INSIDE
+`OverviewTab` but was referenced by sub-components `PieChartCard` and `RevenueBarChart`
+which are defined OUTSIDE OverviewTab's scope. This caused a `ReferenceError` that crashed
+the entire React tree, showing the "client-side exception" error overlay.
+
+### Issue 2: admin-shop-card.tsx crash
+`ShopOverviewCard` accessed `shop.recentOrders.length` but `recentOrders` could be
+undefined when the shop data came from the global-stats API which initializes it to `[]`.
+
+### Issue 3: Password change invalidates session
+After changing the admin password, the session token (based on old password hash)
+becomes invalid. The `verifySession()` check fails, but no new token is generated.
+The user is logged out without explanation and must re-login manually.
+
+## Files Modified
+| File | Change |
+|------|--------|
+| `src/components/app/admin-overview-tab.tsx` | Added `safeStats` with defaults inside OverviewTab, pass to sub-components as prop |
+| `src/components/app/admin-shop-card.tsx` | Added optional chaining for `shop.recentOrders` |
+| `src/components/app/admin-security-tab.tsx` | Added auto session renewal after password change |
+| `src/app/page.tsx` | Added defensive defaults when setting globalStats |
+| `src/app/api/admin/debug/route.ts` | New diagnostic endpoint for production |
+
+## Verification (agent-browser)
+| Test | Result |
+|------|----------------|
+| Login (Admin@2026) | ✅ |
+| Dashboard renders | ✅ No crash! |
+| Stats cards show | ✅ "0", "0,00 د.ج", "0", "1/1" |
+| Welcome banner | ✅ "مرحباً بك في طيف 👋" |
+| No React crash | ✅ |
+| Password change auto-renews session | ✅ (code-level) |
+
+## Commit pushed
+- `db0b0c6` - fix: admin dashboard crash after password change + auto session renewal
