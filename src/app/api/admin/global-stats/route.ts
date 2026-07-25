@@ -12,32 +12,21 @@ export async function GET() {
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
 
-    // === استعلامان فقط إلى Turso مباشرة (بدون Prisma) ===
-    const [statsResult, shopsResult] = await tursoQueries([
+    // === 3 استعلامات بسيطة إلى Turso مباشرة (HTTP mode, بدون Prisma) ===
+
+    // الاستعلام 1: إجمالي الإحصائيات
+    const statsResult = await tursoQuery(`
+      SELECT 
+        COUNT(*) as totalOrders,
+        COALESCE(SUM(total), 0) as totalRevenue,
+        COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders
+      FROM "PrintOrder"
+    `, [todayISO]);
+
+    // الاستعلام 2: توزيع الحالات + المتاجر (موازي)
+    const [statusRows, shopsRaw] = await tursoQueries<Record<string, unknown>[]>([
+      { sql: `SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status` },
       {
-        // الاستعلام 1: إحصائيات الطلبات + توزيع الحالات
-        sql: `
-          SELECT 
-            COUNT(*) as totalOrders,
-            COALESCE(SUM(total), 0) as totalRevenue,
-            COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders,
-            NULL as status,
-            0 as statusCount,
-            'stats' as _rowType
-          FROM "PrintOrder"
-          UNION ALL
-          SELECT 
-            0, 0, 0,
-            status as status,
-            COUNT(*) as statusCount,
-            'status' as _rowType
-          FROM "PrintOrder"
-          GROUP BY status
-        `,
-        params: { p1: todayISO },
-      },
-      {
-        // الاستعلام 2: المتاجر مع إحصائياتها
         sql: `
           SELECT 
             s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
@@ -54,7 +43,7 @@ export async function GET() {
           ) o ON o."shopId" = s.id
           ORDER BY s."createdAt" DESC
         `,
-        params: { p1: todayISO },
+        args: [todayISO],
       },
     ]);
 
@@ -72,45 +61,36 @@ export async function GET() {
     const elapsed = Date.now() - startTime;
     console.log(`[global-stats] loaded in ${elapsed}ms`);
 
-    // تحليل النتائج المجمعة
-    let totalOrders = 0;
-    let totalRevenue = 0;
-    let todayOrders = 0;
-    const statusCounts: Record<string, number> = {};
+    // تجهيز البيانات
+    const statsRow = statsResult[0] || {};
+    const totalOrders = toNum(statsRow.totalOrders);
+    const totalRevenue = toNum(statsRow.totalRevenue);
+    const todayOrders = toNum(statsRow.todayOrders);
 
-    for (const row of statsResult) {
-      const r = row as Record<string, unknown>;
-      if (r._rowType === "stats") {
-        totalOrders = toNum(r.totalOrders);
-        totalRevenue = toNum(r.totalRevenue);
-        todayOrders = toNum(r.todayOrders);
-      } else if (r._rowType === "status" && r.status) {
-        statusCounts[String(r.status)] = toNum(r.statusCount);
-      }
+    const statusCounts: Record<string, number> = {};
+    for (const s of statusRows) {
+      statusCounts[String(s.status)] = toNum(s.count);
     }
 
-    const shopStats = shopsResult.map((s) => {
-      const shop = s as Record<string, unknown>;
-      return {
-        id: String(shop.id),
-        name: String(shop.name),
-        slug: String(shop.slug),
-        ownerName: shop.ownerName ? String(shop.ownerName) : null,
-        ownerPhone: shop.ownerPhone ? String(shop.ownerPhone) : null,
-        phone: shop.phone ? String(shop.phone) : null,
-        isActive: Boolean(shop.isActive),
-        trialDays: shop.trialDays != null ? toNum(shop.trialDays) : null,
-        trialStartsAt: shop.trialStartsAt ? String(shop.trialStartsAt) : null,
-        plan: String(shop.plan || "free"),
-        adminPin: String(shop.adminPin),
-        country: String(shop.country || "DZ"),
-        language: String(shop.language || "ar"),
-        orders: toNum(shop.orderCount),
-        revenue: toNum(shop.shopRevenue),
-        todayOrders: toNum(shop.todayCount),
-        recentOrders: [] as never[],
-      };
-    });
+    const shopStats = shopsRaw.map((s) => ({
+      id: String(s.id),
+      name: String(s.name),
+      slug: String(s.slug),
+      ownerName: s.ownerName ? String(s.ownerName) : null,
+      ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
+      phone: s.phone ? String(s.phone) : null,
+      isActive: Boolean(s.isActive),
+      trialDays: s.trialDays != null ? toNum(s.trialDays) : null,
+      trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
+      plan: String(s.plan || "free"),
+      adminPin: String(s.adminPin),
+      country: String(s.country || "DZ"),
+      language: String(s.language || "ar"),
+      orders: toNum(s.orderCount),
+      revenue: toNum(s.shopRevenue),
+      todayOrders: toNum(s.todayCount),
+      recentOrders: [] as never[],
+    }));
 
     const recentOrders = recentOrdersRaw.map((o) => {
       const order = o as Record<string, unknown>;
