@@ -12,6 +12,7 @@ export async function runMigrations(): Promise<void> {
     await Promise.allSettled([
       db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`).catch(() => {}),
       db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]'`).catch(() => {}),
+      db.$executeRawUnsafe(`ALTER TABLE "SuperAdmin" ADD COLUMN "name" TEXT NOT NULL DEFAULT 'مدير'`).catch(() => {}),
       db.$executeRawUnsafe(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`).catch(() => {}),
       db.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`).catch(() => {}),
     ])
@@ -41,7 +42,7 @@ async function getSuperAdminRaw(selectFields?: Record<string, boolean>) {
   try {
     const cols = selectFields
       ? Object.keys(selectFields).join(', ')
-      : 'id, key, password, "teamMembers", "platformSettings"'
+      : 'id, key, password, name, "teamMembers", "platformSettings"'
     const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT ${cols} FROM "SuperAdmin" WHERE key = 'main' LIMIT 1`
     )

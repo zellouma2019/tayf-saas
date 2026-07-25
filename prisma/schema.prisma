@@ -144,6 +144,8 @@ model SuperAdmin {
   key   String @unique @default("main")
   /// كلمة مرور لوحة التحكم الرئيسية
   password String @default("Admin@2025")
+  /// اسم المدير (لعرضه في الترحيب)
+  name   String @default("مدير")
   /// قائمة أعضاء الفريق JSON: [{ email, name, role, addedAt }]
   teamMembers String @default("[]")
   /// إعدادات المنصة JSON: { platformName, platformLogo, platformTagline, maintenanceMode, defaultShopSettings, defaultFeatures, notifications }

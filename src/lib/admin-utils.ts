@@ -33,14 +33,14 @@ export function isAuthenticated(): boolean {
   }
 }
 
-/** التحقق من الجلسة مع الخادم (يُستدعى عند تحميل الصفحة) */
-export async function verifySession(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
+/** التحقق من الجلسة مع الخادم (يُستدعى عند تحميل الصفحة) — يُرجع { valid, adminName } */
+export async function verifySession(): Promise<{ valid: boolean; adminName?: string }> {
+  if (typeof window === "undefined") return { valid: false };
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return false;
+    if (!raw) return { valid: false };
     const { ts, token } = JSON.parse(raw);
-    if (!token) return false;
+    if (!token) return { valid: false };
 
     const res = await fetch("/api/super-admin/verify", {
       method: "POST",
@@ -49,12 +49,12 @@ export async function verifySession(): Promise<boolean> {
     });
     if (res.ok) {
       const data = await res.json();
-      return data.valid === true;
+      return { valid: data.valid === true, adminName: data.adminName };
     }
-    return false;
+    return { valid: false };
   } catch {
     // في حالة فشل الشبكة، نسمح بالوصول مؤقتاً (التحقق السابق يكفي)
-    return isAuthenticated();
+    return { valid: isAuthenticated() };
   }
 }
 

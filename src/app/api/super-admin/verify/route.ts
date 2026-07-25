@@ -30,15 +30,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, reason: "expired" }, { status: 200 });
     }
 
-    // جلب كلمة المرور الحالية بأمان
-    const admin = await getSuperAdmin({ id: true, key: true, password: true }) as { password: string } | null;
+    // جلب كلمة المرور واسم المدير بأمان
+    const admin = await getSuperAdmin({ id: true, key: true, password: true, name: true }) as { password: string; name?: string } | null;
     if (!admin || !admin.password) {
       return NextResponse.json({ valid: false }, { status: 200 });
     }
 
     const expectedToken = await simpleHash(`${admin.password}:${ts}:${APP_SECRET}`);
     if (token === expectedToken) {
-      return NextResponse.json({ valid: true }, { status: 200 });
+      return NextResponse.json({ valid: true, adminName: admin.name || "مدير" }, { status: 200 });
     }
 
     return NextResponse.json({ valid: false, reason: "password_changed" }, { status: 200 });

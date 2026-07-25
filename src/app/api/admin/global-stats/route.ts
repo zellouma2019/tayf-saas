@@ -38,58 +38,57 @@ export async function GET(req: NextRequest) {
 
     // === 4 استعلامات raw SQL موازية (أسرع على Turso من Prisma ORM) ===
 
-    // 1. إحصائيات الطلبات الكلية
-    const orderStats = await safeQuery("order-stats", async () => {
-      const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT 
-          COUNT(*) as totalOrders,
-          COALESCE(SUM(total), 0) as totalRevenue,
-          COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders
-        FROM "PrintOrder"
-      `, todayISO);
-      const r = rows[0] || {};
-      return { totalOrders: toNum(r.totalOrders), totalRevenue: toNum(r.totalRevenue), todayOrders: toNum(r.todayOrders) };
-    }, { totalOrders: 0, totalRevenue: 0, todayOrders: 0 });
+    // تشغيل الاستعلامات الأربعة بالتوازي لتسريع التحميل
+    const [orderStats, statusRows, shops, recentOrdersRaw] = await Promise.all([
+      safeQuery("order-stats", async () => {
+        const rows = await db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+          SELECT 
+            COUNT(*) as totalOrders,
+            COALESCE(SUM(total), 0) as totalRevenue,
+            COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders
+          FROM "PrintOrder"
+        `, todayISO);
+        const r = rows[0] || {};
+        return { totalOrders: toNum(r.totalOrders), totalRevenue: toNum(r.totalRevenue), todayOrders: toNum(r.todayOrders) };
+      }, { totalOrders: 0, totalRevenue: 0, todayOrders: 0 }),
 
-    // 2. توزيع حالات الطلبات
-    const statusRows = await safeQuery("status-dist", async () => {
-      return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status
-      `);
-    }, []);
+      safeQuery("status-dist", async () => {
+        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+          SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status
+        `);
+      }, []),
 
-    // 3. المتاجر مع إحصائيات لكل متجر (JOIN واحد)
-    const shops = await safeQuery("shops", async () => {
-      return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT 
-          s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
-          s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
-          s.country, s.language,
-          COALESCE(o.cnt, 0) as orderCount,
-          COALESCE(o.rev, 0) as shopRevenue,
-          COALESCE(o.tod, 0) as todayCount
-        FROM "Shop" s
-        LEFT JOIN (
-          SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(total), 0) as rev,
-                 COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
-          FROM "PrintOrder" GROUP BY "shopId"
-        ) o ON o."shopId" = s.id
-        ORDER BY s."createdAt" DESC
-      `, todayISO);
-    }, []);
+      safeQuery("shops", async () => {
+        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+          SELECT 
+            s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
+            s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
+            s.country, s.language,
+            COALESCE(o.cnt, 0) as orderCount,
+            COALESCE(o.rev, 0) as shopRevenue,
+            COALESCE(o.tod, 0) as todayCount
+          FROM "Shop" s
+          LEFT JOIN (
+            SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(total), 0) as rev,
+                   COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
+            FROM "PrintOrder" GROUP BY "shopId"
+          ) o ON o."shopId" = s.id
+          ORDER BY s."createdAt" DESC
+        `, todayISO);
+      }, []),
 
-    // 4. آخر 20 طلب مع اسم المتجر
-    const recentOrdersRaw = await safeQuery("recent-orders", async () => {
-      return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT 
-          o.id, o.reference, o."serviceType", o."serviceName",
-          o.status, o.total, o.customer, o."createdAt",
-          o."shopId", s.name as shopName, s.slug as shopSlug
-        FROM "PrintOrder" o
-        LEFT JOIN "Shop" s ON o."shopId" = s.id
-        ORDER BY o."createdAt" DESC LIMIT 20
-      `);
-    }, []);
+      safeQuery("recent-orders", async () => {
+        return db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+          SELECT 
+            o.id, o.reference, o."serviceType", o."serviceName",
+            o.status, o.total, o.customer, o."createdAt",
+            o."shopId", s.name as shopName, s.slug as shopSlug
+          FROM "PrintOrder" o
+          LEFT JOIN "Shop" s ON o."shopId" = s.id
+          ORDER BY o."createdAt" DESC LIMIT 20
+        `);
+      }, []),
+    ]);
 
     const elapsed = Date.now() - startTime;
     console.log(`[global-stats] loaded in ${elapsed}ms — ${shops.length} shops, ${orderStats.totalOrders} orders`);

@@ -28,7 +28,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     (async () => {
       try {
         // تحقق من الخادم أولاً
-        const valid = await verifySession();
+        const { valid } = await verifySession();
         if (valid) {
           onUnlock();
           return;

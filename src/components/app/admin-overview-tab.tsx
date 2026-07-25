@@ -15,10 +15,11 @@ import { formatNumber, STATUS_COLORS, getTimeAgo } from "@/lib/admin-utils";
 import type { GlobalStats } from "@/lib/admin-types";
 import { ShopOverviewCard } from "@/components/app/admin-shop-card";
 
-export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
+export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   stats: GlobalStats;
   lastUpdated: string;
   onOpenCreate: () => void;
+  adminName?: string;
 }) {
   const s = stats ?? {} as GlobalStats;
   const safeStats: GlobalStats = {
@@ -36,7 +37,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate }: {
       {/* شريط الترحيب */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white">
         <div className="relative z-10">
-          <h2 className="text-xl sm:text-2xl font-bold mb-1">مرحباً بك في طيف 👋</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1">مرحباً بك {adminName || "في طيف"} 👋</h2>
           <p className="text-white/80 text-sm max-w-lg">
             منصة إدارة المطابع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين
           </p>
