@@ -31,15 +31,32 @@ export async function runMigrations(): Promise<void> {
 
 /**
  * Fetch the single SuperAdmin row. Returns only requested fields (or all by default).
+ * Safely falls back if a requested column doesn't exist in the live DB (migration gap).
  */
 export async function getSuperAdmin(selectFields?: Record<string, boolean>) {
-  const fields = selectFields
-    ? Object.keys(selectFields).map((k) => `"${k}"`).join(', ')
-    : 'id, key, password, name, "teamMembers", "platformSettings"'
+  const requested = selectFields
+    ? Object.keys(selectFields)
+    : ['id', 'key', 'password', 'name', 'teamMembers', 'platformSettings']
 
-  const rows = await tursoQuery<Record<string, unknown>>(
-    `SELECT ${fields} FROM "SuperAdmin" WHERE key = 'main' LIMIT 1`
-  )
+  // Try with all requested columns first
+  const cols = requested.map((k) => `"${k}"`).join(', ')
+  let rows: Record<string, unknown>[] = []
+  try {
+    rows = await tursoQuery<Record<string, unknown>>(
+      `SELECT ${cols} FROM "SuperAdmin" WHERE key = 'main' LIMIT 1`
+    )
+  } catch {
+    // A requested column doesn't exist in the live DB — fall back to safe core columns
+    // and run migration to add missing columns for next time.
+    runMigrations().catch(() => {})
+    try {
+      rows = await tursoQuery<Record<string, unknown>>(
+        `SELECT id, key, password FROM "SuperAdmin" WHERE key = 'main' LIMIT 1`
+      )
+    } catch {
+      return null
+    }
+  }
   const row = rows[0]
   if (!row) return null
 
@@ -50,6 +67,8 @@ export async function getSuperAdmin(selectFields?: Record<string, boolean>) {
   if (row.platformSettings && typeof row.platformSettings === 'string') {
     row.platformSettings = safeJson(row.platformSettings as string, {})
   }
+  // Default name if column missing
+  if (!('name' in row)) row.name = 'مدير'
   return row as never
 }
 
