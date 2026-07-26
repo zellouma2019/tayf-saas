@@ -1878,7 +1878,7 @@ function ThemePickerSection({
                     <div className="flex-1 h-1 rounded-full bg-dark-200" />
                   </div>
                   {/* المحتوى */}
-                  <div className="h-8 bg-white" />
+                  <div className="h-8" style={{ backgroundColor: theme.contentBg }} />
                   {/* التذييل */}
                   <div className="h-2" style={{ backgroundColor: theme.footer.bg }} />
                 </div>

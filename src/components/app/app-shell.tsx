@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useState, useMemo, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { shopApi } from "@/lib/shop-api";
 import { useShop } from "@/lib/shop-context";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -111,8 +112,52 @@ export function AppShell() {
   const isOrderTrackingEnabled = shopSettings.enableOrderTracking !== false;
   const welcomeMessage = shopSettings.welcomeMessage || "";
 
-  // قالب المتجر اللوني (يُطبَّق على الواجهة التي يراها الزبون)
-  const theme: ShopTheme = useMemo(() => getTheme(shop?.themeId), [shop?.themeId]);
+  // قالب المتجر اللوني — يتكيّف مع الوضع الداكن تلقائياً
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const theme: ShopTheme = useMemo(() => {
+    const base = getTheme(shop?.themeId);
+    if (!isDark) return base;
+    // ===== Dark mode overrides =====
+    // ألوان المتجر مصمّمة للوضع الفاتح (خلفية بيضاء + نص داكن).
+    // في الوضع الداكن نُبدّل الخلفيات الفاتحة بسطوح داكنة والنصوص الداكنة بنصوص فاتحة،
+    // مع الحفاظ على لون الـ accent المميّز لكل متجر.
+    return {
+      ...base,
+      topBar: {
+        bg: "#0e0e10",
+        text: "#e8e4dc",
+        accent: base.topBar.accent,
+      },
+      header: {
+        bg: "#141416",
+        text: "#e8e4dc",
+        border: "rgba(255, 255, 255, 0.08)",
+      },
+      nav: {
+        active: base.accent,
+        activeText: "#0a0a0b",
+        hover: "rgba(255, 255, 255, 0.05)",
+      },
+      footer: {
+        bg: "#0a0a0b",
+        text: "#a8a29e",
+        border: "rgba(255, 255, 255, 0.06)",
+        linkHover: base.accent,
+      },
+      fab: {
+        bg: base.fab.bg,
+        hover: base.fab.hover,
+        icon: "#ffffff",
+      },
+      contentBg: "#0a0a0b",
+      card: {
+        border: "rgba(255, 255, 255, 0.08)",
+        hoverBg: "rgba(255, 255, 255, 0.03)",
+      },
+      logoIconColor: base.accent,
+    };
+  }, [shop?.themeId, isDark]);
   // متغيرات CSS لكل ألوان القالب (تُحقن في الجذر)
   const themeStyle = useMemo(() => {
     const t = theme;

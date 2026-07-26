@@ -381,7 +381,7 @@ function FeaturesTab() {
               {lockedPaidFeatures.map((f) => (
                 <div
                   key={f.key}
-                  className="flex items-center gap-2.5 bg-white/60 rounded-lg px-3 py-2.5 border border-dark-200/60 opacity-70"
+                  className="flex items-center gap-2.5 bg-card/60 rounded-lg px-3 py-2.5 border border-dark-200/60 opacity-70"
                 >
                   <div className="w-7 h-7 rounded-lg bg-dark-100 flex items-center justify-center shrink-0">
                     <Lock className="h-3.5 w-3.5 text-dark-400" />
@@ -1207,7 +1207,7 @@ export function MerchantSettingsAdvanced({
                   ? formatCurrency(exampleAmount, null, selectedCurrency)
                   : formatCurrency(exampleAmount, selectedCountry);
                 return (
-                  <div className="flex items-center gap-4 p-3 rounded-lg bg-white border border-dark-200/60">
+                  <div className="flex items-center gap-4 p-3 rounded-lg bg-card border border-dark-200/60">
                     <div className="flex items-center gap-2 flex-1">
                       <DollarSign className="h-4 w-4 text-amber-500 shrink-0" />
                       <div>
@@ -1301,7 +1301,7 @@ export function MerchantSettingsAdvanced({
               </div>
 
               {/* Enable order tracking toggle */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-dark-200/60">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-dark-200/60">
                 <div>
                   <div className="text-sm font-medium text-dark-700 flex items-center gap-2">
                     <ToggleLeft className="h-4 w-4 text-gold-400" />
@@ -1381,7 +1381,7 @@ export function MerchantSettingsAdvanced({
                       : "border-dark-200/40 opacity-60"
                   }`}
                 >
-                  <CardHeader className="pb-3 bg-white/50">
+                  <CardHeader className="pb-3 bg-card/50">
                     <div className="flex items-center justify-between gap-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <span className="text-lg">{del.emoji}</span>
@@ -1421,7 +1421,7 @@ export function MerchantSettingsAdvanced({
                   </CardHeader>
                   <CardContent className="p-4 space-y-3">
                     {/* Enable toggle */}
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-dark-200/60">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-dark-200/60">
                       <span className="text-xs text-dark-600 font-medium">
                         تفعيل / تعطيل
                       </span>
@@ -1523,7 +1523,7 @@ export function MerchantSettingsAdvanced({
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Enable toggle */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-dark-200/60">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-dark-200/60">
                 <div>
                   <div className="text-sm font-medium text-dark-700">
                     تفعيل شاشة الترحيب
@@ -1639,14 +1639,14 @@ export function MerchantSettingsAdvanced({
 
               {/* Extra toggles */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-dark-200/60">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-dark-200/60">
                   <span className="text-sm text-dark-700">شريط التحميل</span>
                   <Switch
                     checked={settings.intro?.showProgress ?? true}
                     onCheckedChange={(v) => updateIntro("showProgress", v)}
                   />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-dark-200/60">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-dark-200/60">
                   <span className="text-sm text-dark-700">
                     الحلقة الدوارة
                   </span>
@@ -1714,7 +1714,7 @@ export function MerchantSettingsAdvanced({
                     </div>
                   )}
                   {settings.intro?.footerText && (
-                    <p className="text-xs text-neutral-500 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       {settings.intro.footerText}
                     </p>
                   )}
@@ -1746,7 +1746,7 @@ export function MerchantSettingsAdvanced({
               <AccordionItem
                 key={service.type}
                 value={`service-${service.type}`}
-                className="border border-dark-200/60 rounded-xl bg-white overflow-hidden px-0 data-[state=open]:shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                className="border border-dark-200/60 rounded-xl bg-card overflow-hidden px-0 data-[state=open]:shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               >
                 <AccordionTrigger className="px-4 hover:no-underline hover:bg-gold-500/5">
                   <div className="flex items-center gap-3 w-full pr-2">
@@ -1887,7 +1887,7 @@ export function MerchantSettingsAdvanced({
 
                   {/* Service flags */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-dark-200/60">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-dark-200/60">
                       <div>
                         <div className="text-xs font-medium text-dark-600">
                           تعتمد على عدد الصفحات
@@ -1903,7 +1903,7 @@ export function MerchantSettingsAdvanced({
                         }
                       />
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-dark-200/60">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-dark-200/60">
                       <div>
                         <div className="text-xs font-medium text-dark-600">
                           نطاق الطباعة
@@ -1949,7 +1949,7 @@ export function MerchantSettingsAdvanced({
                     {service.sections.map((section, secIdx) => (
                       <div
                         key={section.id}
-                        className="rounded-lg border border-dark-200/60 bg-white overflow-hidden"
+                        className="rounded-lg border border-dark-200/60 bg-card overflow-hidden"
                       >
                         {/* Section header */}
                         <div className="flex items-center justify-between gap-2 p-3 border-b border-dark-200/60 bg-dark-50/50">
