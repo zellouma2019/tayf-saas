@@ -98,7 +98,7 @@ export default function SuperAdminPage() {
     return () => window.removeEventListener("platform-settings-updated", onSettingsUpdated);
   }, []);
 
-  const loadAll = useCallback(async (useCache = true) => {
+  const loadStats = useCallback(async (useCache = true) => {
     // محاولة عرض البيانات المخزنة مؤقتاً فوراً (Stale-While-Revalidate)
     if (useCache) {
       try {
@@ -111,32 +111,29 @@ export default function SuperAdminPage() {
       } catch {}
     }
 
-    // لا نعرض التحميل إذا كانت البيانات المخزنة موجودة
     const hasCached = useCache && !!sessionStorage.getItem('admin_global_stats');
     if (!hasCached) setLoading(true);
     setLoadError("");
 
     try {
-      const [statsRes, ordersRes] = await Promise.allSettled([
-        adminFetch("/api/admin/global-stats").then((r) => r.ok ? r.json() : null).catch(() => null),
-        adminFetch("/api/orders?noPreview=true&limit=100").then((r) => r.ok ? r.json() : null).catch(() => null),
-      ]);
-      let statsLoaded = false;
-      let ordersLoaded = false;
-      if (statsRes.status === "fulfilled" && statsRes.value && !statsRes.value.error) {
-        const d = statsRes.value;
-        const stats = { totalOrders: d.totalOrders ?? 0, totalRevenue: d.totalRevenue ?? 0, todayOrders: d.todayOrders ?? 0, shopCount: d.shopCount ?? 0, activeShopCount: d.activeShopCount ?? 0, statusCounts: d.statusCounts ?? {}, shopStats: d.shopStats ?? [], recentOrders: d.recentOrders ?? [] };
+      const d = await adminFetch("/api/admin/global-stats").then((r) => r.ok ? r.json() : null).catch(() => null);
+      if (d && !d.error) {
+        const stats = {
+          totalOrders: d.totalOrders ?? 0,
+          totalRevenue: d.totalRevenue ?? 0,
+          todayOrders: d.todayOrders ?? 0,
+          shopCount: d.shopCount ?? 0,
+          activeShopCount: d.activeShopCount ?? 0,
+          statusCounts: d.statusCounts ?? {},
+          shopStats: d.shopStats ?? [],
+          recentOrders: d.recentOrders ?? [],
+        };
         setGlobalStats(stats);
         try { sessionStorage.setItem('admin_global_stats', JSON.stringify(stats)); } catch {}
-        statsLoaded = true;
-      }
-      if (ordersRes.status === "fulfilled" && ordersRes.value && !ordersRes.value.error) {
-        setAllOrders(ordersRes.value.orders || []);
-        ordersLoaded = true;
-      }
-      setLastUpdated("الآن");
-      if (!statsLoaded && !ordersLoaded) {
-        setLoadError("فشل تحميل البيانات من الخادم");
+        setLastUpdated("الآن");
+      } else {
+        setLastUpdated("تعذّر التحديث");
+        if (!hasCached) setLoadError("فشل تحميل الإحصائيات");
       }
     } catch {
       setLoadError("خطأ في الاتصال بالخادم");
@@ -145,14 +142,33 @@ export default function SuperAdminPage() {
     }
   }, []);
 
+  // تحميل الطلبات بشكل مستقل (لا يُعطّل عرض الإحصائيات)
+  const loadOrders = useCallback(async () => {
+    try {
+      const d = await adminFetch("/api/orders?noPreview=true&limit=100").then((r) => r.ok ? r.json() : null).catch(() => null);
+      if (d && !d.error) {
+        setAllOrders(d.orders || []);
+      }
+    } catch {
+      // أخطاء الطلبات لا تُعطّل الواجهة — الإحصائيات كافية للعرض الأولي
+    }
+  }, []);
+
+  // النسخة الموحدة للتحديث اليدوي (زر التحديث) — تحميل الاثنين معاً
+  const loadAll = useCallback(async (useCache = true) => {
+    await Promise.allSettled([loadStats(useCache), loadOrders()]);
+  }, [loadStats, loadOrders]);
+
   useEffect(() => {
     setMounted(true);
     if (!isAuthenticated()) return;
 
     setAuthenticated(true); // عرض الواجهة فوراً
 
-    // تحميل البيانات أولاً (الأهم — يظهر المحتوى فوراً من الكاش)
-    loadAll();
+    // 1) حمّل الإحصائيات أولاً (سريع ~600ms) — تظهر لوحة التحكم فوراً
+    loadStats();
+    // 2) حمّل الطلبات في الخلفية (لا تُعطّل العرض)
+    loadOrders();
 
     // التحقق من الجلسة بالتوازي (يستخدم كاش sessionStorage لمدة 5 دقائق)
     // لا يُعطّل الواجهة أبداً — لو فشل الشبكة يبقى المستخدم يعمل
@@ -163,7 +179,7 @@ export default function SuperAdminPage() {
         setAuthenticated(false);
       }
     });
-  }, []);
+  }, [loadStats, loadOrders]);
 
   const filteredOrders = useMemo(() => {
     let list = allOrders;
