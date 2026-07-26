@@ -832,3 +832,101 @@ useEffect(() => {
 
 ## Commit
 - `c12a751` — fix: dashboard not loading after login + platform-settings 500
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: إصلاح مشاكل الوضع الداكن + رفع الشعار على Vercel
+
+## التشخيص
+
+حلّلت 4 لقطات شاشة من المستخدم باستخدام VLM واكتشفت:
+1. **لوحة تحكم التاجر**: نص داكن على داكن (غير مقروء)
+2. **إضافة عميل**: بطاقة "طباعة فاتورة" بخلفية بيضاء في الوضع الداكن
+3. **الخدمات**: نص شريط التنقل السفلي داكن على داكن
+4. **الإعدادات**: تسميات حقول الإدخال وعناوين الأقسام داكنة على داكنة
+
+كما أبلغ المستخدم أن **الشعار لا يستجيب عند تغييره خاصة في الوضع الداكن**.
+
+## السبب الجذري #1: `@theme inline` في Tailwind CSS 4
+
+**الملف:** `src/app/globals.css`
+
+كان `globals.css` يستخدم `@theme inline` الذي **يخبز القيم في الأدوات المساعدة (utilities) وقت البناء** بدلاً من استخدام `var()`. هذا يعني:
+- `text-dark-800` كان دائماً = `#1a1a1a` (قيمة الوضع الفاتح)
+- تجاوزات `:root` و `.light` لـ `--color-dark-*` **لم تكن تؤثر على الأدوات المساعدة**
+
+**التشخيص التقني:**
+- `htmlClass` = `"dark"` (الوضع الداكن مفعّل ✓)
+- `--color-dark-800` CSS variable = `#dcdce4` (صحيح للوضع الداكن ✓)
+- لكن `h2Color` (محسوب) = `rgb(26, 26, 26)` = `#1a1a1a` (قيمة الوضع الفاتح ✗)
+
+**الحل:** تغيير `@theme inline` إلى `@theme` (بدون `inline`). الآن الأدوات المساعدة تستخدم `var(--color-dark-800)` التي تحلّ بشكل صحيح حسب الثيم.
+
+بعد الإصلاح: `h2Color` = `rgb(220, 220, 228)` = `#dcdce4` ✓
+
+## السبب الجذري #2: رفع الشعار يكتب على نظام ملفات Vercel (للقراءة فقط)
+
+**الملف:** `src/app/api/super-admin/upload-logo/route.ts`
+
+كان المسار يحاول الكتابة إلى `public/uploads/` الذي هو **للقراءة فقط على Vercel serverless**. النتيجة: الشعار لا يُرفع، المستخدم يرى "فشل رفع الشعار".
+
+**الحل:** تحويل الصورة إلى base64 data URL وإرجاعها مباشرة. يُخزَّن الشعار في `platformSettings` (DB) عبر PUT الموجود. حد الحجم: 512KB.
+
+## السبب الجذري #3: ألوان ثيم المتجر لا تتكيّف مع الوضع الداكن
+
+**الملف:** `src/components/app/app-shell.tsx`
+
+ألوان ثيم المتجر (themes.ts) مصمّمة للوضع الفاتح (`header.bg = "#ffffff"`, `header.text = "#171717"`). في الوضع الداكن، الترويسة والشريط السفلي كانوا بيض بنص داكن.
+
+**الحل:** استخدام `useTheme()` من next-themes. في الوضع الداكن، تجاوز ألوان الثيم بسطوح داكنة مع الحفاظ على لون الـ accent المميّز.
+
+## الإصلاحات الإضافية
+
+### `src/components/app/merchant-dashboard.tsx`
+- شاشة دخول PIN: أضيفت `dark:from-dark-950 dark:via-dark-900 dark:to-dark-950` للتدرّج
+- معاينة الثيم: `bg-white` → `theme.contentBg`
+- منتقي الأيقونات: `bg-dark-800` → `bg-secondary`
+
+### `src/components/app/merchant-settings-advanced.tsx`
+- 10 مثيلات `bg-white` → `bg-card` (بطاقات الإعدادات)
+- شريط الحفظ العائم: `bg-dark-800 text-white` → `bg-card text-card-foreground`
+- عناصر الميزات: `bg-dark-800` → `bg-secondary`
+
+### `src/components/app/merchant-order-detail.tsx`
+- نقطة الخط الزمني: `bg-white` → `bg-card`
+
+### `src/components/app/upload-step.tsx`
+- لوحة التحليل: `bg-dark-800` → `bg-card`
+
+### `src/components/app/track-order.tsx`
+- شريط التقدّم: `dark:bg-dark-800` → `dark:bg-muted`
+
+## النتائج المُتحقَّق منها على الموقع المباشر
+
+| الاختبار | النتيجة |
+|---------|---------|
+| لوحة تحكم الأدمن (داكن) | ✅ نص مقروء، لا مشاكل تباين |
+| لوحة تحكم الأدمن (فاتح) | ✅ يعمل بشكل صحيح |
+| شاشة PIN للتاجر (داكن) | ✅ نص مقروء، بطاقة واضحة |
+| صفحة المتجر للزبون (داكن) | ✅ 8/10 — احترافي |
+| رفع الشعار | ✅ base64 data URL — يعمل على Vercel |
+| زمن تحميل لوحة التحكم | ✅ ~5 ثواني (cold start) |
+
+### VLM Verification:
+- "Excellent / High Quality" dark mode implementation
+- "No significant contrast issues"
+- "All text readable"
+- "Card visible"
+- "WCAG AA standards met"
+
+## Commits المرفوعة
+- `4053318` — fix: logo upload on Vercel (base64 data URL) + dark mode adaptations
+- `3a62739` — fix: merchant dashboard dark mode — login screen gradient + order detail
+- `f931f3f` — fix: replace bg-dark-800 (inverts to light in dark mode) with themed alternatives
+- `0b85af1` — fix(CRITICAL): @theme inline → @theme — dark mode CSS variables now work
+
+## ملاحظة
+- `@theme inline` → `@theme` كان السبب الجذري لكل مشاكل ألوان النص في الوضع الداكن
+- هذا الإصلاح يحلّ جميع مشاكل `text-dark-*` و `bg-dark-*` في كامل التطبيق
+- الشعار الآن يُخزَّن كـ base64 في DB (يعمل على Vercel بدون كتابة على filesystem)
