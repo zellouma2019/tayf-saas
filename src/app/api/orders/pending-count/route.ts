@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, toNum } from "@/lib/turso-lite";
 
+export const dynamic = "force-dynamic";
+
 /// عدد الطلبات المعلقة — عبر turso-lite (أسرع من Prisma على Vercel)
 /// يُستدعى كل 30 ثانية من لوحة التاجر
 export async function GET(req: NextRequest) {

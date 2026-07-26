@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 
 export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 /// تنزيل الملف المرفوع للطلب — عبر turso-lite (أسرع من Prisma على Vercel)
 export async function GET(

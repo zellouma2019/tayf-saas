@@ -7,6 +7,8 @@ import type { ServiceType } from "@/lib/print-config";
 import { orderFindWhere } from "@/lib/order-lookup";
 import { tursoQuery, safeJson } from "@/lib/turso-lite";
 
+export const dynamic = "force-dynamic";
+
 /// قراءة طلب واحد عبر turso-lite (أسرع من Prisma على Vercel)
 async function fetchOrderRaw(id: string, shopId: string | null) {
   const whereClause = shopId

@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 
 export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 // استعلام قائمة الطلبات عبر turso-lite (أسرع 10x من Prisma على Vercel)
 // كل الأعمدة النصية JSON تُمرّر كما هي ويتم parse على العميل

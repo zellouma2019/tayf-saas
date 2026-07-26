@@ -1,9 +1,9 @@
 /**
  * عميل Turso خفيف الوزن — يتجاوز Prisma بالكامل لعمليات القراءة
- * أسرع 10x من PrismaLibSQL على Vercel serverless
- * 
+ * أسرع من PrismaLibSQL على Vercel serverless (لا يُحمّل Prisma runtime)
+ *
  * الاستراتيجية:
- * - تحويل libsql:// إلى https:// لإجبار HTTP mode (بدون WebSocket)
+ * - استخدام نفس URL الخاص بـ PrismaLibSQL (libsql://) — يعمل بشكل موثوق
  * - اتصال واحد قابل لإعادة الاستخدام
  * - معاملات positional فقط
  * - يدعم SQLite المحلي تلقائياً عند غياب TURSO_DATABASE_URL
@@ -19,14 +19,9 @@ function getTursoClient(): Client {
   const token = process.env.TURSO_AUTH_TOKEN;
 
   // 1) إذا وُجدت إعدادات Turso — استخدمها (الإنتاج على Vercel)
+  // نستخدم libsql:// مباشرة (نفس ما يستخدمه PrismaLibSQL ويعمل بشكل موثوق)
   if (rawUrl) {
-    // تحويل libsql:// إلى https:// لإجبار HTTP mode (أسرع على Vercel serverless)
-    // libsql:// يحاول WebSocket أولاً مما يسبب تأخير كبير على Vercel
-    const url = rawUrl.startsWith("libsql://")
-      ? rawUrl.replace("libsql://", "https://")
-      : rawUrl;
-
-    _client = createClient({ url, authToken: token });
+    _client = createClient({ url: rawUrl, authToken: token });
     return _client;
   }
 
@@ -53,6 +48,7 @@ export function safeJson<T = Record<string, unknown>>(str: string | null, fallba
 
 /**
  * استعلام SQL مباشر على Turso (بدون Prisma)
+ * مع fallback تلقائي إلى Prisma عند الفشل (safety net)
  * @param sql استعلام SQL مع معاملات ? للمواقع
  * @param args مصفوفة المعاملات (ترتيبية)
  */
@@ -60,9 +56,28 @@ export async function tursoQuery<T = Record<string, unknown>>(
   sql: string,
   args?: unknown[]
 ): Promise<T[]> {
-  const client = getTursoClient();
-  const result = await client.execute({ sql, args: args || [] });
-  return result.rows as unknown as T[];
+  try {
+    const client = getTursoClient();
+    // مهلة 12 ثانية — إذا تجاوزها، ننتقل إلى Prisma fallback
+    const result = await Promise.race([
+      client.execute({ sql, args: args || [] }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("turso-lite timeout")), 12000)
+      ),
+    ]);
+    return result.rows as unknown as T[];
+  } catch (e) {
+    // fallback إلى Prisma عند فشل turso-lite
+    console.warn("[turso-lite] falling back to Prisma:", (e as Error).message);
+    try {
+      const { db } = await import("@/lib/db");
+      const rows = await db.$queryRawUnsafe(sql, ...(args || []));
+      return rows as unknown as T[];
+    } catch (prismaErr) {
+      console.error("[turso-lite] Prisma fallback also failed:", prismaErr);
+      throw prismaErr;
+    }
+  }
 }
 
 /**

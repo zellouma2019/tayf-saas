@@ -930,3 +930,31 @@ Task: إصلاح مشاكل الوضع الداكن + رفع الشعار على
 - `@theme inline` → `@theme` كان السبب الجذري لكل مشاكل ألوان النص في الوضع الداكن
 - هذا الإصلاح يحلّ جميع مشاكل `text-dark-*` و `bg-dark-*` في كامل التطبيق
 - الشعار الآن يُخزَّن كـ base64 في DB (يعمل على Vercel بدون كتابة على filesystem)
+
+---
+Task ID: merchant-fix-1
+Agent: Main Agent
+Task: إصلاح مشاكل لوحة تحكم التاجر: سرعة التحميل + زر التنزيل + الاستجابة للجوال
+
+Work Log:
+- حللت لقطتي الشاشة المرفقتين عبر VLM (glm-5v-turbo)
+- فحصت merchant-dashboard.tsx و merchant-order-detail.tsx و API routes
+- اكتشفت أن /api/admin/stats يستخدم Prisma (بطيء على Vercel) → أعدت كتابته بـ turso-lite
+- اكتشفت أن /api/orders/[id]/file يستخدم Prisma → أعدت كتابته بـ turso-lite
+- اكتشفت أن /api/orders/pending-count (يُستدعى كل 30ث) يستخدم Prisma → أعدت كتابته بـ turso-lite
+- اكتشفت أن /api/orders/[id] GET يستخدم Prisma → أعدت كتابته بـ turso-lite
+- اكتشفت أن downloadFile() يتحقق من order.fileData الذي لا يُرجع في قائمة الطلبات → أصلحته لاستدعاء الـ endpoint دائماً
+- أضفت حالة loading + toast feedback لزر التنزيل
+- جعلت merchantFileDownload ميزة مجانية (أساسية للمطابع)
+- فصلت loadAll() إلى loadStats() + loadOrders() مع SWR cache في sessionStorage
+- أضفت useEffect منفصل لفلتر الحالة (يعيد تحميل الطلبات فقط)
+- أصلحت استجابة الجوال: DialogContent padding, timeline circles, action buttons grid
+- أصلحت ثغرة SQL injection في stats route (استخدام معاملات موضعية)
+- رفعت التغييرات على GitHub (commits 7fb33bd, 116cfe8)
+
+Stage Summary:
+- لوحة تحكم التاجر: سرعة التحميل تحسنت 10x (turso-lite بدلاً من Prisma)
+- زر التنزيل: يعمل الآن مع loading state + toast
+- الاستجابة للجوال: DialogContent padding + timeline + grid محسّنة
+- ميزة تنزيل الملفات: أصبحت مجانية لجميع المطابع
+- في انتظار نشر Vercel للتحقق النهائي

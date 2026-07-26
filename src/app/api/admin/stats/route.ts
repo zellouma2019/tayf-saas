@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
-// Vercel: Cache response at edge for 30 seconds
-export const revalidate = 30;
+// تجنب ISR caching — الرد ديناميكي دائماً
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /// إحصائيات التاجر/الإدارة عبر turso-lite (أسرع 10x من Prisma على Vercel)
 /// يتجنب WebSocket cold-start الخاص بـ PrismaLibSQL
