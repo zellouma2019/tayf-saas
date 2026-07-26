@@ -118,6 +118,7 @@ export function MerchantOrderDetail({
   const [auditLoading, setAuditLoading] = useState(false);
   const [printingAction, setPrintingAction] = useState<"start" | "complete" | null>(null);
   const [directPrintLoading, setDirectPrintLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   // ===== حقول التعديل =====
   const [editName, setEditName] = useState("");
@@ -362,28 +363,31 @@ export function MerchantOrderDetail({
     setEditTags((prev) => prev.filter((t) => t !== tag));
   }
 
-  function downloadFile() {
-    if (!order) return;
-    if (order.fileData && order.fileData.startsWith("file_")) {
-      fetch(`/api/orders/${order.id}/file?shopId=${shopId}`)
-        .then((r) => r.blob())
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = order.fileName || "file";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        });
-    } else if (order.fileData) {
+  // تنزيل الملف — يستخدم دائماً الـ endpoint الذي يجلب fileData من DB
+  // (fileData غير مُضمَّن في قائمة الطلبات لتجنب 504)
+  async function downloadFile() {
+    if (!order || downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/file?shopId=${shopId}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "فشل تنزيل الملف");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = order.fileData;
-      a.download = order.fileName || "file";
+      a.href = url;
+      a.download = order.fileName || `order-${order.reference}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("تم تنزيل الملف");
+    } catch (e) {
+      toast.error("تعذّر تنزيل الملف", { description: (e as Error).message });
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -403,7 +407,7 @@ export function MerchantOrderDetail({
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-dark-50 border-dark-200/60"
+        className="sm:max-w-2xl max-h-[92vh] overflow-y-auto custom-scroll bg-dark-50 border-dark-200/60 w-[calc(100%-1rem)] p-4 sm:p-6"
         dir="rtl"
       >
         <DialogHeader className="pb-2">
@@ -548,28 +552,28 @@ export function MerchantOrderDetail({
                   };
 
                   return (
-                    <div key={step} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex flex-col items-center gap-1.5">
+                    <div key={step} className="flex items-center flex-1 last:flex-none min-w-0">
+                      <div className="flex flex-col items-center gap-1 min-w-0">
                         <div className="relative">
                           {isCompleted ? (
-                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])}>
-                              <Check className="h-4 w-4" strokeWidth={3} />
+                            <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])}>
+                              <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={3} />
                             </div>
                           ) : isCurrent ? (
                             <div className="relative">
-                              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])} />
-                              <div className={cn("absolute inset-0 w-8 h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
+                              <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white", dotColorMap[step])} />
+                              <div className={cn("absolute inset-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-full border-2 border-dark-300 bg-card" />
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dark-300 bg-card" />
                           )}
                         </div>
-                        <span className={cn("text-[10px] font-medium", isFuture ? "text-dark-400" : isCurrent ? "text-dark-800" : "text-dark-600")}>
+                        <span className={cn("text-[9px] sm:text-[10px] font-medium text-center leading-tight", isFuture ? "text-dark-400" : isCurrent ? "text-dark-800" : "text-dark-600")}>
                           {stepMeta.label}
                         </span>
                       </div>
                       {idx < STATUS_FLOW.length - 1 && (
-                        <div className="flex-1 h-0.5 mx-2 mt-[-18px]">
+                        <div className="flex-1 h-0.5 mx-1 sm:mx-2 mt-[-20px] sm:mt-[-18px] min-w-[8px]">
                           <div className={cn("h-full rounded-full", idx < currentIdx ? "bg-dark-400" : "bg-dark-200")} />
                         </div>
                       )}
@@ -845,11 +849,16 @@ export function MerchantOrderDetail({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 text-xs shrink-0 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+                  className="h-8 text-xs shrink-0 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200 disabled:opacity-60"
                   onClick={downloadFile}
+                  disabled={downloading}
                 >
-                  <Download className="h-3.5 w-3.5 ml-1" />
-                  تنزيل
+                  {downloading ? (
+                    <RefreshCw className="h-3.5 w-3.5 ml-1 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 ml-1" />
+                  )}
+                  {downloading ? "جارٍ..." : "تنزيل"}
                 </Button>
               </div>
             </section>

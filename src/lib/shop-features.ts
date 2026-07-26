@@ -280,7 +280,7 @@ export const FEATURES: FeatureDef[] = [
     description: "تنزيل ملفات الزبائن مباشرة من لوحة التحكم لطباعتها فوراً",
     icon: "Download",
     category: "export",
-    isFree: false,
+    isFree: true,
     order: 204,
   },
   {

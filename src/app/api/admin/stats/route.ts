@@ -1,56 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
+import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
 // Vercel: Cache response at edge for 30 seconds
 export const revalidate = 30;
 
-function toNum(v: unknown): number { return v == null ? 0 : Number(v); }
-function safeJson<T = Record<string, unknown>>(str: string, fallback: T): T {
-  try { return JSON.parse(str); } catch { return fallback; }
-}
-
+/// إحصائيات التاجر/الإدارة عبر turso-lite (أسرع 10x من Prisma على Vercel)
+/// يتجنب WebSocket cold-start الخاص بـ PrismaLibSQL
 export async function GET(request: NextRequest) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
 
   try {
-    // لا نستخدم ensureDb() — Prisma يتصل تلقائياً
     const shopId = request.nextUrl.searchParams.get("shopId");
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayISO = todayStart.toISOString();
 
-    const shopWhere = shopId ? ` WHERE "shopId" = '${shopId}'` : "";
+    // بناء شروط WHERE ديناميكياً مع معاملات موضعية (منع SQL injection)
+    // يدعم الطلبات القديمة (shopId = null)
+    // shopFilter: شرط shopId (يُعاد استخدامه في عدة استعلامات)
+    const shopFilter = shopId ? `("shopId" = ? OR "shopId" IS NULL)` : "";
+    const shopAndToday = shopId
+      ? `("shopId" = ? OR "shopId" IS NULL) AND "createdAt" >= ?`
+      : `"createdAt" >= ?`;
 
-    // 3 استعلامات فقط بدلاً من 6
-    const [statsRow, serviceAndStatusRows, recentOrders] = await Promise.all([
+    // الوسائط بحسب وجود shopId
+    // stats: shopId?(shopId, shopId, todayISO, shopId, shopId) : (todayISO,)
+    const statsArgs: unknown[] = shopId
+      ? [shopId, shopId, todayISO, shopId, shopId]
+      : [todayISO];
+    const listArgs: unknown[] = shopId ? [shopId] : [];
+
+    // 3 استعلامات موازية عبر turso-lite (HTTP mode مباشرة)
+    const [statsRows, serviceAndStatusRows, recentOrders] = await Promise.all([
       // الاستعلام 1: إجمالي الإحصائيات في صف واحد
-      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT 
-          (SELECT COUNT(*) FROM "PrintOrder"${shopWhere}) as total,
-          (SELECT COUNT(*) FROM "PrintOrder"${shopWhere} WHERE "createdAt" >= ?) as today,
-          (SELECT COALESCE(SUM(total), 0) FROM "PrintOrder"${shopWhere}) as revenue,
-          (SELECT COALESCE(SUM(amount), 0) FROM "Expense"${shopWhere}) as expenses
-      `, todayISO).catch(() => [{ total: 0, today: 0, revenue: 0, expenses: 0 }]),
+      tursoQuery<Array<Record<string, unknown>>>(
+        `SELECT
+          (SELECT COUNT(*) FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}) as total,
+          (SELECT COUNT(*) FROM "PrintOrder" WHERE ${shopAndToday}) as today,
+          (SELECT COALESCE(SUM(total), 0) FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}) as revenue,
+          (SELECT COALESCE(SUM(amount), 0) FROM "Expense" ${shopFilter ? `WHERE ${shopFilter}` : ""}) as expenses
+        `,
+        statsArgs
+      ).catch((e) => {
+        console.error("[admin/stats] stats subquery failed:", e);
+        return [{ total: 0, today: 0, revenue: 0, expenses: 0 }];
+      }),
 
       // الاستعلام 2: توزيع الحالات + أنواع الخدمات
-      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT status, "serviceType", COUNT(*) as count, COALESCE(SUM(total), 0) as revenue
-        FROM "PrintOrder"${shopWhere}
-        GROUP BY status, "serviceType"
-      `).catch(() => []),
+      tursoQuery<Array<Record<string, unknown>>>(
+        `SELECT status, "serviceType", COUNT(*) as count, COALESCE(SUM(total), 0) as revenue
+         FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}
+         GROUP BY status, "serviceType"`,
+        listArgs
+      ).catch(() => []),
 
       // الاستعلام 3: آخر الطلبات
-      db.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-        SELECT id, reference, "serviceType", "serviceName", status, total, pages, copies,
-               "createdAt", "fileName", "fileType", options, customer, delivery, pricing, "adminNotes", tags
-        FROM "PrintOrder"${shopWhere}
-        ORDER BY "createdAt" DESC LIMIT 5
-      `).catch(() => []),
+      tursoQuery<Array<Record<string, unknown>>>(
+        `SELECT id, reference, "serviceType", "serviceName", status, total, pages, copies,
+                "createdAt", "fileName", "fileType", options, customer, delivery, pricing, "adminNotes", tags
+         FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}
+         ORDER BY "createdAt" DESC LIMIT 5`,
+        listArgs
+      ).catch(() => []),
     ]);
 
-    const stats = statsRow[0] || {};
+    const stats = statsRows[0] || {};
     const total = toNum(stats.total);
     const today = toNum(stats.today);
     const revenueSum = toNum(stats.revenue);

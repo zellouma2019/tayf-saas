@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery } from "@/lib/turso-lite";
 import fs from "fs";
 import path from "path";
-import { orderFindWhere } from "@/lib/order-lookup";
 
-/// تنزيل الملف المرفوع للطلب
+export const maxDuration = 30;
+
+/// تنزيل الملف المرفوع للطلب — عبر turso-lite (أسرع من Prisma على Vercel)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -12,8 +13,20 @@ export async function GET(
   try {
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
-    const findWhere = orderFindWhere(id, shopId);
-    const order = await db.printOrder.findFirst({ where: findWhere });
+
+    // استعلام مباشر يجلب fileData + fileName فقط
+    // يدعم الطلبات القديمة (shopId = null)
+    const whereClause = shopId
+      ? `WHERE id = ? AND ("shopId" = ? OR "shopId" IS NULL)`
+      : `WHERE id = ?`;
+    const args = shopId ? [id, shopId] : [id];
+
+    const rows = await tursoQuery<{ fileData: string | null; fileName: string | null }>(
+      `SELECT "fileData", "fileName" FROM "PrintOrder" ${whereClause} LIMIT 1`,
+      args
+    );
+
+    const order = rows[0];
     if (!order) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
@@ -47,6 +60,7 @@ export async function GET(
           "Content-Type": mimeType,
           "Content-Disposition": `attachment; filename*=UTF-8''${safeName}`,
           "Content-Length": buffer.length.toString(),
+          "Cache-Control": "private, max-age=0, no-cache",
         },
       });
     }
@@ -70,6 +84,7 @@ export async function GET(
         "Content-Type": urlMime,
         "Content-Disposition": `attachment; filename*=UTF-8''${safeName}`,
         "Content-Length": buffer.length.toString(),
+        "Cache-Control": "private, max-age=0, no-cache",
       },
     });
   } catch (e) {

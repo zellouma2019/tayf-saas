@@ -166,6 +166,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [rawOrders, setRawOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState<string>("date");
@@ -383,26 +384,64 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     }
   }
 
-  const loadAll = useCallback(() => {
+  // تحميل الإحصائيات — مع SWR cache في sessionStorage (عرض فوري للبيانات المخزنة)
+  const loadStats = useCallback(async (useCache = true) => {
+    const cacheKey = `tayf-stats-${shopId}`;
+    // اعرض البيانات المخزنة فوراً (SWR pattern)
+    if (useCache) {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          setStats(JSON.parse(cached));
+        }
+      } catch { /* ignore */ }
+    }
+    setStatsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/stats?shopId=${shopId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* ignore */ }
+      }
+    } catch {
+      /* silent — keep cached data if present */
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [shopId]);
+
+  // تحميل الطلبات — مستقل عن الإحصائيات (لا يحجب الواجهة)
+  const loadOrders = useCallback(async () => {
     setLoading(true);
-    Promise.all([
-      fetch(`/api/admin/stats?shopId=${shopId}`).then((r) => r.json()),
-      fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`).then((r) => r.json()),
-    ])
-      .then(([s, o]) => {
-        setStats(s);
+    try {
+      const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`);
+      if (res.ok) {
+        const o = await res.json();
         setRawOrders(o.orders || []);
-      })
-      .catch(() => {})
-      .finally(() => {
-        setLoading(false);
-        refreshShop();
-      });
-  }, [shopId, statusFilter, refreshShop]);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setLoading(false);
+    }
+  }, [shopId, statusFilter]);
+
+  // تحميل كامل (موازي لكن مستقل)
+  const loadAll = useCallback(() => {
+    loadStats();
+    loadOrders();
+    refreshShop();
+  }, [loadStats, loadOrders, refreshShop]);
 
   useEffect(() => {
     if (unlocked) loadAll();
   }, [unlocked, loadAll]);
+
+  // عند تغيير فلتر الحالة، أعد تحميل الطلبات فقط (دون الإحصائيات)
+  useEffect(() => {
+    if (unlocked) loadOrders();
+  }, [statusFilter, unlocked, loadOrders]);
 
   async function handlePinSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -2498,11 +2537,11 @@ function MobileOrderCard({
             </div>
           )}
 
-          <div className={cn("grid gap-2.5 pt-1", hasFeature("receiptPrinting") ? "grid-cols-3" : "grid-cols-2")}>
+          <div className={cn("grid gap-2.5 pt-1", hasFeature("receiptPrinting") ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2")}>
             <Button
               size="sm"
               variant="outline"
-              className="text-sm h-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+              className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
               onClick={() => window.open(`/api/orders/${order.id}/invoice?shopId=${shopId}`, "_blank")}
             >
               <Download className="h-3.5 w-3.5" />
@@ -2512,7 +2551,7 @@ function MobileOrderCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="text-sm h-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+                className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
                 onClick={() => printReceipt(order, shopName, shopPhone, shopAddress)}
               >
                 <Printer className="h-3.5 w-3.5" />
