@@ -32,8 +32,9 @@ export async function PUT(req: NextRequest) {
 
     await updateSuperAdmin({ password: newPassword });
     return NextResponse.json({ success: true, isFirstTime });
-  } catch {
-    return NextResponse.json({ error: "خطأ في تحديث كلمة المرور" }, { status: 500 });
+  } catch (e) {
+    console.error('[password/PUT]', e);
+    return NextResponse.json({ error: "خطأ في تحديث كلمة المرور", detail: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
 }
 
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, message: "تم إعادة تعيين كلمة المرور" });
   } catch (e) {
     console.error('[password/PATCH]', e);
-    return NextResponse.json({ error: "فشل إعادة التعيين" }, { status: 500 });
+    return NextResponse.json({ error: "فشل إعادة التعيين", detail: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
 }
 
