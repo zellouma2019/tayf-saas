@@ -5,6 +5,20 @@ import { addAuditLog } from "@/lib/audit";
 import { STATUS_META, calculatePricing, estimateDeliveryHours } from "@/lib/print-config";
 import type { ServiceType } from "@/lib/print-config";
 import { orderFindWhere } from "@/lib/order-lookup";
+import { tursoQuery, safeJson } from "@/lib/turso-lite";
+
+/// قراءة طلب واحد عبر turso-lite (أسرع من Prisma على Vercel)
+async function fetchOrderRaw(id: string, shopId: string | null) {
+  const whereClause = shopId
+    ? `WHERE id = ? AND ("shopId" = ? OR "shopId" IS NULL)`
+    : `WHERE id = ?`;
+  const args = shopId ? [id, shopId] : [id];
+  const rows = await tursoQuery<Record<string, unknown>>(
+    `SELECT * FROM "PrintOrder" ${whereClause} LIMIT 1`,
+    args
+  );
+  return rows[0] || null;
+}
 
 export async function GET(
   req: NextRequest,
@@ -13,18 +27,17 @@ export async function GET(
   try {
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
-    const where = orderFindWhere(id, shopId);
-    const order = await db.printOrder.findFirst({ where });
+    const order = await fetchOrderRaw(id, shopId);
     if (!order) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
     return NextResponse.json({
       ...order,
-      options: JSON.parse(order.options),
-      customer: JSON.parse(order.customer),
-      delivery: JSON.parse(order.delivery),
-      pricing: JSON.parse(order.pricing),
-      smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
+      options: safeJson(String(order.options || "{}"), {}),
+      customer: safeJson(String(order.customer || "{}"), {}),
+      delivery: safeJson(String(order.delivery || "{}"), {}),
+      pricing: safeJson(String(order.pricing || "{}"), {}),
+      smartAnalysis: order.smartAnalysis ? safeJson(String(order.smartAnalysis), null) : null,
     });
   } catch (e) {
     console.error('[orders/[id]/GET]', e);

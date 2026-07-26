@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { orderListWhere } from "@/lib/order-lookup";
+import { tursoQuery, toNum } from "@/lib/turso-lite";
 
+/// عدد الطلبات المعلقة — عبر turso-lite (أسرع من Prisma على Vercel)
+/// يُستدعى كل 30 ثانية من لوحة التاجر
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,11 +12,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "shopId is required" }, { status: 400 });
     }
 
-    const where = orderListWhere(shopId, { status: "pending" });
+    // يدعم الطلبات القديمة (shopId = null)
+    const rows = await tursoQuery<{ cnt: unknown }>(
+      `SELECT COUNT(*) as cnt FROM "PrintOrder" WHERE status = ? AND ("shopId" = ? OR "shopId" IS NULL)`,
+      ["pending", shopId]
+    );
 
-    const count = await db.printOrder.count({ where });
-
-    return NextResponse.json({ count });
+    return NextResponse.json({ count: toNum(rows[0]?.cnt) });
   } catch (error) {
     console.error("pending-count error:", error);
     return NextResponse.json({ count: 0 });
