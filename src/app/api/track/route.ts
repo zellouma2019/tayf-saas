@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
+export const maxDuration = 30;
+export const dynamic = "force-dynamic";
+
 /// تتبّع الطلب برقم المرجع أو رقم الهاتف (turso-lite — أسرع 10x من Prisma على Vercel)
+/// يستخدم قائمة أعمدة محددة (بدون fileData/smartAnalysis) لتسريع الاستجابة
+const TRACK_SQL = `
+  SELECT
+    o.id, o.reference, o."serviceType", o."serviceName",
+    o."fileName", o."fileType", o."fileSize",
+    o.options, o.customer, o.delivery, o.pricing,
+    o."estimatedHours", o.status, o.pages, o.copies, o.total, o.cost,
+    o.tags, o."adminNotes", o."shopId",
+    o."createdAt", o."updatedAt",
+    o."readyAt", o."deliveredAt",
+    o."startedPrintingAt", o."completedPrintingAt"
+  FROM "PrintOrder" o
+`;
+
 export async function GET(req: NextRequest) {
   try {
-    // الصيانة التلقائية تعمل في الخلفية (لا تُعقّ الطلب)
-    // cleanupOldOrders يستخدم Prisma بطيء — تجنّبه على مسار الزبون
-    // سيُستدعى تلقائياً من مسار الإدارة بدلاً من ذلك
-
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") || "").trim();
     const shopId = searchParams.get("shopId");
@@ -28,7 +41,7 @@ export async function GET(req: NextRequest) {
     const whereClause = `WHERE ${whereParts.join(" AND ")}`;
 
     const rows = await tursoQuery<Record<string, unknown>>(
-      `SELECT * FROM "PrintOrder" o ${whereClause} ORDER BY o."createdAt" DESC LIMIT 50`,
+      `${TRACK_SQL} ${whereClause} ORDER BY o."createdAt" DESC LIMIT 50`,
       args
     );
 
@@ -60,7 +73,7 @@ export async function GET(req: NextRequest) {
         deliveredAt: o.deliveredAt,
         startedPrintingAt: o.startedPrintingAt,
         completedPrintingAt: o.completedPrintingAt,
-        smartAnalysis: o.smartAnalysis ? safeJson(o.smartAnalysis as string, null) : null,
+        smartAnalysis: null,
       })),
     });
   } catch (e) {
