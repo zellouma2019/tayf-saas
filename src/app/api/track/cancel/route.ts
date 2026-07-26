@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery, tursoExecute } from "@/lib/turso-lite";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -8,14 +8,27 @@ export async function PUT(req: NextRequest) {
     if (!reference) {
       return NextResponse.json({ error: "رقم الطلب مطلوب" }, { status: 400 });
     }
-    const order = await db.printOrder.findFirst({ where: { reference } });
+
+    // ابحث عن الطلب بسرعة عبر turso-lite
+    const rows = await tursoQuery<{ id: string; status: string }>(
+      `SELECT id, status FROM "PrintOrder" WHERE reference = ? LIMIT 1`,
+      [reference]
+    );
+
+    const order = rows[0];
     if (!order) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
     if (order.status !== "pending") {
       return NextResponse.json({ error: "لا يمكن إلغاء طلب ليس في حالة الانتظار" }, { status: 400 });
     }
-    await db.printOrder.update({ where: { id: order.id }, data: { status: "cancelled" } });
+
+    // حدّث الحالة عبر turso-lite
+    await tursoExecute(
+      `UPDATE "PrintOrder" SET status = 'cancelled', "updatedAt" = ? WHERE id = ?`,
+      [new Date().toISOString(), order.id]
+    );
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Cancel order error:", error);

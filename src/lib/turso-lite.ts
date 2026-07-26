@@ -1,5 +1,5 @@
 /**
- * عميل Turso خفيف الوزن — يتجاوز Prisma بالكامل لعمليات القراءة
+ * عميل Turso خفيف الوزن — يتجاوز Prisma بالكامل لعمليات القراءة والكتابة
  * أسرع من PrismaLibSQL على Vercel serverless (لا يُحمّل Prisma runtime)
  *
  * الاستراتيجية:
@@ -93,4 +93,42 @@ export async function tursoQueries<T extends unknown[]>(
       return result.rows as unknown as T;
     })
   );
+}
+
+/**
+ * تنفيذ عملية كتابة (INSERT/UPDATE/DELETE) مباشرة على Turso — بدون Prisma
+ * يُرجع ResultSet الكامل مع lastInsertRowid و rowsAffected
+ *
+ * @param sql استعلام SQL مع معاملات ? للمواقع (يمكن استخدام RETURNING *)
+ * @param args مصفوفة المعاملات (ترتيبية)
+ */
+export async function tursoExecute<T = Record<string, unknown>>(
+  sql: string,
+  args?: unknown[]
+): Promise<{ rows: T[]; lastInsertRowid: bigint | null; rowsAffected: number }> {
+  try {
+    const client = getTursoClient();
+    const result = await Promise.race([
+      client.execute({ sql, args: (args || []) as never[] }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("turso-lite execute timeout")), 12000)
+      ),
+    ]);
+    return {
+      rows: result.rows as unknown as T[],
+      lastInsertRowid: result.lastInsertRowid ?? null,
+      rowsAffected: result.rowsAffected,
+    };
+  } catch (e) {
+    // fallback إلى Prisma عند فشل turso-lite
+    console.warn("[turso-lite] execute falling back to Prisma:", (e as Error).message);
+    try {
+      const { db } = await import("@/lib/db");
+      const rows = await db.$executeRawUnsafe(sql, ...(args || []));
+      return { rows: [], lastInsertRowid: null, rowsAffected: rows };
+    } catch (prismaErr) {
+      console.error("[turso-lite] Prisma execute fallback also failed:", prismaErr);
+      throw prismaErr;
+    }
+  }
 }

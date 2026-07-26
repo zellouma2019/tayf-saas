@@ -214,63 +214,71 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
     <Card className="overflow-hidden shadow-lg shadow-slate-200/40 dark:shadow-slate-900/40 hover:shadow-xl dark:hover:shadow-slate-800/50 transition-shadow duration-300">
       <CardContent className="p-0">
         {/* الرأس */}
-        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 bg-neutral-900 text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400 flex items-center justify-center">
-              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-900" />
-            </div>
-            <div>
-              <div className="font-mono font-bold text-sm text-amber-400">{order.reference}</div>
-              <div className="text-xs text-neutral-300">
-                {serviceEmoji} {order.serviceName} · {formatDateTimeAr(order.createdAt)}
+        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b flex flex-col gap-2.5 bg-neutral-900 text-white">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400 flex items-center justify-center shrink-0">
+                <Package className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-900" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-mono font-bold text-sm text-amber-400 truncate">{order.reference}</div>
+                <div className="text-[11px] sm:text-xs text-neutral-300 truncate">
+                  {serviceEmoji} {order.serviceName}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-2">
-            {order.status === "pending" && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-rose-400 hover:text-rose-300 hover:bg-rose-900/30 text-xs gap-1"
-                    disabled={cancelling}
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    إلغاء الطلب
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent dir="rtl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>تأكيد إلغاء الطلب</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      هل أنت متأكد من إلغاء الطلب <span className="font-mono font-bold text-foreground">{order.reference}</span>؟ لا يمكن التراجع عن هذا الإجراء.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>تراجع</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleCancel}
-                      className="bg-rose-600 hover:bg-rose-700 text-white"
-                    >
-                      {cancelling ? "جارٍ الإلغاء..." : "نعم، إلغاء الطلب"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-            <span className={`text-xs px-2.5 py-1 rounded-full border ${meta.bg}`}>
+            <span className={`text-[11px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border whitespace-nowrap shrink-0 ${meta.bg}`}>
               {meta.label}
             </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-neutral-400 hover:text-white hover:bg-white/10 text-xs gap-1"
-              onClick={handleShare}
-            >
-              {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
-              {copied ? "تم النسخ" : "مشاركة"}
-            </Button>
+          </div>
+          <div className="flex items-center justify-between gap-2 -mx-1">
+            <div className="text-[10px] sm:text-xs text-neutral-400 px-1 truncate" dir="auto">
+              {formatDateTimeAr(order.createdAt)}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {order.status === "pending" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-rose-400 hover:text-rose-300 hover:bg-rose-900/30 text-[11px] h-8 px-2 gap-1"
+                      disabled={cancelling}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      <span className="sm:hidden">إلغاء</span>
+                      <span className="hidden sm:inline">إلغاء الطلب</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent dir="rtl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>تأكيد إلغاء الطلب</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        هل أنت متأكد من إلغاء الطلب <span className="font-mono font-bold text-foreground">{order.reference}</span>؟ لا يمكن التراجع عن هذا الإجراء.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>تراجع</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCancel}
+                        className="bg-rose-600 hover:bg-rose-700 text-white"
+                      >
+                        {cancelling ? "جارٍ الإلغاء..." : "نعم، إلغاء الطلب"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-neutral-400 hover:text-white hover:bg-white/10 text-[11px] h-8 px-2 gap-1"
+                onClick={handleShare}
+              >
+                {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
+                {copied ? "تم" : "مشاركة"}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -296,18 +304,20 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
           </motion.div>
 
             {/* خط الزمن المحسّن */}
-          <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-3 sm:p-4 border border-dark-200/60 dark:border-dark-700/60">
-            <div className="flex items-start sm:items-center justify-between relative gap-2 sm:gap-0">
+          <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-2.5 sm:p-4 border border-dark-200/60 dark:border-dark-700/60">
+            <div className="flex items-start justify-between relative gap-1 sm:gap-2">
               {/* خط الربط الخلفي */}
-              <div className="absolute top-4 right-6 left-6 h-1 bg-dark-200 dark:bg-dark-700 rounded-full hidden sm:block" />
+              <div className="absolute top-3.5 right-4 left-4 h-1 bg-dark-200 dark:bg-dark-700 rounded-full hidden xs:block sm:block" />
               <div
-                className="absolute top-4 right-6 h-1 bg-gradient-to-l from-emerald-400 to-teal-500 rounded-full transition-all duration-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30 hidden sm:block"
+                className="absolute top-3.5 right-4 h-1 bg-gradient-to-l from-emerald-400 to-teal-500 rounded-full transition-all duration-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30 hidden xs:block sm:block"
                 style={{ width: `${Math.min(100, ((currentStep - 1) / (STATUS_FLOW.length - 1)) * 100)}%` }}
               />
               {STATUS_FLOW.map((s, i) => {
                 const done = i < currentStep - 1;
                 const active = i === currentStep - 1;
                 const m = STATUS_META[s];
+                // اختصار التسميات على الشاشات الصغيرة جداً
+                const shortLabel = m.label.length > 8 ? m.label.split(' ')[0] : m.label;
                 return (
                   <div key={s} className="flex-1 flex flex-col items-center relative z-10 min-w-0">
                     <motion.div
@@ -328,52 +338,53 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                       {done ? <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <span>{m.emoji}</span>}
                     </motion.div>
                     <div
-                      className={`text-[9px] sm:text-[11px] mt-1 sm:mt-1.5 text-center leading-tight ${
+                      className={`text-[9px] xs:text-[10px] sm:text-[11px] mt-1 sm:mt-1.5 text-center leading-tight line-clamp-2 ${
                         done || active ? "font-semibold text-foreground" : "text-muted-foreground/60"
                       }`}
                     >
-                      {m.label}
+                      <span className="sm:hidden">{shortLabel}</span>
+                      <span className="hidden sm:inline">{m.label}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
             {meta.description && (
-              <p className="text-xs text-center text-muted-foreground mt-3">{meta.description}</p>
+              <p className="text-[11px] sm:text-xs text-center text-muted-foreground mt-2 sm:mt-3">{meta.description}</p>
             )}
           </div>
 
           {/* QR + الفاتورة + التسليم */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2">
             {qrUrl && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/60 dark:border-amber-800/30">
-                <img src={qrUrl} alt="QR code" className="w-14 h-14 rounded-lg" />
-                <div>
+              <div className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/60 dark:border-amber-800/30">
+                <img src={qrUrl} alt="QR code" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
+                <div className="min-w-0">
                   <div className="text-xs font-bold text-amber-800 dark:text-amber-400">رمز QR</div>
-                  <div className="text-[11px] text-muted-foreground">أظهره عند الاستلام</div>
+                  <div className="text-[10px] sm:text-[11px] text-muted-foreground truncate">أظهره عند الاستلام</div>
                 </div>
               </div>
             )}
             <button
               onClick={downloadInvoice}
               disabled={pdfLoading}
-              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/30 dark:from-violet-950/20 dark:to-violet-900/10 border border-gold-200/60 dark:border-gold-500/20 hover:from-violet-100 hover:to-violet-100/50 dark:hover:from-violet-900/30 dark:hover:to-violet-900/20 transition-all text-right disabled:opacity-60"
+              className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/30 dark:from-violet-950/20 dark:to-violet-900/10 border border-gold-200/60 dark:border-gold-500/20 hover:from-violet-100 hover:to-violet-100/50 dark:hover:from-violet-900/30 dark:hover:to-violet-900/20 transition-all text-right disabled:opacity-60"
             >
               {pdfLoading ? (
                 <Loader2 className="h-5 w-5 text-gold-500 shrink-0 animate-spin" />
               ) : (
                 <FileText className="h-5 w-5 text-gold-500 shrink-0" />
               )}
-              <div>
-                <div className="text-xs font-bold text-foreground">{pdfLoading ? "جارٍ الإنشاء..." : "فاتورة PDF"}</div>
-                <div className="text-[11px] text-muted-foreground">تنزيل الفاتورة</div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-foreground truncate">{pdfLoading ? "جارٍ الإنشاء..." : "فاتورة PDF"}</div>
+                <div className="text-[10px] sm:text-[11px] text-muted-foreground">تنزيل الفاتورة</div>
               </div>
             </button>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-gold-500/8 to-gold-500/5 border border-gold-500/20/60">
+            <div className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-gold-500/8 to-gold-500/5 border border-gold-500/20/60">
               <Truck className="h-5 w-5 text-gold-500 shrink-0" />
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs font-bold text-gold-400">التسليم</div>
-                <div className="text-[11px] text-muted-foreground">{DELIVERY_LABELS[delivery.mode] || delivery.mode}</div>
+                <div className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{DELIVERY_LABELS[delivery.mode] || delivery.mode}</div>
               </div>
             </div>
           </div>
@@ -393,7 +404,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <Detail label="العميل" value={customer.name} />
             <Detail label="الهاتف" value={customer.phone} />
-            <Detail label="عدد الصفحات" value={`${order.pages} صفحة × ${order.copies} نسخة`} />
+            <Detail label="عدد الصفحات" value={`${order.pages}×${order.copies}`} />
             <Detail label="التسليم" value={DELIVERY_LABELS[delivery.mode] || delivery.mode} />
             <Detail label="المجموع" value={formatDA(order.total)} highlight />
           </div>
@@ -405,9 +416,9 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
 
 function Detail({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="rounded-lg bg-muted/30 p-3 border-r-[3px] border-r-amber-400/60">
-      <div className="text-xs text-muted-foreground mb-0.5">{label}</div>
-      <div className={`text-sm font-semibold truncate ${highlight ? "text-amber-700 dark:text-amber-400 font-bold" : ""}`} dir="auto">
+    <div className="rounded-lg bg-muted/30 p-2.5 sm:p-3 border-r-[3px] border-r-amber-400/60 min-w-0">
+      <div className="text-[11px] sm:text-xs text-muted-foreground mb-0.5">{label}</div>
+      <div className={`text-xs sm:text-sm font-semibold truncate ${highlight ? "text-amber-700 dark:text-amber-400 font-bold" : ""}`} dir="auto">
         {value}
       </div>
     </div>

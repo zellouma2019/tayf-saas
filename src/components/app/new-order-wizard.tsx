@@ -825,15 +825,15 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {/* رأس المعالج */}
         <div className="mb-6">
           {/* Step Indicator */}
-          <div className="flex items-center justify-center gap-0 mb-5">
+          <div className="flex items-center justify-center gap-0 mb-5 overflow-x-auto custom-scroll pb-1">
             {STEP_LABELS.map((label, i) => {
               const isCompleted = i < step;
               const isActive = i === step;
               const isFuture = i > step;
               return (
-                <div key={i} className="flex items-center">
+                <div key={i} className="flex items-center shrink-0">
                   {/* Step circle */}
-                  <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex flex-col items-center gap-1.5 w-16 sm:w-20 md:w-24 lg:w-28">
                     <motion.div
                       animate={isActive ? { scale: [1, 1.12, 1], boxShadow: [
                         "0 0 0 0 rgba(124,58,237,0.4)",
@@ -843,7 +843,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       transition={isActive ? { repeat: Infinity, duration: 2.5, ease: "easeInOut" } : {}}
                       className={`
                         rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
-                        ${isActive ? "w-11 h-11" : "w-9 h-9"}
+                        ${isActive ? "w-10 h-10 sm:w-11 sm:h-11" : "w-8 h-8 sm:w-9 sm:h-9"}
                         ${isCompleted
                           ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40"
                           : isActive
@@ -854,20 +854,20 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     >
                       {isCompleted ? (
                         <span className="flex items-center justify-center gap-0.5">
-                          <Check className="h-4 w-4" />
+                          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           <span className="text-[10px]">✨</span>
                         </span>
                       ) : (
                         <span>{i + 1}</span>
                       )}
                     </motion.div>
-                    <div className="text-center">
-                      <span className={`text-[11px] font-semibold leading-tight block ${
+                    <div className="text-center px-0.5">
+                      <span className={`text-[10px] sm:text-[11px] font-semibold leading-tight block ${
                         isActive ? "text-gold-600" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground/50"
                       }`}>
                         {label}
                       </span>
-                      <span className={`text-[10px] leading-tight block mt-0.5 ${
+                      <span className={`text-[9px] sm:text-[10px] leading-tight block mt-0.5 ${
                         isActive ? "text-gold-300" : "text-muted-foreground/40"
                       }`}>
                         {STEP_DURATIONS[i]}
@@ -876,7 +876,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   </div>
                   {/* Connecting line */}
                   {i < STEP_LABELS.length - 1 && (
-                    <div className="w-8 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-1.5 sm:mx-2 rounded-full bg-muted dark:bg-muted overflow-hidden relative -mt-5">
+                    <div className="w-4 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-0.5 sm:mx-2 rounded-full bg-muted dark:bg-muted overflow-hidden relative -mt-5 sm:-mt-6">
                       <motion.div
                         className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-violet-500 to-indigo-500"
                         initial={{ width: "0%" }}
@@ -890,22 +890,23 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             })}
           </div>
 
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gold-600 bg-gold-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+          <div className="flex items-center justify-between mb-2 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[10px] sm:text-xs font-medium text-gold-600 bg-gold-100 px-2 sm:px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
                 <Clock className="h-3 w-3" />
                 {STEP_DURATIONS[step]}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 الخطوة {step + 1} من 5
               </span>
             </div>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 shrink-0">
               <Sparkles className="h-3 w-3 text-gold-400" />
-              المجموع ≈ دقيقة واحدة
+              <span className="hidden xs:inline sm:inline">المجموع ≈ دقيقة</span>
+              <span className="xs:hidden sm:hidden">≈ دقيقة</span>
             </span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold">{STEP_LABELS[step]}</h2>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold">{STEP_LABELS[step]}</h2>
         </div>
 
         {/* ===== الخطوة 0: رفع الملف والتحليل المحسّن ===== */}

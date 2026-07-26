@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
+import { tursoQuery, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
 import fs from "fs";
 import path from "path";
 
@@ -293,46 +293,133 @@ export async function POST(req: NextRequest) {
 
     const estimatedHours = estimateDeliveryHours(delivery.mode, pages, copies);
 
-    // استيراد Prisma فقط عند إنشاء الطلب (لا يُحمّل على استعلامات GET)
-    const { db } = await import("@/lib/db");
-
+    // 🔥 استخدم turso-lite مباشرة بدلاً من Prisma (يتجنب cold-start لـ PrismaLibSQL)
+    // توليد مرجع فريد
     let reference = generateReference();
-    let exists = await db.printOrder.findUnique({ where: { reference } });
-    while (exists) {
+    let existsRows = await tursoQuery<{ id: string }>(
+      `SELECT id FROM "PrintOrder" WHERE reference = ? LIMIT 1`,
+      [reference]
+    );
+    let safety = 0;
+    while (existsRows.length > 0 && safety < 10) {
       reference = generateReference();
-      exists = await db.printOrder.findUnique({ where: { reference } });
+      existsRows = await tursoQuery<{ id: string }>(
+        `SELECT id FROM "PrintOrder" WHERE reference = ? LIMIT 1`,
+        [reference]
+      );
+      safety++;
     }
 
-    const order = await db.printOrder.create({
-      data: {
+    // إنشاء الطلب عبر INSERT مع RETURNING * (libsql يدعمها)
+    const newId = `o_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    const now = new Date().toISOString();
+
+    const insertRows = await tursoExecute<Record<string, unknown>>(
+      `INSERT INTO "PrintOrder" (
+        id, reference, "serviceType", "serviceName",
+        "fileName", "fileType", "fileSize", "fileData", "smartAnalysis",
+        options, customer, delivery, pricing,
+        "estimatedHours", status, pages, copies, total, cost,
+        tags, "createdAt", "updatedAt", "shopId"
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '[]', ?, ?, ?)
+      RETURNING *`,
+      [
+        newId,
         reference,
         serviceType,
-        serviceName: service.name,
-        fileName: fileName || null,
-        fileType: fileType || null,
-        fileSize: fileSize || null,
-        fileData: fileData || null,
-        smartAnalysis: smartAnalysis ? JSON.stringify(smartAnalysis) : null,
-        options: JSON.stringify(options),
-        customer: JSON.stringify(customer),
-        delivery: JSON.stringify(delivery),
-        pricing: JSON.stringify(pricing),
+        service.name,
+        fileName || null,
+        fileType || null,
+        fileSize || null,
+        fileData || null,
+        smartAnalysis ? JSON.stringify(smartAnalysis) : null,
+        JSON.stringify(options),
+        JSON.stringify(customer),
+        JSON.stringify(delivery),
+        JSON.stringify(pricing),
         estimatedHours,
-        status: "pending",
+        "pending",
         pages,
         copies,
-        total: pricing.total,
-        ...(shopId ? { shopId } : {}),
-      },
-    });
+        pricing.total,
+        now,
+        now,
+        shopId || null,
+      ]
+    );
+
+    const order = insertRows.rows[0];
+    if (!order) {
+      // fallback إلى Prisma إذا فشل RETURNING
+      console.warn("[orders/POST] RETURNING failed, falling back to Prisma");
+      const { db } = await import("@/lib/db");
+      const fallbackOrder = await db.printOrder.create({
+        data: {
+          id: newId,
+          reference,
+          serviceType,
+          serviceName: service.name,
+          fileName: fileName || null,
+          fileType: fileType || null,
+          fileSize: fileSize || null,
+          fileData: fileData || null,
+          smartAnalysis: smartAnalysis ? JSON.stringify(smartAnalysis) : null,
+          options: JSON.stringify(options),
+          customer: JSON.stringify(customer),
+          delivery: JSON.stringify(delivery),
+          pricing: JSON.stringify(pricing),
+          estimatedHours,
+          status: "pending",
+          pages,
+          copies,
+          total: pricing.total,
+          ...(shopId ? { shopId } : {}),
+        },
+      });
+      return NextResponse.json({
+        ...fallbackOrder,
+        options: JSON.parse(fallbackOrder.options),
+        customer: JSON.parse(fallbackOrder.customer),
+        delivery: JSON.parse(fallbackOrder.delivery),
+        pricing: JSON.parse(fallbackOrder.pricing),
+        smartAnalysis: fallbackOrder.smartAnalysis ? JSON.parse(fallbackOrder.smartAnalysis) : null,
+      });
+    }
+
+    // إرجاع الطلب بالشكل المتوقع من العميل
+    const orderOptions = safeJson(order.options as string, {});
+    const orderCustomer = safeJson(order.customer as string, { name: "", phone: "" });
+    const orderDelivery = safeJson(order.delivery as string, { mode: "pickup" });
+    const orderPricing = safeJson(order.pricing as string, { total: 0 });
+    const orderAnalysis = order.smartAnalysis
+      ? safeJson(order.smartAnalysis as string, null)
+      : null;
 
     return NextResponse.json({
-      ...order,
-      options: JSON.parse(order.options),
-      customer: JSON.parse(order.customer),
-      delivery: JSON.parse(order.delivery),
-      pricing: JSON.parse(order.pricing),
-      smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
+      id: order.id,
+      reference: order.reference,
+      serviceType: order.serviceType,
+      serviceName: order.serviceName,
+      fileName: order.fileName,
+      fileType: order.fileType,
+      fileSize: order.fileSize != null ? toNum(order.fileSize) : null,
+      fileData: order.fileData,
+      smartAnalysis: orderAnalysis,
+      options: orderOptions,
+      customer: orderCustomer,
+      delivery: orderDelivery,
+      pricing: orderPricing,
+      estimatedHours: toNum(order.estimatedHours),
+      status: order.status,
+      pages: toNum(order.pages),
+      copies: toNum(order.copies),
+      total: toNum(order.total),
+      cost: toNum(order.cost),
+      tags: safeJson<string[]>(order.tags as string, []),
+      adminNotes: order.adminNotes,
+      shopId: order.shopId,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
     });
   } catch (e) {
     console.error('[orders/POST]', e);
