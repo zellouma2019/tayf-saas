@@ -743,3 +743,92 @@ Task: إصلاح مشكلة تحديث كلمة المرور (500 error)
 - كلمة المرور الحالية على الموقع المباشر: `Admin@2026` (تم إعادة تعيينها)
 - جميع عمليات SuperAdmin الآن <1.3 ثانية (كانت 5-15s مع Prisma)
 - turso-lite هو المعيار الآن لجميع عمليات SuperAdmin
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: إصلاح عودة مشكلة بطء تحميل لوحة التحكم + platform-settings 500
+
+## التشخيص
+اختبرت الموقع المباشر بعد إصلاحات كلمة المرور واكتشفت:
+1. **لوحة التحكم تظهر الـ shell فقط، بدون محتوى** (لا إحصائيات، لا طلبات)
+2. `/api/super-admin/platform-settings` → **500** (regression)
+3. فحص network: فقط 3 طلبات (platform-settings, password, auth) — **لا global-stats ولا orders!**
+
+### الأسباب الجذرية (3 مشاكل):
+
+1. **useEffect لا يُعاد تشغيله بعد تسجيل الدخول**
+   - `useEffect` بـ deps `[loadStats, loadOrders]` يعمل فقط على mount
+   - بعد `LoginGate.onUnlock() → setAuthenticated(true)`، الـ effect لا يُعاد تشغيله
+   - النتيجة: `loadStats()` و `loadOrders()` لا تُستدعى أبداً بعد الدخول
+
+2. **platform-settings 500: double-parsing bug**
+   - `getSuperAdmin` كان يحلل JSON columns تلقائياً (platformSettings → object)
+   - الـ route يستدعي `JSON.parse(admin.platformSettings)` على object → `"[object Object]" is not valid JSON`
+
+3. **عمود `name` مفقود على DB الحية**
+   - `runMigrations()` لم تكن تُستدعى قبل الاستعلامات
+   - `SELECT name FROM "SuperAdmin"` → SQL_INPUT_ERROR
+
+## الإصلاحات
+
+### 1. فصل useEffect إلى اثنين (`src/app/page.tsx`)
+```js
+// Mount فقط: تحقق سريع من الجلسة المحفوظة
+useEffect(() => {
+  setMounted(true);
+  if (isAuthenticated()) setAuthenticated(true);
+}, []);
+
+// يعمل عندما authenticated = true (بعد الدخول أو العودة)
+useEffect(() => {
+  if (!authenticated) return;
+  loadStats();
+  loadOrders();
+  verifySession().then(...)
+}, [authenticated, loadStats, loadOrders]);
+```
+
+### 2. إصلاح double-parsing (`src/lib/db-migrations.ts`)
+- `getSuperAdmin` يُرجع JSON columns كـ **raw strings** (مثل Prisma)
+- المستهلكون (routes) يعملون `JSON.parse()` كما كانوا
+- لا double-parsing
+
+### 3. runMigrations محسّن (`src/lib/db-migrations.ts`)
+- **Deduplicated** مع promise tracking (لا تكرار)
+- تُستدعى و await في `getSuperAdmin` و `createSuperAdmin` قبل أي استعلام
+- الأعمدة الناقصة تُضاف قبل الـ SELECT
+
+### 4. auth route آمن (`src/app/api/super-admin/auth/route.ts`)
+- `adminName` يُرجع 'مدير' كـ fallback لو العمود/القيمة مفقودة
+
+## النتائج المُتحقَّق منها
+
+### محلياً (بعد الإصلاح):
+| API | الحالة | الزمن |
+|-----|--------|------|
+| platform-settings | ✅ 200 | — |
+| auth | ✅ 200 | 155ms |
+| global-stats | ✅ 200 | 174ms |
+| orders | ✅ 200 | 204ms |
+| password GET | ✅ 200 | — |
+
+### على Vercel المباشر:
+| API | الحالة | الزمن |
+|-----|--------|------|
+| platform-settings | ✅ 200 | 1.3s |
+| auth | ✅ 200 | 0.6s |
+| global-stats | ✅ 200 | 0.9s |
+| orders | ✅ 200 | 10.6s (cold) |
+
+### اختبار agent-browser (fresh login):
+1. مسح localStorage + sessionStorage (محاكاة زيارة جديدة)
+2. إدخال Admin@2026 + دخول
+3. **خلال 6.1 ثانية**: لوحة التحكم الكاملة تظهر
+   - "مرحباً بك مدير 👋" ✓
+   - إجمالي الإيرادات 8,833.00 د.ج ✓
+   - المخططات ✓
+4. تبويب الطلبات: جميع الطلبات الـ 12 تظهر ✓
+
+## Commit
+- `c12a751` — fix: dashboard not loading after login + platform-settings 500
