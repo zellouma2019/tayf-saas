@@ -958,3 +958,42 @@ Stage Summary:
 - الاستجابة للجوال: DialogContent padding + timeline + grid محسّنة
 - ميزة تنزيل الملفات: أصبحت مجانية لجميع المطابع
 - في انتظار نشر Vercel للتحقق النهائي
+
+---
+Task ID: merchant-fix-2
+Agent: Main Agent
+Task: إصلاح زر التنزيل المفقود في قائمة الطلبات + التحقق الشامل من لوحة التاجر
+
+Work Log:
+- قرأت worklog.md لفهم ما تم سابقاً (merchant-fix-1 أعد كتابة APIs بـ turso-lite)
+- فحصت OrderDetailsRow (desktop table row) ووجدت BUG حرج:
+  * السطر 254 و 261: `{order.fileData && (` يتحقق من fileData
+  * لكن /api/orders لا يُرجع fileData (مُستثنى لتجنب 504)
+  * النتيجة: زر "تنزيل الملف الأصلي" لا يظهر أبداً على الديسكتوب!
+- الإصلاح: تغيير الشرط من `order.fileData` إلى `order.fileName` (يُرجع دائماً)
+- فحصت MobileOrderCard (merchant-dashboard.tsx سطر 2472):
+  * استخدم window.open الذي قد يحظره مانع النوافذ
+  * أعدت كتابته بـ fetch+blob (نفس نمط merchant-order-detail.tsx)
+  * أضفت حالة loading (downloading) + toast feedback
+- راجعت /api/orders/[id]/file/route.ts — يستخدم turso-lite (سريع)
+- راجعت /api/admin/stats/route.ts — يستخدم turso-lite (سريع)
+- راجعت /api/orders/route.ts — يستخدم turso-lite (سريع)
+- lint: نجح بدون أخطاء
+- رفعت commit a744957 على GitHub
+
+التحقق على الموقع المباشر (agent-browser):
+1. لوحة تحكم الأدمن: تحميل في ~6 ثواني (cold start) — لا تراجع
+2. لوحة تحكم التاجر (aalm-almrh): تحميل في ~5 ثواني بعد PIN
+3. زر التنزيل في المودال: ✅ يعمل (toast "تم تنزيل الملف")
+4. زر التنزيل في البطاقة الموبايل: ✅ يعمل (toast "تم تنزيل الملف")
+5. الوضع الداكن للتاجر: ✅ VLM أكد "all text readable, no contrast issues"
+6. الوضع الداكن للأدمن: ✅ VLM أكد "logo visible, high-contrast dark theme"
+7. استجابة الموبايل لقائمة الطلبات: ✅ VLM أكد "production-ready mobile UI"
+8. الشعار في الوضع الداكن: ✅ مرئي (gold/yellow icon)
+
+Stage Summary:
+- BUG حرج مُصلح: زر التنزيل لم يكن يظهر أبداً على الديسكتوب بسبب التحقق من fileData
+- زر التنزيل الموبايل: أصبح موثوقاً (fetch+blob بدل window.open)
+- جميع الإصلاحات مُتحقَّق منها على الموقع المباشر
+- لا تراجع في سرعة تحميل لوحة الأدمن
+- الوضع الداكن يعمل بشكل احترافي في كل اللوحات
