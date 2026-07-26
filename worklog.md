@@ -671,3 +671,75 @@ Task: إصلاح بطء تحميل لوحة تحكم الأدمن من الجذ�
 - لكن المستخدم يرى المحتوى خلال <5 ثواني بدلاً من >2 دقيقة
 - الإحصائيات تظهر خلال <1 ثانية بفضل الفصل
 - sessionStorage cache يجعل تحديث الصفحة فورياً تقريباً
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: إصلاح مشكلة تحديث كلمة المرور (500 error)
+
+## التشخيص الجذري
+اختبرت تحديث كلمة المرور على الموقع المباشر:
+- `GET /api/super-admin/password` → 200 (يعمل)
+- `PUT /api/super-admin/password` → **500 "خطأ في تحديث كلمة المرور"**
+
+### الأسباب الجذرية (3 مشاكل متراكمة):
+
+1. **`updateSuperAdmin` يستخدم PostgreSQL params ($1) بدل SQLite (?)**
+   - الكود: `sets.push(\`"${k}" = $${vals.length + 1}\`)` 
+   - Turso/SQLite لا يدعم `$1` → استعلام فاشل صامت
+   - والقيم لم تكن تُمرر أصلاً (لا binding)
+
+2. **مسار auth يعتمد على Prisma البطيء**
+   - PrismaLibSQL adapter يحاول WebSocket على Vercel → 5-15s cold start
+
+3. **عمود `name` غير موجود في قاعدة البيانات الحية**
+   - `runMigrations()` لم تكن تُستدعى في تدفق الطلب
+   - `SELECT name FROM "SuperAdmin"` → `SQL_INPUT_ERROR: no such column: name`
+   - اكتُشف بإضافة `detail` للاستجابة
+
+## الإصلاحات المنفّذة
+
+### 1. إعادة كتابة كاملة لـ `src/lib/db-migrations.ts`
+- استبدلت Prisma بـ **turso-lite** (HTTP SQL client، 10x أسرع)
+- `updateSuperAdmin`: يستخدم SQLite positional params `?` مع binding صحيح
+- `getSuperAdmin`: **fallback آمن** — لو فشل العمود المطلوب، يعود للأعمدة الأساسية (id, key, password) ويشغّل migrations
+- `createSuperAdmin`: يستخدم `?` params بدل string interpolation (آمن من SQL injection)
+
+### 2. إعادة كتابة `src/app/api/super-admin/auth/route.ts`
+- يستخدم `getSuperAdmin` مباشرة (بدل Prisma)
+- لا cold-start لـ Prisma بعد الآن
+- يرجع `adminName` في الاستجابة
+
+### 3. أمان الأعمدة المفقودة
+- `getSuperAdmin` يفترض `name = 'مدير'` لو العمود غير موجود
+- يشغّل `runMigrations()` تلقائياً لإضافة الأعمدة الناقصة للطلب القادم
+
+## النتائج المُتحقَّق منها على الموقع المباشر
+
+| الاختبار | النتيجة |
+|---------|---------|
+| GET password status | ✅ 200 — isDefault: true |
+| PUT change (default → new) | ✅ 200 — isFirstTime: true |
+| PUT change (wrong current) | ✅ 401 — "كلمة المرور الحالية غير صحيحة" |
+| PUT change (correct current) | ✅ 200 — success: true |
+| POST auth with new password | ✅ 200 — returns token + adminName |
+| PATCH reset to default | ✅ 200 — "تم إعادة تعيين كلمة المرور" |
+| UI: Security tab form | ✅ "تم تعيين كلمة المرور بنجاح" |
+
+### اختبار agent-browser الكامل:
+1. فتح الموقع → لوحة التحكم تظهر (جلسة سابقة محفوظة)
+2. تبويب "الأمان والفريق" → نموذج تغيير كلمة المرور
+3. إدخال "NewSecure@2026" + تأكيد → "تم تعيين كلمة المرور بنجاح" ✓
+4. تسجيل دخول بكلمة المرور الجديدة → نجح ✓
+5. إعادة تعيين إلى Admin@2026 ✓
+
+## Commits المرفوعة
+- `d2b015a` — fix: password update 500 — rewrite SuperAdmin data layer with turso-lite
+- `76488fb` — fix: auth route — use getSuperAdmin directly
+- `d271493` — fix: SuperAdmin 'name' column missing — getSuperAdmin falls back safely
+- `4668b80` — cleanup: remove debug detail from error responses
+
+## ملاحظات
+- كلمة المرور الحالية على الموقع المباشر: `Admin@2026` (تم إعادة تعيينها)
+- جميع عمليات SuperAdmin الآن <1.3 ثانية (كانت 5-15s مع Prisma)
+- turso-lite هو المعيار الآن لجميع عمليات SuperAdmin
