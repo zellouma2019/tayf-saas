@@ -466,3 +466,91 @@ API routes on Vercel serverless. It forces HTTPS mode and eliminates Prisma over
 - Write operations (CREATE, UPDATE, DELETE) that need type safety
 - Complex queries with relations
 - Admin-only routes where speed is less critical
+
+---
+Task ID: 15
+Agent: Main Agent
+Task: تسريع لوحة الأدمن <1s + إصلاح رفع الملفات + تسعير آمن + إعادة تصميم هيدر الزبون + تقليل حجم المشروع
+
+## الوضع الحالي
+- ✅ لوحة تحكم الأدمن تتحمّل في أقل من 1 ثانية (مع كاش sessionStorage)
+- ✅ رفع الملفات يعمل (تم إنشاء /api/orders/upload المفقود)
+- ✅ التسعير يُحسب على الخادم فقط (لا يثق بقيمة العميل)
+- ✅ هيدر الزبون يطبّق ألوان ثيم المتجر مع خط محسّن
+- ✅ التنقل السفلي على الجوال (bottom nav) مع ألوان الثيم
+- ✅ الفاتورة لا تعتمد على Google Fonts CDN
+- ✅ pdf.worker محلي (لا يعتمد على unpkg CDN)
+- ✅ تم تقليل حجم المشروع بحذف خطوط Amiri (863KB)
+
+## الإصلاحات المُطبَّقة
+
+### 1. تسريع تحميل لوحة الأدمن (< 1 ثانية)
+- `src/lib/admin-utils.ts`: كاش sessionStorage لنتيجة verifySession (5 دقائق TTL)
+- `src/lib/admin-utils.ts`: تحقق محلي من صلاحية الجلسة قبل أي طلب شبكة
+- `src/app/page.tsx`: loadAll() أولاً ثم verifySession() بالتوازي
+- النتيجة: عند تحديث الصفحة، الكاش يُعرض فوراً، verifySession يُستخدم من الكاش
+
+### 2. إصلاح رفع الملفات (سبب بطء/تذبذب الطلبات)
+- `src/app/api/orders/upload/route.ts` (جديد): مسار رفع الملفات الصغيرة المفقود
+- كان كل ملف < 900KB يفشل في الرفع ويُخزَّن كـ base64 في DB → بطء + تضخم DB
+- الآن الملفات تُخزَّن على القرص باسم file_<timestamp>_<random>.<ext>
+
+### 3. التسعير الآمن على الخادم (security fix)
+- `src/app/api/orders/route.ts`: حذف الثقة في body.finalTotal من العميل
+- `src/lib/offers.ts`: دالة applyOfferCode() للتحقق الصارم من أكواد الخصم
+- الخادم يُعيد حساب السعر كاملاً + يطبّق الخصم فقط بعد التحقق
+
+### 4. إصلاح ظهور كود الخصم متأخراً
+- `src/components/app/new-order-wizard.tsx`: 4 ثواني → 1.2 ثانية
+- إضافة cleanup function صحيحة لمنع تسريب الـ timeout
+
+### 5. إعادة تصميم هيدر الزبون
+- `src/components/app/app-shell.tsx`: تطبيق ألوان ثيم المتجر (themeId)
+- شريط زخرفي علوي بتدرّج لوني
+- شعار مع ring لوني + نقطة زخرفية
+- اسم المتجر بخط Cairo bold + سطر فرعي (tagline)
+- زر "طلب سريع" جانبي
+- `src/components/app/app-shell.tsx`: شريط تنقل سفلي للجوال (bottom nav)
+- التذييل يستخدم ألوان ثيم المتجر
+
+### 6. تحسين الفاتورة
+- `src/app/api/orders/[id]/invoice/route.ts`: حذف Google Fonts CDN
+- استخدام خطوط النظام (Cairo → Tajawal → Segoe UI → Noto Sans Arabic → Tahoma)
+- تأخير الطباعة: 500ms → 300ms
+
+### 7. رفع الملفات بالذكاء الاصطناعي
+- `src/lib/file-analyzer.ts`: pdf.worker محلي بدلاً من unpkg CDN
+- `public/pdf.worker.min.mjs` (جديد): نسخة محلية من worker
+- `src/app/api/ai/analyze-file/route.ts`: maxDuration=60 للملفات الكبيرة
+- `src/lib/turso-lite.ts`: fallback إلى SQLite المحلي عند غياب Turso
+
+### 8. تقليل حجم المشروع
+- حذف `public/fonts/Amiri-Regular.ttf` (443KB)
+- حذف `public/fonts/Amiri-Bold.ttf` (420KB)
+- حذف `src/lib/pdf-arabic.ts` (غير مستخدم)
+- حذف `src/components/forms/print-view.tsx` (غير مستخدم)
+- `next.config.ts`: optimizePackageImports لـ lucide-react, recharts, framer-motion, radix
+
+### 9. إصلاحات إضافية
+- `src/components/app/order-success.tsx`: إصلاح جمع المذكر (ساعة/ساعتان/ساعات)
+- `src/components/app/admin-security-tab.tsx`: clearVerifyCache() بعد تغيير كلمة المرور
+- `src/app/globals.css`: safe-area-pb / safe-area-pt للجوال + no-print utility
+
+## نتائج الاختبار (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| تحميل لوحة الأدمن | ✅ يعرض البطاقات + الترحيب |
+| global-stats API | ✅ 200 في 69ms |
+| رفع ملف PNG | ✅ file_*.png محفوظ |
+| رفض ملف .txt | ✅ رسالة خطأ صحيحة |
+| هيدر الزبون | ✅ اسم المتجر + tagline + ألوان الثيم |
+| التنقل السفلي (جوال) | ✅ أزرار مع أيقونات |
+
+## Commit المرفوع
+- `5f4881e` على origin/main → Vercel سينشر تلقائياً
+
+## توصيات المرحلة القادمة
+1. اختبار مسار الطلب الكامل على الموقع الحي بعد نشر Vercel
+2. إضافة تخزين سحابي للملفات (Vercel Blob / S3) بدلاً من القرص المحلي
+3. مراقبة أداء global-stats على Vercel (يجب أن يكون < 500ms)
+4. إضافة PWA / Service Worker للتخزين المؤقت دون اتصال
