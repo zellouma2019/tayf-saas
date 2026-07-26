@@ -561,7 +561,7 @@ export function MerchantOrderDetail({
                               <div className={cn("absolute inset-0 w-8 h-8 rounded-full animate-ping opacity-30", dotColorMap[step])} />
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-full border-2 border-dark-300 bg-white" />
+                            <div className="w-8 h-8 rounded-full border-2 border-dark-300 bg-card" />
                           )}
                         </div>
                         <span className={cn("text-[10px] font-medium", isFuture ? "text-dark-400" : isCurrent ? "text-dark-800" : "text-dark-600")}>

@@ -462,13 +462,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   // ===== شاشة كلمة المرور =====
   if (!unlocked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 p-4" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
         {/* Decorative grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
         <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-dark-200/60 relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
           <CardContent className="p-8">
             <div className="text-center mb-8">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-5 shadow-lg shadow-violet-300/40" style={{ animation: "float 3s ease-in-out infinite" }}>
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-5 shadow-lg shadow-violet-300/40 dark:shadow-violet-900/40" style={{ animation: "float 3s ease-in-out infinite" }}>
                 <Lock className="h-12 w-12 text-white" />
               </div>
               <h2 className="text-xl font-bold text-dark-800">لوحة تحكم المتجر</h2>
@@ -493,7 +493,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 />
               </div>
               {pinError && (
-                <div className="flex items-center justify-center gap-2 text-sm text-rose-500">
+                <div className="flex items-center justify-center gap-2 text-sm text-rose-500 dark:text-rose-400">
                   <AlertCircle className="h-4 w-4" />
                   كلمة المرور غير صحيحة
                 </div>
