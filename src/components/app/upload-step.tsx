@@ -970,7 +970,7 @@ export default function UploadStep({
             animate="visible"
             className="space-y-4"
           >
-            <div className="bg-dark-800 rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
               <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-0">
                 {/* ─── Left: Analysis Cards (last on mobile, first on desktop) ─── */}
                 <div className="p-4 sm:p-5 space-y-4 order-2 lg:order-1">

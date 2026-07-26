@@ -300,7 +300,7 @@ function FeaturesTab() {
             {freeFeatures.map((f) => (
               <div
                 key={f.key}
-                className="flex items-center gap-2.5 bg-dark-800 rounded-lg px-3 py-2.5 border border-emerald-100/80"
+                className="flex items-center gap-2.5 bg-secondary rounded-lg px-3 py-2.5 border border-emerald-100/80"
               >
                 <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
@@ -340,7 +340,7 @@ function FeaturesTab() {
               {activePaidFeatures.map((f) => (
                 <div
                   key={f.key}
-                  className="flex items-center gap-2.5 bg-dark-800 rounded-lg px-3 py-2.5 border border-gold-500/15/80"
+                  className="flex items-center gap-2.5 bg-secondary rounded-lg px-3 py-2.5 border border-gold-500/15/80"
                 >
                   <div className="w-7 h-7 rounded-lg bg-gold-100 flex items-center justify-center shrink-0">
                     <Check className="h-3.5 w-3.5 text-gold-500" />
@@ -2217,7 +2217,7 @@ export function MerchantSettingsAdvanced({
       {/* ===== Floating save bar (shows when there are unsaved changes) ===== */}
       {hasChanges && (
         <div className="sticky bottom-4 z-30 mx-auto max-w-md">
-          <div className="bg-dark-800 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-gold-500/30">
+          <div className="bg-card text-card-foreground rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-gold-500/30">
             <div className="flex items-center gap-2 text-xs">
               <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
               <span>لديك تغييرات غير محفوظة</span>

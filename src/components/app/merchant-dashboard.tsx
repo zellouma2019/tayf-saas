@@ -1625,7 +1625,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   className={cn(
                     "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 border border-dark-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
                     selectedIcon === name
-                      ? "bg-dark-800 shadow-md ring-1 ring-gold-500/30 border-gold-200"
+                      ? "bg-secondary shadow-md ring-1 ring-gold-500/30 border-gold-200"
                       : "bg-dark-50 hover:bg-gold-500/10 hover:shadow-md",
                   )}
                 >

@@ -282,7 +282,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
             transition={{ duration: 0.4, delay: 0.15 }}
             className="flex items-center gap-3 mb-1"
           >
-            <div className="flex-1 h-2.5 bg-dark-100 dark:bg-dark-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-2.5 bg-dark-100 dark:bg-muted rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-l from-emerald-400 via-emerald-500 to-teal-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/30"
                 initial={{ width: 0 }}
