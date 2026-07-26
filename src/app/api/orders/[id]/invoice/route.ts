@@ -87,18 +87,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>فاتورة ${order.reference} — ${shopName}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   @page { margin: 10mm; size: A4; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: "Cairo", "Segoe UI", Tahoma, sans-serif;
+    /* استخدم خطوط النظام لتجنّب الاعتماد على CDN خارجي (أسرع + يعمل دون اتصال) */
+    font-family: "Cairo", "Tajawal", "Segoe UI", "Noto Sans Arabic", Tahoma, "Helvetica Neue", Arial, sans-serif;
     background: #f0f2f5;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     padding: 20px;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   .invoice {
@@ -496,9 +497,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 </div>
 
 <script>
-  window.onload = function() {
-    setTimeout(function() { window.print(); }, 500);
-  };
+  // انتظر تحميل الصفحة ثم اطبع بعد تأخير قصير (300ms أسرع من 500ms)
+  window.addEventListener('load', function() {
+    setTimeout(function() { window.print(); }, 300);
+  });
 </script>
 </body>
 </html>`;

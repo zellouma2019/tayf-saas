@@ -35,6 +35,3 @@ export async function downloadInvoicePDF(orderId: string, reference?: string): P
     return false;
   }
 }
-
-// إبقاء التصديرات القديمة لمنع أخطاء الاستيراد
-export { initArabicPdf, ar, arFont, hasArabic } from "@/lib/pdf-arabic";

@@ -214,6 +214,19 @@
   .font-cairo {
     font-family: var(--font-cairo), sans-serif;
   }
+  /* مساحة آمنة للشريط السفلي على الأجهزة ذات النوتش (iPhone X+) */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  /* إخفاء العناصر عند الطباعة */
+  .no-print {
+    @media print {
+      display: none !important;
+    }
+  }
 }
 
 /* ===== ضبط حجم الخطوط على الهاتف ===== */

@@ -178,7 +178,6 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await ensureDb();
     const body = await req.json();
     const {
       serviceType,
@@ -191,6 +190,7 @@ export async function POST(req: NextRequest) {
       customer,
       delivery,
       shopId: bodyShopId,
+      appliedOfferCode,
     } = body;
     const shopId = bodyShopId || req.nextUrl.searchParams.get("shopId");
 
@@ -201,6 +201,7 @@ export async function POST(req: NextRequest) {
 
     const pages = Number(options.pages) || 1;
     const copies = Number(options.copies) || 1;
+    // 🔒 احسب السعر على الخادم فقط — لا تثق أبداً بقيمة العميل
     const pricing = calculatePricing({
       serviceType: serviceType as ServiceType,
       pages,
@@ -212,12 +213,26 @@ export async function POST(req: NextRequest) {
       paperType: options.paperType,
       delivery: delivery.mode,
     });
-    const clientTotal = typeof body.finalTotal === 'number' ? body.finalTotal : null;
-    const finalTotal = clientTotal && clientTotal > 0 ? clientTotal : pricing.total;
-    if (clientTotal && clientTotal > 0) {
-      pricing.total = finalTotal;
-      pricing.extrasCost = Math.max(0, finalTotal - pricing.copiesCost - (pricing.bindingCost || 0) - pricing.deliveryCost + (pricing.discount || 0));
+
+    // طبّق كود العرض على الخادم إن وُجد (تحقق صارم)
+    if (appliedOfferCode && typeof appliedOfferCode === "string") {
+      try {
+        const { applyOfferCode } = await import("@/lib/offers");
+        const offerResult = applyOfferCode(
+          appliedOfferCode,
+          serviceType as ServiceType,
+          pages,
+          copies,
+          pricing,
+        );
+        if (offerResult.valid && offerResult.pricing) {
+          Object.assign(pricing, offerResult.pricing);
+        }
+      } catch {
+        // فشل التحقق من العرض — تجاهله واستخدم السعر الأساسي
+      }
     }
+
     const estimatedHours = estimateDeliveryHours(delivery.mode, pages, copies);
 
     let reference = generateReference();

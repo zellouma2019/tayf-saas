@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
 
+// السماح بوقت أطول لمعالجة الملفات الكبيرة بالذكاء الاصطناعي (حتى 60 ثانية)
+export const maxDuration = 60;
+
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
 
 const ANALYSIS_PROMPT = `أنت خبير في تحليل المستندات والصور لتحديد أفضل خدمة طباعة. حلّل المحتوى المرفق وأجب بـ JSON فقط (بدون markdown، بدون نص إضافي، بدون \`\`\`).

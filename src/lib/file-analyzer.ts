@@ -13,8 +13,8 @@ async function ensurePdfjs() {
   }
   if (!workerInitialized) {
     try {
-      // تحميل worker من CDN لتقليل حجم المشروع
-      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@6.1.200/build/pdf.worker.min.mjs";
+      // استخدم النسخة المحلية من worker (أسرع + يعمل دون اتصال + لا يعتمد على CDN)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       workerInitialized = true;
     } catch {
       try {

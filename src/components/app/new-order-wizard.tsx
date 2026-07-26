@@ -209,19 +209,19 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   }, [printRange, pageRange, totalPages]);
 
   // إظهار عرض مفاجئ عند الوصول لمراجعة الطلب (الخطوة 4)
-  // التأخير 4 ثواني بعد ظهور صفحة المراجعة لإعطاء العميل وقتاً للاطلاع
+  // تأخير قصير (1.2 ثانية) لإظهار العرض بشكل لطيف بعد ظهور المراجعة
   useEffect(() => {
     if (step === 4 && !offerShown && serviceType) {
       const selectedOffer = selectOffer(serviceType, pages, copies);
       if (selectedOffer) {
         setOffer(selectedOffer);
         setOfferShown(true); // اضبط أولاً لمنع إعادة التشغيل
-        // تأخير 4 ثواني لإظهار النافذة بشكل مفاجئ بعد قراءة العميل للمراجعة
+        // تأخير 1.2 ثانية فقط لإظهار النافذة بشكل سلس بعد ظهور المراجعة
         const t = setTimeout(() => {
           setOfferPopupOpen(true);
-        }, 4000);
-        // لا تُرجع cleanup function لتجنب إلغاء الـ timeout
-        return () => {};
+        }, 1200);
+        // تنظيف الـ timeout عند إلغاء التركيب أو تغيير الخطوة
+        return () => clearTimeout(t);
       }
     }
   }, [step, offerShown, serviceType, pages, copies]);
@@ -752,11 +752,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       if (!res.ok) throw new Error("فشل إرسال الطلب");
       const order = await res.json();
       toast.success("تم استلام طلبك بنجاح! 🎉");
+      // استخدم السعر المُحتسب من الخادم (ليس من العميل) لضمان التطابق
       onCreated({
         id: order.id,
         reference: order.reference,
         serviceName: order.serviceName,
-        total: finalPricing.total,
+        total: order.total ?? finalPricing.total,
         status: order.status,
         estimatedHours: order.estimatedHours,
       });

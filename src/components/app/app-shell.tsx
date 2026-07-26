@@ -45,6 +45,7 @@ import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { getCountry } from "@/lib/countries";
 import { DEFAULT_SETTINGS, type AppSettings } from "@/lib/default-settings";
+import { getTheme, type ShopTheme } from "@/lib/themes";
 
 type View = "new" | "repeat" | "track" | "history" | "admin";
 
@@ -109,6 +110,33 @@ export function AppShell() {
   const whatsappBtnNumber = shopSettings.whatsappButtonNumber || shopWhatsapp;
   const isOrderTrackingEnabled = shopSettings.enableOrderTracking !== false;
   const welcomeMessage = shopSettings.welcomeMessage || "";
+
+  // قالب المتجر اللوني (يُطبَّق على الواجهة التي يراها الزبون)
+  const theme: ShopTheme = useMemo(() => getTheme(shop?.themeId), [shop?.themeId]);
+  // متغيرات CSS لكل ألوان القالب (تُحقن في الجذر)
+  const themeStyle = useMemo(() => {
+    const t = theme;
+    return {
+      "--shop-accent": t.accent,
+      "--shop-topbar-bg": t.topBar.bg,
+      "--shop-topbar-text": t.topBar.text,
+      "--shop-topbar-accent": t.topBar.accent,
+      "--shop-header-bg": t.header.bg,
+      "--shop-header-text": t.header.text,
+      "--shop-header-border": t.header.border,
+      "--shop-nav-active": t.nav.active,
+      "--shop-nav-active-text": t.nav.activeText,
+      "--shop-nav-hover": t.nav.hover,
+      "--shop-footer-bg": t.footer.bg,
+      "--shop-footer-text": t.footer.text,
+      "--shop-footer-border": t.footer.border,
+      "--shop-fab-bg": t.fab.bg,
+      "--shop-fab-hover": t.fab.hover,
+      "--shop-fab-icon": t.fab.icon,
+      "--shop-card-border": t.card.border,
+      "--shop-logo-icon": t.logoIconColor,
+    } as React.CSSProperties;
+  }, [theme]);
 
   const formattedPhone = shopPhone ? shopPhone.replace(/(\d{2})(\d{3})(\d{2})(\d{3})/, "$1 $2 $3 $4") : "";
 
@@ -199,35 +227,43 @@ export function AppShell() {
     <>
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
     <LayoutGroup>
-      <div className="min-h-screen flex flex-col bg-background" dir="rtl">
-      {/* ===== الشريط العلوي الأسود ===== */}
+      <div className="min-h-screen flex flex-col bg-background" dir="rtl" style={themeStyle}>
+      {/* ===== الشريط العلوي المُلوَّن حسب ثيم المتجر ===== */}
       {view !== "new" && (
-      <div className="bg-muted/80 text-muted-foreground backdrop-blur-sm border-b">
+      <div
+        className="backdrop-blur-sm border-b no-print"
+        style={{
+          backgroundColor: theme.topBar.bg,
+          color: theme.topBar.text,
+          borderBottomColor: theme.footer.border,
+        }}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-8 sm:h-9 flex items-center justify-between gap-2">
           {/* الجوال: معلومة واحدة واضحة */}
           <div className="flex sm:hidden items-center gap-1.5 text-xs min-w-0">
-            <span className="text-primary shrink-0">⚡</span>
+            <span className="shrink-0" style={{ color: theme.topBar.accent }}>⚡</span>
             <span className="truncate">اطلب خلال دقيقة</span>
           </div>
           {/* الحاسوب: كل المميزات */}
           <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
-              <span className="text-primary">⚡</span>
+              <span style={{ color: theme.topBar.accent }}>⚡</span>
               اطلب خلال دقيقة
             </span>
             <span className="hidden md:flex items-center gap-1.5 whitespace-nowrap">
-              <span className="text-primary">🕐</span>
+              <span style={{ color: theme.topBar.accent }}>🕐</span>
               جاهز خلال ساعة
             </span>
             <span className="hidden lg:flex items-center gap-1.5 whitespace-nowrap">
-              <span className="text-primary">🔔</span>
+              <span style={{ color: theme.topBar.accent }}>🔔</span>
               إشعار عند الجاهزية
             </span>
           </div>
           {shopPhone && (
           <a
             href={`tel:${shopPhone}`}
-            className="flex items-center gap-1 hover:text-white transition-colors whitespace-nowrap shrink-0 text-xs sm:text-xs"
+            className="flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 text-xs sm:text-xs hover:opacity-80"
+            style={{ color: theme.topBar.accent }}
           >
             <Phone className="h-3 w-3 shrink-0" />
             <span className="hidden sm:inline">{formattedPhone}</span>
@@ -238,115 +274,164 @@ export function AppShell() {
       </div>
       )}
 
-      {/* ===== الترويسة الرئيسية ===== */}
-      <header className={`bg-background border-b border-border/50 sticky top-0 z-40 no-print transition-shadow duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-gradient-to-l after:from-primary/20 after:via-primary/10 after:to-primary/20 ${scrolled ? 'shadow-sm' : ''}`}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
-          {/* الشعار */}
+      {/* ===== الترويسة الرئيسية المُصمَّمة حسب ثيم المتجر ===== */}
+      <header
+        className={`sticky top-0 z-40 no-print transition-all duration-300 ${
+          scrolled ? "shadow-md" : "shadow-sm"
+        }`}
+        style={{
+          backgroundColor: theme.header.bg,
+          color: theme.header.text,
+          borderBottomColor: theme.header.border,
+        }}
+      >
+        {/* شريط زخرفي علوي بلون الثيم */}
+        <div
+          className="h-[3px] w-full"
+          style={{
+            background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.topBar.accent} 50%, ${theme.accent} 100%)`,
+            opacity: 0.9,
+          }}
+        />
+        <div className="border-b" style={{ borderColor: theme.header.border }}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 h-16 md:h-20 flex items-center justify-between gap-2 sm:gap-3 overflow-hidden">
+          {/* الشعار + اسم المتجر بتصميم محسَّن */}
           <button
             onClick={() => { setFooterOpen(false); setView("new"); }}
-            className="flex items-center gap-2 sm:gap-2.5 min-w-0"
+            className="flex items-center gap-2.5 sm:gap-3 min-w-0 group"
           >
-            {shop?.logoUrl ? (
-              <img src={shop.logoUrl} alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-300 object-cover" />
-            ) : platformLogoUrl ? (
-              <img src={platformLogoUrl} alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-300 object-cover dark:hidden" />
-            ) : (
-              <img src="/tayf-logo-sm.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-300 dark:hidden" />
-            )}
-            {shop?.logoUrl ? null : (platformLogoDarkUrl || platformLogoUrl) ? (
-              <img src={platformLogoDarkUrl || platformLogoUrl} alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-300 object-cover hidden dark:block" />
-            ) : (
-              <img src="/tayf-logo-sm-dark.png" alt={displayBusinessName} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-300 hidden dark:block" />
-            )}
-            <div className="font-bold text-sm md:text-base leading-tight truncate min-w-0">{displayBusinessName}</div>
+            {/* إطار الشعار مع ظل وتوهج لوني */}
+            <div className="relative shrink-0">
+              {shop?.logoUrl ? (
+                <img
+                  src={shop.logoUrl}
+                  alt={displayBusinessName}
+                  className={`w-11 h-11 md:w-12 md:h-12 ${theme.logoStyle} object-cover ring-2 ring-offset-2 transition-all duration-300 group-hover:scale-105`}
+                  style={{
+                    // @ts-expect-error -- ring color via CSS var
+                    "--tw-ring-color": theme.accent + "40",
+                    // @ts-expect-error -- offset color
+                    "--tw-ring-offset-color": theme.header.bg,
+                  }}
+                />
+              ) : (
+                <div
+                  className={`w-11 h-11 md:w-12 md:h-12 ${theme.logoStyle} flex items-center justify-center ring-2 ring-offset-2 transition-all duration-300 group-hover:scale-105`}
+                  style={{
+                    backgroundColor: theme.accent + "15",
+                    // @ts-expect-error -- ring color via CSS var
+                    "--tw-ring-color": theme.accent + "40",
+                    // @ts-expect-error -- offset color
+                    "--tw-ring-offset-color": theme.header.bg,
+                  }}
+                >
+                  <Printer
+                    className="h-6 w-6 md:h-7 md:w-7"
+                    style={{ color: theme.logoIconColor }}
+                  />
+                </div>
+              )}
+              {/* نقطة زخرفية صغيرة */}
+              <span
+                className="absolute -bottom-0.5 -left-0.5 w-2.5 h-2.5 rounded-full ring-2"
+                style={{
+                  backgroundColor: theme.accent,
+                  // @ts-expect-error -- ring color
+                  "--tw-ring-color": theme.header.bg,
+                }}
+              />
+            </div>
+
+            {/* اسم المتجر + السطر الفرعي */}
+            <div className="flex flex-col items-start min-w-0 leading-tight">
+              <span
+                className="font-extrabold text-base md:text-lg tracking-tight truncate max-w-[45vw] sm:max-w-[280px] transition-all duration-300"
+                style={{
+                  color: theme.header.text,
+                  fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif",
+                }}
+              >
+                {displayBusinessName}
+              </span>
+              {displayTagline ? (
+                <span
+                  className="text-[10px] md:text-[11px] font-medium truncate max-w-[45vw] sm:max-w-[240px] mt-0.5"
+                  style={{ color: theme.header.text, opacity: 0.6 }}
+                >
+                  {displayTagline}
+                </span>
+              ) : (
+                <span
+                  className="text-[10px] md:text-[11px] font-medium tracking-wide truncate mt-0.5"
+                  style={{ color: theme.accent, opacity: 0.85 }}
+                >
+                  مطبعة رقمية · طباعة أونلاين
+                </span>
+              )}
+            </div>
           </button>
 
-          {/* التنقل - حاسوب */}
-          <nav className="hidden md:flex items-center gap-1 bg-muted/60 rounded-full p-1">
-            {navItems.map((item) => (
+          {/* التنقل - حاسوب (يستخدم ألوان الثيم) */}
+          <nav
+            className="hidden md:flex items-center gap-1 rounded-full p-1"
+            style={{ backgroundColor: theme.nav.hover }}
+          >
+            {navItems.map((item) => {
+              const isActive = view === item.key;
+              return (
               <button
                 key={item.key}
                 onClick={() => handleNavClick(item.key)}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  view === item.key
-                    ? "text-white"
-                    : "text-foreground hover:bg-background"
-                }`}
+                className="relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                style={{
+                  color: isActive ? theme.nav.activeText : theme.header.text,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = theme.header.bg;
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+                }}
               >
-                {view === item.key && (
+                {isActive && (
                   <motion.div
                     layoutId="nav-active-desktop"
-                    className="absolute inset-0 bg-primary rounded-full shadow-sm"
-                    style={{ zIndex: -1 }}
+                    className="absolute inset-0 rounded-full shadow-sm"
+                    style={{ backgroundColor: theme.nav.active, zIndex: -1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
                 <item.icon className="h-4 w-4 relative z-10" />
                 <span className="relative z-10">{item.label}</span>
                 {item.key === "admin" && !adminUnlocked && (
-                  <svg className="h-3 w-3 text-primary relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <svg className="h-3 w-3 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: theme.accent }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 )}
               </button>
-            ))}
+              );
+            })}
           </nav>
 
-          {/* التنقل - الجوال (أيقونات واضحة) */}
-          <nav className="flex md:hidden items-center gap-1 bg-muted/60 rounded-full p-1 shrink-0">
-            {navItems.filter((item) => !item.desktopOnly).map((item) => (
-              <button
-                key={item.key}
-                onClick={() => handleNavClick(item.key)}
-                className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
-                  view === item.key
-                    ? "text-white"
-                    : "text-foreground hover:bg-background"
-                }`}
-                aria-label={item.label}
-              >
-                {view === item.key && (
-                  <motion.div
-                    layoutId="nav-active-mobile"
-                    className="absolute inset-0 bg-primary rounded-full"
-                    style={{ zIndex: -1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <item.icon className="h-4 w-4 relative z-10" />
-                {item.key === "admin" && !adminUnlocked && (
-                  <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-primary rounded-full" />
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* زر مشاركة المتجر */}
-          <button
-            onClick={() => {
-              const url = window.location.origin + window.location.pathname;
-              if (navigator.share) {
-                navigator.share({ title: shopName, url });
-              } else {
-                navigator.clipboard.writeText(url).then(() => toast.success("تم نسخ الرابط", { description: "شاركه مع أصدقائك" }));
-              }
-            }}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-lg hover:bg-primary/10 transition-colors"
-            title="مشاركة رابط المتجر"
-          >
-            <Share2 className="h-4 w-4" />
-            <span>مشاركة</span>
-          </button>
-
-          {/* زر التبديل بين الوضعين */}
-          {hasFeature("darkMode") && (
+          {/* الأزرار الجانبية: تبديل الثيم + زر الطلب السريع */}
           <div className="flex items-center gap-1.5 shrink-0">
             <ThemeToggle />
+            <button
+              onClick={() => handleNavClick("new")}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{
+                backgroundColor: theme.fab.bg,
+                color: theme.fab.icon,
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>طلب سريع</span>
+            </button>
           </div>
-          )}
+          </div>
         </div>
       </header>
 
       {/* ===== المحتوى ===== */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col pb-20 md:pb-0">
         <div className="flex-1 py-4 md:py-8">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full">
             {/* Welcome message */}
@@ -421,15 +506,32 @@ export function AppShell() {
           </div>
         </div>
 
-        {/* ===== التذييل (يختفي في قسم الإدارة) ===== */}
+        {/* ===== التذييل (يختفي في قسم الإدارة) — يستخدم ألوان ثيم المتجر ===== */}
         {view !== "admin" && (
-        <footer className="bg-neutral-900 text-neutral-300 mt-auto no-print">
-          {/* خط فاصل متدرّج */}
-          <div className="h-px bg-gradient-to-l from-primary/50 via-border to-primary/50" />
+        <footer
+          className="mt-auto no-print"
+          style={{
+            backgroundColor: theme.footer.bg,
+            color: theme.footer.text,
+            borderTopColor: theme.footer.border,
+          }}
+        >
+          {/* خط فاصل متدرّج بلون الثيم */}
+          <div
+            className="h-[2px] w-full"
+            style={{
+              background: `linear-gradient(90deg, ${theme.accent}00 0%, ${theme.accent} 50%, ${theme.accent}00 100%)`,
+              opacity: 0.5,
+            }}
+          />
           {/* زر الطي/الفتح - يظهر فقط على الجوال */}
           <button
             onClick={() => setFooterOpen(!footerOpen)}
-            className="md:hidden w-full flex items-center justify-center gap-2 min-h-[44px] px-4 text-xs text-neutral-400 hover:text-primary transition-colors border-b border-neutral-800/60 active:bg-neutral-800/50"
+            className="md:hidden w-full flex items-center justify-center gap-2 min-h-[44px] px-4 text-xs transition-colors border-b active:bg-black/20"
+            style={{
+              color: theme.footer.text,
+              borderColor: theme.footer.border,
+            }}
             aria-expanded={footerOpen}
             aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}
           >
@@ -592,6 +694,56 @@ export function AppShell() {
 
       {/* الزر العائم: واتساب + مساعد ذكي */}
       <FloatingAssistant onRepeatOrder={() => setView("repeat")} />
+
+      {/* ===== شريط التنقل السفلي للجوال (ثيم المتجر) ===== */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 no-print border-t backdrop-blur-lg"
+        style={{
+          backgroundColor: theme.header.bg + "f5",
+          borderColor: theme.header.border,
+        }}
+      >
+        <div className="flex items-center justify-around px-1 py-1.5 safe-area-pb">
+          {navItems.filter((item) => !item.desktopOnly).map((item) => {
+            const isActive = view === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => handleNavClick(item.key)}
+                className="relative flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg min-w-[56px] transition-all"
+                style={{ color: isActive ? theme.accent : theme.header.text }}
+                aria-label={item.label}
+              >
+                <div
+                  className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300"
+                  style={{
+                    backgroundColor: isActive ? theme.accent + "20" : "transparent",
+                  }}
+                >
+                  <item.icon
+                    className="h-5 w-5 transition-transform"
+                    style={{
+                      transform: isActive ? "scale(1.1)" : "scale(1)",
+                    }}
+                  />
+                  {item.key === "admin" && !adminUnlocked && (
+                    <span
+                      className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
+                      style={{ backgroundColor: theme.accent }}
+                    />
+                  )}
+                </div>
+                <span
+                  className="text-[10px] font-medium leading-none"
+                  style={{ opacity: isActive ? 1 : 0.7 }}
+                >
+                  {item.shortLabel}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       </div>
     </LayoutGroup>

@@ -6,6 +6,7 @@
  * - تحويل libsql:// إلى https:// لإجبار HTTP mode (بدون WebSocket)
  * - اتصال واحد قابل لإعادة الاستخدام
  * - معاملات positional فقط
+ * - يدعم SQLite المحلي تلقائياً عند غياب TURSO_DATABASE_URL
  */
 import { createClient, type Client } from "@libsql/client";
 
@@ -17,18 +18,27 @@ function getTursoClient(): Client {
   const rawUrl = process.env.TURSO_DATABASE_URL;
   const token = process.env.TURSO_AUTH_TOKEN;
 
-  if (!rawUrl) {
-    throw new Error("TURSO_DATABASE_URL not set");
+  // 1) إذا وُجدت إعدادات Turso — استخدمها (الإنتاج على Vercel)
+  if (rawUrl) {
+    // تحويل libsql:// إلى https:// لإجبار HTTP mode (أسرع على Vercel serverless)
+    // libsql:// يحاول WebSocket أولاً مما يسبب تأخير كبير على Vercel
+    const url = rawUrl.startsWith("libsql://")
+      ? rawUrl.replace("libsql://", "https://")
+      : rawUrl;
+
+    _client = createClient({ url, authToken: token });
+    return _client;
   }
 
-  // تحويل libsql:// إلى https:// لإجبار HTTP mode (أسرع على Vercel serverless)
-  // libsql:// يحاول WebSocket أولاً مما يسبب تأخير كبير على Vercel
-  const url = rawUrl.startsWith("libsql://")
-    ? rawUrl.replace("libsql://", "https://")
-    : rawUrl;
+  // 2) fallback إلى SQLite المحلي (التطوير المحلي بدون Turso)
+  const localUrl = process.env.DATABASE_URL;
+  if (localUrl) {
+    // Prisma تستخدم file: prefix — @libsql/client يتوقع file: أيضاً
+    _client = createClient({ url: localUrl });
+    return _client;
+  }
 
-  _client = createClient({ url, authToken: token });
-  return _client;
+  throw new Error("No database configured: set TURSO_DATABASE_URL or DATABASE_URL");
 }
 
 /** تحويل BigInt إلى Number */

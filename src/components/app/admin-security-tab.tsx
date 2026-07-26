@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDateTimeAr } from "@/lib/print-config";
 import type { TeamMember } from "@/lib/admin-types";
+import { markAuthenticated, clearSession, clearVerifyCache } from "@/lib/admin-utils";
 
 export function SecurityTab() {
   const [isDefaultPwd, setIsDefaultPwd] = useState(true);
@@ -93,7 +94,9 @@ export function SecurityTab() {
           if (authRes.ok) {
             const authData = await authRes.json();
             if (authData.success && authData.token) {
-              localStorage.setItem("sa_auth", JSON.stringify({ ts: authData.ts || Date.now(), token: authData.token }));
+              // امسح كاش التحقق القديم ثم احفظ الجلسة الجديدة
+              clearVerifyCache();
+              markAuthenticated(authData.token, authData.ts);
             }
           }
         } catch { /* تجديد الجلسة فشل — المستخدم سيعيد تسجيل الدخول */ }
@@ -152,7 +155,7 @@ export function SecurityTab() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("sa_auth");
+    clearSession();
     window.location.reload();
   }
 

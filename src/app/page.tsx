@@ -151,7 +151,11 @@ export default function SuperAdminPage() {
 
     setAuthenticated(true); // عرض الواجهة فوراً
 
-    // تشغيل verifySession و loadAll بالتوازي (لا ننتظر التحقق)
+    // تحميل البيانات أولاً (الأهم — يظهر المحتوى فوراً من الكاش)
+    loadAll();
+
+    // التحقق من الجلسة بالتوازي (يستخدم كاش sessionStorage لمدة 5 دقائق)
+    // لا يُعطّل الواجهة أبداً — لو فشل الشبكة يبقى المستخدم يعمل
     verifySession().then(({ valid, adminName: name }) => {
       if (name) setAdminName(name);
       if (!valid) {
@@ -159,8 +163,6 @@ export default function SuperAdminPage() {
         setAuthenticated(false);
       }
     });
-
-    loadAll();
   }, []);
 
   const filteredOrders = useMemo(() => {

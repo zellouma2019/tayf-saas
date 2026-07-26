@@ -213,7 +213,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               <div className="flex-1">
                 <div className="text-xs text-muted-foreground">الوقت المتوقع للتسليم</div>
                 <div className="font-bold text-gold-400">
-                  {order.estimatedHours} {order.estimatedHours === 1 ? "ساعة" : "ساعة"}
+                  {order.estimatedHours} {order.estimatedHours === 1 ? "ساعة" : order.estimatedHours === 2 ? "ساعتان" : "ساعات"}
                 </div>
               </div>
               <div className="text-xs text-gold-500 text-left">

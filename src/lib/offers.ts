@@ -175,6 +175,86 @@ export function selectOffer(
 }
 
 /**
+ * واجهة نتيجة تطبيق كود العرض
+ */
+export interface OfferApplyResult {
+  valid: boolean;
+  pricing?: {
+    total: number;
+    discount: number;
+    appliedOfferNote?: string;
+  };
+  offer?: Offer;
+  reason?: string;
+}
+
+/**
+ * تطبيق كود عرض على سعر مُحتسب — يُستدعى من الخادم للتحقق الصارم.
+ * يعيد حساب الخصم بناءً على العرض الفعلي (لا يثق بقيمة العميل).
+ */
+export function applyOfferCode(
+  code: string,
+  serviceType: string,
+  pages: number,
+  copies: number,
+  pricing: { total: number; discount?: number; finishingCost?: number; bindingCost?: number },
+): OfferApplyResult {
+  if (!code || typeof code !== "string") {
+    return { valid: false, reason: "كود فارغ" };
+  }
+
+  // ابحث عن العرض بالكود (مطابقة حالة الأحرف)
+  const offer = OFFERS.find((o) => o.code.toUpperCase() === code.toUpperCase());
+  if (!offer) {
+    return { valid: false, reason: "كود غير صالح" };
+  }
+
+  // تحقق من أن العرض يطبّق على نوع الخدمة
+  if (!offer.appliesTo.includes(serviceType)) {
+    return { valid: false, reason: "العرض لا يطبّق على هذه الخدمة", offer };
+  }
+
+  // تحقق من الشروط الإضافية
+  if (offer.minPages && pages < offer.minPages) {
+    return { valid: false, reason: `يتطلب ${offer.minPages} صفحة على الأقل`, offer };
+  }
+  if (offer.minCopies && copies < offer.minCopies) {
+    return { valid: false, reason: `يتطلب ${offer.minCopies} نسخة على الأقل`, offer };
+  }
+
+  // احسب الخصم
+  let discountAmount = 0;
+  let note = "";
+
+  if (offer.discountPercent) {
+    discountAmount = Math.round((pricing.total * offer.discountPercent) / 100);
+    note = `${offer.discountPercent}% خصم`;
+  }
+
+  if (offer.freeService) {
+    note = offer.freeService;
+    // خصم قيمة الخدمة المجانية (تجليد/تغليف)
+    if (offer.freeService.includes("تجليد") && pricing.bindingCost) {
+      discountAmount += pricing.bindingCost;
+    } else if (offer.freeService.includes("تغليف") && pricing.finishingCost) {
+      discountAmount += pricing.finishingCost;
+    }
+  }
+
+  const newTotal = Math.max(0, pricing.total - discountAmount);
+
+  return {
+    valid: true,
+    offer,
+    pricing: {
+      total: newTotal,
+      discount: (pricing.discount || 0) + discountAmount,
+      appliedOfferNote: note,
+    },
+  };
+}
+
+/**
  * ألوان الثيمات للعروض
  */
 export const OFFER_THEMES: Record<string, {

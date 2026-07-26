@@ -33,15 +33,91 @@ export function isAuthenticated(): boolean {
   }
 }
 
-/** التحقق من الجلسة مع الخادم (يُستدعى عند تحميل الصفحة) — يُرجع { valid, adminName } */
-export async function verifySession(): Promise<{ valid: boolean; adminName?: string }> {
-  if (typeof window === "undefined") return { valid: false };
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return { valid: false };
-    const { ts, token } = JSON.parse(raw);
-    if (!token) return { valid: false };
+// التحقق من الجلسة يُخزَّن مؤقتاً لمدة 5 دقائق في sessionStorage
+// لتجنّب إعادة التحقق على كل تحديث للصفحة (تسريع التحميل)
+const VERIFY_CACHE_KEY = "sa_verify_cache";
+const VERIFY_CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
 
+interface VerifyCache {
+  valid: boolean;
+  adminName?: string;
+  cachedAt: number;
+}
+
+function getCachedVerify(): VerifyCache | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(VERIFY_CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw) as VerifyCache;
+    if (Date.now() - c.cachedAt > VERIFY_CACHE_TTL) return null;
+    return c;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedVerify(valid: boolean, adminName?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(
+      VERIFY_CACHE_KEY,
+      JSON.stringify({ valid, adminName, cachedAt: Date.now() } as VerifyCache)
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+/** مسح كاش التحقق (يُستدعى بعد تغيير كلمة المرور أو تسجيل الخروج) */
+export function clearVerifyCache() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(VERIFY_CACHE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * التحقق من الجلسة مع الخادم — يُرجع { valid, adminName }.
+ * يستخدم كاش sessionStorage لمدة 5 دقائق لتجنّب الطلبات المتكررة على كل تحديث.
+ * مرر `force: true` لتجاوز الكاش (بعد تغيير كلمة المرور مثلاً).
+ */
+export async function verifySession(force = false): Promise<{ valid: boolean; adminName?: string }> {
+  if (typeof window === "undefined") return { valid: false };
+
+  // 1) تحقق سريع من localStorage أولاً — إن لم توجد جلسة لا داعي للشبكة
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return { valid: false };
+  let token: string | undefined;
+  let ts: number | undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    token = parsed.token;
+    ts = parsed.ts;
+  } catch {
+    return { valid: false };
+  }
+  if (!token) return { valid: false };
+
+  // 2) تحقق من صلاحية الجلسة محلياً (4 ساعات) قبل أي طلب شبكة
+  if (Date.now() - (ts || 0) > SESSION_HOURS * 60 * 60 * 1000) {
+    localStorage.removeItem(SESSION_KEY);
+    clearVerifyCache();
+    return { valid: false };
+  }
+
+  // 3) استخدم الكاش إن وُجد وغير منتهٍ (تسريع التحميل < 1 ثانية)
+  if (!force) {
+    const cached = getCachedVerify();
+    if (cached) {
+      return { valid: cached.valid, adminName: cached.adminName };
+    }
+  }
+
+  // 4) اطلب التحقق من الخادم
+  try {
     const res = await fetch("/api/super-admin/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,8 +125,11 @@ export async function verifySession(): Promise<{ valid: boolean; adminName?: str
     });
     if (res.ok) {
       const data = await res.json();
-      return { valid: data.valid === true, adminName: data.adminName };
+      const valid = data.valid === true;
+      setCachedVerify(valid, data.adminName);
+      return { valid, adminName: data.adminName };
     }
+    setCachedVerify(false);
     return { valid: false };
   } catch {
     // في حالة فشل الشبكة، نسمح بالوصول مؤقتاً (التحقق السابق يكفي)
@@ -65,6 +144,7 @@ export function markAuthenticated(token: string, ts?: number) {
 /** مسح الجلسة */
 export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
+  clearVerifyCache();
 }
 
 // طلبات بسيطة بدون مفتاح (بعد التحقق من الجلسة)
