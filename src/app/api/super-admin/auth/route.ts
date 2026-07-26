@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRateLimit } from "@/lib/rate-limit";
-import { ensureSuperAdmin } from "@/lib/db-migrations";
+import { getSuperAdmin } from "@/lib/db-migrations";
 
 const APP_SECRET = "tayf_admin_session_2025";
 
@@ -22,26 +22,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "كلمة المرور مطلوبة" }, { status: 400 });
     }
 
-    // استخدم turso-lite السريع (بدل Prisma البطيء على Vercel)
-    const admin = await ensureSuperAdmin();
+    // استخدم turso-lite السريع
+    const admin = await getSuperAdmin({ id: true, key: true, password: true, name: true }) as
+      | { id: string; key: string; password: string; name?: string }
+      | null;
 
     const isFirstTime = !admin || !admin.password || admin.password === "Admin@2026";
+    const adminPassword = admin?.password || "Admin@2026";
 
     if (isFirstTime) {
       const ts = Date.now();
-      const token = await simpleHash(`${admin?.password || "Admin@2026"}:${ts}:${APP_SECRET}`);
+      const token = await simpleHash(`${adminPassword}:${ts}:${APP_SECRET}`);
       return NextResponse.json({ success: true, isFirstTime: true, ts, token });
     }
 
-    if (admin!.password === password) {
+    if (adminPassword === password) {
       const ts = Date.now();
       const token = await simpleHash(`${password}:${ts}:${APP_SECRET}`);
-      return NextResponse.json({ success: true, isFirstTime: false, ts, token });
+      return NextResponse.json({ success: true, isFirstTime: false, ts, token, adminName: admin?.name });
     }
 
     return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 401 });
   } catch (e) {
     console.error("[super-admin/auth/POST]", e);
-    return NextResponse.json({ error: "خطأ في التحقق", detail: e instanceof Error ? e.message : String(e) }, { status: 500 });
+    return NextResponse.json(
+      { error: "خطأ في التحقق", detail: e instanceof Error ? e.message : String(e) },
+      { status: 500 }
+    );
   }
 }
