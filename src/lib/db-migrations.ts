@@ -5,40 +5,51 @@
  * turso-lite forces HTTPS mode (no WebSocket) → 10x faster on Vercel serverless.
  * Uses SQLite positional params (?) — NOT PostgreSQL ($1).
  */
-import { tursoQuery, tursoQueries, safeJson } from '@/lib/turso-lite'
+import { tursoQuery } from '@/lib/turso-lite'
 
 let migrationsRan = false
+let migrationsPromise: Promise<void> | null = null
 
 /**
  * Self-migration — runs ALTER TABLE for any missing columns (idempotent).
  * Failures (column already exists) are silently ignored.
+ * Deduplicated: only runs once per cold start.
  */
 export async function runMigrations(): Promise<void> {
   if (migrationsRan) return
-  try {
-    await Promise.allSettled([
-      tursoQuery(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`).catch(() => {}),
-      tursoQuery(`ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]'`).catch(() => {}),
-      tursoQuery(`ALTER TABLE "SuperAdmin" ADD COLUMN "name" TEXT NOT NULL DEFAULT 'مدير'`).catch(() => {}),
-      tursoQuery(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`).catch(() => {}),
-      tursoQuery(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`).catch(() => {}),
-    ])
-    migrationsRan = true
-  } catch (e) {
-    console.warn('[migration] Failed:', e)
-  }
+  if (migrationsPromise) return migrationsPromise
+
+  migrationsPromise = (async () => {
+    try {
+      await Promise.allSettled([
+        tursoQuery(`ALTER TABLE "SuperAdmin" ADD COLUMN "platformSettings" TEXT NOT NULL DEFAULT '{}'`),
+        tursoQuery(`ALTER TABLE "SuperAdmin" ADD COLUMN "teamMembers" TEXT NOT NULL DEFAULT '[]'`),
+        tursoQuery(`ALTER TABLE "SuperAdmin" ADD COLUMN "name" TEXT NOT NULL DEFAULT 'مدير'`),
+        tursoQuery(`ALTER TABLE "Shop" ADD COLUMN "customCurrency" TEXT`),
+        tursoQuery(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`),
+      ])
+      migrationsRan = true
+    } catch (e) {
+      console.warn('[migration] Failed:', e)
+    } finally {
+      migrationsPromise = null
+    }
+  })()
+  return migrationsPromise
 }
 
 /**
  * Fetch the single SuperAdmin row. Returns only requested fields (or all by default).
- * Safely falls back if a requested column doesn't exist in the live DB (migration gap).
+ * Runs migrations first to ensure all columns exist.
  */
 export async function getSuperAdmin(selectFields?: Record<string, boolean>) {
+  // Ensure columns exist before querying (idempotent, deduplicated)
+  await runMigrations()
+
   const requested = selectFields
     ? Object.keys(selectFields)
     : ['id', 'key', 'password', 'name', 'teamMembers', 'platformSettings']
 
-  // Try with all requested columns first
   const cols = requested.map((k) => `"${k}"`).join(', ')
   let rows: Record<string, unknown>[] = []
   try {
@@ -46,9 +57,7 @@ export async function getSuperAdmin(selectFields?: Record<string, boolean>) {
       `SELECT ${cols} FROM "SuperAdmin" WHERE key = 'main' LIMIT 1`
     )
   } catch {
-    // A requested column doesn't exist in the live DB — fall back to safe core columns
-    // and run migration to add missing columns for next time.
-    runMigrations().catch(() => {})
+    // Migration didn't add the column (edge case) — fall back to core columns
     try {
       rows = await tursoQuery<Record<string, unknown>>(
         `SELECT id, key, password FROM "SuperAdmin" WHERE key = 'main' LIMIT 1`
@@ -60,15 +69,8 @@ export async function getSuperAdmin(selectFields?: Record<string, boolean>) {
   const row = rows[0]
   if (!row) return null
 
-  // Parse JSON columns if present
-  if (row.teamMembers && typeof row.teamMembers === 'string') {
-    row.teamMembers = safeJson(row.teamMembers as string, [])
-  }
-  if (row.platformSettings && typeof row.platformSettings === 'string') {
-    row.platformSettings = safeJson(row.platformSettings as string, {})
-  }
-  // Default name if column missing
-  if (!('name' in row)) row.name = 'مدير'
+  // Return JSON columns as raw strings (consumers parse them).
+  // This matches Prisma's behavior and avoids double-parsing bugs.
   return row as never
 }
 
@@ -76,6 +78,7 @@ export async function getSuperAdmin(selectFields?: Record<string, boolean>) {
  * Create the SuperAdmin row with defaults. Used on first setup.
  */
 export async function createSuperAdmin(data?: { password?: string; name?: string }) {
+  await runMigrations()
   const password = data?.password || 'Admin@2026'
   const name = data?.name || 'مدير'
   await tursoQuery(

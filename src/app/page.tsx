@@ -159,11 +159,17 @@ export default function SuperAdminPage() {
     await Promise.allSettled([loadStats(useCache), loadOrders()]);
   }, [loadStats, loadOrders]);
 
+  // عند Mount: تحقق سريع من الجلسة المحفوظة (عودة المستخدم)
   useEffect(() => {
     setMounted(true);
-    if (!isAuthenticated()) return;
+    if (isAuthenticated()) {
+      setAuthenticated(true);
+    }
+  }, []);
 
-    setAuthenticated(true); // عرض الواجهة فوراً
+  // عندما يصبح authenticated = true (بعد تسجيل الدخول أو العودة) — حمّل البيانات
+  useEffect(() => {
+    if (!authenticated) return;
 
     // 1) حمّل الإحصائيات أولاً (سريع ~600ms) — تظهر لوحة التحكم فوراً
     loadStats();
@@ -179,7 +185,7 @@ export default function SuperAdminPage() {
         setAuthenticated(false);
       }
     });
-  }, [loadStats, loadOrders]);
+  }, [authenticated, loadStats, loadOrders]);
 
   const filteredOrders = useMemo(() => {
     let list = allOrders;

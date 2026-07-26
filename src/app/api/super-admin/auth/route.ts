@@ -29,17 +29,18 @@ export async function POST(req: NextRequest) {
 
     const isFirstTime = !admin || !admin.password || admin.password === "Admin@2026";
     const adminPassword = admin?.password || "Admin@2026";
+    const adminName = (admin?.name as string) || "مدير";
 
     if (isFirstTime) {
       const ts = Date.now();
       const token = await simpleHash(`${adminPassword}:${ts}:${APP_SECRET}`);
-      return NextResponse.json({ success: true, isFirstTime: true, ts, token });
+      return NextResponse.json({ success: true, isFirstTime: true, ts, token, adminName });
     }
 
     if (adminPassword === password) {
       const ts = Date.now();
       const token = await simpleHash(`${password}:${ts}:${APP_SECRET}`);
-      return NextResponse.json({ success: true, isFirstTime: false, ts, token, adminName: admin?.name });
+      return NextResponse.json({ success: true, isFirstTime: false, ts, token, adminName });
     }
 
     return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 401 });

@@ -52,7 +52,8 @@ export async function GET(req: NextRequest) {
       ? { ...DEFAULT_PLATFORM_SETTINGS, ...JSON.parse(admin.platformSettings) }
       : DEFAULT_PLATFORM_SETTINGS;
     return NextResponse.json({ settings });
-  } catch {
+  } catch (e) {
+    console.error('[platform-settings/GET]', e);
     return NextResponse.json({ error: "خطأ في جلب الإعدادات" }, { status: 500 });
   }
 }
@@ -80,7 +81,8 @@ export async function PUT(req: NextRequest) {
 
     await updateSuperAdmin({ platformSettings: JSON.stringify(updated) });
     return NextResponse.json({ success: true, settings: updated });
-  } catch {
+  } catch (e) {
+    console.error('[platform-settings/PUT]', e);
     return NextResponse.json({ error: "خطأ في تحديث الإعدادات" }, { status: 500 });
   }
 }
