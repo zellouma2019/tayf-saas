@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 import fs from "fs";
 import path from "path";
@@ -292,6 +291,9 @@ export async function POST(req: NextRequest) {
     }
 
     const estimatedHours = estimateDeliveryHours(delivery.mode, pages, copies);
+
+    // استيراد Prisma فقط عند إنشاء الطلب (لا يُحمّل على استعلامات GET)
+    const { db } = await import("@/lib/db");
 
     let reference = generateReference();
     let exists = await db.printOrder.findUnique({ where: { reference } });
