@@ -251,14 +251,14 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
                                   📦 {Math.round(order.fileSize / 1024)} ك.ب
                                 </span>
                               ) : null}
-                              {order.fileData && (
+                              {order.fileName && (
                                 <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/30 text-emerald-700 dark:text-emerald-400 font-medium">
                                   ✓ متاح للتنزيل
                                 </span>
                               )}
                             </div>
                             <div className="flex gap-2 mt-2.5 flex-wrap">
-                              {order.fileData && (
+                              {order.fileName && (
                                 <Button
                                   size="sm"
                                   className="bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white h-8 text-xs"

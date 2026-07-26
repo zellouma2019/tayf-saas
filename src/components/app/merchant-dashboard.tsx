@@ -2384,10 +2384,39 @@ function MobileOrderCard({
   onToggleSelect?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { hasFeature } = useShop();
   const canDownloadFile = hasFeature("merchantFileDownload");
   const meta = STATUS_META[order.status];
   const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
+
+  // تنزيل الملف عبر fetch + blob (أكثر موثوقية من window.open الذي قد يحظره مانع النوافذ)
+  async function handleDownload(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/file?shopId=${shopId}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "فشل تنزيل الملف");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = order.fileName || `order-${order.reference}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("تم تنزيل الملف");
+    } catch (err) {
+      toast.error("تعذّر تنزيل الملف", { description: (err as Error).message });
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const statusBorderClass: Record<string, string> = {
     pending: "border-l-amber-400",
@@ -2468,11 +2497,12 @@ function MobileOrderCard({
                 {canDownloadFile ? (
                   <Button
                     size="sm"
-                    className="h-7 text-[11px] px-2.5 bg-gold-500 hover:bg-gold-600 text-white rounded-lg shrink-0 transition-all duration-200 active:scale-[0.97]"
-                    onClick={(e) => { e.stopPropagation(); window.open(`/api/orders/${order.id}/file?shopId=${shopId}`, "_blank"); }}
+                    className="h-7 text-[11px] px-2.5 bg-gold-500 hover:bg-gold-600 text-white rounded-lg shrink-0 transition-all duration-200 active:scale-[0.97] disabled:opacity-60"
+                    onClick={handleDownload}
+                    disabled={downloading}
                   >
-                    <Download className="h-3 w-3 ml-1" />
-                    تنزيل
+                    {downloading ? <RefreshCw className="h-3 w-3 ml-1 animate-spin" /> : <Download className="h-3 w-3 ml-1" />}
+                    {downloading ? "جارٍ..." : "تنزيل"}
                   </Button>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-2 py-0.5 rounded-full shrink-0">
