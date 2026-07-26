@@ -34,9 +34,10 @@ export async function GET(request: NextRequest) {
     const listArgs: unknown[] = shopId ? [shopId] : [];
 
     // 3 استعلامات موازية عبر turso-lite (HTTP mode مباشرة)
+    type StatsRow = Record<string, unknown>;
     const [statsRows, serviceAndStatusRows, recentOrders] = await Promise.all([
       // الاستعلام 1: إجمالي الإحصائيات في صف واحد
-      tursoQuery<Array<Record<string, unknown>>>(
+      tursoQuery<StatsRow>(
         `SELECT
           (SELECT COUNT(*) FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}) as total,
           (SELECT COUNT(*) FROM "PrintOrder" WHERE ${shopAndToday}) as today,
@@ -44,30 +45,30 @@ export async function GET(request: NextRequest) {
           (SELECT COALESCE(SUM(amount), 0) FROM "Expense" ${shopFilter ? `WHERE ${shopFilter}` : ""}) as expenses
         `,
         statsArgs
-      ).catch((e) => {
+      ).catch((e): StatsRow[] => {
         console.error("[admin/stats] stats subquery failed:", e);
         return [{ total: 0, today: 0, revenue: 0, expenses: 0 }];
       }),
 
       // الاستعلام 2: توزيع الحالات + أنواع الخدمات
-      tursoQuery<Array<Record<string, unknown>>>(
+      tursoQuery<StatsRow>(
         `SELECT status, "serviceType", COUNT(*) as count, COALESCE(SUM(total), 0) as revenue
          FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}
          GROUP BY status, "serviceType"`,
         listArgs
-      ).catch(() => []),
+      ).catch((): StatsRow[] => []),
 
       // الاستعلام 3: آخر الطلبات
-      tursoQuery<Array<Record<string, unknown>>>(
+      tursoQuery<StatsRow>(
         `SELECT id, reference, "serviceType", "serviceName", status, total, pages, copies,
                 "createdAt", "fileName", "fileType", options, customer, delivery, pricing, "adminNotes", tags
          FROM "PrintOrder" ${shopFilter ? `WHERE ${shopFilter}` : ""}
          ORDER BY "createdAt" DESC LIMIT 5`,
         listArgs
-      ).catch(() => []),
+      ).catch((): StatsRow[] => []),
     ]);
 
-    const stats = statsRows[0] || {};
+    const stats: StatsRow = statsRows[0] || {};
     const total = toNum(stats.total);
     const today = toNum(stats.today);
     const revenueSum = toNum(stats.revenue);
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     const statusMap: Record<string, number> = {};
     const serviceMap: Record<string, { count: number; revenue: number }> = {};
-    for (const row of serviceAndStatusRows) {
+    for (const row of serviceAndStatusRows as StatsRow[]) {
       const st = String(row.status);
       statusMap[st] = (statusMap[st] || 0) + toNum(row.count);
       const svc = String(row.serviceType);
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
       todayOrders: today,
       statusCounts: statusMap,
       serviceCounts: Object.entries(serviceMap).map(([serviceType, v]) => ({ serviceType, ...v })),
-      recentOrders: recentOrders.map((o) => ({
+      recentOrders: (recentOrders as StatsRow[]).map((o) => ({
         ...o,
         total: toNum(o.total),
         pages: toNum(o.pages),

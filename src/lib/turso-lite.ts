@@ -60,7 +60,7 @@ export async function tursoQuery<T = Record<string, unknown>>(
     const client = getTursoClient();
     // مهلة 12 ثانية — إذا تجاوزها، ننتقل إلى Prisma fallback
     const result = await Promise.race([
-      client.execute({ sql, args: args || [] }),
+      client.execute({ sql, args: (args || []) as never[] }),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("turso-lite timeout")), 12000)
       ),
@@ -89,7 +89,7 @@ export async function tursoQueries<T extends unknown[]>(
   const client = getTursoClient();
   return Promise.all(
     queries.map(async ({ sql, args }) => {
-      const result = await client.execute({ sql, args: args || [] });
+      const result = await client.execute({ sql, args: (args || []) as never[] });
       return result.rows as unknown as T;
     })
   );
