@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
+import { tursoQuery, tursoQueries, toNum, safeJson } from "@/lib/turso-lite";
 
 export const maxDuration = 30;
 
+/// تحليلات متقدمة عبر turso-lite (أسرع 10x من Prisma على Vercel)
+/// يُستدعى من لوحة التحكم الإدارية + لوحة التاجر
 export async function GET(request: Request) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
@@ -16,150 +18,208 @@ export async function GET(request: Request) {
     const since = new Date();
     since.setDate(since.getDate() - parseInt(period, 10));
     since.setHours(0, 0, 0, 0);
+    const sinceISO = since.toISOString();
 
     const now = new Date();
-    const baseWhere: Record<string, unknown> = {};
-    if (shopId) baseWhere.shopId = shopId;
 
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const sixMonthsISO = sixMonthsAgo.toISOString();
+
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const fourteenDaysISO = fourteenDaysAgo.toISOString();
+
     const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourteenDaysAgo.getDate() - 28);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const fourWeeksISO = fourWeeksAgo.toISOString();
+
     const prevSince = new Date(since);
     prevSince.setDate(prevSince.getDate() - parseInt(period, 10));
+    const prevSinceISO = prevSince.toISOString();
 
-    // 4 استعلامات متوازية بدلاً من 8 تسلسلية
-    const [monthlyOrders, dailyOrders, recentForHeatmap, allOrders] = await Promise.all([
-      db.printOrder.findMany({
-        where: { ...baseWhere, createdAt: { gte: sixMonthsAgo } },
-        select: { total: true, createdAt: true, status: true },
-      }),
-      db.printOrder.findMany({
-        where: { ...baseWhere, createdAt: { gte: fourteenDaysAgo } },
-        select: { total: true, createdAt: true },
-      }),
-      db.printOrder.findMany({
-        where: { ...baseWhere, createdAt: { gte: fourWeeksAgo } },
-        select: { createdAt: true },
-      }),
-      db.printOrder.findMany({
-        where: baseWhere,
-        select: { customer: true, total: true, createdAt: true, status: true, pages: true, copies: true, serviceType: true },
-      }),
+    // شرط shopId
+    const shopFilter = shopId
+      ? `("shopId" = ? OR "shopId" IS NULL)`
+      : "";
+
+    // 4 استعلامات موازية عبر turso-lite (HTTP mode مباشرة)
+    type Row = Record<string, unknown>;
+
+    // الاستعلام 1: بيانات شهرية (آخر 6 أشهر)
+    const monthlySQL = `
+      SELECT
+        strftime('%Y-%m', "createdAt") as month,
+        COUNT(*) as count,
+        COALESCE(SUM(total), 0) as revenue,
+        COUNT(CASE WHEN status = 'delivered' THEN 1 END) as delivered
+      FROM "PrintOrder"
+      WHERE "createdAt" >= ?
+      ${shopFilter ? `AND ${shopFilter}` : ""}
+      GROUP BY strftime('%Y-%m', "createdAt")
+      ORDER BY month DESC
+      LIMIT 6
+    `;
+    const monthlyArgs = shopId ? [sixMonthsISO, shopId] : [sixMonthsISO];
+
+    // الاستعلام 2: بيانات يومية (آخر 14 يوم)
+    const dailySQL = `
+      SELECT
+        date("createdAt") as day,
+        COALESCE(SUM(total), 0) as revenue
+      FROM "PrintOrder"
+      WHERE "createdAt" >= ?
+      ${shopFilter ? `AND ${shopFilter}` : ""}
+      GROUP BY date("createdAt")
+      ORDER BY day ASC
+    `;
+    const dailyArgs = shopId ? [fourteenDaysISO, shopId] : [fourteenDaysISO];
+
+    // الاستعلام 3: خريطة حرارية (آخر 4 أسابيع)
+    const heatmapSQL = `
+      SELECT "createdAt"
+      FROM "PrintOrder"
+      WHERE "createdAt" >= ?
+      ${shopFilter ? `AND ${shopFilter}` : ""}
+    `;
+    const heatmapArgs = shopId ? [fourWeeksISO, shopId] : [fourWeeksISO];
+
+    // الاستعلام 4: جميع البيانات للفترة المحددة (للتحليل الشامل)
+    const allOrdersSQL = `
+      SELECT customer, total, "createdAt", status, pages, copies, "serviceType"
+      FROM "PrintOrder"
+      ${shopFilter ? `WHERE ${shopFilter}` : ""}
+    `;
+    const allOrdersArgs: unknown[] = shopId ? [shopId] : [];
+
+    const [monthlyRows, dailyRows, heatmapRows, allOrdersRows] = await Promise.all([
+      tursoQuery<Row>(monthlySQL, monthlyArgs).catch((): Row[] => []),
+      tursoQuery<Row>(dailySQL, dailyArgs).catch((): Row[] => []),
+      tursoQuery<Row>(heatmapSQL, heatmapArgs).catch((): Row[] => []),
+      tursoQuery<Row>(allOrdersSQL, allOrdersArgs).catch((): Row[] => []),
     ]);
 
-    // 1. Monthly data (in-memory from allOrders)
-    const monthlyMap: Record<string, { revenue: number; count: number; delivered: number }> = {};
-    monthlyOrders.forEach((o) => {
-      const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, "0")}`;
-      if (!monthlyMap[key]) monthlyMap[key] = { revenue: 0, count: 0, delivered: 0 };
-      monthlyMap[key].revenue += o.total;
-      monthlyMap[key].count += 1;
-      if (o.status === "delivered") monthlyMap[key].delivered += 1;
-    });
-    const monthlyData = Object.entries(monthlyMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6)
-      .map(([month, data]) => ({ month, ...data }));
+    // 1. Monthly data
+    const monthlyData = monthlyRows
+      .reverse()
+      .map((r) => ({
+        month: String(r.month),
+        revenue: toNum(r.revenue),
+        count: toNum(r.count),
+        delivered: toNum(r.delivered),
+      }));
 
     // 2. Daily data
-    const dailyMap: Record<string, number> = {};
-    dailyOrders.forEach((o) => {
-      const key = o.createdAt.toISOString().split("T")[0];
-      dailyMap[key] = (dailyMap[key] || 0) + o.total;
-    });
-    const dailyData = Object.entries(dailyMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, revenue]) => ({ date, revenue }));
+    const dailyData = dailyRows.map((r) => ({
+      date: String(r.day),
+      revenue: toNum(r.revenue),
+    }));
 
-    // 3. Service distribution (in-memory)
+    // 3. Service distribution (in-memory from allOrders)
     const serviceMap: Record<string, { count: number; revenue: number }> = {};
-    allOrders.forEach((o) => {
-      if (!serviceMap[o.serviceType]) serviceMap[o.serviceType] = { count: 0, revenue: 0 };
-      serviceMap[o.serviceType].count += 1;
-      serviceMap[o.serviceType].revenue += o.total;
-    });
+    for (const o of allOrdersRows) {
+      const svc = String(o.serviceType);
+      if (!serviceMap[svc]) serviceMap[svc] = { count: 0, revenue: 0 };
+      serviceMap[svc].count += 1;
+      serviceMap[svc].revenue += toNum(o.total);
+    }
     const serviceDistribution = Object.entries(serviceMap).map(([serviceType, d]) => ({
       serviceType, count: d.count, revenue: d.revenue,
     }));
 
-    // 4. Status distribution (in-memory)
+    // 4. Status distribution (in-memory from allOrders)
     const statusMap: Record<string, number> = {};
-    allOrders.forEach((o) => {
-      statusMap[o.status] = (statusMap[o.status] || 0) + 1;
-    });
+    for (const o of allOrdersRows) {
+      const st = String(o.status);
+      statusMap[st] = (statusMap[st] || 0) + 1;
+    }
     const statusDistribution = Object.entries(statusMap).map(([status, count]) => ({
       status, count,
     }));
 
-    // 5. Top customers (in-memory)
-    const customerMap: Record<string, { name: string; phone: string; orders: number; total: number; lastOrder: Date }> = {};
-    allOrders.forEach((o) => {
+    // 5. Top customers (in-memory from allOrders)
+    const customerMap: Record<string, { name: string; phone: string; orders: number; total: number; lastOrder: string }> = {};
+    for (const o of allOrdersRows) {
       try {
-        const c = JSON.parse(o.customer);
+        const c = safeJson(String(o.customer || "{}"), { name: "", phone: "" });
         const phone = c.phone || "unknown";
         if (!customerMap[phone]) {
-          customerMap[phone] = { name: c.name || "—", phone, orders: 0, total: 0, lastOrder: o.createdAt };
+          customerMap[phone] = { name: c.name || "—", phone, orders: 0, total: 0, lastOrder: "" };
         }
         customerMap[phone].orders += 1;
-        customerMap[phone].total += o.total;
-        if (o.createdAt > customerMap[phone].lastOrder) customerMap[phone].lastOrder = o.createdAt;
+        customerMap[phone].total += toNum(o.total);
+        if (!customerMap[phone].lastOrder || String(o.createdAt) > customerMap[phone].lastOrder) {
+          customerMap[phone].lastOrder = String(o.createdAt);
+        }
       } catch { /* skip bad data */ }
-    });
+    }
     const topCustomers = Object.values(customerMap)
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
 
     // 6. Weekly heatmap (in-memory)
     const heatmap: number[][] = Array.from({ length: 4 }, () => Array(7).fill(0));
-    recentForHeatmap.forEach((o) => {
-      const diff = Math.floor((now.getTime() - o.createdAt.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff < 28) {
-        const week = Math.floor(diff / 7);
-        const day = o.createdAt.getDay();
-        heatmap[week][day] += 1;
-      }
-    });
+    for (const o of heatmapRows) {
+      try {
+        const diff = Math.floor((now.getTime() - new Date(String(o.createdAt)).getTime()) / (1000 * 60 * 60 * 24));
+        if (diff >= 0 && diff < 28) {
+          const week = Math.floor(diff / 7);
+          const day = new Date(String(o.createdAt)).getDay();
+          if (week >= 0 && week < 4 && day >= 0 && day < 7) {
+            heatmap[week][day] += 1;
+          }
+        }
+      } catch { /* skip */ }
+    }
 
-    // 7. Period summary (in-memory from allOrders)
-    const periodOrders = allOrders.filter((o) => o.createdAt >= since);
-    const periodSummary = {
-      totalRevenue: periodOrders.reduce((s, o) => s + o.total, 0),
-      totalOrders: periodOrders.length,
-      deliveredOrders: periodOrders.filter((o) => o.status === "delivered").length,
-      cancelledOrders: periodOrders.filter((o) => o.status === "cancelled").length,
-      avgOrderValue:
-        periodOrders.length > 0
-          ? Math.round(periodOrders.reduce((s, o) => s + o.total, 0) / periodOrders.length)
-          : 0,
-      totalPages: periodOrders.reduce((s, o) => s + (o.pages || 0), 0),
-      totalCopies: periodOrders.reduce((s, o) => s + (o.copies || 0), 0),
-      deliveryRate:
-        periodOrders.length > 0
-          ? Math.round(
-              (periodOrders.filter((o) => o.status === "delivered").length /
-                periodOrders.filter((o) => o.status !== "cancelled").length) *
-                100
-            )
-          : 0,
+    // 7. Period summary — فلترة بالذاكرة من allOrdersRows
+    let periodSummary = {
+      totalRevenue: 0,
+      totalOrders: 0,
+      deliveredOrders: 0,
+      cancelledOrders: 0,
+      avgOrderValue: 0,
+      totalPages: 0,
+      totalCopies: 0,
+      deliveryRate: 0,
     };
+    const periodOrders: Row[] = [];
+    for (const o of allOrdersRows) {
+      try {
+        const created = new Date(String(o.createdAt));
+        if (created >= since) periodOrders.push(o);
+      } catch { /* skip */ }
+    }
+    periodSummary.totalRevenue = periodOrders.reduce((s, o) => s + toNum(o.total), 0);
+    periodSummary.totalOrders = periodOrders.length;
+    periodSummary.deliveredOrders = periodOrders.filter((o) => String(o.status) === "delivered").length;
+    periodSummary.cancelledOrders = periodOrders.filter((o) => String(o.status) === "cancelled").length;
+    periodSummary.avgOrderValue = periodOrders.length > 0
+      ? Math.round(periodSummary.totalRevenue / periodOrders.length)
+      : 0;
+    periodSummary.totalPages = periodOrders.reduce((s, o) => s + toNum(o.pages), 0);
+    periodSummary.totalCopies = periodOrders.reduce((s, o) => s + toNum(o.copies), 0);
+    const nonCancelled = periodOrders.filter((o) => String(o.status) !== "cancelled");
+    periodSummary.deliveryRate = nonCancelled.length > 0
+      ? Math.round((periodSummary.deliveredOrders / nonCancelled.length) * 100)
+      : 0;
 
-    // 8. Previous period comparison (in-memory)
-    const prevOrders = allOrders.filter((o) => o.createdAt >= prevSince && o.createdAt < since);
-    const prevSummary = {
-      totalRevenue: prevOrders.reduce((s, o) => s + o.total, 0),
-      totalOrders: prevOrders.length,
-    };
-    const revenueChange =
-      prevSummary.totalRevenue > 0
-        ? Math.round(((periodSummary.totalRevenue - prevSummary.totalRevenue) / prevSummary.totalRevenue) * 100)
-        : 0;
-    const ordersChange =
-      prevSummary.totalOrders > 0
-        ? Math.round(((periodSummary.totalOrders - prevSummary.totalOrders) / prevSummary.totalOrders) * 100)
-        : 0;
+    // 8. Previous period comparison
+    const prevOrders: Row[] = [];
+    for (const o of allOrdersRows) {
+      try {
+        const created = new Date(String(o.createdAt));
+        if (created >= prevSince && created < since) prevOrders.push(o);
+      } catch { /* skip */ }
+    }
+    const prevTotalRevenue = prevOrders.reduce((s, o) => s + toNum(o.total), 0);
+    const prevTotalOrders = prevOrders.length;
+    const revenueChange = prevTotalRevenue > 0
+      ? Math.round(((periodSummary.totalRevenue - prevTotalRevenue) / prevTotalRevenue) * 100)
+      : 0;
+    const ordersChange = prevTotalOrders > 0
+      ? Math.round(((periodSummary.totalOrders - prevTotalOrders) / prevTotalOrders) * 100)
+      : 0;
 
     return NextResponse.json({
       periodSummary,

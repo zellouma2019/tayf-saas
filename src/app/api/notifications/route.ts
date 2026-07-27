@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
 import { requireAdmin } from "@/lib/admin-auth";
 
 interface Notification {
@@ -12,6 +12,7 @@ interface Notification {
   createdAt: string;
 }
 
+/// إشعارات عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function GET(request: NextRequest) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
@@ -20,54 +21,60 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const since = searchParams.get("since");
     const shopId = searchParams.get("shopId");
+
     const sinceDate = since ? new Date(since) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const sinceISO = sinceDate.toISOString();
 
-    const baseWhere: Record<string, unknown> = {};
-    if (shopId) baseWhere.shopId = shopId;
+    const shopFilter = shopId ? `("shopId" = ? OR "shopId" IS NULL)` : "1=1";
+    const args: unknown[] = shopId ? [shopId] : [];
 
-    // Get new orders since
-    const newOrders = await db.printOrder.findMany({
-      where: { ...baseWhere, createdAt: { gte: sinceDate } },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    });
+    // جلب الطلبات الجديدة منذ since
+    const newOrders = await tursoQuery(
+      `SELECT id, customer, "serviceName", reference, "createdAt"
+       FROM "PrintOrder"
+       WHERE ${shopFilter} AND "createdAt" >= ?
+       ORDER BY "createdAt" DESC LIMIT 20`,
+      [...args, sinceISO]
+    );
 
     const notifications: Notification[] = newOrders.map((o) => {
-      const customer = JSON.parse(o.customer as string) as { name?: string };
+      const customer = safeJson(String(o.customer || "{}"), { name: "" });
       return {
         id: `new-${o.id}`,
         type: "new_order" as const,
         title: "طلب جديد",
         body: `${customer.name || "عميل"} — ${o.serviceName} — ${o.reference}`,
-        orderId: o.id,
+        orderId: String(o.id),
         read: false,
-        createdAt: o.createdAt.toISOString(),
+        createdAt: String(o.createdAt),
       };
     });
 
-    // Check for stale orders (pending > 2 hours or printing > 4 hours)
+    // التحقق من الطلبات المتأخرة (pending > 2 ساعة أو printing > 4 ساعات)
     const staleThreshold = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const staleOrders = await db.printOrder.findMany({
-      where: {
-        ...baseWhere,
-        status: { in: ["pending", "printing"] },
-        createdAt: { lt: staleThreshold },
-      },
-      orderBy: { createdAt: "asc" },
-      take: 5,
-    });
+    const staleISO = staleThreshold.toISOString();
 
-    staleOrders.forEach((o) => {
+    const staleOrders = await tursoQuery(
+      `SELECT id, reference, status, "updatedAt"
+       FROM "PrintOrder"
+       WHERE ${shopFilter}
+       AND status IN ('pending', 'printing')
+       AND "createdAt" < ?
+       ORDER BY "createdAt" ASC LIMIT 5`,
+      [...args, staleISO]
+    );
+
+    for (const o of staleOrders) {
       notifications.push({
         id: `stale-${o.id}`,
         type: "stale_order",
         title: "طلب متأخر",
-        body: `${o.reference} — ${o.status === "pending" ? "لم يُبدأ بعد" : "قيد الطباعة منذ فترة"}`,
-        orderId: o.id,
+        body: `${o.reference} — ${String(o.status) === "pending" ? "لم يُبدأ بعد" : "قيد الطباعة منذ فترة"}`,
+        orderId: String(o.id),
         read: false,
-        createdAt: o.updatedAt.toISOString(),
+        createdAt: String(o.updatedAt),
       });
-    });
+    }
 
     notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 

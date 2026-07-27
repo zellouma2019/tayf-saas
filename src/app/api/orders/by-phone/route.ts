@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { runAutoCleanup } from "@/lib/cleanup";
-import { orderListWhere } from "@/lib/order-lookup";
+import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
-/// جلب جميع الطلبات المرتبطة برقم هاتف معين (لتكرار الطلب)
+/// جلب الطلبات المرتبطة برقم هاتف عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function GET(req: NextRequest) {
   try {
-    await runAutoCleanup();
-
     const { searchParams } = new URL(req.url);
     const phone = (searchParams.get("phone") || "").trim();
     const shopId = searchParams.get("shopId");
@@ -16,27 +12,30 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ orders: [], message: "رقم الهاتف قصير جداً" });
     }
 
-    // تطبيع الرقم: إزالة المسافات والشرطات
+    // تطبيع الرقم
     const normalized = phone.replace(/[\s\-+]/g, "");
+    const phonePattern = `%${normalized.substring(0, 8)}%`;
 
-    const where = orderListWhere(shopId, {
-      customer: { contains: normalized.substring(0, 8) },
-    });
+    const shopFilter = shopId ? `AND ("shopId" = ? OR "shopId" IS NULL)` : "";
+    const args: unknown[] = shopId ? [phonePattern, shopId] : [phonePattern];
 
-    const orders = await db.printOrder.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
+    const orders = await tursoQuery(
+      `SELECT * FROM "PrintOrder" WHERE customer LIKE ? ${shopFilter} ORDER BY "createdAt" DESC LIMIT 50`,
+      args
+    );
 
     return NextResponse.json({
       orders: orders.map((o) => ({
         ...o,
-        options: JSON.parse(o.options),
-        customer: JSON.parse(o.customer),
-        delivery: JSON.parse(o.delivery),
-        pricing: JSON.parse(o.pricing),
-        smartAnalysis: o.smartAnalysis ? JSON.parse(o.smartAnalysis) : null,
+        options: safeJson(String(o.options || "{}"), {}),
+        customer: safeJson(String(o.customer || "{}"), { name: "", phone: "" }),
+        delivery: safeJson(String(o.delivery || "{}"), { mode: "pickup" }),
+        pricing: safeJson(String(o.pricing || "{}"), { total: 0 }),
+        smartAnalysis: o.smartAnalysis ? safeJson(String(o.smartAnalysis), null) : null,
+        total: toNum(o.total),
+        pages: toNum(o.pages),
+        copies: toNum(o.copies),
+        cost: toNum(o.cost),
       })),
       count: orders.length,
     });

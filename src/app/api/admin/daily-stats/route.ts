@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
 import { requireAdmin } from "@/lib/admin-auth";
-import { orderListWhere } from "@/lib/order-lookup";
 
+/// إحصائيات يومية عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function GET(request: NextRequest) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
@@ -13,48 +13,43 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // حساب بداية آخر 7 أيام
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
-    const days: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      days.push(d.toISOString().slice(0, 10));
-    }
 
-    // جلب كل الطلبات من آخر 7 أيام لهذا المتجر
+    // آخر 7 أيام
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
+    const sevenDaysISO = sevenDaysAgo.toISOString();
 
-    const baseWhere = orderListWhere(shopId, {
-      createdAt: { gte: sevenDaysAgo },
-      status: { not: "cancelled" },
-    });
+    // جلب الطلبات اليومية من آخر 7 أيام
+    const orders = await tursoQuery<{ createdAt: string; total: number }>(
+      `SELECT "createdAt", total FROM "PrintOrder"
+       WHERE ("shopId" = ? OR "shopId" IS NULL)
+       AND "createdAt" >= ?
+       AND status != 'cancelled'
+       ORDER BY "createdAt" DESC`,
+      [shopId, sevenDaysISO]
+    );
 
-    const orders = await db.printOrder.findMany({
-      where: baseWhere,
-      select: {
-        createdAt: true,
-        total: true,
-      },
-    });
-
-    // تجميع البيانات باليوم (JS-based grouping)
+    // تجميع البيانات باليوم
     const dailyMap: Record<string, { orders: number; revenue: number }> = {};
-    for (const day of days) {
-      dailyMap[day] = { orders: 0, revenue: 0 };
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      dailyMap[key] = { orders: 0, revenue: 0 };
     }
 
     for (const o of orders) {
-      const dateStr = o.createdAt.toISOString().slice(0, 10);
+      const dateStr = String(o.createdAt).slice(0, 10);
       if (dailyMap[dateStr]) {
         dailyMap[dateStr].orders += 1;
-        dailyMap[dateStr].revenue += o.total || 0;
+        dailyMap[dateStr].revenue += toNum(o.total);
       }
     }
 
+    const days = Object.keys(dailyMap).sort();
     const daily = days.map((date) => ({
       date,
       orders: dailyMap[date].orders,

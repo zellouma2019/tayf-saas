@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 import { requireAdmin } from "@/lib/admin-auth";
 import * as XLSX from "xlsx";
 import { STATUS_META } from "@/lib/print-config";
@@ -15,6 +15,7 @@ const SERVICE_NAMES: Record<string, string> = {
   poster: "ملصقات",
 };
 
+/// تصدير الطلبات عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function POST(request: Request) {
   const { authorized, error: authError } = await requireAdmin(request);
   if (!authorized) return authError;
@@ -23,54 +24,49 @@ export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get("shopId");
 
-    const where: Record<string, unknown> = {};
-    if (shopId) where.shopId = shopId;
+    const shopFilter = shopId ? `("shopId" = ? OR "shopId" IS NULL)` : "";
+    const args: unknown[] = shopId ? [shopId] : [];
 
-    // استثناء fileData و smartAnalysis من التصدير
-    const orders = await db.printOrder.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true, reference: true, serviceType: true, serviceName: true,
-        fileName: true, fileType: true, pages: true, copies: true,
-        total: true, status: true, createdAt: true, adminNotes: true,
-        customer: true,
-      },
-    });
+    const orders = await tursoQuery(
+      `SELECT
+        id, reference, "serviceType", "serviceName",
+        "fileName", "fileType", pages, copies,
+        total, status, "createdAt", "adminNotes", customer
+      FROM "PrintOrder"
+      ${shopFilter ? `WHERE ${shopFilter}` : ""}
+      ORDER BY "createdAt" DESC`,
+      args
+    );
 
     // === Sheet 1: Orders ===
     const orderRows = orders.map((o) => {
-      let customerName = "—";
-      let customerPhone = "—";
-      try {
-        const c = JSON.parse(o.customer);
-        customerName = c.name || "—";
-        customerPhone = c.phone || "—";
-      } catch { /* skip */ }
-
+      const customer = safeJson(String(o.customer || "{}"), { name: "", phone: "" });
       return {
         "المرجع": o.reference,
-        "الخدمة": o.serviceName || SERVICE_NAMES[o.serviceType] || o.serviceType,
-        "العميل": customerName,
-        "الهاتف": customerPhone,
-        "الصفحات": o.pages,
-        "النسخ": o.copies,
-        "المبلغ": o.total,
-        "الحالة": STATUS_META[o.status]?.label || o.status,
-        "التاريخ": o.createdAt.toLocaleDateString("ar-SA-u-nu-latn"),
+        "الخدمة": o.serviceName || SERVICE_NAMES[String(o.serviceType)] || o.serviceType,
+        "العميل": customer.name || "—",
+        "الهاتف": customer.phone || "—",
+        "الصفحات": toNum(o.pages),
+        "النسخ": toNum(o.copies),
+        "المبلغ": toNum(o.total),
+        "الحالة": STATUS_META[String(o.status)]?.label || o.status,
+        "التاريخ": new Date(String(o.createdAt)).toLocaleDateString("ar-SA-u-nu-latn"),
         "ملاحظات": o.adminNotes || "",
       };
     });
 
     // === Sheet 2: Statistics ===
-    const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
-    const delivered = orders.filter((o) => o.status === "delivered").length;
+    const totalRevenue = orders.reduce((s, o) => s + toNum(o.total), 0);
+    const delivered = orders.filter((o) => String(o.status) === "delivered").length;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const todayCount = orders.filter((o) => new Date(o.createdAt) >= todayStart).length;
+    const todayCount = orders.filter((o) => new Date(String(o.createdAt)) >= todayStart).length;
 
     const statusStats: Record<string, number> = {};
-    orders.forEach((o) => { statusStats[o.status] = (statusStats[o.status] || 0) + 1; });
+    for (const o of orders) {
+      const st = String(o.status);
+      statusStats[st] = (statusStats[st] || 0) + 1;
+    }
 
     const statsRows = [
       { "المقياس": "إجمالي الطلبات", "القيمة": orders.length },

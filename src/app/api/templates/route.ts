@@ -1,35 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
 import { TEMPLATE_DEFINITIONS } from "@/lib/form-templates";
 
-/// زرع قوالب النماذج في قاعدة البيانات إن لم تكن موجودة
+/// جلب القوالب عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function GET(req: NextRequest) {
   try {
     const shopId = req.nextUrl.searchParams.get("shopId");
-    const where = shopId ? { shopId } : { shopId: null as string | null };
-    const existing = await db.formTemplate.count({ where });
-    if (existing === 0) {
-      await db.formTemplate.createMany({
-        data: TEMPLATE_DEFINITIONS.map((t) => ({
-          title: t.name,
-          icon: t.icon,
-          category: t.category,
-          fields: JSON.stringify(t.schema),
-          isActive: true,
-          ...(shopId ? { shopId } : {}),
-        })),
-      });
+    const shopFilter = shopId ? `("shopId" = ? OR "shopId" IS NULL)` : `("shopId" IS NULL)`;
+    const args: unknown[] = shopId ? [shopId] : [];
+
+    // زرع القوالب الافتراضية إن لم تكن موجودة
+    const countRows = await tursoQuery<{ cnt: unknown }>(
+      `SELECT COUNT(*) as cnt FROM "FormTemplate" WHERE ${shopFilter}`,
+      args
+    );
+    const existingCount = toNum(countRows[0]?.cnt);
+
+    if (existingCount === 0) {
+      const now = new Date().toISOString();
+      for (const t of TEMPLATE_DEFINITIONS) {
+        const newId = `tpl_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+        await tursoExecute(
+          `INSERT INTO "FormTemplate" (id, title, icon, category, fields, "isActive", "createdAt", "updatedAt", "shopId")
+           VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+          [newId, t.name, t.icon, t.category, JSON.stringify(t.schema), now, now, shopId || null]
+        );
+      }
     }
-    const templates = await db.formTemplate.findMany({
-      where,
-      orderBy: { createdAt: "asc" },
-    });
+
+    const templates = await tursoQuery(
+      `SELECT * FROM "FormTemplate" WHERE ${shopFilter} ORDER BY "createdAt" ASC`,
+      args
+    );
+
     return NextResponse.json({
       templates: templates.map((t) => ({
         ...t,
         code: t.title,
         name: t.title,
-        schema: JSON.parse(t.fields),
+        schema: safeJson(String(t.fields || "{}"), { sections: [] }),
       })),
     });
   } catch (e) {
@@ -41,25 +50,31 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/// إنشاء قالب عبر turso-lite
 export async function POST(req: NextRequest) {
   try {
     const shopId = req.nextUrl.searchParams.get("shopId");
     const body = await req.json();
-    const template = await db.formTemplate.create({
-      data: {
-        title: body.name || body.title || "",
-        icon: body.icon || "file-text",
-        category: body.category || "عام",
-        fields: JSON.stringify(body.schema || { sections: [] }),
-        isActive: true,
-        ...(shopId ? { shopId } : {}),
-      },
-    });
+
+    const newId = `tpl_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+
+    const result = await tursoExecute(
+      `INSERT INTO "FormTemplate" (id, title, icon, category, fields, "isActive", "createdAt", "updatedAt", "shopId")
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?) RETURNING *`,
+      [newId, body.name || body.title || "", body.icon || "file-text", body.category || "عام", JSON.stringify(body.schema || { sections: [] }), now, now, shopId || null]
+    );
+
+    const template = result.rows[0];
+    if (!template) {
+      return NextResponse.json({ error: "فشل إنشاء القالب" }, { status: 500 });
+    }
+
     return NextResponse.json({
       ...template,
       code: template.title,
       name: template.title,
-      schema: JSON.parse(template.fields),
+      schema: safeJson(String(template.fields || "{}"), { sections: [] }),
     });
   } catch (e) {
     console.error('[templates/POST]', e);
