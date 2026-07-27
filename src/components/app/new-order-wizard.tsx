@@ -59,6 +59,61 @@ import type { CreatedOrder } from "@/components/app/app-shell";
 import type { PrintOrderLite } from "@/lib/order-types";
 // FileAnalysisPanel replaced by UploadStep
 
+/* ═══════════════════════════════════════════════════════
+   Chunked Upload Helper
+   رفع الملفات الكبيرة (>4MB) على أجزاء لتجاوز حد Vercel
+   ═══════════════════════════════════════════════════════ */
+
+const CHUNK_SIZE = 900 * 1024; // 900 KB لكل جزء (أقل من حد البوابة)
+
+async function uploadFileInChunks(
+  file: File,
+  ext: string,
+  onProgress: (progress: number) => void,
+): Promise<{ storedFileName: string }> {
+  const fileId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+  onProgress(5);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk = file.slice(start, end);
+
+    const formData = new FormData();
+    formData.append("chunk", chunk, `chunk_${i}`);
+    formData.append("fileId", fileId);
+    formData.append("chunkIndex", i.toString());
+    formData.append("totalChunks", totalChunks.toString());
+    formData.append("fileName", file.name);
+    formData.append("fileSize", file.size.toString());
+    formData.append("fileExt", ext);
+
+    const res = await fetch("/api/orders/upload-chunk", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: "فشل رفع الجزء" }));
+      throw new Error(errData.error || `فشل رفع الجزء ${i + 1} من ${totalChunks}`);
+    }
+
+    const data = await res.json();
+
+    // تحديث التقدم: 5% + (نسبة الأجزاء المكتملة × 90%)
+    onProgress(5 + Math.round(((i + 1) / totalChunks) * 90));
+
+    if (data.complete && data.storedFileName) {
+      onProgress(100);
+      return { storedFileName: data.storedFileName };
+    }
+  }
+
+  throw new Error("لم يكتمل رفع الملف — يرجى المحاولة مرة أخرى");
+}
+
 interface NewOrderWizardProps {
   onCreated: (order: CreatedOrder) => void;
   /** طلب سابق للتعبئة المسبقة (لتكرار الطلب) */
@@ -80,7 +135,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   const [fileName, setFileName] = useState("");
   const [fileType, setFileType] = useState("");
   const [fileSize, setFileSize] = useState(0);
-  const [fileDataUrl, setFileDataUrl] = useState<string>(""); // اسم الملف المخزَّن على الخادم
+  const [fileDataUrl, setFileDataUrl] = useState<string>(""); // base64 data URL (ملفات ≤ 4MB)
+  const [storedFileName, setStoredFileName] = useState<string>(""); // اسم الملف المخزَّن (ملفات > 4MB عبر أجزاء)
   const [uploadProgress, setUploadProgress] = useState(0); // 0-100
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>("idle");
@@ -454,12 +510,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setUploadError(`صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: ${ACCEPTED.join(", ")}`);
       return;
     }
-    // التحقق من الحجم — حد أقصى 3 ميغا (Vercel body limit ~4.5MB بعد base64)
-    const MAX_FILE_SIZE = 3 * 1024 * 1024;
+    // التحقق من الحجم — حد أقصى 50 ميغا
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
     if (f.size > MAX_FILE_SIZE) {
       setAnalysisPhase("error");
       setUploadError(
-        `حجم الملف ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (${MAX_FILE_SIZE / (1024 * 1024)} ميغا). يرجى ضغط الملف أو تقسيمه قبل الرفع.`,
+        `حجم الملف ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (${MAX_FILE_SIZE / (1024 * 1024)} ميغا). يرجى ضغط الملف أو تقسيمه إلى أجزاء أصغر.`,
       );
       return;
     }
@@ -473,35 +529,42 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setFileType(ext.toUpperCase());
     setFileSize(f.size);
     setFileDataUrl("");
+    setStoredFileName("");
     setUploadError("");
 
-    // ─── المرحلة 1: رفع الملف (base64 مباشرة — بدون قرص) ───
-    // Vercel serverless لا يدعم نظام ملفات دائم، لذا نخزن الملف كـ data URL في الطلب نفسه.
-    // الرفع المباشر عبر /api/orders/upload يضمن ضغط JSON صحيح + نوع MIME.
+    // ─── المرحلة 1: رفع الملف ───
+    // ملفات ≤ 4 ميغا: base64 مباشرة في JSON body
+    // ملفات > 4 ميغا: رفع عبر أجزاء (chunks) لتجاوز حد Vercel
+    const CHUNK_THRESHOLD = 4 * 1024 * 1024; // 4 MB
     setAnalysisPhase("uploading");
     setUploadStatus("uploading");
     setUploadProgress(0);
 
     try {
-      // استراتيجية محسّنة: اقرأ الملف كـ base64 على العميل مباشرة (الأسرع والأكثر موثوقية)
-      // ثم أرسله في POST /api/orders كـ fileData. لا حاجة لطلب رفع منفصل.
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        // محاكاة تقدّم القراءة (قراءة الملف محلياً سريعة جداً)
-        reader.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress(Math.min(95, Math.round((e.loaded / e.total) * 95)));
-          }
-        };
-        reader.onload = () => {
-          setUploadProgress(100);
-          resolve(reader.result as string);
-        };
-        reader.onerror = () => reject(new Error("فشل قراءة الملف"));
-        reader.readAsDataURL(f);
-      });
-
-      setFileDataUrl(dataUrl);
+      if (f.size <= CHUNK_THRESHOLD) {
+        // استراتيجية سريعة: اقرأ الملف كـ base64 محلياً وأرسله في POST
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setUploadProgress(Math.min(95, Math.round((e.loaded / e.total) * 95)));
+            }
+          };
+          reader.onload = () => {
+            setUploadProgress(100);
+            resolve(reader.result as string);
+          };
+          reader.onerror = () => reject(new Error("فشل قراءة الملف"));
+          reader.readAsDataURL(f);
+        });
+        setFileDataUrl(dataUrl);
+        setStoredFileName("");
+      } else {
+        // استراتيجية الأجزاء: رفع الملف الكبير على دفعات
+        const result = await uploadFileInChunks(f, ext, setUploadProgress);
+        setStoredFileName(result.storedFileName);
+        setFileDataUrl("");
+      }
       setUploadStatus("done");
     } catch (uploadErr) {
       setAnalysisPhase("error");
@@ -609,7 +672,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           fileName: fileName || null,
           fileType: fileType || null,
           fileSize: fileSize || null,
+          // ملفات صغيرة: fileData كـ base64 | ملفات كبيرة: storedFileName من الرفع المجزأ
           fileData: fileDataUrl || null,
+          storedFileName: storedFileName || null,
           smartAnalysis: analysis
             ? {
                 detectedService: analysis.detectedService,
@@ -672,6 +737,10 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setStep(0);
       setServiceType(null);
       setFileName("");
+      setFileType("");
+      setFileSize(0);
+      setFileDataUrl("");
+      setStoredFileName("");
       setAnalysis(null);
       setAnalysisPhase("idle");
       setUploadError("");

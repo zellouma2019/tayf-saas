@@ -248,6 +248,7 @@ export async function POST(req: NextRequest) {
       fileType,
       fileSize,
       fileData,
+      storedFileName: bodyStoredFileName,
       smartAnalysis,
       options,
       customer,
@@ -256,6 +257,29 @@ export async function POST(req: NextRequest) {
       appliedOfferCode,
     } = body;
     const shopId = bodyShopId || req.nextUrl.searchParams.get("shopId");
+
+    // ─── معالجة الملف المرفوع عبر أجزاء ───
+    // إذا تم رفع الملف عبر chunks، اقرأه من القرص وحوّله إلى base64
+    let resolvedFileData = fileData || null;
+    if (!resolvedFileData && bodyStoredFileName) {
+      try {
+        const filePath = path.join(process.cwd(), "uploads", bodyStoredFileName);
+        if (fs.existsSync(filePath)) {
+          const buffer = fs.readFileSync(filePath);
+          const ext = bodyStoredFileName.split(".").pop()?.toLowerCase() || "";
+          const mimeMap: Record<string, string> = {
+            pdf: "application/pdf",
+            docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            jpg: "image/jpeg", jpeg: "image/jpeg",
+            png: "image/png", webp: "image/webp",
+          };
+          const mime = mimeMap[ext] || "application/octet-stream";
+          resolvedFileData = `data:${mime};base64,${buffer.toString("base64")}`;
+        }
+      } catch (readErr) {
+        console.warn("[orders/POST] Failed to read chunked file:", readErr);
+      }
+    }
 
     const service = SERVICE_MAP[serviceType as ServiceType];
     if (!service) {
@@ -336,7 +360,7 @@ export async function POST(req: NextRequest) {
         fileName || null,
         fileType || null,
         fileSize || null,
-        fileData || null,
+        resolvedFileData || null,
         smartAnalysis ? JSON.stringify(smartAnalysis) : null,
         JSON.stringify(options),
         JSON.stringify(customer),
@@ -367,7 +391,7 @@ export async function POST(req: NextRequest) {
           fileName: fileName || null,
           fileType: fileType || null,
           fileSize: fileSize || null,
-          fileData: fileData || null,
+          fileData: resolvedFileData || null,
           smartAnalysis: smartAnalysis ? JSON.stringify(smartAnalysis) : null,
           options: JSON.stringify(options),
           customer: JSON.stringify(customer),

@@ -68,7 +68,7 @@ export interface UploadStepProps {
    ═══════════════════════════════════════════════════════ */
 
 const ACCEPTED_TYPES = [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
-const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB (Vercel body limit ~4.5MB بعد base64)
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB (الملفات الكبيرة تُرفع عبر أجزاء)
 
 const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg: string; label: string }> = {
   PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/40", label: "PDF" },
@@ -343,7 +343,7 @@ export default function UploadStep({
       return `صيغة الملف "${ext}" غير مدعومة. الصيغ المدعومة: ${ACCEPTED_TYPES.join(", ")}`;
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `حجم الملف ${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (${MAX_FILE_SIZE / (1024 * 1024)} ميغا). يرجى ضغط الملف أو تقسيمه.`;
+      return `حجم الملف ${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (${MAX_FILE_SIZE / (1024 * 1024)} ميغا). يرجى ضغط الملف أو تقسيمه إلى أجزاء أصغر.`;
     }
     if (file.size === 0) {
       return "الملف فارغ — يرجى اختيار ملف آخر";
