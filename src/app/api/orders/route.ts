@@ -227,6 +227,11 @@ export async function GET(req: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    }, {
+      headers: {
+        // cache قصير على edge (3 ثواني) لتقليل ضغط Turso
+        "Cache-Control": "private, max-age=0, s-maxage=3",
+      },
     });
   } catch (e) {
     console.error('[orders/GET]', e);

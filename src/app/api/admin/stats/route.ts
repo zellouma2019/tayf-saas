@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
 // تجنب ISR caching — الرد ديناميكي دائماً
+// لكن نسمح بـ edge cache قصير (3 ثواني) لتقليل ضغط Turso
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -103,6 +104,11 @@ export async function GET(request: NextRequest) {
         delivery: safeJson(String(o.delivery || "{}"), {}),
         pricing: safeJson(String(o.pricing || "{}"), {}),
       })),
+    }, {
+      headers: {
+        // cache قصير على edge لتقليل ضغط Turso (3 ثواني)
+        "Cache-Control": "private, max-age=0, s-maxage=3",
+      },
     });
   } catch (e) {
     console.error("[admin/stats] fatal error:", e);

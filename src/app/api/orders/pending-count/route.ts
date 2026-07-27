@@ -20,7 +20,12 @@ export async function GET(req: NextRequest) {
       ["pending", shopId]
     );
 
-    return NextResponse.json({ count: toNum(rows[0]?.cnt) });
+    return NextResponse.json({ count: toNum(rows[0]?.cnt) }, {
+      headers: {
+        // cache قصير على edge (10 ثواني) — لا حاجة لتحديث فوري للعداد
+        "Cache-Control": "private, max-age=0, s-maxage=10",
+      },
+    });
   } catch (error) {
     console.error("pending-count error:", error);
     return NextResponse.json({ count: 0 });

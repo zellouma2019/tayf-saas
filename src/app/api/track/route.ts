@@ -75,6 +75,11 @@ export async function GET(req: NextRequest) {
         completedPrintingAt: o.completedPrintingAt,
         smartAnalysis: null,
       })),
+    }, {
+      headers: {
+        // cache على edge (5 ثواني) — تتبع الطلب لا يحتاج تحديث فوري
+        "Cache-Control": "private, max-age=0, s-maxage=5",
+      },
     });
   } catch (e) {
     console.error('[track]', e);
