@@ -3,14 +3,28 @@
  * أسرع من PrismaLibSQL على Vercel serverless (لا يُحمّل Prisma runtime)
  *
  * الاستراتيجية:
- * - استخدام نفس URL الخاص بـ PrismaLibSQL (libsql://) — يعمل بشكل موثوق
- * - اتصال واحد قابل لإعادة الاستخدام
+ * - تحويل libsql:// إلى https:// لإجبار HTTP mode (أسرع من WebSocket على Vercel)
+ * - اتصال واحد قابل لإعادة الاستخدام عبر module-level cache
  * - معاملات positional فقط
  * - يدعم SQLite المحلي تلقائياً عند غياب TURSO_DATABASE_URL
  */
 import { createClient, type Client } from "@libsql/client";
 
 let _client: Client | null = null;
+
+/**
+ * تحويل رابط Turso إلى HTTPS لإجبار HTTP mode
+ * - libsql://  → https://  (HTTP mode — أسرع وأكثر موثوقية على Vercel)
+ * - libsql+ws:// → wss://  (WebSocket — نتجنبه)
+ * - libsql+http:// → https:// (صريح)
+ * - file:// يبقى كما هو (SQLite محلي)
+ */
+function normalizeTursoUrl(url: string): string {
+  if (url.startsWith("libsql+ws://")) return url.replace("libsql+ws://", "wss://");
+  if (url.startsWith("libsql+http://")) return url.replace("libsql+http://", "https://");
+  if (url.startsWith("libsql://")) return url.replace("libsql://", "https://");
+  return url;
+}
 
 function getTursoClient(): Client {
   if (_client) return _client;
@@ -19,9 +33,15 @@ function getTursoClient(): Client {
   const token = process.env.TURSO_AUTH_TOKEN;
 
   // 1) إذا وُجدت إعدادات Turso — استخدمها (الإنتاج على Vercel)
-  // نستخدم libsql:// مباشرة (نفس ما يستخدمه PrismaLibSQL ويعمل بشكل موثوق)
+  // نحوّل libsql:// إلى https:// لإجبار HTTP mode (أسرع من WebSocket على Vercel)
   if (rawUrl) {
-    _client = createClient({ url: rawUrl, authToken: token });
+    const httpUrl = normalizeTursoUrl(rawUrl);
+    _client = createClient({
+      url: httpUrl,
+      authToken: token,
+      // إعدادات HTTP لتحسين الأداء على Vercel serverless
+      intMode: "number",
+    });
     return _client;
   }
 
