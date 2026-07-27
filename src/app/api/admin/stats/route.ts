@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     }, {
       headers: {
         // cache قصير على edge لتقليل ضغط Turso (3 ثواني)
-        "Cache-Control": "private, max-age=0, s-maxage=3",
+        "Cache-Control": "public, max-age=0, s-maxage=3",
       },
     });
   } catch (e) {

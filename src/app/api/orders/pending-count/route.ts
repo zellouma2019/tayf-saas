@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ count: toNum(rows[0]?.cnt) }, {
       headers: {
         // cache قصير على edge (10 ثواني) — لا حاجة لتحديث فوري للعداد
-        "Cache-Control": "private, max-age=0, s-maxage=10",
+        "Cache-Control": "public, max-age=0, s-maxage=10",
       },
     });
   } catch (error) {

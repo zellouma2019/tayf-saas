@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
     }, {
       headers: {
         // cache على edge (5 ثواني) — تتبع الطلب لا يحتاج تحديث فوري
-        "Cache-Control": "private, max-age=0, s-maxage=5",
+        "Cache-Control": "public, max-age=0, s-maxage=5",
       },
     });
   } catch (e) {
