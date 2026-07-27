@@ -55,6 +55,7 @@ import {
 } from "@/lib/option-translations";
 import { cn } from "@/lib/utils";
 import { PrintJobTicket } from "@/components/app/print-job-ticket";
+import { DirectPrintPreviewDialog } from "@/components/app/direct-print-preview-dialog";
 
 // ===== أنواع =====
 
@@ -117,8 +118,8 @@ export function MerchantOrderDetail({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [printingAction, setPrintingAction] = useState<"start" | "complete" | null>(null);
-  const [directPrintLoading, setDirectPrintLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showDirectPrintPreview, setShowDirectPrintPreview] = useState(false);
 
   // ===== حقول التعديل =====
   const [editName, setEditName] = useState("");
@@ -266,50 +267,10 @@ export function MerchantOrderDetail({
     }
   }
 
-  // ===== طباعة مباشرة =====
+  // ===== طباعة مباشرة — تفتح نافذة المعاينة والتحقق الذكي =====
   async function handleDirectPrint() {
     if (!order) return;
-    setDirectPrintLoading(true);
-    try {
-      // 1) Change status to "printing"
-      const printRes = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "printing" }),
-      });
-      if (!printRes.ok) {
-        const err = await printRes.json();
-        throw new Error(err.error || "فشل تحديث الحالة");
-      }
-
-      toast.success("بدأت الطباعة", {
-        description: `${order.reference} — جارٍ تنفيذ الطباعة`,
-      });
-      onStatusChange(order, "printing");
-      onUpdated();
-
-      // 2) Wait a tick for the DOM to settle, then trigger print
-      await new Promise((r) => setTimeout(r, 300));
-      window.print();
-
-      // 3) After print dialog closes, change to "ready"
-      const readyRes = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "ready" }),
-      });
-      if (readyRes.ok) {
-        toast.success("تمت الطباعة", {
-          description: `${order.reference} — جاهز للاستلام`,
-        });
-        onStatusChange(order, "ready");
-        onUpdated();
-      }
-    } catch (e) {
-      toast.error("خطأ في الطباعة المباشرة", { description: (e as Error).message });
-    } finally {
-      setDirectPrintLoading(false);
-    }
+    setShowDirectPrintPreview(true);
   }
 
   async function handleDelete() {
@@ -407,23 +368,38 @@ export function MerchantOrderDetail({
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl max-h-[92vh] overflow-y-auto custom-scroll bg-dark-50 border-dark-200/60 w-[calc(100%-1rem)] p-4 sm:p-6"
+        className="flex flex-col gap-0 p-0 rounded-none border-0 inset-0 top-0 left-0 translate-x-0 translate-y-0 h-[100dvh] w-full max-w-none sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-2xl sm:max-h-[92vh] sm:rounded-xl sm:border sm:border-dark-200/60 sm:h-auto overflow-hidden bg-dark-50"
         dir="rtl"
+        showCloseButton={false}
       >
-        <DialogHeader className="pb-2">
-          <DialogTitle className="flex items-center gap-2 text-lg text-dark-800">
-            <span className="text-xl">{serviceEmoji}</span>
-            <span className="font-mono">{order.reference}</span>
-            <span className="text-muted-foreground font-normal text-sm">— {order.serviceName}</span>
-          </DialogTitle>
-          <DialogDescription className="text-xs text-dark-500">
-            {formatDateTimeAr(order.createdAt)}
-          </DialogDescription>
-        </DialogHeader>
+        {/* ===== Header لاصق ===== */}
+        <div className="sticky top-0 z-30 flex items-center justify-between gap-2 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-dark-200/60 bg-dark-50/95 backdrop-blur-sm print-hide">
+          <div className="min-w-0 flex-1">
+            <DialogTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-lg text-dark-800">
+              <span className="text-base sm:text-xl">{serviceEmoji}</span>
+              <span className="font-mono">{order.reference}</span>
+              <span className="text-muted-foreground font-normal text-xs hidden sm:inline truncate">— {order.serviceName}</span>
+            </DialogTitle>
+            <DialogDescription className="text-[11px] sm:text-xs text-dark-500">
+              {formatDateTimeAr(order.createdAt)}
+            </DialogDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-lg hover:bg-dark-100"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <div className="space-y-4">
+        {/* ===== المحتوى القابل للتمرير ===== */}
+        <div className="flex-1 overflow-y-auto custom-scroll px-3 py-3 sm:px-5 sm:py-4">
+
+        <div className="space-y-3 sm:space-y-4">
           {/* ===== شريط الحالة + أزرار الطباعة ===== */}
-          <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <div className="flex items-center gap-2 flex-wrap mb-3">
               <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium", meta.bg)}>
                 {meta.emoji} {meta.label}
@@ -494,31 +470,24 @@ export function MerchantOrderDetail({
               </div>
             )}
 
-            {/* ===== طباعة مباشرة ===== */}
+            {/* ===== طباعة مباشرة — تفتح نافذة المعاينة والتحقق الذكي ===== */}
             {order.status !== "cancelled" && order.status !== "delivered" && (
               <div className="pt-2 mt-2 border-t border-dark-100">
                 {hasDirectPrinting ? (
                   <Button
                     size="sm"
                     onClick={handleDirectPrint}
-                    disabled={directPrintLoading || printingAction !== null}
+                    disabled={printingAction !== null}
                     className={cn(
-                      "h-10 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] gap-2",
+                      "h-10 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] gap-2 w-full sm:w-auto",
                       "bg-gradient-to-l from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md shadow-amber-200/60",
-                      directPrintLoading && "opacity-70 pointer-events-none",
+                      printingAction !== null && "opacity-70 pointer-events-none",
                     )}
                   >
-                    {directPrintLoading ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        جارٍ الطباعة...
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-4 w-4" />
-                        طباعة مباشرة
-                      </>
-                    )}
+                    <>
+                      <Zap className="h-4 w-4" />
+                      طباعة مباشرة مع معاينة وتحقق ذكي
+                    </>
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-dark-400">
@@ -535,7 +504,7 @@ export function MerchantOrderDetail({
 
           {/* ===== شريط تقدم الحالة ===== */}
           {order.status !== "cancelled" && (
-            <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 {STATUS_FLOW.map((step, idx) => {
                   const stepMeta = STATUS_META[step];
@@ -585,7 +554,7 @@ export function MerchantOrderDetail({
           )}
 
           {/* ===== معلومات العميل ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               معلومات العميل
             </h3>
@@ -640,7 +609,7 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== مواصفات الطباعة ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               مواصفات الطباعة
             </h3>
@@ -670,7 +639,7 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== الكميات والأسعار ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               الكميات والأسعار
             </h3>
@@ -749,7 +718,7 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== ملاحظات إدارية ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               ملاحظات إدارية
             </h3>
@@ -762,7 +731,7 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== الوسوم ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               <Tag className="h-3.5 w-3.5" />
               الوسوم
@@ -833,7 +802,7 @@ export function MerchantOrderDetail({
 
           {/* ===== معلومات الملف ===== */}
           {order.fileName && (
-            <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+            <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
                 الملف المرفق
               </h3>
@@ -865,7 +834,7 @@ export function MerchantOrderDetail({
           )}
 
           {/* ===== التسليم ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               التسليم
             </h3>
@@ -886,7 +855,7 @@ export function MerchantOrderDetail({
           </section>
 
           {/* ===== سجل التغييرات ===== */}
-          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+          <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <button
               type="button"
               className="flex items-center gap-2 w-full text-right"
@@ -984,14 +953,43 @@ export function MerchantOrderDetail({
             )}
           </section>
 
-          {/* ===== أزرار الحفظ والإجراءات ===== */}
-          <div className="flex items-center justify-between pt-2 border-t border-dark-200/60">
-            <div className="flex items-center gap-2">
+          {/* ===== أزرار الحفظ والإجراءات — في الفوتر اللاصق ===== */}
+        </div>
+        </div>
+
+        {/* ===== Footer لاصق ===== */}
+        <div className="sticky bottom-0 z-30 border-t border-dark-200/60 bg-dark-50/95 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3 print-hide">
+          {showDeleteConfirm ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-rose-600 flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                تأكيد حذف الطلب؟
+              </span>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="h-9 text-xs rounded-lg"
+              >
+                {deleting ? "جارٍ..." : "نعم، احذف"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="h-9 text-xs text-dark-500 rounded-lg"
+              >
+                إلغاء
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-xs text-dark-500 hover:text-dark-700 rounded-lg"
+                className="h-9 text-xs text-dark-500 hover:text-dark-700 rounded-lg"
               >
                 <X className="h-3.5 w-3.5 ml-1" />
                 إغلاق
@@ -1000,7 +998,7 @@ export function MerchantOrderDetail({
                 variant="outline"
                 size="sm"
                 onClick={openInvoice}
-                className="text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+                className="h-9 text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
               >
                 <FileCheck className="h-3.5 w-3.5 ml-1" />
                 فاتورة
@@ -1010,69 +1008,64 @@ export function MerchantOrderDetail({
                   variant="outline"
                   size="sm"
                   onClick={() => { if (order) printReceipt(order, shopName, shopPhone, shopAddress); }}
-                  className="text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+                  className="h-9 text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
                 >
                   <Printer className="h-3.5 w-3.5 ml-1" />
-                  طباعة إيصال
+                  إيصال
                 </Button>
               )}
-              {!showDeleteConfirm ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="text-xs rounded-lg border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all duration-200"
-                >
-                  <Trash2 className="h-3.5 w-3.5 ml-1" />
-                  حذف
-                </Button>
-              ) : (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-rose-600 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    تأكيد؟
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="h-8 text-xs rounded-lg"
-                  >
-                    {deleting ? "جارٍ..." : "نعم، احذف"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="h-8 text-xs text-dark-500 rounded-lg"
-                  >
-                    إلغاء
-                  </Button>
-                </div>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="h-9 text-xs rounded-lg border-rose-200 dark:border-rose-800/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all duration-200"
+              >
+                <Trash2 className="h-3.5 w-3.5 ml-1" />
+                حذف
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+                className="h-9 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98] mr-auto"
+              >
+                <Save className="h-3.5 w-3.5 ml-1" />
+                {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
+              </Button>
             </div>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saving}
-              className="text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
-            >
-              <Save className="h-3.5 w-3.5 ml-1" />
-              {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
-            </Button>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
 
-      {/* Print Job Ticket — hidden on screen, visible only when printing */}
-      {hasDirectPrinting && order && (
+      {/* Print Job Ticket — فقط عند عدم فتح نافذة المعاينة (لتفادي تضارب الطباعة) */}
+      {hasDirectPrinting && order && !showDirectPrintPreview && (
         <PrintJobTicket
           order={order}
           shopName={shopName}
           shopPhone={shopPhone}
           shopAddress={shopAddress}
+        />
+      )}
+
+      {/* نافذة المعاينة والتحقق الذكي للطباعة المباشرة */}
+      {order && (
+        <DirectPrintPreviewDialog
+          order={order}
+          open={showDirectPrintPreview}
+          onClose={() => setShowDirectPrintPreview(false)}
+          shopId={shopId}
+          shopName={shopName}
+          shopPhone={shopPhone}
+          shopAddress={shopAddress}
+          onPrintStart={() => {
+            onStatusChange(order, "printing");
+            onUpdated();
+          }}
+          onPrintComplete={() => {
+            onStatusChange(order, "ready");
+            onUpdated();
+          }}
         />
       )}
     </>
