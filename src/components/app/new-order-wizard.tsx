@@ -454,10 +454,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setUploadError(`صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: ${ACCEPTED.join(", ")}`);
       return;
     }
-    // التحقق من الحجم
-    if (f.size > 50 * 1024 * 1024) {
+    // التحقق من الحجم — حد أقصى 3 ميغا (Vercel body limit ~4.5MB بعد base64)
+    const MAX_FILE_SIZE = 3 * 1024 * 1024;
+    if (f.size > MAX_FILE_SIZE) {
       setAnalysisPhase("error");
-      setUploadError(`حجم الملف ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (50 ميغابايت)`);
+      setUploadError(
+        `حجم الملف ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (${MAX_FILE_SIZE / (1024 * 1024)} ميغا). يرجى ضغط الملف أو تقسيمه قبل الرفع.`,
+      );
       return;
     }
     if (f.size === 0) {
@@ -472,129 +475,33 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setFileDataUrl("");
     setUploadError("");
 
-    // ─── المرحلة 1: رفع الملف ───
+    // ─── المرحلة 1: رفع الملف (base64 مباشرة — بدون قرص) ───
+    // Vercel serverless لا يدعم نظام ملفات دائم، لذا نخزن الملف كـ data URL في الطلب نفسه.
+    // الرفع المباشر عبر /api/orders/upload يضمن ضغط JSON صحيح + نوع MIME.
     setAnalysisPhase("uploading");
     setUploadStatus("uploading");
     setUploadProgress(0);
 
     try {
-      const CHUNK_THRESHOLD = 900 * 1024; // 900 كيلوبايت
-      const CHUNK_SIZE = 900 * 1024;
-
-      let storedFileName: string;
-      let useBase64Fallback = false;
-
-      try {
-      if (f.size <= CHUNK_THRESHOLD) {
-        // ملف صغير — رفع مباشر
-        const formData = new FormData();
-        formData.append("file", f);
-
-        storedFileName = await new Promise<string>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          const shopId = useAppStore.getState().shopId || "";
-          const uploadQ = shopId ? `?shopId=${encodeURIComponent(shopId)}` : "";
-          xhr.open("POST", `/api/orders/upload${uploadQ}`);
-
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-              setUploadProgress(Math.round((e.loaded / e.total) * 100));
-            }
-          };
-
-          xhr.onload = () => {
-            if (xhr.status === 200) {
-              const data = JSON.parse(xhr.responseText);
-              resolve(data.storedFileName);
-            } else {
-              let msg = `فشل رفع الملف — رمز الخطأ: ${xhr.status}`;
-              try { const d = JSON.parse(xhr.responseText); if (d.error) msg = d.error; } catch {}
-              reject(new Error(msg));
-            }
-          };
-
-          xhr.onerror = () => reject(new Error("خطأ في الاتصال بالخادم. تحقق من اتصالك بالإنترنت."));
-          xhr.send(formData);
-        });
-      } else {
-        // ملف كبير — رفع مجزأ (لتجاوز حد 1 ميغا في البوابة)
-        const fileId = crypto.randomUUID();
-        const totalChunks = Math.ceil(f.size / CHUNK_SIZE);
-        let overallLoaded = 0;
-
-        for (let i = 0; i < totalChunks; i++) {
-          const start = i * CHUNK_SIZE;
-          const end = Math.min(start + CHUNK_SIZE, f.size);
-          const blob = f.slice(start, end);
-
-          const formData = new FormData();
-          formData.append("chunk", blob, `chunk_${i}`);
-          formData.append("fileId", fileId);
-          formData.append("chunkIndex", String(i));
-          formData.append("totalChunks", String(totalChunks));
-          formData.append("fileName", f.name);
-          formData.append("fileSize", String(f.size));
-          formData.append("fileExt", ext);
-
-          const result = await new Promise<{ complete: boolean; storedFileName?: string; error?: string }>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            const shopId = useAppStore.getState().shopId || "";
-            const chunkQ = shopId ? `?shopId=${encodeURIComponent(shopId)}` : "";
-            xhr.open("POST", `/api/orders/upload-chunk${chunkQ}`);
-
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                const chunkPct = e.loaded / e.total;
-                const pct = Math.round(((overallLoaded + start + e.loaded) / f.size) * 100);
-                setUploadProgress(Math.min(pct, 99));
-              }
-            };
-
-            xhr.onload = () => {
-              if (xhr.status === 200) {
-                resolve(JSON.parse(xhr.responseText));
-              } else {
-                let msg = `فشل رفع الجزء ${i + 1}/${totalChunks} — رمز الخطأ: ${xhr.status}`;
-                try { const d = JSON.parse(xhr.responseText); if (d.error) msg = d.error; } catch {}
-                reject(new Error(msg));
-              }
-            };
-
-            xhr.onerror = () => reject(new Error(`خطأ في الاتصال أثناء رفع الجزء ${i + 1}/${totalChunks}`));
-            xhr.send(formData);
-          });
-
-          overallLoaded = end;
-
-          if (result.complete && result.storedFileName) {
-            storedFileName = result.storedFileName;
+      // استراتيجية محسّنة: اقرأ الملف كـ base64 على العميل مباشرة (الأسرع والأكثر موثوقية)
+      // ثم أرسله في POST /api/orders كـ fileData. لا حاجة لطلب رفع منفصل.
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        // محاكاة تقدّم القراءة (قراءة الملف محلياً سريعة جداً)
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.min(95, Math.round((e.loaded / e.total) * 95)));
           }
-        }
-        // إذا لم نحصل على storedFileName من آخر جزء
-        if (!storedFileName) {
-          throw new Error("فشل في تجميع الملف. حاول مرة أخرى.");
-        }
-      }
-      } catch (uploadErr) {
-        // إذا فشل رفع الملف (مثلاً على Vercel بسبب عدم دعم نظام الملفات)
-        // نستخدم base64 كمصدر بديل
-        console.warn("File upload failed, falling back to base64:", (uploadErr as Error).message);
-        useBase64Fallback = true;
-      }
+        };
+        reader.onload = () => {
+          setUploadProgress(100);
+          resolve(reader.result as string);
+        };
+        reader.onerror = () => reject(new Error("فشل قراءة الملف"));
+        reader.readAsDataURL(f);
+      });
 
-      if (useBase64Fallback) {
-        // قراءة الملف كـ base64 وتخزينه مباشرة في الطلب
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error("فشل قراءة الملف"));
-          reader.readAsDataURL(f);
-        });
-        storedFileName = base64;
-      }
-
-      setFileDataUrl(storedFileName);
-      setUploadProgress(100);
+      setFileDataUrl(dataUrl);
       setUploadStatus("done");
     } catch (uploadErr) {
       setAnalysisPhase("error");

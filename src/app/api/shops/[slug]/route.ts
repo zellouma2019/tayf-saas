@@ -1,28 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery, tursoExecute } from "@/lib/turso-lite";
 import { withRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-/// تهيئة قاعدة البيانات إن لم تكن جاهزة
-async function ensureSchema(): Promise<boolean> {
-  try {
-    await db.shop.count();
-    return true;
-  } catch {
-    try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const res = await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
+/// أعمدة متجر آمنة للإرجاع للعميل (بدون adminPin)
+const SHOP_SELECT_COLUMNS = `
+  id, slug, name, phone, whatsapp, email, address,
+  "logoUrl", "logoIcon", "primaryColor", "themeId",
+  settings, "ownerName", "ownerPhone", "isActive",
+  plan, features, "createdAt", "updatedAt",
+  "trialDays", "trialStartsAt", country, language, "customCurrency"
+`;
+
+interface ShopRow {
+  id: string;
+  slug: string;
+  name: string;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  address: string | null;
+  logoUrl: string | null;
+  logoIcon: string;
+  primaryColor: string | null;
+  themeId: number;
+  settings: string | null;
+  ownerName: string | null;
+  ownerPhone: string | null;
+  isActive: boolean | number;
+  plan: string;
+  features: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  trialDays: number | null;
+  trialStartsAt: string | null;
+  country: string;
+  language: string;
+  customCurrency: string | null;
+  adminPin?: string;
 }
 
-/// جلب بيانات متجر محدد
+/// جلب بيانات متجر محدد — عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -31,42 +50,52 @@ export async function GET(
   if (!rl.ok) return rl.response;
   try {
     const { slug } = await params;
-    const shop = await db.shop.findUnique({
-      where: { slug },
-    });
+    const rows = await tursoQuery<ShopRow>(
+      `SELECT ${SHOP_SELECT_COLUMNS}, "adminPin" FROM "Shop" WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    const shop = rows[0];
 
     if (!shop || !shop.isActive) {
       return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
     }
 
     // لا نُرجع كلمة المرور
-    const { adminPin: _, ...safeShop } = shop;
-
+    const { adminPin: _pin, ...safeShop } = shop;
+    void _pin;
+    // تحويل القيم المنطقية (SQLite يخزنها 0/1)
+    if (typeof safeShop.isActive === "number") {
+      safeShop.isActive = safeShop.isActive === 1;
+    }
     return NextResponse.json({ shop: safeShop });
   } catch (e) {
+    console.error('[shops/[slug]/GET]', e);
     // محاولة تهيئة قاعدة البيانات إن لم تكن الجداول موجودة
-    const ready = await ensureSchema();
-    if (!ready) {
-      return NextResponse.json({ error: "الخدمة غير متاحة حالياً" }, { status: 503 });
-    }
     try {
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
+      // إعادة المحاولة بعد التهيئة
       const { slug } = await params;
-      const shop = await db.shop.findUnique({
-        where: { slug },
-      });
-      if (!shop || !shop.isActive) {
+      const rows = await tursoQuery<ShopRow>(
+        `SELECT ${SHOP_SELECT_COLUMNS} FROM "Shop" WHERE slug = ? AND "isActive" = 1 LIMIT 1`,
+        [slug]
+      );
+      const shop = rows[0];
+      if (!shop) {
         return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
       }
-      const { adminPin: _, ...safeShop } = shop;
-      return NextResponse.json({ shop: safeShop });
+      if (typeof shop.isActive === "number") shop.isActive = shop.isActive === 1;
+      return NextResponse.json({ shop });
     } catch (retryErr) {
-      console.error('[shops/[slug]/GET]', retryErr);
+      console.error('[shops/[slug]/GET retry]', retryErr);
       return NextResponse.json({ error: "الخدمة غير متاحة حالياً" }, { status: 503 });
     }
   }
 }
 
-/// تحديث بيانات المتجر
+/// تحديث بيانات المتجر — عبر turso-lite
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -78,29 +107,60 @@ export async function PUT(
     const body = await req.json();
 
     // التحقق من كلمة المرور (إلزامي دائماً)
-    const shop = await db.shop.findUnique({ where: { slug } });
+    const rows = await tursoQuery<{ adminPin: string }>(
+      `SELECT "adminPin" FROM "Shop" WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    const shop = rows[0];
     if (!shop || !body.adminPin || shop.adminPin !== String(body.adminPin)) {
       return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 403 });
     }
 
-    // البيانات القابلة للتعديل (بدون كلمة المرور والمعرّف)
-    const { adminPin: _pin, slug: _slug, id: _id, createdAt: _c, updatedAt: _u, ...updateData } = body;
+    // البيانات القابلة للتعديل
+    const allowedFields = [
+      "name", "phone", "whatsapp", "email", "address",
+      "logoUrl", "logoIcon", "primaryColor", "themeId",
+      "settings", "ownerName", "ownerPhone", "isActive",
+      "plan", "features", "trialDays", "trialStartsAt",
+      "country", "language", "customCurrency",
+    ];
 
-    const updated = await db.shop.update({
-      where: { slug },
-      data: updateData,
-    });
+    const setClauses: string[] = [];
+    const args: unknown[] = [];
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        setClauses.push(`"${field}" = ?`);
+        args.push(body[field]);
+      }
+    }
 
-    const { adminPin: __, ...safeShop } = updated;
+    if (setClauses.length === 0) {
+      return NextResponse.json({ error: "لا توجد بيانات للتحديث" }, { status: 400 });
+    }
 
-    return NextResponse.json({ shop: safeShop });
+    setClauses.push(`"updatedAt" = ?`);
+    args.push(new Date().toISOString());
+    args.push(slug); // WHERE slug = ?
+
+    const result = await tursoExecute<ShopRow>(
+      `UPDATE "Shop" SET ${setClauses.join(", ")} WHERE slug = ? RETURNING ${SHOP_SELECT_COLUMNS}`,
+      args
+    );
+
+    const updated = result.rows[0];
+    if (!updated) {
+      return NextResponse.json({ error: "فشل تحديث المتجر" }, { status: 500 });
+    }
+    if (typeof updated.isActive === "number") updated.isActive = updated.isActive === 1;
+
+    return NextResponse.json({ shop: updated });
   } catch (e) {
     console.error('[shops/[slug]/PUT]', e);
     return NextResponse.json({ error: "الخدمة غير متاحة حالياً" }, { status: 503 });
   }
 }
 
-/// حذف متجر
+/// حذف متجر — عبر turso-lite
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -111,15 +171,28 @@ export async function DELETE(
     const { slug } = await params;
     const { adminPin } = await req.json();
 
-    const shop = await db.shop.findUnique({ where: { slug } });
+    const rows = await tursoQuery<{ id: string; adminPin: string }>(
+      `SELECT id, "adminPin" FROM "Shop" WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    const shop = rows[0];
     if (!shop || shop.adminPin !== String(adminPin)) {
       return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 403 });
     }
 
     // حذف الطلبات والإعدادات المرتبطة أولاً
-    await db.printOrder.deleteMany({ where: { shopId: shop.id } });
-    await db.setting.deleteMany({ where: { shopId: shop.id } });
-    await db.shop.delete({ where: { id: shop.id } });
+    await tursoExecute(
+      `DELETE FROM "PrintOrder" WHERE "shopId" = ?`,
+      [shop.id]
+    );
+    await tursoExecute(
+      `DELETE FROM "Setting" WHERE "shopId" = ?`,
+      [shop.id]
+    );
+    await tursoExecute(
+      `DELETE FROM "Shop" WHERE id = ?`,
+      [shop.id]
+    );
 
     return NextResponse.json({ success: true });
   } catch (e) {

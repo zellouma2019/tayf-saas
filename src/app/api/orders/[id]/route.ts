@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-auth";
 import { addAuditLog } from "@/lib/audit";
 import { STATUS_META, calculatePricing, estimateDeliveryHours } from "@/lib/print-config";
 import type { ServiceType } from "@/lib/print-config";
-import { orderFindWhere } from "@/lib/order-lookup";
-import { tursoQuery, safeJson } from "@/lib/turso-lite";
+import { tursoQuery, tursoExecute, safeJson, toNum } from "@/lib/turso-lite";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +33,12 @@ export async function GET(
     }
     return NextResponse.json({
       ...order,
+      total: toNum(order.total),
+      pages: toNum(order.pages),
+      copies: toNum(order.copies),
+      cost: toNum(order.cost),
+      estimatedHours: toNum(order.estimatedHours),
+      fileSize: order.fileSize != null ? toNum(order.fileSize) : null,
       options: safeJson(String(order.options || "{}"), {}),
       customer: safeJson(String(order.customer || "{}"), {}),
       delivery: safeJson(String(order.delivery || "{}"), {}),
@@ -59,22 +63,24 @@ export async function PUT(
     const body = await req.json();
     const shopId = body.shopId || req.nextUrl.searchParams.get("shopId");
 
-    const findWhere = orderFindWhere(id, shopId);
-    const existing = await db.printOrder.findFirst({ where: findWhere });
+    // جلب الطلب الحالي عبر turso-lite
+    const existing = await fetchOrderRaw(id, shopId);
     if (!existing) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
 
     // ===== تعديل حقول الطلب =====
     if (body.action === "edit") {
-      const updateData: Record<string, unknown> = {};
+      const setClauses: string[] = [];
+      const sqlArgs: unknown[] = [];
       const auditEntries: Array<{ field: string; oldValue: string; newValue: string }> = [];
 
       // حقول العميل (دمج جزئي)
       if (body.customer) {
-        const oldCustomer = JSON.parse(existing.customer);
+        const oldCustomer = safeJson<Record<string, unknown>>(String(existing.customer || "{}"), {});
         const newCustomer = { ...oldCustomer, ...body.customer };
-        updateData.customer = JSON.stringify(newCustomer);
+        setClauses.push(`customer = ?`);
+        sqlArgs.push(JSON.stringify(newCustomer));
         for (const key of Object.keys(body.customer)) {
           if (String(oldCustomer[key]) !== String(body.customer[key])) {
             auditEntries.push({
@@ -87,42 +93,51 @@ export async function PUT(
       }
 
       if (body.adminNotes !== undefined) {
-        updateData.adminNotes = body.adminNotes;
-        if (existing.adminNotes !== body.adminNotes) {
+        setClauses.push(`"adminNotes" = ?`);
+        sqlArgs.push(body.adminNotes);
+        if ((existing.adminNotes as string) !== body.adminNotes) {
           auditEntries.push({
             field: "adminNotes",
-            oldValue: existing.adminNotes || "",
+            oldValue: String(existing.adminNotes || ""),
             newValue: body.adminNotes,
           });
         }
       }
 
       if (body.tags !== undefined) {
-        updateData.tags = typeof body.tags === "string" ? body.tags : JSON.stringify(body.tags);
+        setClauses.push(`tags = ?`);
+        sqlArgs.push(typeof body.tags === "string" ? body.tags : JSON.stringify(body.tags));
       }
 
       if (body.cost !== undefined) {
-        updateData.cost = Number(body.cost);
+        setClauses.push(`cost = ?`);
+        sqlArgs.push(Number(body.cost));
       }
 
       // إعادة حساب الأسعار إذا تغيرت النسخ أو الصفحات
-      const oldOptions = JSON.parse(existing.options);
+      const oldOptions = safeJson<Record<string, unknown>>(String(existing.options || "{}"), {});
+      const oldDelivery = safeJson<{ mode?: string }>(String(existing.delivery || "{}"), {});
       let needsPriceRecalc = false;
-      if (body.copies !== undefined && body.copies !== existing.copies) {
-        updateData.copies = Number(body.copies);
+      const existingCopies = toNum(existing.copies);
+      const existingPages = toNum(existing.pages);
+
+      if (body.copies !== undefined && body.copies !== existingCopies) {
+        setClauses.push(`copies = ?`);
+        sqlArgs.push(Number(body.copies));
         needsPriceRecalc = true;
         auditEntries.push({
           field: "copies",
-          oldValue: String(existing.copies),
+          oldValue: String(existingCopies),
           newValue: String(body.copies),
         });
       }
-      if (body.pages !== undefined && body.pages !== existing.pages) {
-        updateData.pages = Number(body.pages);
+      if (body.pages !== undefined && body.pages !== existingPages) {
+        setClauses.push(`pages = ?`);
+        sqlArgs.push(Number(body.pages));
         needsPriceRecalc = true;
         auditEntries.push({
           field: "pages",
-          oldValue: String(existing.pages),
+          oldValue: String(existingPages),
           newValue: String(body.pages),
         });
       }
@@ -130,25 +145,44 @@ export async function PUT(
       if (needsPriceRecalc) {
         const pricing = calculatePricing({
           serviceType: existing.serviceType as ServiceType,
-          pages: (updateData.pages as number) || existing.pages,
-          copies: (updateData.copies as number) || existing.copies,
-          color: oldOptions.color,
-          paperSize: oldOptions.paperSize,
-          sides: oldOptions.sides,
-          binding: oldOptions.binding,
-          paperType: oldOptions.paperType,
-          delivery: JSON.parse(existing.delivery)?.mode,
+          pages: body.pages !== undefined ? Number(body.pages) : existingPages,
+          copies: body.copies !== undefined ? Number(body.copies) : existingCopies,
+          color: oldOptions.color as string | undefined,
+          paperSize: oldOptions.paperSize as string | undefined,
+          sides: oldOptions.sides as string | undefined,
+          binding: oldOptions.binding as string | undefined,
+          paperType: oldOptions.paperType as string | undefined,
+          delivery: oldDelivery.mode,
         });
-        updateData.total = pricing.total;
-        updateData.pricing = JSON.stringify(pricing);
-        updateData.estimatedHours = estimateDeliveryHours(
-          JSON.parse(existing.delivery)?.mode,
-          (updateData.pages as number) || existing.pages,
-          (updateData.copies as number) || existing.copies,
+        setClauses.push(`total = ?`);
+        sqlArgs.push(pricing.total);
+        setClauses.push(`pricing = ?`);
+        sqlArgs.push(JSON.stringify(pricing));
+        const newEstimate = estimateDeliveryHours(
+          oldDelivery.mode,
+          body.pages !== undefined ? Number(body.pages) : existingPages,
+          body.copies !== undefined ? Number(body.copies) : existingCopies,
         );
+        setClauses.push(`"estimatedHours" = ?`);
+        sqlArgs.push(newEstimate);
       }
 
-      const updated = await db.printOrder.update({ where: { id }, data: updateData });
+      if (setClauses.length === 0) {
+        return NextResponse.json({ error: "لا توجد بيانات للتحديث" }, { status: 400 });
+      }
+
+      setClauses.push(`"updatedAt" = ?`);
+      sqlArgs.push(new Date().toISOString());
+      sqlArgs.push(id);
+
+      const result = await tursoExecute<Record<string, unknown>>(
+        `UPDATE "PrintOrder" SET ${setClauses.join(", ")} WHERE id = ? RETURNING *`,
+        sqlArgs
+      );
+      const updated = result.rows[0];
+      if (!updated) {
+        return NextResponse.json({ error: "فشل تحديث الطلب" }, { status: 500 });
+      }
 
       // تسجيل كل التغييرات في السجل
       for (const entry of auditEntries) {
@@ -162,31 +196,62 @@ export async function PUT(
         });
       }
 
-      // استثناء fileData من الاستجابة
+      // استثناء fileData و smartAnalysis من الاستجابة
       const { fileData: _fd, smartAnalysis: _sa, ...orderWithoutFile } = updated;
+      void _fd; void _sa;
 
       return NextResponse.json({
         ...orderWithoutFile,
-        options: JSON.parse(updated.options),
-        customer: JSON.parse(updated.customer),
-        delivery: JSON.parse(updated.delivery),
-        pricing: JSON.parse(updated.pricing),
+        total: toNum(orderWithoutFile.total),
+        pages: toNum(orderWithoutFile.pages),
+        copies: toNum(orderWithoutFile.copies),
+        cost: toNum(orderWithoutFile.cost),
+        estimatedHours: toNum(orderWithoutFile.estimatedHours),
+        fileSize: (orderWithoutFile as Record<string, unknown>).fileSize != null
+          ? toNum((orderWithoutFile as Record<string, unknown>).fileSize)
+          : null,
+        options: safeJson(String(updated.options || "{}"), {}),
+        customer: safeJson(String(updated.customer || "{}"), {}),
+        delivery: safeJson(String(updated.delivery || "{}"), {}),
+        pricing: safeJson(String(updated.pricing || "{}"), {}),
       });
     }
 
-    // ===== تغيير الحالة (السلوك الحالي) =====
+    // ===== تغيير الحالة =====
     const { status } = body;
-    const oldStatus = existing.status;
-    const updateData: Record<string, unknown> = { status };
-    if (status === "printing" && !existing.startedPrintingAt) updateData.startedPrintingAt = new Date();
-    if (status === "ready" && !existing.readyAt) updateData.readyAt = new Date();
-    if (status === "ready" && !existing.completedPrintingAt) updateData.completedPrintingAt = new Date();
-    if (status === "delivered" && !existing.deliveredAt) updateData.deliveredAt = new Date();
+    const oldStatus = String(existing.status);
+    const setClauses: string[] = [`status = ?`];
+    const sqlArgs: unknown[] = [status];
 
-    const order = await db.printOrder.update({
-      where: { id },
-      data: updateData,
-    });
+    if (status === "printing" && !existing.startedPrintingAt) {
+      setClauses.push(`"startedPrintingAt" = ?`);
+      sqlArgs.push(new Date().toISOString());
+    }
+    if (status === "ready" && !existing.readyAt) {
+      setClauses.push(`"readyAt" = ?`);
+      sqlArgs.push(new Date().toISOString());
+    }
+    if (status === "ready" && !existing.completedPrintingAt) {
+      setClauses.push(`"completedPrintingAt" = ?`);
+      sqlArgs.push(new Date().toISOString());
+    }
+    if (status === "delivered" && !existing.deliveredAt) {
+      setClauses.push(`"deliveredAt" = ?`);
+      sqlArgs.push(new Date().toISOString());
+    }
+
+    setClauses.push(`"updatedAt" = ?`);
+    sqlArgs.push(new Date().toISOString());
+    sqlArgs.push(id);
+
+    const result = await tursoExecute<Record<string, unknown>>(
+      `UPDATE "PrintOrder" SET ${setClauses.join(", ")} WHERE id = ? RETURNING *`,
+      sqlArgs
+    );
+    const order = result.rows[0];
+    if (!order) {
+      return NextResponse.json({ error: "فشل تحديث الحالة" }, { status: 500 });
+    }
 
     await addAuditLog({
       orderId: id,
@@ -197,15 +262,24 @@ export async function PUT(
       details: `${existing.reference} → ${STATUS_META[status]?.label || status}`,
     });
 
-    // استثناء fileData من استجابة تغيير الحالة
+    // استثناء fileData و smartAnalysis من استجابة تغيير الحالة
     const { fileData: _fd2, smartAnalysis: _sa2, ...orderWithoutFile } = order;
+    void _fd2; void _sa2;
 
     return NextResponse.json({
       ...orderWithoutFile,
-      options: JSON.parse(order.options),
-      customer: JSON.parse(order.customer),
-      delivery: JSON.parse(order.delivery),
-      pricing: JSON.parse(order.pricing),
+      total: toNum(orderWithoutFile.total),
+      pages: toNum(orderWithoutFile.pages),
+      copies: toNum(orderWithoutFile.copies),
+      cost: toNum(orderWithoutFile.cost),
+      estimatedHours: toNum(orderWithoutFile.estimatedHours),
+      fileSize: (orderWithoutFile as Record<string, unknown>).fileSize != null
+        ? toNum((orderWithoutFile as Record<string, unknown>).fileSize)
+        : null,
+      options: safeJson(String(order.options || "{}"), {}),
+      customer: safeJson(String(order.customer || "{}"), {}),
+      delivery: safeJson(String(order.delivery || "{}"), {}),
+      pricing: safeJson(String(order.pricing || "{}"), {}),
     });
   } catch (e) {
     console.error('[orders/[id]/PUT]', e);
@@ -223,17 +297,19 @@ export async function DELETE(
   try {
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
-    const findWhere = orderFindWhere(id, shopId);
-    const order = await db.printOrder.findFirst({ where: findWhere });
-    if (!order) {
+    const existing = await fetchOrderRaw(id, shopId);
+    if (!existing) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
     await addAuditLog({
       orderId: id,
       action: "delete",
-      details: `حذف طلب ${order.reference}`,
+      details: `حذف طلب ${existing.reference}`,
     });
-    await db.printOrder.delete({ where: { id } });
+    await tursoExecute(
+      `DELETE FROM "PrintOrder" WHERE id = ?`,
+      [id]
+    );
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('[orders/[id]/DELETE]', e);
