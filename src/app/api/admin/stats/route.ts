@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
-// تجنب ISR caching — الرد ديناميكي دائماً
-// لكن نسمح بـ edge cache قصير (3 ثواني) لتقليل ضغط Turso
-export const dynamic = "force-dynamic";
+// الرد ديناميكي (يستخدم searchParams) لكن يُسمح بـ edge cache قصير
+// إزالة force-dynamic لتسمح Vercel edge بحفظ الرد لـ s-maxage ثوانٍ
 export const revalidate = 0;
 
 /// إحصائيات التاجر/الإدارة عبر turso-lite (أسرع 10x من Prisma على Vercel)

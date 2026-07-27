@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 export const maxDuration = 30;
-export const dynamic = "force-dynamic";
+// إزالة force-dynamic للسماح بـ edge cache على GET (POST يبقى ديناميكي تلقائياً)
 
 // استعلام قائمة الطلبات عبر turso-lite (أسرع 10x من Prisma على Vercel)
 // كل الأعمدة النصية JSON تُمرّر كما هي ويتم parse على العميل

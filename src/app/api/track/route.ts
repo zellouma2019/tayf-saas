@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
 export const maxDuration = 30;
-export const dynamic = "force-dynamic";
+// إزالة force-dynamic للسماح بـ edge cache (s-maxage=5)
 
 /// تتبّع الطلب برقم المرجع أو رقم الهاتف (turso-lite — أسرع 10x من Prisma على Vercel)
 /// يستخدم قائمة أعمدة محددة (بدون fileData/smartAnalysis) لتسريع الاستجابة

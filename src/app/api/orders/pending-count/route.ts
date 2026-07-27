@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, toNum } from "@/lib/turso-lite";
 
-export const dynamic = "force-dynamic";
+// إزالة force-dynamic للسماح بـ edge cache (s-maxage=10)
 
 /// عدد الطلبات المعلقة — عبر turso-lite (أسرع من Prisma على Vercel)
 /// يُستدعى كل 30 ثانية من لوحة التاجر
