@@ -134,8 +134,19 @@ export async function PUT(
       }
     }
 
+    // حالة خاصة: إذا كان الطلب يحتوي فقط على adminPin (للتحقق من PIN)
+    // نرجع بيانات المتجر الحالية بدون تحديث
     if (setClauses.length === 0) {
-      return NextResponse.json({ error: "لا توجد بيانات للتحديث" }, { status: 400 });
+      const currentRows = await tursoQuery<ShopRow>(
+        `SELECT ${SHOP_SELECT_COLUMNS} FROM "Shop" WHERE slug = ? LIMIT 1`,
+        [slug]
+      );
+      const current = currentRows[0];
+      if (!current) {
+        return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
+      }
+      if (typeof current.isActive === "number") current.isActive = current.isActive === 1;
+      return NextResponse.json({ shop: current });
     }
 
     setClauses.push(`"updatedAt" = ?`);
