@@ -1330,3 +1330,36 @@ Stage Summary:
 - جميع لوحات التحكم تحمل <2 ثانية على كل الأقسام
 - SWR cache pattern يعمل على admin + merchant
 - تم الرفع والتحقق على الموقع الحي: https://tayf-saas.vercel.app/
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: زيادة حد رفع الملفات من 3 ميغا إلى 50 ميغا في نسخة الزبون
+
+Work Log:
+- تحديد المشكلة: حد 3MB موجود في upload-step.tsx و new-order-wizard.tsx
+- السبب: الملفات تُرسل كـ base64 في JSON body (Vercel limit ~4.5MB)
+- الحل: استراتيجية مزدوجة:
+  - ملفات ≤ 4MB: base64 مباشر في JSON (سريع، بدون طلب رفع منفصل)
+  - ملفات > 4MB إلى 50MB: رفع مجزأ عبر /api/orders/upload-chunk
+- التعديلات:
+  1. upload-step.tsx: MAX_FILE_SIZE = 50MB
+  2. new-order-wizard.tsx:
+     - MAX_FILE_SIZE = 50MB
+     - إضافة دالة uploadFileInChunks() مع تتبع التقدم
+     - تعديل processFile() لدعم الاستراتيجيتين
+     - تعديل handleSubmit() لإرسال storedFileName للملفات الكبيرة
+  3. api/orders/route.ts POST: معالجة storedFileName (قراءة من القرص → base64)
+  4. vercel.json: إضافة upload-chunk route مع maxDuration: 60s
+- التحقق عبر agent-browser:
+  - ✅ رفع ملف 5MB تم قبوله بدون خطأ (سابقاً كان يُرفض بحد 3MB)
+  - ✅ زر "التالي" أصبح مفعّلاً بعد رفع الملف
+  - ✅ لا رسالة خطأ عن تجاوز الحد
+- الرفع على GitHub: commits ff5a648, 8ae2419, 0c2acf4
+- التحقق من نشر Vercel: ETag تغيّر، age=0
+
+Stage Summary:
+- حد رفع الملفات: 3MB → 50MB ✅
+- استراتيجية الرفع المزدوج تعمل (inline base64 + chunked upload)
+- رفع ملف 5MB تم اختباره بنجاح على الموقع الحي
+- واجهة الزبون تقبل الآن ملفات حتى 50 ميغابايت
