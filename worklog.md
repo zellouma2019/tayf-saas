@@ -2480,3 +2480,83 @@ Task: إصلاح + تحسينات بصرية + ميزات جديدة (Round 12)
 8. تحسين SEO: إضافة structured data (JSON-LD)
 9. إضافة ملاحظات داخلية على الطلب (Merchant notes)
 10. إضافة تصدير Excel للطلبات
+
+---
+Task ID: qa-fix-round13
+Agent: Main Agent
+Task: تحسينات بصرية + ميزات جديدة (Round 13)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي عبر `?ref=` parameter
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ صفحة التتبع — تعرض واجهة البحث + بحث تلقائي عبر ?ref=
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+
+## الميزات الجديدة
+
+### 1. زر نسخ رابط التتبع (Copy Tracking Link)
+- زر ExternalLink جديد في كل صف طلب في جدول لوحة الإدارة
+- يظهر فقط عند التمرير فوق الصف (hover opacity 0→1)
+- ينسخ رابط `/track?ref=ORDER_REF` ويُظهر toast تأكيد
+- متوفر على حاسوب (عمود جديد) + جوال (بطاقة)
+
+### 2. بحث تلقائي على صفحة التتبع (Auto-search via ?ref=)
+- صفحة `/track` تدعم الآن `?ref=ORDER_REF` query parameter
+- عند فتح رابط التتبع → يتم تعبئة حقل البحث تلقائياً
+- يتم اختيار أول متجر تلقائياً + البحث التلقائي عن الطلب
+- يعمل مع `Suspense` boundary لإصلاح تحذير Next.js
+
+### 3. مؤشر الطلبات الجديدة اليوم (Today's Orders Pulse)
+- شريط ذهبي في رأس لوحة الإدارة يعرض عدد الطلبات الجديدة
+- نقطة متحركة (animate-ping) للفت الانتباه
+- يظهر فقط عند وجود طلبات اليوم (todayOrders > 0)
+- تصميم: خلفية ذهبية فاتحة + نص عربي
+
+## التحسينات البصرية (Round 13)
+
+### تحسينات بطاقات المتاجر
+- **Gradient top bar**: شريط متدرج ذهبي بدلاً من لون واحد
+- **Hover lift**: `hover:shadow-lg hover:-translate-y-0.5` عند التمرير
+- **Border glow**: `border-glow-subtle` توهج حدود خفيف
+- **Stat box hover**: عند التمرير على البطاقة تتغير ألوان الخلفية خفيفاً
+- **Transition**: `transition-all duration-300` سلسة أكثر
+
+### تحسينات التحميل (Skeleton)
+- استخدام `skeleton-soft` CSS بدلاً من `animate-pulse bg-muted`
+- تأثير تحميل ناعم مع خلفية متدرجة ذهبية
+
+### تحسينات صفوف الجداول
+- `group` class على صف الطلب لإظهار/إخفاء عناصر عند التمرير
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/page.tsx` | زر نسخ رابط التتبع + مؤشر الطلبات + تحسينات التحميل |
+| `src/app/track/page.tsx` | Suspense boundary + حماية SSR مع useSearchParams |
+| `src/components/app/track-page-client.tsx` | بحث تلقائي عبر `?ref=` + useSearchParams |
+| `src/components/app/admin-shop-card.tsx` | hover lift + gradient top bar + stat box hover colors |
+
+## Commits
+- 3eaf788: feat(r13): copy tracking link on admin orders, auto-search on track page via ref param, Suspense boundary fix
+- 403628e: feat(r13): today-orders pulse indicator in admin header, improved skeleton loading, empty state styling
+- 98bf8a3: feat(r13): improved shop cards with hover lift + gradient top bar + stat box hover colors
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مراقبة Turso DB — البيانات قد تكون فارغة بسبب مشكلة في التزامن
+2. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+3. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+4. إضافة ميزة سلة مشتريات متعددة الخدمات
+5. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+6. اختبار إمكانية الوصول (accessibility audit)
+7. تحسين SEO: إضافة structured data (JSON-LD)
+8. إضافة ملاحظات داخلية على الطلب (Merchant notes)
+9. إضافة تصدير Excel للطلبات
