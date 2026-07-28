@@ -572,7 +572,7 @@ export function AppShell() {
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.25, ease: "easeInOut" }}
                 >
-                  <OrderHistory />
+                  <OrderHistory onReorder={(o) => { setPrefillOrder(o as any); setFooterOpen(false); setView("new"); }} />
                 </motion.div>
               )}
               {view === "admin" && (

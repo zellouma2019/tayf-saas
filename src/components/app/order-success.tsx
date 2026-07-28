@@ -22,6 +22,7 @@ import {
   Loader2,
   MessageCircle,
   Star,
+  Printer,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,52 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
     setPdfLoading(false);
   }
 
+  function printThermalReceipt(o: CreatedOrder) {
+    const statusMeta = STATUS_META[o.status] || STATUS_META.pending;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("ar-DZ", { year: "numeric", month: "long", day: "numeric" });
+    const timeStr = now.toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" });
+
+    const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>إيصال - ${o.reference}</title>
+<style>
+  @page { size: 80mm auto; margin: 2mm; }
+  body { font-family: 'Courier New', monospace; direction: rtl; margin: 0; padding: 4mm; width: 72mm; font-size: 11px; color: #000; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .line { border-top: 1px dashed #333; margin: 4px 0; }
+  .row { display: flex; justify-content: space-between; padding: 1px 0; }
+  .big { font-size: 16px; font-weight: bold; }
+  .status { display: inline-block; padding: 1px 8px; border: 1px solid #000; border-radius: 4px; font-size: 10px; margin: 2px 0; }
+</style></head><body>
+<div class="center">
+  <div style="font-size:18px;font-weight:bold;">طيف للطباعة الذكية</div>
+  <div style="font-size:10px;color:#555;">Tayf Smart Printing</div>
+</div>
+<div class="line"></div>
+<div class="row"><span>الرقم:</span><span class="bold">${o.reference}</span></div>
+<div class="row"><span>التاريخ:</span><span>${dateStr} ${timeStr}</span></div>
+<div class="row"><span>الحالة:</span><span class="status">${statusMeta.emoji} ${statusMeta.label}</span></div>
+<div class="line"></div>
+<div class="row"><span>الخدمة:</span><span>${o.serviceName}</span></div>
+<div class="row"><span>المجموع:</span><span class="big">${formatDA(o.total)}</span></div>
+<div class="row"><span>التسليم المتوقع:</span><span>${o.estimatedHours} ساعة</span></div>
+<div class="line"></div>
+<div class="center" style="font-size:10px;color:#555;">
+  <div>شكراً لاختياركم طيف</div>
+  <div style="font-size:9px;margin-top:2px;">تتبع طلبك: ${typeof window !== 'undefined' ? window.location.origin : ''}/track</div>
+</div>
+<script>window.onload=function(){window.print();}</script>
+</body></html>`;
+
+    const win = window.open("", "_blank", "width=320,height=600");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    } else {
+      toast.error("لم يتم فتح نافذة الطباعة");
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg w-[calc(100vw-1rem)] p-0 gap-0 overflow-hidden max-h-[94vh] flex flex-col" dir="rtl" onInteractOutside={(e) => e.preventDefault()} aria-describedby={undefined}>
@@ -161,26 +208,26 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               </div>
             </div>
 
-            {/* ===== QR + الفاتورة ===== */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            {/* ===== QR + الفاتورة + إيصال ===== */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => setShowQR(!showQR)}
-                className="group flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors text-right"
+                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors"
               >
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-neutral-900 flex items-center justify-center shrink-0">
                   <QrCode className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
                 </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-xs sm:text-sm">رمز QR</div>
-                  <div className="text-[10px] sm:text-xs text-muted-foreground">
-                    {showQR ? "إخفاء" : "اعرض للمسح"}
+                <div className="min-w-0 text-center">
+                  <div className="font-bold text-[10px] sm:text-xs">رمز QR</div>
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground">
+                    {showQR ? "إخفاء" : "اعرض"}
                   </div>
                 </div>
               </button>
               <button
                 onClick={downloadInvoice}
                 disabled={pdfLoading}
-                className="group flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-right disabled:opacity-60"
+                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors disabled:opacity-60"
               >
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
                   {pdfLoading ? (
@@ -189,9 +236,21 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                     <Download className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-900" />
                   )}
                 </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-xs sm:text-sm truncate">{pdfLoading ? "جارٍ..." : "فاتورة PDF"}</div>
-                  <div className="text-[10px] sm:text-xs text-muted-foreground">تنزيل للطباعة</div>
+                <div className="min-w-0 text-center">
+                  <div className="font-bold text-[10px] sm:text-xs truncate">{pdfLoading ? "جارٍ..." : "فاتورة PDF"}</div>
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground">تنزيل</div>
+                </div>
+              </button>
+              <button
+                onClick={() => printThermalReceipt(order)}
+                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
+                  <Printer className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                </div>
+                <div className="min-w-0 text-center">
+                  <div className="font-bold text-[10px] sm:text-xs">إيصال حراري</div>
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground">طباعة مباشرة</div>
                 </div>
               </button>
             </div>
