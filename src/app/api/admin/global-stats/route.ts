@@ -61,7 +61,12 @@ export async function GET() {
     const elapsed = Date.now() - startTime;
     console.log(`[global-stats] loaded in ${elapsed}ms`);
 
-    // تجهيز البيانات
+    // تجهيز البيانات — statusCounts first (needed by fallback)
+    const statusCounts: Record<string, number> = {};
+    for (const s of statusRows) {
+      statusCounts[String(s.status)] = toNum(s.count);
+    }
+
     const statsRow = statsResult[0] || {};
     let totalOrders = toNum(statsRow.totalOrders);
     const totalRevenue = toNum(statsRow.totalRevenue);
@@ -79,11 +84,6 @@ export async function GET() {
         return created >= todayISO;
       });
       todayOrders = todayOrdersList.length;
-    }
-
-    const statusCounts: Record<string, number> = {};
-    for (const s of statusRows) {
-      statusCounts[String(s.status)] = toNum(s.count);
     }
 
     const shopStats = shopsRaw.map((s) => ({

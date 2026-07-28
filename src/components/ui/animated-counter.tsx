@@ -57,7 +57,7 @@ export function AnimatedCounter({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [value, duration]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value, duration]);
 
   // Initial animation on mount
   useEffect(() => {
@@ -88,7 +88,7 @@ export function AnimatedCounter({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const displayText = formatFn
     ? formatFn(displayValue)

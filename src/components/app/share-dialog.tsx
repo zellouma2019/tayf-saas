@@ -53,13 +53,14 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
       return;
     }
     try {
+      const shopName = shop?.name || "طيف";
       await navigator.share({
-        title: shop?.name || "طيف",
-        text: `اطبع مع ${shop?.name} — سريع وسهل`,
+        title: shopName,
+        text: `اطبع مع ${shopName} — سريع وسهل`,
         url: shopUrl,
       });
     } catch {}
-  }, [shop?.name, shopUrl, copyToClipboard]);
+  }, [shop, shopUrl, copyToClipboard]);
 
   if (!shop) return null;
 
