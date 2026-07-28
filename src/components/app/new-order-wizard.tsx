@@ -75,6 +75,81 @@ interface UploadedFileData {
   type: string;
 }
 
+/* ─── Fallback: رفع مجزأ عبر API (عند عدم توفر Uploadthing) ─── */
+const FALLBACK_CHUNK_SIZE = 4 * 1024 * 1024;
+const FALLBACK_CONCURRENCY = 6;
+
+async function uploadFileViaFallback(
+  file: File,
+  ext: string,
+  onProgress: (progress: number) => void,
+): Promise<{ storedFileName: string }> {
+  const fileId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const totalChunks = Math.ceil(file.size / FALLBACK_CHUNK_SIZE);
+  let completedChunks = 0;
+  let storedFileName = "";
+
+  onProgress(3);
+
+  const tasks = Array.from({ length: totalChunks }, (_, i) => ({
+    index: i,
+    start: i * FALLBACK_CHUNK_SIZE,
+    end: Math.min((i + 1) * FALLBACK_CHUNK_SIZE, file.size),
+  }));
+
+  async function uploadOne(task: typeof tasks[0]): Promise<void> {
+    if (storedFileName) return;
+    const chunk = file.slice(task.start, task.end);
+    const formData = new FormData();
+    formData.append("chunk", chunk, `chunk_${task.index}`);
+    formData.append("fileId", fileId);
+    formData.append("chunkIndex", task.index.toString());
+    formData.append("totalChunks", totalChunks.toString());
+    formData.append("fileName", file.name);
+    formData.append("fileSize", file.size.toString());
+    formData.append("fileExt", ext);
+
+    const res = await fetch("/api/orders/upload-chunk", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: "فشل رفع الجزء" }));
+      throw new Error(errData.error || `فشل رفع الجزء ${task.index + 1}`);
+    }
+
+    const data = await res.json();
+    completedChunks++;
+    onProgress(3 + Math.round((completedChunks / totalChunks) * 92));
+
+    if (data.complete && data.storedFileName) {
+      storedFileName = data.storedFileName;
+      onProgress(100);
+    }
+  }
+
+  let nextIdx = 0;
+  async function worker() {
+    while (nextIdx < tasks.length && !storedFileName) {
+      const task = tasks[nextIdx++];
+      await uploadOne(task);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(FALLBACK_CONCURRENCY, totalChunks) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+
+  if (!storedFileName) {
+    throw new Error("لم يكتمل رفع الملف — يرجى المحاولة مرة أخرى");
+  }
+
+  return { storedFileName };
+}
+
 interface NewOrderWizardProps {
   onCreated: (order: CreatedOrder) => void;
   /** طلب سابق للتعبئة المسبقة (لتكرار الطلب) */
@@ -549,11 +624,19 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         setUploadedFile(null);
       } else {
         // 🚀 رفع مباشر إلى Uploadthing CDN — لا يمر عبر Vercel serverless!
-        setUploadProgress(5); // بداية الرفع
-        await startUpload([f]);
-        // startUpload calls onClientUploadComplete which sets uploadedFile + progress
-        if (!uploadedFile || !uploadedFile.url) {
-          throw new Error("فشل رفع الملف — يرجى المحاولة مرة أخرى");
+        try {
+          setUploadProgress(5);
+          await startUpload([f]);
+          // startUpload calls onClientUploadComplete which sets uploadedFile + progress
+          if (!uploadedFile || !uploadedFile.url) {
+            throw new Error("فشل رفع الملف — يرجى المحاولة مرة أخرى");
+          }
+        } catch (cdnErr) {
+          // Fallback: إذا لم يكن Uploadthing متاحاً، استخدم الرفع المجزأ عبر API
+          console.warn("[upload] Uploadthing not available, falling back to chunked upload:", cdnErr);
+          const result = await uploadFileViaFallback(f, ext, setUploadProgress);
+          setStoredFileName(result.storedFileName);
+          setUploadedFile(null);
         }
       }
       setUploadStatus("done");
