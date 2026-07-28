@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   STATUS_META,
@@ -542,13 +542,13 @@ function TableRowInner({
         <div className="flex items-center gap-1.5">
           <span className={cn(
             "inline-block w-2 h-2 rounded-full shrink-0",
-            order.status === "pending" && "bg-amber-500 animate-pulse",
+            order.status === "pending" && "bg-amber-500 animate-pulse pending-pulse-ring",
             order.status === "printing" && "bg-blue-500 animate-spin",
             order.status === "ready" && "bg-emerald-500",
             order.status === "delivered" && "bg-gray-400",
             order.status === "cancelled" && "bg-rose-500"
           )} />
-          <Badge variant="outline" className={`text-xs ${meta.bg}`}>
+          <Badge variant="outline" className={`text-xs ${meta.bg} badge-dot`}>
             {meta.label}
           </Badge>
         </div>
@@ -560,21 +560,56 @@ function TableRowInner({
         <div className="flex items-center justify-center gap-1">
           {canPrintReceipt && onPrintReceipt && (
             <button
-              className="p-1 rounded hover:bg-muted transition-colors"
+              className="p-1 rounded hover:bg-muted transition-colors tooltip-gold"
+              data-tooltip="طباعة إيصال"
               onClick={(e) => { e.stopPropagation(); onPrintReceipt(); }}
-              title="طباعة إيصال"
             >
               <Printer className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
             </button>
           )}
           {onClone && (
             <button
-              className="p-1 rounded hover:bg-muted transition-colors"
+              className="p-1 rounded hover:bg-muted transition-colors tooltip-gold"
+              data-tooltip="نسخ الطلب"
               onClick={(e) => { e.stopPropagation(); onClone(); }}
-              title="نسخ الطلب"
             >
               <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
             </button>
+          )}
+          {onStatusChange && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-1 rounded hover:bg-muted transition-colors tooltip-gold"
+                  data-tooltip="تغيير الحالة"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <div className="px-2 py-1.5 text-[10px] text-muted-foreground">تغيير سريع للحالة</div>
+                {STATUS_FLOW.map((s) => (
+                  <DropdownMenuItem
+                    key={s}
+                    onClick={(e) => { e.stopPropagation(); onStatusChange(order, s); }}
+                    className={cn("text-xs cursor-pointer gap-2", order.status === s && "bg-muted/50")}
+                  >
+                    <span>{STATUS_META[s].emoji}</span>
+                    <span>{STATUS_META[s].label}</span>
+                    {order.status === s && <Check className="h-3 w-3 mr-auto text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); onStatusChange(order, "cancelled"); }}
+                  className={cn("text-xs cursor-pointer gap-2 text-rose-600 dark:text-rose-400", order.status === "cancelled" && "bg-rose-50 dark:bg-rose-950/30")}
+                >
+                  <span>❌</span>
+                  <span>إلغاء</span>
+                  {order.status === "cancelled" && <Check className="h-3 w-3 mr-auto" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <div className={`inline-flex transition-transform ${expanded ? "rotate-90" : ""}`}>
             <ChevronLeft className="h-4 w-4 text-amber-600" />

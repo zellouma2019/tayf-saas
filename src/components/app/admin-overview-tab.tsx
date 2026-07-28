@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -14,6 +14,7 @@ import {
 import { formatNumber, STATUS_COLORS, getTimeAgo } from "@/lib/admin-utils";
 import type { GlobalStats } from "@/lib/admin-types";
 import { ShopOverviewCard } from "@/components/app/admin-shop-card";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   stats: GlobalStats;
@@ -35,23 +36,23 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   return (
     <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up">
         <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 animate-[pulse_5s_ease-in-out_infinite_1s]" />
         <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 animate-[pulse_6s_ease-in-out_infinite_2s]" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-1">مرحباً بك {adminName || "في طيف"} 👋</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">مرحباً بك {adminName || "في طيف"} <Sparkles className="h-5 w-5 text-white/80" /></h2>
             <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
           </div>
           {safeStats.totalOrders > 0 && (
             <div className="flex gap-4 sm:gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold tabular-nums">{formatNumber(safeStats.todayOrders)}</div>
+                <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.todayOrders} formatFn={formatNumber} /></div>
                 <div className="text-[11px] text-white/60">طلبات اليوم</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold tabular-nums">{formatDA(safeStats.totalRevenue)}</div>
+                <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.totalRevenue} formatFn={formatDA} /></div>
                 <div className="text-[11px] text-white/60">إجمالي الإيرادات</div>
               </div>
             </div>
@@ -68,17 +69,18 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-lift-glow">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(safeStats.totalOrders ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Package className="h-5 w-5 text-primary" /></div></div>
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-primary" /></div></div>
+          {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatDA(safeStats.totalRevenue ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(safeStats.todayOrders ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(safeStats.activeShopCount ?? 0)}<span className="text-muted-foreground/40 text-lg font-normal">/{formatNumber(safeStats.shopCount ?? 0)}</span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>
 
@@ -95,9 +97,10 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
             const totalOrders = safeStats.totalOrders ?? 0;
             if (totalOrders === 0) {
               return (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <Clock className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm">لا توجد طلبات بعد لعرض التوزيع</p>
+                <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                  <div className="empty-state-icon"><Clock className="h-8 w-8 text-primary/60" /></div>
+                  <p className="text-sm font-medium">لا توجد طلبات بعد لعرض التوزيع</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا بمجرد وصول أول طلب</p>
                 </div>
               );
             }
@@ -156,25 +159,19 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
 
       {/* بطاقات الإجراءات السريعة */}
       {(safeStats.shopStats.length ?? 0) === 0 && (
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4">
-          <button onClick={onOpenCreate} className="group bg-card rounded-xl border border-border shadow-sm p-5 text-right hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Store className="h-5 w-5 text-primary" />
-            </div>
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4 fade-in-up fade-in-up-delay-1">
+          <button onClick={onOpenCreate} className="group bg-card rounded-xl border border-border shadow-sm p-5 text-right hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-glow-subtle">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-primary" /></div>
             <h3 className="text-sm font-bold text-foreground mb-1">إنشاء متجرك الأول</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">ابدأ بتسجيل مطبعتك وشارك الرابط مع زبائنك</p>
           </button>
-          <div className="bg-card rounded-xl border border-border shadow-sm p-5 text-right">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-              <UserCheck className="h-5 w-5 text-primary" />
-            </div>
+          <div className="bg-card rounded-xl border border-border shadow-sm p-5 text-right border-glow-subtle">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><UserCheck className="h-5 w-5 text-primary" /></div>
             <h3 className="text-sm font-bold text-foreground mb-1">إدارة الفريق</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">أضف أعضاء الفريق وحدد صلاحياتهم من صفحة الأمان</p>
           </div>
-          <div className="bg-card rounded-xl border border-border shadow-sm p-5 text-right">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-            </div>
+          <div className="bg-card rounded-xl border border-border shadow-sm p-5 text-right border-glow-subtle">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><ShoppingBag className="h-5 w-5 text-primary" /></div>
             <h3 className="text-sm font-bold text-foreground mb-1">تخصيص الإعدادات</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">عيّن الخدمات والأسعار الافتراضية لكل متجر جديد</p>
           </div>

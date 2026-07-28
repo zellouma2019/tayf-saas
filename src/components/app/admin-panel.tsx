@@ -755,14 +755,20 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             </CardHeader>
             <CardContent className="p-0">
               {loading ? (
-                <div className="py-16 text-center text-muted-foreground text-sm">
-                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
-                  جارٍ التحميل...
+                <div className="py-20 text-center text-muted-foreground text-sm">
+                  <div className="empty-state-icon mb-4 mx-auto"><RefreshCw className="h-7 w-7 text-primary/60 animate-spin" /></div>
+                  <p className="font-medium">جارٍ تحميل الطلبات...</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">قد يستغرق هذا بضع ثوانٍ</p>
                 </div>
               ) : filteredOrders.length === 0 ? (
-                <div className="py-16 text-center">
-                  <Inbox className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                <div className="py-20 text-center fade-in-up">
+                  <div className="empty-state-icon"><Inbox className="h-8 w-8 text-primary/60" /></div>
+                  <p className="text-sm font-medium text-foreground">لا توجد طلبات</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    {search || statusFilter !== "all" || dateFrom || dateTo
+                      ? "جرّب تغيير معايير البحث أو التصفية"
+                      : "ستظهر الطلبات الجديدة هنا تلقائياً"}
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto custom-scroll">
