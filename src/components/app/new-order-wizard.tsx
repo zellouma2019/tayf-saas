@@ -628,19 +628,22 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         setUploadedFile(null);
       } else {
         // 🚀 رفع مباشر إلى Uploadthing CDN — لا يمر عبر Vercel serverless!
-        uploadErrorRef.current = null;
-        uploadedFileRef.current = null;
         try {
           setUploadProgress(5);
-          await startUpload([f]);
-          // انتظر قليلاً ليتمكن callback من تعيين القيم
-          await new Promise(resolve => setTimeout(resolve, 500));
-          if (uploadErrorRef.current || !uploadedFileRef.current) {
-            throw new Error(uploadErrorRef.current || "لم يتم رفع الملف");
-          }
-          // Copy ref data to state for later use in handleSubmit
-          if (uploadedFileRef.current && !uploadedFile) {
-            setUploadedFile(uploadedFileRef.current);
+          const uploadResult = await startUpload([f]);
+          if (uploadResult && uploadResult.length > 0) {
+            const uploaded = uploadResult[0] as unknown as UploadedFileData;
+            setUploadedFile({
+              url: uploaded.url,
+              name: uploaded.name,
+              size: uploaded.size,
+              key: uploaded.key,
+              type: uploaded.type,
+            });
+            uploadedFileRef.current = uploaded;
+            setUploadProgress(100);
+          } else {
+            throw new Error("لم يتم رفع الملف — النتيجة فارغة");
           }
         } catch (cdnErr) {
           // Fallback: إذا لم يكن Uploadthing متاحاً، استخدم الرفع المجزأ عبر API
