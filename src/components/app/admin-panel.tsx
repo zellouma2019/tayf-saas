@@ -159,6 +159,28 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState("orders");
 
+  // ===== Browser native notifications =====
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  function showBrowserNotification(title: string, body: string) {
+    try {
+      if ("Notification" in window && Notification.permission === "granted" && document.visibilityState === "hidden") {
+        new Notification(title, {
+          body,
+          icon: "/platform-logo.png",
+          badge: "/platform-logo.png",
+          tag: "tayf-new-order",
+        });
+      }
+    } catch {
+      // Not supported
+    }
+  }
+
   // ===== Polling notifications every 30s =====
   useEffect(() => {
     async function fetchNotifs() {
@@ -168,11 +190,19 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         });
         if (res.ok) {
           const data = await res.json();
-          setNotifications((prev) => {
-            const ids = new Set(prev.map((n) => n.id));
-            const fresh = (data.notifications as Notification[]).filter((n) => !ids.has(n.id));
-            return [...fresh, ...prev].slice(0, 30);
-          });
+          const newNotifs = (data.notifications as Notification[]).filter(
+            (n) => !notifications.some((existing) => existing.id === n.id)
+          );
+          if (newNotifs.length > 0) {
+            setNotifications((prev) => [...newNotifs, ...prev].slice(0, 30));
+
+            // Browser native notification for new orders
+            for (const n of newNotifs) {
+              if (n.type === "new_order") {
+                showBrowserNotification(n.title, n.body);
+              }
+            }
+          }
           setLastCheck(new Date().toISOString());
         }
       } catch {
