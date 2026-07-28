@@ -77,8 +77,8 @@ export function ShopOverviewCard({ shop, onRefresh }: {
   onRefresh: () => void;
 }) {
   return (
-    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-md transition-all overflow-hidden", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
-      <div className="h-1 bg-primary/100" />
+    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden border-glow-subtle group", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+      <div className="h-1 bg-gradient-to-l from-primary via-primary/80 to-primary/40" />
       <CardHeader className="pb-2 px-5 pt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
@@ -112,15 +112,15 @@ export function ShopOverviewCard({ shop, onRefresh }: {
       </CardHeader>
       <CardContent className="px-5 pb-5 space-y-4">
         <div className="grid grid-cols-3 gap-2.5 text-center">
-          <div className="bg-muted/50 rounded-xl p-3">
+          <div className="bg-muted/50 rounded-xl p-3 transition-colors group-hover:bg-primary/5">
             <div className="text-lg font-bold text-foreground">{shop.orders}</div>
             <div className="text-xs text-muted-foreground/70">طلبات</div>
           </div>
-          <div className="bg-emerald-50/60 rounded-xl p-3">
+          <div className="bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl p-3 transition-colors group-hover:bg-emerald-500/5">
             <div className="text-lg font-bold text-emerald-600">{formatDA(shop.revenue)}</div>
             <div className="text-xs text-muted-foreground/70">إيرادات</div>
           </div>
-          <div className="bg-amber-50/60 rounded-xl p-3">
+          <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-xl p-3 transition-colors group-hover:bg-amber-500/5">
             <div className="text-lg font-bold text-amber-600">{shop.todayOrders}</div>
             <div className="text-xs text-muted-foreground/70">اليوم</div>
           </div>
