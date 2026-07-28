@@ -11,16 +11,21 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "طيف — منصة إدارة المطابع",
+  title: {
+    default: "طيف — منصة إدارة المطابع الذكية",
+    template: "%s | طيف",
+  },
   description:
-    "منصة طيف المتكاملة لإدارة المطابع. إنشاء المتاجر، إدارة الطلبات، تتبع العملاء، وتحليل الأرباح.",
+    "منصة طيف لإدارة المطابع — طلبات أونلاين، تتبع الطلبات، لوحة تحكم للتاجر، وإحصائيات متقدمة",
   keywords: [
     "مطبعة",
     "طباعة",
-    "طباعة مستندات",
-    "طباعة صور",
-    "تجليد",
+    "إدارة",
+    "أونلاين",
+    "طلب طباعة",
     "طيف",
+    "لوحة تحكم",
+    "إدارة المطابع",
   ],
   authors: [{ name: "طيف" }],
   icons: {
@@ -33,11 +38,29 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "طيف — منصة إدارة المطابع",
-    description: "منصة متكاملة لإدارة المطابع والخدمات الطباعية",
     type: "website",
+    locale: "ar_DZ",
+    url: "https://tayf-saas.vercel.app",
     siteName: "طيف",
+    title: "طيف — منصة إدارة المطابع الذكية",
+    description:
+      "منصة طيف لإدارة المطابع — طلبات أونلاين، تتبع الطلبات، لوحة تحكم للتاجر",
+    images: [
+      {
+        url: "/brand/og-image.png",
+        width: 1344,
+        height: 768,
+        alt: "طيف — منصة إدارة المطابع",
+      },
+    ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "طيف — منصة إدارة المطابع الذكية",
+    description: "منصة طيف لإدارة المطابع",
+    images: ["/brand/og-image.png"],
+  },
+  robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",
 };
 

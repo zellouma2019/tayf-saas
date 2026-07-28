@@ -55,6 +55,7 @@ import {
   Bell,
   BarChart3,
   Users,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import type { LucideIcon } from "lucide-react";
@@ -95,6 +96,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -117,6 +120,7 @@ import {
 } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { printReceipt } from "@/lib/print-receipt";
+import { generateStatsReport, type StatsReportData } from "@/lib/pdf-stats-report";
 import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
 import { SHOP_THEMES } from "@/lib/themes";
 import { type FeatureKey } from "@/lib/shop-features";
@@ -182,6 +186,16 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [selectedOrder, setSelectedOrder] = useState<PrintOrderLite | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // حالة التقرير
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportFrom, setReportFrom] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  });
+  const [reportTo, setReportTo] = useState<Date>(new Date());
+  const [reportLoading, setReportLoading] = useState(false);
 
   // جلب عدد الطلبات المعلقة
   const fetchPendingCount = useCallback(() => {
@@ -860,7 +874,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { icon: Plus, label: "طلب جديد", color: "from-violet-500 to-violet-600", action: () => window.open(customerLink, '_blank') },
-                  { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => toast.info("قريباً: التقارير اليومية") },
+                  { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => setReportOpen(true) },
                   { icon: Users, label: "العملاء", color: "from-amber-500 to-amber-600", action: () => setActiveTab("customers") },
                   { icon: FileText, label: "المصاريف", color: "from-rose-500 to-rose-600", action: () => setActiveTab("expenses") },
                 ].map((item) => (
@@ -1540,6 +1554,142 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         hasReceiptPrinting={hasFeature("receiptPrinting")}
         hasDirectPrinting={hasFeature("directPrinting")}
       />
+
+      {/* ===== نافذة تقرير الإحصائيات ===== */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              تقرير الإحصائيات
+            </DialogTitle>
+            <DialogDescription>
+              اختر فترة التقرير ثم اضغط &quot;إنشاء التقرير&quot;
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">من تاريخ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-right font-normal">
+                      <CalendarIcon className="ml-2 h-4 w-4 text-muted-foreground" />
+                      {reportFrom ? reportFrom.toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }) : "اختر"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={reportFrom}
+                      onSelect={(d) => d && setReportFrom(d)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">إلى تاريخ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-right font-normal">
+                      <CalendarIcon className="ml-2 h-4 w-4 text-muted-foreground" />
+                      {reportTo ? reportTo.toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }) : "اختر"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={reportTo}
+                      onSelect={(d) => d && setReportTo(d)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  const today = new Date();
+                  setReportTo(today);
+                  const d = new Date();
+                  d.setDate(d.getDate() - 1);
+                  setReportFrom(d);
+                }}
+              >
+                أمس
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  const today = new Date();
+                  setReportTo(today);
+                  const d = new Date();
+                  d.setDate(d.getDate() - 7);
+                  setReportFrom(d);
+                }}
+              >
+                آخر 7 أيام
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  const today = new Date();
+                  setReportTo(today);
+                  const d = new Date();
+                  d.setDate(d.getDate() - 30);
+                  setReportFrom(d);
+                }}
+              >
+                آخر 30 يوم
+              </Button>
+            </div>
+
+            <Button
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+              disabled={reportLoading}
+              onClick={async () => {
+                setReportLoading(true);
+                try {
+                  const from = reportFrom.toISOString().slice(0, 10);
+                  const to = reportTo.toISOString().slice(0, 10);
+                  const res = await fetch(`/api/orders/report?shopId=${shopId}&from=${from}&to=${to}`);
+                  if (!res.ok) throw new Error("فشل في جلب التقرير");
+                  const data: StatsReportData = await res.json();
+                  generateStatsReport(data);
+                  setReportOpen(false);
+                  toast.success("تم إنشاء التقرير", { description: "استخدم زر الطباعة لحفظ التقرير كـ PDF" });
+                } catch (e) {
+                  toast.error("فشل إنشاء التقرير", { description: (e as Error).message });
+                } finally {
+                  setReportLoading(false);
+                }
+              }}
+            >
+              {reportLoading ? (
+                <>
+                  <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                  جارٍ الإنشاء...
+                </>
+              ) : (
+                <>
+                  <Download className="ml-2 h-4 w-4" />
+                  إنشاء التقرير
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
