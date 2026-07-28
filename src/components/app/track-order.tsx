@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Package, Inbox, QrCode, Download, Clock, Loader2, FileText, Copy, CheckCircle2, Truck, Lightbulb, XCircle, Share2 } from "lucide-react";
+import { Search, Package, Inbox, QrCode, Download, Clock, Loader2, FileText, Copy, CheckCircle2, Truck, Lightbulb, XCircle, Share2, MessageCircle } from "lucide-react";
 import QRCode from "qrcode";
 import { downloadInvoicePDF } from "@/lib/pdf-invoice";
 import { shopApi } from "@/lib/shop-api";
@@ -277,6 +277,21 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
               >
                 {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5" />}
                 {copied ? "تم" : "مشاركة"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-[#25D366] hover:text-[#1da851] hover:bg-[#25D366]/10 text-[11px] h-8 px-2 gap-1"
+                onClick={() => {
+                  const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
+                  const text = `📋 متابعة طلب طيف\n\n🔖 رقم الطلب: ${order.reference}\n🖨️ الخدمة: ${order.serviceName}\n💰 السعر: ${formatDA(order.total)}\n📊 الحالة: ${meta.label}\n\n📎 تفاصيل الطلب:\n${trackUrl}`;
+                  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                  window.open(url, "_blank");
+                  toast.success("تم فتح واتساب");
+                }}
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                واتساب
               </Button>
             </div>
           </div>
