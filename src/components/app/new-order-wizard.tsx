@@ -628,9 +628,17 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         setUploadedFile(null);
       } else {
         // 🚀 رفع مباشر إلى Uploadthing CDN — لا يمر عبر Vercel serverless!
+        const uploadStartTime = Date.now();
         try {
           setUploadProgress(5);
+          toast.info("⚡ جاري رفع الملف مباشرة إلى CDN...", {
+            description: `${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت — رفع سريع مباشر`,
+            duration: 3000,
+          });
+          console.log("[upload] Starting UploadThing CDN upload for:", f.name, f.size, "bytes");
           const uploadResult = await startUpload([f]);
+          const uploadDuration = ((Date.now() - uploadStartTime) / 1000).toFixed(1);
+          console.log("[upload] UploadThing result in", uploadDuration, "s:", uploadResult);
           if (uploadResult && uploadResult.length > 0) {
             const uploaded = uploadResult[0] as unknown as UploadedFileData;
             setUploadedFile({
@@ -642,15 +650,29 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             });
             uploadedFileRef.current = uploaded;
             setUploadProgress(100);
+            toast.success(`✅ تم رفع الملف في ${uploadDuration} ثانية`, {
+              description: "CDN — رفع سريع مباشر",
+              duration: 4000,
+            });
           } else {
             throw new Error("لم يتم رفع الملف — النتيجة فارغة");
           }
         } catch (cdnErr) {
           // Fallback: إذا لم يكن Uploadthing متاحاً، استخدم الرفع المجزأ عبر API
-          console.warn("[upload] Uploadthing not available, falling back to chunked upload:", cdnErr);
+          const errMsg = (cdnErr as Error)?.message || String(cdnErr);
+          console.error("[upload] UploadThing CDN failed:", errMsg, cdnErr);
+          toast.warning("⚠️ CDN غير متاح — جاري الرفع عبر الخادم (أبطأ)", {
+            description: errMsg.length > 100 ? errMsg.substring(0, 100) + "..." : errMsg,
+            duration: 5000,
+          });
           const result = await uploadFileViaFallback(f, ext, setUploadProgress);
+          const fallbackDuration = ((Date.now() - uploadStartTime) / 1000).toFixed(1);
           setStoredFileName(result.storedFileName);
           setUploadedFile(null);
+          toast.info(`⏳ تم رفع الملف في ${fallbackDuration} ثانية (خادم)`, {
+            description: "تم الرفع عبر الخادم — لحظات رفع أسرع via CDN",
+            duration: 5000,
+          });
         }
       }
       setUploadStatus("done");

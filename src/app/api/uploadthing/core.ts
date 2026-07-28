@@ -22,7 +22,7 @@ export const ourFileRouter = {
     },
     "image/webp": { maxFileSize: "50MB", maxFileCount: 1 },
   }).onUploadComplete(async ({ file }) => {
-    // الملف تم رفعه بنجاح إلى CDN — لا حاجة لأي معالجة
+    console.log("[uploadthing] Upload complete:", file.name, file.size, "bytes →", file.url);
     return {
       url: file.url,
       name: file.name,
