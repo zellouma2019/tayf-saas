@@ -84,7 +84,7 @@ const PHASE_CONFIG: Record<
   { label: string; icon: typeof Upload; description: string }
 > = {
   idle: { label: "بانتظار الملف", icon: Upload, description: "" },
-  uploading: { label: "رفع الملف", icon: Upload, description: "جارٍ رفع الملف إلى الخادم الآمن..." },
+  uploading: { label: "رفع الملف", icon: Upload, description: "جارٍ رفع الملف مباشرة إلى CDN السريع..." },
   "local-analysis": { label: "التحليل المحلي", icon: Brain, description: "تحليل محتوى الملف الفعلي..." },
   "ai-analysis": { label: "التحليل الذكي", icon: Sparkles, description: "تحليل بالذكاء الاصطناعي..." },
   done: { label: "اكتمل", icon: CheckCircle2, description: "" },
@@ -797,7 +797,7 @@ export default function UploadStep({
         className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5"
       >
         <span className="text-emerald-500">&#128274;</span>
-        ملفاتك آمنة — تُعالج محلياً ولا تُرفع لأي خادم خارجي
+        ملفاتك تُرفع مباشرة عبر CDN آمن — لا تمر عبر خوادمنا
       </motion.p>
 
       {/* ═══════════════════════════════════════════════════
@@ -899,7 +899,7 @@ export default function UploadStep({
                     />
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>📤 رفع إلى الخادم الآمن...</span>
+                    <span>⚡ رفع مباشر إلى CDN</span>
                     <span dir="ltr">
                       {fileSize > 0 ? `${(fileSize / 1024).toFixed(0)} ك.ب` : ""}
                     </span>

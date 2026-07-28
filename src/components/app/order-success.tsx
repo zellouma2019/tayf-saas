@@ -20,6 +20,7 @@ import {
   Search,
   Plus,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
@@ -283,19 +284,34 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             </div>
 
             {/* ===== مشاركة حالة الطلب ===== */}
-            <Button
-              variant="outline"
-              className="w-full border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 h-10 sm:h-11"
-              onClick={() => {
-                const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
-                navigator.clipboard.writeText(trackUrl).then(() =>
-                  toast.success("تم نسخ رابط التتبّع", { description: "شاركه مع أصدقائك" })
-                );
-              }}
-            >
-              <Copy className="h-4 w-4" />
-              شارك حالة الطلب
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="w-full border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 h-10 sm:h-11"
+                onClick={() => {
+                  const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
+                  navigator.clipboard.writeText(trackUrl).then(() =>
+                    toast.success("تم نسخ رابط التتبّع", { description: "شاركه مع أصدقائك" })
+                  );
+                }}
+              >
+                <Copy className="h-4 w-4" />
+                نسخ رابط التتبّع
+              </Button>
+              <Button
+                className="w-full bg-[#25D366] hover:bg-[#1da851] text-white h-10 sm:h-11 border-0"
+                onClick={() => {
+                  const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
+                  const text = `📋 طلب جديد على طيف!\n\n🔖 رقم الطلب: ${order.reference}\n🖨️ الخدمة: ${order.serviceName}\n💰 السعر: ${formatDA(order.total)}\n⏰ التسليم المتوقع: ${order.estimatedHours} ساعة\n\n📎 تابع طلبك هنا:\n${trackUrl}`;
+                  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                  window.open(whatsappUrl, "_blank");
+                  toast.success("تم فتح واتساب", { description: "شارك تفاصيل طلبك" });
+                }}
+              >
+                <MessageCircle className="h-4 w-4" />
+                شارك عبر واتساب
+              </Button>
+            </div>
 
             {/* ===== أزرار الإجراءات ===== */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 sm:pt-2">
