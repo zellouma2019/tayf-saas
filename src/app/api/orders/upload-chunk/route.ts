@@ -37,45 +37,64 @@ function getDirectClient(): Client {
 
 /**
  * إنشاء جداول الأجزاء إن لم تكن موجودة
- * (Turso لا يدعم IF NOT EXISTS في ALTER — نستخدم CREATE TABLE IF NOT EXISTS)
+ * يُستخدم العميل المباشر (بدون مهلة) لضمان نجاح الإنشاء حتى مع cold start
  */
 let _tablesEnsured = false;
 async function ensureUploadTables() {
   if (_tablesEnsured) return;
+  
+  const createUploadTable = `CREATE TABLE IF NOT EXISTS FileUpload (
+    id TEXT PRIMARY KEY,
+    fileName TEXT NOT NULL,
+    fileSize INTEGER NOT NULL,
+    fileExt TEXT NOT NULL,
+    totalChunks INTEGER NOT NULL,
+    receivedCount INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'uploading',
+    assembledBase64 TEXT,
+    createdAt TEXT NOT NULL
+  )`;
+  const createChunkTable = `CREATE TABLE IF NOT EXISTS FileChunk (
+    id TEXT PRIMARY KEY,
+    uploadId TEXT NOT NULL,
+    chunkIndex INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  )`;
+  const createIndex = `CREATE INDEX IF NOT EXISTS idx_filechunk_uploadId ON FileChunk(uploadId)`;
+
+  // الاستراتيجية 1: العميل المباشر (بدون مهلة — مناسب لـ cold start)
   try {
-    await tursoExecute(`
-      CREATE TABLE IF NOT EXISTS "FileUpload" (
-        id TEXT PRIMARY KEY,
-        "fileName" TEXT NOT NULL,
-        "fileSize" INTEGER NOT NULL,
-        "fileExt" TEXT NOT NULL,
-        "totalChunks" INTEGER NOT NULL,
-        "receivedCount" INTEGER NOT NULL DEFAULT 0,
-        status TEXT NOT NULL DEFAULT 'uploading',
-        "assembledBase64" TEXT,
-        "createdAt" TEXT NOT NULL
-      )
-    `);
-    await tursoExecute(`
-      CREATE TABLE IF NOT EXISTS "FileChunk" (
-        id TEXT PRIMARY KEY,
-        "uploadId" TEXT NOT NULL,
-        "chunkIndex" INTEGER NOT NULL,
-        data TEXT NOT NULL,
-        "createdAt" TEXT NOT NULL
-      )
-    `);
-    // إنشاء الفهرس إن لم يكن موجوداً
+    const client = getDirectClient();
+    await client.execute({ sql: createUploadTable, args: [] });
+    await client.execute({ sql: createChunkTable, args: [] });
+    try { await client.execute({ sql: createIndex, args: [] }); } catch { /* index may exist */ }
+    _tablesEnsured = true;
+    return;
+  } catch (directErr) {
+    console.warn("[upload-chunk] Direct client failed, trying Prisma:", (directErr as Error).message);
+  }
+
+  // الاستراتيجية 2: Prisma fallback
+  try {
+    const { db } = await import("@/lib/db");
+    await db.$executeRawUnsafe(createUploadTable);
+    await db.$executeRawUnsafe(createChunkTable);
+    try { await db.$executeRawUnsafe(createIndex); } catch { /* index may exist */ }
+    _tablesEnsured = true;
+    return;
+  } catch (prismaErr) {
+    console.error("[upload-chunk] Prisma fallback also failed:", (prismaErr as Error).message);
+    // الاستراتيجية 3: turso-lite (مع مهلة أطول نسبياً)
     try {
-      await tursoExecute(`CREATE INDEX IF NOT EXISTS idx_filechunk_uploadId ON "FileChunk"("uploadId")`);
-    } catch {
-      // الفهرس قد يكون موجوداً مسبقاً
+      await tursoExecute(createUploadTable);
+      await tursoExecute(createChunkTable);
+      _tablesEnsured = true;
+      return;
+    } catch (tursoErr) {
+      console.error("[upload-chunk] All table creation strategies failed:", tursoErr);
+      throw new Error("فشل إنشاء جداول التخزين المؤقت — يرجى المحاولة لاحقاً");
     }
-    _tablesEnsured = true;
-  } catch (e) {
-    console.error("[upload-chunk] Failed to ensure tables:", e);
-    // لا نوقف العملية — قد تكون الجداول موجودة بالفعل
-    _tablesEnsured = true;
   }
 }
 
@@ -228,9 +247,10 @@ export async function POST(req: NextRequest) {
       complete: false,
     });
   } catch (e) {
-    console.error("[upload-chunk] Error:", e);
+    const errMsg = (e as Error)?.message || String(e);
+    console.error("[upload-chunk] Error:", errMsg, e);
     return NextResponse.json(
-      { error: "فشل في حفظ الجزء على الخادم" },
+      { error: "فشل في حفظ الجزء على الخادم", detail: errMsg },
       { status: 500 },
     );
   }
