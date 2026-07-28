@@ -1,0 +1,24 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://tayf-saas.vercel.app",
+      "localStorage": [
+        {
+          "name": "sa_auth",
+          "value": "{\"ts\":1785260750825,\"token\":\"2d05d279b2211df8e672e7a52571e2c916677386559fc7b861480da8d25c46b5\"}"
+        }
+      ],
+      "sessionStorage": [
+        {
+          "name": "sa_verify_cache",
+          "value": "{\"valid\":true,\"adminName\":\"مدير\",\"cachedAt\":1785260751641}"
+        },
+        {
+          "name": "admin_global_stats",
+          "value": "{\"totalOrders\":0,\"totalRevenue\":0,\"todayOrders\":0,\"shopCount\":0,\"activeShopCount\":0,\"statusCounts\":{\"delivered\":1,\"pending\":29,\"printing\":4,\"ready\":4},\"shopStats\":[],\"recentOrders\":[]}"
+        }
+      ]
+    }
+  ]
+}

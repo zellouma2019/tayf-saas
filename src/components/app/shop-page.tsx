@@ -1,18 +1,86 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ShopProvider, useShop } from "@/lib/shop-context";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Store, AlertTriangle, RotateCcw } from "lucide-react";
 
 const MerchantDashboard = dynamic(
   () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
   { ssr: false, loading: () => <ShopLoader /> },
 );
+
+// ===== Error Boundary للقبض على أخطاء لوحة التحكم =====
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
+
+class MerchantErrorBoundary extends Component<
+  { children: ReactNode; shopId: string; shopSlug: string },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: ReactNode; shopId: string; shopSlug: string }) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("[MerchantDashboard] Error caught by boundary:", error);
+    console.error("[MerchantDashboard] Component stack:", errorInfo.componentStack);
+    this.setState({ errorInfo });
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
+          <Card className="max-w-lg w-full text-center">
+            <CardContent className="py-10">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center mb-5">
+                <AlertTriangle className="h-8 w-8 text-rose-500" />
+              </div>
+              <h2 className="text-xl font-bold mb-2 text-foreground">حدث خطأ في لوحة التحكم</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                يرجى المحاولة مرة أخرى أو تحديث الصفحة
+              </p>
+              {this.state.error && (
+                <pre className="text-xs text-left bg-muted/50 rounded-lg p-3 mb-4 max-h-32 overflow-auto font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap" dir="ltr">
+                  {this.state.error.message}
+                </pre>
+              )}
+              {this.state.errorInfo?.componentStack && (
+                <pre className="text-xs text-left bg-muted/30 rounded-lg p-3 mb-4 max-h-24 overflow-auto font-mono text-muted-foreground whitespace-pre-wrap" dir="ltr">
+                  {this.state.errorInfo.componentStack}
+                </pre>
+              )}
+              <Button onClick={this.handleReset} className="gap-2">
+                <RotateCcw className="h-4 w-4" />
+                تحديث الصفحة
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function ShopLoader() {
   return (
@@ -67,10 +135,12 @@ function ShopAppInner({ slug }: { slug: string }) {
   // لوحة التحكم الخاصة بالتاجر (صاحب المتجر)
   if (isAdmin) {
     return (
-      <MerchantDashboard
-        shopId={shop.id}
-        shopSlug={slug}
-      />
+      <MerchantErrorBoundary shopId={shop.id} shopSlug={slug}>
+        <MerchantDashboard
+          shopId={shop.id}
+          shopSlug={slug}
+        />
+      </MerchantErrorBoundary>
     );
   }
 
