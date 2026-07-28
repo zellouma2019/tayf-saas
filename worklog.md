@@ -1556,3 +1556,45 @@ Stage Summary:
 الملاحظات:
 - زر "إعادة المحاولة" يظهر عند فشل Uploadthing رغم نجاح fallback — مشكلة عرض فقط لا تمنع المتابعة
 - الإصلاح المقترح: إخفاء رسالة الخطأ عند نجاح fallback
+
+---
+Task ID: uploadthing-cdn
+Agent: Main Agent
+Task: تفعيل UploadThing CDN لرفع سريع للملفات بدلاً من التخزين في Turso DB
+
+## الوضع الحالي
+- ✅ UploadThing مُثبّت ومُهيأ (v7.7.4)
+- ✅ بيانات الاعتماد مُضافة (UPLOADTHING_TOKEN)
+- ✅ مُنشر على Vercel مع token في route handler
+- ✅ الملفات > 500KB تُرفع مباشرة إلى UploadThing CDN
+- ✅ الملفات ≤ 500KB تُرفع كـ base64 في JSON body (سريعة)
+- ✅ Fallback للرفع المجزأ عند عدم توفر UploadThing
+- ✅ تحسين عرض/تنزيل الملفات عبر إعادة توجيه مباشرة إلى CDN
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `.env` | إضافة UPLOADTHING_TOKEN |
+| `src/app/api/uploadthing/route.ts` | إضافة token fallback في config |
+| `src/app/api/uploadthing/core.ts` | دعم PDF, DOCX, صور حتى 50MB |
+| `src/lib/file-resolver.ts` | إضافة extractCdnUrl + تحسين التعليقات |
+| `src/app/api/orders/[id]/file/route.ts` | إعادة توجيه مباشرة إلى CDN |
+| `src/app/api/orders/[id]/preview/route.ts` | إعادة توجيه مباشرة إلى CDN |
+
+## كيف يعمل الرفع الآن
+1. زبون يختار ملف > 500KB
+2. المتصفح يُرسل طلب إلى `/api/uploadthing` للحصول على رابط موقّع
+3. المتصفح يُرفع الملف مباشرة إلى UploadThing CDN (sea1 region)
+4. CDN يُرسل callback إلى `/api/uploadthing` عند الاكتمال
+5. الرابط يُخزّن في Turso كـ `__cdn__:https://...`
+6. عرض/تنزيل الملف = إعادة توجيه مباشرة 302 إلى CDN
+
+## السرعة المتوقعة
+- ملف 5MB: ~3-5 ثوانٍ (مقارنة بـ 60+ ثانية سابقاً)
+- ملف 20MB: ~8-12 ثانية
+- ملف 50MB: ~15-25 ثانية
+
+## ⚠️ ملاحظة مهمة
+Token مُشفّر مباشرة في `route.ts` كـ fallback. يُفضل إضافة UPLOADTHING_TOKEN
+كمتغير بيئة في Vercel Dashboard > Settings > Environment Variables
+ثم حذف السطر من الكود.
