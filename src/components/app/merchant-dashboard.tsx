@@ -843,7 +843,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
               {/* التحليلات */}
               <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
-                <AdminAnalytics stats={stats} shopId={shopId} />
+                <AdminAnalytics stats={stats} orders={orders} />
               </div>
             </div>
           )}

@@ -293,6 +293,19 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                 <MessageCircle className="h-3.5 w-3.5" />
                 واتساب
               </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-violet-400 hover:text-violet-300 hover:bg-violet-900/30 text-[11px] h-8 px-2 gap-1"
+                onClick={() => {
+                  const newOrderUrl = `${window.location.origin}${window.location.pathname}`;
+                  window.location.href = newOrderUrl;
+                  toast.info("جارٍ فتح صفحة طلب جديد...");
+                }}
+              >
+                <Package className="h-3.5 w-3.5" />
+                إعادة الطلب
+              </Button>
             </div>
           </div>
         </div>
@@ -391,9 +404,6 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
                 );
               })}
             </div>
-            {meta.description && (
-              <p className="text-[11px] sm:text-xs text-center text-muted-foreground mt-2 sm:mt-3">{meta.description}</p>
-            )}
           </div>
 
           {/* QR + الفاتورة + التسليم */}
