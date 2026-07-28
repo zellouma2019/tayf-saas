@@ -1598,3 +1598,41 @@ Task: تفعيل UploadThing CDN لرفع سريع للملفات بدلاً م�
 Token مُشفّر مباشرة في `route.ts` كـ fallback. يُفضل إضافة UPLOADTHING_TOKEN
 كمتغير بيئة في Vercel Dashboard > Settings > Environment Variables
 ثم حذف السطر من الكود.
+
+---
+Task ID: upload-fix-feedback
+Agent: Main Agent
+Task: تحسين ردود فعل رفع الملفات + إضافة زر واتساب + تحسينات بصرية
+
+## الوضع الحالي
+- ✅ تم تحسين ردود فعل رفع الملفات عبر CDN مع إشعارات toast
+- ✅ إضافة مؤقتات زمنية لعملية الرفع (CDN vs fallback)
+- ✅ تم إضافة زر "شارك عبر واتساب" في صفحة نجاح الطلب
+- ✅ تحديث رسائل الرفع لتوضيح أن الملفات تُرفع عبر CDN
+- ✅ إضافة logging للـ uploadthing callback
+- ✅ Token مضمون دائماً (env var + fallback hardcoded)
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/api/uploadthing/route.ts` | Token يُمرر دائماً مباشرة (env أو hardcoded) |
+| `src/app/api/uploadthing/core.ts` | إضافة console.log في onUploadComplete |
+| `src/components/app/new-order-wizard.tsx` | إضافة toast مؤقتات + رسائل خطأ واضحة عند fallback |
+| `src/components/app/upload-step.tsx` | تحديث رسائل CDN + نص الأمان |
+| `src/components/app/order-success.tsx` | إضافة زر مشاركة واتساب أخضر |
+
+## الميزات الجديدة
+1. **زر واتساب**: في صفحة نجاح الطلب، زر أخضر يُرسل تفاصيل الطلب عبر واتساب
+2. **إشعارات رفع ذكية**: toast يوضح زمن الرفع وطريقة التحميل (CDN vs خادم)
+3. **رسائل أفضل**: "رفع مباشر إلى CDN" بدلاً من "رفع إلى الخادم الآمن"
+
+## ⚠️ ملاحظات مهمة
+- يجب إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel Dashboard
+- Merchant panel orders أحياناً تُرجع 0 (timeout في Turso HTTP)
+- بعض API endpoints تعاني من بطء Turso HTTP عند استعلامات كبيرة
+
+## التوصيات للمرحلة القادمة
+1. إضافة UPLOADTHING_TOKEN و UPLOADTHING_SECRET كمتغيرات بيئة على Vercel
+2. تحسين أداء استعلامات الطلبات (إضافة فهارس في Turso أو استخدام cache)
+3. تحسين لوحة تحكم التاجر (تحميل أسرع للطلبات)
+4. إضافة dark mode improvements
