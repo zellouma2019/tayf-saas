@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote, Check, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { OrderTags } from "./order-tags";
 import {
   STATUS_META,
   formatDA,
@@ -542,8 +543,9 @@ function TableRowInner({
         ) : null}
       </TableCell>
       <TableCell className="font-mono text-xs whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {order.reference}
+          <OrderTags orderId={order.id} size="sm" />
           {order.statusNotes && (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/30" title={order.statusNotes}>
               <StickyNote className="h-2.5 w-2.5" />

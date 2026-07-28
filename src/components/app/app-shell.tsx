@@ -45,6 +45,7 @@ import { PriceEstimator } from "@/components/app/price-estimator";
 import { PageSkeleton } from "@/components/app/page-skeleton";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Intro } from "@/components/app/intro";
+import { CommandPalette } from "@/components/app/command-palette";
 import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { getCountry } from "@/lib/countries";
@@ -277,6 +278,7 @@ export function AppShell() {
   return (
     <>
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
+    <CommandPalette />
     <LayoutGroup>
       <div className="min-h-screen flex flex-col bg-background" dir="rtl" style={themeStyle}>
       {/* ===== الشريط العلوي المُلوَّن حسب ثيم المتجر ===== */}
@@ -475,6 +477,18 @@ export function AppShell() {
             >
               <Plus className="h-3.5 w-3.5" />
               <span>طلب سريع</span>
+            </button>
+            {/* Ctrl+K hint */}
+            <button
+              onClick={() => {
+                // Trigger command palette via custom event
+                window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+              }}
+              className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 border border-border/50 transition-colors"
+              title="بحث سريع"
+            >
+              <Search className="h-3 w-3" />
+              <kbd className="kbd-key text-[9px]">Ctrl+K</kbd>
             </button>
           </div>
           </div>

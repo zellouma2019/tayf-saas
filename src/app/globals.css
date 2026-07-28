@@ -1811,3 +1811,248 @@ html.dark .glass-card {
 .table-row-odd {
   @apply bg-transparent;
 }
+
+/* ===== Round 16: Enhanced Styling & Animations ===== */
+
+/* Premium shimmer loading effect */
+@keyframes shimmer-slide {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer-card {
+  background: linear-gradient(90deg, var(--card, #fff) 25%, var(--muted, #f5f5f5) 50%, var(--card, #fff) 75%);
+  background-size: 200% 100%;
+  animation: shimmer-slide 1.8s ease-in-out infinite;
+}
+.dark .shimmer-card {
+  background: linear-gradient(90deg, var(--card, #1e1e2e) 25%, var(--muted, #2a2a3e) 50%, var(--card, #1e1e2e) 75%);
+  background-size: 200% 100%;
+  animation: shimmer-slide 1.8s ease-in-out infinite;
+}
+
+/* Gradient text utility */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #d4a853, #f5d79e, #d4a853);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-violet {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #10b981, #6ee7b7, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced card hover with 3D tilt effect */
+.card-tilt {
+  @apply transition-all duration-300 ease-out;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+.card-tilt:hover {
+  transform: translateY(-2px) rotateX(1deg);
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+/* Pulse glow for important elements */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 168, 83, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(212, 168, 83, 0); }
+}
+.pulse-gold {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Smooth number counter animation */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.count-animate {
+  animation: count-up 0.5s ease-out;
+}
+
+/* Improved focus ring */
+.focus-ring-improved {
+  @apply outline-none ring-2 ring-offset-2 ring-offset-background;
+  --tw-ring-color: rgba(212, 168, 83, 0.5);
+}
+.focus-ring-improved:focus-within {
+  --tw-ring-color: rgba(212, 168, 83, 0.7);
+}
+
+/* Status badge enhanced */
+.status-badge-enhanced {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-200;
+}
+.status-badge-enhanced::before {
+  content: '';
+  @apply w-1.5 h-1.5 rounded-full shrink-0;
+}
+
+/* Ripple effect for buttons */
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+.btn-ripple {
+  @apply relative overflow-hidden;
+}
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  transition: none;
+}
+.btn-ripple:active::after {
+  animation: ripple 0.5s ease-out;
+}
+
+/* Floating label animation */
+.floating-label {
+  @apply relative;
+}
+.floating-label label {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none;
+}
+.floating-label input:focus ~ label,
+.floating-label input:not(:placeholder-shown) ~ label {
+  @apply -top-2.5 text-[10px] bg-card px-1;
+  color: #d4a853;
+}
+
+/* Skeleton with wave effect */
+@keyframes skeleton-wave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-wave {
+  @apply relative overflow-hidden bg-muted;
+}
+.skeleton-wave::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: skeleton-wave 1.5s ease-in-out infinite;
+}
+
+/* Tag/chip component base */
+.tag-chip {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors;
+}
+.tag-urgent { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400; }
+.tag-vip { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400; }
+.tag-wholesale { @apply bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400; }
+.tag-express { @apply bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400; }
+.tag-new { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400; }
+.tag-custom { @apply bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400; }
+
+/* Improved scrollbar for the whole app */
+.scrollbar-improved {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 83, 0.2) transparent;
+}
+.scrollbar-improved::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-improved::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-improved::-webkit-scrollbar-thumb {
+  background-color: rgba(212, 168, 83, 0.2);
+  border-radius: 6px;
+}
+.scrollbar-improved::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(212, 168, 83, 0.35);
+}
+
+/* Kanban column enhanced */
+.kanban-column-header {
+  @apply px-3 py-2.5 rounded-t-xl border border-b-0 transition-all duration-200;
+}
+.kanban-column-body {
+  @apply flex-1 p-1.5 border rounded-b-xl bg-muted/20 space-y-0 min-h-[150px] max-h-[60vh] overflow-y-auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 83, 0.2) transparent;
+}
+.kanban-column-body::-webkit-scrollbar { width: 6px; height: 6px; }
+.kanban-column-body::-webkit-scrollbar-track { background: transparent; }
+.kanban-column-body::-webkit-scrollbar-thumb {
+  background-color: rgba(212, 168, 83, 0.2);
+  border-radius: 6px;
+}
+
+/* Collapse animation for kanban columns */
+@keyframes collapse-down {
+  from { max-height: 60vh; opacity: 1; }
+  to { max-height: 0; opacity: 0; overflow: hidden; }
+}
+@keyframes expand-down {
+  from { max-height: 0; opacity: 0; overflow: hidden; }
+  to { max-height: 60vh; opacity: 1; }
+}
+.kanban-collapsed .kanban-column-body {
+  animation: collapse-down 0.3s ease-out forwards;
+}
+.kanban-expanded .kanban-column-body {
+  animation: expand-down 0.3s ease-out forwards;
+}
+
+/* Quick stats row */
+.quick-stat {
+  @apply flex items-center gap-3 p-3 rounded-xl transition-all duration-200;
+}
+.quick-stat:hover {
+  @apply bg-primary/5;
+}
+.quick-stat-icon {
+  @apply w-9 h-9 rounded-lg flex items-center justify-center shrink-0;
+}
+
+/* Sparkline mini chart */
+.sparkline {
+  @apply inline-flex items-end gap-[1px] h-4;
+}
+.sparkline-bar {
+  @apply w-[3px] rounded-t-sm transition-all duration-300;
+  min-height: 2px;
+}
+
+/* Keyboard shortcut key styling */
+.kbd-key {
+  @apply inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-md text-[10px] font-mono font-bold bg-muted border border-border shadow-sm transition-all duration-150;
+}
+.kbd-key:hover {
+  @apply bg-primary/10 border-primary/20;
+}
+
+/* Command palette overlay */
+.command-palette-backdrop {
+  @apply fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm;
+  animation: fade-in 0.15s ease-out;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.command-palette {
+  @apply fixed top-[20%] left-1/2 -translate-x-1/2 w-[90vw] max-w-lg z-[61] rounded-2xl border border-border shadow-2xl bg-card/95 backdrop-blur-xl overflow-hidden;
+  animation: command-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes command-enter {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.97); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.command-item {
+  @apply flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors text-sm;
+}
+.command-item:hover, .command-item.active {
+  @apply bg-primary/8 text-foreground;
+}

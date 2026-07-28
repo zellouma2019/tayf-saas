@@ -28,9 +28,13 @@ import {
   XCircle,
   AlertTriangle,
   Timer,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { OrderTags } from "./order-tags";
 import { formatDA } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { cn } from "@/lib/utils";
 
 function timeAgo(date: Date | string): string {
   const now = Date.now();
@@ -68,6 +72,35 @@ interface KanbanBoardProps {
   onRefresh: () => void;
 }
 
+/** WIP limit indicator */
+function WipIndicator({ count, limit }: { count: number; limit: number }) {
+  if (!limit) return null;
+  const pct = count / limit;
+  const color = pct >= 1 ? "text-rose-500" : pct >= 0.75 ? "text-amber-500" : "text-emerald-500";
+  return (
+    <span className={cn("text-[9px] tabular-nums font-medium", color)}>
+      {count}/{limit}
+    </span>
+  );
+}
+
+/** Sparkline mini chart for revenue */
+function MiniSparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const max = Math.max(...values, 1);
+  return (
+    <div className="sparkline">
+      {values.map((v, i) => (
+        <div
+          key={i}
+          className={cn("sparkline-bar", i === values.length - 1 ? "bg-gold-400" : "bg-primary/25")}
+          style={{ height: `${Math.max(15, (v / max) * 100)}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** بطاقة طلب قابلة للسحب */
 function SortableOrderCard({
   order,
@@ -98,10 +131,10 @@ function SortableOrderCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-card rounded-lg border p-3 mb-2 transition-shadow ${
+      className={`bg-card rounded-xl border p-3 mb-2 transition-all duration-200 ${
         isDragging
-          ? "shadow-lg ring-2 ring-primary/30 z-50 opacity-90"
-          : "hover:shadow-sm"
+          ? "shadow-xl ring-2 ring-primary/30 z-50 opacity-90 scale-[1.02]"
+          : "hover:shadow-md hover:border-primary/20"
       } ${isStale ? "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20" : ""}`}
     >
       <div className="flex items-start gap-2">
@@ -109,10 +142,10 @@ function SortableOrderCard({
         <button
           {...attributes}
           {...listeners}
-          className="mt-0.5 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
+          className="mt-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
           aria-label="اسحب"
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="h-3.5 w-3.5" />
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
@@ -126,8 +159,12 @@ function SortableOrderCard({
           <div className="text-xs text-muted-foreground truncate mb-1">
             {order.customer?.name || "—"}
           </div>
+          {/* Tags row */}
+          <div className="mb-1">
+            <OrderTags orderId={order.id} size="sm" />
+          </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
+            <span className="text-xs font-bold text-gradient-gold">
               {formatDA(order.total)}
             </span>
             <div className="flex items-center gap-1.5">
@@ -169,6 +206,16 @@ export function KanbanBoard({
   onRefresh,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+
+  const toggleCollapse = useCallback((colKey: string) => {
+    setCollapsedColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(colKey)) next.delete(colKey);
+      else next.add(colKey);
+      return next;
+    });
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -253,34 +300,44 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-3 min-h-[400px] overflow-x-auto pb-2 sm:overflow-visible sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:gap-3 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0">
-        {columnOrders.map((col) => (
-          <div key={col.key} className="flex flex-col min-w-[200px] sm:min-w-0 sm:flex-1">
+        {columnOrders.map((col) => {
+          const isCollapsed = collapsedColumns.has(col.key);
+          return (
+          <div key={col.key} className={cn("flex flex-col min-w-[200px] sm:min-w-0 sm:flex-1 transition-all duration-300", isCollapsed ? "opacity-60" : "")}>
             {/* رأس العمود */}
             <div
-              className={`flex flex-col px-3 py-2 rounded-t-lg border border-b-0 ${col.color}`}
+              className={cn("kanban-column-header flex flex-col", col.color, "cursor-pointer select-none")}
+              onClick={() => toggleCollapse(col.key)}
             >
               <div className="flex items-center gap-2">
                 <col.icon className="h-3.5 w-3.5" />
                 <span className="font-medium text-xs">{col.label}</span>
-                <span className="mr-auto flex items-center gap-1">
-                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 px-1.5 py-0.5 rounded-full">
+                <span className="mr-auto flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 px-1.5 py-0.5 rounded-full tabular-nums">
                     {col.orders.length}
                   </span>
+                  <WipIndicator count={col.orders.length} limit={col.key === 'printing' ? 5 : undefined} />
                 </span>
+                {isCollapsed
+                  ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  : <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                }
               </div>
-              {col.orders.length > 0 && (
-                <div className="text-[10px] opacity-70 mt-0.5">
-                  {formatDA(col.totalRevenue)}
+              {!isCollapsed && col.orders.length > 0 && (
+                <div className="text-[10px] opacity-70 mt-0.5 flex items-center gap-2">
+                  <span className="font-bold">{formatDA(col.totalRevenue)}</span>
+                  <MiniSparkline values={col.orders.slice(-7).map(o => o.total)} />
                 </div>
               )}
             </div>
             {/* محتوى العمود */}
+            {!isCollapsed && (
             <SortableContext
               items={col.orders.map((o) => o.id)}
               strategy={verticalListSortingStrategy}
             >
               <div
-                className="flex-1 p-1.5 border rounded-b-lg bg-muted/20 space-y-0 min-h-[150px] max-h-[60vh] overflow-y-auto"
+                className="kanban-column-body"
                 data-column={col.key}
               >
                 {col.orders.length === 0 ? (
@@ -301,8 +358,10 @@ export function KanbanBoard({
                 )}
               </div>
             </SortableContext>
+            )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* منطقة إسقاط الإلغاء */}
