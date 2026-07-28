@@ -177,6 +177,14 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
 
   return (
     <div className={cn("min-h-screen bg-background flex items-center justify-center p-4 relative", lang === "ar" ? "dir-rtl" : "dir-ltr")} dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* Dot grid background pattern */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
+        style={{
+          backgroundImage: 'radial-gradient(circle, currentColor 0.8px, transparent 0.8px)',
+          backgroundSize: '28px 28px',
+        }}
+      />
+
       {/* Animated decorative blobs */}
       <motion.div
         className="absolute top-1/4 right-1/4 w-72 h-72 rounded-full blur-3xl pointer-events-none"
@@ -257,8 +265,10 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 1, repeat: Infinity }}
+                  className="relative mx-auto w-fit"
                 >
-                  <ShieldAlert className="h-10 w-10 text-rose-500 mx-auto" />
+                  <div className="absolute inset-0 rounded-full bg-rose-500/20 blur-md animate-[onlinePulse_2s_ease-in-out_infinite]" />
+                  <ShieldAlert className="h-10 w-10 text-rose-500 mx-auto relative drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
                 </motion.div>
                 <p className="text-sm font-medium text-destructive">{t.lockedTitle}</p>
                 <p className="text-3xl font-bold text-foreground tabular-nums">{lockoutSecondsLeft}</p>
@@ -316,6 +326,11 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
                     </motion.div>
                   ) : t.loginBtn}
                 </Button>
+                {!verifying && password.trim() && (
+                  <p className="text-center text-[10px] text-muted-foreground/50 mt-1.5">
+                    {lang === "ar" ? "اضغط Enter للدخول" : "Press Enter to login"}
+                  </p>
+                )}
               </motion.form>
             )}
           </AnimatePresence>

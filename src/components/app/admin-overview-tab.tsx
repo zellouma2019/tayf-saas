@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -95,13 +95,13 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   return (
     <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up glass-card" style={{ backgroundColor: 'rgba(124, 58, 237, 0.85)', backdropFilter: 'blur(16px)' }}>
+      <div className="gradient-border-animated relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up glass-card" style={{ backgroundColor: 'rgba(124, 58, 237, 0.85)', backdropFilter: 'blur(16px)' }}>
         <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 animate-[pulse_5s_ease-in-out_infinite_1s]" />
         <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 animate-[pulse_6s_ease-in-out_infinite_2s]" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">مرحباً بك {adminName || "في طيف"} <Sparkles className="h-5 w-5 text-white/80" /></h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2"><span className="online-dot" /><span>مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
             <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
           </div>
           {safeStats.totalOrders > 0 && (
@@ -109,6 +109,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
               <div className="text-center">
                 <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.todayOrders} formatFn={formatNumber} /></div>
                 <div className="text-[11px] text-white/60">طلبات اليوم</div>
+                <span className={cn("comparison-badge mt-1.5 inline-block text-[10px] px-2 py-0.5 rounded-full font-medium", safeStats.todayOrders > 0 ? "comparison-up" : "comparison-neutral")}>
+                  {safeStats.todayOrders > 0 ? "نشاط جيد" : "لا طلبات"}
+                </span>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.totalRevenue} formatFn={formatDA} /></div>
@@ -212,6 +215,63 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
       {/* مخطط إيرادات الأسبوع */}
       <WeeklyRevenueChart stats={stats} />
 
+      {/* أفضل الزبائن */}
+      {(() => {
+        const customerMap = new Map<string, { name: string; count: number; total: number }>();
+        (safeStats.recentOrders || []).forEach((order) => {
+          const name = order.customer?.name || "—";
+          const existing = customerMap.get(name);
+          if (existing) {
+            existing.count += 1;
+            existing.total += order.total || 0;
+          } else {
+            customerMap.set(name, { name, count: 1, total: order.total || 0 });
+          }
+        });
+        const topCustomers = Array.from(customerMap.values())
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+        return (
+          <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+                <Crown className="h-4 w-4 text-gold-500" />
+                أفضل الزبائن
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {topCustomers.length === 0 ? (
+                <div className="py-10 flex flex-col items-center text-muted-foreground">
+                  <Users className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                  <p className="text-sm font-medium">لا يوجد زبائن بعد</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا أفضل الزبائن بناءً على عدد الطلبات</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {topCustomers.map((customer, index) => (
+                    <div key={customer.name} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-primary/5 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={cn(
+                          "inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold shrink-0",
+                          index === 0 ? "rank-1" : index === 1 ? "rank-2" : index === 2 ? "rank-3" : "rank-default"
+                        )}>
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-medium text-foreground truncate">{customer.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-xs px-2 py-0.5 rounded-lg bg-primary/10 text-primary font-semibold tabular-nums">{customer.count} طلب</span>
+                        <span className="text-sm font-bold text-foreground/80 tabular-nums">{formatDA(customer.total)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* ملخص المتاجر */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {safeStats.shopStats.map((shop) => (
@@ -292,8 +352,11 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {(safeStats.recentOrders || []).slice(0, 10).map((order) => (
-                <div key={order.id} className="flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 hover:bg-primary/5 transition-colors">
+              {(safeStats.recentOrders || []).slice(0, 10).map((order, idx) => (
+                <div key={order.id} className={cn(
+                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 transition-colors table-row-accent",
+                  idx % 2 === 0 ? "table-row-even" : "table-row-odd"
+                )}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -305,7 +368,8 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-bold text-foreground">{formatDA(order.total)}</span>
-                    <span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[order.status] || ""}`}>
+                    <span className={cn("text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5", STATUS_COLORS[order.status] || "")}>
+                      <span className={cn("status-dot", `status-dot-${order.status}`)} />
                       {STATUS_META[order.status]?.label || order.status}
                     </span>
                   </div>

@@ -1679,3 +1679,135 @@ html.dark .glass-card {
   background: var(--primary);
   animation: underline-grow 0.4s ease-out;
 }
+
+/* ===== Round 15: Enhanced Animations & Utilities ===== */
+
+/* Floating action bar for batch operations */
+.batch-action-bar {
+  @apply fixed bottom-0 left-0 right-0 z-50 p-4;
+  animation: slideUpFromBottom 0.3s ease-out;
+}
+@keyframes slideUpFromBottom {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Gradient animated border */
+.gradient-border-animated {
+  position: relative;
+}
+.gradient-border-animated::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d4a853, #8b5cf6, #d4a853, transparent);
+  background-size: 200% 100%;
+  animation: gradientSlide 3s ease-in-out infinite;
+}
+@keyframes gradientSlide {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Online indicator dot */
+.online-dot {
+  @apply inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5;
+  animation: onlinePulse 2s ease-in-out infinite;
+}
+@keyframes onlinePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+}
+
+/* Status dot for orders */
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full mr-1.5 shrink-0;
+}
+.status-dot-pending { background-color: #f59e0b; }
+.status-dot-printing { background-color: #8b5cf6; }
+.status-dot-ready { background-color: #10b981; }
+.status-dot-delivered { background-color: #6b7280; }
+.status-dot-cancelled { background-color: #ef4444; }
+
+/* Improved table row with right accent */
+.table-row-accent {
+  @apply relative transition-all duration-200;
+}
+.table-row-accent:hover::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #d4a853, #8b5cf6);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Number rank badge */
+.rank-badge {
+  @apply w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0;
+}
+.rank-1 { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400; }
+.rank-2 { @apply bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400; }
+.rank-3 { @apply bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400; }
+.rank-default { @apply bg-muted text-muted-foreground; }
+
+/* Glass morphism for floating elements */
+.glass-float {
+  @apply backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border border-white/20 dark:border-slate-700/50;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Improved notification item */
+.notif-item {
+  @apply px-4 py-3 hover:bg-primary/5 transition-colors cursor-pointer border-b border-border/50 last:border-0;
+}
+.notif-item.unread {
+  @apply bg-primary/3;
+}
+.notif-item.unread::before {
+  content: '';
+  @apply absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary;
+}
+
+/* Smooth scrollbar for notifications */
+.notif-scroll-custom {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+.notif-scroll-custom::-webkit-scrollbar {
+  width: 4px;
+}
+.notif-scroll-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+.notif-scroll-custom::-webkit-scrollbar-thumb {
+  background-color: rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+
+/* Comparison badge */
+.comparison-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold;
+}
+.comparison-up {
+  @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+}
+.comparison-down {
+  @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400;
+}
+.comparison-neutral {
+  @apply bg-muted text-muted-foreground;
+}
+
+/* Alternating table rows */
+.table-row-even {
+  @apply bg-muted/30;
+}
+.table-row-odd {
+  @apply bg-transparent;
+}

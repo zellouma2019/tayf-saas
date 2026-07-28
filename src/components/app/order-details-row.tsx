@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote, Check } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote, Check, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   STATUS_META,
   formatDA,
@@ -20,6 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import { STATUS_FLOW } from "@/lib/print-config";
 import {
   translateOptionKey,
@@ -59,9 +62,13 @@ interface OrderDetailsRowProps {
   onClick?: (order: PrintOrderLite) => void;
   onPrintReceipt?: () => void;
   canPrintReceipt?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  note?: string;
+  onSaveNote?: (note: string) => void;
 }
 
-export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt }: OrderDetailsRowProps) {
+export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[order.status];
 
@@ -158,13 +165,18 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
         selected={selected}
         onToggleSelect={onToggleSelect}
         onClick={onClick}
+        onStatusChange={onStatusChange}
         onClone={onClone}
         onPrintReceipt={onPrintReceipt}
         canPrintReceipt={canPrintReceipt}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
+        note={note}
+        onSaveNote={onSaveNote}
       />
       {expanded && (
         <tr className="bg-amber-50/40 dark:bg-amber-950/20">
-          <td colSpan={11} className="p-0">
+          <td colSpan={13} className="p-0">
             <div className="p-4 md:p-6 border-t border-amber-200 dark:border-amber-800/40">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
                 {/* ===== مواصفات الطباعة ===== */}
@@ -428,9 +440,14 @@ function TableRow({
   selected,
   onToggleSelect,
   onClick,
+  onStatusChange,
   onClone,
   onPrintReceipt,
   canPrintReceipt,
+  isFavorite,
+  onToggleFavorite,
+  note,
+  onSaveNote,
 }: {
   order: PrintOrderLite;
   meta: { label: string; bg: string };
@@ -440,9 +457,14 @@ function TableRow({
   selected?: boolean;
   onToggleSelect?: () => void;
   onClick?: (order: PrintOrderLite) => void;
+  onStatusChange?: (order: PrintOrderLite, status: string) => void;
   onClone?: () => void;
   onPrintReceipt?: () => void;
   canPrintReceipt?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  note?: string;
+  onSaveNote?: (note: string) => void;
 }) {
   return (
     <TableRowInner
@@ -454,9 +476,14 @@ function TableRow({
       selected={selected}
       onToggleSelect={onToggleSelect}
       onClick={onClick}
+      onStatusChange={onStatusChange}
       onClone={onClone}
       onPrintReceipt={onPrintReceipt}
       canPrintReceipt={canPrintReceipt}
+      isFavorite={isFavorite}
+      onToggleFavorite={onToggleFavorite}
+      note={note}
+      onSaveNote={onSaveNote}
     />
   );
 }
@@ -470,9 +497,14 @@ function TableRowInner({
   selected,
   onToggleSelect,
   onClick,
+  onStatusChange,
   onClone,
   onPrintReceipt,
   canPrintReceipt,
+  isFavorite,
+  onToggleFavorite,
+  note,
+  onSaveNote,
 }: {
   order: PrintOrderLite;
   meta: { label: string; bg: string };
@@ -482,10 +514,16 @@ function TableRowInner({
   selected?: boolean;
   onToggleSelect?: () => void;
   onClick?: (order: PrintOrderLite) => void;
+  onStatusChange?: (order: PrintOrderLite, status: string) => void;
   onClone?: () => void;
   onPrintReceipt?: () => void;
   canPrintReceipt?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  note?: string;
+  onSaveNote?: (note: string) => void;
 }) {
+  const [localNote, setLocalNote] = useState(note || "");
   return (
     <tr
       className={`hover:bg-amber-50/30 dark:hover:bg-amber-950/20 cursor-pointer transition-colors ${expanded ? "bg-amber-50/50 dark:bg-amber-950/20" : ""} ${selected ? "bg-rose-50/40 dark:bg-rose-950/20" : ""}`}
@@ -555,6 +593,41 @@ function TableRowInner({
       </TableCell>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
         {formatDateTimeAr(order.createdAt)}
+      </TableCell>
+      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-center gap-0.5">
+          <button
+            className="p-1 rounded hover:bg-muted transition-colors"
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(); }}
+          >
+            <Star className={cn("h-3.5 w-3.5 transition-colors", isFavorite ? "fill-gold-400 text-gold-400" : "text-muted-foreground/40 hover:text-gold-400")} />
+          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="p-1 rounded hover:bg-muted transition-colors relative" onClick={(e) => e.stopPropagation()}>
+                <StickyNote className="h-3.5 w-3.5 text-muted-foreground/40 hover:text-foreground transition-colors" />
+                {note && <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-gold-500 rounded-full" />}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" dir="rtl" onClick={(e) => e.stopPropagation()}>
+              <Textarea
+                value={localNote}
+                onChange={(e) => setLocalNote(e.target.value)}
+                placeholder="ملاحظة خاصة بالتاجر..."
+                className="text-xs min-h-[70px] mb-2 resize-none"
+                autoFocus
+              />
+              <div className="flex justify-end">
+                <button
+                  onClick={() => { onSaveNote?.(localNote); if (localNote.trim()) toast.success("تم حفظ الملاحظة"); }}
+                  className="text-xs bg-gold-500 hover:bg-gold-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  حفظ
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-1">

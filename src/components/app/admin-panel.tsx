@@ -64,6 +64,7 @@ import {
 } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { OrderDetailsRow } from "@/components/app/order-details-row";
 import { OrderDetailModal } from "@/components/app/order-detail-modal";
@@ -151,12 +152,14 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [batchStatusLoading, setBatchStatusLoading] = useState(false);
+  const [batchStatus, setBatchStatus] = useState("");
   const [detailOrder, setDetailOrder] = useState<PrintOrderLite | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotif, setShowNotif] = useState(false);
   const [lastCheck, setLastCheck] = useState(() => new Date().toISOString());
   const notifRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState("orders");
 
   // ===== Browser native notifications =====
@@ -224,6 +227,13 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Sync indeterminate state for Select All checkbox
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredOrders.length;
+    }
+  }, [selectedIds.size, filteredOrders.length]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -640,33 +650,53 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                     variant="outline"
                     size="icon"
                     onClick={() => setShowNotif((v) => !v)}
-                    className="relative h-9 w-9"
+                    className={cn(
+                      "relative h-9 w-9",
+                      unreadCount > 0 && "border-rose-300 dark:border-rose-700",
+                    )}
                   >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none">
+                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none pulse-ring-rose">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-background" />
+                    )}
                   </Button>
                   {showNotif && (
-                    <div className="absolute top-full left-0 mt-1 z-50 w-72 sm:w-80 rounded-xl border bg-background shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
-                      <div className="flex items-center justify-between px-3 py-2 border-b">
-                        <span className="text-xs font-bold">الإشعارات</span>
-                        {notifications.length > 0 && (
+                    <div className="absolute top-full left-0 mt-1 z-50 w-80 sm:w-96 rounded-xl border bg-background shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs font-bold">الإشعارات</span>
+                          {unreadCount > 0 && (
+                            <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        {unreadCount > 0 && (
                           <button
                             onClick={() => {
                               setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
                             }}
-                            className="text-[10px] text-muted-foreground hover:text-foreground"
+                            className="flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/40 transition-colors"
                           >
                             تعيين الكل كمقروء
                           </button>
                         )}
                       </div>
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto notif-scroll-custom">
                         {notifications.length === 0 ? (
-                          <div className="py-8 text-center text-xs text-muted-foreground">لا توجد إشعارات</div>
+                          <div className="py-12 text-center">
+                            <div className="empty-state-icon mx-auto mb-3">
+                              <Bell className="h-6 w-6 text-muted-foreground/40" />
+                            </div>
+                            <p className="text-xs font-medium text-muted-foreground">لا توجد إشعارات جديدة</p>
+                            <p className="text-[10px] text-muted-foreground/50 mt-1">ستظهر الإشعارات الجديدة هنا تلقائياً</p>
+                          </div>
                         ) : (
                           notifications.map((n) => (
                             <button
@@ -679,22 +709,22 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                                 setShowNotif(false);
                               }}
                               className={cn(
-                                "w-full text-right px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/50 transition-colors",
+                                "w-full text-right px-4 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors relative",
                                 !n.read && "bg-rose-50/40 dark:bg-rose-950/20",
                               )}
                             >
-                              <div className="flex items-start gap-2">
-                                <span className="text-sm mt-0.5 shrink-0">
+                              <div className="flex items-start gap-2.5">
+                                <span className="text-base mt-0.5 shrink-0">
                                   {n.type === "new_order" ? "🆕" : n.type === "stale_order" ? "⏰" : "🔔"}
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs font-bold text-foreground">{n.title}</div>
+                                  <div className={cn("text-xs font-bold text-foreground", !n.read && "text-rose-700 dark:text-rose-400")}>{n.title}</div>
                                   <div className="text-xs text-muted-foreground mt-0.5 truncate">{n.body}</div>
                                   <div className="text-[10px] text-muted-foreground/60 mt-0.5">
                                     {formatDateTimeAr(n.createdAt)}
                                   </div>
                                 </div>
-                                {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 mt-1.5" />}
+                                {!n.read && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1.5 pulse-ring-rose" />}
                               </div>
                             </button>
                           ))
@@ -807,10 +837,12 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                       <TableRow className="bg-muted/40">
                         <TableHead className="w-10 text-center">
                           <input
+                            ref={selectAllRef}
                             type="checkbox"
                             checked={selectedIds.size === filteredOrders.length && filteredOrders.length > 0}
                             onChange={toggleSelectAll}
                             className="w-4 h-4 rounded accent-rose-500 cursor-pointer"
+                            title={selectedIds.size === filteredOrders.length && filteredOrders.length > 0 ? "إلغاء تحديد الكل" : "تحديد الكل"}
                           />
                         </TableHead>
                         <TableHead className="text-right text-xs">رقم الطلب</TableHead>
@@ -952,6 +984,82 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         onClose={() => setDetailOrder(null)}
         onStatusChange={changeStatus}
       />
+
+      {/* شريط الإجراءات الجماعية العائم */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-auto sm:bottom-6 sm:w-auto sm:min-w-[480px]"
+          >
+            <div className="glass-card rounded-2xl border-2 border-gold-500/40 dark:border-gold-500/30 shadow-2xl shadow-gold-500/10 px-4 py-3 sm:px-5 sm:py-3.5">
+              <div className="flex items-center gap-3 sm:gap-4">
+                {/* عدد المحدد */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-xl bg-gold-500/10 border border-gold-500/20 shrink-0">
+                    <span className="text-sm font-bold text-gold-600 dark:text-gold-400 tabular-nums">{selectedIds.size}</span>
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground hidden sm:inline whitespace-nowrap">
+                    طلب محدد
+                  </span>
+                </div>
+
+                {/* فاصل */}
+                <div className="w-px h-8 bg-border shrink-0" />
+
+                {/* اختيار الحالة */}
+                <Select value={batchStatus} onValueChange={setBatchStatus} disabled={batchStatusLoading}>
+                  <SelectTrigger className="h-8 text-xs w-auto min-w-[150px] sm:min-w-[180px] border-gold-500/20">
+                    <SelectValue placeholder={batchStatusLoading ? "جارٍ التطبيق..." : "اختر الحالة الجديدة"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_FLOW.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {STATUS_META[s].emoji} {STATUS_META[s].label}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="cancelled">❌ إلغاء الطلبات</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* أزرار */}
+                <div className="flex items-center gap-2 mr-auto">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (batchStatus) {
+                        batchChangeStatus(batchStatus);
+                        setBatchStatus("");
+                      }
+                    }}
+                    disabled={!batchStatus || batchStatusLoading}
+                    className="h-8 text-xs bg-gold-500 hover:bg-gold-600 text-black font-semibold px-4"
+                  >
+                    {batchStatusLoading ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    تطبيق
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedIds(new Set());
+                      setBatchStatus("");
+                    }}
+                    className="h-8 text-xs border-border"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

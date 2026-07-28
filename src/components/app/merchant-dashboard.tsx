@@ -56,6 +56,7 @@ import {
   BarChart3,
   Users,
   Calendar as CalendarIcon,
+  Star,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import type { LucideIcon } from "lucide-react";
@@ -222,6 +223,35 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [pendingCount, setPendingCount] = useState(0);
   const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ===== المفضلة والملاحظات =====
+  const [favoriteOrders, setFavoriteOrders] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try { const d = localStorage.getItem("tayf-favorite-orders"); return d ? new Set(JSON.parse(d)) : new Set(); } catch { return new Set(); }
+  });
+  const [orderNotes, setOrderNotes] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
+    try { const d = localStorage.getItem("tayf-order-notes"); return d ? JSON.parse(d) : {}; } catch { return {}; }
+  });
+  const [quickDateFilter, setQuickDateFilter] = useState<"all" | "today" | "week" | "favorites">("all");
+
+  const toggleFavorite = useCallback((orderId: string) => {
+    setFavoriteOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId); else next.add(orderId);
+      localStorage.setItem("tayf-favorite-orders", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const saveNote = useCallback((orderId: string, note: string) => {
+    setOrderNotes(prev => {
+      const next = { ...prev, [orderId]: note };
+      localStorage.setItem("tayf-order-notes", JSON.stringify(next));
+      return next;
+    });
+    if (note.trim()) toast.success("تم حفظ الملاحظة");
+  }, []);
+
   // حالة التقرير
   const [reportOpen, setReportOpen] = useState(false);
   const [reportFrom, setReportFrom] = useState<Date>(() => {
@@ -260,6 +290,16 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
           x.customer.phone.includes(search),
       );
     }
+    // فلترة التاريخ والمفضلة
+    if (quickDateFilter === "today") {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      result = result.filter((o) => new Date(o.createdAt) >= today);
+    } else if (quickDateFilter === "week") {
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); weekAgo.setHours(0, 0, 0, 0);
+      result = result.filter((o) => new Date(o.createdAt) >= weekAgo);
+    } else if (quickDateFilter === "favorites") {
+      result = result.filter((o) => favoriteOrders.has(o.id));
+    }
     // ترتيب
     result = [...result].sort((a, b) => {
       let cmp = 0;
@@ -270,7 +310,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       return sortDir === "desc" ? -cmp : cmp;
     });
     return result;
-  }, [rawOrders, search, sortField, sortDir]);
+  }, [rawOrders, search, sortField, sortDir, quickDateFilter, favoriteOrders]);
 
   // حسابات الربح (قبل أي return مبكر)
   const totalCost = useMemo(() => rawOrders.reduce((s, o) => s + (o.cost || 0), 0), [rawOrders]);
@@ -1224,7 +1264,37 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </div>
               </div>
 
-              {/* شرائح التصفية السريعة */}
+              {/* شرائح التصفية السريعة - التاريخ */}
+              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1">
+                {[
+                  { value: "all" as const, label: "الكل", icon: null },
+                  { value: "today" as const, label: "اليوم", icon: <CalendarIcon className="h-3.5 w-3.5" /> },
+                  { value: "week" as const, label: "هذا الأسبوع", icon: <Clock className="h-3.5 w-3.5" /> },
+                  { value: "favorites" as const, label: "المفضلة", icon: <Star className="h-3.5 w-3.5" /> },
+                ].map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setQuickDateFilter(f.value)}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 min-h-[36px] rounded-lg px-3 py-1.5",
+                      quickDateFilter === f.value
+                        ? "bg-gold-500 text-white shadow-md"
+                        : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10",
+                    )}
+                  >
+                    {f.icon}
+                    {f.label}
+                    {f.value === "favorites" && favoriteOrders.size > 0 && (
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-md",
+                        quickDateFilter === "favorites" ? "bg-white/20" : "bg-secondary",
+                      )}>{favoriteOrders.size}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* شرائح التصفية السريعة - الحالة */}
               <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1">
                 {quickFilters.map((f) => {
                   const dotColor: Record<string, string> = {
@@ -1317,6 +1387,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                               </button>
                               <span className="text-right text-xs text-muted-foreground font-medium sm:hidden">التاريخ</span>
                             </TableHead>
+                            <TableHead className="text-center text-xs w-16"></TableHead>
                             <TableHead className="text-center text-xs w-10"></TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1331,6 +1402,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                               onToggleSelect={selectionMode ? () => toggleSelect(o.id) : undefined}
                               canPrintReceipt={hasFeature("receiptPrinting")}
                               onPrintReceipt={() => printReceipt(o, shop?.name || "", shop?.phone || "", shop?.address || null)}
+                              isFavorite={favoriteOrders.has(o.id)}
+                              onToggleFavorite={() => toggleFavorite(o.id)}
+                              note={orderNotes[o.id] || ""}
+                              onSaveNote={(n) => saveNote(o.id, n)}
                             />
                           ))}
                         </TableBody>
