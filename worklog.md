@@ -1390,3 +1390,26 @@ Stage Summary:
 - حد الرفع: 50MB (4MB هو عتبة التبديل فقط) ✅
 - لا حلقة فحص مرجع، لا RETURNING *, لا base64 للملفات الكبيرة
 - تم النشر والتحقق على Vercel (ETag: 68b3d2a4)
+---
+Task ID: 1
+Agent: main
+Task: Fix file upload for files >4MB on Vercel + fix order submission delay
+
+Work Log:
+- Analyzed root cause: Vercel serverless has READ-ONLY filesystem — chunked upload using fs.writeFileSync silently failed for files >4MB
+- Added FileUpload and FileChunk tables to Prisma schema for persistent chunk storage in Turso DB
+- Created src/lib/file-resolver.ts utility that resolves all file formats: data URL, filesystem (file_), chunked DB (__chunked__)
+- Rewrote src/app/api/orders/upload-chunk/route.ts to store chunks in Turso DB instead of filesystem
+- Updated src/app/api/orders/route.ts POST handler to use __chunked__:<uploadId> prefix for large files
+- Updated file/preview/thumbnail endpoints to use resolveFileData() for all file formats
+- Fixed critical bug: variable name mismatch (chunk vs file) in upload-chunk route
+- Improved ensureUploadTables() with 3-strategy approach: direct Turso client → Prisma fallback → turso-lite
+- Tested on live site: 7MB file uploaded successfully via 9 chunks, basic analysis completed
+
+Stage Summary:
+- Files up to 50MB can now be uploaded on Vercel (chunked upload uses Turso DB storage)
+- Small files (≤4MB) continue using inline base64 (no changes needed)
+- Order submission for large files is fast because POST body only contains a reference ID
+- The CHUNK_THRESHOLD=4MB is just the split point between strategies, NOT the max limit
+- MAX_FILE_SIZE=50MB is the actual limit (enforced in both client and server)
+- All changes deployed to Vercel and verified working
