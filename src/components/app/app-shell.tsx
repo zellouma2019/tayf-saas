@@ -551,6 +551,23 @@ export function AppShell() {
           </div>
         </div>
 
+        {/* شريط الإجراءات السريعة */}
+        {view !== "admin" && (
+        <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 -mx-4">
+          <div className="flex items-center gap-2 justify-center text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400">
+              <span>⚡</span> اطلب خلال دقيقة
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
+              <span>🕐</span> جاهز خلال ساعة
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">
+              <span>🔔</span> إشعار عند الجاهزية
+            </span>
+          </div>
+        </div>
+        )}
+
         {/* ===== التذييل (يختفي في قسم الإدارة) — يستخدم ألوان ثيم المتجر ===== */}
         {view !== "admin" && (
         <footer

@@ -318,6 +318,33 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
             </span>
           </motion.div>
 
+          {/* سجل التوقيتات */}
+          {(order.startedPrintingAt || order.readyAt || order.deliveredAt) && (
+            <div className="space-y-2">
+              <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3 w-3" />
+                سجل التقدم
+              </div>
+              <div className="space-y-1.5">
+                {order.createdAt && (
+                  <TimelineItem label="تم استلام الطلب" time={order.createdAt} done />
+                )}
+                {order.startedPrintingAt && (
+                  <TimelineItem label="بدأ الطباعة" time={order.startedPrintingAt} done />
+                )}
+                {order.completedPrintingAt && (
+                  <TimelineItem label="اكتملت الطباعة" time={order.completedPrintingAt} done />
+                )}
+                {order.readyAt && (
+                  <TimelineItem label="جاهز للاستلام" time={order.readyAt} done={order.status === "ready" || order.status === "delivered"} />
+                )}
+                {order.deliveredAt && (
+                  <TimelineItem label="تم التسليم" time={order.deliveredAt} done />
+                )}
+              </div>
+            </div>
+          )}
+
             {/* خط الزمن المحسّن */}
           <div className="bg-gradient-to-l from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 rounded-xl p-2.5 sm:p-4 border border-dark-200/60 dark:border-dark-700/60">
             <div className="flex items-start justify-between relative gap-1 sm:gap-2">
@@ -426,6 +453,18 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function TimelineItem({ label, time, done }: { label: string; time: string; done: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5 text-[11px]">
+      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+        {done ? <CheckCircle2 className="h-3 w-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+      </div>
+      <span className="text-muted-foreground min-w-0">{label}</span>
+      <span className="text-foreground/70 font-medium mr-auto tabular-nums" dir="ltr">{formatDateTimeAr(time)}</span>
+    </div>
   );
 }
 

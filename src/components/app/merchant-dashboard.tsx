@@ -118,6 +118,7 @@ import { printReceipt } from "@/lib/print-receipt";
 import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
 import { SHOP_THEMES } from "@/lib/themes";
 import { type FeatureKey } from "@/lib/shop-features";
+import { motion } from "framer-motion";
 
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
@@ -260,7 +261,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         title: "القائمة",
         items: [
           { key: "home", label: "الرئيسية", icon: LayoutGrid },
-          { key: "orders", label: "الطلبات", icon: Package, badge: stats?.totalOrders || undefined },
+          { key: "orders", label: "الطلبات", icon: Package, badge: pendingCount > 0 ? pendingCount : undefined },
           { key: "settings", label: "إعدادات المتجر", icon: Settings },
           { key: "advancedSettings", label: "إعدادات متقدمة", icon: SlidersHorizontal },
         ],
@@ -274,7 +275,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         ],
       },
     ];
-  }, [stats?.totalOrders, hasFeature]);
+  }, [pendingCount, hasFeature]);
 
   function toggleSelectAll() {
     if (selectedIds.size === orders.length && orders.length > 0) {
@@ -723,48 +724,33 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {!(stats?.totalOrders ?? 0) && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-gold-500 via-violet-500 to-indigo-600 p-6 sm:p-8 text-white">
-                  <div className="relative z-10">
-                    <h2 className="text-lg sm:text-xl font-bold mb-1">🎉 متجرك جاهز لاستقبال الطلبات!</h2>
-                    <p className="text-dark-200 text-sm max-w-lg mb-4">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
+                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl" />
+                  <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl" />
+                  <div className="relative text-center">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className="text-4xl mb-3"
+                    >
+                      🎉
+                    </motion.div>
+                    <h2 className="text-lg sm:text-xl font-bold mb-2 text-foreground">متجرك جاهز لاستقبال الطلبات!</h2>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
                       شارك رابط متجرك مع زبائنك لبدء استقبال طلبات الطباعة أونلاين
                     </p>
-                    <div className="flex items-center gap-3">
-                      <a
-                        href={customerLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 bg-card text-primary rounded-lg px-4 py-2 text-sm font-semibold hover:bg-secondary transition-colors shadow-sm"
-                      >
-                        <ExternalLink className="h-4 w-4" />
+                    <div className="flex items-center justify-center gap-3">
+                      <a href={customerLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md">
+                        <Eye className="h-4 w-4" />
                         معاينة المتجر
                       </a>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(customerLink).then(() => {
-                            toast.success("تم نسخ الرابط", { description: "شاركه مع زبائنك" });
-                          });
-                        }}
-                        className="inline-flex items-center gap-1.5 bg-white/15 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-white/25 transition-colors"
-                      >
+                      <button onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ الرابط!"); }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card hover:bg-secondary border border-border text-sm font-medium transition-colors">
                         <Copy className="h-4 w-4" />
                         نسخ الرابط
                       </button>
                     </div>
                   </div>
-                  {/* Floating decorative shapes */}
-                  <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10" style={{ animation: "float 4s ease-in-out infinite" }} />
-                  <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5" style={{ animation: "float 5s ease-in-out infinite reverse" }} />
-                  <div className="absolute right-1/4 top-4 w-4 h-4 rounded-full bg-white/20" style={{ animation: "float 3s ease-in-out infinite" }} />
-                  <div className="absolute left-1/3 bottom-8 w-3 h-3 rounded-full bg-white/15" style={{ animation: "float 4.5s ease-in-out infinite reverse" }} />
-                  <div className="absolute right-12 bottom-1/3 w-2 h-2 rounded-full bg-white/25" style={{ animation: "float 3.5s ease-in-out infinite" }} />
-                  <div className="absolute left-1/4 top-1/3 w-2.5 h-2.5 rounded-full bg-white/10" style={{ animation: "float 5.5s ease-in-out infinite" }} />
-                  {/* Particle dots */}
-                  <div className="absolute left-[15%] top-[20%] w-1 h-1 rounded-full bg-white/30" />
-                  <div className="absolute left-[70%] top-[15%] w-1 h-1 rounded-full bg-white/20" />
-                  <div className="absolute left-[45%] top-[80%] w-1 h-1 rounded-full bg-white/25" />
-                  <div className="absolute left-[80%] top-[60%] w-1 h-1 rounded-full bg-white/15" />
-                  <div className="absolute left-[25%] top-[70%] w-1 h-1 rounded-full bg-white/20" />
                 </div>
               )}
 
