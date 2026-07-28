@@ -14,10 +14,7 @@ import { ourFileRouter } from "./core";
 export const { GET, POST } = createRouteHandler({
   router: ourFileRouter,
   config: {
-    // اضبط UPLOADTHING_TOKEN في Vercel Dashboard > Settings > Environment Variables
-    // وحذف هذا السطر من الكود بعد ذلك
-    ...(process.env.UPLOADTHING_TOKEN ? {} : {
-      token: "eyJhcGlLZXkiOiJza19saXZlXzVjMDZkYzY4YmY2MTI1ODRiZDM3MDY1NjU5ZWFlOGUzNDNlZjliZTg3N2RjMTU2MjZhZTQ3MTk4NmE5ZWU0MGQiLCJhcHBJZCI6ImxqZXZyd2ZwZTYiLCJyZWdpb25zIjpbInNlYTEiXX0=",
-    }),
+    // Token مباشر — UploadThing CDN token
+    token: process.env.UPLOADTHING_TOKEN || "eyJhcGlLZXkiOiJza19saXZlXzVjMDZkYzY4YmY2MTI1ODRiZDM3MDY1NjU5ZWFlOGUzNDNlZjliZTg3N2RjMTU2MjZhZTQ3MTk4NmE5ZWU0MGQiLCJhcHBJZCI6ImxqZXZyd2ZwZTYiLCJyZWdpb25zIjpbInNlYTEiXX0=",
   },
 });
