@@ -223,10 +223,11 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
   // ===== TanStack Query: إحصائيات مع كاش تلقائي =====
   const { data: queryStats } = useQuery({
-    queryKey: ["admin-stats"],
-    queryFn: () => shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
+    queryKey: ["admin-stats", adminCode],
+    queryFn: () => fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
     staleTime: 15 * 1000,
     refetchInterval: 60 * 1000,
+    enabled: !!adminCode,
   });
 
   // مزامنة بيانات Query مع الحالة المحلية
@@ -235,9 +236,10 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   }, [queryStats]);
 
   function loadAll() {
+    if (!adminCode) return;
     setLoading(true);
     Promise.all([
-      shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
+      fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
       // Admin sees ALL orders — use fetch directly (not shopApi which filters by shopId)
       fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
@@ -262,7 +264,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [adminCode]);
 
   // تصفية: حالة + بحث + تاريخ
   const filteredOrders = useMemo(() => {
