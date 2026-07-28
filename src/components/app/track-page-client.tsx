@@ -285,13 +285,13 @@ export function TrackPageClient() {
                   رقم الطلب أو رقم الهاتف
                 </label>
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 search-input-enhanced rounded-xl">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="مثال: A-1050 أو 0560..."
-                      className="pr-9 h-11 text-sm focus-visible:ring-gold-500/30 focus-visible:border-gold-500"
+                      className="pr-9 h-11 text-sm rounded-xl focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all duration-300"
                       dir="ltr"
                     />
                   </div>
