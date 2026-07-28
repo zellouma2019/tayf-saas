@@ -137,6 +137,26 @@ const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expense
 const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <DynamicSkeleton /> });
 const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <DynamicSkeleton /> });
 
+// ===== Sound Notification Helper =====
+function playNotificationSound() {
+  if (typeof window === "undefined") return;
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(587, ctx.currentTime);
+    oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(1047, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.5);
+  } catch {}
+}
+
 function DynamicSkeleton() {
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -194,8 +214,9 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState("");
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [mobileSelectionMode, setMobileSelectionMode] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
   const [viewMode, setViewMode] = useState<OrderViewMode>("table");
   const [selectedOrder, setSelectedOrder] = useState<PrintOrderLite | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
@@ -348,7 +369,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         description: `${selectedIds.size} طلب ← ${STATUS_META[newStatus].label}`,
       });
       setSelectedIds(new Set());
-      setMobileSelectionMode(false);
+      setSelectionMode(false);
+      setBulkStatus("");
       loadAll();
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
@@ -376,7 +398,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         description: `تم حذف ${selectedIds.size} طلب`,
       });
       setSelectedIds(new Set());
-      setMobileSelectionMode(false);
+      setSelectionMode(false);
       loadAll();
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
@@ -503,6 +525,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               description: diff === 1 ? 'تم استلام طلب جديد — تحقق من قائمة الطلبات' : `تم استلام ${diff} طلبات جديدة`,
               duration: 6000,
             });
+            playNotificationSound();
             // تحديث البيانات تلقائياً
             loadStats(false);
             loadOrders();
@@ -1115,11 +1138,26 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="space-y-5"
             >
-              {/* أزرار التبديل بين جدول ولوحة كانبان */}
+              {/* أزرار التبديل بين جدول ولوحة كانبان + وضع التحديد */}
               <div className="flex items-center gap-2">
+                {viewMode === "table" && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectionMode(!selectionMode); if (selectionMode) setSelectedIds(new Set()); }}
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
+                      selectionMode
+                        ? "bg-rose-500 text-white"
+                        : "text-muted-foreground hover:text-foreground hover:bg-rose-500/10",
+                    )}
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                    {selectionMode ? "إلغاء التحديد" : "تحديد"}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => setViewMode("table")}
+                  onClick={() => { setViewMode("table"); if (selectionMode) { setSelectionMode(false); setSelectedIds(new Set()); } }}
                   className={cn(
                     "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
                     viewMode === "table"
@@ -1132,7 +1170,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode("kanban")}
+                  onClick={() => { setViewMode("kanban"); if (selectionMode) { setSelectionMode(false); setSelectedIds(new Set()); } }}
                   className={cn(
                     "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
                     viewMode === "kanban"
@@ -1240,7 +1278,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-muted/50 hover:bg-secondary/80 border-b border-border">
-                            {hasFeature("bulkActions") && (
+                            {selectionMode && (
                               <TableHead className="w-10 p-2">
                                 <Checkbox
                                   checked={orders.length > 0 && selectedIds.size === orders.length}
@@ -1285,8 +1323,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                               order={o}
                               onStatusChange={changeStatus}
                               onClick={() => setSelectedOrder(o)}
-                              selected={hasFeature("bulkActions") ? selectedIds.has(o.id) : undefined}
-                              onToggleSelect={hasFeature("bulkActions") ? () => toggleSelect(o.id) : undefined}
+                              selected={selectionMode ? selectedIds.has(o.id) : undefined}
+                              onToggleSelect={selectionMode ? () => toggleSelect(o.id) : undefined}
                               canPrintReceipt={hasFeature("receiptPrinting")}
                               onPrintReceipt={() => printReceipt(o, shop?.name || "", shop?.phone || "", shop?.address || null)}
                             />
@@ -1304,18 +1342,18 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-foreground">الطلبات ({orders.length})</h3>
                     <div className="flex items-center gap-1">
-                      {hasFeature("bulkActions") && !mobileSelectionMode && orders.length > 0 && (
+                      {!selectionMode && orders.length > 0 && (
                         <button
-                          onClick={() => setMobileSelectionMode(true)}
+                          onClick={() => setSelectionMode(true)}
                           className="text-[11px] px-3 py-1.5 rounded-md transition-colors bg-gold-500 text-white hover:bg-gold-600 flex items-center gap-1 min-h-[32px]"
                         >
                           <ListChecks className="h-3 w-3" />
                           تحديد
                         </button>
                       )}
-                      {mobileSelectionMode && (
+                      {selectionMode && (
                         <button
-                          onClick={() => { setMobileSelectionMode(false); setSelectedIds(new Set()); }}
+                          onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
                           className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-foreground min-h-[32px]"
                         >
                           إلغاء
@@ -1342,7 +1380,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
-                    orders.map((o) => <MobileOrderCard key={o.id} order={o} onStatusChange={changeStatus} onClick={() => setSelectedOrder(o)} shopId={shopId} shopName={shop?.name || ""} shopPhone={shop?.phone || ""} shopAddress={shop?.address || null} selectionMode={mobileSelectionMode} selected={mobileSelectionMode ? selectedIds.has(o.id) : undefined} onToggleSelect={mobileSelectionMode ? () => toggleSelect(o.id) : undefined} />)
+                    orders.map((o) => <MobileOrderCard key={o.id} order={o} onStatusChange={changeStatus} onClick={() => setSelectedOrder(o)} shopId={shopId} shopName={shop?.name || ""} shopPhone={shop?.phone || ""} shopAddress={shop?.address || null} selectionMode={selectionMode} selected={selectionMode ? selectedIds.has(o.id) : undefined} onToggleSelect={selectionMode ? () => toggleSelect(o.id) : undefined} />)
                   )}
                 </div>
               </div>
@@ -1375,7 +1413,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     {selectedIds.size} محدد
                   </span>
                   <div className="w-px h-6 bg-white/25 shrink-0" />
-                  <Select onValueChange={(v) => bulkChangeStatus(v)} disabled={bulkLoading}>
+                  <Select onValueChange={(v) => setBulkStatus(v)} disabled={bulkLoading}>
                     <SelectTrigger className="h-9 w-auto min-w-[110px] sm:min-w-[130px] text-xs rounded-lg border-white/30 bg-white/15 text-white hover:bg-white/25 focus:ring-white/40 [&_svg]:text-white">
                       <SelectValue placeholder="تغيير الحالة" />
                     </SelectTrigger>
@@ -1387,6 +1425,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </Select>
                   <Button
                     size="sm"
+                    onClick={() => { if (bulkStatus) bulkChangeStatus(bulkStatus); }}
+                    disabled={bulkLoading || !bulkStatus}
+                    className="h-9 text-xs gap-1.5 rounded-lg bg-white text-gold-700 hover:bg-white/90 font-semibold border border-white/30 active:scale-[0.98] transition-all duration-200"
+                  >
+                    {bulkLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    تطبيق
+                  </Button>
+                  <Button
+                    size="sm"
                     onClick={bulkDelete}
                     disabled={bulkLoading}
                     className="h-9 text-xs gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/30 active:scale-[0.98] transition-all duration-200"
@@ -1395,7 +1442,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     حذف المحدد
                   </Button>
                   <button
-                    onClick={() => { setSelectedIds(new Set()); setMobileSelectionMode(false); }}
+                    onClick={() => { setSelectedIds(new Set()); setSelectionMode(false); }}
                     className="w-9 h-9 rounded-full hover:bg-white/25 flex items-center justify-center transition-all duration-200 text-white/70 hover:text-white"
                     aria-label="إلغاء التحديد"
                   >

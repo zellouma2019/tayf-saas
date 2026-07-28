@@ -66,6 +66,7 @@ export function AppShell() {
   const [footerOpen, setFooterOpen] = useState(false);
   const [showEstimator, setShowEstimator] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showBackTop, setShowBackTop] = useState(false);
   const { shop, hasFeature } = useShop();
   // شعار المنصة
   const [platformLogoUrl, setPlatformLogoUrl] = useState("");
@@ -192,7 +193,7 @@ export function AppShell() {
 
   // Track scroll for header shadow
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 8);
+    const handleScroll = () => { setScrolled(window.scrollY > 8); setShowBackTop(window.scrollY > 400); };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -495,10 +496,10 @@ export function AppShell() {
               {view === "new" && (
                 <motion.div
                   key="view-new"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   {/* خلفية نقطية متحركة */}
                   <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, var(--shop-accent) 0.6px, transparent 0.6px)", backgroundSize: "28px 28px", opacity: 0.08 }}>
@@ -545,10 +546,10 @@ export function AppShell() {
               {view === "repeat" && (
                 <motion.div
                   key="view-repeat"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   <RepeatOrder onRepeat={handleRepeat} />
                 </motion.div>
@@ -556,10 +557,10 @@ export function AppShell() {
               {view === "track" && (
                 <motion.div
                   key="view-track"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   <TrackOrder key={refreshKey} />
                 </motion.div>
@@ -567,10 +568,10 @@ export function AppShell() {
               {view === "history" && (
                 <motion.div
                   key="view-history"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   <OrderHistory onReorder={(o) => { setPrefillOrder(o as any); setFooterOpen(false); setView("new"); }} />
                 </motion.div>
@@ -578,10 +579,10 @@ export function AppShell() {
               {view === "admin" && (
                 <motion.div
                   key="view-admin"
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   <AdminPanel key={refreshKey} onRefresh={incrementRefresh} />
                 </motion.div>
@@ -862,8 +863,44 @@ export function AppShell() {
         </div>
       )}
 
+      {/* زر واتساب عائم */}
+      {whatsappBtnNumber && (
+        <motion.a
+          href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`مرحباً، أريد الاستفسار عن خدمات الطباعة`)}  `}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="wa-float-pulse fixed bottom-40 right-4 z-30 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:shadow-xl flex items-center justify-center group"
+          title="تواصل عبر واتساب"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1.5, type: "spring", stiffness: 260, damping: 20 }}
+        >
+          <MessageCircle className="h-7 w-7 group-hover:scale-110 transition-transform" />
+          {/* Tooltip */}
+          <span className="absolute right-full mr-3 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none">
+            تواصل عبر واتساب
+          </span>
+        </motion.a>
+      )}
+
       {/* الزر العائم: واتساب + مساعد ذكي */}
       <FloatingAssistant onRepeatOrder={() => setView("repeat")} />
+
+      {/* زر العودة للأعلى */}
+      <AnimatePresence>
+        {showBackTop && view !== "new" && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-24 right-4 z-30 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors"
+            title="العودة للأعلى"
+          >
+            <ChevronUp className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* ===== شريط التنقل السفلي للجوال (ثيم المتجر) ===== */}
       <nav

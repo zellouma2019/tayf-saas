@@ -80,11 +80,29 @@ class MerchantErrorBoundary extends Component<
 
 function ShopLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 animate-pulse" />
-        <div className="h-4 w-32 mx-auto bg-muted rounded animate-pulse" />
-        <p className="text-sm text-muted-foreground">جارٍ تحميل المتجر...</p>
+    <div className="min-h-screen flex items-center justify-center bg-background animate-fade-in" dir="rtl">
+      <div className="max-w-md w-full mx-auto p-8 text-center space-y-6">
+        {/* Logo placeholder with pulse */}
+        <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 skeleton-shimmer flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 skeleton-shimmer" />
+        </div>
+        {/* Title skeleton */}
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-3/4 mx-auto rounded-lg" />
+          <Skeleton className="h-4 w-1/2 mx-auto rounded-lg" />
+        </div>
+        {/* Service cards skeleton */}
+        <div className="grid grid-cols-2 gap-3 mt-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-4 rounded-xl bg-card border border-border space-y-2">
+              <Skeleton className="h-8 w-8 rounded-lg mx-auto" />
+              <Skeleton className="h-3 w-3/4 mx-auto rounded" />
+              <Skeleton className="h-2 w-1/2 mx-auto rounded" />
+            </div>
+          ))}
+        </div>
+        {/* Loading text */}
+        <p className="text-xs text-muted-foreground animate-pulse-slow">جاري تحميل المتجر...</p>
       </div>
     </div>
   );
