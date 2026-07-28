@@ -67,17 +67,17 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
       )}
 
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(safeStats.totalOrders ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Package className="h-5 w-5 text-primary" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatDA(safeStats.totalRevenue ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(safeStats.todayOrders ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums">{formatNumber(safeStats.activeShopCount ?? 0)}<span className="text-muted-foreground/40 text-lg font-normal">/{formatNumber(safeStats.shopCount ?? 0)}</span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
 
       {/* بطاقات الإجراءات السريعة */}
       {(safeStats.shopStats.length ?? 0) === 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4">
           <button onClick={onOpenCreate} className="group bg-card rounded-xl border border-border shadow-sm p-5 text-right hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <Store className="h-5 w-5 text-primary" />

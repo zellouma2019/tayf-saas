@@ -123,18 +123,32 @@ import { printReceipt } from "@/lib/print-receipt";
 import { generateStatsReport, type StatsReportData } from "@/lib/pdf-stats-report";
 import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
 import { SHOP_THEMES } from "@/lib/themes";
+import { Skeleton } from "@/components/ui/skeleton";
 import { type FeatureKey } from "@/lib/shop-features";
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
 import { motion, AnimatePresence } from 'framer-motion';
 const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
-const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <DynamicSkeleton /> });
 const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
-const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
-const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
-const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
-const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
-const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <DynamicSkeleton /> });
+
+function DynamicSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-64 rounded-xl" />
+    </div>
+  );
+}
 
 // QRCode import خفيف
 let QRCodeModule: typeof import("qrcode") | null = null;
@@ -601,7 +615,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 <Lock className="h-12 w-12 text-white" />
               </div>
               <h2 className="text-xl font-bold text-foreground">لوحة تحكم المتجر</h2>
-              <p className="text-sm text-dark-500 mt-2">أدخل رمز PIN للوصول إلى لوحة التحكم</p>
+              <p className="text-sm text-muted-foreground mt-2">أدخل رمز PIN للوصول إلى لوحة التحكم</p>
               <p className="text-xs text-gold-500 font-medium mt-1">طيف</p>
             </div>
 
@@ -613,7 +627,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   onChange={(e) => { setPin(e.target.value); setPinError(false); }}
                   placeholder="• • • •"
                   className={cn(
-                    "text-center text-2xl tracking-[0.5em] h-12 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 shadow-sm bg-dark-50 transition-shadow",
+                    "text-center text-2xl tracking-[0.5em] h-12 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 shadow-sm bg-card transition-shadow",
                     pinError && "ring-2 ring-rose-400 bg-rose-50/50 dark:bg-rose-950/20 shadow-rose-100",
                   )}
                   autoFocus
@@ -629,7 +643,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
                 disabled={pin.length < 1 || verifying}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -787,10 +801,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="space-y-6"
             >
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden",
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group relative overflow-hidden",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
@@ -1110,7 +1124,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
                     viewMode === "table"
                       ? "bg-gold-500 text-white"
-                      : "text-dark-500 hover:text-dark-700 hover:bg-gold-500/10",
+                      : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10",
                   )}
                 >
                   <Table2 className="h-4 w-4" />
@@ -1123,7 +1137,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
                     viewMode === "kanban"
                       ? "bg-gold-500 text-white"
-                      : "text-dark-500 hover:text-dark-700 hover:bg-gold-500/10",
+                      : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10",
                   )}
                 >
                   <Columns3 className="h-4 w-4" />
@@ -1138,14 +1152,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="ابحث برقم الطلب أو اسم/هاتف العميل..."
-                    className="pr-10 text-sm h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                    className="pr-10 text-sm h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
                     onKeyDown={(e) => e.key === "Enter" && loadAll()}
                   />
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="text-sm h-11 rounded-xl border-dark-200">
+                      <SelectTrigger className="text-sm h-11 rounded-xl border-border">
                         <SelectValue placeholder="كل الحالات" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1158,11 +1172,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </Select>
                   </div>
                   {hasFeature("exportExcel") && (
-                    <Button variant="outline" onClick={exportCSV} className="shrink-0 h-11 w-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200" title="تصدير CSV">
+                    <Button variant="outline" onClick={exportCSV} className="shrink-0 h-11 w-11 rounded-lg border-border hover:bg-secondary transition-all duration-200" title="تصدير CSV">
                       <Download className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button variant="outline" onClick={loadAll} className="shrink-0 h-11 w-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200">
+                  <Button variant="outline" onClick={loadAll} className="shrink-0 h-11 w-11 rounded-lg border-border hover:bg-secondary transition-all duration-200">
                     <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                   </Button>
                 </div>
@@ -1187,14 +1201,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       "flex items-center gap-2 text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0 min-h-[44px]",
                       isActive
                         ? "bg-gold-500 text-white rounded-lg px-4 py-2 shadow-md shadow-violet-200"
-                        : "text-dark-500 hover:text-dark-700 hover:bg-gold-500/10 hover:shadow-sm hover:-translate-y-0.5 rounded-lg px-4 py-2",
+                        : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10 hover:shadow-sm hover:-translate-y-0.5 rounded-lg px-4 py-2",
                     )}
                   >
                     <span className={cn("w-2 h-2 rounded-full shrink-0", isActive && f.value !== "all" ? "bg-white/70" : dotColor[f.value] || "bg-dark-400")} />
                     {f.label}
                     <span className={cn(
                       "tabular-nums text-xs px-2 py-0.5 rounded-md",
-                      isActive ? "bg-white/20 text-white" : "bg-dark-100 text-dark-500",
+                      isActive ? "bg-white/20 text-white" : "bg-secondary text-muted-foreground",
                     )}>
                       {f.count}
                     </span>
@@ -1225,7 +1239,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     <div className="overflow-x-auto custom-scroll">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-dark-50/80 hover:bg-secondary/80 border-b border-border">
+                          <TableRow className="bg-muted/50 hover:bg-secondary/80 border-b border-border">
                             {hasFeature("bulkActions") && (
                               <TableHead className="w-10 p-2">
                                 <Checkbox
@@ -1236,30 +1250,30 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                               </TableHead>
                             )}
                             <TableHead>
-                              <button onClick={() => toggleSort("reference")} className="flex items-center gap-1 text-right text-xs text-dark-500 font-medium hover:text-dark-700 transition-colors">
+                              <button onClick={() => toggleSort("reference")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors">
                                 رقم الطلب <SortIcon field="reference" />
                               </button>
                             </TableHead>
-                            <TableHead className="text-right text-xs text-dark-500 font-medium">الخدمة</TableHead>
-                            <TableHead className="text-right text-xs text-dark-500 font-medium">العميل</TableHead>
-                            <TableHead className="text-right text-xs text-dark-500 font-medium hidden md:table-cell">الهاتف</TableHead>
-                            <TableHead className="text-right text-xs text-dark-500 font-medium hidden lg:table-cell">التفاصيل</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium">الخدمة</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium">العميل</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium hidden md:table-cell">الهاتف</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium hidden lg:table-cell">التفاصيل</TableHead>
                             <TableHead>
-                              <button onClick={() => toggleSort("total")} className="flex items-center gap-1 text-right text-xs text-dark-500 font-medium hover:text-dark-700 transition-colors">
+                              <button onClick={() => toggleSort("total")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors">
                                 المجموع <SortIcon field="total" />
                               </button>
                             </TableHead>
-                            <TableHead className="text-right text-xs text-dark-500 font-medium hidden lg:table-cell">الربح</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium hidden lg:table-cell">الربح</TableHead>
                             <TableHead>
-                              <button onClick={() => toggleSort("status")} className="flex items-center gap-1 text-right text-xs text-dark-500 font-medium hover:text-dark-700 transition-colors">
+                              <button onClick={() => toggleSort("status")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors">
                                 الحالة <SortIcon field="status" />
                               </button>
                             </TableHead>
                             <TableHead>
-                              <button onClick={() => toggleSort("date")} className="flex items-center gap-1 text-right text-xs text-dark-500 font-medium hover:text-dark-700 transition-colors hidden sm:flex">
+                              <button onClick={() => toggleSort("date")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors hidden sm:flex">
                                 التاريخ <SortIcon field="date" />
                               </button>
-                              <span className="text-right text-xs text-dark-500 font-medium sm:hidden">التاريخ</span>
+                              <span className="text-right text-xs text-muted-foreground font-medium sm:hidden">التاريخ</span>
                             </TableHead>
                             <TableHead className="text-center text-xs w-10"></TableHead>
                           </TableRow>
@@ -1302,15 +1316,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       {mobileSelectionMode && (
                         <button
                           onClick={() => { setMobileSelectionMode(false); setSelectedIds(new Set()); }}
-                          className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-dark-600 min-h-[32px]"
+                          className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-foreground min-h-[32px]"
                         >
                           إلغاء
                         </button>
                       )}
-                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-dark-600")}>
+                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
                         {sortDir === "desc" ? "الأحدث" : "الأقدم"}
                       </button>
-                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-dark-600")}>
+                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
                         الأعلى سعراً
                       </button>
                     </div>
@@ -1503,17 +1517,17 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             >
                 <div>
                   <h2 className="font-bold text-lg text-foreground">معاينة متجرك</h2>
-                  <p className="text-sm text-dark-500 mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
+                  <p className="text-sm text-muted-foreground mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
                 </div>
                 <div className="flex gap-2">
-                <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-dark-200 text-dark-700 hover:bg-secondary rounded-lg shrink-0">
+                <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-border text-foreground hover:bg-secondary rounded-lg shrink-0">
                   <ExternalLink className="h-4 w-4" />
                   فتح في نافذة جديدة
                 </Button>
                 </div>
               <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 <div className="p-0">
-                  <div className="bg-dark-100 p-3 flex items-center gap-2.5 border-b border-border">
+                  <div className="bg-muted p-3 flex items-center gap-2.5 border-b border-border">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-rose-400" />
                       <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -1767,7 +1781,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
                   <Button
                     size="sm"
                     variant="outline"
-                    className="w-full rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200"
+                    className="w-full rounded-lg border-border hover:bg-secondary transition-all duration-200"
                     onClick={() => window.open(`tel:${contactNumber.replace(/\s/g, "")}`, "_self")}
                   >
                     <Phone className="h-4 w-4 ml-1" />
@@ -1775,7 +1789,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
                   </Button>
                 )}
                 <button
-                  className="text-xs text-muted-foreground hover:text-dark-600 mt-1 transition-colors duration-200"
+                  className="text-xs text-muted-foreground hover:text-foreground mt-1 transition-colors duration-200"
                   onClick={() => setShowContact(false)}
                 >
                   إلغاء
@@ -2041,7 +2055,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
         </div>
         <div>
           <h2 className="font-bold text-lg text-foreground">{shop?.name || "التاجر"}</h2>
-          <p className="text-xs text-dark-500">إعدادات المتجر والحساب</p>
+          <p className="text-xs text-muted-foreground">إعدادات المتجر والحساب</p>
         </div>
       </div>
 
@@ -2067,7 +2081,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-xl bg-dark-50 border border-border shadow-sm flex items-center justify-center shrink-0">
+                <div className="w-20 h-20 rounded-xl bg-muted border border-border shadow-sm flex items-center justify-center shrink-0">
                   <Store className="h-8 w-8 text-muted-foreground/60" />
                 </div>
               )}
@@ -2113,11 +2127,11 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                     "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
                     selectedIcon === name
                       ? "bg-secondary shadow-md ring-1 ring-gold-500/30 border-gold-200"
-                      : "bg-dark-50 hover:bg-gold-500/10 hover:shadow-md",
+                      : "bg-muted hover:bg-gold-500/10 hover:shadow-md",
                   )}
                 >
                   <IconComp className={cn("h-7 w-7", selectedIcon === name ? "text-gold-500 font-bold" : "text-dark-500")} />
-                  <span className="text-xs font-medium text-dark-600">{ICON_LABELS[name]}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{ICON_LABELS[name]}</span>
                 </button>
               ))}
             </div>
@@ -2150,31 +2164,31 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
               معلومات المتجر
             </h3>
             <div>
-              <Label className="text-dark-600 text-sm">اسم المتجر</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
+              <Label className="text-muted-foreground text-sm">اسم المتجر</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><Phone className="h-3.5 w-3.5 text-muted-foreground" />الهاتف</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><Phone className="h-3.5 w-3.5 text-muted-foreground" />الهاتف</Label>
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
               </div>
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />واتساب</Label>
-                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />واتساب</Label>
+                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
               </div>
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><Mail className="h-3.5 w-3.5 text-muted-foreground" />البريد الإلكتروني</Label>
-                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><Mail className="h-3.5 w-3.5 text-muted-foreground" />البريد الإلكتروني</Label>
+                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
               </div>
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><MapPin className="h-3.5 w-3.5 text-muted-foreground" />العنوان</Label>
-                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><MapPin className="h-3.5 w-3.5 text-muted-foreground" />العنوان</Label>
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" />
               </div>
             </div>
           </div>
         </div>
 
-        <Button type="submit" className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]" disabled={saving}>
+        <Button type="submit" className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50" disabled={saving}>
           <Save className="h-4 w-4" />
           {saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
         </Button>
@@ -2192,15 +2206,15 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-dark-600 text-sm">الاسم</Label>
-              <Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
+              <Label className="text-muted-foreground text-sm">الاسم</Label>
+              <Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" />
             </div>
             <div>
-              <Label className="text-dark-600 text-sm">الهاتف</Label>
-              <Input value={form.ownerPhone} onChange={(e) => setForm({ ...form, ownerPhone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
+              <Label className="text-muted-foreground text-sm">الهاتف</Label>
+              <Input value={form.ownerPhone} onChange={(e) => setForm({ ...form, ownerPhone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
             </div>
           </div>
-          <Button onClick={handleSaveOwnerInfo} className="w-full h-11 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]" disabled={saving}>
+          <Button onClick={handleSaveOwnerInfo} className="w-full h-11 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50" disabled={saving}>
             <Save className="h-4 w-4" />
             {saving ? "جارٍ الحفظ..." : "حفظ معلومات المالك"}
           </Button>
@@ -2216,7 +2230,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
           <form onSubmit={handleChangePin} className="space-y-3 max-w-md">
             {/* كلمة المرور الحالية */}
             <div>
-              <Label className="text-xs text-dark-500 mb-1 block">كلمة المرور الحالية</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">كلمة المرور الحالية</Label>
               <div className="relative">
                 <Input
                   type={showCurrentPin ? "text" : "password"}
@@ -2224,13 +2238,13 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   onChange={(e) => setPinForm({ ...pinForm, currentPin: e.target.value })}
                   placeholder="أدخل كلمة المرور الحالية"
                   dir="ltr"
-                  className="h-11 pe-10 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                  className="h-11 pe-10 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPin(!showCurrentPin)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-dark-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showCurrentPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -2239,7 +2253,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             </div>
             {/* كلمة المرور الجديدة */}
             <div>
-              <Label className="text-xs text-dark-500 mb-1 block">كلمة المرور الجديدة</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">كلمة المرور الجديدة</Label>
               <div className="relative">
                 <Input
                   type={showNewPin ? "text" : "password"}
@@ -2247,14 +2261,14 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   onChange={(e) => setPinForm({ ...pinForm, newPin: e.target.value })}
                   placeholder="4 أحرف على الأقل"
                   dir="ltr"
-                  className="h-11 pe-10 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                  className="h-11 pe-10 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
                   required
                   minLength={4}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPin(!showNewPin)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-dark-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showNewPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -2263,14 +2277,14 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             </div>
             {/* تأكيد كلمة المرور */}
             <div>
-              <Label className="text-xs text-dark-500 mb-1 block">تأكيد كلمة المرور الجديدة</Label>
+              <Label className="text-xs text-muted-foreground mb-1 block">تأكيد كلمة المرور الجديدة</Label>
               <Input
                 type="password"
                 value={pinForm.confirmPin}
                 onChange={(e) => setPinForm({ ...pinForm, confirmPin: e.target.value })}
                 placeholder="أعد إدخال كلمة المرور"
                 dir="ltr"
-                className="h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                className="h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
                 required
                 minLength={4}
               />
@@ -2280,7 +2294,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             </div>
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+              className="w-full h-11 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
               disabled={changingPin || !pinForm.currentPin || !pinForm.newPin || pinForm.newPin !== pinForm.confirmPin}
             >
               {changingPin ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -2370,7 +2384,7 @@ function ThemePickerSection({
                   <div className="h-2" style={{ backgroundColor: theme.footer.bg }} />
                 </div>
                 {/* اسم القالب */}
-                <div className="px-2.5 py-2 bg-dark-50">
+                <div className="px-2.5 py-2 bg-muted">
                   <span className="text-[10px] font-medium text-dark-700">{theme.name}</span>
                 </div>
               </button>
@@ -2462,7 +2476,7 @@ function PriceEditorSection({
 
           <div className="space-y-2.5">
             {services.map((svc, idx) => (
-              <div key={svc.type} className="rounded-xl bg-dark-50 border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+              <div key={svc.type} className="rounded-xl bg-muted border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 {/* رأس الخدمة */}
                 <button
                   type="button"
@@ -2499,16 +2513,16 @@ function PriceEditorSection({
                       <Input
                         value={svc.name}
                         onChange={(e) => updateService(idx, { name: e.target.value })}
-                        className="mt-1 h-10 text-sm rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                        className="mt-1 h-10 text-sm rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-dark-500">السعر الأساسي لكل صفحة (د.ج)</Label>
+                      <Label className="text-xs text-muted-foreground">السعر الأساسي لكل صفحة (د.ج)</Label>
                       <Input
                         type="number"
                         value={svc.basePricePerPage}
                         onChange={(e) => updateService(idx, { basePricePerPage: parseInt(e.target.value) || 0 })}
-                        className="mt-1 h-10 text-sm rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all"
+                        className="mt-1 h-10 text-sm rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
                         dir="ltr"
                         min={0}
                       />
@@ -2519,7 +2533,7 @@ function PriceEditorSection({
                         checked={svc.enabled}
                         onCheckedChange={(checked) => updateService(idx, { enabled: !!checked })}
                       />
-                      <Label htmlFor={`svc-enabled-${idx}`} className="text-xs cursor-pointer text-dark-600">
+                      <Label htmlFor={`svc-enabled-${idx}`} className="text-xs cursor-pointer text-foreground">
                         الخدمة مفعّلة
                       </Label>
                     </div>
@@ -2531,7 +2545,7 @@ function PriceEditorSection({
 
           <Button
             onClick={handleSaveServices}
-            className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
             disabled={saving}
           >
             <Save className="h-4 w-4" />
@@ -2660,7 +2674,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
           <Link2 className="h-8 w-8 text-gold-500" />
         </div>
         <h2 className="text-xl font-bold text-foreground">مشاركة متجرك</h2>
-        <p className="text-sm text-dark-500 mt-1.5">انشر رابط متجرك ليزوره زبائنك ويقدمون طلباتهم</p>
+        <p className="text-sm text-muted-foreground mt-1.5">انشر رابط متجرك ليزوره زبائنك ويقدمون طلباتهم</p>
       </div>
 
       {/* رابط الزبائن */}
@@ -2679,11 +2693,11 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
             <Input
               value={customerLink}
               readOnly
-              className="flex-1 bg-dark-50 text-sm rounded-xl border-dark-200 h-11"
+              className="flex-1 bg-muted text-sm rounded-xl border-border h-11"
               dir="ltr"
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button onClick={copyCustomerLink} variant="outline" className="shrink-0 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200 h-11 px-4">
+            <Button onClick={copyCustomerLink} variant="outline" className="shrink-0 rounded-lg border-border hover:bg-secondary transition-all duration-200 h-11 px-4">
               <Copy className="h-4 w-4" />
               {copied ? "تم!" : "نسخ"}
             </Button>
@@ -2714,20 +2728,20 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
                   📱 امسح الرمز بكاميرا الهاتف للوصول مباشرة إلى متجر <strong className="text-dark-700">{shopName}</strong>
                 </p>
                 <div className="flex gap-3 w-full">
-                  <Button onClick={printQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200">
+                  <Button onClick={printQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-border hover:bg-secondary transition-all duration-200">
                     <Printer className="h-4 w-4" />
                     طباعة الباركود
                   </Button>
-                  <Button onClick={downloadQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200">
+                  <Button onClick={downloadQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-border hover:bg-secondary transition-all duration-200">
                     <Download className="h-4 w-4" />
                     تحميل الصورة
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="w-48 h-48 bg-dark-50 rounded-xl flex items-center justify-center border border-border">
+              <div className="w-48 h-48 bg-muted rounded-xl flex items-center justify-center border border-border">
                 <div className="text-center">
-                  <div className="animate-spin w-6 h-6 border-2 border-dark-200 border-t-violet-500 rounded-full mx-auto mb-2" />
+                  <div className="animate-spin w-6 h-6 border-2 border-border border-t-violet-500 rounded-full mx-auto mb-2" />
                   <span className="text-xs text-muted-foreground">جارٍ توليد الرمز...</span>
                 </div>
               </div>
@@ -2758,7 +2772,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
             <Input
               value={`${customerLink}?admin=1`}
               readOnly
-              className="flex-1 bg-dark-50 text-sm rounded-xl border-dark-200 h-11"
+              className="flex-1 bg-muted text-sm rounded-xl border-border h-11"
               dir="ltr"
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
@@ -3010,7 +3024,7 @@ function MobileOrderCard({
               <div className="text-xs font-bold text-dark-700 mb-2">مراحل الطباعة</div>
               <div className="space-y-1.5">
                 {order.startedPrintingAt && (
-                  <div className="flex items-center gap-2 text-xs text-dark-600">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <PrinterIcon className="h-3.5 w-3.5 text-gold-400" />
                     <span>بدأ: {formatDateTimeAr(order.startedPrintingAt)}</span>
                   </div>
@@ -3029,7 +3043,7 @@ function MobileOrderCard({
             <Button
               size="sm"
               variant="outline"
-              className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200"
+              className="text-xs sm:text-sm h-11 rounded-lg border-border hover:bg-secondary transition-all duration-200"
               onClick={() => window.open(`/api/orders/${order.id}/invoice?shopId=${shopId}`, "_blank")}
             >
               <Download className="h-3.5 w-3.5" />
@@ -3039,7 +3053,7 @@ function MobileOrderCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200"
+                className="text-xs sm:text-sm h-11 rounded-lg border-border hover:bg-secondary transition-all duration-200"
                 onClick={() => printReceipt(order, shopName, shopPhone, shopAddress)}
               >
                 <Printer className="h-3.5 w-3.5" />

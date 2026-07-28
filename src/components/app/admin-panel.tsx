@@ -399,35 +399,35 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       value: stats?.totalOrders ?? 0,
       icon: Package,
       color: "text-gold-500",
-      bg: "bg-gold-500/10",
+      bg: "bg-gold-500/10 dark:bg-gold-500/15",
     },
     {
       title: "إجمالي الإيرادات",
       value: formatDA(stats?.totalRevenue ?? 0),
       icon: DollarSign,
-      color: "text-emerald-600",
+      color: "text-emerald-600 dark:text-emerald-400",
       bg: "bg-emerald-50 dark:bg-emerald-950/30",
     },
     {
       title: "طلبات اليوم",
       value: stats?.todayOrders ?? 0,
       icon: TrendingUp,
-      color: "text-amber-600",
+      color: "text-amber-600 dark:text-amber-400",
       bg: "bg-amber-50 dark:bg-amber-950/30",
     },
     {
       title: "قيد الطباعة",
       value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0),
       icon: Clock,
-      color: "text-rose-600",
+      color: "text-rose-600 dark:text-rose-400",
       bg: "bg-rose-50 dark:bg-rose-950/30",
     },
     {
       title: "صافي الربح",
       value: formatDA(stats?.profit ?? 0),
       icon: DollarSign,
-      color: (stats?.profit ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600",
-      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-red-50",
+      color: (stats?.profit ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-red-50 dark:bg-red-950/30",
     },
   ];
 
@@ -442,9 +442,9 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   return (
     <div className="space-y-6">
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((c, i) => (
-          <Card key={i}>
+          <Card key={i} className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
             <CardContent className="p-3 md:p-5">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
@@ -517,14 +517,14 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Package className="h-3.5 w-3.5" />
                 الإجمالي:
-                <span className="font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
+                <span className="font-bold text-foreground tabular-nums">
                   {stats?.totalOrders ?? 0}
                 </span>
               </span>
               <span className="text-muted-foreground/40">|</span>
               <span className="text-muted-foreground">
                 المعروض:
-                <span className="font-bold text-neutral-900 dark:text-neutral-100 tabular-nums mr-1">
+                <span className="font-bold text-foreground tabular-nums mr-1">
                   {filteredOrders.length}
                 </span>
               </span>

@@ -657,7 +657,7 @@ export function AppShell() {
             }
           >
             <div className="max-w-7xl mx-auto px-4 py-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
@@ -718,7 +718,7 @@ export function AppShell() {
                         {shopServices.map((s: { name: string; emoji?: string }, i: number) => (
                           <div
                             key={i}
-                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary transition-all duration-300 cursor-default hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:-translate-y-0.5"
+                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary transition-all duration-300 cursor-default hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:-translate-y-0.5 active:scale-[0.97]"
                           >
                             <span className="shrink-0">{s.emoji || "🖨️"}</span>
                             <span className="truncate">{s.name}</span>
@@ -851,7 +851,7 @@ export function AppShell() {
       {/* حاسبة الأسعار */}
       <button
         onClick={() => setShowEstimator(!showEstimator)}
-        className="fixed bottom-24 left-4 z-30 w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
+        className="fixed bottom-24 left-4 z-30 w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
         title="حاسبة الأسعار"
       >
         <Calculator className="h-5 w-5" />

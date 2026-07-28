@@ -133,7 +133,7 @@ export function TrackPageClient() {
               onValueChange={setSelectedShop}
               disabled={shopsLoading || shops.length === 0}
             >
-              <SelectTrigger className="w-full h-11 text-sm">
+              <SelectTrigger className="w-full h-11 text-sm focus-visible:ring-gold-500/30 focus-visible:border-gold-500">
                 <SelectValue
                   placeholder={
                     shopsLoading
@@ -167,13 +167,13 @@ export function TrackPageClient() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="مثال: A-1050 أو 0560..."
-                  className="pr-9 h-11 text-sm"
+                  className="pr-9 h-11 text-sm focus-visible:ring-gold-500/30 focus-visible:border-gold-500"
                   dir="ltr"
                 />
               </div>
               <Button
                 type="submit"
-                className="h-11 px-6 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white"
+                className="h-11 px-6 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
                 disabled={loading || !query.trim() || !selectedShop}
               >
                 {loading ? (
@@ -289,7 +289,7 @@ function TrackedOrderCard({ order }: { order: PrintOrderLite }) {
   const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
 
   return (
-    <Card className="overflow-hidden shadow-lg shadow-slate-200/40 dark:shadow-slate-900/40 hover:shadow-xl dark:hover:shadow-slate-800/50 transition-shadow duration-300">
+    <Card className="overflow-hidden shadow-lg shadow-slate-200/40 dark:shadow-slate-900/40 hover:shadow-xl dark:hover:shadow-slate-800/50 hover:-translate-y-0.5 transition-all duration-300">
       {/* Dark header strip */}
       <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-neutral-900 text-white">
         <div className="flex items-center justify-between gap-3">
@@ -342,7 +342,7 @@ function TrackedOrderCard({ order }: { order: PrintOrderLite }) {
         </div>
 
         {/* Status timeline summary */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 dark:bg-muted/50 rounded-lg px-3 py-2">
           <Clock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
           <span>
             آخر تحديث: {formatDateTimeAr(order.updatedAt)}
@@ -365,7 +365,7 @@ function InfoItem({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg bg-muted/30 p-2.5 border-r-[3px] border-r-amber-400/60 min-w-0">
+    <div className="rounded-lg bg-muted/30 dark:bg-muted/50 p-2.5 border-r-[3px] border-r-amber-400/60 min-w-0">
       <div className="text-[11px] text-muted-foreground mb-0.5 flex items-center gap-1">
         {icon}
         {label}

@@ -3,11 +3,12 @@
 import { Suspense, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ShopProvider, useShop } from "@/lib/shop-context";
+import { ShopProvider, useShop } from "lib/shop-context";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Store, AlertTriangle, RotateCcw } from "lucide-react";
 
 const MerchantDashboard = dynamic(
@@ -15,7 +16,7 @@ const MerchantDashboard = dynamic(
   { ssr: false, loading: () => <ShopLoader /> },
 );
 
-// ===== Error Boundary للقبض على أخطاء لوحة التحكم =====
+// ===== Error Boundary =====
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
@@ -60,7 +61,7 @@ class MerchantErrorBoundary extends Component<
                 يرجى المحاولة مرة أخرى أو تحديث الصفحة
               </p>
               <div className="flex items-center justify-center gap-3">
-                <Button onClick={this.handleReset} className="gap-2">
+                <Button onClick={this.handleReset} className="gap-2 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50">
                   <RotateCcw className="h-4 w-4" />
                   تحديث الصفحة
                 </Button>
@@ -80,8 +81,9 @@ class MerchantErrorBoundary extends Component<
 function ShopLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500 mx-auto mb-3" />
+      <div className="text-center space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 animate-pulse" />
+        <div className="h-4 w-32 mx-auto bg-muted rounded animate-pulse" />
         <p className="text-sm text-muted-foreground">جارٍ تحميل المتجر...</p>
       </div>
     </div>
@@ -94,7 +96,7 @@ function ShopNotFound() {
       <Card className="max-w-md w-full text-center">
         <CardContent className="py-12">
           <Store className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">المتجر غير موجود</h2>
+          <h2 className="text-xl font-bold mb-2 text-foreground">المتجر غير موجود</h2>
           <p className="text-sm text-muted-foreground">
             تأكد من صحة الرابط أو تواصل مع صاحب المتجر
           </p>
@@ -112,7 +114,6 @@ function ShopAppInner({ slug }: { slug: string }) {
   const setShopId = useAppStore((s) => s.setShopId);
   const setShowAdminLink = useAppStore((s) => s.setShowAdminLink);
 
-  // ضبط shopId ورابط الإدارة في المتجر عند التحميل
   useEffect(() => {
     if (shop) {
       setShopId(shop.id);
@@ -127,7 +128,6 @@ function ShopAppInner({ slug }: { slug: string }) {
   if (loading) return <ShopLoader />;
   if (error || !shop) return <ShopNotFound />;
 
-  // لوحة التحكم الخاصة بالتاجر (صاحب المتجر)
   if (isAdmin) {
     return (
       <MerchantErrorBoundary shopId={shop.id} shopSlug={slug}>
@@ -139,7 +139,6 @@ function ShopAppInner({ slug }: { slug: string }) {
     );
   }
 
-  // واجهة الزبون
   return <AppShell />;
 }
 

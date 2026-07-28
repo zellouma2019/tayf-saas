@@ -182,7 +182,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg active:scale-[0.97] transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-gold-500/50"
                 disabled={verifying || !password.trim()}
               >
                 {verifying ? <RefreshCw className="h-4 w-4 animate-spin" /> : "دخول"}

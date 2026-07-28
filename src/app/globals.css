@@ -243,9 +243,17 @@
   }
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling & theme transition */
 html {
   scroll-behavior: smooth;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth theme transition for card-like surfaces */
+@layer base {
+  .bg-card, .bg-secondary, .bg-muted, .bg-popover, .bg-sidebar {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
 }
 
 /* ==========================================================================
@@ -915,4 +923,26 @@ html {
   .direct-print-area {
     display: block !important;
   }
+}
+/* Smooth theme transition */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Button press effect */
+@keyframes press {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
