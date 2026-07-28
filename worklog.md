@@ -2728,3 +2728,98 @@ Task: تحسينات بصرية + ميزات جديدة (Round 15)
 8. إضافة ملاحظات داخلية على الطلب (DB-based, not just localStorage)
 9. إضافة لوحة Kanban محسّنة للطلبات
 10. تحسين أداء التحميل (lazy loading + code splitting)
+
+---
+Task ID: qa-fix-round16
+Agent: Main Agent
+Task: تحسينات بصرية + ميزات جديدة (Round 16)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع البيانات الحية
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+
+## الميزات الجديدة
+
+### 1. لوحة الأوامر (Command Palette — Ctrl+K)
+- فتح بـ Ctrl+K أو Cmd+K من أي صفحة متجر
+- بحث فوري في الأوامر (طلب جديد، تكرار، تتبّع، سجل، إدارة، حاسبة)
+- دعم لوحة المفاتيح: ↑↓ للتنقل، Enter للاختيار، Esc للإغلاق
+- زر "Ctrl+K" مرئي في الشريط العلوي (على الشاشات الكبيرة)
+- ملف جديد: `src/components/app/command-palette.tsx`
+
+### 2. نظام علامات الطلبات (Order Tags)
+- علامات ملونة: عاجل، VIP، جملة، سريع، جديد
+- تظهر في صف الطلب وفي بطاقات الكانبان
+- حفظ في localStorage (tayf-order-tags)
+- إضافة/إزالة سهلة عبر popover
+- ملف جديد: `src/components/app/order-tags.tsx`
+
+### 3. تحسينات لوحة كانبان
+- أعمدة قابلة للطي (collapse/expand) بالنقر على الرأس
+- مؤشر WIP (حد الطباعة: 5 طلبات)
+- رسم بياني مصغّر (sparkline) للإيرادات في كل عمود
+- بطاقات محسّنة: حدود ذهبية متدرجة، مقياس أكبر عند السحب
+- علامات الطلبات مدمجة في كل بطاقة
+
+### 4. حوار مشاركة المتجر (Share Dialog)
+- رمز QR ديناميكي حسب رابط المتجر
+- أزرار مشاركة: واتساب، مشاركة أصلية، SMS، نسخ رابط QR
+- نسخ رابط المتجر بضغطة واحدة
+- ملف جديد: `src/components/app/share-dialog.tsx`
+
+## التحسينات البصرية (Round 16)
+
+### CSS جديدة (+240 سطر)
+- `.shimmer-card` — تأثير تحميل متلألئ
+- `.text-gradient-gold/violet/emerald` — نص متدرج
+- `.card-tilt` — تأثير ميل ثلاثي الأبعاد عند التمرير
+- `.pulse-gold` — نبض توهج ذهبي
+- `.count-animate` — حركة عداد
+- `.focus-ring-improved` — حلقة تركيز محسّنة
+- `.status-badge-enhanced` — شارات حالة محسّنة مع dot
+- `.btn-ripple` — تأثير تموج عند الضغط
+- `.floating-label` — تسميات عائمة للحقول
+- `.skeleton-wave` — هيكل تحميل مع موجة
+- `.tag-chip` + 6 متغيرات — علامات ملونة
+- `.scrollbar-improved` — شريط تمرير ذهبي محسّن
+- `.kanban-column-header/body` — أعمدة كانبان محسّنة
+- `.quick-stat` / `.quick-stat-icon` — إحصائيات سريعة
+- `.sparkline` / `.sparkline-bar` — رسم بياني مصغّر
+- `.kbd-key` — مفتاح اختصار لوحة المفاتيح
+- `.command-palette` / `.command-palette-backdrop` / `.command-item` — لوحة الأوامر
+- حركات: shimmer-slide, pulse-glow, count-up, ripple, skeleton-wave, collapse-down, expand-down, fade-in, command-enter
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/globals.css` | +240 سطر: CSS Round 16 |
+| `src/components/app/command-palette.tsx` | جديد: لوحة الأوامر Ctrl+K |
+| `src/components/app/order-tags.tsx` | جديد: نظام علامات الطلبات |
+| `src/components/app/share-dialog.tsx` | جديد: حوار مشاركة المتجر مع QR |
+| `src/components/app/kanban-board.tsx` | طي الأعمدة + WIP + sparklines + علامات + تصميم محسّن |
+| `src/components/app/order-details-row.tsx` | علامات الطلبات في صفوف الجدول |
+| `src/components/app/app-shell.tsx` | لوحة الأوامر + زر Ctrl+K في الشريط العلوي |
+
+## Commits
+- 354df15: feat(r16): command palette (Ctrl+K), order tags system, enhanced kanban, share dialog, CSS utilities
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+2. إضافة تصدير Excel للطلبات
+3. إضافة structured data (JSON-LD) لـ SEO
+4. دمج ShareDialog في لوحة تحكم التاجر (زر مشاركة)
+5. اختبار UploadThing CDN على الموقع الحي
+6. إضافة ميزة سلة مشتريات متعددة الخدمات
+7. إضافة لوحة Kanban محسّنة (تصفية حسب العلامات)
+8. تحسين التجربة التجريبية (فترة التجربة + ترقية)
