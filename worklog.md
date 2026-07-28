@@ -2379,3 +2379,104 @@ Task: إصلاحات + ميزات جديدة كبيرة + تحسينات بصر�
 7. تحسين SEO: إضافة structured data (JSON-LD)
 8. إضافة ملاحظات داخلية على الطلب (Merchant notes)
 9. إضافة تصدير Excel للطلبات
+10. ⚠️ مراقبة Turso DB — البيانات تعرض 0 رغم وجودها سابقاً
+
+---
+Task ID: qa-fix-round12
+Agent: Main Agent
+Task: إصلاح + تحسينات بصرية + ميزات جديدة (Round 12)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع الإحصائيات المتحركة
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل بشكل صحيح
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ ⚠️ Turso DB تعرض 0 بيانات (كانت 38 طلب سابقاً)
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء
+- ✅ نظرة عامة — عدّاد متحرك، بطاقات محسّنة، حالة فارغة محسّنة
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ✅ لا أخطاء JavaScript في أي صفحة
+
+## الإصلاحات
+| المشكلة | الحل |
+|---------|------|
+| إحصائيات لوحة الإدارة تعرض 0 دائماً | إصلاح سباق التحميل: `adminCode` فارغ عند أول render → إضافة `enabled: !!adminCode` و `adminCode` في queryKey + إعادة تشغيل loadAll عند تغيير adminCode |
+
+## الميزات الجديدة
+
+### 1. عدّاد متحرك (Animated Counter)
+- مكوّن `AnimatedCounter` جديد: عدّ تصاعدي سلس مع `requestAnimationFrame`
+- تأثير `ease-out cubic` للتباطؤ الطبيعي
+- يعمل مع أي دالة تنسيق (`formatNumber`, `formatDA`)
+- يُستخدم في بطاقات الإحصائيات وشريط الترحيب
+
+### 2. تغيير سريع للحالة (Quick Status Dropdown)
+- زر dropdown جديد في كل صف طلب (▼) لتغيير الحالة مباشرة
+- يعرض جميع الحالات مع emoji + ✓ للحالة الحالية
+- لا يتطلب فتح نافذة التفاصيل
+- زر إلغاء باللون الأحمر
+
+### 3. إشعارات المتصفح الأصلية (Browser Native Notifications)
+- طلب إذن Notification عند فتح لوحة الإدارة
+- عند وصول طلب جديد والصفحة في الخلفية → إشعار أصلي
+- يتضمن أيقونة + عنوان + نص + tag للتحكم
+
+## التحسينات البصرية (Round 12)
+
+### CSS جديدة (+200 سطر)
+- `.gradient-text-gold` — نص متدرج ذهبي دافئ
+- `.focus-ring-gold` — حلقة تركيز ذهبية للحقول
+- `.border-glow-subtle` — توهج حدود خفيف عند التمرير
+- `.table-row-stripe` — صفوف متناوبة للجداول
+- `.order-row-hover` — تمييز صف الطلب عند التمرير
+- `.notif-slide-in` — حركة انزلاق للإشعارات
+- `.tooltip-gold` — تلميحات ذهبية مخصصة
+- `.pending-pulse-ring` — نبض حلقة للطلبات المعلقة
+- `.status-badge-v2` — شارات حالة محسّنة مع dot
+- `.empty-state-icon` — أيقونة حالة فارغة محسّنة
+- `.quick-actions` — أزرار إجراء سريع تظهر عند التمرير
+- `.notification-scroll` — شريط تمرير للإشعارات
+- `.skeleton-soft` — شريط تحميل خفيف
+- `.sidebar-divider` — فاصل أقسام الشريط الجانبي
+- `.mobile-nav-item` — عنصر تنقل محسّن
+- `.fade-in-up` — حركة ظهور عمودية مع تأخير
+
+### تحسينات المكونات
+- **شريط الترحيب**: أيقونة Sparkles + عدّاد متحرك + fade-in-up
+- **بطاقات الإحصائيات**: عدّاد متحرك + سهم "اليوم" + hover scale على الأيقونات + border-glow
+- **الحالة الفارغة**: أيقونة في إطار دائري + نص مُحسّن + نص فرعي
+- **صف الطلب**: badge-dot + pending-pulse-ring + تلميحات ذهبية
+- **صفوف الجدول**: تحسين hover مع ألوان متناوبة
+- **نافذة التحميل**: أيقونة أكبر + نص "قد يستغرق بضع ثوانٍ"
+- **نافذة الفراغ**: نص ذكي يتغير حسب وجود فلاتر
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/components/ui/animated-counter.tsx` | جديد: مكوّن عدّاد متحرك |
+| `src/app/globals.css` | +200 سطر: CSS Round 12 |
+| `src/components/app/admin-panel.tsx` | إصلاح سباق التحميل + إشعارات المتصفح |
+| `src/components/app/admin-overview-tab.tsx` | عدّاد متحرك + Sparkles + fade-in-up + حالات فارغة محسّنة |
+| `src/components/app/order-details-row.tsx` | dropdown تغيير الحالة السريع + badge-dot + pending-pulse-ring |
+
+## Commits
+- ef832ad: fix: admin stats race condition - wait for adminCode before fetching
+- 50443d3: feat(r12): animated counters, quick status dropdown on order rows, improved empty states, gold accent styling
+- 7b8b6a0: feat(r12): browser native notifications, improved notification polling, sidebar dividers, enhanced order rows
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مراقبة Turso DB — البيانات تعرض 0 (أولوية عالية)
+2. ⚠️ التحقق من سلامة بيانات Turso
+3. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+4. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+5. إضافة ميزة سلة مشتريات متعددة الخدمات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+7. اختبار إمكانية الوصول (accessibility audit)
+8. تحسين SEO: إضافة structured data (JSON-LD)
+9. إضافة ملاحظات داخلية على الطلب (Merchant notes)
+10. إضافة تصدير Excel للطلبات
