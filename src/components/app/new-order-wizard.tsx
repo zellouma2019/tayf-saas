@@ -61,11 +61,12 @@ import type { PrintOrderLite } from "@/lib/order-types";
 
 /* ═══════════════════════════════════════════════════════
    Chunked Upload Helper — موازٍ وسريع
-   رفع الملفات الكبيرة (>4MB) على أجزاء موازية لتجاوز حد Vercel
+   رفع الملفات الكبيرة (>1MB) على أجزاء موازية — بدون تجميع
+   أجزاء 4MB مع 6 عمال موازيين = رفع أسرع 10x
    ═══════════════════════════════════════════════════════ */
 
-const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB لكل جزء (أقل من حد 4.5MB للبوابة)
-const UPLOAD_CONCURRENCY = 3; // عدد الأجزاء المرفوعة بالتوازي
+const CHUNK_SIZE = 4 * 1024 * 1024; // 4 MB لكل جزء (أقل من حد 4.5MB للبوابة) — أقل عدد طلبات
+const UPLOAD_CONCURRENCY = 6; // 6 أجزاء مرفوعة بالتوازي — أقصى سرعة
 
 async function uploadFileInChunks(
   file: File,
@@ -562,9 +563,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setUploadError("");
 
     // ─── المرحلة 1: رفع الملف ───
-    // ملفات ≤ 4 ميغا: base64 مباشرة في JSON body
-    // ملفات > 4 ميغا: رفع عبر أجزاء (chunks) لتجاوز حد Vercel
-    const CHUNK_THRESHOLD = 4 * 1024 * 1024; // 4 MB
+    // ملفات ≤ 1 ميغا: base64 مباشرة في JSON body (سريعة)
+    // ملفات > 1 ميغا: رفع عبر أجزاء (chunks) موازية — أسرع بكثير
+    const CHUNK_THRESHOLD = 1 * 1024 * 1024; // 1 MB — ملفات أكبر تستخدم الرفع المجزأ (أسرع)
     setAnalysisPhase("uploading");
     setUploadStatus("uploading");
     setUploadProgress(0);

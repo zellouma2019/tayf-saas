@@ -4,7 +4,10 @@
  * الصيغ المدعومة:
  * 1. data:...;base64,... → base64 data URL (تمرير مباشر)
  * 2. file_...            → مسار ملف على القرص (التطوير المحلي فقط)
- * 3. __chunked__:<id>    → ملف مخزن كأجزاء في قاعدة البيانات (يُقرأ ويُجمع)
+ * 3. __chunked__:<id>    → ملف مخزن كأجزاء في قاعدة البيانات
+ *    - status=complete   → قراءة assembledBase64 مباشرة (سريع)
+ *    - status=chunks_ready → تجميع كسول (عند أول وصول)
+ *    - status=uploading  → محاولة تجميع الأجزاء (حالة نادرة)
  *
  * يُستخدم في جميع نقاط النهاية التي تتعامل مع ملفات الطلبات:
  * - /api/orders/[id]/file     (تنزيل)
@@ -12,7 +15,6 @@
  * - /api/orders/[id]/thumbnail (صورة مصغّرة)
  * - /api/orders/[id]/verify-print
  */
-import { tursoQuery, tursoExecute } from "@/lib/turso-lite";
 import { createClient, type Client } from "@libsql/client";
 
 let _directClient: Client | null = null;
@@ -34,6 +36,19 @@ function getDirectClient(): Client {
   return _directClient;
 }
 
+/** تنفيذ استعلام مباشر بدون مهلة */
+async function directExecute(sql: string, args: unknown[] = []) {
+  const client = getDirectClient();
+  return client.execute({ sql, args: args as never[] });
+}
+
+/** استعلام قراءة مباشر */
+async function directQuery<T = Record<string, unknown>>(sql: string, args: unknown[] = []): Promise<T[]> {
+  const client = getDirectClient();
+  const result = await client.execute({ sql, args: args as never[] });
+  return result.rows as unknown as T[];
+}
+
 /**
  * حلّ بيانات الملف من أي صيغة إلى data URL كامل (أو null)
  */
@@ -48,54 +63,57 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
     const uploadId = fileData.replace("__chunked__:", "");
 
     try {
-      // محاولة قراءة البيانات المجتمعة أولاً
-      const rows = await tursoQuery<{ assembledBase64: string | null; status: string }>(
+      // محاولة قراءة البيانات المجتمعة أولاً (الأسرع)
+      const rows = await directQuery<{ assembledBase64: string | null; status: string }>(
         `SELECT "assembledBase64", status FROM "FileUpload" WHERE id = ?`,
         [uploadId]
       );
       const upload = rows[0];
 
+      // إذا كانت مجمّعة مسبقاً — إرجاع مباشر (سريع جداً)
       if (upload?.assembledBase64 && upload.status === "complete") {
         return upload.assembledBase64;
       }
 
-      // إذا لم تكن مجمعة — اجمع الأجزاء (حالة نادرة: الفشل أثناء التجميع)
-      if (upload?.status === "uploading") {
-        const chunkRows = await tursoQuery<{ data: string }>(
+      // ─── التجميع الكسول: تجميع عند أول وصول ───
+      // يحدث عندما status = "chunks_ready" (تخطينا التجميع أثناء الرفع لتسريعه)
+      // أو status = "uploading" (حالة نادرة: فشل أثناء الرفع)
+      if (upload?.status === "chunks_ready" || upload?.status === "uploading") {
+        const chunkRows = await directQuery<{ data: string }>(
           `SELECT data FROM "FileChunk" WHERE "uploadId" = ? ORDER BY "chunkIndex"`,
           [uploadId]
         );
 
         if (chunkRows.length > 0) {
-          const ext = uploadId.includes("pdf") ? "pdf" : "bin";
+          // احصل على امتداد الملف
+          const uploadInfo = await directQuery<{ fileExt: string }>(
+            `SELECT "fileExt" FROM "FileUpload" WHERE id = ?`,
+            [uploadId]
+          );
+          const fileExt = uploadInfo[0]?.fileExt || "bin";
           const MIME_MAP: Record<string, string> = {
             pdf: "application/pdf",
             docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             jpg: "image/jpeg", jpeg: "image/jpeg",
             png: "image/png", webp: "image/webp",
           };
-
-          // احصل على الامتداد من بيانات الرفع
-          const uploadRows = await tursoQuery<{ fileExt: string }>(
-            `SELECT "fileExt" FROM "FileUpload" WHERE id = ?`,
-            [uploadId]
-          );
-          const fileExt = uploadRows[0]?.fileExt || ext;
           const mime = MIME_MAP[fileExt] || "application/octet-stream";
 
+          // تجميع الأجزاء في الذاكرة
           const fullBase64 = chunkRows.map(r => r.data).join("");
           const dataUrl = `data:${mime};base64,${fullBase64}`;
 
-          // خزّن البيانات المجتمعة لاستخدامها لاحقاً
+          // خزّن البيانات المجتمعة لاستخدامها لاحقاً (استعلام واحد)
           try {
-            const client = getDirectClient();
-            await client.execute({
-              sql: `UPDATE "FileUpload" SET status = 'complete', "assembledBase64" = ? WHERE id = ?`,
-              args: [dataUrl, uploadId] as never[],
-            });
-            await tursoExecute(`DELETE FROM "FileChunk" WHERE "uploadId" = ?`, [uploadId]);
-          } catch {
-            // تجاهل أخطاء التنظيف
+            await directExecute(
+              `UPDATE "FileUpload" SET status = 'complete', "assembledBase64" = ? WHERE id = ?`,
+              [dataUrl, uploadId]
+            );
+            // حذف الأجزاء الفردية (تحرير المساحة)
+            await directExecute(`DELETE FROM "FileChunk" WHERE "uploadId" = ?`, [uploadId]);
+          } catch (cleanupErr) {
+            console.warn("[file-resolver] Lazy assembly cleanup failed:", cleanupErr);
+            // لا نفشل — البيانات مجمّعة في الذاكرة وسيتم إرجاعها
           }
 
           return dataUrl;
@@ -123,14 +141,14 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
  */
 export async function cleanupOldUploads(): Promise<void> {
   try {
-    await tursoExecute(
-      `DELETE FROM "FileChunk" WHERE "uploadId" IN (SELECT id FROM "FileUpload" WHERE status = 'uploading' AND datetime("createdAt") < datetime('now', '-1 hour'))`
+    await directExecute(
+      `DELETE FROM "FileChunk" WHERE "uploadId" IN (SELECT id FROM "FileUpload" WHERE status IN ('uploading', 'chunks_ready') AND datetime("createdAt") < datetime('now', '-1 hour'))`
     );
-    await tursoExecute(
-      `DELETE FROM "FileUpload" WHERE status = 'uploading' AND datetime("createdAt") < datetime('now', '-1 hour')`
+    await directExecute(
+      `DELETE FROM "FileUpload" WHERE status IN ('uploading', 'chunks_ready') AND datetime("createdAt") < datetime('now', '-1 hour')`
     );
     // تنظيف الملفات المكتملة الأقدم من 7 أيام
-    await tursoExecute(
+    await directExecute(
       `DELETE FROM "FileUpload" WHERE status = 'complete' AND datetime("createdAt") < datetime('now', '-7 days')`
     );
   } catch {
