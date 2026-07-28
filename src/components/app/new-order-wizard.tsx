@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { useShop } from "@/lib/shop-context";
 import { getCountry } from "@/lib/countries";
@@ -176,25 +176,29 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   const [uploadedFile, setUploadedFile] = useState<UploadedFileData | null>(null); // بيانات ملف Uploadthing CDN
 
   // Uploadthing hook — رفع مباشر إلى CDN
+  const uploadErrorRef = useRef<string | null>(null);
+  const uploadedFileRef = useRef<UploadedFileData | null>(null);
   const { startUpload, isUploading } = useUploadThing("printFileUploader", {
     onClientUploadComplete: (files) => {
       if (files && files.length > 0) {
         const uploaded = files[0] as unknown as UploadedFileData;
-        setUploadedFile({
+        const data = {
           url: uploaded.url,
           name: uploaded.name,
           size: uploaded.size,
           key: uploaded.key,
           type: uploaded.type,
-        });
+        };
+        uploadedFileRef.current = data;
+        setUploadedFile(data);
         setUploadProgress(100);
       }
     },
     onUploadError: (error) => {
-      throw new Error(error.message || "فشل رفع الملف إلى CDN");
+      uploadErrorRef.current = error.message || "فشل رفع الملف إلى CDN";
+      console.warn("[upload] Uploadthing error:", error.message);
     },
     onUploadProgress: (progress) => {
-      // progress is 0-100 from Uploadthing
       setUploadProgress(Math.min(98, Math.round(progress)));
     },
   });
@@ -624,12 +628,19 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         setUploadedFile(null);
       } else {
         // 🚀 رفع مباشر إلى Uploadthing CDN — لا يمر عبر Vercel serverless!
+        uploadErrorRef.current = null;
+        uploadedFileRef.current = null;
         try {
           setUploadProgress(5);
           await startUpload([f]);
-          // startUpload calls onClientUploadComplete which sets uploadedFile + progress
-          if (!uploadedFile || !uploadedFile.url) {
-            throw new Error("فشل رفع الملف — يرجى المحاولة مرة أخرى");
+          // انتظر قليلاً ليتمكن callback من تعيين القيم
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (uploadErrorRef.current || !uploadedFileRef.current) {
+            throw new Error(uploadErrorRef.current || "لم يتم رفع الملف");
+          }
+          // Copy ref data to state for later use in handleSubmit
+          if (uploadedFileRef.current && !uploadedFile) {
+            setUploadedFile(uploadedFileRef.current);
           }
         } catch (cdnErr) {
           // Fallback: إذا لم يكن Uploadthing متاحاً، استخدم الرفع المجزأ عبر API
