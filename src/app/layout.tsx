@@ -49,15 +49,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" type="image/png" />
-        <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="theme-color" content="#d4a853" />
-        <meta property="og:title" content="طيف — منصة إدارة المطابع" />
-        <meta property="og:description" content="منصة متكاملة لإدارة المطابع والخدمات الطباعية" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="طيف" />
       </head>
       <body
         className={`${cairo.variable} font-cairo antialiased bg-background text-foreground`}

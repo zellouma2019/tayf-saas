@@ -122,13 +122,13 @@ import { motion } from "framer-motion";
 
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
-const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-dark-400 text-sm">جارٍ التحميل...</div> });
+const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
-const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <div className="py-16 text-center text-dark-400 text-sm">جارٍ التحميل...</div> });
-const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <div className="py-16 text-center text-dark-400 text-sm">جارٍ التحميل...</div> });
-const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <div className="py-16 text-center text-dark-400 text-sm">جارٍ التحميل...</div> });
-const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <div className="py-16 text-center text-dark-400 text-sm">جارٍ التحميل...</div> });
-const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-dark-400 text-sm">جارٍ التحميل...</div> });
+const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 
 // QRCode import خفيف
 let QRCodeModule: typeof import("qrcode") | null = null;
@@ -444,6 +444,39 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     if (unlocked) loadOrders();
   }, [statusFilter, unlocked, loadOrders]);
 
+  // ===== إشعار الطلبات الجديدة في الوقت الفعلي =====
+  const lastKnownCountRef = useRef(0);
+  const notifIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!unlocked) return;
+    // تحقق من الطلبات الجديدة كل 20 ثانية
+    const checkNewOrders = async () => {
+      try {
+        const res = await fetch(`/api/orders/pending-count?shopId=${shopId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const currentCount = data.count || 0;
+          if (lastKnownCountRef.current > 0 && currentCount > lastKnownCountRef.current) {
+            const diff = currentCount - lastKnownCountRef.current;
+            toast.info(`📦 ${diff === 1 ? 'طلب جديد' : `${diff} طلبات جديدة`}!`, {
+              description: diff === 1 ? 'تم استلام طلب جديد — تحقق من قائمة الطلبات' : `تم استلام ${diff} طلبات جديدة`,
+              duration: 6000,
+            });
+            // تحديث البيانات تلقائياً
+            loadStats(false);
+            loadOrders();
+          }
+          lastKnownCountRef.current = currentCount;
+        }
+      } catch { /* silent */ }
+    };
+    // تحقق فوري عند الفتح
+    checkNewOrders();
+    notifIntervalRef.current = setInterval(checkNewOrders, 20000);
+    return () => { if (notifIntervalRef.current) clearInterval(notifIntervalRef.current); };
+  }, [unlocked, shopId, loadStats, loadOrders]);
+
   async function handlePinSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pin || verifying) return;
@@ -505,13 +538,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
         {/* Decorative grid pattern */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-        <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-dark-200/60 relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
+        <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-border relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-5 shadow-lg shadow-violet-300/40 dark:shadow-violet-900/40" style={{ animation: "float 3s ease-in-out infinite" }}>
                 <Lock className="h-12 w-12 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-dark-800">لوحة تحكم المتجر</h2>
+              <h2 className="text-xl font-bold text-foreground">لوحة تحكم المتجر</h2>
               <p className="text-sm text-dark-500 mt-2">أدخل رمز PIN للوصول إلى لوحة التحكم</p>
               <p className="text-xs text-gold-500 font-medium mt-1">طيف</p>
             </div>
@@ -555,7 +588,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             >
               هل نسيت الرمز؟
             </button>
-            <p className="text-xs text-dark-400 mt-4 text-center">
+            <p className="text-xs text-muted-foreground mt-4 text-center">
               🔒 هذا القسم مخصص لصاحب المتجر فقط
             </p>
           </CardContent>
@@ -568,12 +601,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const customerLink = typeof window !== "undefined" ? `${window.location.origin}/s/${shopSlug}` : `/s/${shopSlug}`;
 
   const statCards = [
-    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-violet-50 to-violet-100/60", borderColor: "border-t-violet-400" },
-    { title: "إجمالي الإيرادات", value: formatDA(stats?.totalRevenue ?? 0), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60", borderColor: "border-t-emerald-400" },
-    { title: "صافي الربح", value: formatDA(totalProfit), icon: TrendingUp, color: totalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: totalProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100/60" : "bg-gradient-to-br from-rose-50 to-rose-100/60", borderColor: totalProfit >= 0 ? "border-t-emerald-400" : "border-t-rose-400" },
-    { title: "قيد التنفيذ", value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60", borderColor: "border-t-amber-400" },
-    { title: "إيرادات اليوم", value: formatDA(todayRevenue), icon: Inbox, color: "text-sky-600", bg: "bg-gradient-to-br from-sky-50 to-sky-100/60", borderColor: "border-t-sky-400", trend: todayRevenue > 0 ? "up" : todayRevenue < 0 ? "down" : undefined },
-    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-gold-500" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-violet-50 to-violet-100/60" : "bg-gradient-to-br from-rose-50 to-rose-100/60", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-violet-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
+    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-violet-50 to-violet-100/60 dark:from-violet-950/40 dark:to-violet-900/20", borderColor: "border-t-violet-400" },
+    { title: "إجمالي الإيرادات", value: formatDA(stats?.totalRevenue ?? 0), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20", borderColor: "border-t-emerald-400" },
+    { title: "صافي الربح", value: formatDA(totalProfit), icon: TrendingUp, color: totalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: totalProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: totalProfit >= 0 ? "border-t-emerald-400" : "border-t-rose-400" },
+    { title: "قيد التنفيذ", value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60 dark:from-amber-950/40 dark:to-amber-900/20", borderColor: "border-t-amber-400" },
+    { title: "إيرادات اليوم", value: formatDA(todayRevenue), icon: Inbox, color: "text-sky-600", bg: "bg-gradient-to-br from-sky-50 to-sky-100/60 dark:from-sky-950/40 dark:to-sky-900/20", borderColor: "border-t-sky-400", trend: todayRevenue > 0 ? "up" : todayRevenue < 0 ? "down" : undefined },
+    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-gold-500" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-violet-50 to-violet-100/60 dark:from-violet-950/40 dark:to-violet-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-violet-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
   ];
 
   const quickFilters = [
@@ -744,19 +777,19 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {!(stats?.totalOrders ?? 0) && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 animate-pulse-slow border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
                   <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl" />
                   <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl" />
                   <div className="relative text-center">
                     <motion.div
                       initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
+                      transition={{ duration: 0.5, ease: "easeOut", y: { duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } }}
                       className="text-4xl mb-3"
                     >
                       🎉
                     </motion.div>
-                    <h2 className="text-lg sm:text-xl font-bold mb-2 text-foreground">متجرك جاهز لاستقبال الطلبات!</h2>
+                    <h2 className="text-lg sm:text-xl font-bold mb-2 text-foreground">{shop?.name || "المتجر"} جاهز لاستقبال الطلبات!</h2>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
                       شارك رابط متجرك مع زبائنك لبدء استقبال طلبات الطباعة أونلاين
                     </p>
@@ -775,24 +808,41 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
 
               {/* آخر الطلبات */}
-              <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                <div className="border-b border-dark-200/60 px-4 sm:px-6 pt-5 pb-3">
-                  <h3 className="text-sm font-semibold flex items-center gap-2 text-dark-800">
-                    <Clock className="h-4 w-4 text-gold-400" />
-                    آخر الطلبات
-                  </h3>
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="border-b border-border px-4 sm:px-6 pt-5 pb-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                      <Clock className="h-4 w-4 text-gold-400" />
+                      آخر الطلبات
+                      {stats?.recentOrders?.length ? (
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-gold-500/15 text-gold-500 text-[11px] font-bold tabular-nums">
+                          {stats.recentOrders.length}
+                        </span>
+                      ) : null}
+                    </h3>
+                    {stats?.recentOrders?.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("orders")}
+                        className="text-xs text-gold-500 hover:text-gold-600 font-medium flex items-center gap-1 transition-colors"
+                      >
+                        عرض الكل
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="p-0">
                   {loading ? (
-                    <div className="py-12 text-center text-dark-400 text-sm">
+                    <div className="py-12 text-center text-muted-foreground text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
                     </div>
                   ) : !stats?.recentOrders?.length ? (
                     <div className="py-14 flex flex-col items-center">
-                      <Inbox className="h-10 w-10 text-dark-200 mb-3" />
-                      <p className="text-sm font-medium text-dark-400">لا توجد طلبات بعد</p>
-                      <p className="text-xs text-dark-300 mt-1">ستظهر هنا آخر الطلبات الواردة</p>
+                      <Inbox className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                      <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا آخر الطلبات الواردة</p>
                       <a
                         href={customerLink}
                         target="_blank"
@@ -804,7 +854,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       </a>
                     </div>
                   ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-border">
                       {stats.recentOrders.slice(0, 5).map((o) => {
                         const meta = STATUS_META[o.status] || STATUS_META.pending;
                         const statusBorderMap: Record<string, string> = {
@@ -815,23 +865,39 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                           cancelled: "border-r-rose-400",
                         };
                         const serviceEmoji = SERVICE_MAP[o.serviceType]?.emoji ?? "";
+                        // أزرار تغيير الحالة السريعة
+                        const nextStatus = o.status === "pending" ? "printing" : o.status === "printing" ? "ready" : o.status === "ready" ? "delivered" : null;
+                        const nextStatusMeta = nextStatus ? STATUS_META[nextStatus] : null;
                         return (
-                          <div key={o.id} className={cn("flex items-center justify-between px-4 sm:px-6 py-3.5 gap-3 hover:bg-gold-500/5 transition-colors duration-150 border-r-[3px]", statusBorderMap[o.status] || "border-r-slate-300")}>
+                          <div key={o.id} className={cn("flex items-center justify-between px-4 sm:px-6 py-3.5 gap-3 hover:bg-secondary transition-colors duration-150 border-r-[3px]", o.status === "pending" && "animate-pulse-slow", statusBorderMap[o.status] || "border-r-border")}>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className="font-mono text-xs font-bold text-dark-800 cursor-pointer hover:text-gold-500 transition-colors"
+                                  className="font-mono text-xs font-bold text-foreground cursor-pointer hover:text-gold-500 transition-colors"
                                   onClick={() => setSelectedOrder(o)}
                                 >{o.reference}</span>
                                 <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium", meta.bg)}>{meta.label}</span>
                               </div>
-                              <div className="text-xs text-dark-400 truncate mt-0.5">
+                              <div className="text-xs text-muted-foreground truncate mt-0.5">
                                 {o.customer.name} · {serviceEmoji}{o.serviceName}
                               </div>
                             </div>
-                            <div className="text-left shrink-0">
-                              <div className="text-sm font-bold text-gold-500">{formatDA(o.total)}</div>
-                              <div className="text-xs text-dark-400">{formatDateTimeAr(o.createdAt)}</div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {nextStatus && nextStatusMeta && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); changeStatus(o, nextStatus); }}
+                                  className="hidden sm:flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors border border-emerald-200 dark:border-emerald-800/40"
+                                  title={`تحويل إلى: ${nextStatusMeta.label}`}
+                                >
+                                  <Check className="h-3 w-3" />
+                                  {nextStatusMeta.label}
+                                </button>
+                              )}
+                              <div className="text-left">
+                                <div className="text-sm font-bold text-gold-500">{formatDA(o.total)}</div>
+                                <div className="text-xs text-muted-foreground text-left">{formatDateTimeAr(o.createdAt)}</div>
+                              </div>
                             </div>
                           </div>
                         );
@@ -842,7 +908,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* التحليلات */}
-              <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 <AdminAnalytics stats={stats} orders={orders} />
               </div>
             </div>
@@ -883,7 +949,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* الفلاتر */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="relative">
-                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-dark-400" />
+                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -908,11 +974,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </Select>
                   </div>
                   {hasFeature("exportExcel") && (
-                    <Button variant="outline" onClick={exportCSV} className="shrink-0 h-11 w-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200" title="تصدير CSV">
+                    <Button variant="outline" onClick={exportCSV} className="shrink-0 h-11 w-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200" title="تصدير CSV">
                       <Download className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button variant="outline" onClick={loadAll} className="shrink-0 h-11 w-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200">
+                  <Button variant="outline" onClick={loadAll} className="shrink-0 h-11 w-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200">
                     <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                   </Button>
                 </div>
@@ -956,26 +1022,26 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* ===== عرض الجدول ===== */}
               {viewMode === "table" && (<>
               {/* جدول الطلبات - حاسوب */}
-              <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block">
-                <div className="border-b border-dark-200/60 px-6 pt-5 pb-3">
-                  <h3 className="text-sm font-semibold text-dark-800">الطلبات ({orders.length})</h3>
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block">
+                <div className="border-b border-border px-6 pt-5 pb-3">
+                  <h3 className="text-sm font-semibold text-foreground">الطلبات ({orders.length})</h3>
                 </div>
                 <div className="p-0">
                   {loading ? (
-                    <div className="py-16 text-center text-dark-400 text-sm">
+                    <div className="py-16 text-center text-muted-foreground text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-16 text-center">
-                      <Inbox className="h-12 w-12 mx-auto text-dark-200 mb-3" />
-                      <p className="text-sm text-dark-400">لا توجد طلبات</p>
+                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                      <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto custom-scroll">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-dark-50/80 hover:bg-gold-500/5/80 border-b border-dark-200/60">
+                          <TableRow className="bg-dark-50/80 hover:bg-secondary/80 border-b border-border">
                             {hasFeature("bulkActions") && (
                               <TableHead className="w-10 p-2">
                                 <Checkbox
@@ -1035,10 +1101,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* بطاقات الطلبات - جوال */}
-              <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] md:hidden">
-                <div className="border-b border-dark-200/60 px-5 pt-5 pb-2">
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] md:hidden">
+                <div className="border-b border-border px-5 pt-5 pb-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-dark-800">الطلبات ({orders.length})</h3>
+                    <h3 className="text-sm font-semibold text-foreground">الطلبات ({orders.length})</h3>
                     <div className="flex items-center gap-1">
                       {hasFeature("bulkActions") && !mobileSelectionMode && orders.length > 0 && (
                         <button
@@ -1052,15 +1118,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       {mobileSelectionMode && (
                         <button
                           onClick={() => { setMobileSelectionMode(false); setSelectedIds(new Set()); }}
-                          className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-dark-400 hover:text-dark-600 min-h-[32px]"
+                          className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-dark-600 min-h-[32px]"
                         >
                           إلغاء
                         </button>
                       )}
-                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-dark-400 hover:text-dark-600")}>
+                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-dark-600")}>
                         {sortDir === "desc" ? "الأحدث" : "الأقدم"}
                       </button>
-                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-dark-400 hover:text-dark-600")}>
+                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-dark-600")}>
                         الأعلى سعراً
                       </button>
                     </div>
@@ -1068,14 +1134,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </div>
                 <div className="p-4 space-y-3">
                   {loading ? (
-                    <div className="py-10 text-center text-dark-400 text-sm">
+                    <div className="py-10 text-center text-muted-foreground text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-10 text-center">
-                      <Inbox className="h-10 w-10 mx-auto text-dark-200 mb-2" />
-                      <p className="text-xs text-dark-400">لا توجد طلبات</p>
+                      <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
                     orders.map((o) => <MobileOrderCard key={o.id} order={o} onStatusChange={changeStatus} onClick={() => setSelectedOrder(o)} shopId={shopId} shopName={shop?.name || ""} shopPhone={shop?.phone || ""} shopAddress={shop?.address || null} selectionMode={mobileSelectionMode} selected={mobileSelectionMode ? selectedIds.has(o.id) : undefined} onToggleSelect={mobileSelectionMode ? () => toggleSelect(o.id) : undefined} />)
@@ -1086,16 +1152,16 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
               {/* ===== عرض كانبان ===== */}
               {viewMode === "kanban" && (
-                <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+                <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
                   {loading ? (
-                    <div className="py-16 text-center text-dark-400 text-sm">
+                    <div className="py-16 text-center text-muted-foreground text-sm">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       جارٍ التحميل...
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-16 text-center">
-                      <Inbox className="h-12 w-12 mx-auto text-dark-200 mb-3" />
-                      <p className="text-sm text-dark-400">لا توجد طلبات</p>
+                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                      <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
                     <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
@@ -1161,7 +1227,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
           )}
           {/* ===== تبويب التحليلات ===== */}
           {activeTab === "analytics" && hasFeature("advancedAnalytics") && (
-            <div className="bg-card border border-gold-500/8 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
               <div className="p-4 sm:p-6">
                 <MerchantAnalytics stats={stats} orders={rawOrders} />
               </div>
@@ -1198,23 +1264,23 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             <div className="space-y-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-bold text-lg text-dark-800">معاينة متجرك</h2>
+                  <h2 className="font-bold text-lg text-foreground">معاينة متجرك</h2>
                   <p className="text-sm text-dark-500 mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
                 </div>
-                <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-dark-200 text-dark-700 hover:bg-gold-500/5 rounded-lg shrink-0">
+                <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-dark-200 text-dark-700 hover:bg-secondary rounded-lg shrink-0">
                   <ExternalLink className="h-4 w-4" />
                   فتح في نافذة جديدة
                 </Button>
               </div>
-              <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 <div className="p-0">
-                  <div className="bg-dark-100 p-3 flex items-center gap-2.5 border-b border-dark-200/60">
+                  <div className="bg-dark-100 p-3 flex items-center gap-2.5 border-b border-border">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-rose-400" />
                       <div className="w-3 h-3 rounded-full bg-amber-400" />
                       <div className="w-3 h-3 rounded-full bg-emerald-400" />
                     </div>
-                    <div className="flex-1 bg-card border border-gold-500/8 rounded-xl" dir="ltr">
+                    <div className="flex-1 bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl" dir="ltr">
                       {customerLink}
                     </div>
                   </div>
@@ -1290,12 +1356,12 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
       </div>
       {!isEnabled && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center rounded-xl z-10">
-          <div className="bg-card border border-gold-500/8 rounded-xl">
+          <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-4 shadow-lg shadow-violet-200/50">
               <ShieldCheck className="h-8 w-8 text-white" />
             </div>
             <h4 className="font-bold text-sm mb-1 text-foreground">{title}</h4>
-            <p className="text-xs text-dark-400 mb-5">{desc}</p>
+            <p className="text-xs text-muted-foreground mb-5">{desc}</p>
             {!showContact ? (
               <Button
                 size="sm"
@@ -1325,7 +1391,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
                   <Button
                     size="sm"
                     variant="outline"
-                    className="w-full rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+                    className="w-full rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200"
                     onClick={() => window.open(`tel:${contactNumber.replace(/\s/g, "")}`, "_self")}
                   >
                     <Phone className="h-4 w-4 ml-1" />
@@ -1333,7 +1399,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
                   </Button>
                 )}
                 <button
-                  className="text-xs text-dark-400 hover:text-dark-600 mt-1 transition-colors duration-200"
+                  className="text-xs text-muted-foreground hover:text-dark-600 mt-1 transition-colors duration-200"
                   onClick={() => setShowContact(false)}
                 >
                   إلغاء
@@ -1598,23 +1664,23 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
           <User className="h-5 w-5 text-gold-500" />
         </div>
         <div>
-          <h2 className="font-bold text-lg text-dark-800">{shop?.name || "التاجر"}</h2>
+          <h2 className="font-bold text-lg text-foreground">{shop?.name || "التاجر"}</h2>
           <p className="text-xs text-dark-500">إعدادات المتجر والحساب</p>
         </div>
       </div>
 
       {/* ===== 1. رفع الشعار (customLogo) ===== */}
       <ProLock featureKey="customLogo" title="شعار المتجر" desc="ارفع شعار متجرك ليظهر للزبائن">
-        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="p-4 sm:p-6 space-y-5">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Upload className="h-4 w-4 text-gold-500" />
               شعار المتجر
               <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
             </h3>
             <div className="flex items-center gap-4">
               {logoUrl ? (
-                <div className="relative w-20 h-20 rounded-xl overflow-hidden shadow-sm shrink-0 border border-dark-200/60">
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden shadow-sm shrink-0 border border-border">
                   <img src={logoUrl} alt="شعار المتجر" className="w-full h-full object-cover" />
                   <button
                     onClick={handleRemoveLogo}
@@ -1625,8 +1691,8 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-xl bg-dark-50 border border-dark-200/60 shadow-sm flex items-center justify-center shrink-0">
-                  <Store className="h-8 w-8 text-dark-300" />
+                <div className="w-20 h-20 rounded-xl bg-dark-50 border border-border shadow-sm flex items-center justify-center shrink-0">
+                  <Store className="h-8 w-8 text-muted-foreground/60" />
                 </div>
               )}
               <div className="flex-1 space-y-3">
@@ -1645,7 +1711,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                     </span>
                   </div>
                 </label>
-                <p className="text-xs text-dark-400">الحد الأقصى: 2 م.ب (يُضغط تلقائياً)</p>
+                <p className="text-xs text-muted-foreground">الحد الأقصى: 2 م.ب (يُضغط تلقائياً)</p>
               </div>
             </div>
           </div>
@@ -1654,9 +1720,9 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
 
       {/* ===== 2. أيقونة الشعار (customLogo) ===== */}
       <ProLock featureKey="customLogo" title="أيقونة الشعار" desc="اختر أيقونة مميزة لشعار متجرك">
-        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="p-4 sm:p-6 space-y-5">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Palette className="h-4 w-4 text-gold-500" />
               أيقونة الشعار
               <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
@@ -1668,7 +1734,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                   type="button"
                   onClick={() => handleSelectIcon(name)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 border border-dark-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
+                    "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
                     selectedIcon === name
                       ? "bg-secondary shadow-md ring-1 ring-gold-500/30 border-gold-200"
                       : "bg-dark-50 hover:bg-gold-500/10 hover:shadow-md",
@@ -1680,8 +1746,8 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
               ))}
             </div>
             {/* معاينة حية */}
-            <div className="mt-3 pt-4 border-t border-dark-200/60">
-              <p className="text-xs text-dark-400 mb-3">معاينة:</p>
+            <div className="mt-3 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-3">معاينة:</p>
               <div className="inline-flex items-center gap-2.5 p-3 rounded-xl shadow-sm" style={{ backgroundColor: shop?.primaryColor || "#d4a853" }}>
                 <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   {(() => {
@@ -1701,9 +1767,9 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
 
       {/* ===== 4. معلومات المتجر (مجاني) ===== */}
       <form onSubmit={handleSave} className="space-y-5">
-        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <div className="p-4 sm:p-6 space-y-5">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Store className="h-4 w-4 text-gold-500" />
               معلومات المتجر
             </h3>
@@ -1713,19 +1779,19 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><Phone className="h-3.5 w-3.5 text-dark-400" />الهاتف</Label>
+                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><Phone className="h-3.5 w-3.5 text-muted-foreground" />الهاتف</Label>
                 <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
               </div>
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><MessageCircle className="h-3.5 w-3.5 text-dark-400" />واتساب</Label>
+                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />واتساب</Label>
                 <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
               </div>
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><Mail className="h-3.5 w-3.5 text-dark-400" />البريد الإلكتروني</Label>
+                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><Mail className="h-3.5 w-3.5 text-muted-foreground" />البريد الإلكتروني</Label>
                 <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" dir="ltr" />
               </div>
               <div>
-                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><MapPin className="h-3.5 w-3.5 text-dark-400" />العنوان</Label>
+                <Label className="flex items-center gap-1.5 text-dark-600 text-sm"><MapPin className="h-3.5 w-3.5 text-muted-foreground" />العنوان</Label>
                 <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-11 rounded-xl border-dark-200 focus:ring-gold-500/20 focus:border-gold-500 transition-all" />
               </div>
             </div>
@@ -1742,9 +1808,9 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
       <PriceEditorSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} />
 
       {/* ===== 6. معلومات المالك + تغيير كلمة المرور (مجاني) ===== */}
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
             <User className="h-4 w-4 text-gold-500" />
             معلومات المالك
           </h3>
@@ -1765,9 +1831,9 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
         </div>
       </div>
 
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
             <Lock className="h-4 w-4 text-gold-500" />
             تغيير كلمة المرور
           </h3>
@@ -1788,7 +1854,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                 <button
                   type="button"
                   onClick={() => setShowCurrentPin(!showCurrentPin)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-dark-600"
                   tabIndex={-1}
                 >
                   {showCurrentPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -1812,7 +1878,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                 <button
                   type="button"
                   onClick={() => setShowNewPin(!showNewPin)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-dark-600"
                   tabIndex={-1}
                 >
                   {showNewPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -1894,9 +1960,9 @@ function ThemePickerSection({
 
   return (
     <ProLock featureKey="customTheme" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
             <Palette className="h-4 w-4 text-gold-500" />
             القالب اللوني
           </h3>
@@ -1907,7 +1973,7 @@ function ThemePickerSection({
                 type="button"
                 onClick={() => handleSelectTheme(theme.id)}
                 className={cn(
-                  "rounded-xl overflow-hidden transition-all duration-200 text-right border border-dark-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
+                  "rounded-xl overflow-hidden transition-all duration-200 text-right border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
                   selectedThemeId === theme.id
                     ? "ring-2 ring-gold-500 shadow-md border-gold-200"
                     : "hover:shadow-md",
@@ -2010,9 +2076,9 @@ function PriceEditorSection({
 
   return (
     <ProLock featureKey={["customPricing", "serviceToggle"]} title="إدارة الأسعار والخدمات" desc="خصّص أسعار خدماتك بسهولة">
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-5">
-          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
             <DollarSign className="h-4 w-4 text-gold-500" />
             إدارة الأسعار والخدمات
             <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
@@ -2020,7 +2086,7 @@ function PriceEditorSection({
 
           <div className="space-y-2.5">
             {services.map((svc, idx) => (
-              <div key={svc.type} className="rounded-xl bg-dark-50 border border-dark-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+              <div key={svc.type} className="rounded-xl bg-dark-50 border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 {/* رأس الخدمة */}
                 <button
                   type="button"
@@ -2030,19 +2096,19 @@ function PriceEditorSection({
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{svc.emoji}</span>
                     <div>
-                      <div className="text-sm font-medium text-dark-800">{svc.name}</div>
-                      <div className="text-xs text-dark-400">
+                      <div className="text-sm font-medium text-foreground">{svc.name}</div>
+                      <div className="text-xs text-muted-foreground">
                         {svc.basePricePerPage > 0 ? `${svc.basePricePerPage} د.ج/صفحة` : "مجاني"}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {!svc.enabled && (
-                      <Badge variant="outline" className="text-[10px] text-dark-400 border-dark-300 rounded-lg">معطّل</Badge>
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground border-dark-300 rounded-lg">معطّل</Badge>
                     )}
                     <ChevronLeft
                       className={cn(
-                        "h-4 w-4 text-dark-400 transition-transform duration-200",
+                        "h-4 w-4 text-muted-foreground transition-transform duration-200",
                         expandedIdx === idx && "rotate-90",
                       )}
                     />
@@ -2217,20 +2283,20 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
         <div className="w-16 h-16 mx-auto rounded-2xl bg-gold-50 flex items-center justify-center mb-4 border border-gold-200/60">
           <Link2 className="h-8 w-8 text-gold-500" />
         </div>
-        <h2 className="text-xl font-bold text-dark-800">مشاركة متجرك</h2>
+        <h2 className="text-xl font-bold text-foreground">مشاركة متجرك</h2>
         <p className="text-sm text-dark-500 mt-1.5">انشر رابط متجرك ليزوره زبائنك ويقدمون طلباتهم</p>
       </div>
 
       {/* رابط الزبائن */}
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-50/80 flex items-center justify-center">
               <Link2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-dark-800">رابط الزبائن</h3>
-              <p className="text-xs text-dark-400">هذا الرابط لمشاركته مع الزبائن فقط</p>
+              <h3 className="font-bold text-sm text-foreground">رابط الزبائن</h3>
+              <p className="text-xs text-muted-foreground">هذا الرابط لمشاركته مع الزبائن فقط</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -2241,7 +2307,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
               dir="ltr"
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button onClick={copyCustomerLink} variant="outline" className="shrink-0 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200 h-11 px-4">
+            <Button onClick={copyCustomerLink} variant="outline" className="shrink-0 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200 h-11 px-4">
               <Copy className="h-4 w-4" />
               {copied ? "تم!" : "نسخ"}
             </Button>
@@ -2250,15 +2316,15 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       </div>
 
       {/* ===== رمز QR / الباركود ===== */}
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-xl bg-gold-50/80 flex items-center justify-center">
               <QrCode className="h-4 w-4 text-gold-500" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-dark-800">رمز QR للمتجر</h3>
-              <p className="text-xs text-dark-400">اطبعه واعرضه في محلك أو على وسائل التواصل</p>
+              <h3 className="font-bold text-sm text-foreground">رمز QR للمتجر</h3>
+              <p className="text-xs text-muted-foreground">اطبعه واعرضه في محلك أو على وسائل التواصل</p>
             </div>
           </div>
 
@@ -2268,25 +2334,25 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
                 <div className="rounded-xl p-5 bg-card shadow-sm border border-dashed border-border">
                   <img src={qrUrl} alt="QR Code" className="w-48 h-48 md:w-56 md:h-56" />
                 </div>
-                <p className="text-xs text-dark-400 text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   📱 امسح الرمز بكاميرا الهاتف للوصول مباشرة إلى متجر <strong className="text-dark-700">{shopName}</strong>
                 </p>
                 <div className="flex gap-3 w-full">
-                  <Button onClick={printQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200">
+                  <Button onClick={printQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200">
                     <Printer className="h-4 w-4" />
                     طباعة الباركود
                   </Button>
-                  <Button onClick={downloadQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200">
+                  <Button onClick={downloadQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200">
                     <Download className="h-4 w-4" />
                     تحميل الصورة
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="w-48 h-48 bg-dark-50 rounded-xl flex items-center justify-center border border-dark-200/60">
+              <div className="w-48 h-48 bg-dark-50 rounded-xl flex items-center justify-center border border-border">
                 <div className="text-center">
                   <div className="animate-spin w-6 h-6 border-2 border-dark-200 border-t-violet-500 rounded-full mx-auto mb-2" />
-                  <span className="text-xs text-dark-400">جارٍ توليد الرمز...</span>
+                  <span className="text-xs text-muted-foreground">جارٍ توليد الرمز...</span>
                 </div>
               </div>
             )}
@@ -2301,14 +2367,14 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       </Button>
 
       {/* رابط الإدارة */}
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ borderWidth: "1.5px", borderStyle: "dashed", borderColor: "#d4a853" }}>
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ borderWidth: "1.5px", borderStyle: "dashed", borderColor: "#d4a853" }}>
         <div className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gold-50/80 flex items-center justify-center">
               <AlertCircle className="h-4 w-4 text-gold-500" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-dark-800">رابط الإدارة (لك أنت فقط)</h3>
+              <h3 className="font-bold text-sm text-foreground">رابط الإدارة (لك أنت فقط)</h3>
               <p className="text-xs text-gold-500">⚠️ لا تشارك هذا الرابط مع أحد</p>
             </div>
           </div>
@@ -2320,7 +2386,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
               dir="ltr"
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button onClick={copyAdminLink} variant="outline" size="icon" className={cn("shrink-0 rounded-lg border-dark-200 transition-all duration-200 h-11 w-11", adminCopied ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" : "hover:bg-gold-500/5")}>
+            <Button onClick={copyAdminLink} variant="outline" size="icon" className={cn("shrink-0 rounded-lg border-dark-200 transition-all duration-200 h-11 w-11", adminCopied ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" : "hover:bg-secondary")}>
               {adminCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
@@ -2434,10 +2500,10 @@ function MobileOrderCard({
   const borderClass = statusBorderClass[order.status] || "border-l-slate-300";
 
   return (
-    <div className={cn("bg-card border border-gold-500/8 rounded-xl border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-200", borderClass, selected && "ring-2 ring-gold-500 ring-offset-1")}>
+    <div className={cn("bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-200", borderClass, selected && "ring-2 ring-gold-500 ring-offset-1")}>
       <button
         onClick={() => { if (selectionMode) { onToggleSelect?.(); return; } setExpanded(!expanded); if (!expanded && onClick) onClick(order); }}
-        className="w-full p-4 text-right hover:bg-gold-500/5 transition-colors duration-200"
+        className="w-full p-4 text-right hover:bg-secondary transition-colors duration-200"
       >
         <div className="flex items-start justify-between gap-2 mb-2.5">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -2451,8 +2517,8 @@ function MobileOrderCard({
             )}
             <span className="text-xl shrink-0">{serviceEmoji}</span>
             <div className="min-w-0">
-              <div className="font-mono text-xs font-bold text-dark-800">{order.reference}</div>
-              <div className="text-xs text-dark-400 mt-0.5">{order.serviceName}</div>
+              <div className="font-mono text-xs font-bold text-foreground">{order.reference}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{order.serviceName}</div>
             </div>
           </div>
           <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium shrink-0", meta.bg)}>
@@ -2461,15 +2527,15 @@ function MobileOrderCard({
         </div>
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate text-dark-800">{order.customer.name}</div>
-            <div className="text-xs text-dark-400" dir="ltr">{order.customer.phone}</div>
+            <div className="text-sm font-medium truncate text-foreground">{order.customer.name}</div>
+            <div className="text-xs text-muted-foreground" dir="ltr">{order.customer.phone}</div>
           </div>
           <div className="text-left shrink-0">
             <div className="font-bold text-gold-500 text-sm">{formatDA(order.total)}</div>
-            <div className="text-xs text-dark-400">{order.pages}ص × {order.copies}ن</div>
+            <div className="text-xs text-muted-foreground">{order.pages}ص × {order.copies}ن</div>
           </div>
         </div>
-        <div className="mt-2.5 pt-2.5 border-t border-dark-100 flex items-center justify-between text-xs text-dark-400">
+        <div className="mt-2.5 pt-2.5 border-t border-dark-100 flex items-center justify-between text-xs text-muted-foreground">
           <span>{formatDateTimeAr(order.createdAt)}</span>
           <span className={cn("flex items-center gap-1 text-gold-400", expanded && "rotate-90", "transition-transform duration-200")}>
             <ChevronLeft className="h-3.5 w-3.5" />
@@ -2479,7 +2545,7 @@ function MobileOrderCard({
       </button>
 
       {expanded && (
-        <div className="border-t border-dark-100 bg-card border border-gold-500/8 rounded-xl p-4 space-y-3">
+        <div className="border-t border-dark-100 bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl p-4 space-y-3">
           <div>
             <div className="text-xs font-bold text-dark-700 mb-2">مواصفات الطباعة</div>
             <div className="grid grid-cols-2 gap-2">
@@ -2487,8 +2553,8 @@ function MobileOrderCard({
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !["notes", "printRange", "pageRange", "totalPages"].includes(k))
                 .map(([k, v]) => (
                   <div key={k} className="rounded-xl bg-card shadow-sm border border-border px-3 py-2">
-                    <div className="text-[11px] text-dark-400">{OPTION_LABELS[k as keyof typeof OPTION_LABELS] || k}</div>
-                    <div className="text-xs font-semibold text-dark-800">{String(v)}</div>
+                    <div className="text-[11px] text-muted-foreground">{OPTION_LABELS[k as keyof typeof OPTION_LABELS] || k}</div>
+                    <div className="text-xs font-semibold text-foreground">{String(v)}</div>
                   </div>
                 ))}
             </div>
@@ -2577,7 +2643,7 @@ function MobileOrderCard({
             <Button
               size="sm"
               variant="outline"
-              className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+              className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200"
               onClick={() => window.open(`/api/orders/${order.id}/invoice?shopId=${shopId}`, "_blank")}
             >
               <Download className="h-3.5 w-3.5" />
@@ -2587,7 +2653,7 @@ function MobileOrderCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+                className="text-xs sm:text-sm h-11 rounded-lg border-dark-200 hover:bg-secondary transition-all duration-200"
                 onClick={() => printReceipt(order, shopName, shopPhone, shopAddress)}
               >
                 <Printer className="h-3.5 w-3.5" />

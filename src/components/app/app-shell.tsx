@@ -184,6 +184,7 @@ export function AppShell() {
   }, [theme]);
 
   const formattedPhone = shopPhone ? shopPhone.replace(/(\d{2})(\d{3})(\d{2})(\d{3})/, "$1 $2 $3 $4") : "";
+  const customerLink = typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}` : `/s/${shop?.slug || ""}`;
 
   // Track scroll for header shadow
   useEffect(() => {
@@ -725,13 +726,61 @@ export function AppShell() {
                           <div className="text-neutral-500">الجمعة: مغلق</div>
                         </div>
                       </li>
+                      {/* أيقونات التواصل الاجتماعي */}
+                      <li className="flex items-center gap-2 pt-2 border-t border-neutral-700">
+                        <Share2 className="h-4 w-4 text-primary shrink-0" />
+                        <div className="flex items-center gap-2">
+                          {whatsappBtnNumber && (
+                            <a
+                              href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center transition-colors"
+                              title="واتساب"
+                            >
+                              <MessageCircle className="h-4 w-4 text-emerald-400" />
+                            </a>
+                          )}
+                          {shopPhone && (
+                            <a
+                              href={`tel:${shopPhone}`}
+                              className="w-8 h-8 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 flex items-center justify-center transition-colors"
+                              title="اتصل"
+                            >
+                              <Phone className="h-4 w-4 text-sky-400" />
+                            </a>
+                          )}
+                          {shopEmail && (
+                            <a
+                              href={`mailto:${shopEmail}`}
+                              className="w-8 h-8 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 flex items-center justify-center transition-colors"
+                              title="بريد إلكتروني"
+                            >
+                              <Mail className="h-4 w-4 text-violet-400" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ رابط المتجر!"); }}
+                            className="w-8 h-8 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
+                            title="نسخ رابط المتجر"
+                          >
+                            <Copy className="h-4 w-4 text-amber-400" />
+                          </button>
+                        </div>
+                      </li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-500">
                   © {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة
-                  <div className="mt-1 text-neutral-600 flex items-center justify-center gap-1">{platformLogoUrl ? (<img src={platformLogoUrl} alt="طيف" className="w-4 h-4 inline dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" />)}{platformLogoDarkUrl || platformLogoUrl ? (<img src={platformLogoDarkUrl || platformLogoUrl} alt="طيف" className="w-4 h-4 inline hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" />)} طيف</div>
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <span className="text-neutral-600">يعمل بفضل</span>
+                    <a href="/" className="inline-flex items-center gap-1 text-gold-400 hover:text-gold-300 transition-colors font-medium">
+                      {platformLogoUrl ? (<img src={platformLogoUrl} alt="طيف" className="w-4 h-4 inline dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" />)}{platformLogoDarkUrl || platformLogoUrl ? (<img src={platformLogoDarkUrl || platformLogoUrl} alt="طيف" className="w-4 h-4 inline hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" />)}
+                      طيف
+                    </a>
+                  </div>
                 </div>
             </div>
           </div>

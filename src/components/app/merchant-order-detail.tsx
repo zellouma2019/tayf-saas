@@ -372,6 +372,7 @@ export function MerchantOrderDetail({
         className="flex flex-col gap-0 p-0 rounded-none border-0 inset-0 top-0 left-0 translate-x-0 translate-y-0 h-[100dvh] w-full max-w-none sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-2xl sm:max-h-[92vh] sm:rounded-xl sm:border sm:border-dark-200/60 sm:h-auto overflow-hidden bg-dark-50"
         dir="rtl"
         showCloseButton={false}
+        aria-describedby={undefined}
       >
         {/* ===== Header لاصق ===== */}
         <div className="sticky top-0 z-30 flex items-center justify-between gap-2 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-dark-200/60 bg-dark-50/95 backdrop-blur-sm print-hide">

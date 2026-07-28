@@ -35,23 +35,11 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
         }
       } catch {}
 
-      // إذا لم تنجح، تحقق من حالة كلمة المرور واعرض شاشة الدخول
+      // التحقق من حالة كلمة المرور فقط (بدون إظهار تحذير قبل تسجيل الدخول)
       try {
-        const r = await fetch("/api/super-admin/password");
-        const d = await r.json();
-        setChecking(false);
-
-        if (d.isDefault === true) {
-          setTimeout(() => {
-            toast.warning("⚠️ كلمة المرور الافتراضية لا تزال مستخدمة", {
-              description: "يُرجى تغييرها فوراً من الإعدادات ← الأمان",
-              duration: 10000,
-            });
-          }, 800);
-        }
-      } catch {
-        setChecking(false);
-      }
+        await fetch("/api/super-admin/password");
+      } catch {}
+      setChecking(false);
     })();
   }, []);
 
@@ -90,6 +78,21 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
         // حفظ رمز الجلسة المُوقَّع من الخادم مع الطابع الزمني
         markAuthenticated(data.token, data.ts);
         setAttempts(0);
+
+        // تحقق من كلمة المرور الافتراضية بعد تسجيل الدخول فقط
+        try {
+          const pwRes = await fetch("/api/super-admin/password");
+          const pwData = await pwRes.json();
+          if (pwData.isDefault === true) {
+            setTimeout(() => {
+              toast.warning("⚠️ كلمة المرور الافتراضية لا تزال مستخدمة", {
+                description: "يُرجى تغييرها فوراً من الإعدادات ← الأمان",
+                duration: 10000,
+              });
+            }, 500);
+          }
+        } catch {}
+
         onUnlock();
       } else {
         setError(true);
