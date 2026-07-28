@@ -2560,3 +2560,79 @@ Task: تحسينات بصرية + ميزات جديدة (Round 13)
 7. تحسين SEO: إضافة structured data (JSON-LD)
 8. إضافة ملاحظات داخلية على الطلب (Merchant notes)
 9. إضافة تصدير Excel للطلبات
+
+---
+Task ID: qa-fix-round14
+Agent: Main Agent
+Task: تحسينات بصرية + ميزات جديدة (Round 14)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع البيانات الحية
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata + glass effects
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ البيانات الحية تعمل (أكثر من 36 طلب عبر المتاجر)
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء، بيانات حية ظاهرة
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+
+## الميزات الجديدة
+
+### 1. مخطط إيرادات الأسبوع (Weekly Revenue Chart)
+- في لوحة إدارة المنصة (تبويب نظرة عامة)
+- رسم بياني شريطي مصغّر يعرض إيرادات آخر 7 أيام
+- أعمدة متدرجة: اليوم باللون الذهبي، باقي الأيام باللون الأساسي
+- تسميات أيام الأسبوع بالعربي
+- مجموع الإيرادات الأسبوعية في عنوان البطاقة
+
+### 2. زر تصدير CSV في الإجراءات السريعة
+- في لوحة تحكم التاجر (تبويب الرئيسية)
+- زر جديد تصدير CSV في شبكة الإجراءات السريعة (5 أزرار بدل 4)
+- تصدير تلقائي بتنسيق CSV مع BOM
+
+## التحسينات البصرية (Round 14)
+
+### CSS جديدة (+300 سطر)
+- glass-card, hover-scale-glow, card-glow, stagger-fade
+- hero-animated-gradient, badge-breathe, modal-entrance
+- tooltip-improved, smooth-scrollbar, press-effect
+- text-gradient-gold/emerald/violet, border-animated-gradient
+- skeleton-card, animate-float-gentle, shimmer-bg, pulse-ring-rose
+- counter-glow-animate, animated-underline, dot-pattern
+
+### تحسينات المكونات
+- لوحة الإدارة: بطاقات إحصائيات مع card-glow + stagger-fade
+- لوحة الإدارة: شريط الترحيب مع glass-card
+- بطاقات المتاجر: شريط ذهبي متدرج + card-glow
+- لوحة تحكم التاجر: stat cards + daily summary + quick actions مع stagger-fade
+- لوحة تحكم التاجر: PIN login مع floating orbs + glass-card
+- صفحة المتجر: trust bar مع glass-card + animated gradient
+- صفحة المتجر: حبوب الإجراءات محسّنة مع borders + hover
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/globals.css` | +300 سطر: CSS Round 14 |
+| `src/components/app/admin-overview-tab.tsx` | مخطط إيرادات الأسبوع + glass-card |
+| `src/components/app/merchant-dashboard.tsx` | glass-card + CSV زر + stagger-fade |
+| `src/components/app/app-shell.tsx` | glass-card trust bar + enhanced pills |
+| `src/components/app/admin-shop-card.tsx` | gradient gold top bar + card-glow |
+
+## Commits
+- 6130096: feat(r14): weekly revenue chart, glass effects, enhanced animations, CSV export button
+
+## التوصيات للمرحلة القادمة
+1. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+2. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+3. إضافة ميزة سلة مشتريات متعددة الخدمات
+4. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+5. اختبار إمكانية الوصول (accessibility audit)
+6. تحسين SEO: إضافة structured data (JSON-LD)
+7. إضافة ملاحظات داخلية على الطلب (Merchant notes UI)
+8. إضافة تصدير Excel محسّن
