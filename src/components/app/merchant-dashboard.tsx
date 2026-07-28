@@ -118,9 +118,8 @@ import { printReceipt } from "@/lib/print-receipt";
 import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
 import { SHOP_THEMES } from "@/lib/themes";
 import { type FeatureKey } from "@/lib/shop-features";
-import { motion } from "framer-motion";
-
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
+const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
 const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
 const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
@@ -858,14 +857,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl" />
                   <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl" />
                   <div className="relative text-center">
-                    <motion.div
+                    <MotionDiv
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
                       transition={{ duration: 0.5, ease: "easeOut", y: { duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } }}
                       className="text-4xl mb-3"
                     >
                       🎉
-                    </motion.div>
+                    </MotionDiv>
                     <h2 className="text-lg sm:text-xl font-bold mb-2 text-foreground">{shop?.name || "المتجر"} جاهز لاستقبال الطلبات!</h2>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
                       شارك رابط متجرك مع زبائنك لبدء استقبال طلبات الطباعة أونلاين
