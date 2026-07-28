@@ -10,19 +10,18 @@ const nextConfig: NextConfig = {
   ],
   serverExternalPackages: ["sharp", "@libsql/client"],
   // تحسين حجم الحزمة — استيراد انتقائي للمكتبات الكبيرة (يعمل مع Turbopack)
-  // ملاحظة: تم تعطيل مؤقتاً بسبب خطأ TDZ في الإنتاج
-  // experimental: {
-  //   optimizePackageImports: [
-  //     "lucide-react",
-  //     "recharts",
-  //     "@radix-ui/react-dialog",
-  //     "@radix-ui/react-select",
-  //     "@radix-ui/react-dropdown-menu",
-  //     "@radix-ui/react-popover",
-  //     "@radix-ui/react-tooltip",
-  //     "@radix-ui/react-tabs",
-  //   ],
-  // },
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-select",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-tabs",
+    ],
+  },
 };
 
 export default nextConfig;

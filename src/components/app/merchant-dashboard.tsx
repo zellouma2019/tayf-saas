@@ -120,16 +120,13 @@ import { SHOP_THEMES } from "@/lib/themes";
 import { type FeatureKey } from "@/lib/shop-features";
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
-// KanbanBoard temporarily disabled to test TDZ error
-// const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
 const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
 const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
-// KanbanBoard disabled for TDZ fix testing
-// const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
+const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 
 // QRCode import خفيف
@@ -489,6 +486,9 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     return () => { if (notifIntervalRef.current) clearInterval(notifIntervalRef.current); };
   }, [unlocked, shopId, loadStats, loadOrders]);
 
+  // ===== رابط المتجر للزبون =====
+  const customerLink = typeof window !== "undefined" ? `${window.location.origin}/s/${shopSlug}` : `/s/${shopSlug}`;
+
   // ===== اختصارات لوحة المفاتيح =====
   useEffect(() => {
     if (!unlocked) return;
@@ -635,7 +635,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }
 
   // ===== لوحة التحكم الرئيسية =====
-  const customerLink = typeof window !== "undefined" ? `${window.location.origin}/s/${shopSlug}` : `/s/${shopSlug}`;
 
   const statCards = [
     { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-violet-50 to-violet-100/60 dark:from-violet-950/40 dark:to-violet-900/20", borderColor: "border-t-violet-400" },
@@ -1281,8 +1280,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
-                    // KanbanBoard temporarily disabled
-                    <div className="py-16 text-center text-muted-foreground text-sm">جدول كانبان قيد التحميل...</div>
+                    <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
                   )}
                 </div>
               )}
