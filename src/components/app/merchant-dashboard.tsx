@@ -701,6 +701,26 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 ))}
               </div>
 
+              {/* شريط ملخص اليوم */}
+              {stats && (stats.todayOrders || 0) > 0 && (
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                    <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">اليوم</div>
+                      <div className="text-sm font-bold tabular-nums">{stats.todayOrders || 0}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">إيرادات</div>
+                      <div className="text-sm font-bold tabular-nums">{formatDA(todayRevenue)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* إجراءات سريعة */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   STATUS_META,
   formatDA,
@@ -529,9 +530,19 @@ function TableRowInner({
         })()}
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className={`text-xs ${meta.bg}`}>
-          {meta.label}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <span className={cn(
+            "inline-block w-2 h-2 rounded-full shrink-0",
+            order.status === "pending" && "bg-amber-500 animate-pulse",
+            order.status === "printing" && "bg-blue-500 animate-spin",
+            order.status === "ready" && "bg-emerald-500",
+            order.status === "delivered" && "bg-gray-400",
+            order.status === "cancelled" && "bg-rose-500"
+          )} />
+          <Badge variant="outline" className={`text-xs ${meta.bg}`}>
+            {meta.label}
+          </Badge>
+        </div>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
         {formatDateTimeAr(order.createdAt)}

@@ -72,7 +72,7 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB (الملفات الكبيرة 
 
 const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg: string; label: string }> = {
   PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/40", label: "PDF" },
-  DOCX: { icon: FileSpreadsheet, color: "text-gold-400", bg: "bg-gold-500/10 border-gold-500/20", label: "DOCX" },
+  DOCX: { icon: FileSpreadsheet, color: "text-gold-400 dark:text-gold-300", bg: "bg-gold-500/10 dark:bg-gold-500/20 border-gold-500/20 dark:border-gold-500/30", label: "DOCX" },
   JPG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "JPG" },
   JPEG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "JPEG" },
   PNG: { icon: ImageIcon, color: "text-gold-400", bg: "bg-gold-50 dark:bg-gold-500/10 border-gold-200 dark:border-gold-500/20", label: "PNG" },
@@ -908,7 +908,7 @@ export default function UploadStep({
               )}
 
               {(analysisPhase === "local-analysis" || analysisPhase === "ai-analysis") && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-500/10 to-gold-500/5 border border-gold-500/15">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gold-500/10 to-gold-500/5 dark:from-gold-500/20 dark:to-gold-500/10 border border-gold-500/15 dark:border-gold-500/25">
                   <div className="relative">
                     <motion.div
                       animate={{ rotate: 360 }}

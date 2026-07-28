@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
+import { tursoQueryWithTimeout, toNum, safeJson } from "@/lib/turso-lite";
 
 export const maxDuration = 15; // تقليل من 30 إلى 15 — الاستعلام المُحسَّن يستخدم فهرس
 // إزالة force-dynamic للسماح بـ edge cache (s-maxage=5)
@@ -57,9 +57,10 @@ export async function GET(req: NextRequest) {
     }
     const whereClause = `WHERE ${whereParts.join(" AND ")}`;
 
-    const rows = await tursoQuery<Record<string, unknown>>(
+    const rows = await tursoQueryWithTimeout<Record<string, unknown>>(
       `${TRACK_SQL} ${whereClause} ORDER BY o."createdAt" DESC LIMIT 50`,
-      args
+      args,
+      5000 // 5 ثواني — استعلام مفهرس يجب أن يكون فورياً
     );
 
     return NextResponse.json({

@@ -36,15 +36,27 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
     <div className="space-y-6">
       {/* شريط الترحيب */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white">
-        <div className="relative z-10">
-          <h2 className="text-xl sm:text-2xl font-bold mb-1">مرحباً بك {adminName || "في طيف"} 👋</h2>
-          <p className="text-white/80 text-sm max-w-lg">
-            منصة إدارة المطابع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين
-          </p>
+        <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 animate-[pulse_5s_ease-in-out_infinite_1s]" />
+        <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 animate-[pulse_6s_ease-in-out_infinite_2s]" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold mb-1">مرحباً بك {adminName || "في طيف"} 👋</h2>
+            <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
+          </div>
+          {safeStats.totalOrders > 0 && (
+            <div className="flex gap-4 sm:gap-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold tabular-nums">{formatNumber(safeStats.todayOrders)}</div>
+                <div className="text-[11px] text-white/60">طلبات اليوم</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold tabular-nums">{formatDA(safeStats.totalRevenue)}</div>
+                <div className="text-[11px] text-white/60">إجمالي الإيرادات</div>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
-        <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5" />
-        <div className="absolute left-1/2 -bottom-8 w-20 h-20 rounded-full bg-white/5" />
       </div>
 
       {lastUpdated && (
