@@ -607,8 +607,41 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setAnalysis(null);
     setAnalysisPhase("local-analysis");
 
+    // ═══ ملفات كبيرة عبر الأجزاء: تحليل سريع بدون إعادة قراءة الملف ═══
+    // الملف تم رفعه بالفعل — لا حاجة لقراءته مرة أخرى من القرص
+    const isChunked = f.size > CHUNK_THRESHOLD;
+
     try {
-      const basicResult = await analyzeFileReal(f);
+      let basicResult: RealFileAnalysis;
+
+      if (isChunked) {
+        // تحليل سريع: معلومات أساسية فقط بدون pdfjs أو canvas
+        basicResult = {
+          detectedService: ext === "pdf" ? "document" : ext === "docx" ? "document" : "photo",
+          detectedServiceName: ext === "pdf" ? "طباعة مستند" : ext === "docx" ? "طباعة مستند" : "طباعة صورة",
+          pageCount: 1,
+          fileSizeKB: Math.round(f.size / 1024),
+          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+          suggestedColor: "bw",
+          suggestedPaperSize: "A4",
+          suggestedPaperType: "normal",
+          suggestedBinding: "none",
+          confidence: 65,
+          insights: [`ملف كبير (${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت) — تم تخطي التحليل التفصيلي لتسريع العملية`],
+          fileType: ext.toUpperCase(),
+          fileName: f.name,
+          fileSizeFormatted: f.size > 1024 * 1024
+            ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
+            : `${Math.round(f.size / 1024)} كيلوبايت`,
+        };
+        setTotalPages(1);
+        setPages(1);
+      } else {
+        // ملفات صغيرة: تحليل كامل (pdfjs + canvas)
+        basicResult = await analyzeFileReal(f);
+        setTotalPages(basicResult.pageCount);
+        setPages(basicResult.pageCount);
+      }
 
       // عرض النتيجة الأساسية فوراً
       setAnalysis(basicResult);
@@ -645,7 +678,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       // ─── المرحلة 3: التحليل الذكي بالـ VLM ───
       setAnalysisPhase("ai-analysis");
 
-      analyzeFileWithAI(f, basicResult).then(({ vlmAnalysis, enhancedAnalysis }) => {
+      // ملفات كبيرة: تخطي VLM (لا توجد معاينة + الملف كبير)
+      if (isChunked) {
+        // تحليل سريع — لا حاجة لـ VLM على ملفات كبيرة بدون معاينة
+        setTimeout(() => setAnalysisPhase("done"), 500);
+      } else {
+        analyzeFileWithAI(f, basicResult).then(({ vlmAnalysis, enhancedAnalysis }) => {
         if (vlmAnalysis) {
           setAnalysis(enhancedAnalysis);
           setServiceType(enhancedAnalysis.detectedService as ServiceType);
@@ -680,6 +718,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         // VLM فشل — التحليل الأساسي كافٍ
         setAnalysisPhase("done");
       });
+      } // end else (VLM for small files)
     } catch (err) {
       setAnalysisPhase("error");
       setUploadError((err as Error).message || "تعذّر تحليل الملف. تأكد أن الملف غير تالف.");

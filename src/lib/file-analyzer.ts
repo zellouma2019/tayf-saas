@@ -186,6 +186,9 @@ async function analyzePdf(
   let aspectRatio: string | undefined;
   const insights: string[] = [];
 
+  // ═══ وضع خفيف للملفات الكبيرة (>1MB) — يتجنب العمليات الثقيلة ═══
+  const isLarge = sizeMB > 1;
+
   try {
     const lib = await ensurePdfjs();
     const arrayBuffer = await file.arrayBuffer();
@@ -204,15 +207,14 @@ async function analyzePdf(
       }
     } catch {}
 
-    // استخراج النص من أول 3 صفحات لاكتشاف نوع المحتوى
-    const pagesToRead = Math.min(3, pageCount);
+    // استخراج النص — ملفات كبيرة: أول صفحة فقط | ملفات صغيرة: أول 3 صفحات
+    const pagesToRead = isLarge ? Math.min(1, pageCount) : Math.min(3, pageCount);
     let fullText = "";
-    let totalTextItems = 0; // عدّاد لجميع عناصر النص (حتى الفارغة)
+    let totalTextItems = 0;
     for (let i = 1; i <= pagesToRead; i++) {
       try {
         const page = await pdf.getPage(i);
 
-        // ═══ الطريقة الأولى: getTextContent عادي مع normalizeWhitespace ═══
         let content = await page.getTextContent({ normalizeWhitespace: true });
         let pageTextParts: string[] = [];
 
@@ -227,8 +229,6 @@ async function analyzePdf(
 
         let pageText = pageTextParts.join(" ");
 
-        // ═══ الطريقة الثانية: إذا لم نجد نصاً، جرّب disableCombineTextItems ═══
-        // نُجرب هذه الطريقة كلما كان النص فارغاً، حتى لو وُجدت عناصر نصية فارغة
         if (pageText.trim().length === 0) {
           try {
             content = await page.getTextContent({
@@ -254,11 +254,11 @@ async function analyzePdf(
         fullText += " " + pageText;
         if (pageText.trim().length > 0) hasText = true;
 
-        // توليد معاينة مصغرة + استخراج أبعاد الصفحة من أول صفحة
+        // توليد معاينة + أبعاد الصفحة (فقط الصفحة الأولى)
         if (i === 1) {
           try {
-            const viewport = page.getViewport({ scale: 1 }); // scale=1 للحصول على البكسلات الحقيقية
-            const pdfWidthMM = (viewport.width * 25.4) / 72; // PDF يستخدم 72 نقطة/إنش
+            const viewport = page.getViewport({ scale: 1 });
+            const pdfWidthMM = (viewport.width * 25.4) / 72;
             const pdfHeightMM = (viewport.height * 25.4) / 72;
             pageDimensionsMM = {
               width: Math.round(pdfWidthMM * 10) / 10,
@@ -269,81 +269,71 @@ async function analyzePdf(
             isPortrait = orientation === "عمودي";
             aspectRatio = getAspectRatioText(Math.round(pdfWidthMM), Math.round(pdfHeightMM));
 
-            // المعاينة المصغرة
-            const thumbViewport = page.getViewport({ scale: 0.5 });
-            const canvas = document.createElement("canvas");
-            canvas.width = thumbViewport.width;
-            canvas.height = thumbViewport.height;
-            const context = canvas.getContext("2d");
-            if (context) {
-              await page.render({ canvasContext: context, viewport: thumbViewport, canvas } as Parameters<typeof page.render>[0]).promise;
-              thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
+            // ═══ المعاينة المصغرة — ملفات كبيرة: تخطي (يُحلّ لاحقاً بالـ VLM) ═══
+            if (!isLarge) {
+              const thumbViewport = page.getViewport({ scale: 0.5 });
+              const canvas = document.createElement("canvas");
+              canvas.width = thumbViewport.width;
+              canvas.height = thumbViewport.height;
+              const context = canvas.getContext("2d");
+              if (context) {
+                await page.render({ canvasContext: context, viewport: thumbViewport, canvas } as Parameters<typeof page.render>[0]).promise;
+                thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
 
-              // تحليل الألوان من المعاينة
+                // تحليل الألوان
+                try {
+                  const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+                  let colorPixels = 0;
+                  let grayPixels = 0;
+                  const sampleStep = 16;
+                  for (let p = 0; p < imgData.data.length; p += 4 * sampleStep) {
+                    const r = imgData.data[p];
+                    const g = imgData.data[p + 1];
+                    const b = imgData.data[p + 2];
+                    const maxC = Math.max(r, g, b);
+                    const minC = Math.min(r, g, b);
+                    if (maxC - minC > 30) colorPixels++;
+                    else grayPixels++;
+                  }
+                  const total = colorPixels + grayPixels;
+                  if (total > 0) {
+                    colorSpace = colorPixels / total > 0.3 ? "RGB" : "تدرج رمادي";
+                  }
+                } catch {}
+
+                estimatedDPI = Math.round(canvas.width / (pdfWidthMM / 25.4));
+                dpiCategory = categorizeDPI(estimatedDPI);
+              }
+
+              // فحص operators
               try {
-                const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
-                let colorPixels = 0;
-                let grayPixels = 0;
-                const sampleStep = 16; // عينة كل 16 بكسل
-                for (let p = 0; p < imgData.data.length; p += 4 * sampleStep) {
-                  const r = imgData.data[p];
-                  const g = imgData.data[p + 1];
-                  const b = imgData.data[p + 2];
-                  const maxC = Math.max(r, g, b);
-                  const minC = Math.min(r, g, b);
-                  if (maxC - minC > 30) {
-                    colorPixels++;
-                  } else {
-                    grayPixels++;
-                  }
-                }
-                const total = colorPixels + grayPixels;
-                if (total > 0) {
-                  if (colorPixels / total > 0.3) {
-                    colorSpace = "RGB";
-                  } else {
-                    colorSpace = "تدرج رمادي";
-                  }
+                const ops = await page.getOperatorList();
+                const textOpNames = new Set([
+                  String(lib.OPS.showText),
+                  String(lib.OPS.showSpacedText),
+                ]);
+                const imageOpNames = new Set([
+                  String(lib.OPS.paintImageXObject),
+                  String(lib.OPS.paintJpegXObject),
+                ]);
+                for (let opIdx = 0; opIdx < ops.fnArray.length; opIdx++) {
+                  const fnName = String(ops.fnArray[opIdx]);
+                  if (textOpNames.has(fnName) && !hasText) hasText = true;
+                  if (imageOpNames.has(fnName)) hasImages = true;
+                  if (hasText && hasImages) break;
                 }
               } catch {}
-
-              // تقدير DPI من بكسلات المعاينة والأبعاد الفعلية
-              estimatedDPI = Math.round(canvas.width / (pdfWidthMM / 25.4));
+            } else {
+              // ملف كبير: بدون معاينة — التقدير الأساسي فقط
+              estimatedDPI = Math.round(viewport.width / (pdfWidthMM / 25.4));
               dpiCategory = categorizeDPI(estimatedDPI);
+              insights.push("تم تخطي المعاينة التفصيلية لتسريع التحليل");
             }
-
-            // فحص وجود صور ونصوص في الصفحة (من operators)
-            try {
-              const ops = await page.getOperatorList();
-              // أسماء عوامل النص في pdf.js
-              const textOpNames = new Set([
-                String(lib.OPS.showText),
-                String(lib.OPS.showSpacedText),
-              ]);
-              const imageOpNames = new Set([
-                String(lib.OPS.paintImageXObject),
-                String(lib.OPS.paintJpegXObject),
-              ]);
-
-              for (let opIdx = 0; opIdx < ops.fnArray.length; opIdx++) {
-                const fnName = String(ops.fnArray[opIdx]);
-                if (textOpNames.has(fnName) && !hasText) {
-                  // وجود عوامل طباعة نص = الملف يحتوي نصوص
-                  hasText = true;
-                }
-                if (imageOpNames.has(fnName)) {
-                  hasImages = true;
-                }
-                if (hasText && hasImages) break;
-              }
-            } catch {}
           } catch {}
         }
       } catch {}
     }
 
-    // ═══ فحص إضافي: إذا وجدنا عناصر نص كثيرة (حتى لو فارغة) فالملف يحتوي نصوص ═══
-    // هذا يحدث مع ملفات PDF التي تستخدم ترميز خطوط مخصص (CMap) لا يستطيع pdf.js فك شفرته
     if (!hasText && totalTextItems > 5) {
       hasText = true;
       insights.push("نصوص مكتشفة (ترميز خطوط مخصص — قد لا يتم عرضها بشكل صحيح)");
@@ -766,11 +756,20 @@ export async function analyzeFileWithAI(
     formData.append("fileName", file.name);
     formData.append("fileType", basicAnalysis.fileType);
 
-    // إرسال المعاينة المصغرة أو الصورة الأصلية
-    if (basicAnalysis.thumbnailUrl) {
+    // ═══ تحسين: للصور الكبيرة، أرسل نسخة مصغّرة فقط (أسرع بكثير) ═══
+    if (isImage && file.size > 200 * 1024) {
+      try {
+        const thumbnailBlob = await createImageThumbnail(file, 400);
+        if (thumbnailBlob) {
+          formData.append("thumbnailDataUrl", await blobToDataUrl(thumbnailBlob, "image/jpeg"));
+        }
+      } catch {
+        // فشل التصغير — أرسل الملف الأصلي
+        formData.append("file", file);
+      }
+    } else if (basicAnalysis.thumbnailUrl) {
       formData.append("thumbnailDataUrl", basicAnalysis.thumbnailUrl);
     } else if (isImage) {
-      // تحويل الصورة الأصلية إلى data URL
       formData.append("file", file);
     }
 
@@ -785,7 +784,8 @@ export async function analyzeFileWithAI(
     }
 
     // لا نرسل طلب VLM إذا لم يكن هناك صورة أو معاينة
-    if (!basicAnalysis.thumbnailUrl && !isImage) {
+    const hasVisual = formData.has("thumbnailDataUrl") || formData.has("file");
+    if (!hasVisual) {
       return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
     }
 
@@ -859,4 +859,37 @@ export function parsePageRange(range: string, totalPages: number): number {
     }
   }
   return pages.size > 0 ? pages.size : totalPages;
+}
+
+/// إنشاء نسخة مصغّرة من صورة كـ Blob (لإرسالها للـ VLM بدلاً من الصورة الأصلية)
+async function createImageThumbnail(file: File, maxDim: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(null); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.75);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+/// تحويل Blob إلى Data URL
+function blobToDataUrl(blob: Blob, mime: string): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(blob);
+  });
 }
