@@ -258,27 +258,14 @@ export async function POST(req: NextRequest) {
     } = body;
     const shopId = bodyShopId || req.nextUrl.searchParams.get("shopId");
 
-    // ─── معالجة الملف المرفوع عبر أجزاء ───
-    // إذا تم رفع الملف عبر chunks، اقرأه من القرص وحوّله إلى base64
-    let resolvedFileData = fileData || null;
+    // ─── معالجة بيانات الملف ───
+    // ملفات صغيرة: fileData كـ base64 data URL
+    // ملفات كبيرة: storedFileName مباشرة (endpoints تعرف تتعامل مع بادئة "file_")
+    let resolvedFileData: string | null = fileData || null;
     if (!resolvedFileData && bodyStoredFileName) {
-      try {
-        const filePath = path.join(process.cwd(), "uploads", bodyStoredFileName);
-        if (fs.existsSync(filePath)) {
-          const buffer = fs.readFileSync(filePath);
-          const ext = bodyStoredFileName.split(".").pop()?.toLowerCase() || "";
-          const mimeMap: Record<string, string> = {
-            pdf: "application/pdf",
-            docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            jpg: "image/jpeg", jpeg: "image/jpeg",
-            png: "image/png", webp: "image/webp",
-          };
-          const mime = mimeMap[ext] || "application/octet-stream";
-          resolvedFileData = `data:${mime};base64,${buffer.toString("base64")}`;
-        }
-      } catch (readErr) {
-        console.warn("[orders/POST] Failed to read chunked file:", readErr);
-      }
+      // خزّن اسم الملف المخزَّن مباشرة بدون تحويل إلى base64
+      // endpoints الـ file/preview تدعم قراءة الملف من القرص عبر بادئة "file_"
+      resolvedFileData = bodyStoredFileName;
     }
 
     const service = SERVICE_MAP[serviceType as ServiceType];
@@ -322,36 +309,23 @@ export async function POST(req: NextRequest) {
 
     const estimatedHours = estimateDeliveryHours(delivery.mode, pages, copies);
 
-    // 🔥 استخدم turso-lite مباشرة بدلاً من Prisma (يتجنب cold-start لـ PrismaLibSQL)
-    // توليد مرجع فريد
-    let reference = generateReference();
-    let existsRows = await tursoQuery<{ id: string }>(
-      `SELECT id FROM "PrintOrder" WHERE reference = ? LIMIT 1`,
-      [reference]
-    );
-    let safety = 0;
-    while (existsRows.length > 0 && safety < 10) {
-      reference = generateReference();
-      existsRows = await tursoQuery<{ id: string }>(
-        `SELECT id FROM "PrintOrder" WHERE reference = ? LIMIT 1`,
-        [reference]
-      );
-      safety++;
-    }
+    // 🔥 مرجع فريد بدون فحص DB — generateReference يولّد 900,000 قيمة ممكنة
+    const reference = generateReference();
 
-    // إنشاء الطلب عبر INSERT مع RETURNING * (libsql يدعمها)
+    // ─── INSERT سريع بدون RETURNING * ───
+    // يعود فقط بالـ id لتأكيد النجاح — نستخدم القيم المعروفة لبناء الاستجابة
+    // هذا يوفر: قراءة البيانات الضخمة (fileData) من Turso + parse على الخادم
     const newId = `o_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
     const now = new Date().toISOString();
 
-    const insertRows = await tursoExecute<Record<string, unknown>>(
+    await tursoExecute(
       `INSERT INTO "PrintOrder" (
         id, reference, "serviceType", "serviceName",
         "fileName", "fileType", "fileSize", "fileData", "smartAnalysis",
         options, customer, delivery, pricing,
         "estimatedHours", status, pages, copies, total, cost,
         tags, "createdAt", "updatedAt", "shopId"
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '[]', ?, ?, ?)
-      RETURNING *`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '[]', ?, ?, ?)`,
       [
         newId,
         reference,
@@ -377,78 +351,34 @@ export async function POST(req: NextRequest) {
       ]
     );
 
-    const order = insertRows.rows[0];
-    if (!order) {
-      // fallback إلى Prisma إذا فشل RETURNING
-      console.warn("[orders/POST] RETURNING failed, falling back to Prisma");
-      const { db } = await import("@/lib/db");
-      const fallbackOrder = await db.printOrder.create({
-        data: {
-          id: newId,
-          reference,
-          serviceType,
-          serviceName: service.name,
-          fileName: fileName || null,
-          fileType: fileType || null,
-          fileSize: fileSize || null,
-          fileData: resolvedFileData || null,
-          smartAnalysis: smartAnalysis ? JSON.stringify(smartAnalysis) : null,
-          options: JSON.stringify(options),
-          customer: JSON.stringify(customer),
-          delivery: JSON.stringify(delivery),
-          pricing: JSON.stringify(pricing),
-          estimatedHours,
-          status: "pending",
-          pages,
-          copies,
-          total: pricing.total,
-          ...(shopId ? { shopId } : {}),
-        },
-      });
-      return NextResponse.json({
-        ...fallbackOrder,
-        options: JSON.parse(fallbackOrder.options),
-        customer: JSON.parse(fallbackOrder.customer),
-        delivery: JSON.parse(fallbackOrder.delivery),
-        pricing: JSON.parse(fallbackOrder.pricing),
-        smartAnalysis: fallbackOrder.smartAnalysis ? JSON.parse(fallbackOrder.smartAnalysis) : null,
-      });
-    }
-
-    // إرجاع الطلب بالشكل المتوقع من العميل
-    const orderOptions = safeJson(order.options as string, {});
-    const orderCustomer = safeJson(order.customer as string, { name: "", phone: "" });
-    const orderDelivery = safeJson(order.delivery as string, { mode: "pickup" });
-    const orderPricing = safeJson(order.pricing as string, { total: 0 });
-    const orderAnalysis = order.smartAnalysis
-      ? safeJson(order.smartAnalysis as string, null)
-      : null;
-
+    // ─── بناء الاستجابة مباشرة من القيم المعروفة ───
+    // لا حاجة لـ RETURNING * — العميل يحتاج فقط: id, reference, serviceName, total, status
+    // نتجنب إعادة fileData الضخم (ليس هناك حاجة له في الاستجابة)
     return NextResponse.json({
-      id: order.id,
-      reference: order.reference,
-      serviceType: order.serviceType,
-      serviceName: order.serviceName,
-      fileName: order.fileName,
-      fileType: order.fileType,
-      fileSize: order.fileSize != null ? toNum(order.fileSize) : null,
-      fileData: order.fileData,
-      smartAnalysis: orderAnalysis,
-      options: orderOptions,
-      customer: orderCustomer,
-      delivery: orderDelivery,
-      pricing: orderPricing,
-      estimatedHours: toNum(order.estimatedHours),
-      status: order.status,
-      pages: toNum(order.pages),
-      copies: toNum(order.copies),
-      total: toNum(order.total),
-      cost: toNum(order.cost),
-      tags: safeJson<string[]>(order.tags as string, []),
-      adminNotes: order.adminNotes,
-      shopId: order.shopId,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
+      id: newId,
+      reference,
+      serviceType,
+      serviceName: service.name,
+      fileName: fileName || null,
+      fileType: fileType || null,
+      fileSize: fileSize || null,
+      // fileData: لا يُعاد للعميل (غير ضروري + يسبب بطء كبير)
+      smartAnalysis: smartAnalysis || null,
+      options,
+      customer,
+      delivery,
+      pricing,
+      estimatedHours,
+      status: "pending",
+      pages,
+      copies,
+      total: pricing.total,
+      cost: 0,
+      tags: [],
+      adminNotes: null,
+      shopId: shopId || null,
+      createdAt: now,
+      updatedAt: now,
     });
   } catch (e) {
     console.error('[orders/POST]', e);

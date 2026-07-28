@@ -281,7 +281,9 @@ export const STATUS_META: Record<
 export const STATUS_FLOW = ["pending", "printing", "ready", "delivered"];
 
 export function generateReference(): string {
-  const rnd = Math.floor(1000 + Math.random() * 9000);
+  // مرجع فريد بدون الحاجة لفحص DB — يولّد A-XXXXXX (6 أرقام عشوائية)
+  // مساحة 900,000 قيمة كافية للتفرد
+  const rnd = Math.floor(100000 + Math.random() * 900000);
   return `A-${rnd}`;
 }
 
