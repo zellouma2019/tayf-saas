@@ -126,6 +126,7 @@ import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard
 import { SHOP_THEMES } from "@/lib/themes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type FeatureKey } from "@/lib/shop-features";
+const PrintQueueWidget = dynamic(() => import("@/components/app/print-queue-widget").then((m) => ({ default: m.PrintQueueWidget })), { ssr: false, loading: () => <DynamicSkeleton /> });
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
 import { motion, AnimatePresence } from 'framer-motion';
@@ -972,6 +973,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </button>
                 ))}
               </div>
+
+              {/* طابور الطباعة */}
+              <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+                <CardContent className="pt-4">
+                  <PrintQueueWidget orders={orders} />
+                </CardContent>
+              </Card>
 
               {!(stats?.totalOrders ?? 0) && (
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">

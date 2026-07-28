@@ -16,6 +16,8 @@ import type { GlobalStats } from "@/lib/admin-types";
 import { ShopOverviewCard } from "@/components/app/admin-shop-card";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { cn } from "@/lib/utils";
+import { ActivityFeed } from "@/components/app/activity-feed";
+import { QuickStatsOverview } from "@/components/app/quick-stats-overview";
 
 // ===== Weekly Revenue Mini Bar Chart =====
 function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
@@ -131,17 +133,17 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-fade">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-scale-glow card-glow group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-primary" /></div></div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 hover-scale-glow card-glow group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 hover-scale-glow card-glow group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 hover-scale-glow card-glow group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>
@@ -300,7 +302,16 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
         </div>
       )}
 
-      {/* آخر الطلبات */}
+      {/* إحصائيات سريعة مع SVG Progress Rings */}
+      <QuickStatsOverview
+        totalOrders={safeStats.totalOrders ?? 0}
+        completedOrders={(safeStats.statusCounts?.delivered ?? 0) + (safeStats.statusCounts?.completed ?? 0)}
+        pendingOrders={safeStats.statusCounts?.pending ?? 0}
+        totalRevenue={safeStats.totalRevenue ?? 0}
+        className="fade-in-up fade-in-up-delay-1"
+      />
+
+      {/* آخر الطلبات + النشاط */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="bg-card rounded-xl border border-border shadow-sm">
           <CardHeader className="pb-3">
@@ -310,35 +321,8 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {safeStats.recentOrders?.slice(0, 6).map((order) => {
-                const timeAgo = getTimeAgo(order.createdAt);
-                const activityIcon = order.status === "pending" ? "📝" : order.status === "printing" ? "🖨️" : order.status === "ready" ? "✅" : order.status === "delivered" ? "📦" : "❌";
-                return (
-                  <div key={order.id} className="flex items-start gap-3 px-4 py-3 hover:bg-primary/5/50 transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 text-sm mt-0.5">{activityIcon}</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-foreground/80 truncate">
-                        <span className="font-semibold">{order.customer?.name || "—"}</span>
-                        <span className="text-muted-foreground mx-1">·</span>
-                        {order.serviceName || "—"}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] text-muted-foreground">{order.shopName || "—"}</span>
-                        <span className="text-[11px] text-muted-foreground/40">·</span>
-                        <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold text-foreground/80 shrink-0">{formatDA(order.total)}</span>
-                  </div>
-                );
-              })}
-              {!(safeStats.recentOrders?.length) && (
-                <div className="py-8 flex flex-col items-center">
-                  <Activity className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                  <p className="text-muted-foreground text-xs">لا توجد نشاطات بعد</p>
-                </div>
-              )}
+            <div className="px-4 py-2">
+              <ActivityFeed orders={safeStats.recentOrders || []} />
             </div>
           </CardContent>
         </Card>
@@ -376,10 +360,12 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
                 </div>
               ))}
               {!(safeStats.recentOrders?.length) && (
-                <div className="py-14 flex flex-col items-center justify-center">
-                  <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-muted-foreground text-sm font-medium">لا توجد طلبات بعد</p>
-                  <p className="text-muted-foreground/40 text-xs mt-1">ستظهر هنا آخر الطلبات من جميع المتاجر</p>
+                <div className="empty-state py-14">
+                  <div className="empty-state-icon">
+                    <Package className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
+                  <p className="text-[11px] text-muted-foreground/50 mt-1">ستظهر هنا آخر الطلبات من جميع المتاجر</p>
                 </div>
               )}
             </div>
