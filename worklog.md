@@ -2823,3 +2823,116 @@ Task: تحسينات بصرية + ميزات جديدة (Round 16)
 6. إضافة ميزة سلة مشتريات متعددة الخدمات
 7. إضافة لوحة Kanban محسّنة (تصفية حسب العلامات)
 8. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+
+---
+Task ID: qa-fix-round17
+Agent: Main Agent
+Task: تحسينات بصرية + ميزات جديدة (Round 17)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع البيانات الحية (38 طلب، 5 متاجر)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ إصلاح مشكلة Turso DB: fallback للـ COUNT(*) عندما يعيد 0
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء، بيانات حية ظاهرة (38 طلب)
+- ✅ إحصائيات سريعة — SVG Progress Rings ظاهرة (معدل الإنجاز، قيمة المتوسط، في الانتظار)
+- ✅ النشاطات الأخيرة — Activity Feed Timeline ظاهر مع طوابع زمنية
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ صفحة التتبع — تعرض واجهة البحث مع search-input-enhanced
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+- ✅ Lint: 0 أخطاء، 4 تحذيرات (unused directives فقط)
+
+## الميزات الجديدة
+
+### 1. سجل النشاطات (Activity Feed Timeline)
+- مكون جديد: `src/components/app/activity-feed.tsx`
+- خط زمني بصري مع نقاط ذهبية متصلة بخطوط متدرجة
+- أنواع النشاطات: طلب جديد، تحديث حالة، إنجاز طلب، إنشاء متجر
+- طوابع زمنية نسبية (منذ X ساعة/دقيقة/يوم)
+- نقطة نابضة للنشاط الأخير (timeline-pulse animation)
+- حالة فارغة محسّنة مع أيقونة
+
+### 2. إحصائيات سريعة مع SVG Progress Rings (Quick Stats Overview)
+- مكون جديد: `src/components/app/quick-stats-overview.tsx`
+- 3 بطاقات: معدل الإنجاز (%)، قيمة المتوسط (د.ج)، في الانتظار
+- حلقات SVG متحركة مع gradient shadows
+- hover تأثير ثلاثي الأبعاد (stat-card-3d)
+- أرقام عداد متحركة (counter-number)
+
+### 3. طابور الطباعة (Print Queue Widget)
+- مكون جديد: `src/components/app/print-queue-widget.tsx`
+- في لوحة تحكم التاجر (تبويب الرئيسية)
+- 3 إحصائيات ملونة: جارٍ الطباعة، مؤكد، بانتظار
+- شريط تقدم متحرك مع نسبة مئوية
+- قائمة الطلبات في الطابور (حتى 8 طلبات)
+- حالة فارغة محسّنة
+
+## الإصلاحات
+
+| المشكلة | الحل |
+|---------|------|
+| Turso DB COUNT(*) يعيد 0 رغم وجود 38 طلب | إضافة fallback: حساب من statusCounts/recentOrders |
+| text-muted/50 غير صالح في Tailwind v4 | تغيير إلى text-muted-foreground/30 |
+| eslint error في share-dialog.tsx (preserve-manual-memoization) | تحديث useCallback deps |
+
+## التحسينات البصرية (Round 17)
+
+### CSS جديدة (~300 سطر)
+- view-transition, view-enter — انتقالات سلسة بين الصفحات
+- timeline-connector, timeline-dot, timeline-dot-active — خط زمني بصرية
+- empty-state, empty-state-icon — حالة فارغة محسّنة
+- stat-card-3d — تأثير 3D عند التمرير
+- progress-ring-circle — حلقة تقدم متحركة
+- notif-badge — شارة إشعارات متحركة
+- skeleton-shimmer — تحميل متلألئ ذهبي
+- focus-ring-gold — حلقة تركيز ذهبية محسّنة
+- fab — زر عائم متحرك
+- tooltip-enhanced — تلميح محسّن
+- glass-refined — glassmorphism محسّن
+- status-badge-pill — شارات حالة محسّنة
+- hover-lift, press-scale — تفاعلات دقيقة
+- nav-link-animated — خط سفلي متحرك للتنقل
+- search-input-enhanced — حقل بحث محسّن
+- loading-dots — نقاط تحميل متحركة
+- skeleton-card, badge-count, scroll-shadow, toast-enhanced
+
+### تحسينات المكونات
+- لوحة الإدارة: بطاقات إحصائيات مع stat-card-3d + hover tilt
+- لوحة الإدارة: حالة فارغة مع empty-state محسّنة
+- صفحة التتبع: search-input-enhanced + rounded-xl + transition-all
+- زر تسجيل الدخول: press-scale + focus-ring-gold
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/globals.css` | +300 سطر: CSS Round 17 |
+| `src/components/app/activity-feed.tsx` | جديد: سجل النشاطات |
+| `src/components/app/quick-stats-overview.tsx` | جديد: إحصائيات SVG rings |
+| `src/components/app/print-queue-widget.tsx` | جديد: طابور الطباعة |
+| `src/components/app/admin-overview-tab.tsx` | دمج ActivityFeed + QuickStatsOverview + empty-state محسّنة |
+| `src/components/app/merchant-dashboard.tsx` | دمج PrintQueueWidget في تبويب الرئيسية |
+| `src/components/app/track-page-client.tsx` | search-input-enhanced + rounded-xl |
+| `src/components/app/share-dialog.tsx` | إصلاح eslint directives |
+| `src/app/api/admin/global-stats/route.ts` | Fallback لـ Turso DB COUNT(*) |
+
+## Commits
+- 7b8a1a3: feat(r17): activity feed timeline, quick stats SVG rings, print queue widget, enhanced CSS utilities, styling polish
+- b18c845: fix(r17): text-muted/50 not valid in tw4, use text-muted-foreground/30 for progress ring
+- b1d855f: style(r17): enhanced search input, focus rings, press effects on track page
+- fe10889: fix(r17): add Turso DB fallback for global-stats when COUNT(*) returns 0 but data exists
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مراقبة Turso DB — لا يزال COUNT(*) يعيد 0 أحياناً (تم إضافة fallback)
+2. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+3. إضافة structured data (JSON-LD) لـ SEO
+4. إضافة ملاحظات داخلية على الطلب (DB-based, not just localStorage)
+5. إضافة لوحة Kanban محسّنة (تصفية حسب العلامات)
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+7. إضافة ميزة سلة مشتريات متعددة الخدمات
+
