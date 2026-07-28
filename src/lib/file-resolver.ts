@@ -2,12 +2,10 @@
  * file-resolver.ts — حلّ بيانات الملف من أي صيغة
  *
  * الصيغ المدعومة:
- * 1. data:...;base64,... → base64 data URL (تمرير مباشر)
- * 2. file_...            → مسار ملف على القرص (التطوير المحلي فقط)
- * 3. __chunked__:<id>    → ملف مخزن كأجزاء في قاعدة البيانات
- *    - status=complete   → قراءة assembledBase64 مباشرة (سريع)
- *    - status=chunks_ready → تجميع كسول (عند أول وصول)
- *    - status=uploading  → محاولة تجميع الأجزاء (حالة نادرة)
+ * 1. data:...;base64,...     → base64 data URL (تمرير مباشر — ملفات صغيرة ≤ 500KB)
+ * 2. __cdn__:https://...     → ملف مرفوع عبر Uploadthing CDN (جلب مباشر)
+ * 3. __chunked__:<id>        → ملف مخزن كأجزاء في قاعدة البيانات (legacy fallback)
+ * 4. file_...                → مسار ملف على القرص (التطوير المحلي فقط)
  *
  * يُستخدم في جميع نقاط النهاية التي تتعامل مع ملفات الطلبات:
  * - /api/orders/[id]/file     (تنزيل)
@@ -58,7 +56,26 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
   // 1. بالفعل data URL — تمرير مباشر
   if (fileData.startsWith("data:")) return fileData;
 
-  // 2. ملف مجزأ في قاعدة البيانات
+  // 2. ملف مرفوع عبر Uploadthing CDN — جلب مباشر من CDN
+  if (fileData.startsWith("__cdn__:")) {
+    const cdnUrl = fileData.replace("__cdn__:", "");
+    try {
+      const response = await fetch(cdnUrl);
+      if (!response.ok) {
+        console.error("[file-resolver] CDN fetch failed:", response.status);
+        return null;
+      }
+      const buffer = await response.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      const contentType = response.headers.get("content-type") || "application/octet-stream";
+      return `data:${contentType};base64,${base64}`;
+    } catch (e) {
+      console.error("[file-resolver] CDN fetch error:", e);
+      return null;
+    }
+  }
+
+  // 3. ملف مجزأ في قاعدة البيانات (legacy fallback)
   if (fileData.startsWith("__chunked__:")) {
     const uploadId = fileData.replace("__chunked__:", "");
 
@@ -70,14 +87,11 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
       );
       const upload = rows[0];
 
-      // إذا كانت مجمّعة مسبقاً — إرجاع مباشر (سريع جداً)
       if (upload?.assembledBase64 && upload.status === "complete") {
         return upload.assembledBase64;
       }
 
-      // ─── التجميع الكسول: تجميع عند أول وصول ───
-      // يحدث عندما status = "chunks_ready" (تخطينا التجميع أثناء الرفع لتسريعه)
-      // أو status = "uploading" (حالة نادرة: فشل أثناء الرفع)
+      // التجميع الكسول
       if (upload?.status === "chunks_ready" || upload?.status === "uploading") {
         const chunkRows = await directQuery<{ data: string }>(
           `SELECT data FROM "FileChunk" WHERE "uploadId" = ? ORDER BY "chunkIndex"`,
@@ -85,7 +99,6 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
         );
 
         if (chunkRows.length > 0) {
-          // احصل على امتداد الملف
           const uploadInfo = await directQuery<{ fileExt: string }>(
             `SELECT "fileExt" FROM "FileUpload" WHERE id = ?`,
             [uploadId]
@@ -99,21 +112,17 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
           };
           const mime = MIME_MAP[fileExt] || "application/octet-stream";
 
-          // تجميع الأجزاء في الذاكرة
           const fullBase64 = chunkRows.map(r => r.data).join("");
           const dataUrl = `data:${mime};base64,${fullBase64}`;
 
-          // خزّن البيانات المجتمعة لاستخدامها لاحقاً (استعلام واحد)
           try {
             await directExecute(
               `UPDATE "FileUpload" SET status = 'complete', "assembledBase64" = ? WHERE id = ?`,
               [dataUrl, uploadId]
             );
-            // حذف الأجزاء الفردية (تحرير المساحة)
             await directExecute(`DELETE FROM "FileChunk" WHERE "uploadId" = ?`, [uploadId]);
-          } catch (cleanupErr) {
-            console.warn("[file-resolver] Lazy assembly cleanup failed:", cleanupErr);
-            // لا نفشل — البيانات مجمّعة في الذاكرة وسيتم إرجاعها
+          } catch {
+            // تجاهل أخطاء التنظيف
           }
 
           return dataUrl;
@@ -127,12 +136,12 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
     }
   }
 
-  // 3. مسار ملف على القرص (التطوير المحلي)
+  // 4. مسار ملف على القرص (التطوير المحلي)
   if (fileData.startsWith("file_")) {
-    return fileData; // سيتعامل معه الـ endpoint مباشرة عبر fs
+    return fileData;
   }
 
-  // 4. قيمة غير معروفة — أرجعها كما هي
+  // 5. قيمة غير معروفة — أرجعها كما هي
   return fileData;
 }
 
@@ -147,7 +156,6 @@ export async function cleanupOldUploads(): Promise<void> {
     await directExecute(
       `DELETE FROM "FileUpload" WHERE status IN ('uploading', 'chunks_ready') AND datetime("createdAt") < datetime('now', '-1 hour')`
     );
-    // تنظيف الملفات المكتملة الأقدم من 7 أيام
     await directExecute(
       `DELETE FROM "FileUpload" WHERE status = 'complete' AND datetime("createdAt") < datetime('now', '-7 days')`
     );

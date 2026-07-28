@@ -57,91 +57,22 @@ import { shopApi } from "@/lib/shop-api";
 import { OfferPopup } from "@/components/app/offer-popup";
 import type { CreatedOrder } from "@/components/app/app-shell";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { useUploadThing } from "@/lib/uploadthing";
 // FileAnalysisPanel replaced by UploadStep
 
 /* ═══════════════════════════════════════════════════════
-   Chunked Upload Helper — موازٍ وسريع
-   رفع الملفات الكبيرة (>1MB) على أجزاء موازية — بدون تجميع
-   أجزاء 4MB مع 6 عمال موازيين = رفع أسرع 10x
+   Uploadthing — رفع سريع مباشر إلى CDN
+   الملفات تذهب مباشرة من المتصفح إلى Uploadthing CDN
+   دون المرور عبر Vercel serverless = سرعة فائقة
    ═══════════════════════════════════════════════════════ */
 
-const CHUNK_SIZE = 4 * 1024 * 1024; // 4 MB لكل جزء (أقل من حد 4.5MB للبوابة) — أقل عدد طلبات
-const UPLOAD_CONCURRENCY = 6; // 6 أجزاء مرفوعة بالتوازي — أقصى سرعة
-
-async function uploadFileInChunks(
-  file: File,
-  ext: string,
-  onProgress: (progress: number) => void,
-): Promise<{ storedFileName: string }> {
-  const fileId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-  let completedChunks = 0;
-  let storedFileName = "";
-
-  onProgress(3);
-
-  // إنشاء قائمة المهام
-  const tasks = Array.from({ length: totalChunks }, (_, i) => ({
-    index: i,
-    start: i * CHUNK_SIZE,
-    end: Math.min((i + 1) * CHUNK_SIZE, file.size),
-  }));
-
-  // رفع جزء واحد
-  async function uploadOne(task: typeof tasks[0]): Promise<void> {
-    if (storedFileName) return; // تم الاكتمال — لا حاجة لمزيد
-
-    const chunk = file.slice(task.start, task.end);
-    const formData = new FormData();
-    formData.append("chunk", chunk, `chunk_${task.index}`);
-    formData.append("fileId", fileId);
-    formData.append("chunkIndex", task.index.toString());
-    formData.append("totalChunks", totalChunks.toString());
-    formData.append("fileName", file.name);
-    formData.append("fileSize", file.size.toString());
-    formData.append("fileExt", ext);
-
-    const res = await fetch("/api/orders/upload-chunk", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({ error: "فشل رفع الجزء" }));
-      throw new Error(errData.error || `فشل رفع الجزء ${task.index + 1} من ${totalChunks}`);
-    }
-
-    const data = await res.json();
-    completedChunks++;
-    onProgress(3 + Math.round((completedChunks / totalChunks) * 92));
-
-    if (data.complete && data.storedFileName) {
-      storedFileName = data.storedFileName;
-      onProgress(100);
-    }
-  }
-
-  // تجمّع منتجين موازيين يأخذون مهام من القائمة
-  let nextIdx = 0;
-  async function worker() {
-    while (nextIdx < tasks.length && !storedFileName) {
-      const task = tasks[nextIdx++];
-      await uploadOne(task);
-    }
-  }
-
-  // تشغيل المنتجين الموازيين
-  const workers = Array.from(
-    { length: Math.min(UPLOAD_CONCURRENCY, totalChunks) },
-    () => worker(),
-  );
-  await Promise.all(workers);
-
-  if (!storedFileName) {
-    throw new Error("لم يكتمل رفع الملف — يرجى المحاولة مرة أخرى");
-  }
-
-  return { storedFileName };
+/** بيانات ملف مُرفع عبر Uploadthing */
+interface UploadedFileData {
+  url: string;
+  name: string;
+  size: number;
+  key: string;
+  type: string;
 }
 
 interface NewOrderWizardProps {
@@ -165,8 +96,33 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   const [fileName, setFileName] = useState("");
   const [fileType, setFileType] = useState("");
   const [fileSize, setFileSize] = useState(0);
-  const [fileDataUrl, setFileDataUrl] = useState<string>(""); // base64 data URL (ملفات ≤ 4MB)
-  const [storedFileName, setStoredFileName] = useState<string>(""); // اسم الملف المخزَّن (ملفات > 4MB عبر أجزاء)
+  const [fileDataUrl, setFileDataUrl] = useState<string>(""); // base64 data URL (ملفات ≤ 1MB فقط)
+  const [storedFileName, setStoredFileName] = useState<string>(""); // اسم الملف المخزَّن (fallback)
+  const [uploadedFile, setUploadedFile] = useState<UploadedFileData | null>(null); // بيانات ملف Uploadthing CDN
+
+  // Uploadthing hook — رفع مباشر إلى CDN
+  const { startUpload, isUploading } = useUploadThing("printFileUploader", {
+    onClientUploadComplete: (files) => {
+      if (files && files.length > 0) {
+        const uploaded = files[0] as unknown as UploadedFileData;
+        setUploadedFile({
+          url: uploaded.url,
+          name: uploaded.name,
+          size: uploaded.size,
+          key: uploaded.key,
+          type: uploaded.type,
+        });
+        setUploadProgress(100);
+      }
+    },
+    onUploadError: (error) => {
+      throw new Error(error.message || "فشل رفع الملف إلى CDN");
+    },
+    onUploadProgress: (progress) => {
+      // progress is 0-100 from Uploadthing
+      setUploadProgress(Math.min(98, Math.round(progress)));
+    },
+  });
   const [uploadProgress, setUploadProgress] = useState(0); // 0-100
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>("idle");
@@ -560,19 +516,20 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setFileSize(f.size);
     setFileDataUrl("");
     setStoredFileName("");
+    setUploadedFile(null);
     setUploadError("");
 
     // ─── المرحلة 1: رفع الملف ───
-    // ملفات ≤ 1 ميغا: base64 مباشرة في JSON body (سريعة)
-    // ملفات > 1 ميغا: رفع عبر أجزاء (chunks) موازية — أسرع بكثير
-    const CHUNK_THRESHOLD = 1 * 1024 * 1024; // 1 MB — ملفات أكبر تستخدم الرفع المجزأ (أسرع)
+    // ملفات ≤ 500KB: base64 مباشرة في JSON body (سريعة جداً)
+    // ملفات > 500KB: رفع مباشر إلى Uploadthing CDN (أسرع 100x من serverless)
+    const INLINE_THRESHOLD = 500 * 1024; // 500 KB فقط — الباقي عبر CDN
     setAnalysisPhase("uploading");
     setUploadStatus("uploading");
     setUploadProgress(0);
 
     try {
-      if (f.size <= CHUNK_THRESHOLD) {
-        // استراتيجية سريعة: اقرأ الملف كـ base64 محلياً وأرسله في POST
+      if (f.size <= INLINE_THRESHOLD) {
+        // ملفات صغيرة جداً: base64 مباشرة في JSON body
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onprogress = (e) => {
@@ -589,11 +546,15 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         });
         setFileDataUrl(dataUrl);
         setStoredFileName("");
+        setUploadedFile(null);
       } else {
-        // استراتيجية الأجزاء: رفع الملف الكبير على دفعات
-        const result = await uploadFileInChunks(f, ext, setUploadProgress);
-        setStoredFileName(result.storedFileName);
-        setFileDataUrl("");
+        // 🚀 رفع مباشر إلى Uploadthing CDN — لا يمر عبر Vercel serverless!
+        setUploadProgress(5); // بداية الرفع
+        await startUpload([f]);
+        // startUpload calls onClientUploadComplete which sets uploadedFile + progress
+        if (!uploadedFile || !uploadedFile.url) {
+          throw new Error("فشل رفع الملف — يرجى المحاولة مرة أخرى");
+        }
       }
       setUploadStatus("done");
     } catch (uploadErr) {
@@ -608,14 +569,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setAnalysis(null);
     setAnalysisPhase("local-analysis");
 
-    // ═══ ملفات كبيرة عبر الأجزاء: تحليل سريع بدون إعادة قراءة الملف ═══
-    // الملف تم رفعه بالفعل — لا حاجة لقراءته مرة أخرى من القرص
-    const isChunked = f.size > CHUNK_THRESHOLD;
+    // الملف لا يزال متاحاً في الذاكرة (File object) — يمكن تحليله مباشرة
+    const isCDN = f.size > INLINE_THRESHOLD;
 
     try {
       let basicResult: RealFileAnalysis;
 
-      if (isChunked) {
+      if (isCDN) {
         // تحليل سريع: معلومات أساسية فقط بدون pdfjs أو canvas
         basicResult = {
           detectedService: ext === "pdf" ? "document" : ext === "docx" ? "document" : "photo",
@@ -628,7 +588,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           suggestedPaperType: "normal",
           suggestedBinding: "none",
           confidence: 65,
-          insights: [`ملف كبير (${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت) — تم تخطي التحليل التفصيلي لتسريع العملية`],
+          insights: [`ملف مرفوع إلى CDN (${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت)`],
           fileType: ext.toUpperCase(),
           fileName: f.name,
           fileSizeFormatted: f.size > 1024 * 1024
@@ -733,6 +693,20 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     if (!serviceType || !pricing || !finalPricing) return;
     setSubmitting(true);
     try {
+      // تحديد مصدر بيانات الملف:
+      // 1. uploadedFile: ملف مرفوع عبر Uploadthing CDN (الأساس — أسرع)
+      // 2. fileDataUrl: ملف صغير كـ base64 (≤ 500KB)
+      // 3. storedFileName: fallback (رفع مجزأ عبر API)
+      let resolvedFileData: string | null = fileDataUrl || null;
+      let resolvedStoredFileName: string | null = storedFileName || null;
+      if (uploadedFile) {
+        // ملف Uploadthing — نرسل رابط CDN مباشرة
+        resolvedFileData = `__cdn__:${uploadedFile.url}`;
+        resolvedStoredFileName = uploadedFile.key;
+      } else if (storedFileName) {
+        resolvedFileData = `__chunked__:${storedFileName}`;
+      }
+
       const res = await shopApi("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -741,9 +715,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           fileName: fileName || null,
           fileType: fileType || null,
           fileSize: fileSize || null,
-          // ملفات صغيرة: fileData كـ base64 | ملفات كبيرة: storedFileName من الرفع المجزأ
-          fileData: fileDataUrl || null,
-          storedFileName: storedFileName || null,
+          // ملفات CDN: رابط مباشر | ملفات صغيرة: base64 | ملفات مجزأة: storedFileName
+          fileData: resolvedFileData,
+          storedFileName: resolvedStoredFileName,
           smartAnalysis: analysis
             ? {
                 detectedService: analysis.detectedService,
@@ -810,6 +784,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setFileSize(0);
       setFileDataUrl("");
       setStoredFileName("");
+      setUploadedFile(null);
       setAnalysis(null);
       setAnalysisPhase("idle");
       setUploadError("");
