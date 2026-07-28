@@ -510,28 +510,31 @@ export function AppShell() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 rounded-2xl overflow-hidden bg-gradient-to-l from-violet-500/8 via-indigo-500/5 to-sky-500/8 dark:from-violet-500/15 dark:via-indigo-500/10 dark:to-sky-500/15 border border-violet-200/50 dark:border-violet-700/30 p-3 sm:p-4"
+                    className="mb-4 rounded-2xl overflow-hidden glass-card p-3 sm:p-4 border border-violet-200/40 dark:border-violet-700/30"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 ring-2 ring-background flex items-center justify-center text-[10px]">🖨️</div>
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 ring-2 ring-background flex items-center justify-center text-[10px]">📄</div>
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-background flex items-center justify-center text-[10px]">📸</div>
+                    <div className="relative overflow-hidden rounded-xl">
+                      <div className="absolute inset-0 hero-animated-gradient" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(6,182,212,0.06), rgba(16,185,129,0.06))' }} />
+                      <div className="relative flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">🖨️</div>
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">📄</div>
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">📸</div>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm font-medium text-foreground truncate">خدمة طباعة احترافية وسريعة</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">رفع ملفك واحصل على تسعيرة فورية ✓</p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-medium text-foreground truncate">خدمة طباعة احترافية وسريعة</p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">رفع ملفك واحصل على تسعيرة فورية ✓</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>جاهز خلال ساعة</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 className="h-3 w-3" />
-                          <span>موثوق</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>جاهز خلال ساعة</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>موثوق</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -595,14 +598,14 @@ export function AppShell() {
         {/* شريط الإجراءات السريعة */}
         {view !== "admin" && (
         <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 -mx-4">
-          <div className="flex items-center gap-2 justify-center text-[11px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400">
+          <div className="flex items-center gap-2 justify-center text-[11px] text-muted-foreground flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/40 dark:border-violet-800/30 hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-colors cursor-default">
               <span>⚡</span> اطلب خلال دقيقة
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-default">
               <span>🕐</span> جاهز خلال ساعة
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/40 dark:border-amber-800/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-default">
               <span>🔔</span> إشعار عند الجاهزية
             </span>
           </div>

@@ -631,7 +631,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
         {/* Decorative grid pattern */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-        <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-border relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
+        {/* Decorative floating orbs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-300/10 dark:bg-violet-700/10 rounded-full blur-3xl animate-float-gentle" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-300/10 dark:bg-amber-700/10 rounded-full blur-3xl animate-float-gentle animate-float-gentle-delay-2" />
+        <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-border relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 glass-card">
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-5 shadow-lg shadow-violet-300/40 dark:shadow-violet-900/40" style={{ animation: "float 3s ease-in-out infinite" }}>
@@ -824,10 +827,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="space-y-6"
             >
-              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-fade">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group relative overflow-hidden",
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover-scale-glow card-glow group relative overflow-hidden",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
@@ -852,14 +855,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* ملخص اليوم */}
-              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5">
+              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-violet-500" />
                       ملخص اليوم
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <div className="text-[11px] text-muted-foreground">الطلبات</div>
                         <div className="text-lg font-bold tabular-nums text-foreground">{todayOrdersList.length}</div>
@@ -908,10 +911,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
 
               {/* إجراءات سريعة */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-fade">
                 {[
                   { icon: Plus, label: "طلب جديد", color: "from-violet-500 to-violet-600", action: () => window.open(customerLink, '_blank') },
                   { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => setReportOpen(true) },
+                  { icon: Download, label: "تصدير CSV", color: "from-sky-500 to-sky-600", action: () => exportCSV() },
                   { icon: Users, label: "العملاء", color: "from-amber-500 to-amber-600", action: () => setActiveTab("customers") },
                   { icon: FileText, label: "المصاريف", color: "from-rose-500 to-rose-600", action: () => setActiveTab("expenses") },
                 ].map((item) => (
@@ -919,7 +923,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     key={item.label}
                     type="button"
                     onClick={item.action}
-                    className="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border bg-card hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+                    className="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border bg-card hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group press-effect"
                   >
                     <div className={cn("w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform", item.color)}>
                       <item.icon className="h-5 w-5 text-white" />

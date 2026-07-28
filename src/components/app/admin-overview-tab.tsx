@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -15,6 +15,65 @@ import { formatNumber, STATUS_COLORS, getTimeAgo } from "@/lib/admin-utils";
 import type { GlobalStats } from "@/lib/admin-types";
 import { ShopOverviewCard } from "@/components/app/admin-shop-card";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { cn } from "@/lib/utils";
+
+// ===== Weekly Revenue Mini Bar Chart =====
+function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
+  const recentOrders = stats.recentOrders || [];
+  const today = new Date();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+  const dayLabels = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+  const dailyRevenue = days.map(d => {
+    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+    return recentOrders
+      .filter(o => { const t = new Date(o.createdAt); return t >= dayStart && t <= dayEnd; })
+      .reduce((s, o) => s + (o.total || 0), 0);
+  });
+  const maxRev = Math.max(...dailyRevenue, 1);
+  const totalWeek = dailyRevenue.reduce((s, v) => s + v, 0);
+  if (totalWeek === 0) return null;
+  return (
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+          <CalendarDays className="h-4 w-4 text-gold-500" />
+          إيرادات الأسبوع
+          <span className="text-xs text-muted-foreground font-normal mr-auto tabular-nums">{formatDA(totalWeek)}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-end gap-2 h-28">
+          {dailyRevenue.map((rev, i) => {
+            const height = Math.max(8, (rev / maxRev) * 100);
+            const isToday = i === 6;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                <span className="text-[9px] text-muted-foreground tabular-nums">{rev > 0 ? (rev >= 1000 ? `${(rev / 1000).toFixed(1)}k` : String(rev)) : ''}</span>
+                <div className="w-full flex justify-center">
+                  <div
+                    className={cn(
+                      "rounded-t-lg transition-all duration-700 ease-out w-full max-w-[30px] cursor-default",
+                      isToday
+                        ? "bg-gradient-to-t from-gold-500 to-gold-300 shadow-sm shadow-gold-500/20 hover:shadow-gold-500/40"
+                        : "bg-gradient-to-t from-primary/25 to-primary/15 hover:from-primary/35 hover:to-primary/25"
+                    )}
+                    style={{ height: `${height}%` }}
+                  />
+                </div>
+                <span className={cn("text-[9px]", isToday ? "font-bold text-gold-600 dark:text-gold-400" : "text-muted-foreground")}>{dayLabels[i].slice(0, 3)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   stats: GlobalStats;
@@ -36,7 +95,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   return (
     <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up glass-card" style={{ backgroundColor: 'rgba(124, 58, 237, 0.85)', backdropFilter: 'blur(16px)' }}>
         <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 animate-[pulse_5s_ease-in-out_infinite_1s]" />
         <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 animate-[pulse_6s_ease-in-out_infinite_2s]" />
@@ -68,18 +127,18 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
       )}
 
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-fade">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-scale-glow card-glow group">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-primary" /></div></div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 hover-scale-glow card-glow group">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 hover-scale-glow card-glow group">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary/60 p-5 sm:p-6 hover-lift-glow border-glow-subtle group">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 hover-scale-glow card-glow group">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>
@@ -149,6 +208,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
         <PieChartCard stats={stats} />
         <RevenueBarChart stats={stats} />
       </div>
+
+      {/* مخطط إيرادات الأسبوع */}
+      <WeeklyRevenueChart stats={stats} />
 
       {/* ملخص المتاجر */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
