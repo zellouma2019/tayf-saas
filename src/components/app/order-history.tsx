@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { History, Phone, Search, Loader2, Inbox, Package } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { History, Phone, Search, Loader2, Inbox, Package, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { shopApi } from "@/lib/shop-api";
 import { formatDA, formatDateTimeAr } from "@/lib/print-config";
@@ -41,6 +48,25 @@ export function OrderHistory() {
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredOrders = useMemo(() => {
+    let result = orders;
+    if (statusFilter !== "all") {
+      result = result.filter((o) => o.status === statusFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(
+        (o) =>
+          o.reference?.toLowerCase().includes(q) ||
+          o.customer?.name?.toLowerCase().includes(q) ||
+          o.serviceName?.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [orders, statusFilter, searchQuery]);
 
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault();
@@ -105,9 +131,57 @@ export function OrderHistory() {
         </Button>
       </form>
 
-      <p className="text-xs text-center text-muted-foreground mb-6">
+      <p className="text-xs text-center text-muted-foreground mb-4">
         أدخل رقم الهاتف الذي استخدمته عند إنشاء الطلب
       </p>
+
+      {/* فلاتر البحث */}
+      {searched && orders.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="بحث بالرقم المرجعي أو الاسم..."
+              className="pr-9 h-9 text-xs"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
+            <SelectTrigger className="h-9 w-full sm:w-[180px] text-xs">
+              <Filter className="h-3.5 w-3.5 ml-1" />
+              <SelectValue placeholder="كل الحالات" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل الحالات</SelectItem>
+              <SelectItem value="pending">بانتظار المراجعة</SelectItem>
+              <SelectItem value="confirmed">مؤكّد</SelectItem>
+              <SelectItem value="printing">جارٍ الطباعة</SelectItem>
+              <SelectItem value="ready">جاهز للاستلام</SelectItem>
+              <SelectItem value="delivered">تم التسليم</SelectItem>
+              <SelectItem value="cancelled">ملغي</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* حالة عدم وجود نتائج بعد الفلتر */}
+      {!loading && searched && orders.length > 0 && filteredOrders.length === 0 && (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <Filter className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+            <p className="text-sm font-medium">لا توجد نتائج تطابق الفلتر</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 text-xs"
+              onClick={() => { setStatusFilter("all"); setSearchQuery(""); }}
+            >
+              مسح الفلاتر
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* حالة التحميل */}
       {loading && (
@@ -131,13 +205,13 @@ export function OrderHistory() {
       )}
 
       {/* قائمة الطلبات */}
-      {!loading && orders.length > 0 && (
+      {!loading && filteredOrders.length > 0 && (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground mb-2">
-            تم العثور على {orders.length} طلب
+            تم العثور على {filteredOrders.length}{filteredOrders.length !== orders.length ? ` من ${orders.length}` : ""} طلب
           </p>
           <AnimatePresence>
-            {orders.map((order, i) => (
+            {filteredOrders.map((order, i) => (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, y: 16 }}

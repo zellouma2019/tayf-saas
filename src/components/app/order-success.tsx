@@ -21,8 +21,10 @@ import {
   Plus,
   Loader2,
   MessageCircle,
+  Star,
 } from "lucide-react";
 import QRCode from "qrcode";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { downloadInvoicePDF } from "@/lib/pdf-invoice";
 import type { CreatedOrder } from "@/components/app/app-shell";
@@ -43,6 +45,8 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [showQR, setShowQR] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
 
   useEffect(() => {
     if (order && open) {
@@ -282,6 +286,51 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 })}
               </div>
             </div>
+
+            {/* تقييم الخدمة */}
+            {!ratingSubmitted && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className="text-center py-4"
+              >
+                <p className="text-sm text-muted-foreground mb-3">كيف كانت تجربتك؟</p>
+                <div className="flex items-center justify-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="p-1 hover:scale-125 transition-transform"
+                      aria-label={`${star} نجوم`}
+                    >
+                      <Star
+                        className={cn(
+                          "h-8 w-8 transition-colors",
+                          star <= rating
+                            ? "text-amber-400 fill-amber-400"
+                            : "text-muted-foreground/30"
+                        )}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {rating > 0 && (
+                  <Button
+                    onClick={() => { setRatingSubmitted(true); toast.success("شكراً لتقييمك! 🙏"); }}
+                    className="mt-3 bg-amber-500 hover:bg-amber-600 text-white"
+                    size="sm"
+                  >
+                    إرسال التقييم
+                  </Button>
+                )}
+              </motion.div>
+            )}
+            {ratingSubmitted && (
+              <div className="text-center py-3">
+                <p className="text-sm text-amber-500 font-medium">شكراً لتقييمك! ❤️</p>
+              </div>
+            )}
 
             {/* ===== مشاركة حالة الطلب ===== */}
             <div className="grid grid-cols-2 gap-2">

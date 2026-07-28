@@ -29,6 +29,7 @@ import {
   Tag,
   Store,
   Calculator,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -499,6 +500,36 @@ export function AppShell() {
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.25, ease: "easeInOut" }}
                 >
+                  {/* شريط الثقة */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 rounded-2xl overflow-hidden bg-gradient-to-l from-violet-500/8 via-indigo-500/5 to-sky-500/8 dark:from-violet-500/15 dark:via-indigo-500/10 dark:to-sky-500/15 border border-violet-200/50 dark:border-violet-700/30 p-3 sm:p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 ring-2 ring-background flex items-center justify-center text-[10px]">🖨️</div>
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 ring-2 ring-background flex items-center justify-center text-[10px]">📄</div>
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-background flex items-center justify-center text-[10px]">📸</div>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-medium text-foreground truncate">خدمة طباعة احترافية وسريعة</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">رفع ملفك واحصل على تسعيرة فورية ✓</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>جاهز خلال ساعة</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>موثوق</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
                   <NewOrderWizard
                     onCreated={handleCreated}
                     prefillOrder={prefillOrder}

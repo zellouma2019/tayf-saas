@@ -487,6 +487,31 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     return () => { if (notifIntervalRef.current) clearInterval(notifIntervalRef.current); };
   }, [unlocked, shopId, loadStats, loadOrders]);
 
+  // ===== اختصارات لوحة المفاتيح =====
+  useEffect(() => {
+    if (!unlocked) return;
+    const handler = (e: KeyboardEvent) => {
+      // Alt+N: طلب جديد
+      if (e.altKey && e.key === "n") {
+        e.preventDefault();
+        window.open(customerLink, "_blank");
+      }
+      // Alt+R: تحديث
+      if (e.altKey && e.key === "r") {
+        e.preventDefault();
+        loadAll();
+      }
+      // Alt+1-5: التنقل بين التبويبات
+      const tabMap: Record<string, MerchantTab> = { "1": "home", "2": "orders", "3": "customers", "4": "expenses", "5": "analytics" };
+      if (e.altKey && tabMap[e.key]) {
+        e.preventDefault();
+        setActiveTab(tabMap[e.key]);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [unlocked, customerLink, loadAll]);
+
   async function handlePinSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pin || verifying) return;
@@ -702,6 +727,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
             </button>
             <ThemeToggle />
+            <div className="hidden lg:flex items-center gap-1 text-[10px] text-muted-foreground/50">
+              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px]">Alt+N</kbd>
+              <span>طلب</span>
+              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px] ml-1">Alt+R</kbd>
+              <span>تحديث</span>
+            </div>
             <a
               href={customerLink}
               target="_blank"
@@ -742,6 +773,42 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* ملخص اليوم */}
+              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-violet-500" />
+                      ملخص اليوم
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">الطلبات</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground">{todayOrdersList.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">الإيرادات</div>
+                        <div className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{formatDA(todayRevenue)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">مكتملة</div>
+                        <div className="text-lg font-bold tabular-nums text-violet-600 dark:text-violet-400">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center shrink-0">
+                    <div className="text-3xl mb-1">{todayOrdersList.length > 3 ? '🔥' : todayOrdersList.length > 0 ? '👍' : '📋'}</div>
+                    <div className="text-[11px] text-muted-foreground font-medium">
+                      {todayOrdersList.length > 3 ? 'يوم نشط!' : todayOrdersList.length > 0 ? 'بداية جيدة' : 'ابدأ يومك'}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* شريط ملخص اليوم */}
