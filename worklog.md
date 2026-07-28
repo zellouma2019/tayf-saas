@@ -2627,12 +2627,104 @@ Task: تحسينات بصرية + ميزات جديدة (Round 14)
 ## Commits
 - 6130096: feat(r14): weekly revenue chart, glass effects, enhanced animations, CSV export button
 
+---
+Task ID: qa-fix-round15
+Agent: Main Agent
+Task: تحسينات بصرية + ميزات جديدة (Round 15)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع البيانات الحية (38 طلب، 5 متاجر)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء، بيانات حية ظاهرة (38 طلب)
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ صفحة التتبع — تعرض واجهة البحث بدون أخطاء
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+- ✅ الميزات الجديدة تعمل: أفضل الزبائن، online-dot، gradient-border-animated
+
+## الميزات الجديدة
+
+### 1. شريط إجراءات جماعي عائم (Batch Status Update)
+- عند تحديد طلبات عبر checkboxes، يظهر شريط عائم من الأسفل
+- خلفية glass-card مع حدود ذهبية
+- dropdown لتغيير حالة المحددين + زر تطبيق + زر إلغاء
+- حركة slide-up مع framer-motion
+
+### 2. أفضل الزبائن (Top Customers)
+- بطاقة جديدة في لوحة نظرة عامة تُظهر أفضل 5 زبائن
+- ترتيب حسب عدد الطلبات مع rank badges ذهبية/فضية/برونزية
+- عرض عدد الطلبات وإجمالي الإنفاق لكل زبون
+
+### 3. طلبات مفضلة (Favorite Orders)
+- نجمة ⭐ بجانب كل طلب في لوحة تحكم التاجر
+- حفظ في localStorage (tayf-favorite-orders)
+- تصفية "المفضلة فقط" عبر Quick Filter Chips
+
+### 4. ملاحظات التاجر (Merchant Notes)
+- أيقونة 📝 بجانب كل طلب لفتح popover ملاحظة
+- حفظ في localStorage (tayf-order-notes)
+- نقطة ذهبية عند وجود ملاحظة
+
+### 5. فلاتر سريعة (Quick Filter Chips)
+- شريط: الكل / اليوم / هذا الأسبوع / المفضلة
+- الفعال بخلفية ذهبية
+
+### 6. تحديد الكل (Select All Checkbox)
+- checkbox في رأس جدول الطلبات
+- حالة indeterminate عند تحديد جزئي
+
+### 7. تحسينات الإشعارات
+- زر "تحديد الكل كمقروء" في dropdown الإشعارات
+- نقطة حمراء نابضة للإشعارات غير المقروءة
+- حالة فارغة محسّنة مع أيقونة
+
+## التحسينات البصرية (Round 15)
+
+### CSS جديدة (+130 سطر)
+- batch-action-bar — شريط عائم مع حركة slide-up
+- gradient-border-animated — حدود متدرجة متحركة (ذهبي↜بنفسجي)
+- online-dot — نقطة خضراء نابضة للوضع "متصل"
+- status-dot + 5 متغيرات — نقاط ملونة لحالات الطلبات
+- table-row-accent — حدود يمنى متدرجة عند التمرير
+- rank-badge + 4 متغيرات — شارات ترتيب ذهبية/فضية/برونزية
+- glass-float — glassmorphism للعناصر العائمة
+- notif-item + unread — عناصر إشعارات مع مؤشر غير مقروء
+- comparison-badge + 3 متغيرات — شارات مقارنة (صاعد/هابط/محايد)
+- table-row-even/odd — صفوف متناوبة
+
+### تحسينات المكونات
+- **شريط الترحيب**: animated gradient border + online indicator dot + comparison badge
+- **جدول آخر الطلبات**: status dots + hover accent + صفوف متناوبة
+- **صفحة تسجيل الدخول**: dot grid background + Enter hint + red glow on locked state
+- **dropdown الإشعارات**: wider + scroll custom + mark all read + empty state
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/globals.css` | +130 سطر: CSS Round 15 |
+| `src/components/app/admin-login-gate.tsx` | dot grid + Enter hint + red glow |
+| `src/components/app/admin-overview-tab.tsx` | أفضل الزبائن + online-dot + gradient-border + status dots + comparison badge |
+| `src/components/app/admin-panel.tsx` | batch action bar + select all + mark all read + improved notifications |
+| `src/components/app/merchant-dashboard.tsx` | favorites + notes + quick filter chips |
+| `src/components/app/order-details-row.tsx` | star toggle + note popover in table |
+
+## Commits
+- 55a91d7: feat(r15): batch status update, top customers, favorites, merchant notes, enhanced styling
+
 ## التوصيات للمرحلة القادمة
-1. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
 2. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
 3. إضافة ميزة سلة مشتريات متعددة الخدمات
 4. تحسين التجربة التجريبية (فترة التجربة + ترقية)
 5. اختبار إمكانية الوصول (accessibility audit)
 6. تحسين SEO: إضافة structured data (JSON-LD)
-7. إضافة ملاحظات داخلية على الطلب (Merchant notes UI)
-8. إضافة تصدير Excel محسّن
+7. إضافة تصدير Excel محسّن
+8. إضافة ملاحظات داخلية على الطلب (DB-based, not just localStorage)
+9. إضافة لوحة Kanban محسّنة للطلبات
+10. تحسين أداء التحميل (lazy loading + code splitting)
