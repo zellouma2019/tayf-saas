@@ -238,7 +238,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     setLoading(true);
     Promise.all([
       shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
-      shopApi("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
+      // Admin sees ALL orders — use fetch directly (not shopApi which filters by shopId)
+      fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
       .then(([s, o]) => {
         if (s) setStats(s);
