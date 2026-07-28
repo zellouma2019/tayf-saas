@@ -36,65 +36,39 @@ function getDirectClient(): Client {
 }
 
 /**
- * إنشاء جداول الأجزاء إن لم تكن موجودة
- * يُستخدم العميل المباشر (بدون مهلة) لضمان نجاح الإنشاء حتى مع cold start
+ * إنشاء جداول الأجزاء إن لم تكن موجودة — محسّن: 2 استعلامات فقط
+ * يُستخدم turso-lite مباشرة (بدون Prisma — أسرع وأخف)
  */
 let _tablesEnsured = false;
 async function ensureUploadTables() {
   if (_tablesEnsured) return;
-  
-  const createUploadTable = `CREATE TABLE IF NOT EXISTS FileUpload (
-    id TEXT PRIMARY KEY,
-    fileName TEXT NOT NULL,
-    fileSize INTEGER NOT NULL,
-    fileExt TEXT NOT NULL,
-    totalChunks INTEGER NOT NULL,
-    receivedCount INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'uploading',
-    assembledBase64 TEXT,
-    createdAt TEXT NOT NULL
-  )`;
-  const createChunkTable = `CREATE TABLE IF NOT EXISTS FileChunk (
-    id TEXT PRIMARY KEY,
-    uploadId TEXT NOT NULL,
-    chunkIndex INTEGER NOT NULL,
-    data TEXT NOT NULL,
-    createdAt TEXT NOT NULL
-  )`;
-  const createIndex = `CREATE INDEX IF NOT EXISTS idx_filechunk_uploadId ON FileChunk(uploadId)`;
 
-  // الاستراتيجية 1: العميل المباشر (بدون مهلة — مناسب لـ cold start)
   try {
-    const client = getDirectClient();
-    await client.execute({ sql: createUploadTable, args: [] });
-    await client.execute({ sql: createChunkTable, args: [] });
-    try { await client.execute({ sql: createIndex, args: [] }); } catch { /* index may exist */ }
-    _tablesEnsured = true;
-    return;
-  } catch (directErr) {
-    console.warn("[upload-chunk] Direct client failed, trying Prisma:", (directErr as Error).message);
-  }
-
-  // الاستراتيجية 2: Prisma fallback
-  try {
-    const { db } = await import("@/lib/db");
-    await db.$executeRawUnsafe(createUploadTable);
-    await db.$executeRawUnsafe(createChunkTable);
-    try { await db.$executeRawUnsafe(createIndex); } catch { /* index may exist */ }
-    _tablesEnsured = true;
-    return;
-  } catch (prismaErr) {
-    console.error("[upload-chunk] Prisma fallback also failed:", (prismaErr as Error).message);
-    // الاستراتيجية 3: turso-lite (مع مهلة أطول نسبياً)
+    await tursoExecute(`CREATE TABLE IF NOT EXISTS "FileUpload" (
+      id TEXT PRIMARY KEY,
+      "fileName" TEXT NOT NULL,
+      "fileSize" INTEGER NOT NULL,
+      "fileExt" TEXT NOT NULL,
+      "totalChunks" INTEGER NOT NULL,
+      "receivedCount" INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'uploading',
+      "assembledBase64" TEXT,
+      "createdAt" TEXT NOT NULL
+    )`);
+    await tursoExecute(`CREATE TABLE IF NOT EXISTS "FileChunk" (
+      id TEXT PRIMARY KEY,
+      "uploadId" TEXT NOT NULL,
+      "chunkIndex" INTEGER NOT NULL,
+      data TEXT NOT NULL,
+      "createdAt" TEXT NOT NULL
+    )`);
     try {
-      await tursoExecute(createUploadTable);
-      await tursoExecute(createChunkTable);
-      _tablesEnsured = true;
-      return;
-    } catch (tursoErr) {
-      console.error("[upload-chunk] All table creation strategies failed:", tursoErr);
-      throw new Error("فشل إنشاء جداول التخزين المؤقت — يرجى المحاولة لاحقاً");
-    }
+      await tursoExecute(`CREATE INDEX IF NOT EXISTS "idx_filechunk_uploadId" ON "FileChunk"("uploadId")`);
+    } catch { /* index may exist */ }
+    _tablesEnsured = true;
+  } catch (e) {
+    console.error("[upload-chunk] Table creation failed:", (e as Error).message);
+    throw new Error("فشل إنشاء جداول التخزين المؤقت — يرجى المحاولة لاحقاً");
   }
 }
 
@@ -129,122 +103,114 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ─── التحقق من وجود الجزء مسبقاً ───
-    const existingChunk = await tursoQuery<{ id: string }>(
-      `SELECT id FROM "FileChunk" WHERE "uploadId" = ? AND "chunkIndex" = ? LIMIT 1`,
-      [fileId, chunkIndex]
+    // ─── تحقق مما إذا كان الرفع مكتمل مسبقاً (إعادة المحاولة) ───
+    const existingUpload = await tursoQuery<{ status: string; receivedCount: string; totalChunks: string }>(
+      `SELECT status, "receivedCount", "totalChunks" FROM "FileUpload" WHERE id = ?`,
+      [fileId]
     );
-
-    if (existingChunk.length > 0) {
-      // الجزء موجود — أرجع التقدم الحالي
-      const upload = await tursoQuery<{ receivedCount: number; totalChunks: number; status: string }>(
-        `SELECT "receivedCount", "totalChunks", status FROM "FileUpload" WHERE id = ?`,
-        [fileId]
-      );
-      const u = upload[0];
-      const isComplete = u?.status === "complete";
+    if (existingUpload.length > 0 && existingUpload[0].status === "complete") {
       return NextResponse.json({
         chunkIndex,
-        received: Number(u?.receivedCount || 0),
-        total: Number(u?.totalChunks || totalChunks),
-        complete: isComplete,
-        storedFileName: isComplete ? fileId : undefined,
+        received: parseInt(existingUpload[0].receivedCount || "0", 10),
+        total: parseInt(existingUpload[0].totalChunks || String(totalChunks), 10),
+        complete: true,
+        storedFileName: fileId,
       });
     }
 
-    // ─── إنشاء جلسة الرفع إن لم تكن موجودة ───
-    const existingUpload = await tursoQuery<{ id: string }>(
-      `SELECT id FROM "FileUpload" WHERE id = ?`,
-      [fileId]
+    // ─── إنشاء جلسة الرفع إن لم تكن موجودة (استعلام واحد: INSERT OR IGNORE) ───
+    await tursoExecute(
+      `INSERT OR IGNORE INTO "FileUpload" (id, "fileName", "fileSize", "fileExt", "totalChunks", "receivedCount", status, "createdAt") VALUES (?, ?, ?, ?, ?, 0, 'uploading', ?)`,
+      [fileId, fileName, fileSize, fileExt, totalChunks, new Date().toISOString()]
     );
 
-    if (existingUpload.length === 0) {
-      await tursoExecute(
-        `INSERT INTO "FileUpload" (id, "fileName", "fileSize", "fileExt", "totalChunks", "receivedCount", status, "createdAt") VALUES (?, ?, ?, ?, ?, 0, 'uploading', ?)`,
-        [fileId, fileName, fileSize, fileExt, totalChunks, new Date().toISOString()]
-      );
-    }
-
-    // ─── قراءة الجزء وتحويله إلى base64 ───
+    // ─── حفظ الجزء (استعلام واحد: INSERT OR IGNORE — يتجاهل التكرار للموازية) ───
     const chunkBuffer = Buffer.from(await chunk.arrayBuffer());
     const chunkBase64 = chunkBuffer.toString("base64");
     const chunkId = `${fileId}_c${chunkIndex}`;
 
-    // ─── حفظ الجزء في قاعدة البيانات ───
-    await tursoExecute(
-      `INSERT INTO "FileChunk" (id, "uploadId", "chunkIndex", data, "createdAt") VALUES (?, ?, ?, ?, ?)`,
+    const insertResult = await tursoExecute(
+      `INSERT OR IGNORE INTO "FileChunk" (id, "uploadId", "chunkIndex", data, "createdAt") VALUES (?, ?, ?, ?, ?)`,
       [chunkId, fileId, chunkIndex, chunkBase64, new Date().toISOString()]
     );
 
-    // ─── تحديث عدد الأجزاء المستلمة ───
-    await tursoExecute(
-      `UPDATE "FileUpload" SET "receivedCount" = "receivedCount" + 1 WHERE id = ?`,
-      [fileId]
-    );
+    // ─── تحديث العداد فقط إذا كان الجزء جديداً ───
+    if (insertResult.rowsAffected > 0) {
+      // تحديث العداد (بشرط عدم تجاوز المجموع — يمنع التجاوز في الموازية)
+      await tursoExecute(
+        `UPDATE "FileUpload" SET "receivedCount" = "receivedCount" + 1 WHERE id = ? AND "receivedCount" < "totalChunks"`,
+        [fileId]
+      );
 
-    // ─── هل اكتمل الملف؟ ───
-    const updated = await tursoQuery<{ receivedCount: string; totalChunks: string; fileExt: string }>(
-      `SELECT "receivedCount", "totalChunks", "fileExt" FROM "FileUpload" WHERE id = ?`,
-      [fileId]
-    );
-    const upload = updated[0];
-    const receivedCount = parseInt(upload?.receivedCount || "0", 10);
-    const totalCount = parseInt(upload?.totalChunks || String(totalChunks), 10);
+      // ─── هل اكتمل الملف؟ ───
+      const upload = await tursoQuery<{ receivedCount: string; totalChunks: string; fileExt: string }>(
+        `SELECT "receivedCount", "totalChunks", "fileExt" FROM "FileUpload" WHERE id = ?`,
+        [fileId]
+      );
+      const receivedCount = parseInt(upload[0]?.receivedCount || "0", 10);
+      const totalCount = parseInt(upload[0]?.totalChunks || String(totalChunks), 10);
 
-    if (receivedCount >= totalCount) {
-      // ─── تجميع الأجزاء ───
-      const ext = upload?.fileExt || fileExt;
-      const mime = MIME_MAP[ext] || "application/octet-stream";
+      if (receivedCount >= totalCount) {
+        // ─── تجميع الأجزاء ───
+        const ext = upload[0]?.fileExt || fileExt;
+        const mime = MIME_MAP[ext] || "application/octet-stream";
 
-      try {
-        // استخدم العميل المباشر بدون مهلة للتجميع
-        const client = getDirectClient();
-        const chunkRows = await client.execute({
-          sql: `SELECT data FROM "FileChunk" WHERE "uploadId" = ? ORDER BY "chunkIndex"`,
-          args: [fileId] as never[],
-        });
+        try {
+          const client = getDirectClient();
+          const chunkRows = await client.execute({
+            sql: `SELECT data FROM "FileChunk" WHERE "uploadId" = ? ORDER BY "chunkIndex"`,
+            args: [fileId] as never[],
+          });
 
-        // دمج كل أجزاء base64 في سلسلة واحدة
-        const fullBase64 = chunkRows.rows.map(r => r.data as string).join("");
-        const dataUrl = `data:${mime};base64,${fullBase64}`;
+          const fullBase64 = chunkRows.rows.map(r => r.data as string).join("");
+          const dataUrl = `data:${mime};base64,${fullBase64}`;
 
-        // حفظ البيانات المجتمعة
-        await client.execute({
-          sql: `UPDATE "FileUpload" SET status = 'complete', "assembledBase64" = ? WHERE id = ?`,
-          args: [dataUrl, fileId] as never[],
-        });
+          await client.execute({
+            sql: `UPDATE "FileUpload" SET status = 'complete', "assembledBase64" = ? WHERE id = ?`,
+            args: [dataUrl, fileId] as never[],
+          });
 
-        // حذف الأجزاء الفردية (لم تعد ضرورية)
-        await tursoExecute(`DELETE FROM "FileChunk" WHERE "uploadId" = ?`, [fileId]);
+          // حذف الأجزاء الفردية
+          await tursoExecute(`DELETE FROM "FileChunk" WHERE "uploadId" = ?`, [fileId]);
 
-        // تنظيف الجلسات القديمة بشكل عشوائي (10% من المرات)
-        if (Math.random() < 0.1) {
-          cleanupOldUploads().catch(() => {});
+          // تنظيف الجلسات القديمة بشكل عشوائي (10% من المرات)
+          if (Math.random() < 0.1) {
+            cleanupOldUploads().catch(() => {});
+          }
+
+          return NextResponse.json({
+            storedFileName: fileId,
+            originalName: fileName,
+            size: fileSize,
+            type: ext,
+            complete: true,
+            received: totalCount,
+            total: totalCount,
+          });
+        } catch (assemblyErr) {
+          console.error("[upload-chunk] Assembly failed:", assemblyErr);
+          return NextResponse.json(
+            { error: "فشل تجميع الملف — يرجى المحاولة مرة أخرى" },
+            { status: 500 },
+          );
         }
-
-        return NextResponse.json({
-          storedFileName: fileId,
-          originalName: fileName,
-          size: fileSize,
-          type: ext,
-          complete: true,
-          received: totalCount,
-          total: totalCount,
-        });
-      } catch (assemblyErr) {
-        console.error("[upload-chunk] Assembly failed:", assemblyErr);
-        return NextResponse.json(
-          { error: "فشل تجميع الملف — يرجى المحاولة مرة أخرى" },
-          { status: 500 },
-        );
       }
     }
 
+    // ─── إرجاع التقدم الحالي ───
+    const current = await tursoQuery<{ receivedCount: string; totalChunks: string; status: string }>(
+      `SELECT "receivedCount", "totalChunks", status FROM "FileUpload" WHERE id = ?`,
+      [fileId]
+    );
+    const u = current[0];
+    const isComplete = u?.status === "complete";
+
     return NextResponse.json({
       chunkIndex,
-      received: receivedCount,
-      total: totalCount,
-      complete: false,
+      received: parseInt(u?.receivedCount || "0", 10),
+      total: parseInt(u?.totalChunks || String(totalChunks), 10),
+      complete: isComplete,
+      storedFileName: isComplete ? fileId : undefined,
     });
   } catch (e) {
     const errMsg = (e as Error)?.message || String(e);

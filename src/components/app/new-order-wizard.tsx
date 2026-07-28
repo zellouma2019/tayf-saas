@@ -60,11 +60,12 @@ import type { PrintOrderLite } from "@/lib/order-types";
 // FileAnalysisPanel replaced by UploadStep
 
 /* ═══════════════════════════════════════════════════════
-   Chunked Upload Helper
-   رفع الملفات الكبيرة (>4MB) على أجزاء لتجاوز حد Vercel
+   Chunked Upload Helper — موازٍ وسريع
+   رفع الملفات الكبيرة (>4MB) على أجزاء موازية لتجاوز حد Vercel
    ═══════════════════════════════════════════════════════ */
 
-const CHUNK_SIZE = 900 * 1024; // 900 KB لكل جزء (أقل من حد البوابة)
+const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB لكل جزء (أقل من حد 4.5MB للبوابة)
+const UPLOAD_CONCURRENCY = 3; // عدد الأجزاء المرفوعة بالتوازي
 
 async function uploadFileInChunks(
   file: File,
@@ -73,18 +74,27 @@ async function uploadFileInChunks(
 ): Promise<{ storedFileName: string }> {
   const fileId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  let completedChunks = 0;
+  let storedFileName = "";
 
-  onProgress(5);
+  onProgress(3);
 
-  for (let i = 0; i < totalChunks; i++) {
-    const start = i * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, file.size);
-    const chunk = file.slice(start, end);
+  // إنشاء قائمة المهام
+  const tasks = Array.from({ length: totalChunks }, (_, i) => ({
+    index: i,
+    start: i * CHUNK_SIZE,
+    end: Math.min((i + 1) * CHUNK_SIZE, file.size),
+  }));
 
+  // رفع جزء واحد
+  async function uploadOne(task: typeof tasks[0]): Promise<void> {
+    if (storedFileName) return; // تم الاكتمال — لا حاجة لمزيد
+
+    const chunk = file.slice(task.start, task.end);
     const formData = new FormData();
-    formData.append("chunk", chunk, `chunk_${i}`);
+    formData.append("chunk", chunk, `chunk_${task.index}`);
     formData.append("fileId", fileId);
-    formData.append("chunkIndex", i.toString());
+    formData.append("chunkIndex", task.index.toString());
     formData.append("totalChunks", totalChunks.toString());
     formData.append("fileName", file.name);
     formData.append("fileSize", file.size.toString());
@@ -97,21 +107,40 @@ async function uploadFileInChunks(
 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({ error: "فشل رفع الجزء" }));
-      throw new Error(errData.error || `فشل رفع الجزء ${i + 1} من ${totalChunks}`);
+      throw new Error(errData.error || `فشل رفع الجزء ${task.index + 1} من ${totalChunks}`);
     }
 
     const data = await res.json();
-
-    // تحديث التقدم: 5% + (نسبة الأجزاء المكتملة × 90%)
-    onProgress(5 + Math.round(((i + 1) / totalChunks) * 90));
+    completedChunks++;
+    onProgress(3 + Math.round((completedChunks / totalChunks) * 92));
 
     if (data.complete && data.storedFileName) {
+      storedFileName = data.storedFileName;
       onProgress(100);
-      return { storedFileName: data.storedFileName };
     }
   }
 
-  throw new Error("لم يكتمل رفع الملف — يرجى المحاولة مرة أخرى");
+  // تجمّع منتجين موازيين يأخذون مهام من القائمة
+  let nextIdx = 0;
+  async function worker() {
+    while (nextIdx < tasks.length && !storedFileName) {
+      const task = tasks[nextIdx++];
+      await uploadOne(task);
+    }
+  }
+
+  // تشغيل المنتجين الموازيين
+  const workers = Array.from(
+    { length: Math.min(UPLOAD_CONCURRENCY, totalChunks) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+
+  if (!storedFileName) {
+    throw new Error("لم يكتمل رفع الملف — يرجى المحاولة مرة أخرى");
+  }
+
+  return { storedFileName };
 }
 
 interface NewOrderWizardProps {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
+import { applyOfferCode } from "@/lib/offers";
 import fs from "fs";
 import path from "path";
 
@@ -287,10 +288,9 @@ export async function POST(req: NextRequest) {
       delivery: delivery.mode,
     });
 
-    // طبّق كود العرض على الخادم إن وُجد (تحقق صارم)
+    // طبّق كود العرض على الخادم إن وُجد (تحقق صارم — بدون import ديناميكي)
     if (appliedOfferCode && typeof appliedOfferCode === "string") {
       try {
-        const { applyOfferCode } = await import("@/lib/offers");
         const offerResult = applyOfferCode(
           appliedOfferCode,
           serviceType as ServiceType,
