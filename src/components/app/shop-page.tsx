@@ -3,7 +3,7 @@
 import { Suspense, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ShopProvider, useShop } from "lib/shop-context";
+import { ShopProvider, useShop } from "@/lib/shop-context";
 import { AppShell } from "@/components/app/app-shell";
 import { useAppStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
