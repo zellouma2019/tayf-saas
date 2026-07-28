@@ -2083,3 +2083,91 @@ ReferenceError: Cannot access 'tP' before initialization
 5. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
 6. تحسين أداء merchant dashboard على الجوال (تحميل أسرع)
 7. إضافة ميزة سلة مشتريات متعددة الخدمات
+
+---
+Task ID: qa-fix-round9
+Agent: Main Agent
+Task: ميزات جديدة + تحسينات بصرية + SEO + تقارير
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript (5/5 صفحات)
+- ✅ لوحة تحكم التاجر تعمل بشكل كامل
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata ديناميكية
+- ✅ تتبع الطلبات يعمل
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بدون أخطاء
+- ✅ تصميم الجوال يعمل بشكل جيد
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء
+- ✅ صفحة المتجر — كل الأزرار تعمل، SEO title يعرض اسم المتجر
+- ✅ لوحة تحكم التاجر — دخول PIN، كل التبويبات تعمل
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ✅ الوضع الداكن — بدون أخطاء بصرية
+- ✅ تصميم الجوال (375px) — كل العناصر ظاهرة
+
+## الميزات الجديدة
+
+### 1. SEO Metadata + og:image
+- صورة OG احترافية (1344×768) عند `/brand/og-image.png`
+- metadata شاملة في layout.tsx (title, description, keywords, OpenGraph, Twitter)
+- metadata ديناميكية لكل متجر: عنوان ووصف مخصص حسب اسم المتجر
+- title template: `{shopName} — طلب طباعة أونلاين | طيف`
+
+### 2. تقارير PDF للإحصائيات
+- API endpoint جديد: `/api/orders/report?shopId=xxx&from=DATE&to=DATE`
+- زر "تقرير يومي" في لوحة التحكم يفتح حوار اختيار الفترة
+- 4 أزرار سريعة: أمس، آخر 7 أيام، آخر 30 يوم
+- انتقائي التاريخ بحواليندار منسق عربي
+- التقرير يُفتح في نافذة جديدة مع:
+  - 4 بطاقات إحصائيات (الطلبات، الإيرادات، الربح، التكاليف)
+  - رسم بياني لتوزيع الحالات
+  - رسم بياني للإيرادات اليومية
+  - جدول أعلى 10 خدمات
+  - زر طباعة للحفظ كـ PDF
+
+### 3. تحسينات الوضع الداكن
+- `admin-panel.tsx`: ألوان أيقونات وبطاقات في dark mode
+- `track-page-client.tsx`: خلفيات بطاقات البحث في dark mode
+- إضافة `html.dark { color-scheme: dark }` في globals.css
+
+### 4. تحسينات بصرية
+- ShopLoader محسّن: مربع ذهبي متحرك + skeleton shimmer
+- micro-interactions: `active:scale-[0.97]` على أزرار الدخول
+- `.skeleton-shimmer` CSS utility للتحميل الأنيق
+- `@keyframes press` للحركات الدقيقة
+
+### 5. تحسينات الجوال
+- بطاقات إحصائيات الإدارة: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `public/brand/og-image.png` | جديد: صورة OG احترافية |
+| `src/app/layout.tsx` | SEO metadata شاملة |
+| `src/app/s/[slug]/page.tsx` | metadata ديناميكية لكل متجر |
+| `src/lib/pdf-stats-report.ts` | جديد: مولّد تقرير HTML |
+| `src/app/api/orders/report/route.ts` | جديد: API التقرير |
+| `src/components/app/merchant-dashboard.tsx` | حوار التقرير مع التاريخ |
+| `src/components/app/shop-page.tsx` | إصلاح import + ShopLoader محسّن |
+| `src/components/app/admin-panel.tsx` | dark mode + grid جوال |
+| `src/components/app/track-page-client.tsx` | dark mode |
+| `src/components/app/admin-login-gate.tsx` | micro-interaction |
+| `src/app/globals.css` | animations + dark color-scheme |
+
+## إصلاح البناء
+- إصلاح مسار import مكسور: `"lib/shop-context"` → `"@/lib/shop-context"` في shop-page.tsx
+
+## Commits
+- 2a31290: feat: order status notes, enhanced styling, dialog fixes
+- e320611: feat: dark mode polish, skeletons, micro-interactions, mobile fixes
+- 720256b: fix: restore @/ import path in shop-page.tsx
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مراقبة Turso DB (أولوية عالية)
+2. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+3. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+4. تحسين أداء merchant dashboard على الجوال (تحميل أسرع)
+5. إضافة ميزة سلة مشتريات متعددة الخدمات
+6. إضافة إشعارات صوتية عند وصول طلب جديد
+7. تحسين التجربة التجريبية (فترة التجربة + ترقية)
