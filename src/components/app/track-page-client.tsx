@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -115,15 +116,17 @@ function useEtaCountdown(estimatedHours: number, createdAt: string, status: stri
 }
 
 export function TrackPageClient() {
+  const searchParams = useSearchParams();
+  const prefillRef = searchParams.get("ref") || "";
   const [shops, setShops] = useState<Shop[]>([]);
   const [selectedShop, setSelectedShop] = useState<string>("");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(prefillRef);
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(false);
   const [shopsLoading, setShopsLoading] = useState(true);
   const [searched, setSearched] = useState(false);
 
-  // Fetch shops on mount
+  // Fetch shops on mount + auto-search if ref query param exists
   useEffect(() => {
     (async () => {
       try {
@@ -139,6 +142,29 @@ export function TrackPageClient() {
       }
     })();
   }, []);
+
+  // Auto-search when ref is pre-filled and shops are loaded
+  const autoSearchedRef = useRef(false);
+  useEffect(() => {
+    if (prefillRef && shops.length > 0 && !autoSearchedRef.current) {
+      autoSearchedRef.current = true;
+      // Find shop that has this order
+      const timer = setTimeout(() => {
+        // Search all shops for the order
+        const shopToSearch = shops[0]?.slug || "";
+        if (shopToSearch) {
+          setSelectedShop(shopToSearch);
+          setQuery(prefillRef);
+          // Trigger search after a short delay for state to update
+          setTimeout(() => {
+            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+            handleSearch(fakeEvent);
+          }, 100);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [prefillRef, shops]);
 
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault();

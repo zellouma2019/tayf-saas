@@ -341,10 +341,11 @@ export default function SuperAdminPage() {
                     <TableHead className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wide cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("total")}><span className="inline-flex items-center gap-1">المجموع <SortIcon field="total" /></span></TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wide">الحالة</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wide cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("date")}><span className="inline-flex items-center gap-1">التاريخ <SortIcon field="date" /></span></TableHead>
+                    <TableHead className="text-center text-xs font-medium text-muted-foreground uppercase tracking-wide w-10"></TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {filteredOrders.slice(0, 100).map((o) => (
-                      <TableRow key={o.id} className="cursor-pointer hover:bg-background transition-colors border-b border-border" onClick={() => setSelectedOrder(o)}>
+                      <TableRow key={o.id} className="cursor-pointer hover:bg-background transition-colors border-b border-border group" onClick={() => setSelectedOrder(o)}>
                         <TableCell className="font-mono text-xs font-bold text-foreground">{o.reference}</TableCell>
                         <TableCell className="text-xs"><span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">{o.shopName || "—"}</span></TableCell>
                         <TableCell className="text-sm text-foreground">{SERVICE_EMOJI[o.serviceType] || ""} {o.serviceName}</TableCell>
@@ -352,6 +353,15 @@ export default function SuperAdminPage() {
                         <TableCell className="text-sm font-bold text-foreground">{formatDA(o.total)}</TableCell>
                         <TableCell><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span></TableCell>
                         <TableCell className="text-sm text-muted-foreground/70">{formatDateTimeAr(o.createdAt)}</TableCell>
+                        <TableCell className="text-center">
+                          <button
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                            title="نسخ رابط التتبع"
+                            onClick={(e) => { e.stopPropagation(); robustCopy(`${window.location.origin}/track?ref=${o.reference}`, "تم نسخ رابط التتبع", "شاركه مع العميل لمتابعة طلبه"); }}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                          </button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -361,10 +371,10 @@ export default function SuperAdminPage() {
               {/* بطاقات - جوال */}
               <div className="md:hidden space-y-3">
                 {filteredOrders.slice(0, 50).map((o) => (
-                  <div key={o.id} className={cn("cursor-pointer bg-card rounded-xl border border-border shadow-sm p-4 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow border-r-[3px]", STATUS_BORDER_COLORS[o.status] || "")} onClick={() => setSelectedOrder(o)}>
+                  <div key={o.id} className={cn("cursor-pointer bg-card rounded-xl border border-border shadow-sm p-4 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow border-r-[3px] group", STATUS_BORDER_COLORS[o.status] || "")} onClick={() => setSelectedOrder(o)}>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0"><div className="flex items-center gap-2"><span className="font-mono text-xs font-bold text-foreground">{o.reference}</span><span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">{o.shopName}</span></div><div className="text-xs text-muted-foreground/70 mt-1">{SERVICE_EMOJI[o.serviceType] || ""} {o.serviceName} · {o.customer.name}</div></div>
-                      <div className="text-left shrink-0"><div className="text-sm font-bold text-foreground">{formatDA(o.total)}</div><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span></div>
+                      <div className="text-left shrink-0 flex items-center gap-1.5"><div className="text-sm font-bold text-foreground">{formatDA(o.total)}</div><span className={`text-xs px-2.5 py-1 rounded-lg ${STATUS_COLORS[o.status] || ""}`}>{STATUS_META[o.status]?.label || o.status}</span><button className="p-1 rounded-lg hover:bg-muted transition-colors opacity-0 group-hover:opacity-100" title="نسخ رابط التتبع" onClick={(e) => { e.stopPropagation(); robustCopy(`${window.location.origin}/track?ref=${o.reference}`, "تم نسخ رابط التتبع", "شاركه مع العميل"); }}><ExternalLink className="h-3.5 w-3.5 text-muted-foreground" /></button></div>
                     </div>
                   </div>
                 ))}
