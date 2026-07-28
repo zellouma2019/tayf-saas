@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     const fileSize = parseInt(formData.get("fileSize") as string, 10);
     const fileExt = formData.get("fileExt") as string | null;
 
-    if (!file || fileId == null || isNaN(chunkIndex) || isNaN(totalChunks) || !fileName || isNaN(fileSize) || !fileExt) {
+    if (!chunk || fileId == null || isNaN(chunkIndex) || isNaN(totalChunks) || !fileName || isNaN(fileSize) || !fileExt) {
       return NextResponse.json({ error: "بيانات غير مكتملة" }, { status: 400 });
     }
 
