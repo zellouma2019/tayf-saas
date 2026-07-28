@@ -1995,3 +1995,91 @@ Task: QA + 5 ميزات جديدة + تحسينات بصرية
 6. إضافة ملاحظات داخلية عند تغيير حالة الطلب
 7. تحسين أداء merchant dashboard على الجوال (تحميل أسرع)
 8. إضافة ميزة سلة مشتريات متعددة الخدمات
+
+---
+Task ID: qa-fix-round8
+Agent: Main Agent
+Task: إصلاح حرج + ميزات جديدة + تحسينات بصرية
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة تحكم التاجر تعمل بشكل كامل (بعد إصلاح TDZ)
+- ✅ صفحة المتجر للزبون تعمل بشكل جيد مع تحسينات بصرية
+- ✅ تتبع الطلبات يعمل
+- ✅ لا أخطاء في البناء
+
+## الإصلاح الحرج: خطأ TDZ في لوحة تحكم التاجر
+
+### المشكلة
+صفحة `/s/[slug]?admin=1` كانت تعرض "Application error: a client-side exception has occurred" بسبب خطأ:
+```
+ReferenceError: Cannot access 'tP' before initialization
+```
+
+### السبب الجذري
+في `merchant-dashboard.tsx`، المتغير `customerLink` كان معرّفاً بعد `return !unlocked` (سطر 636)، لكن `useEffect` لاختصارات لوحة المفاتيح (سطر 493) كان ي référence `customerLink` في مصفوفة التبعية `[unlocked, customerLink, loadAll]`. بسبب ترتيب الكود، تم الوصول إلى المتغير قبل تعريفه (TDZ).
+
+### الحل
+- نقل تعريف `customerLink` قبل `useEffect` اختصارات لوحة المفاتيح
+- إضافة Error Boundary حول MerchantDashboard لمنع تعطل الصفحة بالكامل
+- تحويل `motion` import إلى dynamic import لتقليل حجم الحزمة
+
+### الملفات المُعدلة للإصلاح
+| الملف | التغيير |
+|------|---------|
+| `src/components/app/shop-page.tsx` | إضافة MerchantErrorBoundary + تنظيف عرض الأخطاء |
+| `src/components/app/merchant-dashboard.tsx` | نقل customerLink قبل useEffect + lazy MotionDiv |
+| `next.config.ts` | تعطيل/إعادة تفعيل optimizePackageImports |
+
+## الميزات الجديدة
+
+### 1. ملاحظات حالة الطلب
+- عند تغيير حالة الطلب، يظهر حوار مع:
+  - مؤشر انتقال الحالة (قديم → جديد)
+  - حقل نص اختياري للملاحظات
+  - أزرار تأكيد/إلغاء
+- الملاحظة تظهر في:
+  - جدول الطلبات (شارة بنفسجية)
+  - تفاصيل الطلب (قسم "ملاحظة الحالة")
+  - عرض الجوال (بطاقة ملاحظة)
+
+### 2. تحسينات بصرية — صفحة المتجر
+- خلفية نقاط دقيقة في منطقة البطل
+- خط تدرج محسّن تحت الرأس
+- بطاقات الخدمات مع تأثير رفع + توهج عند التمرير
+- أقسام "روابط سريعة" و"خدماتنا" مع شريط ملون
+- شاشة المقدمة: جزيئات أكثر، توهج الشعار، انتقالات سلسة
+
+### 3. تحسينات بصرية — لوحة التحكم
+- بطاقات الإحصائيات مع توهج ذهبي عند التمرير
+- الحالة النشطة في الشريط الجانبي مع تأثير توهج
+- انتقالات سلسة بين التبويبات (AnimatePresence + motion.div)
+- حالة الفراغ: جزيئات عائمة ذهبية + رسوم متحركة متدرجة
+
+### 4. إصلاح تحذيرات DialogContent
+إضافة `aria-describedby={undefined}` إلى DialogContent في:
+- form-filler, admin-gate, premium-feature, offer-popup
+- admin-shop-card, admin-create-shop, merchant-customers, admin-customers
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ صفحة المتجر تعمل بدون أخطاء
+- ✅ لوحة الإدارة تعمل بدون أخطاء
+- ✅ لوحة تحكم التاجر تعمل بدون أخطاء (PIN + لوحة كاملة)
+- ✅ صفحة التتبع تعمل بدون أخطاء
+- ✅ لا أخطاء JavaScript في أي صفحة
+
+## Commits
+- 4d95e4c: fix: add error boundary to merchant dashboard
+- d8dc0ee: fix: resolve TDZ error (disable optimizePackageImports)
+- e5ca41f: fix: disable kanban + show stack trace
+- f77d341: fix: CRITICAL — move customerLink before useEffect
+- 2a31290: feat: order status notes, enhanced styling, dialog fixes
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مراقبة Turso DB (أولوية عالية)
+2. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+3. إضافة og:image للسوشيال ميديا
+4. إضافة تقارير PDF للإحصائيات
+5. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+6. تحسين أداء merchant dashboard على الجوال (تحميل أسرع)
+7. إضافة ميزة سلة مشتريات متعددة الخدمات
