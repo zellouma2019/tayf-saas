@@ -29,10 +29,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ orders: [] });
     }
 
-    // بناء WHERE مباشرة بـ SQL
+    // بناء WHERE مباشرة بـ SQL — تحسين الأداء بتجنب LIKE مع %
+    // إذا كان البحث يطابق نمط المرجع (A-XXXXXX) نستخدم = بدلاً من LIKE
+    // هذا يستخدم الفهرس الفريد على reference ويمنع مسح الجدول الكامل
     const whereParts: string[] = [];
-    const args: unknown[] = [`%${q}%`, `%${q}%`];
-    whereParts.push(`(o.reference LIKE ? OR o.customer LIKE ?)`);
+    const args: unknown[] = [];
+    const refPattern = /^A-\d{4,6}$/;
+    const phonePattern = /^0[5-7]\d{8}$/;
+
+    if (refPattern.test(q)) {
+      // مرجع بالضبط — يستخدم الفهرس الفريد (فوري)
+      args.push(q);
+      whereParts.push(`o.reference = ?`);
+    } else if (phonePattern.test(q)) {
+      // رقم هاتف جزائري — بحث في JSON customer
+      args.push(`%${q}%`);
+      whereParts.push(`o.customer LIKE ?`);
+    } else {
+      // بحث عام — LIKE على reference و customer (أبطأ لكن شامل)
+      args.push(`${q}%`, `%${q}%`);
+      whereParts.push(`(o.reference LIKE ? OR o.customer LIKE ?)`);
+    }
 
     if (shopId) {
       args.push(shopId);

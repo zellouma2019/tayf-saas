@@ -14,9 +14,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "shopId is required" }, { status: 400 });
     }
 
-    // يدعم الطلبات القديمة (shopId = null)
+    // تحسين: استخدام shopId = ? مباشرة (يستخدم الفهرس) بدلاً من OR IS NULL
     const rows = await tursoQuery<{ cnt: unknown }>(
-      `SELECT COUNT(*) as cnt FROM "PrintOrder" WHERE status = ? AND ("shopId" = ? OR "shopId" IS NULL)`,
+      `SELECT COUNT(*) as cnt FROM "PrintOrder" WHERE status = ? AND "shopId" = ?`,
       ["pending", shopId]
     );
 

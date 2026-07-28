@@ -140,13 +140,21 @@ export async function GET(req: NextRequest) {
       whereParts.push(`o.customer LIKE ?`);
     }
     if (search) {
-      args.push(`%${search}%`, `%${search}%`);
-      whereParts.push(`(o.reference LIKE ? OR o.customer LIKE ?)`);
+      // تحسين: إذا كان البحث يطابق نمط المرجع نستخدم = (فهرس فريد)
+      const refPattern = /^A-\d{4,6}$/;
+      if (refPattern.test(search)) {
+        args.push(search);
+        whereParts.push(`o.reference = ?`);
+      } else {
+        args.push(`${search}%`, `%${search}%`);
+        whereParts.push(`(o.reference LIKE ? OR o.customer LIKE ?)`);
+      }
     }
-    // دعم shopId مع الطلبات القديمة (shopId = null)
+    // دعم shopId — تحسين: استخدام = مباشرة (يستخدم الفهرس) بدلاً من OR IS NULL
+    // الطلبات القديمة بدون shopId ستُظهر في لوحة الإدارة العامة فقط
     if (shopId) {
       args.push(shopId);
-      whereParts.push(`(o."shopId" = ? OR o."shopId" IS NULL)`);
+      whereParts.push(`o."shopId" = ?`);
     }
 
     const whereClause = whereParts.length > 0
