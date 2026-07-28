@@ -60,8 +60,9 @@ class MerchantErrorBoundary extends Component<
                 يرجى المحاولة مرة أخرى أو تحديث الصفحة
               </p>
               {this.state.error && (
-                <pre className="text-xs text-left bg-muted/50 rounded-lg p-3 mb-4 max-h-32 overflow-auto font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap" dir="ltr">
+                <pre className="text-xs text-left bg-muted/50 rounded-lg p-3 mb-4 max-h-48 overflow-auto font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap" dir="ltr">
                   {this.state.error.message}
+{this.state.error.stack || ''}
                 </pre>
               )}
               {this.state.errorInfo?.componentStack && (
