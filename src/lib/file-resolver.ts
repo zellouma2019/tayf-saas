@@ -3,7 +3,7 @@
  *
  * الصيغ المدعومة:
  * 1. data:...;base64,...     → base64 data URL (تمرير مباشر — ملفات صغيرة ≤ 500KB)
- * 2. __cdn__:https://...     → ملف مرفوع عبر Uploadthing CDN (جلب مباشر)
+ * 2. __cdn__:https://...     → ملف مرفوع عبر Uploadthing CDN (إعادة توجيه مباشرة)
  * 3. __chunked__:<id>        → ملف مخزن كأجزاء في قاعدة البيانات (legacy fallback)
  * 4. file_...                → مسار ملف على القرص (التطوير المحلي فقط)
  *
@@ -48,7 +48,19 @@ async function directQuery<T = Record<string, unknown>>(sql: string, args: unkno
 }
 
 /**
+ * استخراج رابط CDN مباشر من بيانات الملف
+ * يُستخدم لإنشاء إعادة توجيه HTTP 302 إلى CDN بدلاً من جلب البيانات عبر الخادم
+ */
+export function extractCdnUrl(fileData: string | null | undefined): string | null {
+  if (!fileData || !fileData.startsWith("__cdn__:")) return null;
+  return fileData.replace("__cdn__:", "");
+}
+
+/**
  * حلّ بيانات الملف من أي صيغة إلى data URL كامل (أو null)
+ *
+ * ملاحظة: للملفات المرفوعة عبر CDN (__cdn__:)، يُفضل استخدام extractCdnUrl
+ * مع إعادة التوجيه بدلاً من هذه الدالة لتجنب تمرير البيانات عبر الخادم
  */
 export async function resolveFileData(fileData: string | null | undefined): Promise<string | null> {
   if (!fileData) return null;
@@ -57,6 +69,7 @@ export async function resolveFileData(fileData: string | null | undefined): Prom
   if (fileData.startsWith("data:")) return fileData;
 
   // 2. ملف مرفوع عبر Uploadthing CDN — جلب مباشر من CDN
+  // (للاستخدام فقط عندما لا يمكن إعادة التوجيه — مثل verify-print أو API internal)
   if (fileData.startsWith("__cdn__:")) {
     const cdnUrl = fileData.replace("__cdn__:", "");
     try {

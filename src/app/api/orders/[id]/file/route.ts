@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery } from "@/lib/turso-lite";
-import { resolveFileData } from "@/lib/file-resolver";
+import { resolveFileData, extractCdnUrl } from "@/lib/file-resolver";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
 /// تنزيل الملف المرفوع للطلب — عبر turso-lite (أسرع من Prisma على Vercel)
-/// يدعم: data URL, ملفات مجزأة (__chunked__), ملفات على القرص (file_)
+/// يدعم: data URL, ملفات مجزأة (__chunked__), ملفات CDN (__cdn__), ملفات على القرص (file_)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -32,6 +32,16 @@ export async function GET(
     }
     if (!order.fileData) {
       return NextResponse.json({ error: "لا يوجد ملف لهذا الطلب" }, { status: 404 });
+    }
+
+    // 🚀 ملف CDN — إعادة توجيه مباشرة (لا يمر عبر الخادم!)
+    const cdnUrl = extractCdnUrl(order.fileData);
+    if (cdnUrl) {
+      const safeName = encodeURIComponent(order.fileName || "download");
+      // إضافة معلمة download لتنزيل مباشر بدلاً من العرض
+      const separator = cdnUrl.includes("?") ? "&" : "?";
+      const downloadUrl = `${cdnUrl}${separator}download=1`;
+      return NextResponse.redirect(downloadUrl);
     }
 
     // حلّ بيانات الملف (يدعم data URL, __chunked__, file_)

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery } from "@/lib/turso-lite";
-import { resolveFileData } from "@/lib/file-resolver";
+import { resolveFileData, extractCdnUrl } from "@/lib/file-resolver";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
 /// عرض الملف المرفوع للطلب (inline — للمعاينة في المتصفح)
-/// يدعم: data URL, ملفات مجزأة (__chunked__), ملفات على القرص (file_)
+/// يدعم: data URL, ملفات مجزأة (__chunked__), ملفات CDN (__cdn__), ملفات على القرص (file_)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -31,6 +31,12 @@ export async function GET(
     }
     if (!order.fileData) {
       return NextResponse.json({ error: "لا يوجد ملف لهذا الطلب" }, { status: 404 });
+    }
+
+    // 🚀 ملف CDN — إعادة توجيه مباشرة (لا يمر عبر الخادم!)
+    const cdnUrl = extractCdnUrl(order.fileData);
+    if (cdnUrl) {
+      return NextResponse.redirect(cdnUrl);
     }
 
     // حلّ بيانات الملف (يدعم data URL, __chunked__, file_)
