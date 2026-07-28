@@ -288,15 +288,24 @@ export default function SuperAdminPage() {
             <div className="flex items-center gap-2 shrink-0">
               <ThemeToggle />
               <button onClick={() => setCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
-              <button onClick={() => loadAll(false)} className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
+              <button onClick={() => loadAll(false)} className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors relative"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
+              {stats?.todayOrders && stats.todayOrders > 0 && (
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                  </span>
+                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 tabular-nums">{stats.todayOrders} جديد اليوم</span>
+                </div>
+              )}
             </div>
           </div>
         </header>
 
         {loading ? (
           <div className="p-4 sm:p-6 space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => (<div key={i} className="animate-pulse bg-muted rounded-xl p-5"><div className="flex items-start justify-between"><div className="space-y-2.5 flex-1"><div className="h-8 bg-muted rounded-lg w-24" /><div className="h-3 bg-muted/40 rounded w-28" /></div><div className="w-11 h-11 rounded-xl bg-muted" /></div></div>))}</div>
-            <div className="animate-pulse bg-muted rounded-xl p-6"><div className="h-5 bg-muted rounded-lg w-48 mb-5" /><div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="h-12 bg-muted/30 rounded-lg" />))}</div></div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => (<div key={i} className="skeleton-soft rounded-xl p-5"><div className="flex items-start justify-between"><div className="space-y-2.5 flex-1"><div className="h-8 bg-muted/50 rounded-lg w-24" /><div className="h-3 bg-muted/30 rounded w-28" /></div><div className="w-11 h-11 rounded-xl bg-muted/50" /></div></div>))}</div>
+            <div className="skeleton-soft rounded-xl p-6"><div className="h-5 bg-muted/50 rounded-lg w-48 mb-5" /><div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="h-12 bg-muted/20 rounded-lg" />))}</div></div>
           </div>
         ) : (
         <div className="p-4 sm:p-6 space-y-6">
