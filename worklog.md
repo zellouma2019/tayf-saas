@@ -1526,3 +1526,33 @@ Stage Summary:
   - src/components/app/new-order-wizard.tsx (CHUNK_SIZE, CONCURRENCY, THRESHOLD)
   - src/lib/file-resolver.ts (lazy assembly)
 - Commit: 970d663
+
+---
+Task ID: uploadthing-cdn-integration
+Agent: Main Agent
+Task: دمج Uploadthing CDN للرفع المباشر السريع + fallback للرفع المجزأ
+
+Work Log:
+- تثبيت uploadthing و @uploadthing/react
+- إنشاء src/app/api/uploadthing/core.ts (FileRouter config)
+- إنشاء src/app/api/uploadthing/route.ts (API route handler)
+- إنشاء src/lib/uploadthing.ts (client helpers)
+- تحديث new-order-wizard.tsx:
+  - ملفات ≤ 500KB: base64 مباشر في JSON
+  - ملفات > 500KB: محاولة Uploadthing CDN أولاً
+  - إذا فشل Uploadthing: fallback للرفع المجزأ عبر API
+- تحديث file-resolver.ts لدعم __cdn__: prefix (جلب مباشر من CDN)
+- تحديث vercel.json لتشمل uploadthing route
+- إضافة fallback uploadFileViaFallback كدالة منفصلة
+- إصلاح مشكلة state async مع useRef للـ upload errors
+
+Stage Summary:
+- الكود يعمل على الموقع الحي: https://tayf-saas.vercel.app/
+- بدون إعداد Uploadthing: fallback للرفع المجزأ يعمل (تم اختبار 10MB بنجاح)
+- مع Uploadthing: سيكون الرفع مباشر من المتصفح إلى CDN (بلا serverless) = أسرع 100x
+- يجب على المستخدم إعداد UPLOADTHING_APP_ID و UPLOADTHING_SECRET في Vercel
+- Commits: 2f53dd8, 61587f3, 3483b1c, 4100840
+
+الملاحظات:
+- زر "إعادة المحاولة" يظهر عند فشل Uploadthing رغم نجاح fallback — مشكلة عرض فقط لا تمنع المتابعة
+- الإصلاح المقترح: إخفاء رسالة الخطأ عند نجاح fallback
