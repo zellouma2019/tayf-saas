@@ -82,6 +82,7 @@ export interface PrintOrderLite {
   cost: number;
   tags: string[];
   adminNotes: string | null;
+  statusNotes: string | null;
   createdAt: string;
   updatedAt: string;
   readyAt: string | null;

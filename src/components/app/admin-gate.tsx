@@ -141,7 +141,7 @@ export function AdminGate({ open, onClose, onSuccess }: AdminGateProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir="rtl" onInteractOutside={(e) => e.preventDefault()} aria-describedby={undefined}>
         <DialogTitle className="sr-only">كود الدخول للإدارة</DialogTitle>
         <div className="p-8 text-center">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-neutral-900 flex items-center justify-center mb-4">

@@ -738,6 +738,18 @@ export function MerchantOrderDetail({
             </div>
           </section>
 
+          {/* ===== ملاحظات تغيير الحالة ===== */}
+          {order.statusNotes && (
+          <section className="bg-card border border-violet-200/50 dark:border-violet-800/30 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-violet-400 pr-3 mb-3">
+              ملاحظة الحالة
+            </h3>
+            <div className="rounded-lg bg-violet-50 dark:bg-violet-950/20 border border-violet-200/40 dark:border-violet-800/30 p-3">
+              <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">{order.statusNotes}</p>
+            </div>
+          </section>
+          )}
+
           {/* ===== ملاحظات إدارية ===== */}
           <section className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">

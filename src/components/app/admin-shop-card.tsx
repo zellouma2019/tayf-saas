@@ -516,7 +516,7 @@ function EditShopDialog({ shop, open, onClose, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-4 sm:p-6" dir="rtl">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-4 sm:p-6" dir="rtl" aria-describedby={undefined}>
         <DialogTitle className="flex items-center justify-between">
           <span className="text-foreground">إعدادات متجر &quot;{shop.name}&quot;</span>
           <Badge variant="outline" className={`text-xs font-semibold rounded-lg ${STATUS_BADGE_STYLE[trialStatus.type]}`}>

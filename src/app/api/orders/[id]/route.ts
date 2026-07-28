@@ -44,6 +44,8 @@ export async function GET(
       delivery: safeJson(String(order.delivery || "{}"), {}),
       pricing: safeJson(String(order.pricing || "{}"), {}),
       smartAnalysis: order.smartAnalysis ? safeJson(String(order.smartAnalysis), null) : null,
+      statusNotes: order.statusNotes || null,
+      adminNotes: order.adminNotes || null,
     });
   } catch (e) {
     console.error('[orders/[id]/GET]', e);
@@ -218,10 +220,16 @@ export async function PUT(
     }
 
     // ===== تغيير الحالة =====
-    const { status } = body;
+    const { status, statusNotes } = body;
     const oldStatus = String(existing.status);
     const setClauses: string[] = [`status = ?`];
     const sqlArgs: unknown[] = [status];
+
+    // Save status notes if provided
+    if (statusNotes !== undefined && statusNotes !== null && statusNotes !== '') {
+      setClauses.push(`"statusNotes" = ?`);
+      sqlArgs.push(statusNotes);
+    }
 
     if (status === "printing" && !existing.startedPrintingAt) {
       setClauses.push(`"startedPrintingAt" = ?`);
@@ -259,7 +267,9 @@ export async function PUT(
       field: "status",
       oldValue: oldStatus,
       newValue: status,
-      details: `${existing.reference} → ${STATUS_META[status]?.label || status}`,
+      details: statusNotes
+        ? `${existing.reference} → ${STATUS_META[status]?.label || status} (${statusNotes})`
+        : `${existing.reference} → ${STATUS_META[status]?.label || status}`,
     });
 
     // استثناء fileData و smartAnalysis من استجابة تغيير الحالة

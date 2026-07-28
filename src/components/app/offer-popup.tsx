@@ -53,7 +53,7 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden border-0" dir="rtl">
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden border-0" dir="rtl" aria-describedby={undefined}>
         <DialogTitle className="sr-only">عرض خاص لك</DialogTitle>
 
         {/* ===== الخلفية المتدرجة + الكونفيتي ===== */}

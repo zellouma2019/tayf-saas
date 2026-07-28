@@ -96,7 +96,7 @@ export function PremiumLockDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir="rtl">
+      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir="rtl" aria-describedby={undefined}>
         <DialogTitle className="sr-only">ميزة مدفوعة</DialogTitle>
 
         {/* رأس ذهبي */}

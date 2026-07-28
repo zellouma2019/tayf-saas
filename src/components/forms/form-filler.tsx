@@ -181,7 +181,7 @@ export function FormFiller({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[92vh] max-h-[92vh] p-0 gap-0 flex flex-col overflow-hidden" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-4xl h-[92vh] max-h-[92vh] p-0 gap-0 flex flex-col overflow-hidden" dir="rtl" onInteractOutside={(e) => e.preventDefault()} aria-describedby={undefined}>
         <DialogHeader className="px-6 py-4 border-b bg-primary/5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">

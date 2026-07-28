@@ -103,7 +103,7 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-md rounded-xl shadow-2xl p-0 gap-0 overflow-hidden bg-background" dir="rtl">
+      <DialogContent className="max-w-md rounded-xl shadow-2xl p-0 gap-0 overflow-hidden bg-background" dir="rtl" aria-describedby={undefined}>
         <VisuallyHidden><DialogTitle>إنشاء متجر جديد</DialogTitle></VisuallyHidden>
 
         {showSuccess ? (

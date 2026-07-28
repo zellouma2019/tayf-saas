@@ -23,6 +23,14 @@ const DOT_POSITIONS = [
   { top: 88, left: 10 },
   { top: 90, left: 78 },
   { top: 5, left: 35 },
+  { top: 20, left: 42 },
+  { top: 40, left: 5 },
+  { top: 50, left: 78 },
+  { top: 68, left: 50 },
+  { top: 82, left: 30 },
+  { top: 10, left: 70 },
+  { top: 30, left: 95 },
+  { top: 48, left: 55 },
 ];
 
 export function Intro({ onFinish }: IntroProps) {
@@ -66,12 +74,12 @@ export function Intro({ onFinish }: IntroProps) {
   return (
     <div
       className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-700 ${
-        phase >= 4 ? "opacity-0 scale-105 pointer-events-none" : "opacity-100"
+        phase >= 4 ? "opacity-0 scale-110 pointer-events-none" : "opacity-100"
       }`}
       style={{ backgroundColor: bg, color: "#fff" }}
       dir="rtl"
     >
-      {/* ===== خلفية متدرجة متحركة ===== */}
+      {/* ===== خلفية متدرجة متحركة — محسّنة ===== */}
       <div className="absolute inset-0 overflow-hidden">
         <div
           className="absolute -top-1/4 -right-1/4 w-[600px] h-[600px] rounded-full blur-3xl animate-pulse"
@@ -81,29 +89,47 @@ export function Intro({ onFinish }: IntroProps) {
           className="absolute -bottom-1/4 -left-1/4 w-[500px] h-[500px] rounded-full blur-3xl animate-pulse"
           style={{ backgroundColor: accent + "14", animationDelay: "0.5s" }}
         />
+        {/* إضافة هالة ثالثة للعمق */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-3xl animate-pulse"
+          style={{ backgroundColor: accent + "0A", animationDelay: "1s" }}
+        />
         {/* نقاط متفرقة — مواقع ثابتة لتجنب مشاكل الـ hydration */}
         {DOT_POSITIONS.map((pos, i) => (
           <span
             key={i}
-            className="absolute w-1 h-1 rounded-full"
+            className="absolute rounded-full"
             style={{
-              backgroundColor: accent + "4D",
+              width: i % 3 === 0 ? "3px" : "1.5px",
+              height: i % 3 === 0 ? "3px" : "1.5px",
+              backgroundColor: accent + (i % 3 === 0 ? "6D" : "4D"),
               top: `${pos.top}%`,
               left: `${pos.left}%`,
-              animation: `pulse 2s ease-in-out ${(i * 0.18) % 2}s infinite`,
+              animation: `pulse ${2 + (i % 3) * 0.5}s ease-in-out ${(i * 0.18) % 2}s infinite`,
             }}
           />
         ))}
+      </div>
+
+      {/* ===== خطوط زخرفية متدرجة متحركة ===== */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center pointer-events-none">
+        <div
+          className="w-[200px] h-[1px]"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${accent}40, transparent)`,
+            animation: `pulse 2s ease-in-out 0.5s infinite`,
+          }}
+        />
       </div>
 
       {/* ===== المحتوى ===== */}
       <div className="relative z-10 flex flex-col items-center gap-4 px-6">
         {/* الأيقونة / الإيموجي */}
         <div
-          className={`relative transition-all duration-700 ${
+          className={`relative transition-all duration-700 ease-out ${
             phase >= 1
               ? "opacity-100 scale-100 translate-y-0"
-              : "opacity-0 scale-50 translate-y-8"
+              : "opacity-0 scale-30 translate-y-12"
           } ${phase >= 1 && phase < 4 ? 'animate-float-gentle' : ''}`}
         >
           {/* الشعار */}
@@ -112,20 +138,29 @@ export function Intro({ onFinish }: IntroProps) {
           {/* حلقة دوارة */}
           {introSettings.showSpinningRing && (
             <div
-              className="absolute inset-0 -m-2 rounded-2xl border-2 animate-spin"
+              className="absolute inset-0 -m-3 rounded-3xl border-2 animate-spin"
               style={{
-                borderColor: accent + "4D",
+                borderColor: accent + "3D",
                 borderTopColor: accent,
                 animationDuration: "1.2s",
               }}
             />
           )}
+          {/* توهج خفيف حول الشعار */}
+          <div
+            className="absolute inset-0 -m-6 rounded-full blur-xl opacity-0"
+            style={{
+              backgroundColor: accent,
+              transition: "opacity 1s ease-out",
+              ...(phase >= 1 ? { opacity: 0.15 } : {}),
+            }}
+          />
         </div>
 
         {/* العنوان */}
         <div
-          className={`text-center transition-all duration-500 ${
-            phase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          className={`text-center transition-all duration-600 ease-out ${
+            phase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
           style={{ transitionDelay: "0.1s" }}
         >
@@ -137,8 +172,8 @@ export function Intro({ onFinish }: IntroProps) {
         {/* الشعار السفلي */}
         {introSettings.subtitle && (
           <div
-            className={`flex items-center gap-2 transition-all duration-500 ${
-              phase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+            className={`flex items-center gap-2 transition-all duration-500 ease-out ${
+              phase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
             style={{ transitionDelay: "0.15s" }}
           >
@@ -150,10 +185,10 @@ export function Intro({ onFinish }: IntroProps) {
           </div>
         )}
 
-        {/* شريط التحميل */}
+        {/* شريط التحميل — محسّن */}
         {introSettings.showProgress && (
           <div
-            className={`mt-2 w-32 h-1 rounded-full overflow-hidden transition-all duration-500 ${
+            className={`mt-3 w-40 h-1.5 rounded-full overflow-hidden transition-all duration-500 ${
               phase >= 3 ? "opacity-100" : "opacity-0"
             }`}
             style={{ transitionDelay: "0.2s", backgroundColor: bg === "#1a1a1a" ? "#404040" : "#ffffff20" }}
@@ -161,7 +196,7 @@ export function Intro({ onFinish }: IntroProps) {
             <div
               className="h-full rounded-full animate-intro-progress"
               style={{
-                background: `linear-gradient(to right, ${accent}AA, ${accent})`,
+                background: `linear-gradient(to right, ${accent}88, ${accent}, ${accent}cc)`,
               }}
             />
           </div>
@@ -179,12 +214,12 @@ export function Intro({ onFinish }: IntroProps) {
         </div>
       )}
 
-      {/* ===== زر تخطي ===== */}
+      {/* ===== زر تخطي — محسّن ===== */}
       {phase < 4 && (
         <button
           onClick={() => { setSkipping(true); onFinish(); }}
           disabled={skipping}
-          className={`absolute top-6 left-6 z-20 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all duration-300 ${skipping ? 'opacity-40 cursor-not-allowed' : 'opacity-60 hover:opacity-100 hover:bg-white/10'}`}
+          className={`absolute top-6 left-6 z-20 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all duration-300 ${skipping ? 'opacity-40 cursor-not-allowed' : 'opacity-60 hover:opacity-100 hover:bg-white/10 hover:shadow-lg'}`}
           style={{ borderColor: accent + "4D", color: accent + "CC" }}
           aria-label="تخطي الإنترو"
         >

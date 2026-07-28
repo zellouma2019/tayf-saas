@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   STATUS_META,
@@ -503,7 +503,16 @@ function TableRowInner({
           />
         ) : null}
       </TableCell>
-      <TableCell className="font-mono text-xs whitespace-nowrap">{order.reference}</TableCell>
+      <TableCell className="font-mono text-xs whitespace-nowrap">
+        <div className="flex items-center gap-1.5">
+          {order.reference}
+          {order.statusNotes && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/30" title={order.statusNotes}>
+              <StickyNote className="h-2.5 w-2.5" />
+            </span>
+          )}
+        </div>
+      </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
           <span className="text-lg">{serviceEmoji}</span>

@@ -56,24 +56,18 @@ class MerchantErrorBoundary extends Component<
                 <AlertTriangle className="h-8 w-8 text-rose-500" />
               </div>
               <h2 className="text-xl font-bold mb-2 text-foreground">حدث خطأ في لوحة التحكم</h2>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-muted-foreground mb-6">
                 يرجى المحاولة مرة أخرى أو تحديث الصفحة
               </p>
-              {this.state.error && (
-                <pre className="text-xs text-left bg-muted/50 rounded-lg p-3 mb-4 max-h-48 overflow-auto font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap" dir="ltr">
-                  {this.state.error.message}
-{this.state.error.stack || ''}
-                </pre>
-              )}
-              {this.state.errorInfo?.componentStack && (
-                <pre className="text-xs text-left bg-muted/30 rounded-lg p-3 mb-4 max-h-24 overflow-auto font-mono text-muted-foreground whitespace-pre-wrap" dir="ltr">
-                  {this.state.errorInfo.componentStack}
-                </pre>
-              )}
-              <Button onClick={this.handleReset} className="gap-2">
-                <RotateCcw className="h-4 w-4" />
-                تحديث الصفحة
-              </Button>
+              <div className="flex items-center justify-center gap-3">
+                <Button onClick={this.handleReset} className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  تحديث الصفحة
+                </Button>
+                <Button variant="outline" onClick={() => window.location.href = `/s/${this.props.shopSlug}`}>
+                  العودة للمتجر
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

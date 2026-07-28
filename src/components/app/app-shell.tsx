@@ -335,11 +335,11 @@ export function AppShell() {
           borderBottomColor: theme.header.border,
         }}
       >
-        {/* شريط زخرفي علوي بلون الثيم */}
+          {/* gradient accent line under header - enhanced */}
         <div
           className="h-[3px] w-full"
           style={{
-            background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.topBar.accent} 50%, ${theme.accent} 100%)`,
+            background: `linear-gradient(90deg, transparent 0%, ${theme.accent} 20%, ${theme.topBar.accent} 50%, ${theme.accent} 80%, transparent 100%)`,
             opacity: 0.9,
           }}
         />
@@ -500,6 +500,11 @@ export function AppShell() {
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.25, ease: "easeInOut" }}
                 >
+                  {/* خلفية نقطية متحركة */}
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, var(--shop-accent) 0.6px, transparent 0.6px)", backgroundSize: "28px 28px", opacity: 0.08 }}>
+                    <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(180deg, transparent 0%, var(--shop-accent)05 40%, var(--shop-accent)08 100%)" }} />
+                  </div>
+
                   {/* شريط الثقة */}
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -669,31 +674,34 @@ export function AppShell() {
                   </div>
 
                   <div>
-                    <h4 className="text-white font-semibold text-sm mb-3">روابط سريعة</h4>
+                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                      <div className="w-1 h-4 rounded-full" style={{ backgroundColor: theme.accent }} />
+                      روابط سريعة
+                    </h4>
                     <ul className="space-y-2 text-xs">
                       <li>
-                        <button onClick={() => { setFooterOpen(false); setView("new"); }} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px]">
-                          <Plus className="h-3.5 w-3.5 text-neutral-500" />
+                        <button onClick={() => { setFooterOpen(false); setView("new"); }} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px] group">
+                          <Plus className="h-3.5 w-3.5 text-neutral-500 group-hover:text-primary transition-colors" />
                           طلب طباعة جديد
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => setView("track")} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px]">
-                          <Search className="h-3.5 w-3.5 text-neutral-500" />
+                        <button onClick={() => setView("track")} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px] group">
+                          <Search className="h-3.5 w-3.5 text-neutral-500 group-hover:text-primary transition-colors" />
                           تتبّع طلب
                         </button>
                       </li>
                       {showAdminLink && (
                       <li>
-                        <button onClick={() => handleNavClick("admin")} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px]">
-                          <Shield className="h-3.5 w-3.5 text-neutral-500" />
+                        <button onClick={() => handleNavClick("admin")} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px] group">
+                          <Shield className="h-3.5 w-3.5 text-neutral-500 group-hover:text-primary transition-colors" />
                           لوحة الإدارة
                         </button>
                       </li>
                       )}
                       <li>
-                        <button onClick={() => setView("repeat")} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px]">
-                          <RotateCcw className="h-3.5 w-3.5 text-neutral-500" />
+                        <button onClick={() => setView("repeat")} className="hover:text-primary transition-colors flex items-center gap-2 min-h-[44px] group">
+                          <RotateCcw className="h-3.5 w-3.5 text-neutral-500 group-hover:text-primary transition-colors" />
                           إعادة طلب سابق
                         </button>
                       </li>
@@ -701,13 +709,16 @@ export function AppShell() {
                   </div>
 
                   <div>
-                    <h4 className="text-white font-semibold text-sm mb-3">خدماتنا</h4>
+                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                      <div className="w-1 h-4 rounded-full" style={{ backgroundColor: theme.accent }} />
+                      خدماتنا
+                    </h4>
                     {shopServices ? (
                       <div className="grid grid-cols-2 gap-1.5">
                         {shopServices.map((s: { name: string; emoji?: string }, i: number) => (
                           <div
                             key={i}
-                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary transition-all duration-200 cursor-default hover:shadow-[0_0_8px_rgba(245,158,11,0.15)]"
+                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary transition-all duration-300 cursor-default hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:-translate-y-0.5"
                           >
                             <span className="shrink-0">{s.emoji || "🖨️"}</span>
                             <span className="truncate">{s.name}</span>
@@ -717,7 +728,7 @@ export function AppShell() {
                     ) : (
                       <div className="grid grid-cols-2 gap-1.5">
                         {[{e:"🖨️",n:"طباعة مستند"},{e:"📄",n:"نسخ مستندات"},{e:"🖼️",n:"طباعة صور"},{e:"📚",n:"تجليد"},{e:"🪪",n:"بطاقات"},{e:"📜",n:"ملصقات"}].map((s) => (
-                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary hover:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all cursor-default">
+                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:-translate-y-0.5 transition-all duration-300 cursor-default">
                             <span className="shrink-0">{s.e}</span>
                             <span className="truncate">{s.n}</span>
                           </div>

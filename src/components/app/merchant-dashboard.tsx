@@ -94,6 +94,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,6 +122,7 @@ import { SHOP_THEMES } from "@/lib/themes";
 import { type FeatureKey } from "@/lib/shop-features";
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
+import { motion, AnimatePresence } from 'framer-motion';
 const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
 const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <div className="py-16 text-center text-muted-foreground text-sm">جارٍ التحميل...</div> });
 const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
@@ -551,18 +554,20 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     }
   }
 
-  async function changeStatus(order: PrintOrderLite, status: string) {
+  async function changeStatus(order: PrintOrderLite, status: string, statusNotes?: string) {
     try {
+      const payload: Record<string, unknown> = { status };
+      if (statusNotes) payload.statusNotes = statusNotes;
       const res = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("فشل التحديث");
       toast.success("تم تحديث الحالة", {
         description: `${order.reference} → ${STATUS_META[status].label}`,
       });
-      setRawOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+      setRawOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status, statusNotes: statusNotes || o.statusNotes } : o)));
       loadAll();
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
@@ -757,21 +762,40 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
         {/* ===== المحتوى ===== */}
         <main className="p-4 sm:p-6 space-y-6">
+          <AnimatePresence mode="wait">
           {/* ===== تبويب الرئيسية ===== */}
           {activeTab === "home" && (
-            <div className="space-y-6">
+            <motion.div
+              key="tab-home"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-6"
+            >
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {statCards.map((c, i) => (
-                  <div key={i} className={cn("bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200", c.borderColor)}>
-                    <div className="flex items-start justify-between">
+                  <div key={i} className={cn(
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden",
+                    c.borderColor,
+                  )}>
+                    {/* Gradient glow on hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{
+                      background: 'linear-gradient(135deg, rgba(212,168,83,0.08) 0%, transparent 50%, rgba(212,168,83,0.04) 100%)',
+                    }} />
+                    <div className="relative flex items-start justify-between">
                       <div className="min-w-0">
                         <div className="text-xl sm:text-2xl font-bold tabular-nums truncate text-foreground">{c.value}</div>
                         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">{c.title}{c.trend && (c.trend === "up" ? <ArrowUp className="h-3 w-3 text-emerald-500" /> : <ArrowDown className="h-3 w-3 text-rose-500" />)}</div>
                       </div>
-                      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 animate-pulse-slow", c.bg)}>
+                      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110", c.bg)}>
                         <c.icon className={cn("h-5 w-5", c.color)} />
                       </div>
                     </div>
+                    {/* Bottom gradient line on hover */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.4), transparent)',
+                    }} />
                   </div>
                 ))}
               </div>
@@ -855,9 +879,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {!(stats?.totalOrders ?? 0) && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 animate-pulse-slow border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
-                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl" />
-                  <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl" />
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
+                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl animate-pulse" />
+                  <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+                  {/* Floating particles */}
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <span
+                      key={i}
+                      className="absolute w-1 h-1 rounded-full bg-gold-400/40 animate-float-gentle"
+                      style={{
+                        top: `${15 + i * 18}%`,
+                        left: `${8 + i * 22}%`,
+                        animationDelay: `${i * 0.3}s`,
+                      }}
+                    />
+                  ))}
                   <div className="relative text-center">
                     <MotionDiv
                       initial={{ scale: 0.8, opacity: 0 }}
@@ -867,20 +903,31 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     >
                       🎉
                     </MotionDiv>
+                    <MotionDiv
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
                     <h2 className="text-lg sm:text-xl font-bold mb-2 text-foreground">{shop?.name || "المتجر"} جاهز لاستقبال الطلبات!</h2>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
                       شارك رابط متجرك مع زبائنك لبدء استقبال طلبات الطباعة أونلاين
                     </p>
-                    <div className="flex items-center justify-center gap-3">
-                      <a href={customerLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md">
+                    </MotionDiv>
+                    <MotionDiv
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="flex items-center justify-center gap-3"
+                    >
+                      <a href={customerLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gold-500/30">
                         <Eye className="h-4 w-4" />
                         معاينة المتجر
                       </a>
-                      <button onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ الرابط!"); }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card hover:bg-secondary border border-border text-sm font-medium transition-colors">
+                      <button onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ الرابط!"); }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card hover:bg-secondary border border-border text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                         <Copy className="h-4 w-4" />
                         نسخ الرابط
                       </button>
-                    </div>
+                    </MotionDiv>
                   </div>
                 </div>
               )}
@@ -1027,12 +1074,19 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 <AdminAnalytics stats={stats} orders={orders} />
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* ===== تبويب الطلبات ===== */}
           {activeTab === "orders" && (
-            <div className="space-y-5">
+            <motion.div
+              key="tab-orders"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-5"
+            >
               {/* أزرار التبديل بين جدول ولوحة كانبان */}
               <div className="flex items-center gap-2">
                 <button
@@ -1339,55 +1393,110 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </div>
+            </motion.div>
           )}
           {/* ===== تبويب التحليلات ===== */}
           {activeTab === "analytics" && hasFeature("advancedAnalytics") && (
+            <motion.div
+              key="tab-analytics"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
             <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
               <div className="p-4 sm:p-6">
                 <MerchantAnalytics stats={stats} orders={rawOrders} />
               </div>
             </div>
+            </motion.div>
           )}
 
           {/* ===== تبويب العملاء ===== */}
           {activeTab === "customers" && (
+            <motion.div
+              key="tab-customers"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
             <MerchantCustomers />
+            </motion.div>
           )}
 
           {/* ===== تبويب المصاريف ===== */}
           {activeTab === "expenses" && (
+            <motion.div
+              key="tab-expenses"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
             <MerchantExpenses />
+            </motion.div>
           )}
 
           {/* ===== تبويب إعدادات المتجر ===== */}
           {activeTab === "settings" && (
+            <motion.div
+              key="tab-settings"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
             <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            </motion.div>
           )}
 
           {/* ===== تبويب الإعدادات المتقدمة ===== */}
           {activeTab === "advancedSettings" && (
+            <motion.div
+              key="tab-advanced"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
             <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            </motion.div>
           )}
 
           {/* ===== تبويب مشاركة الرابط ===== */}
           {activeTab === "share" && (
+            <motion.div
+              key="tab-share"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
             <ShareLinkTab shopName={shop?.name || ""} shopSlug={shopSlug} customerLink={customerLink} />
+            </motion.div>
           )}
 
           {/* ===== تبويب المعاينة ===== */}
           {activeTab === "preview" && (
-            <div className="space-y-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <motion.div
+              key="tab-preview"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-5"
+            >
                 <div>
                   <h2 className="font-bold text-lg text-foreground">معاينة متجرك</h2>
                   <p className="text-sm text-dark-500 mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
                 </div>
+                <div className="flex gap-2">
                 <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-dark-200 text-dark-700 hover:bg-secondary rounded-lg shrink-0">
                   <ExternalLink className="h-4 w-4" />
                   فتح في نافذة جديدة
                 </Button>
-              </div>
+                </div>
               <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                 <div className="p-0">
                   <div className="bg-dark-100 p-3 flex items-center gap-2.5 border-b border-border">
@@ -1408,8 +1517,9 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   />
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </main>
       </div>
 
@@ -2561,7 +2671,7 @@ function MobileOrderCard({
   onToggleSelect,
 }: {
   order: PrintOrderLite;
-  onStatusChange: (order: PrintOrderLite, status: string) => void;
+  onStatusChange: (order: PrintOrderLite, status: string, note?: string) => void;
   shopId: string;
   onClick?: (order: PrintOrderLite) => void;
   shopName: string;
@@ -2721,6 +2831,16 @@ function MobileOrderCard({
             </div>
           )}
 
+          {/* ملاحظات تغيير الحالة */}
+          {order.statusNotes && (
+            <div>
+              <div className="flex items-start gap-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200/50 dark:border-violet-800/30 p-2.5">
+                <StickyNote className="h-3.5 w-3.5 text-violet-500 shrink-0 mt-0.5" />
+                <span className="text-xs text-violet-700 dark:text-violet-300">{order.statusNotes}</span>
+              </div>
+            </div>
+          )}
+
           {/* ملاحظات الإدارة */}
           {order.adminNotes && (
             <div>
@@ -2789,10 +2909,28 @@ function ChangeStatusSelect({
   onChange,
 }: {
   order: PrintOrderLite;
-  onChange: (order: PrintOrderLite, status: string) => void;
+  onChange: (order: PrintOrderLite, status: string, note?: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+
+  function handleSelectStatus(status: string) {
+    setPendingStatus(status);
+    setNote("");
+    setOpen(true);
+  }
+
+  function handleConfirm() {
+    if (!pendingStatus) return;
+    onChange(order, pendingStatus, note || undefined);
+    setOpen(false);
+    setPendingStatus(null);
+    setNote("");
+  }
+
   return (
+    <>
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button size="sm" className="text-sm h-11 bg-gold-500 hover:bg-gold-600 text-white rounded-lg transition-all duration-200 active:scale-[0.98]">
@@ -2802,15 +2940,69 @@ function ChangeStatusSelect({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-40 rounded-lg">
         {STATUS_FLOW.filter((s) => s !== order.status).map((s) => (
-          <DropdownMenuItem key={s} onClick={() => { onChange(order, s); setOpen(false); }}>
+          <DropdownMenuItem key={s} onClick={() => handleSelectStatus(s)}>
             <span className="mr-2">{STATUS_META[s].emoji}</span>
             {STATUS_META[s].label}
           </DropdownMenuItem>
         ))}
-        <DropdownMenuItem onClick={() => { onChange(order, "cancelled"); setOpen(false); }}>
+        <DropdownMenuItem onClick={() => handleSelectStatus("cancelled")}>
           إلغاء الطلب
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <Dialog open={pendingStatus !== null} onOpenChange={(isOpen) => { if (!isOpen) { setPendingStatus(null); setNote(""); } }}>
+      <DialogContent className="max-w-sm rounded-xl p-0 gap-0" dir="rtl" aria-describedby={undefined}>
+        <DialogHeader className="p-5 pb-3">
+          <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+            {pendingStatus ? STATUS_META[pendingStatus]?.emoji : ""}
+            تغيير حالة الطلب
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {order.reference} ← {STATUS_META[pendingStatus || "pending"]?.label}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="px-5 pb-4 space-y-4">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
+            <span className="text-sm">{STATUS_META[order.status]?.emoji}</span>
+            <span className="text-sm text-muted-foreground">{STATUS_META[order.status]?.label}</span>
+            <span className="text-sm text-muted-foreground mx-1">←</span>
+            <span className="text-sm">{STATUS_META[pendingStatus || "pending"]?.emoji}</span>
+            <span className="text-sm font-medium text-foreground">{STATUS_META[pendingStatus || "pending"]?.label}</span>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <StickyNote className="h-3.5 w-3.5" />
+              ملاحظة (اختياري)
+            </Label>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="أضف ملاحظة حول تغيير الحالة..."
+              className="text-sm min-h-[70px] rounded-lg border-border resize-none"
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              onClick={handleConfirm}
+              className="flex-1 h-10 bg-gold-500 hover:bg-gold-600 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+            >
+              تأكيد التغيير
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setPendingStatus(null); setNote(""); }}
+              className="h-10 rounded-lg border-border hover:bg-secondary transition-all duration-200"
+            >
+              إلغاء
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
