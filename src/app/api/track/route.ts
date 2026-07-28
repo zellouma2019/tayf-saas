@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
-export const maxDuration = 30;
+export const maxDuration = 15; // تقليل من 30 إلى 15 — الاستعلام المُحسَّن يستخدم فهرس
 // إزالة force-dynamic للسماح بـ edge cache (s-maxage=5)
 
 /// تتبّع الطلب برقم المرجع أو رقم الهاتف (turso-lite — أسرع 10x من Prisma على Vercel)
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
     if (shopId) {
       args.push(shopId);
-      whereParts.push(`(o."shopId" = ? OR o."shopId" IS NULL)`);
+      whereParts.push(`o."shopId" = ?`);
     }
     const whereClause = `WHERE ${whereParts.join(" AND ")}`;
 

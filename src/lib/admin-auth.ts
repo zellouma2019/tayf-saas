@@ -1,9 +1,9 @@
-import { db } from "@/lib/db";
+import { tursoQuery, safeJson } from "@/lib/turso-lite";
 import { DEFAULT_SETTINGS } from "@/lib/default-settings";
 import { NextRequest } from "next/server";
 
 const codeCache = new Map<string, { code: string; time: number }>();
-const CACHE_TTL = 30_000; // 30 seconds
+const CACHE_TTL = 60_000; // 60 ثانية
 
 export async function getAdminCode(shopId?: string | null): Promise<string> {
   const now = Date.now();
@@ -13,14 +13,25 @@ export async function getAdminCode(shopId?: string | null): Promise<string> {
   if (cached && now - cached.time < CACHE_TTL) return cached.code;
 
   try {
-    const where = shopId
-      ? { shopId_key: { shopId, key: "general" } }
-      : { shopId_key: { shopId: null as string | null, key: "general" } };
-    const setting = await db.setting.findFirst({ where });
+    let row: Record<string, unknown> | undefined;
+    if (shopId) {
+      const rows = await tursoQuery(
+        `SELECT value FROM "Setting" WHERE key = 'general' AND "shopId" = ? LIMIT 1`,
+        [shopId]
+      );
+      row = rows[0];
+    } else {
+      const rows = await tursoQuery(
+        `SELECT value FROM "Setting" WHERE key = 'general' AND "shopId" IS NULL LIMIT 1`,
+        []
+      );
+      row = rows[0];
+    }
+
     let code: string;
-    if (setting) {
-      const parsed = JSON.parse(setting.value);
-      code = parsed.adminCode || DEFAULT_SETTINGS.general.adminCode;
+    if (row?.value) {
+      const parsed = safeJson(row.value as string, {});
+      code = (parsed as Record<string, unknown>).adminCode as string || DEFAULT_SETTINGS.general.adminCode;
     } else {
       code = DEFAULT_SETTINGS.general.adminCode;
     }
@@ -48,7 +59,6 @@ export async function verifyAdminRequest(request: Request): Promise<boolean> {
  * يكتشف shopId من query params أو body
  */
 function extractShopId(request: Request): string | null {
-  // من query params
   const url = request instanceof NextRequest ? request.nextUrl : new URL(request.url);
   const shopId = url.searchParams.get("shopId");
   if (shopId) return shopId;

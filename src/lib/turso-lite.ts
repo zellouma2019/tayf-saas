@@ -5,8 +5,9 @@
  * الاستراتيجية:
  * - تحويل libsql:// إلى https:// لإجبار HTTP mode (أسرع من WebSocket على Vercel)
  * - اتصال واحد قابل لإعادة الاستخدام عبر module-level cache
- * - معاملات positional فقط
- * - يدعم SQLite المحلي تلقائياً عند غياب TURSO_DATABASE_URL
+ * - مهلة 8 ثواني (بدلاً من 12) لتجنب تجاوز حد Vercel 30s
+ * - لا يوجد Prisma fallback — Prisma تستخدم نفس Turso DB، لا فائدة منها
+ * - إرجاع فارغ عند الفشل بدلاً من التسبب في 504
  */
 import { createClient, type Client } from "@libsql/client";
 
@@ -14,10 +15,6 @@ let _client: Client | null = null;
 
 /**
  * تحويل رابط Turso إلى HTTPS لإجبار HTTP mode
- * - libsql://  → https://  (HTTP mode — أسرع وأكثر موثوقية على Vercel)
- * - libsql+ws:// → wss://  (WebSocket — نتجنبه)
- * - libsql+http:// → https:// (صريح)
- * - file:// يبقى كما هو (SQLite محلي)
  */
 function normalizeTursoUrl(url: string): string {
   if (url.startsWith("libsql+ws://")) return url.replace("libsql+ws://", "wss://");
@@ -32,23 +29,18 @@ function getTursoClient(): Client {
   const rawUrl = process.env.TURSO_DATABASE_URL;
   const token = process.env.TURSO_AUTH_TOKEN;
 
-  // 1) إذا وُجدت إعدادات Turso — استخدمها (الإنتاج على Vercel)
-  // نحوّل libsql:// إلى https:// لإجبار HTTP mode (أسرع من WebSocket على Vercel)
   if (rawUrl) {
     const httpUrl = normalizeTursoUrl(rawUrl);
     _client = createClient({
       url: httpUrl,
       authToken: token,
-      // إعدادات HTTP لتحسين الأداء على Vercel serverless
       intMode: "number",
     });
     return _client;
   }
 
-  // 2) fallback إلى SQLite المحلي (التطوير المحلي بدون Turso)
   const localUrl = process.env.DATABASE_URL;
   if (localUrl) {
-    // Prisma تستخدم file: prefix — @libsql/client يتوقع file: أيضاً
     _client = createClient({ url: localUrl });
     return _client;
   }
@@ -67,10 +59,8 @@ export function safeJson<T = Record<string, unknown>>(str: string | null, fallba
 }
 
 /**
- * استعلام SQL مباشر على Turso (بدون Prisma)
- * مع fallback تلقائي إلى Prisma عند الفشل (safety net)
- * @param sql استعلام SQL مع معاملات ? للمواقع
- * @param args مصفوفة المعاملات (ترتيبية)
+ * استعلام SQL مباشر على Turso — بدون Prisma fallback
+ * مهلة 8 ثواني — تُرجع مصفوفة فارغة عند الفشل (degradation graciosa)
  */
 export async function tursoQuery<T = Record<string, unknown>>(
   sql: string,
@@ -78,25 +68,40 @@ export async function tursoQuery<T = Record<string, unknown>>(
 ): Promise<T[]> {
   try {
     const client = getTursoClient();
-    // مهلة 12 ثانية — إذا تجاوزها، ننتقل إلى Prisma fallback
     const result = await Promise.race([
       client.execute({ sql, args: (args || []) as never[] }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("turso-lite timeout")), 12000)
+        setTimeout(() => reject(new Error("turso-lite timeout (8s)")), 8000)
       ),
     ]);
     return result.rows as unknown as T[];
   } catch (e) {
-    // fallback إلى Prisma عند فشل turso-lite
-    console.warn("[turso-lite] falling back to Prisma:", (e as Error).message);
-    try {
-      const { db } = await import("@/lib/db");
-      const rows = await db.$queryRawUnsafe(sql, ...(args || []));
-      return rows as unknown as T[];
-    } catch (prismaErr) {
-      console.error("[turso-lite] Prisma fallback also failed:", prismaErr);
-      throw prismaErr;
-    }
+    console.error("[turso-lite] query failed:", (e as Error).message);
+    // إرجاع فارغ بدلاً من Prisma fallback (نفس DB = نفس المشكلة)
+    return [];
+  }
+}
+
+/**
+ * استعلام SQL مع إمكانية تحديد مهلة مخصصة
+ */
+export async function tursoQueryWithTimeout<T = Record<string, unknown>>(
+  sql: string,
+  args: unknown[],
+  timeoutMs: number
+): Promise<T[]> {
+  try {
+    const client = getTursoClient();
+    const result = await Promise.race([
+      client.execute({ sql, args: args as never[] }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`turso-lite timeout (${timeoutMs}ms)`)), timeoutMs)
+      ),
+    ]);
+    return result.rows as unknown as T[];
+  } catch (e) {
+    console.error("[turso-lite] query failed:", (e as Error).message);
+    return [];
   }
 }
 
@@ -109,18 +114,24 @@ export async function tursoQueries<T extends unknown[]>(
   const client = getTursoClient();
   return Promise.all(
     queries.map(async ({ sql, args }) => {
-      const result = await client.execute({ sql, args: (args || []) as never[] });
-      return result.rows as unknown as T;
+      try {
+        const result = await Promise.race([
+          client.execute({ sql, args: (args || []) as never[] }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("turso-lite parallel timeout")), 8000)
+          ),
+        ]);
+        return result.rows as unknown as T;
+      } catch (e) {
+        console.error("[turso-lite] parallel query failed:", (e as Error).message);
+        return [] as unknown as T;
+      }
     })
   );
 }
 
 /**
- * تنفيذ عملية كتابة (INSERT/UPDATE/DELETE) مباشرة على Turso — بدون Prisma
- * يُرجع ResultSet الكامل مع lastInsertRowid و rowsAffected
- *
- * @param sql استعلام SQL مع معاملات ? للمواقع (يمكن استخدام RETURNING *)
- * @param args مصفوفة المعاملات (ترتيبية)
+ * تنفيذ عملية كتابة (INSERT/UPDATE/DELETE) مباشرة على Turso
  */
 export async function tursoExecute<T = Record<string, unknown>>(
   sql: string,
@@ -131,7 +142,7 @@ export async function tursoExecute<T = Record<string, unknown>>(
     const result = await Promise.race([
       client.execute({ sql, args: (args || []) as never[] }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("turso-lite execute timeout")), 12000)
+        setTimeout(() => reject(new Error("turso-lite execute timeout (8s)")), 8000)
       ),
     ]);
     return {
@@ -140,15 +151,7 @@ export async function tursoExecute<T = Record<string, unknown>>(
       rowsAffected: result.rowsAffected,
     };
   } catch (e) {
-    // fallback إلى Prisma عند فشل turso-lite
-    console.warn("[turso-lite] execute falling back to Prisma:", (e as Error).message);
-    try {
-      const { db } = await import("@/lib/db");
-      const rows = await db.$executeRawUnsafe(sql, ...(args || []));
-      return { rows: [], lastInsertRowid: null, rowsAffected: rows };
-    } catch (prismaErr) {
-      console.error("[turso-lite] Prisma execute fallback also failed:", prismaErr);
-      throw prismaErr;
-    }
+    console.error("[turso-lite] execute failed:", (e as Error).message);
+    return { rows: [], lastInsertRowid: null, rowsAffected: 0 };
   }
 }
