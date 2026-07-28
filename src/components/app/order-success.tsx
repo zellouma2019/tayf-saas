@@ -299,7 +299,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 نسخ رابط التتبّع
               </Button>
               <Button
-                className="w-full bg-[#25D366] hover:bg-[#1da851] text-white h-10 sm:h-11 border-0"
+                className="w-full bg-[#25D366] hover:bg-[#1da851] text-white h-12 sm:h-14 border-0 text-base sm:text-lg font-bold shadow-lg shadow-[#25D366]/25 animate-[pulse-shadow_2s_ease-in-out_infinite]"
                 onClick={() => {
                   const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
                   const text = `📋 طلب جديد على طيف!\n\n🔖 رقم الطلب: ${order.reference}\n🖨️ الخدمة: ${order.serviceName}\n💰 السعر: ${formatDA(order.total)}\n⏰ التسليم المتوقع: ${order.estimatedHours} ساعة\n\n📎 تابع طلبك هنا:\n${trackUrl}`;
@@ -308,7 +308,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                   toast.success("تم فتح واتساب", { description: "شارك تفاصيل طلبك" });
                 }}
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
                 شارك عبر واتساب
               </Button>
             </div>
@@ -345,7 +345,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 }}
               >
                 <Plus className="h-4 w-4" />
-                اطلب المزيد
+                إنشاء طلب جديد
               </Button>
             </div>
           </div>

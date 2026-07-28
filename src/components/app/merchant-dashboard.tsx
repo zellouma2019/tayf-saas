@@ -231,6 +231,16 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }, [rawOrders]);
   const todayRevenue = useMemo(() => todayOrdersList.reduce((s, o) => s + o.total, 0), [todayOrdersList]);
   const todayCost = useMemo(() => todayOrdersList.reduce((s, o) => s + (o.cost || 0), 0), [todayOrdersList]);
+  const serviceBreakdown = useMemo(() => {
+    const map = new Map<string, { count: number; revenue: number }>();
+    rawOrders.forEach((o) => {
+      const existing = map.get(o.serviceType) || { count: 0, revenue: 0 };
+      map.set(o.serviceType, { count: existing.count + 1, revenue: existing.revenue + o.total });
+    });
+    return Array.from(map.entries())
+      .map(([serviceType, data]) => ({ serviceType, ...data }))
+      .sort((a, b) => b.count - a.count);
+  }, [rawOrders]);
 
   // مساعد الترتيب
   function toggleSort(field: string) {
@@ -906,6 +916,44 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   )}
                 </div>
               </div>
+
+              {/* توزيع الخدمات */}
+              {serviceBreakdown.length > 0 && (
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+                <div className="border-b border-border px-4 sm:px-6 pt-5 pb-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                    <LayoutGrid className="h-4 w-4 text-primary" />
+                    أكثر الخدمات طلباً
+                  </h3>
+                </div>
+                <div className="p-4 sm:px-6 space-y-2.5">
+                  {serviceBreakdown.slice(0, 5).map((s) => {
+                    const emoji = SERVICE_MAP[s.serviceType]?.emoji ?? "📄";
+                    const name = SERVICE_MAP[s.serviceType]?.name ?? s.serviceType;
+                    const maxCount = serviceBreakdown[0]?.count ?? 1;
+                    const pct = maxCount > 0 ? (s.count / maxCount) * 100 : 0;
+                    return (
+                      <div key={s.serviceType} className="flex items-center gap-3">
+                        <span className="text-base shrink-0 w-6 text-center">{emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-foreground truncate">{name}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">{s.count} طلب</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-l from-primary to-primary/60 transition-all duration-700"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-primary tabular-nums shrink-0">{formatDA(s.revenue)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              )}
 
               {/* التحليلات */}
               <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">

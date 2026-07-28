@@ -130,12 +130,15 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative" dir="rtl">
       {/* Decorative elements */}
-      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-primary/3 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-violet-500/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-amber-500/6 rounded-full blur-3xl pointer-events-none" />
 
-      <Card className="w-full max-w-sm shadow-2xl border-border backdrop-blur-sm bg-card/80 relative z-10">
-        <CardContent className="pt-8 pb-6 px-6">
+      <Card className="w-full max-w-sm shadow-2xl border-border backdrop-blur-sm bg-card/80 relative z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 via-transparent to-amber-500/20 pointer-events-none" />
+        <CardContent className="pt-8 pb-6 px-6 relative z-10">
           <div className="text-center mb-6">
+            <img src="/tayf-logo-sm.png" alt="" className="w-8 h-8 mx-auto mb-3 dark:hidden" />
+            <img src="/tayf-logo-sm-dark.png" alt="" className="w-8 h-8 mx-auto mb-3 hidden dark:block" />
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
               <Lock className="h-8 w-8 text-primary-foreground" />
             </div>
@@ -191,6 +194,9 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
             <ShieldAlert className="h-3 w-3" />
             <span>هذا القسم محمي ومخصص للإدارة فقط</span>
           </div>
+          <p className="text-center text-[10px] text-muted-foreground/40 mt-3">
+            الإصدار 4.0 — منصة طيف للطباعة الذكية
+          </p>
         </CardContent>
       </Card>
     </div>

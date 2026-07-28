@@ -28,6 +28,7 @@ import {
   CreditCard,
   Tag,
   Store,
+  Calculator,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import { OrderHistory } from "@/components/app/order-history";
 import { OrderSuccess } from "@/components/app/order-success";
 import { AdminGate } from "@/components/app/admin-gate";
 import { FloatingAssistant } from "@/components/app/floating-assistant";
+import { PriceEstimator } from "@/components/app/price-estimator";
 import { PageSkeleton } from "@/components/app/page-skeleton";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Intro } from "@/components/app/intro";
@@ -61,6 +63,7 @@ export interface CreatedOrder {
 
 export function AppShell() {
   const [footerOpen, setFooterOpen] = useState(false);
+  const [showEstimator, setShowEstimator] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { shop, hasFeature } = useShop();
   // شعار المنصة
@@ -802,6 +805,20 @@ export function AppShell() {
         onClose={() => setAdminGateOpen(false)}
         onSuccess={handleAdminUnlock}
       />
+
+      {/* حاسبة الأسعار */}
+      <button
+        onClick={() => setShowEstimator(!showEstimator)}
+        className="fixed bottom-24 left-4 z-30 w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
+        title="حاسبة الأسعار"
+      >
+        <Calculator className="h-5 w-5" />
+      </button>
+      {showEstimator && (
+        <div className="fixed bottom-40 left-4 z-30 w-80 sm:w-96">
+          <PriceEstimator onRequestOrder={() => { setShowEstimator(false); setView("new"); }} />
+        </div>
+      )}
 
       {/* الزر العائم: واتساب + مساعد ذكي */}
       <FloatingAssistant onRepeatOrder={() => setView("repeat")} />
