@@ -41,7 +41,7 @@ function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-muted/50"
+          className="text-muted-foreground/30"
         />
         <motion.circle
           cx={size / 2}
