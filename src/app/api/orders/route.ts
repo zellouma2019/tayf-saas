@@ -260,12 +260,11 @@ export async function POST(req: NextRequest) {
 
     // ─── معالجة بيانات الملف ───
     // ملفات صغيرة: fileData كـ base64 data URL
-    // ملفات كبيرة: storedFileName مباشرة (endpoints تعرف تتعامل مع بادئة "file_")
+    // ملفات كبيرة: storedFileName يحتوي uploadId → نخزنه ببادئة __chunked__:
+    // endpoints الـ file/preview تعرف تحلّ البيانات عبر file-resolver.ts
     let resolvedFileData: string | null = fileData || null;
     if (!resolvedFileData && bodyStoredFileName) {
-      // خزّن اسم الملف المخزَّن مباشرة بدون تحويل إلى base64
-      // endpoints الـ file/preview تدعم قراءة الملف من القرص عبر بادئة "file_"
-      resolvedFileData = bodyStoredFileName;
+      resolvedFileData = `__chunked__:${bodyStoredFileName}`;
     }
 
     const service = SERVICE_MAP[serviceType as ServiceType];

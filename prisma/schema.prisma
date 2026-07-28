@@ -229,6 +229,33 @@ model FormTemplate {
   @@index([shopId])
 }
 
+/// جلسة رفع ملف كبير (أجزاء مخزنة مؤقتاً ثم تُجمع)
+model FileUpload {
+  id              String    @id
+  fileName        String
+  fileSize        Int
+  fileExt         String
+  totalChunks     Int
+  receivedCount   Int       @default(0)
+  status          String    @default("uploading") // uploading | complete
+  assembledBase64 String?              // الملف المجمع كـ data URL
+  createdAt       DateTime  @default(now())
+
+  chunks          FileChunk[]
+}
+
+/// جزء من ملف كبير مخزّن مؤقتاً
+model FileChunk {
+  id         String     @id
+  uploadId   String
+  chunkIndex Int
+  data       String     // base64
+  createdAt  DateTime   @default(now())
+  upload     FileUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@index([uploadId])
+}
+
 /// سجلات النماذج المعبأة
 model FormRecord {
   id          String   @id @default(cuid())

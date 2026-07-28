@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery } from "@/lib/turso-lite";
+import { resolveFileData } from "@/lib/file-resolver";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
 /// عرض الملف المرفوع للطلب (inline — للمعاينة في المتصفح)
-/// عبر turso-lite (أسرع من Prisma على Vercel)
+/// يدعم: data URL, ملفات مجزأة (__chunked__), ملفات على القرص (file_)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -14,7 +15,6 @@ export async function GET(
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
 
-    // يدعم الطلبات القديمة (shopId = null)
     const whereClause = shopId
       ? `WHERE id = ? AND ("shopId" = ? OR "shopId" IS NULL)`
       : `WHERE id = ?`;
@@ -33,8 +33,13 @@ export async function GET(
       return NextResponse.json({ error: "لا يوجد ملف لهذا الطلب" }, { status: 404 });
     }
 
-    // استخراج الامتداد من اسم الملف الفعلي (وليس من fileData الذي قد يكون data URL)
-    const ext = (order.fileName?.split(".").pop() || order.fileData.split(".").pop() || "").toLowerCase();
+    // حلّ بيانات الملف (يدعم data URL, __chunked__, file_)
+    const resolvedData = await resolveFileData(order.fileData);
+    if (!resolvedData) {
+      return NextResponse.json({ error: "تعذّر تحميل بيانات الملف" }, { status: 404 });
+    }
+
+    const ext = (order.fileName?.split(".").pop() || "").toLowerCase();
     const mimeTypes: Record<string, string> = {
       pdf: "application/pdf",
       png: "image/png",
@@ -46,37 +51,35 @@ export async function GET(
       doc: "application/msword",
     };
     const mimeType = mimeTypes[ext] || "application/octet-stream";
-    const safeName = encodeURIComponent(order.fileName || order.fileData);
+    const safeName = encodeURIComponent(order.fileName || "preview");
 
-    // data URL (base64) — الحالة الأكثر شيوعاً
-    const dataUrl = order.fileData;
-    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (!matches) {
-      // ليست data URL — قد تكون اسم ملف على القرص
-      if (dataUrl.startsWith("file_")) {
-        // محاولة قراءة من القرص (للطلبات القديمة في التطوير المحلي)
-        try {
-          // استيراد ديناميكي لتجنب fs على Vercel
-          const fs = await import("fs");
-          const path = await import("path");
-          const filePath = path.join(process.cwd(), "uploads", dataUrl);
-          if (!fs.existsSync(filePath)) {
-            return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 404 });
-          }
-          const buffer = fs.readFileSync(filePath);
-          return new NextResponse(buffer, {
-            headers: {
-              "Content-Type": mimeType,
-              "Content-Disposition": `inline; filename*=UTF-8''${safeName}`,
-              "Content-Length": buffer.length.toString(),
-              "Cache-Control": "private, max-age=3600",
-            },
-          });
-        } catch {
+    // ملف على القرص (يبدأ بـ "file_")
+    if (resolvedData.startsWith("file_")) {
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const filePath = path.join(process.cwd(), "uploads", resolvedData);
+        if (!fs.existsSync(filePath)) {
           return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 404 });
         }
+        const buffer = fs.readFileSync(filePath);
+        return new NextResponse(buffer, {
+          headers: {
+            "Content-Type": mimeType,
+            "Content-Disposition": `inline; filename*=UTF-8''${safeName}`,
+            "Content-Length": buffer.length.toString(),
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      } catch {
+        return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 404 });
       }
-      return new NextResponse(dataUrl, {
+    }
+
+    // data URL (base64) — الحالة الأكثر شيوعاً + الملفات المجزأة بعد الحلّ
+    const matches = resolvedData.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) {
+      return new NextResponse(resolvedData, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
           "Content-Disposition": `inline; filename*=UTF-8''${safeName}`,

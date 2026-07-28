@@ -1,37 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import { tursoQuery, tursoExecute } from "@/lib/turso-lite";
+import { createClient, type Client } from "@libsql/client";
+import { cleanupOldUploads } from "@/lib/file-resolver";
 
-// حجم كل جزء: 900 كيلوبايت (أقل من 1 ميغا لتجنب حد البوابة)
+// حجم الملف الأقصى: 50 ميغابايت
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = ["pdf", "docx", "jpg", "jpeg", "png", "webp"];
 
-function getChunksDir() {
-  return path.join(process.cwd(), "uploads", ".chunks");
+const MIME_MAP: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+/**
+ * عميل مباشر بدون مهلة — لعمليات الكتابة/القراءة الكبيرة
+ * (تجميع الأجزاء قد يستغرق أكثر من 12 ثانية)
+ */
+let _directClient: Client | null = null;
+function getDirectClient(): Client {
+  if (_directClient) return _directClient;
+  const rawUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL;
+  const token = process.env.TURSO_AUTH_TOKEN;
+  if (!rawUrl) throw new Error("No database URL configured");
+  const url = rawUrl.startsWith("libsql://")
+    ? rawUrl.replace("libsql://", "https://")
+    : rawUrl.startsWith("libsql+http://")
+    ? rawUrl.replace("libsql+http://", "https://")
+    : rawUrl;
+  _directClient = createClient({ url, authToken: token, intMode: "number" });
+  return _directClient;
 }
 
-function getChunkPath(fileId: string, chunkIndex: number) {
-  return path.join(getChunksDir(), `${fileId}.${chunkIndex}`);
-}
-
-function getMetaPath(fileId: string) {
-  return path.join(getChunksDir(), `${fileId}.meta.json`);
-}
-
-interface ChunkMeta {
-  fileName: string;
-  fileSize: number;
-  fileExt: string;
-  totalChunks: number;
-  receivedChunks: number[];
-  createdAt: number;
+/**
+ * إنشاء جداول الأجزاء إن لم تكن موجودة
+ * (Turso لا يدعم IF NOT EXISTS في ALTER — نستخدم CREATE TABLE IF NOT EXISTS)
+ */
+let _tablesEnsured = false;
+async function ensureUploadTables() {
+  if (_tablesEnsured) return;
+  try {
+    await tursoExecute(`
+      CREATE TABLE IF NOT EXISTS "FileUpload" (
+        id TEXT PRIMARY KEY,
+        "fileName" TEXT NOT NULL,
+        "fileSize" INTEGER NOT NULL,
+        "fileExt" TEXT NOT NULL,
+        "totalChunks" INTEGER NOT NULL,
+        "receivedCount" INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'uploading',
+        "assembledBase64" TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+    await tursoExecute(`
+      CREATE TABLE IF NOT EXISTS "FileChunk" (
+        id TEXT PRIMARY KEY,
+        "uploadId" TEXT NOT NULL,
+        "chunkIndex" INTEGER NOT NULL,
+        data TEXT NOT NULL,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+    // إنشاء الفهرس إن لم يكن موجوداً
+    try {
+      await tursoExecute(`CREATE INDEX IF NOT EXISTS idx_filechunk_uploadId ON "FileChunk"("uploadId")`);
+    } catch {
+      // الفهرس قد يكون موجوداً مسبقاً
+    }
+    _tablesEnsured = true;
+  } catch (e) {
+    console.error("[upload-chunk] Failed to ensure tables:", e);
+    // لا نوقف العملية — قد تكون الجداول موجودة بالفعل
+    _tablesEnsured = true;
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureUploadTables();
+
     const formData = await req.formData();
-    const file = formData.get("chunk") as File | null;
+    const chunk = formData.get("chunk") as File | null;
     const fileId = formData.get("fileId") as string | null;
     const chunkIndex = parseInt(formData.get("chunkIndex") as string, 10);
     const totalChunks = parseInt(formData.get("totalChunks") as string, 10);
@@ -57,122 +110,128 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // التأكد من وجود مجلد الأجزاء
-    const chunksDir = getChunksDir();
-    if (!fs.existsSync(chunksDir)) {
-      fs.mkdirSync(chunksDir, { recursive: true });
-    }
+    // ─── التحقق من وجود الجزء مسبقاً ───
+    const existingChunk = await tursoQuery<{ id: string }>(
+      `SELECT id FROM "FileChunk" WHERE "uploadId" = ? AND "chunkIndex" = ? LIMIT 1`,
+      [fileId, chunkIndex]
+    );
 
-    // قراءة أو إنشاء ملف البيانات الوصفية
-    const metaPath = getMetaPath(fileId);
-    let meta: ChunkMeta;
-
-    if (fs.existsSync(metaPath)) {
-      meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
-    } else {
-      meta = {
-        fileName,
-        fileSize,
-        fileExt,
-        totalChunks,
-        receivedChunks: [],
-        createdAt: Date.now(),
-      };
-    }
-
-    // تجاوز الجزء المكرر
-    if (meta.receivedChunks.includes(chunkIndex)) {
+    if (existingChunk.length > 0) {
+      // الجزء موجود — أرجع التقدم الحالي
+      const upload = await tursoQuery<{ receivedCount: number; totalChunks: number; status: string }>(
+        `SELECT "receivedCount", "totalChunks", status FROM "FileUpload" WHERE id = ?`,
+        [fileId]
+      );
+      const u = upload[0];
+      const isComplete = u?.status === "complete";
       return NextResponse.json({
         chunkIndex,
-        received: meta.receivedChunks.length,
-        total: meta.totalChunks,
-        complete: meta.receivedChunks.length >= meta.totalChunks,
-        storedFileName: meta.receivedChunks.length >= meta.totalChunks ? `_complete_${fileId}` : undefined,
+        received: Number(u?.receivedCount || 0),
+        total: Number(u?.totalChunks || totalChunks),
+        complete: isComplete,
+        storedFileName: isComplete ? fileId : undefined,
       });
     }
 
-    // حفظ الجزء
-    const chunkData = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(getChunkPath(fileId, chunkIndex), chunkData);
+    // ─── إنشاء جلسة الرفع إن لم تكن موجودة ───
+    const existingUpload = await tursoQuery<{ id: string }>(
+      `SELECT id FROM "FileUpload" WHERE id = ?`,
+      [fileId]
+    );
 
-    meta.receivedChunks.push(chunkIndex);
-    fs.writeFileSync(metaPath, JSON.stringify(meta));
+    if (existingUpload.length === 0) {
+      await tursoExecute(
+        `INSERT INTO "FileUpload" (id, "fileName", "fileSize", "fileExt", "totalChunks", "receivedCount", status, "createdAt") VALUES (?, ?, ?, ?, ?, 0, 'uploading', ?)`,
+        [fileId, fileName, fileSize, fileExt, totalChunks, new Date().toISOString()]
+      );
+    }
 
-    // تنظيف الأجزاء القديمة
-    cleanOldChunks(chunksDir);
+    // ─── قراءة الجزء وتحويله إلى base64 ───
+    const chunkBuffer = Buffer.from(await chunk.arrayBuffer());
+    const chunkBase64 = chunkBuffer.toString("base64");
+    const chunkId = `${fileId}_c${chunkIndex}`;
 
-    // هل اكتمل الملف؟
-    if (meta.receivedChunks.length >= meta.totalChunks) {
-      const uploadsDir = path.join(process.cwd(), "uploads");
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
+    // ─── حفظ الجزء في قاعدة البيانات ───
+    await tursoExecute(
+      `INSERT INTO "FileChunk" (id, "uploadId", "chunkIndex", data, "createdAt") VALUES (?, ?, ?, ?, ?)`,
+      [chunkId, fileId, chunkIndex, chunkBase64, new Date().toISOString()]
+    );
 
-      const randomSuffix = crypto.randomBytes(8).toString("hex");
-      const timestamp = Date.now();
-      const storedFileName = `file_${timestamp}_${randomSuffix}.${meta.fileExt}`;
-      const finalPath = path.join(uploadsDir, storedFileName);
+    // ─── تحديث عدد الأجزاء المستلمة ───
+    await tursoExecute(
+      `UPDATE "FileUpload" SET "receivedCount" = "receivedCount" + 1 WHERE id = ?`,
+      [fileId]
+    );
 
-      const writeStream = fs.createWriteStream(finalPath);
-      for (let i = 0; i < meta.totalChunks; i++) {
-        const cp = getChunkPath(fileId, i);
-        if (fs.existsSync(cp)) {
-          writeStream.write(fs.readFileSync(cp));
-          fs.unlinkSync(cp);
+    // ─── هل اكتمل الملف؟ ───
+    const updated = await tursoQuery<{ receivedCount: string; totalChunks: string; fileExt: string }>(
+      `SELECT "receivedCount", "totalChunks", "fileExt" FROM "FileUpload" WHERE id = ?`,
+      [fileId]
+    );
+    const upload = updated[0];
+    const receivedCount = parseInt(upload?.receivedCount || "0", 10);
+    const totalCount = parseInt(upload?.totalChunks || String(totalChunks), 10);
+
+    if (receivedCount >= totalCount) {
+      // ─── تجميع الأجزاء ───
+      const ext = upload?.fileExt || fileExt;
+      const mime = MIME_MAP[ext] || "application/octet-stream";
+
+      try {
+        // استخدم العميل المباشر بدون مهلة للتجميع
+        const client = getDirectClient();
+        const chunkRows = await client.execute({
+          sql: `SELECT data FROM "FileChunk" WHERE "uploadId" = ? ORDER BY "chunkIndex"`,
+          args: [fileId] as never[],
+        });
+
+        // دمج كل أجزاء base64 في سلسلة واحدة
+        const fullBase64 = chunkRows.rows.map(r => r.data as string).join("");
+        const dataUrl = `data:${mime};base64,${fullBase64}`;
+
+        // حفظ البيانات المجتمعة
+        await client.execute({
+          sql: `UPDATE "FileUpload" SET status = 'complete', "assembledBase64" = ? WHERE id = ?`,
+          args: [dataUrl, fileId] as never[],
+        });
+
+        // حذف الأجزاء الفردية (لم تعد ضرورية)
+        await tursoExecute(`DELETE FROM "FileChunk" WHERE "uploadId" = ?`, [fileId]);
+
+        // تنظيف الجلسات القديمة بشكل عشوائي (10% من المرات)
+        if (Math.random() < 0.1) {
+          cleanupOldUploads().catch(() => {});
         }
-      }
-      writeStream.end();
 
-      // حذف ملف البيانات الوصفية
-      if (fs.existsSync(metaPath)) {
-        fs.unlinkSync(metaPath);
+        return NextResponse.json({
+          storedFileName: fileId,
+          originalName: fileName,
+          size: fileSize,
+          type: ext,
+          complete: true,
+          received: totalCount,
+          total: totalCount,
+        });
+      } catch (assemblyErr) {
+        console.error("[upload-chunk] Assembly failed:", assemblyErr);
+        return NextResponse.json(
+          { error: "فشل تجميع الملف — يرجى المحاولة مرة أخرى" },
+          { status: 500 },
+        );
       }
-
-      return NextResponse.json({
-        storedFileName,
-        originalName: meta.fileName,
-        size: meta.fileSize,
-        type: meta.fileExt,
-        complete: true,
-        received: meta.totalChunks,
-        total: meta.totalChunks,
-      });
     }
 
     return NextResponse.json({
       chunkIndex,
-      received: meta.receivedChunks.length,
-      total: meta.totalChunks,
+      received: receivedCount,
+      total: totalCount,
       complete: false,
     });
   } catch (e) {
-    console.error("Chunk upload error:", e);
+    console.error("[upload-chunk] Error:", e);
     return NextResponse.json(
       { error: "فشل في حفظ الجزء على الخادم" },
       { status: 500 },
     );
   }
-}
-
-function cleanOldChunks(chunksDir: string) {
-  try {
-    const now = Date.now();
-    const files = fs.readdirSync(chunksDir);
-    for (const file of files) {
-      if (file.endsWith(".meta.json")) {
-        const mp = path.join(chunksDir, file);
-        try {
-          const meta = JSON.parse(fs.readFileSync(mp, "utf-8"));
-          if (now - meta.createdAt > 60 * 60 * 1000) {
-            const fid = file.replace(".meta.json", "");
-            for (let i = 0; i < meta.totalChunks; i++) {
-              const cp = path.join(chunksDir, `${fid}.${i}`);
-              if (fs.existsSync(cp)) fs.unlinkSync(cp);
-            }
-            fs.unlinkSync(mp);
-          }
-        } catch { /* ignore */ }
-      }
-    }
-  } catch { /* ignore */ }
 }
