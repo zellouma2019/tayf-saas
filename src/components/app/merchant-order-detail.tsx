@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Lock,
   Zap,
+  MessageCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -469,6 +470,25 @@ export function MerchantOrderDetail({
                 )}
               </div>
             )}
+
+            {/* ===== إشعار واتساب للزبون ===== */}
+            <div className="pt-2 mt-2 border-t border-dark-100">
+              <button
+                type="button"
+                onClick={() => {
+                  const phone = order.customer?.whatsapp || order.customer?.phone || "";
+                  const msg = `👋 مرحباً ${order.customer?.name || ""}\n\n📋 طلبك ${order.reference} في ${shopName || "المتجر"}\n📊 الحالة: ${meta.emoji} ${meta.label}\n💰 المبلغ: ${formatDA(order.total)}\n\n🔗 تتبع طلبك:\n${typeof window !== "undefined" ? `${window.location.origin}/s/${new URL(window.location.href).pathname.split("/s/")[1]?.split("?")[0]}?track=${order.reference}` : ""}`;
+                  const url = phone.startsWith("+") ? `https://wa.me/${phone.replace("+", "")}?text=${encodeURIComponent(msg)}` : `https://wa.me/${phone.startsWith("0") ? "213" + phone.slice(1) : phone}?text=${encodeURIComponent(msg)}`;
+                  window.open(url, "_blank");
+                  toast.success("تم فتح واتساب");
+                }}
+                className="flex items-center gap-2 w-full text-xs text-[#25D366] hover:text-[#128C7E] hover:bg-[#25D366]/5 border border-[#25D366]/30 rounded-lg px-3 py-2 transition-all duration-200"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                إبلاغ الزبون عبر واتساب
+                <span className="text-muted-foreground mr-auto">{order.customer?.phone || order.customer?.whatsapp || "—"}</span>
+              </button>
+            </div>
 
             {/* ===== طباعة مباشرة — تفتح نافذة المعاينة والتحقق الذكي ===== */}
             {order.status !== "cancelled" && order.status !== "delivered" && (
