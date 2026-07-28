@@ -524,10 +524,10 @@ export function AppShell() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 rounded-2xl overflow-hidden glass-card p-3 sm:p-4 border border-violet-200/40 dark:border-violet-700/30"
+                    className="mb-4 rounded-2xl overflow-hidden glass-refined p-3 sm:p-4 border border-violet-200/40 dark:border-violet-700/30"
                   >
                     <div className="relative overflow-hidden rounded-xl">
-                      <div className="absolute inset-0 hero-animated-gradient" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(6,182,212,0.06), rgba(16,185,129,0.06))' }} />
+                      <div className="absolute inset-0 hero-animated-gradient" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(212,168,83,0.08), rgba(16,185,129,0.08))' }} />
                       <div className="relative flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
@@ -536,7 +536,7 @@ export function AppShell() {
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">📸</div>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs sm:text-sm font-medium text-foreground truncate">خدمة طباعة احترافية وسريعة</p>
+                            <p className="text-xs sm:text-sm font-semibold truncate text-gradient bg-clip-text text-transparent text-gradient-gold-to-violet">خدمة طباعة احترافية وسريعة</p>
                             <p className="text-[10px] sm:text-xs text-muted-foreground truncate">رفع ملفك واحصل على تسعيرة فورية ✓</p>
                           </div>
                         </div>
@@ -736,7 +736,7 @@ export function AppShell() {
                         {shopServices.map((s: { name: string; emoji?: string }, i: number) => (
                           <div
                             key={i}
-                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary transition-all duration-300 cursor-default hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:-translate-y-0.5 active:scale-[0.97]"
+                            className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary hover-lift press-scale"
                           >
                             <span className="shrink-0">{s.emoji || "🖨️"}</span>
                             <span className="truncate">{s.name}</span>
@@ -746,7 +746,7 @@ export function AppShell() {
                     ) : (
                       <div className="grid grid-cols-2 gap-1.5">
                         {[{e:"🖨️",n:"طباعة مستند"},{e:"📄",n:"نسخ مستندات"},{e:"🖼️",n:"طباعة صور"},{e:"📚",n:"تجليد"},{e:"🪪",n:"بطاقات"},{e:"📜",n:"ملصقات"}].map((s) => (
-                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] hover:-translate-y-0.5 transition-all duration-300 cursor-default">
+                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary hover-lift press-scale">
                             <span className="shrink-0">{s.e}</span>
                             <span className="truncate">{s.n}</span>
                           </div>
@@ -756,7 +756,10 @@ export function AppShell() {
                   </div>
 
                   <div>
-                    <h4 className="text-white font-semibold text-sm mb-3">تواصل معنا</h4>
+                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                      <div className="w-1 h-4 rounded-full" style={{ backgroundColor: theme.accent }} />
+                      تواصل معنا
+                    </h4>
                     <ul className="space-y-3 text-xs">
                       {shopAddress && (
                       <li className="flex items-start gap-2">
@@ -798,7 +801,7 @@ export function AppShell() {
                               href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center transition-colors"
+                              className="w-8 h-8 rounded-lg hover-lift press-scale bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center transition-colors"
                               title="واتساب"
                             >
                               <MessageCircle className="h-4 w-4 text-emerald-400" />
@@ -807,7 +810,7 @@ export function AppShell() {
                           {shopPhone && (
                             <a
                               href={`tel:${shopPhone}`}
-                              className="w-8 h-8 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 flex items-center justify-center transition-colors"
+                              className="w-8 h-8 rounded-lg hover-lift press-scale bg-sky-500/10 hover:bg-sky-500/20 flex items-center justify-center transition-colors"
                               title="اتصل"
                             >
                               <Phone className="h-4 w-4 text-sky-400" />
@@ -816,7 +819,7 @@ export function AppShell() {
                           {shopEmail && (
                             <a
                               href={`mailto:${shopEmail}`}
-                              className="w-8 h-8 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 flex items-center justify-center transition-colors"
+                              className="w-8 h-8 rounded-lg hover-lift press-scale bg-violet-500/10 hover:bg-violet-500/20 flex items-center justify-center transition-colors"
                               title="بريد إلكتروني"
                             >
                               <Mail className="h-4 w-4 text-violet-400" />
@@ -824,7 +827,7 @@ export function AppShell() {
                           )}
                           <button
                             onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ رابط المتجر!"); }}
-                            className="w-8 h-8 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
+                            className="w-8 h-8 rounded-lg hover-lift press-scale bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
                             title="نسخ رابط المتجر"
                           >
                             <Copy className="h-4 w-4 text-amber-400" />

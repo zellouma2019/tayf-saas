@@ -244,14 +244,23 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     });
   }, []);
 
-  const saveNote = useCallback((orderId: string, note: string) => {
+  const saveNote = useCallback(async (orderId: string, note: string) => {
     setOrderNotes(prev => {
       const next = { ...prev, [orderId]: note };
       localStorage.setItem("tayf-order-notes", JSON.stringify(next));
       return next;
     });
-    if (note.trim()) toast.success("تم حفظ الملاحظة");
-  }, []);
+    if (note.trim()) {
+      try {
+        await fetch(`/api/orders/${orderId}/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ note, shopId: shop?.id || "" }),
+        });
+      } catch {}
+      toast.success("تم حفظ الملاحظة");
+    }
+  }, [shop?.id]);
 
   // حالة التقرير
   const [reportOpen, setReportOpen] = useState(false);
@@ -906,19 +915,19 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <div className="text-[11px] text-muted-foreground">الطلبات</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground">{todayOrdersList.length}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number">{todayOrdersList.length}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">الإيرادات</div>
-                        <div className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{formatDA(todayRevenue)}</div>
+                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number">{formatDA(todayRevenue)}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">مكتملة</div>
-                        <div className="text-lg font-bold tabular-nums text-violet-600 dark:text-violet-400">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                        <div className="text-lg font-bold tabular-nums text-violet-600 dark:text-violet-400 counter-number">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
                       </div>
                     </div>
                   </div>

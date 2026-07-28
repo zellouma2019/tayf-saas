@@ -35,5 +35,52 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { slug } = await params;
-  return <ShopPage slug={slug} />;
+
+  // JSON-LD Structured Data for SEO
+  let jsonLd: React.ReactNode = null;
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://tayf-saas.vercel.app";
+    const res = await fetch(`${baseUrl}/api/shops/${slug}`, { cache: "no-store" });
+    if (res.ok) {
+      const { shop } = await res.json();
+      jsonLd = (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              name: shop.name,
+              description: `مطبعة ${shop.name} — خدمة طباعة احترافية أونلاين عبر منصة طيف`,
+              url: `${baseUrl}/s/${shop.slug}`,
+              telephone: shop.phone || shop.ownerPhone || undefined,
+              address: {
+                "@type": "PostalAddress",
+                addressCountry: shop.country || "DZ",
+              },
+              image: `${baseUrl}/brand/og-image.png`,
+              priceRange: "$$",
+              openingHoursSpecification: {
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+                opens: "08:00",
+                closes: "22:00",
+              },
+              areaServed: {
+                "@type": "Country",
+                name: shop.country === "MA" ? "Morocco" : "Algeria",
+              },
+            }),
+          }}
+        />
+      );
+    }
+  } catch {}
+
+  return (
+    <>
+      {jsonLd}
+      <ShopPage slug={slug} />
+    </>
+  );
 }
