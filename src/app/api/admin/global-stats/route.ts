@@ -63,9 +63,23 @@ export async function GET() {
 
     // تجهيز البيانات
     const statsRow = statsResult[0] || {};
-    const totalOrders = toNum(statsRow.totalOrders);
+    let totalOrders = toNum(statsRow.totalOrders);
     const totalRevenue = toNum(statsRow.totalRevenue);
-    const todayOrders = toNum(statsRow.todayOrders);
+    let todayOrders = toNum(statsRow.todayOrders);
+
+    // Fallback: إذا كان الاستعلام الأساسي أرجع 0، نحسب من statusCounts أو recentOrders
+    if (totalOrders === 0 && (statusRows.length > 0 || recentOrdersRaw.length > 0)) {
+      const fromStatus = Object.values(statusCounts).reduce((s, v) => s + v, 0);
+      if (fromStatus > 0) totalOrders = fromStatus;
+      else if (recentOrdersRaw.length > 0) totalOrders = recentOrdersRaw.length;
+    }
+    if (todayOrders === 0 && recentOrdersRaw.length > 0) {
+      const todayOrdersList = recentOrdersRaw.filter(o => {
+        const created = String(o.createdAt || "");
+        return created >= todayISO;
+      });
+      todayOrders = todayOrdersList.length;
+    }
 
     const statusCounts: Record<string, number> = {};
     for (const s of statusRows) {
