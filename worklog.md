@@ -5627,3 +5627,136 @@ Task: QA + CSS Round 39 + ميزات جديدة (Round 39)
 8. تحسين الـ SEO مع og:image للسوشيال ميديا
 9. تكامل MaterialCostEstimator في new-order-wizard
 10. اختبار شامل على الموقع الحي مع agent-browser
+
+---
+Task ID: round40
+Agent: Main Agent
+Task: QA + CSS Round 40 + ميزات جديدة (Round 40)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 40 جولة CSS (21,462 سطر)
+- ✅ 109 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء (1 تحذير a11y — قديم)
+- ✅ تم النشر على Vercel (commit bca8857)
+- ⚠️ Turso DB بطء متقطع (لا يزال)
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel (لا يزال)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 160ms, CLS 0, TTFB 5.4ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| صفحة المتجر (/s/al-riyan) — تعمل | ✅ |
+| صفحة التتبع (/track) — تعمل | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح (37s) | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. بحث سريع (Quick Search Widget)
+- مكون جديد: `src/components/app/quick-search-widget.tsx`
+- حقل بحث تفاعلي مع قائمة منسدلة
+- عمليات بحث سابقة + اقتراحات تلقائية
+- علامات بحث سريع: طلبات اليوم، بانتظار، جاهز
+- AnimatePresence لحركة القائمة
+
+### 2. مواقع الفروع (Branch Locator Widget)
+- مكون جديد: `src/components/app/branch-locator-widget.tsx`
+- 3 فروع: المقر الرئيسي، حيدرة، باب الوادي
+- حالة فتح/إغلاق مع مؤشر لوني
+- تقييم نجوم + عدد الطلبات + خدمات متاحة
+- أزرار إجراء عند التمرير
+
+### 3. جدول المواعيد (Schedule Calendar Widget)
+- مكون جديد: `src/components/app/schedule-calendar-widget.tsx`
+- تقويم شهري تفاعلي مع تنقل بين الأشهر
+- أحداث ملونة على الأيام (نقاط ملونة)
+- عرض مواعيد اليوم أسفل التقويم
+- حركة AnimatePresence عند تغيير الشهر
+
+### 4. لوحة التنبيهات (Alerts Dashboard Widget)
+- مكون جديد: `src/components/app/alerts-dashboard-widget.tsx`
+- 5 تنبيهات: عاجل، تنبيه، معلومات
+- شارات ملونة حسب النوع (أحمر/عنبري/أزرق)
+- عداد التنبيهات العاجلة مع نبض
+- أزرار إجراء سريعة
+
+### 5. الإنجازات والأوسمة (Achievement Badges Widget)
+- مكون جديد: `src/components/app/achievement-badges-widget.tsx`
+- 8 إنجازات في 4 فئات: طلبات، إيرادات، سلسلة، خاصة
+- شريط تقدم لكل إنجاز مع حركة
+- حالة مفتوح/مقفل مع علامة ✓ خضراء
+- شبكة 2×4 متجاوبة
+
+## CSS Round 40 (+289 سطر)
+
+### 1. شبكة استجابة متقدمة (~20 سطر)
+- `.responsive-masonry` (1-4 أعمدة) + `.grid-auto-fit-*`
+- `.layout-sidebar-main/main-sidebar` + `.grid-dense/span-*`
+
+### 2. حركات انتقال الصفحات (~25 سطر)
+- `.page-enter`, `.page-enter-slide`, `.page-enter-scale`
+- `.stagger-children` (تأخير متتالي حتى 9 عناصر)
+
+### 3. حالات التمرير والتركيز (~40 سطر)
+- `.hover-lift-*` (sm/md/lg), `.hover-scale-*`
+- `.hover-underline-anim`, `.hover-bg-fade`, `.hover-border-color`
+- `.focus-ring-offset/inset`
+
+### 4. نظام الزجاجية (~25 سطر)
+- `.glass-subtle/medium/strong/dark/colored`
+
+### 5. نظام الظلال المتقدم (~15 سطر)
+- `.shadow-soft-*` (4 مستويات), `.shadow-inner-*`
+- `.shadow-colored-*` (4 ألوان)
+
+### 6. استعلام الحاوية (~5 سطر)
+- `@container card`, `.container-card/sidebar`
+
+### 7. أنماط الحدود المتقدمة (~25 سطر)
+- `.border-gradient`, `.border-dashed/dotted/double-styled`
+- `.border-animated` (حركة متدرجة)
+
+### 8. أقسام المحتوى (~30 سطر)
+- `.section-divider`, `.section-header`
+- `.content-well`, `.content-callout` (4 أنواع)
+
+### 9. أدوات تباعد متقدمة (~20 سطر)
+- `.space-y/x-*` + `.gap-dense/tight/normal/relaxed/loose`
+
+### 10. أنماط إنتاج الطباعة (~84 سطر)
+- `.production-line/station`, `.job-ticket-card`
+- `.paper-size-preview` (A4/A3/A5/Letter)
+- `.color-profile-badge` (CMYK/RGB/Pantone/Grayscale)
+- `.bleed-area/trim-box/safe-zone`
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 40 +289 سطر (إجمالي 21,462 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج 5 مكونات جديدة |
+| `src/components/app/quick-search-widget.tsx` | جديد: بحث سريع |
+| `src/components/app/branch-locator-widget.tsx` | جديد: مواقع الفروع |
+| `src/components/app/schedule-calendar-widget.tsx` | جديد: جدول المواعيد |
+| `src/components/app/alerts-dashboard-widget.tsx` | جديد: لوحة التنبيهات |
+| `src/components/app/achievement-badges-widget.tsx` | جديد: الإنجازات |
+
+## Commit
+- bca8857: feat(r40): CSS Round 40 (+289 lines), quick search, branch locator, schedule calendar, alerts dashboard, achievement badges
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 40 جولة CSS (21,462 سطر CSS)
+- 109 مكون تطبيقي + 5 مكونات جديدة في Round 40
+- إجمالي ~813 سطر جديدة في Round 40
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع
+3. دمج BranchLocatorWidget في صفحة المتجر
+4. SEO JSON-LD structured data
+5. WebSocket للتحديثات الحية
+6. تكامل MaterialCostEstimator في new-order-wizard
+7. تحسين SEO مع og:image
+8. ملاحظات DB-based للطلبات
