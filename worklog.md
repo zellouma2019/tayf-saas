@@ -4642,3 +4642,165 @@ Task: QA + CSS Round 32 + ميزات جديدة (Round 32)
 8. اختبار UploadThing CDN على الموقع الحي
 9. تكامل OrderBulkActions مع تبويب الطلبات الفعلي
 10. إضافة WebSocket للتحديثات الحية للنشاطات
+
+---
+Task ID: qa-fix-round33
+Agent: Main Agent
+Task: QA + CSS Round 33 + ميزات جديدة (Round 33)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata + مقارنة الخدمات + مسار حالة الطلب المرئي
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint (0 أخطاء، 0 تحذيرات)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit ed6a955)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع (~8s، نظام الصحة يعرض 8062ms)
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (retry mechanism يعمل)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 38 طلب، 5 متاجر، 17,808 د.ج | ✅ |
+| تبويب الطلبات — بنية جدول ظاهرة | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الأزرار تعمل | ✅ |
+| صفحة المتجر — جوال (375x812) | ✅ |
+| البناء — ناجح بدون أخطاء | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الإصلاحات
+
+### 1. خطأ Lint: Badge is not defined
+**المشكلة**: في `admin-overview-tab.tsx`، مكون `Badge` كان مُستخدماً في السطر 660 لكن غير مستورد
+**الحل**: إضافة `import { Badge } from "@/components/ui/badge";` في بداية الملف
+**الملف**: `src/components/app/admin-overview-tab.tsx`
+
+## الميزات الجديدة
+
+### 1. مسار حالة الطلب المرئي (Order Timeline Visualizer)
+- مكون جديد: `src/components/app/order-timeline-visualizer.tsx`
+- مسار بصري من 6 خطوات RTL: جديد → مؤكد → جارٍ الطباعة → فحص الجودة → جاهز → تم التسليم
+- كل خطوة: أيقونة، تسمية، طابع زمني، خط رابط
+- الخطوة الحالية بنبض، الخطوات المكتملة بإشارة تحقق
+- حالة "ملغي" مع شارة حمراء مميزة
+- مدمج في صفحة التتبع (track-page-client.tsx)
+
+### 2. توقعات الإيرادات (Revenue Forecast Widget)
+- مكون جديد: `src/components/app/revenue-forecast-widget.tsx`
+- توقع إجمالي نهاية الشهر بناءً على الإيرادات الحالية والمعدل اليومي
+- رسم SVG sparkline: خط متصل (فعلي) + خط متقطع (توقع)
+- ألوان: أخضر للاتجاه الإيجابي، وردي للسلبي
+- مدمج في تبويب النظرة العامة (admin-overview-tab.tsx)
+
+### 3. صف الإحصائيات السريعة (Quick Stats Row)
+- مكون جديد: `src/components/app/quick-stats-row.tsx`
+- صف أفقي قابل للتمرير مع بطاقات إحصائيات مصغّرة
+- كل بطاقة: مربع أيقونة ملون، قيمة كبيرة، تسمية، شارة اتجاه
+- أنيميشن staggered عند الظهور مع Framer Motion
+- مدمج في تبويب النظرة العامة قبل توقعات الإيرادات
+
+### 4. بطاقة أداء المتجر (Shop Performance Card)
+- مكون جديد: `src/components/app/shop-performance-card.tsx`
+- 4 مقاييس: الطلبات، الإيرادات، متوسط الطلب، التقييم (نجوم)
+- شارة حالة ملونة (نشط/غير نشط/معلّق)
+- تأثير hover-lift + card-glass-morphism
+
+### 5. محدّث حالة مجموعة (Batch Status Updater)
+- مكون جديد: `src/components/app/batch-status-updater.tsx`
+- قائمة طلبات مع خانات اختيار + "تحديد الكل"
+- قائمة منسدلة مخصصة لاختيار الحالة الجديدة
+- شريط تقدم أثناء التحديث المجمّع
+- يستخدم STATUS_META و STATUS_COLORS
+
+## CSS Round 33 (+1411 سطر)
+
+### 1. تحسينات عناصر لوحة البيانات (~195 سطر)
+- `.widget-glass` — زجاجي مع backdrop-blur-xl
+- `.widget-bordered` — حد متدرج متحرك (@property --border-angle)
+- `.widget-collapsible` — طي/فتح سلس
+- `.widget-minimized` — حالة مصغّرة
+- `.widget-header-actions` — أزرار إجراءات في الرأس
+- `.dashboard-grid-masonry` — تخطيط masonry
+- `.dashboard-sidebar-compact` — شريط جانبي مضغوط
+- `.dashboard-header-sticky` — رأس ثابت مع blur
+
+### 2. تحسينات جدول البيانات (~215 سطر)
+- `.table-hover-row` — تمييز عند التمرير
+- `.table-selected-row` — حالة التحديد
+- `.table-group-header` — رأس مجموعة
+- `.table-summary-row` — صف الإجماليات
+- `.table-cell-numeric` — خلايا رقمية
+- `.table-cell-status` — خلايا حالة مع نقطة
+- `.table-cell-actions` — أزرار تظهر عند التمرير
+- `.table-responsive-wrapper` — تمرير أفقي مع تلاشي
+- `.table-empty-state` / `.table-loading`
+
+### 3. تحسينات النماذج والحقول (~215 سطر)
+- `.field-group` / `.field-error` / `.field-success` / `.field-hint`
+- `.select-custom` / `.textarea-auto` / `.input-rtl`
+- `.input-with-prefix` / `.input-with-suffix`
+- `.file-input-styled`
+
+### 4. نظام الإشعارات والتنبيهات (~165 سطر)
+- `.toast-container` / `.toast` / `.toast-success/error/warning/info`
+- `.toast-dismissable` / `.toast-progress`
+- `.notification-badge-stack` / `.notification-item-unread`
+
+### 5. تفاعلات دقيقة متقدمة (~110 سطر)
+- `.hover-lift` / `.hover-glow-primary` / `.hover-underline-animated`
+- `.hover-bg-fade` / `.press-scale` / `.focus-ring-primary`
+- `.ripple-effect` / `.magnetic-hover`
+
+### 6. حالات التحميل المُحسّنة (~190 سطر)
+- `.loading-overlay` / `.loading-bar` (NProgress-style)
+- `.loading-skeleton-wave` / `.loading-content-placeholder`
+- `.loading-inline` / `.loading-chunked`
+
+### 7. استجابة ومحمول (~160 سطر)
+- `.responsive-grid` / `.mobile-card`
+- `.mobile-nav-bar` / `.mobile-sheet` / `.mobile-swipeable`
+- `.touch-feedback` / `.safe-bottom-padding`
+
+### 8. إمكانية الوصول والحركة (~80 سطر)
+- `.sr-only-focusable` / `.focus-visible-ring`
+- `.motion-safe` / `.motion-reduce` / `.high-contrast`
+- 13 keyframes جديدة مع بادئة r33-
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 33 +1411 سطر (إجمالي 11,936 سطر) |
+| `src/app/page.tsx` | (لا تغيير) |
+| `src/components/app/admin-overview-tab.tsx` | إصلاح Badge import + دمج QuickStatsRow + RevenueForecastWidget |
+| `src/components/app/order-detail-modal.tsx` | (لا تغيير) |
+| `src/components/app/track-page-client.tsx` | دمج OrderTimelineVisualizer |
+| `src/components/app/merchant-dashboard.tsx` | (لا تغيير) |
+| `src/components/app/order-timeline-visualizer.tsx` | جديد: مسار حالة الطلب المرئي |
+| `src/components/app/revenue-forecast-widget.tsx` | جديد: توقعات الإيرادات |
+| `src/components/app/quick-stats-row.tsx` | جديد: صف الإحصائيات السريعة |
+| `src/components/app/shop-performance-card.tsx` | جديد: بطاقة أداء المتجر |
+| `src/components/app/batch-status-updater.tsx` | جديد: محدّث حالة مجموعة |
+
+## Commit
+- ed6a955: feat(r33): CSS Round 33, order timeline visualizer, revenue forecast, quick stats row, shop performance card, batch status updater, lint fix
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 33 جولة CSS (11,936 سطر CSS)
+- 73 مكون تطبيقي + 5 مكونات جديدة في Round 33
+- إجمالي 2,347 سطر جديدة في Round 33
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع (~8s). يُنصح بالنظر في بديل (PlanetScale, Neon, Supabase)
+3. تحسين merchant-dashboard.tsx على الموبايل (التصميم الحالي مزدحم)
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات (بدلاً من localStorage فقط)
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. تكامل ShopPerformanceCard في تبويب المتاجر للإدارة
+8. اختبار UploadThing CDN على الموقع الحي
+9. إضافة WebSocket للتحديثات الحية
+10. تحسين الـ SEO مع og:image للسوشيال ميديا
