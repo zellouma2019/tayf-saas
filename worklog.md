@@ -6508,3 +6508,129 @@ Task: QA + CSS Round 46 + 5 ميزات جديدة (Round 46)
 5. تكامل MaterialCostEstimator في new-order-wizard
 6. ملاحظات DB-based للطلبات
 7. دمج OrderFulfillmentTimeline في صفحة الطلبات
+
+---
+Task ID: round47
+Agent: Main Agent
+Task: QA + CSS Round 47 + 5 ميزات جديدة (Round 47)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 47 جولة CSS (30,721 سطر)
+- ✅ 144 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء
+- ✅ تم النشر على Vercel (commit ca770a0)
+- ⚠️ Turso DB بطء متقطع
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| TTFB 53.6ms, CLS 0 | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| لا موارد بطيئة | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح (33.2s) | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. متتبع الشحنات (Shipping Tracker Widget)
+- مكون جديد: `src/components/app/shipping-tracker-widget.tsx` (185 سطر)
+- 5 شحنات مع مسار تقدم من 3 خطوات
+- تلوين حسب الحالة: أخضر (تم التسليم)، عنبري (قيد التوصيل)، أحمر (مُرجع)
+- إحصائيات: إجمالي الشحنات، نسبة النجاح
+
+### 2. الحملات التسويقية (Marketing Campaign Widget)
+- مكون جديد: `src/components/app/marketing-campaign-widget.tsx` (200 سطر)
+- 4 حملات مع مقاييس الأداء ومخطط SVG مقارن
+- أشرطة تقدم الميزانية ونسب التحويل
+- إحصائيات: إجمالي الحملات، النشطة، الميزانية، ROI
+
+### 3. إدارة الموردين (Supplier Management Widget)
+- مكون جديد: `src/components/app/supplier-management-widget.tsx` (199 سطر)
+- 6 موردين مع تصنيفات، تقييم نجوم، أرقام اتصال
+- فلتر حسب التصنيف + شارة أفضل مورد
+- ملخص: إجمالي الموردين، النشطين، طلبات الشهر
+
+### 4. التقارير السريعة (Quick Reports Widget)
+- مكون جديد: `src/components/app/quick-reports-widget.tsx` (167 سطر)
+- 6 تقارير مع أزرار: إنشاء، تحميل، جدولة
+- حالة التقرير: جاهز / قيد الإنشاء / منتهي
+- خط زمني لآخر التقارير
+
+### 5. معاينة الألوان والمواد (Color & Material Preview)
+- مكون جديد: `src/components/app/color-material-preview.tsx` (200 سطر)
+- شبكة 12 لون مع hex codes عند التمرير
+- 6 أنواع ورق مع عينات ألوان ومخزون
+- جدول مقارنة المواد (وزن، نوع التشطيب، السعر)
+
+## CSS Round 47 (+2,172 سطر)
+
+### 1. شريط التقدم أثناء التمرير (~200 سطر)
+- `.scroll-progress-bar/fill`, `.reading-progress`, `.section-indicator`
+- `.scroll-to-top-btn`, `.scroll-shadow-top/bottom`
+
+### 2. العدادات الرقمية المتحركة (~112 سطر)
+- `.counter-value/animate/prefix/suffix`, `.counter-large/medium/small`
+- `.counter-positive/negative`, `.counter-card/group`
+
+### 3. نظام الوسوم المحسّن (~164 سطر)
+- `.tag` + solid/outline/ghost/soft variants
+- `.tag-xs/sm/md/lg`, `.tag-removable`, `.tag-input/list/filter`
+
+### 4. خطوات المعالج والتنقل التدريجي (~170 سطر)
+- `.stepper` + horizontal/vertical
+- `.stepper-item/line/circle/label` + active/completed/pending/error
+
+### 5. أدوات مساعدة للتصور البياني (~150 سطر)
+- `.chart-container-enhanced/tooltip/legend/annotation/gridline`
+- `.chart-empty-state/loading-skeleton`
+
+### 6. نظام إشعارات التنبيهات المنبثقة (~198 سطر)
+- `.toast-container/toast` + success/info/warning/error
+- `.toast-progress-bar`, `.toast-enter/exit` animations
+
+### 7. بطاقات الإحصائيات المتنوعة (~136 سطر)
+- `.stat-card` + icon/value/label/trend/sparkline
+- `.stat-card-compact/highlight/clickable/group`
+
+### 8. مكونات المفاتيح والتبديل (~196 سطر)
+- `.toggle-switch/track/thumb` + sizes
+- `.toggle-group/item`, `.toggle-ios/android`
+
+### 9. مكونات البحث والتصفية (~200 سطر)
+- `.search-box` + with-icon/clear/results/expanded
+- `.filter-bar/chip/dropdown/range/group`
+
+### 10. أنماط التحميل الهيكلي المحسّنة (~180 سطر)
+- `.skeleton-block/circle/text/card/avatar/chart/table`
+- `.skeleton-shimmer/pulse` animations
+
+### 11. متغيرات مسار التنقل (~100 سطر)
+- `.breadcrumb/item/separator/current/collapsed/dropdown`
+- `.breadcrumb-mobile`
+
+### 12. نظام التلميحات والنوافذ المنبثقة (~100 سطر)
+- `.tooltip-wrapper` + positions + themes
+- `.popover-panel` + header/body/footer + sizes
+
+## Commit
+- ca770a0: feat(r47): CSS Round 47 (+2,172 lines, 30,721 total), shipping tracker, marketing campaigns, supplier management, quick reports, color/material preview
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 47 جولة CSS (30,721 سطر CSS)
+- 144 مكون تطبيقي + 5 مكونات جديدة
+- إجمالي ~3,124 سطر جديدة في Round 47
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+2. ⚠️ مراقبة Turso DB — بطء متقطع
+3. SEO JSON-LD structured data
+4. WebSocket للتحديثات الحية
+5. تكامل MaterialCostEstimator في new-order-wizard
+6. ملاحظات DB-based للطلبات
+7. دمج ShippingTrackerWidget في صفحة الطلبات
+8. دمج SupplierManagementWidget في صفحة الإعدادات
+9. دمج QuickReportsWidget في لوحة التقارير
+10. دمج MarketingCampaignWidget في صفحة التسويق
