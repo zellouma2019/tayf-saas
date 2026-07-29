@@ -7920,3 +7920,133 @@ Task: QA testing, styling improvements, feature additions, deployment verificati
 - Git repo: https://github.com/zellouma2019/tayf-saas
 - Live: https://tayf-saas.vercel.app
 - Vercel deploy hook: POST https://api.vercel.com/v1/integrations/deploy/prj_E0enONAqV4zFw1PwKaYNUmTtVAxF/drocnerfiy
+---
+Task ID: Round 53
+Agent: Main Agent (Cron Loop)
+Task: QA + fix build error + major feature additions + CSS v4.8 + deployment
+
+## حالة المشروع الحالية
+
+### ✅ يعمل بشكل جيد:
+- **لوحة تحكم الزبون**: جميع المتاجر تعمل، صفحات الطلب تعمل بشكل كامل
+- **لوحة تحكم التاجر**: 9+ تبويبات تعمل، PIN login يعمل (مثال: al-riyan/1234)
+- **تتبع الطلبات**: صفحة /track تعمل مع اختيار المتجر + بحث
+- **API endpoints**: جميع نقاط النهاية تعمل (/api/health يعيد {"status":"ok"})
+- **GitHub**: جميع الالتزامات مُرسلة (latest: afb3765)
+
+### ❌ مشاكل مكتشفة:
+- **لوحة تحكم الإدمن**: تعمل محلياً لكن تتعطل على Vercel بعد تسجيل الدخول (نفس مشكلة Round 52)
+  - السبب: Vercel لا يسحب أحدث كود من GitHub — يعرض v4.6 بدلاً من v4.8
+  - Deploy hook يعيد بناء نفس الكود القديم
+
+## نتائج QA (agent-browser)
+- ✅ Customer shop pages: تعمل بشكل كامل (al-riyan, all shops)
+- ✅ Merchant dashboard: يعمل بعد PIN login (9 تبويبات، إحصائيات، طلبات، أدوات)
+- ✅ Track page (/track): تعرض اختيار المتجر + بحث
+- ✅ API health: {"status":"ok","db":"connected","v":"4"}
+- ❌ Admin dashboard: يعرض صفحة خطأ بعد تسجيل الدخول (error boundary v4.6 — كود قديم)
+
+## الإصلاحات المُطبقة
+
+### 1. إصلاح خطأ البناء (حرج)
+- **السبب**: استيراد مكرر لـ `AdminNotificationCenter` في page.tsx (سطر 54+55)
+- **الحل**: إزالة الاستيراد المكرر
+- **النتيجة**: Build ناجح بدون أخطاء
+
+### 2. ميزات جديدة للوحة الإدارة
+
+#### البحث الشامل (Global Search)
+- بحث عبر الطلبات والمتاجر والعملاء من البيانات في الذاكرة
+- نتائج مقسّمة حسب الفئة (📦 الطلبات, 🏪 المتاجر, 👤 العملاء)
+- اختصار Ctrl+K لتفعيل البحث
+- قائمة منسدلة مع نتائج فورية
+
+#### إجراءات جماعية (Bulk Actions)
+- تحديد طلبات متعددة عبر checkboxes
+- شريط إجراءات يظهر عند التحديد مع:
+  - عداد: "X طلب محدد"
+  - تحديث الحالة (Dropdown + زر تطبيق)
+  - حذف المحدد (مع تأكيد AlertDialog)
+  - تحديد/إلغاء الكل
+- API endpoint جديد: `/api/orders/bulk-status` (POST)
+
+### 3. ميزات جديدة لوحة تحكم التاجر
+
+#### نظام ملاحظات داخلية (Order Notes)
+- إضافة ملاحظات على كل طلب (للمتجر فقط)
+- API: `/api/orders/[id]/notes` (GET + POST)
+- جدول `OrderNote` يُنشأ تلقائياً
+- عرض الملاحظات في تفاصيل الطلب مع اسم الكاتب + الوقت
+
+#### زر طباعة الإيصال
+- زر "طباعة الإيصال" ظاهر دائماً (بدون قفل PRO)
+- يفتح نافذة جديدة مع إيصال منسّق RTL
+- طباعة تلقائية
+
+#### تصدير CSV محسّن
+- 6 أعمدة: رقم الطلب، اسم الزبون، الخدمة، الحالة، السعر، التاريخ
+- BOM للعربية في Excel
+- تنسيق CSV صحيح مع اقتباس
+
+#### حوار مشاركة الرابط (Share Dialog)
+- زر "مشاركة" مع Share2 icon
+- حوار يحتوي: رابط المتجر + نسخ + واتساب + تيليجرام
+
+### 4. تحسينات CSS (v4.8 + v4.8b)
+
+#### v4.8 — تأثيرات لوحة التاجر (20+ animation):
+- `merchant-stat-lift` — رفع البطاقات عند hover
+- `animate-count-up` — عدّاد متحرك للأرقام
+- `revenue-shimmer` — تأثير لمعان للإيرادات
+- `slide-in-rtl` — دخول بطاقات RTL
+- `pending-pulse` — نبض شارة المعلقة
+- `animate-progress` — نمو شريط التقدم
+- `fab-ripple` — تموج زر الإجراء العائم
+- `kbd-tooltip` — تلميح اختصار لوحة المفاتيح
+- `sidebar-active-glow` — توهج تبويب جانبي نشط
+- `empty-bounce` — حركة حالة فارغة
+- `chart-fade-in` — ظهور سلس للرسوم البيانية
+- `toast-slide` — انزلاق الإشعار
+
+#### v4.8b — تحسينات إضافية:
+- `text-gradient-section` — تدرج نص بنفسجي
+- `card-hover-glow` — توهج البطاقة عند hover
+- `scrollbar-smooth` — شريط تمرير رفيع
+- `widget-fade-in` — ظهور متتابع (حتى 10 عناصر)
+- `skeleton-shimmer` — shimmer تحميل
+- `merchant-header-gradient` — خلفية متدرجة
+- `table-responsive-wrapper` — جدول متجاوب
+
+### 5. تطبيق CSS على المكونات
+- 13 class جديدة مُطبقة على merchant-dashboard.tsx
+- `sidebar-active-glow` على dashboard-sidebar.tsx
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|--------|
+| src/app/page.tsx | إزالة استيراد مكرر + بحث شامل + تحسين bulk actions |
+| src/app/globals.css | +232 سطر CSS (v4.8 + v4.8b animations) |
+| src/app/api/orders/bulk-status/route.ts | جديد — bulk status update endpoint |
+| src/app/api/orders/[id]/notes/route.ts | محسّن — OrderNote table + GET/POST |
+| src/components/app/merchant-dashboard.tsx | +share dialog + CSS classes + CSV export محسّن |
+| src/components/app/merchant-order-detail.tsx | +طباعة الإيصال دائمة |
+| src/components/app/merchant-order-notes.tsx | +API loading + author display |
+| src/components/ui/dashboard-sidebar.tsx | +sidebar-active-glow |
+
+## الإصدارات
+- النسخة: v4.8
+- Commit: afb3765
+- Vercel Job: zw62ig8QsOGDTmAMqz3w
+
+## أولويات الجولة القادمة
+1. 🔴 **حرج**: ربط Vercel بـ GitHub يدوياً — الإدمن لا يعمل على Vercel
+2. 🟡 اختبار ميزات v4.8 الجديدة على الموقع الحي
+3. 🟡 إضافة نظام إشعارات في الوقت الحقيقي (WebSocket/SSE)
+4. 🟢 تحسين أداء التحميل — lazy loading للمكونات الثقيلة
+5. 🟢 إضافة تقارير PDF للإحصائيات
+
+## الملاحظات
+- كلمة مرور الإدمن: Admin@2025
+- PIN متجر الريان: 1234
+- Git repo: https://github.com/zellouma2019/tayf-saas
+- Live: https://tayf-saas.vercel.app
