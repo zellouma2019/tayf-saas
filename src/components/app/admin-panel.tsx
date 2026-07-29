@@ -296,34 +296,61 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     if (queryStats) setStats(queryStats);
   }, [queryStats]);
 
+  // Track last successful load
+  const lastLoadSuccessRef = useRef<number>(0);
+
+  async function fetchOrdersWithRetry(maxRetries = 3): Promise<Record<string, unknown>[]> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await fetch("/api/orders?limit=500&noPreview=true", {
+          cache: 'no-store',
+          headers: { 'x-t': String(Date.now()) },
+        });
+        const data = await res.json();
+        const rawOrders = Array.isArray(data?.orders) ? data.orders : [];
+        const total = data?.pagination?.total;
+        // If we got orders, return immediately
+        if (rawOrders.length > 0) {
+          return rawOrders;
+        }
+        // If no orders but total > 0, the DB had a hiccup — retry with delay
+        if (total > 0 && attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1500 * attempt));
+          continue;
+        }
+        // No orders and no total — genuinely empty
+        return rawOrders;
+      } catch (err) {
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+        console.error('fetchOrdersWithRetry failed after', maxRetries, 'attempts:', err);
+        return [];
+      }
+    }
+    return [];
+  }
+
   function loadAll() {
     if (!adminCode) return;
     setLoading(true);
+    const startTime = Date.now();
     Promise.all([
-      fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
-      // Admin sees ALL orders — use fetch directly (not shopApi which filters by shopId)
-      fetch("/api/orders?limit=10000").then((r) => r.json()).catch(() => ({ orders: [] })),
+      fetch("/api/admin/stats", { headers: { ...adminHeaders, 'Cache-Control': 'no-cache' }, cache: 'no-store' }).then((r) => r.json()).catch(() => null),
+      fetchOrdersWithRetry(3),
     ])
-      .then(([s, o]) => {
+      .then(([s, rawOrders]) => {
         if (s) setStats(s);
-        let rawOrders = Array.isArray(o?.orders) ? o.orders : [];
-        // Turso DB fallback: if SELECT returns 0 but pagination.total > 0, retry once
-        const totalFromPagination = o?.pagination?.total;
-        if (rawOrders.length === 0 && totalFromPagination > 0) {
-          fetch("/api/orders?limit=10000")
-            .then((r2) => r2.json())
-            .then((o2) => {
-              const retryOrders = Array.isArray(o2?.orders) ? o2.orders : [];
-              if (retryOrders.length > 0) setOrders(safeMapOrders(retryOrders));
-            })
-            .catch(() => {});
-          return; // don't set empty orders, wait for retry
+        const mapped = safeMapOrders(rawOrders);
+        if (mapped.length > 0 || (rawOrders as unknown[]).length === 0) {
+          setOrders(mapped);
+          lastLoadSuccessRef.current = Date.now();
         }
-        setOrders(safeMapOrders(rawOrders));
       })
       .catch((err) => {
         console.error("loadAll error:", err);
-        setOrders([]);
+        // Don't clear orders on error — keep last successful data
       })
       .finally(() => setLoading(false));
   }
@@ -348,9 +375,26 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     });
   }
 
+  // Auto-refresh orders every 45 seconds
   useEffect(() => {
     loadAll();
+    const interval = setInterval(() => {
+      if (adminCode) loadAll();
+    }, 45_000);
+    return () => clearInterval(interval);
   }, [adminCode]);
+
+  // Retry if orders are empty but stats show there should be data
+  useEffect(() => {
+    if (!loading && orders.length === 0 && stats && (stats.totalOrders ?? 0) > 0) {
+      const elapsed = Date.now() - lastLoadSuccessRef.current;
+      // Only retry if we haven't successfully loaded in the last 30s
+      if (elapsed > 30_000) {
+        const retryTimer = setTimeout(() => loadAll(), 3000);
+        return () => clearTimeout(retryTimer);
+      }
+    }
+  }, [loading, orders.length, stats?.totalOrders]);
 
   // تصفية: حالة + بحث + تاريخ
   const filteredOrders = useMemo(() => {
@@ -530,9 +574,9 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   return (
     <div className="space-y-6">
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
         {statCards.map((c, i) => (
-          <Card key={i} className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+          <Card key={i} className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 card-glow">
             <CardContent className="p-3 md:p-5">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
@@ -860,11 +904,27 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {loading ? (
-                <div className="py-20 text-center text-muted-foreground text-sm">
-                  <div className="empty-state-icon mb-4 mx-auto"><RefreshCw className="h-7 w-7 text-primary/60 animate-spin" /></div>
-                  <p className="font-medium">جارٍ تحميل الطلبات...</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">قد يستغرق هذا بضع ثوانٍ</p>
+              {loading && orders.length === 0 ? (
+                <div className="py-8 space-y-3 px-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary/60" />
+                    <span>جارٍ تحميل الطلبات...</span>
+                    <span className="text-xs text-muted-foreground/50 mr-auto">المحاولة 1/3</span>
+                  </div>
+                  {/* Skeleton rows */}
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex items-center gap-3 py-2.5 border-b last:border-b-0">
+                      <div className="w-4 h-4 rounded bg-muted animate-pulse" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                        <div className="h-2.5 w-32 rounded bg-muted/70 animate-pulse" />
+                      </div>
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse" />
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                      <div className="h-3 w-14 rounded bg-muted animate-pulse" />
+                      <div className="w-5 h-5 rounded bg-muted animate-pulse" />
+                    </div>
+                  ))}
                 </div>
               ) : filteredOrders.length === 0 ? (
                 <div className="py-20 text-center fade-in-up">
@@ -873,8 +933,19 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                   <p className="text-xs text-muted-foreground/60 mt-1">
                     {search || statusFilter !== "all" || dateFrom || dateTo
                       ? "جرّب تغيير معايير البحث أو التصفية"
-                      : "ستظهر الطلبات الجديدة هنا تلقائياً"}
+                      : stats && (stats.totalOrders ?? 0) > 0
+                        ? "يتم إعادة المحاولة... جارٍ تحميل البيانات من قاعدة البيانات"
+                        : "ستظهر الطلبات الجديدة هنا تلقائياً"}
                   </p>
+                  {stats && (stats.totalOrders ?? 0) > 0 && orders.length === 0 && !loading && (
+                    <button
+                      onClick={loadAll}
+                      className="mt-3 text-xs font-medium text-primary hover:underline flex items-center gap-1 mx-auto"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      إعادة تحميل
+                    </button>
+                  )}
                 </div>
               ) : (
                 <>
@@ -994,15 +1065,33 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               </div>
             </CardHeader>
             <CardContent className="p-3 space-y-2">
-              {loading ? (
-                <div className="py-10 text-center text-muted-foreground text-sm">
-                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
-                  جارٍ التحميل...
+              {loading && orders.length === 0 ? (
+                <div className="py-6 space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    جارٍ التحميل...
+                  </div>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="rounded-xl border bg-card p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded bg-muted animate-pulse" />
+                        <div className="h-3 w-20 rounded bg-muted animate-pulse" />
+                        <div className="ml-auto h-5 w-14 rounded-full bg-muted animate-pulse" />
+                      </div>
+                      <div className="flex justify-between">
+                        <div className="h-2.5 w-24 rounded bg-muted/70 animate-pulse" />
+                        <div className="h-3 w-12 rounded bg-muted animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : filteredOrders.length === 0 ? (
                 <div className="py-10 text-center">
                   <Inbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
                   <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
+                  {stats && (stats.totalOrders ?? 0) > 0 && (
+                    <button onClick={loadAll} className="mt-2 text-xs text-primary hover:underline">إعادة محاولة</button>
+                  )}
                 </div>
               ) : (
                 filteredOrders.map((o) => (
@@ -1024,13 +1113,21 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
         {/* ===== تبويب سبورة الطلبات ===== */}
         <TabsContent value="kanban" className="mt-4">
-          {loading ? (
+          {loading && orders.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground text-sm">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
               جارٍ التحميل...
             </div>
           ) : (
-            <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
+            <div className="relative">
+              {loading && orders.length > 0 && (
+                <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-primary font-medium">
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  جارٍ التحديث...
+                </div>
+              )}
+              <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
+            </div>
           )}
         </TabsContent>
 

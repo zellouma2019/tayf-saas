@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone } from "lucide-react";
+import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -266,9 +266,9 @@ export function OrderDetailModal({
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* شريط الحالة */}
+          {/* شريط الحالة + أزرار التواصل السريع */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-xs px-2.5 py-1 rounded-full border ${meta.bg}`}>
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${meta.bg} status-badge-pop`} key={order.status}>
               {meta.emoji} {meta.label}
             </span>
             {availableStatuses
@@ -278,12 +278,54 @@ export function OrderDetailModal({
                   key={s}
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs"
+                  className="h-7 text-xs btn-magnetic"
                   onClick={() => handleStatusChange(s)}
                 >
                   {STATUS_META[s].label}
                 </Button>
               ))}
+            {/* أزرار التواصل السريع */}
+            <div className="mr-auto flex items-center gap-1.5">
+              {order.customer?.phone && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    onClick={() => {
+                      const phone = order.customer.phone.replace(/[^0-9]/g, '');
+                      const msg = encodeURIComponent(`مرحباً ${order.customer.name || ''}! طلبك ${order.reference} الآن: ${STATUS_META[order.status].label}. ${order.status === 'ready' ? 'يمكنك الاستلام من المطبعة.' : ''}`);
+                      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+                    }}
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    <span className="hidden sm:inline">واتساب</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30"
+                    onClick={() => {
+                      window.open(`tel:${order.customer.phone}`, '_self');
+                    }}
+                  >
+                    <Phone className="h-3 w-3" />
+                    <span className="hidden sm:inline">اتصال</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800/40 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                    onClick={() => {
+                      navigator.clipboard.writeText(order.customer.phone);
+                      toast.success("تم نسخ رقم الهاتف");
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* معلومات العميل — قابل للتعديل */}
