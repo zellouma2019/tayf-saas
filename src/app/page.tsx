@@ -258,13 +258,18 @@ export default function SuperAdminPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
+                "relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
                 activeTab === tab
                   ? "bg-background text-foreground border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
               {tabLabels[tab]}
+              {tab === "orders" && safeOrders.filter(o => o.status === "pending").length > 0 && (
+                <span className="absolute -top-0.5 left-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
+                  {safeOrders.filter(o => o.status === "pending").length}
+                </span>
+              )}
             </button>
           ))}
           <div className="flex-1" />
@@ -427,18 +432,18 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Stats cards - enhanced with gradient indicators */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-stagger">
               {[
                 { label: "إجمالي الطلبات", value: globalStats?.totalOrders ?? safeOrders.length, icon: Package, color: "text-blue-600 dark:text-blue-400", gradient: "from-blue-500/10 to-blue-600/5", border: "border-blue-200 dark:border-blue-800/50" },
                 { label: "المتاجر", value: safeShops.length, icon: Store, color: "text-emerald-600 dark:text-emerald-400", gradient: "from-emerald-500/10 to-emerald-600/5", border: "border-emerald-200 dark:border-emerald-800/50" },
                 { label: "قيد الانتظار", value: safeOrders.filter(o => o.status === "pending").length, icon: Clock, color: "text-amber-600 dark:text-amber-400", gradient: "from-amber-500/10 to-amber-600/5", border: "border-amber-200 dark:border-amber-800/50" },
                 { label: "الإيرادات", value: `${(globalStats?.totalRevenue ?? 0).toLocaleString("ar-DZ")} د.ج`, icon: DollarSign, color: "text-violet-600 dark:text-violet-400", gradient: "from-violet-500/10 to-violet-600/5", border: "border-violet-200 dark:border-violet-800/50" },
               ].map((card, i) => (
-                <div key={i} className={cn("rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden", card.border)}>
+                <div key={i} className={cn("rounded-xl border bg-card p-4 card-hover-lift relative overflow-hidden", card.border)}>
                   <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-br opacity-50 pointer-events-none", card.gradient)} />
                   <div className="relative flex items-center justify-between">
                     <div>
-                      <div className="text-2xl font-bold tabular-nums">{card.value}</div>
+                      <div className="text-2xl font-bold tabular-nums animate-count-up">{card.value}</div>
                       <div className="text-xs text-muted-foreground mt-1">{card.label}</div>
                     </div>
                     <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center", card.gradient)}>
@@ -742,7 +747,7 @@ export default function SuperAdminPage() {
                       <TableRow
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="cursor-pointer hover:bg-muted/50 table-row-highlight"
                       >
                         <TableCell className="font-medium">{order.customer?.name || order.customerName || "—"}</TableCell>
                         <TableCell>{order.serviceName || order.serviceType || "—"}</TableCell>
@@ -772,17 +777,34 @@ export default function SuperAdminPage() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-border bg-card/50 px-4 py-3 flex items-center justify-between">
-        <p className="text-[10px] text-muted-foreground">
-          {platformName} — لوحة الإدارة
-        </p>
-        <button
-          onClick={handleLogout}
-          className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
-        >
-          <Lock className="h-3 w-3" />
-          تسجيل الخروج
-        </button>
+      <footer className="mt-auto border-t border-border bg-card/50 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] text-muted-foreground">
+              {platformName} — لوحة الإدارة
+            </p>
+            {lastUpdated && (
+              <span className="text-[9px] text-muted-foreground/50">•</span>
+            )}
+            {lastUpdated && (
+              <span className="text-[9px] text-muted-foreground/50">
+                v4.1
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[9px] text-muted-foreground/40 tabular-nums">
+              {safeShops.length} متجر • {safeOrders.length} طلب
+            </span>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 hover:bg-destructive/5 px-2 py-1 rounded-md"
+            >
+              <Lock className="h-3 w-3" />
+              تسجيل الخروج
+            </button>
+          </div>
+        </div>
       </footer>
 
       {/* Create Shop Dialog */}
