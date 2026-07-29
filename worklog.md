@@ -7797,3 +7797,45 @@ Task: تحسين تنسيق لوحة الإدارة v4.6 — مؤشرات الأ
 
 ### 4. التحقق
 - ✅ `bun run lint` — بدون أخطاء
+
+---
+Task ID: 8
+Agent: Main Agent
+Task: Deploy v4.6, push to GitHub, trigger Vercel, fix lint, add Quick Actions
+
+## الوضع الحالي
+- ✅ Build ناجح بدون أخطاء (2 تحذيرات CSS @property)
+- ✅ Lint ناجح بدون أخطاء
+- ✅ Git push إلى GitHub ناجح (commit 8810ff3)
+- ✅ Vercel deployment مُشغّل (Job ID: WZbDfzjUjOLyslLGAzhZ)
+- ✅ Screenshot من Vercel Git settings يؤكد الربط نشط (Connected 1m ago)
+
+## التغييرات
+
+### 1. Quick Actions Widget (Overview Tab)
+- أضفنا 4 أزرار إجراءات سريعة دائمة في أعلى النظرة العامة:
+  - إنشاء متجر (Store icon)
+  - تحديث البيانات (RefreshCw icon)
+  - تصدير التقرير CSV (Download icon)
+  - إعدادات المنصة (Settings icon)
+- تأثيرات hover مع glassmorphism وanimations
+
+### 2. CSS Animations
+- إضافة @keyframes slide-down-fade و pulse-soft
+- تأثير stagger على أزرار الإجراءات السريعة
+- online-dot مؤشر حالة متصل
+
+### 3. Error Boundary Component
+- ملف جديد: src/components/app/error-boundary.tsx
+
+## الإصدارات
+- النسخة: v4.6
+- Commit: 8810ff3
+- Vercel Job: WZbDfzjUjOLyslLGAzhZ
+
+## الملاحظات
+- لم نتمكن من تشغيل dev server في sandbox (port 3000 محجوز)
+- تم التحقق عبر build و lint فقط
+- لوحة تحكم الإدمن: 6 tabs + 19+ widgets في النظرة العامة
+- لوحة تحكم التاجر: 9 tabs + 3657 سطر
+- Git repo متصل بـ Vercel (كما هو ظاهر في لقطة الشاشة)
