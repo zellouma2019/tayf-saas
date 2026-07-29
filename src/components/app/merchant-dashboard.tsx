@@ -1050,6 +1050,20 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </span>
               )}
             </button>
+            <a
+              href={customerLink}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary text-xs font-medium transition-colors"
+            >
+              <Store className="h-3.5 w-3.5" />
+              <span>العودة للمتجر</span>
+            </a>
+            <a
+              href={customerLink}
+              className="sm:hidden p-2.5 rounded-lg hover:bg-secondary transition-colors"
+              title="العودة للمتجر"
+            >
+              <Store className="h-4 w-4 text-muted-foreground" />
+            </a>
             <ThemeToggle />
             <div className="hidden lg:flex items-center gap-1 text-[10px] text-muted-foreground/50">
               <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px]">Alt+N</kbd>

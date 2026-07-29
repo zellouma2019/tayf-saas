@@ -32,7 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Package,
   DollarSign,
@@ -640,9 +640,19 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             <span className="sm:hidden">إعدادات</span>
           </TabsTrigger>
         </TabsList>
+      </Tabs>
 
+      <AnimatePresence mode="wait">
         {/* ===== تبويب الطلبات ===== */}
-        <TabsContent value="orders" className="space-y-3 mt-4">
+        {activeTab === "orders" && (
+        <motion.div
+          key="tab-orders"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="space-y-3 mt-4"
+        >
           {/* صف الملخص */}
           <div className="flex items-center justify-between gap-2 px-1 text-xs">
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -1123,10 +1133,19 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             </CardContent>
           </Card>
 
-        </TabsContent>
+        </motion.div>
+        )}
 
         {/* ===== تبويب سبورة الطلبات ===== */}
-        <TabsContent value="kanban" className="mt-4">
+        {activeTab === "kanban" && (
+        <motion.div
+          key="tab-kanban"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="mt-4"
+        >
           {loading && orders.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground text-sm">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -1143,28 +1162,65 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
             </div>
           )}
-        </TabsContent>
+        </motion.div>
+        )}
 
         {/* ===== تبويب الإعدادات ===== */}
-        <TabsContent value="settings" className="mt-4">
+        {activeTab === "settings" && (
+        <motion.div
+          key="tab-settings"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="mt-4"
+        >
           <AdminSettings />
-        </TabsContent>
+        </motion.div>
+        )}
 
         {/* ===== تبويب التحليلات ===== */}
-        <TabsContent value="analytics" className="mt-4">
+        {activeTab === "analytics" && (
+        <motion.div
+          key="tab-analytics"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="mt-4"
+        >
           <AdminAnalytics stats={stats} />
-        </TabsContent>
+        </motion.div>
+        )}
 
         {/* ===== تبويب العملاء ===== */}
-        <TabsContent value="customers" className="mt-4">
+        {activeTab === "customers" && (
+        <motion.div
+          key="tab-customers"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="mt-4"
+        >
           <AdminCustomers />
-        </TabsContent>
+        </motion.div>
+        )}
 
         {/* ===== تبويب المصاريف ===== */}
-        <TabsContent value="expenses" className="mt-4">
+        {activeTab === "expenses" && (
+        <motion.div
+          key="tab-expenses"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="mt-4"
+        >
           <AdminExpenses />
-        </TabsContent>
-      </Tabs>
+        </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* نافذة تفاصيل الطلب */}
       <OrderDetailModal

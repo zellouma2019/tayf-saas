@@ -96,7 +96,7 @@ export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onTo
 حجم الملف: ${order.fileSize ? Math.round(order.fileSize / 1024) + " ك.ب" : "—"}
 
 مواصفات الطباعة:
-${Object.entries(order.options)
+${Object.entries(order.options || {})
   .filter(([k]) => !HIDDEN_OPTION_KEYS.includes(k))
   .map(([k, v]) => `  - ${translateOptionKey(k)}: ${translateOptionValue(String(v))}`)
   .join("\n")}
@@ -151,7 +151,7 @@ ${order.options.printRange === "custom" ? `  - نطاق الطباعة: صفحا
   }
 
   // تجميع خيارات الطباعة للعرض - باستخدام الترجمات العربية
-  const printOptions = Object.entries(order.options)
+  const printOptions = Object.entries(order.options || {})
     .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
     .map(([k, v]) => ({ key: k, label: translateOptionKey(k), value: translateOptionValue(String(v)) }));
 
