@@ -52,9 +52,8 @@ import { SecurityTab } from "@/components/app/admin-security-tab";
 import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
 import { AdminErrorBoundary } from "@/components/app/error-boundary";
 import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
-import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
 
-const BUILD_HASH = "v4.6-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.6";
+const BUILD_HASH = "v4.8-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.8";
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
