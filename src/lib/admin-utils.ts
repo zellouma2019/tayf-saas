@@ -255,3 +255,59 @@ export const TAB_TITLES: Record<string, string> = {
   settings: "إعدادات المتاجر",
   security: "الأمان والفريق",
 };
+
+// ===== Favicon Badge — رقم على أيقونة التبويب =====
+let _faviconCanvas: HTMLCanvasElement | null = null;
+export function setFaviconBadge(count: number) {
+  if (typeof document === "undefined") return;
+  try {
+    if (!_faviconCanvas) {
+      _faviconCanvas = document.createElement("canvas");
+    }
+    const canvas = _faviconCanvas;
+    const size = 32;
+    canvas.width = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // رسم الأيقونة الأصلية
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      ctx.clearRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // رسم الشارة
+      if (count > 0) {
+        const text = count > 99 ? "99+" : String(count);
+        const badgeSize = count > 9 ? 18 : 15;
+        const x = size - badgeSize / 2 - 1;
+        const y = badgeSize / 2 + 1;
+
+        // خلفية الشارة (دائرة حمراء)
+        ctx.beginPath();
+        ctx.arc(x, y, badgeSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444";
+        ctx.fill();
+
+        // نص الشارة
+        ctx.fillStyle = "#ffffff";
+        ctx.font = `bold ${count > 9 ? 9 : 10}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x, y + 0.5);
+      }
+
+      // تحديث الـ favicon
+      const link = document.querySelector<HTMLLinkElement>("link[rel*='icon']");
+      if (link) {
+        link.href = canvas.toDataURL("image/png");
+      }
+    };
+    img.src = "/favicon.png";
+  } catch {
+    // صامت — لا يُعطّل التطبيق
+  }
+}

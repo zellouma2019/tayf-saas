@@ -392,6 +392,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
       {/* تنبيه الطلبات المتأخرة */}
       <StaleOrdersWidget stats={stats} onRefresh={() => {}} />
 
+      {/* ترتيب المتاجر حسب الأداء */}
+      {safeStats.shopStats && safeStats.shopStats.length > 1 && <ShopRankingWidget shops={safeStats.shopStats} />}
+
       {/* آخر الطلبات + النشاط */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="bg-card rounded-xl border border-border shadow-sm">
@@ -563,6 +566,87 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
             <Bar dataKey="revenue" fill="#d4a853" radius={[0, 6, 6, 0]} barSize={22} />
           </BarChart>
         </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ===== ترتيب المتاجر حسب الأداء =====
+const MEDAL_STYLES = [
+  { emoji: "🥇", label: "الأول", ring: "ring-amber-400/40", bg: "bg-amber-50 dark:bg-amber-950/20" },
+  { emoji: "🥈", label: "الثاني", ring: "ring-slate-400/40", bg: "bg-slate-50 dark:bg-slate-800/30" },
+  { emoji: "🥉", label: "الثالث", ring: "ring-orange-400/40", bg: "bg-orange-50 dark:bg-orange-950/20" },
+];
+
+function ShopRankingWidget({ shops }: { shops: GlobalStats["shopStats"] }) {
+  // ترتيب حسب عدد الطلبات (ثم الإيرادات كـ tiebreaker)
+  const ranked = [...shops]
+    .sort((a, b) => (b.orders ?? 0) - (a.orders ?? 0) || (b.revenue ?? 0) - (a.revenue ?? 0))
+    .slice(0, 5);
+
+  if (ranked.length < 2) return null;
+
+  return (
+    <Card className="bg-card rounded-xl border border-border shadow-sm fade-in-up">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+          <Crown className="h-4 w-4 text-amber-500" />
+          ترتيب المتاجر حسب الأداء
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border stagger-list">
+          {ranked.map((shop, idx) => {
+            const medal = MEDAL_STYLES[idx];
+            const maxOrders = ranked[0].orders ?? 1;
+            const pct = Math.round(((shop.orders ?? 0) / maxOrders) * 100);
+            return (
+              <div key={shop.id} className={cn(
+                "flex items-center gap-3 px-4 sm:px-5 py-3.5 table-row-hover transition-colors",
+                idx === 0 && medal?.bg
+              )}>
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold",
+                  medal?.ring && `ring-2 ${medal.ring}`,
+                  idx === 0 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" :
+                  idx === 1 ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" :
+                  idx === 2 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400" :
+                  "bg-muted text-muted-foreground"
+                )}>
+                  {medal?.emoji || idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-foreground truncate">{shop.name}</span>
+                    {shop.isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-700",
+                          idx === 0 ? "bg-amber-500" : idx === 1 ? "bg-slate-400" : "bg-muted-foreground/30"
+                        )}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                      {shop.orders ?? 0} طلب
+                    </span>
+                  </div>
+                </div>
+                {(shop.revenue ?? 0) > 0 && (
+                  <div className="text-left shrink-0">
+                    <div className="text-sm font-bold text-foreground tabular-nums">{formatDA(shop.revenue ?? 0)}</div>
+                    <div className="text-[10px] text-muted-foreground">إيرادات</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );
