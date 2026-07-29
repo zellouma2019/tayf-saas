@@ -6777,6 +6777,94 @@ Task: إصلاح مشاكل حرجة + تقليل حجم المشروع + دعم
 3. 🟡 تحسين تحليل DOCX باستخدام mammoth.js
 4. 🟡 تحسين VLM للملفات الكبيرة (تحليل صفحات متعددة)
 5. 🟢 متابعة التحسينات (CSS + مكونات جديدة)
+
+---
+Task ID: R48-QA-fixes
+Agent: Main Agent
+Task: إصلاح الأخطاء الحرجة + تحسين UX + CSS Round 48
+
+## حالة المشروع الحالية
+- ✅ تم إصلاح عطل لوحة تحكم التاجر (MerchantDashboard crash)
+- ✅ تم تحسين انتقالات التبويبات في لوحة الإدارة
+- ✅ تم إضافة CSS Round 48 (+415 سطر)
+- ✅ تم تحديث GitHub Token ورفع جميع التعديلات
+- ⚠️ Vercel CDN لم يُحدّث الملفات المُجمَّعة بعد (عدة Commits بدون إعادة بناء)
+- 📦 حجم المشروع: 7.2MB (git-tracked)
+
+## الإصلاحات المُنفذة
+
+### 1. إصلاح عطل لوحة تحكم التاجر (MerchantDashboard crash)
+- **السبب الجذري**: `PrintQueueWidget` يُستدعى بـ prop `jobs` (غير موجود) بدلاً من `orders`
+  مما يجعل `orders=undefined` → `.filter()` على undefined → تعطل Error Boundary
+- **الإصلاح**:
+  - إزالة الاستدعاء المكرر لـ `PrintQueueWidget` (يُعرض مرة واحدة في قسم الإيرادات)
+  - إضافة `Array.isArray()` guards في `PrintQueueWidget` و `MerchantAnalytics` و `AdminAnalytics`
+  - إضافة try/catch guards في جميع `.filter()` callbacks في `merchant-dashboard.tsx`
+  - تحسين `loadOrders` للتحقق من صيغة الاستجابة قبل `setRawOrders`
+
+### 2. تحسين لوحة الإدارة — انتقالات التبويبات
+- **قبل**: `TabsContent` ثابت بدون حركة
+- **بعد**: `AnimatePresence` + `motion.div` لكل تبويب مع:
+  - fade-in/out
+  - slide-up/down (y: 8px)
+  - مدة 0.2 ثانية
+
+### 3. تحسينات إضافية
+- إضافة رابط "العودة للمتجر" في شريط لوحة التحكم التاجر
+- `Object.entries(order.options || {})` في `order-details-row.tsx` لمنع الأعطال
+- `flex flex-col` في `shop-page.tsx` لتحسين تدفق المحتوى
+
+### 4. CSS Round 48 (+415 سطر, 31,137 إجمالي)
+- بطاقات إحصائيات بتأثير زجاجي (glassmorphism)
+- انتقالات الشريط الجانبي مع حالة نشطة ذهبية
+- تنقل محسّن للموبايل مع مؤشر نشط
+- تحسينات هيكل التحميل (skeleton wave animation)
+- نبض شارة حالة الطلب (status badge pulse)
+- تحسينات صفوف الجدول
+- أزرار الإجراءات السريعة مع تأثير رفع
+- تحسينات حقول الإدخال
+- رسوم متحركة للإشعارات
+- حالات فارغة محسّنة
+- انتقالات الصفحات
+- شريط تمرير مخصص
+- عناصر طابور الطباعة
+- شريط تقدم الإيرادات
+- تلميحات محسّنة
+- حلقة تركيز ذهبية
+- أدوات مساعدة للتصميم المتجاوب
+- رسوم متحركة للقوائم المنسدلة
+- أنماط Chip/Filter
+- أدوات شبكة متجاوبة
+
+## نتائج الاختبار (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل | ✅ |
+| صفحة المتجر (al-riyan) | ✅ |
+| لوحة تحكم التاجر — شاشة PIN | ✅ |
+| لوحة تحكم التاجر — بعد تسجيل الدخول | ❌ عطل Error Boundary (Vercel لم يُحدّث) |
+| Commit GitHub — ناجح | ✅ |
+| Push — ناجح | ✅ |
+
+## ⚠️ مشكلة Vercel
+- Vercel لم يُعيد بناء المشروع رغم عدة Commits
+- ملفات JS المُجمَّعة (`chunks`) لم تتغير (نفس الـ hash)
+- الحل المقترح: إعادة نشر يدوية من Vercel Dashboard أو CLI
+
+## Commits المُرفعة
+- `1bac3fe`: fix: MerchantDashboard crash - PrintQueueWidget undefined.filter() error
+- `e01c898`: fix: add more defensive guards for undefined array props
+- `27cce0f`: chore: trigger Vercel redeploy
+- `e7d0d3e`: fix: comprehensive defensive guards for merchant dashboard filter crash
+- `1ff0646`: feat: admin panel animated tab transitions + more defensive guards
+- `b0d1dd0`: feat(r48): CSS Round 48 (+415 lines, 31,137 total)
+
+## التوصيات للمرحلة القادمة
+1. 🔴 **أولوية قصوى**: إعادة نشر يدوية من Vercel Dashboard
+2. 🔴 إضافة UPLOADTHING_TOKEN إلى Vercel env vars
+3. 🟡 اختبار شامل بعد النشر الجديد
+4. 🟡 تحسين تحليل DOCX باستخدام mammoth.js
+5. 🟢 متابعة التحسينات (CSS + مكونات جديدة)
 ---
 Task ID: bugfix-round2
 Agent: Main Agent (Cron Loop)
