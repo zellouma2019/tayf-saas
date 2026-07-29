@@ -31,64 +31,14 @@ import { WeeklyReportChart } from "@/components/app/weekly-report-chart";
 import { ShopActivityFeed } from "@/components/app/shop-activity-feed";
 import { RevenueForecastWidget } from "@/components/app/revenue-forecast-widget";
 import { QuickStatsRow } from "@/components/app/quick-stats-row";
-import { ServicePopularityChart } from "@/components/app/service-popularity-chart";
-import { CustomerReviewsWidget } from "@/components/app/customer-reviews-widget";
 import { ProductionEfficiencyDashboard } from "@/components/app/production-efficiency-dashboard";
 import { MetricComparisonGrid } from "@/components/app/metric-comparison-grid";
 import { LiveActivityFeed } from "@/components/app/live-activity-feed";
 import { DailyGoalTracker } from "@/components/app/daily-goal-tracker";
-import OrderAnalyticsSummary from "@/components/app/order-analytics-summary";
-import ExpenseCategoryBreakdown from "@/components/app/expense-category-breakdown";
 import { OrderStatusTimeline } from "@/components/app/order-status-timeline";
 import { StaffActivityWidget } from "@/components/app/staff-activity-widget";
 import { TopServicesWidget } from "@/components/app/top-services-widget";
 import { CustomerStatsWidget } from "@/components/app/customer-stats-widget";
-import { PrintQueueManager } from "@/components/app/print-queue-manager";
-import { RevenueChartWidget } from "@/components/app/revenue-chart-widget";
-import { TeamPerformanceChart } from "@/components/app/team-performance-chart";
-import { OrderFlowDiagram } from "@/components/app/order-flow-diagram";
-import { ShopAnalyticsCard } from "@/components/app/shop-analytics-card";
-import { NotificationPreferences } from "@/components/app/notification-preferences";
-import { QuickSearchWidget } from "@/components/app/quick-search-widget";
-import { BranchLocatorWidget } from "@/components/app/branch-locator-widget";
-import { ScheduleCalendarWidget } from "@/components/app/schedule-calendar-widget";
-import { AlertsDashboardWidget } from "@/components/app/alerts-dashboard-widget";
-import { AchievementBadgesWidget } from "@/components/app/achievement-badges-widget";
-import ExpenseBudgetTracker from "@/components/app/expense-budget-tracker";
-import CustomerFeedbackChart from "@/components/app/customer-feedback-chart";
-import InventoryStockWidget from "@/components/app/inventory-stock-widget";
-import OrderPriorityQueue from "@/components/app/order-priority-queue";
-import ShopComparisonWidget from "@/components/app/shop-comparison-widget";
-import OrderAnalyticsDeepDive from "@/components/app/order-analytics-deep-dive";
-import MerchantRevenueBreakdown from "@/components/app/merchant-revenue-breakdown";
-import DeliveryPerformanceWidget from "@/components/app/delivery-performance-widget";
-import CouponManagementWidget from "@/components/app/coupon-management-widget";
-import DailySalesSummary from "@/components/app/daily-sales-summary";
-import TeamWorkloadWidget from "@/components/app/team-workload-widget";
-import ProfitMarginChart from "@/components/app/profit-margin-chart";
-import CustomerRetentionWidget from "@/components/app/customer-retention-widget";
-import ServiceTimeTracker from "@/components/app/service-time-tracker";
-import PaymentMethodsWidget from "@/components/app/payment-methods-widget";
-import PeakHoursHeatmap from "@/components/app/peak-hours-heatmap";
-import ReferralTrackerWidget from "@/components/app/referral-tracker-widget";
-import WasteReductionWidget from "@/components/app/waste-reduction-widget";
-import ClientCommunicationWidget from "@/components/app/client-communication-widget";
-import MachineMaintenanceWidget from "@/components/app/machine-maintenance-widget";
-import OrderRevenueDistribution from "@/components/app/order-revenue-distribution";
-import MonthlyTargetProgress from "@/components/app/monthly-target-progress";
-import TopCustomersWidget from "@/components/app/top-customers-widget";
-import PrintQualityMonitor from "@/components/app/print-quality-monitor";
-import EmployeePerformanceChart from "@/components/app/employee-performance-chart";
-import BusinessHoursWidget from "@/components/app/business-hours-widget";
-import SeasonalDemandWidget from "@/components/app/seasonal-demand-widget";
-import CostBreakdownWidget from "@/components/app/cost-breakdown-widget";
-import FeedbackSentimentWidget from "@/components/app/feedback-sentiment-widget";
-import OrderFulfillmentTimeline from "@/components/app/order-fulfillment-timeline";
-import { ShippingTrackerWidget } from "@/components/app/shipping-tracker-widget";
-import { MarketingCampaignWidget } from "@/components/app/marketing-campaign-widget";
-import { SupplierManagementWidget } from "@/components/app/supplier-management-widget";
-import { QuickReportsWidget } from "@/components/app/quick-reports-widget";
-import { ColorMaterialPreview } from "@/components/app/color-material-preview";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -828,35 +778,6 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {/* أشهر الخدمات */}
       <ServicePopularityWidget stats={safeStats} />
 
-      {/* مخطط شعبية الخدمات */}
-      <ServicePopularityChart
-        services={[
-          { name: "طباعة مستند", count: 18, percentage: 47 },
-          { name: "طباعة صور", count: 8, percentage: 21 },
-          { name: "تجليد", count: 5, percentage: 13 },
-          { name: "بطاقات", count: 4, percentage: 11 },
-          { name: "ملصقات", count: 3, percentage: 8 },
-        ]}
-      />
-
-      {/* تقييمات الزبائن */}
-      <CustomerReviewsWidget
-        shopName="المنصة"
-        averageRating={4.7}
-        totalReviews={156}
-        reviews={[
-          { id: "1", customerName: "أحمد بن علي", rating: 5, comment: "خدمة ممتازة وسريعة، أنصح الجميع!", date: "2026-07-28", verified: true },
-          { id: "2", customerName: "فاطمة الزهراء", rating: 4, comment: "جودة طباعة عالية جداً", date: "2026-07-27", verified: true },
-          { id: "3", customerName: "محمد الأمين", rating: 5, comment: "أسرع مطبعة تعاملت معها", date: "2026-07-26", verified: false },
-        ]}
-      />
-
-      {/* ملخص التحليلات */}
-      <OrderAnalyticsSummary />
-
-      {/* توزيع المصاريف */}
-      <ExpenseCategoryBreakdown />
-
       {/* مسار حالة الطلب */}
       <OrderStatusTimeline currentStatus="printing" />
 
@@ -868,144 +789,6 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* إحصائيات العملاء */}
       <CustomerStatsWidget />
-
-      {/* مدير قائمة الطباعة */}
-      <PrintQueueManager />
-
-      {/* رسم الإيرادات */}
-      <RevenueChartWidget />
-
-      {/* أداء فريق العمل */}
-      <TeamPerformanceChart />
-
-      {/* مسار معالجة الطلبات */}
-      <OrderFlowDiagram />
-
-      {/* تحليلات المتجر */}
-      <ShopAnalyticsCard />
-
-      {/* إعدادات الإشعارات */}
-      <NotificationPreferences />
-
-      {/* بحث سريع */}
-      <QuickSearchWidget />
-
-      {/* مواقع الفروع */}
-      <BranchLocatorWidget />
-
-      {/* لوحة التنبيهات */}
-      <AlertsDashboardWidget />
-
-      {/* جدول المواعيد */}
-      <ScheduleCalendarWidget />
-
-      {/* الإنجازات */}
-      <AchievementBadgesWidget />
-
-      {/* تتبّع الميزانية */}
-      <ExpenseBudgetTracker />
-
-      {/* تقييمات العملاء */}
-      <CustomerFeedbackChart />
-
-      {/* مخزون المواد */}
-      <InventoryStockWidget />
-
-      {/* طابور الأولوية */}
-      <OrderPriorityQueue />
-
-      {/* مقارنة المتاجر */}
-      <ShopComparisonWidget />
-
-      {/* تحليل الطلبات التفصيلي */}
-      <OrderAnalyticsDeepDive />
-
-      {/* تفصيل الإيرادات */}
-      <MerchantRevenueBreakdown />
-
-      {/* أداء التوصيل */}
-      <DeliveryPerformanceWidget />
-
-      {/* إدارة القسائم */}
-      <CouponManagementWidget />
-
-      {/* ملخص المبيعات اليوم */}
-      <DailySalesSummary />
-
-      {/* حمل العمل */}
-      <TeamWorkloadWidget />
-
-      {/* هوامش الربح */}
-      <ProfitMarginChart />
-
-      {/* الاحتفاظ بالعملاء */}
-      <CustomerRetentionWidget />
-
-      {/* زمن الخدمات */}
-      <ServiceTimeTracker />
-
-      {/* طرق الدفع */}
-      <PaymentMethodsWidget />
-
-      {/* ساعات الذروة */}
-      <PeakHoursHeatmap />
-
-      {/* مصادر الإحالة */}
-      <ReferralTrackerWidget />
-
-      {/* تقليل الهدر */}
-      <WasteReductionWidget />
-
-      {/* تواصل العملاء */}
-      <ClientCommunicationWidget />
-
-      {/* صيانة الآلات */}
-      <MachineMaintenanceWidget />
-
-      {/* توزيع إيرادات الطلبات */}
-      <OrderRevenueDistribution />
-
-      {/* أهداف الشهر */}
-      <MonthlyTargetProgress />
-
-      {/* أفضل العملاء */}
-      <TopCustomersWidget />
-
-      {/* مراقبة جودة الطباعة */}
-      <PrintQualityMonitor />
-
-      {/* أداء الموظفين */}
-      <EmployeePerformanceChart />
-
-      {/* ساعات العمل */}
-      <BusinessHoursWidget />
-
-      {/* الطلب الموسمي */}
-      <SeasonalDemandWidget />
-
-      {/* تحليل التكاليف */}
-      <CostBreakdownWidget />
-
-      {/* تحليل المشاعر */}
-      <FeedbackSentimentWidget />
-
-      {/* مسار تنفيذ الطلبات */}
-      <OrderFulfillmentTimeline />
-
-      {/* متتبع الشحنات */}
-      <ShippingTrackerWidget />
-
-      {/* الحملات التسويقية */}
-      <MarketingCampaignWidget />
-
-      {/* إدارة الموردين */}
-      <SupplierManagementWidget />
-
-      {/* التقارير السريعة */}
-      <QuickReportsWidget />
-
-      {/* معاينة الألوان والمواد */}
-      <ColorMaterialPreview />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
