@@ -79,6 +79,76 @@ function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
   );
 }
 
+// ===== Peak Hours Chart =====
+function PeakHoursChart({ stats }: { stats: GlobalStats }) {
+  const recentOrders = stats.recentOrders || [];
+  const hourlyBuckets = Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    count: 0,
+    revenue: 0,
+  }));
+  recentOrders.forEach(o => {
+    const hour = new Date(o.createdAt).getHours();
+    hourlyBuckets[hour].count++;
+    hourlyBuckets[hour].revenue += o.total || 0;
+  });
+  const maxCount = Math.max(...hourlyBuckets.map(b => b.count), 1);
+  const hasData = hourlyBuckets.some(b => b.count > 0);
+  if (!hasData) return null;
+
+  const peakHour = hourlyBuckets.reduce((max, b) => b.count > max.count ? b : max, hourlyBuckets[0]);
+  const hourLabels = ['12ص', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12م', '1م', '2م', '3م', '4م', '5م', '6م', '7م', '8م', '9م', '10م', '11م'];
+
+  return (
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-elevated">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+          <Clock className="h-4 w-4 text-violet-500" />
+          ذروة الطلب
+          <span className="text-xs text-muted-foreground font-normal mr-auto">
+            الأكثر: {hourLabels[peakHour.hour]} ({peakHour.count} طلب)
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-end gap-[2px] h-20">
+          {hourlyBuckets.map((b, i) => {
+            const height = Math.max(4, (b.count / maxCount) * 100);
+            const isPeak = i === peakHour.hour;
+            const isNow = i === new Date().getHours();
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+                {isPeak && (
+                  <div className="absolute -top-4 text-[8px] font-bold text-violet-500 tabular-nums">
+                    🔥
+                  </div>
+                )}
+                <div className="w-full flex justify-center">
+                  <div
+                    className={cn(
+                      "rounded-sm transition-all duration-500 w-full max-w-[14px] cursor-default",
+                      isPeak
+                        ? "bg-gradient-to-t from-violet-500 to-violet-300 shadow-sm shadow-violet-500/20"
+                        : isNow
+                          ? "bg-gradient-to-t from-gold-500 to-gold-300 shadow-sm shadow-gold-500/20"
+                          : "bg-gradient-to-t from-primary/20 to-primary/10"
+                    )}
+                    style={{ height: `${height}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between mt-1 text-[8px] text-muted-foreground/50">
+          <span>12ص</span>
+          <span>12م</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   stats: GlobalStats;
   lastUpdated: string;
@@ -216,8 +286,11 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
         <RevenueBarChart stats={stats} />
       </div>
 
-      {/* مخطط إيرادات الأسبوع */}
-      <WeeklyRevenueChart stats={stats} />
+      {/* مخطط إيرادات الأسبوع + ذروة الطلب */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <WeeklyRevenueChart stats={stats} />
+        <PeakHoursChart stats={stats} />
+      </div>
 
       {/* أفضل الزبائن */}
       {(() => {

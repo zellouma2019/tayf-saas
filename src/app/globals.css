@@ -3589,3 +3589,220 @@ html.dark .glass-card {
 .glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CSS Round 24 — Advanced Theme Polish + Scroll Shadows + Hover States
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Smooth theme transition for all elements */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+/* Exclude elements that need instant transitions */
+.no-theme-transition,
+.no-theme-transition *,
+button, a, input, [role="button"],
+.animate-spin, animate-pulse, animate-bounce {
+  transition-property: none;
+}
+.theme-transition-smooth {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity, transform;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scroll shadow indicators */
+.scroll-shadow-top {
+  position: relative;
+}
+.scroll-shadow-top::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: block;
+  height: 12px;
+  background: linear-gradient(to bottom, hsl(var(--background) / 0.9), transparent);
+  pointer-events: none;
+  margin-top: -12px;
+}
+.scroll-shadow-bottom {
+  position: relative;
+}
+.scroll-shadow-bottom::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: block;
+  height: 12px;
+  background: linear-gradient(to top, hsl(var(--background) / 0.9), transparent);
+  pointer-events: none;
+  margin-bottom: -12px;
+}
+
+/* Glass card refined */
+.glass-card-refined {
+  background: hsl(var(--background) / 0.7);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid hsl(var(--foreground) / 0.08);
+}
+
+/* Interactive table row */
+.table-row-interactive {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.table-row-interactive:hover {
+  background-color: hsl(var(--accent) / 0.04);
+  box-shadow: inset 3px 0 0 -1px hsl(var(--primary) / 0.3);
+}
+.dark .table-row-interactive:hover {
+  background-color: hsl(var(--accent) / 0.08);
+  box-shadow: inset 3px 0 0 -1px hsl(var(--primary) / 0.4);
+}
+
+/* Elevated card */
+.card-elevated {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+.card-elevated:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 6px -1px hsl(var(--foreground) / 0.05),
+    0 10px 20px -5px hsl(var(--foreground) / 0.08),
+    0 20px 40px -10px hsl(var(--foreground) / 0.04);
+}
+
+/* Text gradient animation */
+@keyframes text-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.text-animated-gradient {
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-gradient-shift 4s ease infinite;
+}
+
+/* Subtle float animation */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.subtle-float {
+  animation: subtle-float 4s ease-in-out infinite;
+}
+
+/* Focus visible ring */
+.focus-visible-ring:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* Skeleton card */
+.skeleton-card {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--muted) / 0.3) 0%,
+    hsl(var(--muted-foreground) / 0.05) 50%,
+    hsl(var(--muted) / 0.3) 100%
+  );
+  background-size: 200% 200%;
+  animation: shimmer-sweep 2.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* Status indicator dot with ring */
+.status-dot-ring {
+  position: relative;
+}
+.status-dot-ring::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 1.5px solid currentColor;
+  opacity: 0.3;
+}
+
+/* Hover scale micro */
+.hover-scale-micro {
+  transition: transform 0.15s ease;
+}
+.hover-scale-micro:hover {
+  transform: scale(1.03);
+}
+.hover-scale-micro:active {
+  transform: scale(0.97);
+}
+
+/* Smooth border radius */
+.smooth-corners {
+  border-radius: 12px;
+}
+
+/* Gradient divider */
+.gradient-divider {
+  height: 1px;
+  border: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--border)) 20%,
+    hsl(var(--border)) 80%,
+    transparent 100%
+  );
+}
+
+/* Active tab indicator */
+.tab-indicator-active {
+  position: relative;
+}
+.tab-indicator-active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+  border-radius: 2px 2px 0 0;
+  animation: tab-indicator-in 0.2s ease;
+}
+@keyframes tab-indicator-in {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Badge gradient */
+.badge-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(280 60% 50%));
+  color: white;
+  font-weight: 600;
+}
+
+/* Print styles */
+@media print {
+  .no-print, .sidebar, nav[aria-label="Sidebar"] {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* Mobile safe bottom padding */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}

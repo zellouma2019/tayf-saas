@@ -21,6 +21,7 @@ import {
 import {
   Table,
   TableBody,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -1018,6 +1019,20 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                         />
                       ))}
                     </TableBody>
+                    <TableFooter>
+                      <TableRow className="bg-muted/50 font-semibold text-xs">
+                        <TableHead colSpan={5} className="text-right text-xs font-semibold">
+                          المجموع ({filteredOrders.length} طلب)
+                        </TableHead>
+                        <TableHead className="text-right text-xs font-semibold text-amber-700 dark:text-amber-400">
+                          {formatDA(filteredOrders.reduce((s, o) => s + o.total, 0))}
+                        </TableHead>
+                        <TableHead className="text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 hidden lg:table-cell">
+                          {formatDA(filteredOrders.reduce((s, o) => s + Math.max(0, o.total - (o.cost || 0)), 0))}
+                        </TableHead>
+                        <TableHead colSpan={2} />
+                      </TableRow>
+                    </TableFooter>
                   </Table>
                 </div>
                 </>

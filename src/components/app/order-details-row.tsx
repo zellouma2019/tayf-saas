@@ -584,19 +584,31 @@ function TableRowInner({
         })()}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1.5">
+        <button
+          className="flex items-center gap-1.5 group cursor-pointer rounded-lg px-1.5 py-1 -mx-1.5 -my-1 hover:bg-muted/60 transition-all"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onStatusChange) {
+              const currentIdx = [...STATUS_FLOW, 'cancelled'].indexOf(order.status);
+              const nextIdx = (currentIdx + 1) % ([...STATUS_FLOW, 'cancelled'].length);
+              onStatusChange(order, [...STATUS_FLOW, 'cancelled'][nextIdx]);
+            }
+          }}
+          title="اضغط لتغيير الحالة"
+        >
           <span className={cn(
-            "inline-block w-2 h-2 rounded-full shrink-0",
+            "inline-block w-2 h-2 rounded-full shrink-0 transition-colors",
             order.status === "pending" && "bg-amber-500 animate-pulse pending-pulse-ring",
             order.status === "printing" && "bg-blue-500 animate-spin",
             order.status === "ready" && "bg-emerald-500",
             order.status === "delivered" && "bg-gray-400",
             order.status === "cancelled" && "bg-rose-500"
           )} />
-          <Badge variant="outline" className={`text-xs ${meta.bg} badge-dot`}>
+          <Badge variant="outline" className={`text-xs ${meta.bg} badge-dot transition-all group-hover:shadow-sm`}>
             {meta.label}
           </Badge>
-        </div>
+          <ChevronLeft className="h-2.5 w-2.5 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />
+        </button>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
         {formatDateTimeAr(order.createdAt)}
