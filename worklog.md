@@ -6062,3 +6062,134 @@ Task: QA + CSS Round 42 + 5 ميزات جديدة (Round 42)
 8. ملاحظات DB-based للطلبات
 9. دمج InventoryStockWidget في لوحة التاجر
 10. دمج DeliveryPerformanceWidget في صفحة الطلبات
+
+---
+Task ID: round43
+Agent: Main Agent
+Task: QA + CSS Round 43 + 5 ميزات جديدة (Round 43)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 43 جولة CSS (24,794 سطر)
+- ✅ 124 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء
+- ✅ تم النشر على Vercel (commit 0f3e7c3)
+- ⚠️ Turso DB بطء متقطع
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 112ms, CLS 0, TTFB 7.6ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| صفحة المتجر (موبايل) — تعمل | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح (42s) | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. حمل العمل (Team Workload Widget)
+- مكون جديد: `src/components/app/team-workload-widget.tsx`
+- 5 أعضاء: أحمد، فاطمة، محمد، سارة، يوسف
+- أشرطة سعة: أخضر (≤60%)، عنبري (60-85%)، أحمر (>85%)
+- إجمالي: 32 مهمة نشطة + زر إعادة التوزيع
+
+### 2. هوامش الربح (Profit Margin Chart)
+- مكون جديد: `src/components/app/profit-margin-chart.tsx`
+- 5 خدمات مع نسبة الربح: مستندات 65%، صور 45%، بانرات 70%، كروت 55%، ملصقات 60%
+- أشرطة أفقية متدرجة + متوسط 59%
+
+### 3. الاحتفاظ بالعملاء (Customer Retention Widget)
+- مكون جديد: `src/components/app/customer-retention-widget.tsx`
+- معدل الاحتفاظ: 78% مع حلقة SVG
+- 4 مقاييس: جدد 24، عائدون 156، مخلصون 89، مغادرة 4.2%
+- فئات العملاء: VIP/نشط/عادي/خامل
+
+### 4. زمن الخدمات (Service Time Tracker)
+- مكون جديد: `src/components/app/service-time-tracker.tsx`
+- 6 خدمات مع أوقات الإنجاز (1-8 ساعات)
+- شارة "سريع" للخدمات السريعة + أسرع خدمة مميزة
+
+### 5. طرق الدفع (Payment Methods Widget)
+- مكون جديد: `src/components/app/payment-methods-widget.tsx`
+- 4 طرق: نقدي 45%، بطاقة 30%، تحويل 18%، إلكتروني 7%
+- حلقات SVG نسبية + إجمالي 277,000 د.ج
+- تنبيه مدفوعات معلقة + قائمة معاملات حديثة
+
+## CSS Round 43 (+1,065 سطر)
+
+### 1. شريط إخباري (~65 سطر)
+- `.marquee-container/track`, `.marquee-vertical`
+- `.marquee-gradient-*`, اتجاه RTL
+
+### 2. تخطيط ماسونري (~38 سطر)
+- `.masonry` (2/3/4 أعمدة), `.masonry-grid/spread`
+
+### 3. نسب العرض (~36 سطر)
+- `.aspect-video/landscape/portrait/square/4:3/3:2/16:9/21:9`
+
+### 4. معرض الصور (~66 سطر)
+- `.gallery-grid/item/caption/masonry/carousel`
+
+### 5. عرض الأرقام (~62 سطر)
+- `.stat-display-lg`, `.stat-change`, `.stat-sparkline`, `.stat-highlight`
+
+### 6. أنماط القوائم المحسّنة (~105 سطر)
+- `.feed-list/item-compact/detailed/unread`, `.feed-filter-bar`
+
+### 7. أنماط الجداول المحسّنة (~89 سطر)
+- `.table-modern` (sticky header, striped, sortable, expandable)
+
+### 8. عداد تنازلي (~88 سطر)
+- `.countdown-grid/unit/ring`, `.countdown-urgent`, `.timer-display`
+
+### 9. نظام التقييمات (~49 سطر)
+- `.rating-stars/star-filled/half/empty`, `.rating-input/bar`
+
+### 10. الشريط الجانبي (~84 سطر)
+- `.sidebar-panel/header/body/footer`, `.sidebar-collapsed/item-active`
+
+### 11. خلفيات متدرجة (~68 سطر)
+- `.bg-mesh-1` إلى `bg-mesh-4`, `.bg-blur-blob/noise/dots/grid`
+
+### 12. أشرطة التمرير (~44 سطر)
+- `.scrollbar-thin/none/styled`, webkit pseudo-elements
+
+### 13. تأثيرات النص (~73 سطر)
+- `.text-stroke/shadow-glow/gradient-animated/blur-in/highlight-*`
+
+### 14. أنماط التحميل (~118 سطر)
+- `.spinner-ring/dots/bar/orbit/roller/pulse/circle-notch`
+- أحجام sm/md/lg + dark mode
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 43 +1,065 سطر (إجمالي 24,794 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج 5 مكونات جديدة |
+| `src/components/app/team-workload-widget.tsx` | جديد: حمل العمل |
+| `src/components/app/profit-margin-chart.tsx` | جديد: هوامش الربح |
+| `src/components/app/customer-retention-widget.tsx` | جديد: الاحتفاظ بالعملاء |
+| `src/components/app/service-time-tracker.tsx` | جديد: زمن الخدمات |
+| `src/components/app/payment-methods-widget.tsx` | جديد: طرق الدفع |
+
+## Commit
+- 0f3e7c3: feat(r43): CSS Round 43 (+1,065 lines, 24,794 total), team workload, profit margins, customer retention, service time tracker, payment methods
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 43 جولة CSS (24,794 سطر CSS)
+- 124 مكون تطبيقي + 5 مكونات جديدة في Round 43
+- إجمالي ~1,739 سطر جديدة في Round 43 (CSS + مكونات)
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+2. ⚠️ مراقبة Turso DB — بطء متقطع
+3. دمج BranchLocatorWidget في صفحة المتجر
+4. SEO JSON-LD structured data
+5. WebSocket للتحديثات الحية
+6. تكامل MaterialCostEstimator في new-order-wizard
+7. تحسين SEO مع og:image
+8. ملاحظات DB-based للطلبات
+9. دمج InventoryStockWidget في لوحة التاجر
+10. دمج PaymentMethodsWidget في صفحة المدفوعات
