@@ -4427,3 +4427,218 @@ Task: QA + CSS Round 31 + ميزات جديدة (Round 31)
 6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
 7. إضافة flip-card لعرض معلومات المتجر
 8. اختبار UploadThing CDN على الموقع الحي
+
+---
+Task ID: qa-fix-round32
+Agent: Main Agent
+Task: QA + CSS Round 32 + ميزات جديدة (Round 32)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata + مقارنة الخدمات
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit e8e54a3)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (retry mechanism يعمل)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — كل المكونات تظهر | ✅ |
+| تبويب الطلبات — بنية جدول + زر "بحث متقدم" | ✅ |
+| تبويب المتاجر — 5 متاجر | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الأزرار تعمل | ✅ |
+| صفحة التتبع (/track) — واجهة البحث تعمل | ✅ |
+| البناء — ناجح بدون أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. التقرير الأسبوعي (Weekly Report Chart)
+- مكون جديد: `src/components/app/weekly-report-chart.tsx`
+- رسم بياني مركب (ComposedChart): أعمدة للطلبات + خط للإيرادات
+- ملخص الأسبوع: إجمالي الطلبات، الإيرادات، متوسط يومي، يوم الذروة، نسبة الإنجاز
+- مقارنة مع الأسبوع السابق (نسبة التغيير %)
+- شارات التغيير (أخضر للزيادة، أحمر للنقصان)
+- مدمج في admin-overview-tab.tsx بعد RevenueAnalytics
+
+### 2. البحث المتقدم (Advanced Search Modal)
+- مكون جديد: `src/components/app/advanced-search-modal.tsx`
+- 9 حقول بحث: نصي، حالة، متجر، اسم الزبون، هاتف، نوع الخدمة، نطاق تاريخ، مبلغ (من/إلى)
+- ترتيب: حسب التاريخ، المبلغ، اسم الزبون، الحالة
+- عدّاد العوامل النشطة
+- زر إعادة تعيين
+- تصميم RTL مع form-card + input-animated-border
+- مدمج في page.tsx: زر "بحث متقدم" في شريط أدوات الطلبات
+
+### 3. إجراءات جماعية للطلبات (Order Bulk Actions)
+- مكون جديد: `src/components/app/order-bulk-actions.tsx`
+- شريط إجراءات يظهر عند تحديد طلبات متعددة
+- تغيير حالة مجمّع (dropdown) حسب STATUS_FLOW
+- أزرار: طباعة، تصدير، حذف (مع تأكيد AlertDialog)
+- عرض العدد + المجموع للطلبات المحددة
+- أنيميشن animate-fade-up
+
+### 4. لوحة الإجراءات السريعة (Quick Actions Panel)
+- مكون جديد: `src/components/app/quick-actions-panel.tsx`
+- شبكة 3×2 من الإجراءات: طلب جديد، تحديث، تصدير، QR كود، الزبائن، إعدادات
+- اختصارات لوحة مفاتيح (kbd) لكل إجراء
+- وضع مطوي/موسع مع AnimatePresence
+- أنيميشن متتالي (stagger) عند الظهور
+
+### 5. شارة ولاء الزبون (Customer Loyalty Badge)
+- مكون جديد: `src/components/app/customer-loyalty-badge.tsx`
+- 5 مستويات: برونزي (0)، فضي (5+)، ذهبي (15+)، بلاتيني (30+)، ألماسي (50+)
+- أيقونات ملونة لكل مستوى (Medal, Shield, Trophy, Award, Crown)
+- شريط تقدم للمستوى التالي مع نسبة
+- عرض: عدد الطلبات، الإجمالي، تاريخ الاول طلب
+- مدمج في merchant-dashboard.tsx (تبويب العملاء) — يعرض أفضل زبون
+
+### 6. النشاطات الأخيرة للمتجر (Shop Activity Feed)
+- مكون جديد: `src/components/app/shop-activity-feed.tsx`
+- خط زمني بصري للنشاطات: أيقونات ملونة لكل حالة (انتظار، تأكيد، طباعة...)
+- إحصائيات سريعة: اليوم، معلّقة، مكتملة، الإيرادات
+- وقت نسبي (منذ 5 د، منذ 2 س)
+- أنيميشن stagger مع framer-motion
+- مدمج في admin-overview-tab.tsx بعد ملخص المتاجر
+
+## CSS Round 32 (+1909 سطر)
+
+### نظام الأنيميشن المتقدم (~280 سطر)
+- `.animate-float` / `.animate-float-delayed` — طفو خفيف
+- `.animate-bounce-soft` — ارتداد ناعم
+- `.animate-shake` — اهتزاز للأخطاء
+- `.animate-wiggle` — اهتزاز للفت الانتباه
+- `.animate-gradient-x` / `.animate-gradient-y` — تدرج متحرك
+- `.animate-border-spin` — حد دوار (conic-gradient)
+- `.animate-text-shimmer-new` — لمعان نص متحرك
+- `.animate-marquee` / `.animate-marquee-reverse` — نص متحرك أفقي
+- `.animate-fade-up/down/left/right` — ظهور اتجاهي
+- `.animate-scale-in` — تكبير عند الظهور
+- `.animate-flip-in-x` / `.animate-flip-in-y` — قلب عند الدخول
+- `.animate-stretch` — تمدد عرض
+- `.animate-blur-in` — من ضبابي إلى واضح
+- `.animate-typewriter` — تأثير الطابعة
+- 16 keyframes جديدة مع بادئة r32-
+- تجاوزات prefers-reduced-motion
+
+### بطاقات متقدمة (~260 سطر)
+- `.card-3d-tilt` — ميل ثلاثي الأبعاد (CSS custom properties)
+- `.card-elastic` — تكبير مرن عند التمرير
+- `.card-peel` — تقشير الزاوية عند التمرير
+- `.card-underline-glow` — توهج تحت الخط
+- `.card-numbered` — رقم كبير خلفي (data-number)
+- `.card-icon-top` — أيقونة فوق المحتوى
+- `.card-horizontal` — عرض أفقي
+- `.card-split` — بطاقة مقسومة لونين
+- `.card-accent-top-new` / `.card-accent-left-new` — شريط لوني جانبي
+- `.card-shadow-lg` / `.card-shadow-xl` — ظلال كبيرة
+- `.card-interactive` — ضغط + ظل
+
+### تحسينات الطباعة (~160 سطر)
+- `.text-balance` / `.text-pretty` — text-wrap
+- `.text-gradient-metallic` — تدرج ذهبي معدني
+- `.text-outline` — نص مع حد فقط (-webkit-text-stroke)
+- `.text-double/dotted/dashed/wavy-underline` — أنواع خطوط سفلى
+- `.text-highlight` / `-blue` / `-green` / `-pink` — تمييز بالخلفية
+- `.text-ellipsis-2` / `.text-ellipsis-3` — اقتطاع متعدد الأسطر (line-clamp)
+- `.text-mono` — خط أحادي العرض
+- `.text-tracking-wide` / `.wider` / `.tight` — تباعد الحروف
+- `.font-display` — خط عرض
+
+### أدوات التخطيط (~220 سطر)
+- `.layout-sidebar-main` / `.layout-2col` / `.layout-3col` / `.layout-hero` / `.layout-aside`
+- `.center-xy` / `.center-x` / `.center-y`
+- `.full-bleed` — عرض كامل للشاشة
+- `.grid-lines` — خطوط شبكة مرئية
+- `.divider-horizontal` / `.divider-vertical` — فواصل متدرجة
+- `.overflow-fade-bottom` / `.overflow-fade-sides` — تلاشي عند التجاوز
+
+### أدوات لوحة البيانات (~340 سطر)
+- `.widget` / `.widget-header` / `.widget-body` / `.widget-footer` — بنية القطعة
+- `.widget-grid-2` / `.widget-grid-3` / `.widget-grid-4` — شبكة القطع
+- `.stat-card` / `.stat-card-mini` — بطاقة إحصائيات
+- `.stat-icon` — حاوية أيقونة دائرية
+- `.progress-ring` — تقدم دائري (conic-gradient)
+- `.progress-bar-animated` / `.progress-bar-striped` / `.progress-bar-glow`
+- `.mini-chart-bar` — عمود مصغّر
+- `.trend-badge` — شارة الاتجاه
+- `.live-dot` — نقطة بث حي نابضة
+
+### عناصر النماذج التفاعلية (~260 سطر)
+- `.toggle-switch` / `.toggle-switch-sm` — زر تبديل CSS فقط
+- `.range-slider` — شريط تمرير مخصص
+- `.checkbox-custom` / `.radio-custom` — خيارات مخصصة
+- `.file-dropzone` — منطقة رفع الملفات
+- `.search-input` / `.search-input-lg` — حقل بحث مع أيقونة
+- `.input-counter` — حقل مع عداد
+- `.input-success` / `.input-error` — حالات التحقق
+- `.input-hint` — نص تلميح
+
+### حالات التحميل (~130 سطر)
+- `.loading-dots-new` — نقاط نابضة
+- `.loading-pulse` — نبض دائري
+- `.loading-skeleton-refined` — هيكل عظمي محسّن
+- `.loading-spinner` — دوّار CSS
+- `.loading-text` — نص مع نقاط متحركة
+- `.skeleton-circle` / `.skeleton-rect` / `.skeleton-line` / `.skeleton-avatar`
+
+### استجابة ومحمول (~120 سطر)
+- `.container-narrow-new` / `.container-wide-new` / `.container-full`
+- `.show-mobile` / `.show-desktop` / `.show-tablet` — إظهار/إخفاء
+- `.safe-area-top` — منطقة آمنة (notched phones)
+- `.bottom-sheet` / `.swipeable` / `.no-scroll`
+
+### تحسينات الوضع الداكن (~80 سطر)
+- `.dark-card` / `.dark-border` / `.dark-text` — تكييف تلقائي
+- `.dark-bg-subtle` — خلفية داكنة خفيفة
+- `.dark-glow` — توهج في الوضع الداكن فقط
+- `.dark-divider` — فاصل داكن
+
+### تطبيق CSS على المكونات
+- `admin-overview-tab.tsx`: widget, stat-card, live-dot, animate-fade-up
+- `page.tsx`: input-animated-border
+- `weekly-report-chart.tsx`: stat-card, metric-large-number, progress-bar-animated, chart-container
+- `advanced-search-modal.tsx`: form-card, search-input, input-animated-border, card-glass-morphism
+- `order-bulk-actions.tsx`: animate-fade-up, badge-pulse
+- `quick-actions-panel.tsx`: animate-fade-up, hide-scrollbar
+- `shop-activity-feed.tsx`: feed-item, animate-fade-up
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 32 +1909 سطر (إجمالي 10,525 سطر) |
+| `src/app/page.tsx` | دمج AdvancedSearchModal + زر "بحث متقدم" |
+| `src/components/app/admin-overview-tab.tsx` | دمج WeeklyReportChart + ShopActivityFeed |
+| `src/components/app/merchant-dashboard.tsx` | دمج CustomerLoyaltyBadge (تبويب العملاء) |
+| `src/components/app/advanced-search-modal.tsx` | جديد: بحث متقدم |
+| `src/components/app/weekly-report-chart.tsx` | جديد: تقرير أسبوعي |
+| `src/components/app/order-bulk-actions.tsx` | جديد: إجراءات جماعية |
+| `src/components/app/quick-actions-panel.tsx` | جديد: إجراءات سريعة |
+| `src/components/app/customer-loyalty-badge.tsx` | جديد: شارة ولاء الزبون |
+| `src/components/app/shop-activity-feed.tsx` | جديد: نشاطات المتجر |
+
+## Commit
+- e8e54a3: feat(r32): CSS Round 32, weekly report chart, advanced search modal, bulk actions, loyalty badges, activity feed, quick actions panel
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 32 جولة CSS (10,525 سطر CSS)
+- 62 مكون تطبيقي + 6 مكونات جديدة في Round 32
+- أولاويات: إضافة UPLOADTHING_TOKEN، مراقبة Turso DB، SEO JSON-LD
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع (~8s). يُنصح بالنظر في بديل (PlanetScale, Neon, Supabase)
+3. تحسين merchant-dashboard.tsx على الموبايل (التصميم الحالي مزدحم)
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات (بدلاً من localStorage فقط)
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
+8. اختبار UploadThing CDN على الموقع الحي
+9. تكامل OrderBulkActions مع تبويب الطلبات الفعلي
+10. إضافة WebSocket للتحديثات الحية للنشاطات
