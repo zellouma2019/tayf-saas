@@ -49,6 +49,11 @@ import { TeamPerformanceChart } from "@/components/app/team-performance-chart";
 import { OrderFlowDiagram } from "@/components/app/order-flow-diagram";
 import { ShopAnalyticsCard } from "@/components/app/shop-analytics-card";
 import { NotificationPreferences } from "@/components/app/notification-preferences";
+import { QuickSearchWidget } from "@/components/app/quick-search-widget";
+import { BranchLocatorWidget } from "@/components/app/branch-locator-widget";
+import { ScheduleCalendarWidget } from "@/components/app/schedule-calendar-widget";
+import { AlertsDashboardWidget } from "@/components/app/alerts-dashboard-widget";
+import { AchievementBadgesWidget } from "@/components/app/achievement-badges-widget";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -846,6 +851,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* إعدادات الإشعارات */}
       <NotificationPreferences />
+
+      {/* بحث سريع */}
+      <QuickSearchWidget />
+
+      {/* مواقع الفروع */}
+      <BranchLocatorWidget />
+
+      {/* لوحة التنبيهات */}
+      <AlertsDashboardWidget />
+
+      {/* جدول المواعيد */}
+      <ScheduleCalendarWidget />
+
+      {/* الإنجازات */}
+      <AchievementBadgesWidget />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard

@@ -21149,7 +21149,291 @@ dir="rtl" .product-card {
 .registration-marks::before { top: 0; left: 0; }
 .registration-marks::after { top: 0; right: 0; }
 
-/* ═══ End CSS Round 39 ═══ */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* CSS Round 40 — أنماط متقدمة للتجاوب والحركات والتخطيط — Advanced Responsive, Animation & Layout Patterns                        */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* ═══ 1. Advanced Responsive Grid System — شبكة استجابة متقدمة ═══ */
+.responsive-masonry { column-count: 1; column-gap: 16px; }
+@media (min-width: 640px) { .responsive-masonry { column-count: 2; } }
+@media (min-width: 1024px) { .responsive-masonry { column-count: 3; } }
+@media (min-width: 1280px) { .responsive-masonry { column-count: 4; } }
+.responsive-masonry > * { break-inside: avoid; margin-block-end: 16px; }
+
+.grid-auto-fit-sm { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; }
+.grid-auto-fit-md { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.grid-auto-fit-lg { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 20px; }
+
+.layout-sidebar-main { display: grid; grid-template-columns: 260px 1fr; gap: 24px; }
+@media (max-width: 1023px) { .layout-sidebar-main { grid-template-columns: 1fr; } }
+.layout-main-sidebar { display: grid; grid-template-columns: 1fr 260px; gap: 24px; }
+@media (max-width: 1023px) { .layout-main-sidebar { grid-template-columns: 1fr; } }
+
+.grid-dense { grid-auto-flow: dense; }
+.grid-span-2 { grid-column: span 2; }
+.grid-span-3 { grid-column: span 3; }
+.grid-span-full { grid-column: 1 / -1; }
+@media (max-width: 639px) { .grid-span-2, .grid-span-3 { grid-column: span 1; } }
+
+/* ═══ 2. Page Transition Animations — حركات انتقال الصفحات ═══ */
+.page-enter { animation: page-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes page-fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-enter-slide { animation: page-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes page-slide-in { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+[dir="rtl"] .page-enter-slide { animation-name: page-slide-in-rtl; }
+@keyframes page-slide-in-rtl { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+
+.page-enter-scale { animation: page-scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes page-scale-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+/* Stagger children — تأخير متتالي للأبناء */
+.stagger-children > * { opacity: 0; animation: stagger-fade-up 0.4s ease forwards; }
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 420ms; }
+.stagger-children > *:nth-child(n+9) { animation-delay: 480ms; }
+@keyframes stagger-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ═══ 3. Advanced Hover & Focus States — حالات التمرير والتركيز المتقدمة ═══ */
+.hover-lift-sm { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.hover-lift-sm:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+.hover-lift-md { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.hover-lift-md:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+
+.hover-lift-lg { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.hover-lift-lg:hover { transform: translateY(-8px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
+
+.hover-scale-sm { transition: transform 0.2s ease; }
+.hover-scale-sm:hover { transform: scale(1.03); }
+
+.hover-scale-md { transition: transform 0.25s ease; }
+.hover-scale-md:hover { transform: scale(1.06); }
+
+.hover-underline-anim { position: relative; }
+.hover-underline-anim::after {
+  content: ""; position: absolute; bottom: -2px; inset-inline-start: 0;
+  width: 0; height: 2px; background: currentColor;
+  transition: width 0.3s ease;
+}
+.hover-underline-anim:hover::after { width: 100%; }
+
+.hover-bg-fade { transition: background-color 0.2s ease; }
+.hover-bg-fade:hover { background-color: var(--bg-secondary, #f8fafc); }
+
+.hover-border-color { transition: border-color 0.2s ease; }
+.hover-border-color:hover { border-color: var(--primary, #6366f1); }
+
+.focus-ring-offset { outline: none; }
+.focus-ring-offset:focus-visible {
+  outline: 2px solid var(--primary, #6366f1);
+  outline-offset: 2px; border-radius: var(--radius-sm, 4px);
+}
+
+.focus-ring-inset { outline: none; }
+.focus-ring-inset:focus-visible {
+  outline: 2px solid var(--primary, #6366f1);
+  outline-offset: -2px; border-radius: var(--radius-sm, 4px);
+}
+
+/* ═══ 4. Glassmorphism System — نظام الزجاجية ═══ */
+.glass-subtle {
+  background: rgba(255,255,255,0.6); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-xl, 16px);
+}
+.glass-medium {
+  background: rgba(255,255,255,0.4); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.25); border-radius: var(--radius-xl, 16px);
+}
+.glass-strong {
+  background: rgba(255,255,255,0.2); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-xl, 16px);
+}
+.glass-dark {
+  background: rgba(15,23,42,0.6); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-xl, 16px);
+  color: #fff;
+}
+.glass-colored {
+  background: rgba(99,102,241,0.15); backdrop-filter: blur(12px);
+  border: 1px solid rgba(99,102,241,0.2); border-radius: var(--radius-xl, 16px);
+}
+
+/* ═══ 5. Advanced Shadow System — نظام الظلال المتقدم ═══ */
+.shadow-soft-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06); }
+.shadow-soft-md { box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04); }
+.shadow-soft-lg { box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04); }
+.shadow-soft-xl { box-shadow: 0 24px 48px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.06); }
+
+.shadow-inner-soft { box-shadow: inset 0 2px 4px rgba(0,0,0,0.04); }
+.shadow-inner-md { box-shadow: inset 0 4px 12px rgba(0,0,0,0.08); }
+
+.shadow-colored-primary { box-shadow: 0 8px 24px rgba(99,102,241,0.2); }
+.shadow-colored-success { box-shadow: 0 8px 24px rgba(16,185,129,0.2); }
+.shadow-colored-warning { box-shadow: 0 8px 24px rgba(245,158,11,0.2); }
+.shadow-colored-danger { box-shadow: 0 8px 24px rgba(239,68,68,0.2); }
+
+/* ═══ 6. Container Query Patterns — أنماط استعلام الحاوية ═══ */
+@container card (min-width: 300px) { .cq-stack { flex-direction: row; gap: 16px; } }
+@container card (max-width: 299px) { .cq-stack { flex-direction: column; gap: 8px; } }
+
+.container-card { container-type: inline-size; container-name: card; }
+.container-sidebar { container-type: inline-size; container-name: sidebar; }
+
+/* ═══ 7. Advanced Border Patterns — أنماط الحدود المتقدمة ═══ */
+.border-gradient {
+  border: none; position: relative;
+}
+.border-gradient::before {
+  content: ""; position: absolute; inset: 0;
+  padding: 1px; border-radius: inherit;
+  background: linear-gradient(135deg, var(--primary, #6366f1), var(--accent, #ec4899));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+}
+
+.border-dashed-styled { border-style: dashed; border-width: 2px; border-color: var(--border, #e2e8f0); }
+.border-dotted-styled { border-style: dotted; border-width: 2px; border-color: var(--border, #e2e8f0); }
+.border-double-styled { border-style: double; border-width: 3px; border-color: var(--border, #e2e8f0); }
+
+.border-animated {
+  background: linear-gradient(var(--bg-primary, #fff), var(--bg-primary, #fff)) padding-box,
+              linear-gradient(135deg, var(--primary, #6366f1), var(--accent, #ec4899), var(--primary, #6366f1)) border-box;
+  border: 2px solid transparent; background-size: 100% 100%, 200% 200%;
+  animation: border-rotate 3s linear infinite;
+}
+@keyframes border-rotate { to { background-position: 100% 100%, 100% 100%; } }
+
+/* ═══ 8. Content Section Patterns — أنماط أقسام المحتوى ═══ */
+.section-divider {
+  display: flex; align-items: center; gap: 16px;
+  padding-block: 24px;
+}
+.section-divider::before, .section-divider::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border, #e2e8f0), transparent);
+}
+
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-block-end: 20px; flex-wrap: wrap; gap: 12px;
+}
+.section-header h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary, #0f172a); }
+
+.content-well {
+  background: var(--bg-secondary, #f8fafc); border-radius: var(--radius-xl, 16px);
+  padding: 24px; margin-block: 16px;
+}
+
+.content-callout {
+  border-inline-start: 4px solid var(--primary, #6366f1);
+  padding: 16px 20px; background: var(--bg-secondary, #f8fafc);
+  border-radius: 0 var(--radius-lg, 8px) var(--radius-lg, 8px) 0;
+}
+.content-callout.info { border-inline-start-color: #3b82f6; }
+.content-callout.success { border-inline-start-color: #10b981; }
+.content-callout.warning { border-inline-start-color: #f59e0b; }
+.content-callout.danger { border-inline-start-color: #ef4444; }
+
+/* ═══ 9. Advanced Spacing Utilities — أدوات تباعد متقدمة ═══ */
+.space-y-1 > * + * { margin-block-start: 4px; }
+.space-y-2 > * + * { margin-block-start: 8px; }
+.space-y-3 > * + * { margin-block-start: 12px; }
+.space-y-4 > * + * { margin-block-start: 16px; }
+.space-y-6 > * + * { margin-block-start: 24px; }
+.space-y-8 > * + * { margin-block-start: 32px; }
+
+.space-x-1 > * + * { margin-inline-start: 4px; }
+.space-x-2 > * + * { margin-inline-start: 8px; }
+.space-x-3 > * + * { margin-inline-start: 12px; }
+.space-x-4 > * + * { margin-inline-start: 16px; }
+
+.gap-dense { gap: 4px; }
+.gap-tight { gap: 8px; }
+.gap-normal { gap: 16px; }
+.gap-relaxed { gap: 24px; }
+.gap-loose { gap: 32px; }
+
+/* ═══ 10. Print Industry Production Patterns — أنماط الإنتاج الخاصة بالطباعة ═══ */
+.production-line {
+  display: flex; align-items: center; gap: 0;
+  padding: 16px; background: var(--bg-secondary, #f8fafc);
+  border-radius: var(--radius-lg, 8px);
+}
+.production-station {
+  flex: 1; text-align: center; padding: 8px 12px;
+  position: relative;
+}
+.production-station::after {
+  content: "→"; margin-inline-start: 8px; color: var(--text-muted, #64748b);
+}
+[dir="rtl"] .production-station::after { content: "←"; margin-inline-start: 0; margin-inline-end: 8px; }
+.production-station:last-child::after { display: none; }
+
+.job-ticket-card {
+  border: 2px solid var(--border, #e2e8f0); border-radius: var(--radius-lg, 8px);
+  padding: 16px; position: relative; background: #fff;
+}
+.job-ticket-card::before {
+  content: ""; position: absolute; top: 0; inset-inline-start: 0;
+  width: 6px; height: 100%;
+  background: var(--primary, #6366f1); border-radius: var(--radius-lg, 8px) 0 0 var(--radius-lg, 8px);
+}
+.job-ticket-card.urgent::before { background: #ef4444; }
+.job-ticket-card.vip::before { background: #d4a853; }
+
+.paper-size-preview {
+  border: 2px solid #333; background: #fff; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.paper-size-a4 { width: 210px; height: 297px; }
+.paper-size-a3 { width: 297px; height: 420px; }
+.paper-size-a5 { width: 148px; height: 210px; }
+.paper-size-letter { width: 216px; height: 279px; }
+
+.color-profile-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: var(--radius-full, 9999px);
+  font-size: 0.7rem; font-weight: 600;
+}
+.color-profile-badge.cmyk { background: #e0e7ff; color: #3730a3; }
+.color-profile-badge.rgb { background: #dcfce7; color: #166534; }
+.color-profile-badge.pantone { background: #fef3c7; color: #92400e; }
+.color-profile-badge.grayscale { background: #f1f5f9; color: #475569; }
+
+.bleed-area {
+  position: relative; padding: 12px;
+  border: 1px solid #999; background: #fff;
+}
+.bleed-area::before {
+  content: "منطقة النزيف (3mm)"; position: absolute; top: 2px; inset-inline-start: 2px;
+  font-size: 0.55rem; color: #999;
+}
+.trim-box {
+  border: 1px dashed #ef4444; margin: 12px;
+  position: relative;
+}
+.trim-box::after {
+  content: "خط القص"; position: absolute; top: -8px; inset-inline-start: 0;
+  font-size: 0.55rem; color: #ef4444; background: #fff; padding: 0 4px;
+}
+.safe-zone {
+  border: 1px dotted #3b82f6; margin: 20px;
+  position: relative;
+}
+.safe-zone::after {
+  content: "منطقة الأمان"; position: absolute; top: -8px; inset-inline-start: 0;
+  font-size: 0.55rem; color: #3b82f6; background: #fff; padding: 0 4px;
+}
+
+/* ═══ End CSS Round 40 ═══ */
 
 @media (prefers-reduced-motion: reduce) {
   .card-holographic, .card-holographic::after, .card-gradient-border::before { animation: none !important; }
@@ -21170,4 +21454,9 @@ dir="rtl" .product-card {
   .micro-progress-fill::after { animation: none !important; }
   .btn-shine::before { animation: none !important; }
   .btn-loading::before { animation: none !important; }
+  .page-enter, .page-enter-slide, .page-enter-scale { animation: none !important; }
+  .stagger-children > * { animation: none !important; opacity: 1 !important; }
+  .border-animated { animation: none !important; }
+  .hover-lift-sm:hover, .hover-lift-md:hover, .hover-lift-lg:hover { transform: none !important; }
+  .hover-scale-sm:hover, .hover-scale-md:hover { transform: none !important; }
 }
