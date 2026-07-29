@@ -59,6 +59,11 @@ import { CustomerFeedbackChart } from "@/components/app/customer-feedback-chart"
 import { InventoryStockWidget } from "@/components/app/inventory-stock-widget";
 import { OrderPriorityQueue } from "@/components/app/order-priority-queue";
 import { ShopComparisonWidget } from "@/components/app/shop-comparison-widget";
+import { OrderAnalyticsDeepDive } from "@/components/app/order-analytics-deep-dive";
+import { MerchantRevenueBreakdown } from "@/components/app/merchant-revenue-breakdown";
+import { DeliveryPerformanceWidget } from "@/components/app/delivery-performance-widget";
+import { CouponManagementWidget } from "@/components/app/coupon-management-widget";
+import { DailySalesSummary } from "@/components/app/daily-sales-summary";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -886,6 +891,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* مقارنة المتاجر */}
       <ShopComparisonWidget />
+
+      {/* تحليل الطلبات التفصيلي */}
+      <OrderAnalyticsDeepDive />
+
+      {/* تفصيل الإيرادات */}
+      <MerchantRevenueBreakdown />
+
+      {/* أداء التوصيل */}
+      <DeliveryPerformanceWidget />
+
+      {/* إدارة القسائم */}
+      <CouponManagementWidget />
+
+      {/* ملخص المبيعات اليوم */}
+      <DailySalesSummary />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard

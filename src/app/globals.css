@@ -22511,6 +22511,1166 @@ tr:hover .table-cell-actions {
 
 /* ═══ End CSS Round 41 ═══ */
 
+/* ═══ CSS Round 42 ═══ */
+
+/* ──────────────────────────────────────
+   1. Advanced Button System — نظام الأزرار المتقدم
+   ────────────────────────────────────── */
+.btn-3d {
+  position: relative;
+  transform: translateY(0);
+  box-shadow: 0 4px 0 var(--primary-dark, #4f46e5), 0 6px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--primary-dark, #4f46e5), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.btn-glow-indigo {
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+  animation: glow-pulse-indigo 2s ease-in-out infinite;
+}
+@keyframes glow-pulse-indigo {
+  0%, 100% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(99, 102, 241, 0.6), 0 0 40px rgba(99, 102, 241, 0.25); }
+}
+.btn-glow-emerald {
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4), 0 0 20px rgba(16, 185, 129, 0.15);
+  animation: glow-pulse-emerald 2s ease-in-out infinite;
+}
+@keyframes glow-pulse-emerald {
+  0%, 100% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.4), 0 0 20px rgba(16, 185, 129, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.25); }
+}
+.btn-glow-rose {
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.4), 0 0 20px rgba(244, 63, 94, 0.15);
+  animation: glow-pulse-rose 2s ease-in-out infinite;
+}
+@keyframes glow-pulse-rose {
+  0%, 100% { box-shadow: 0 0 8px rgba(244, 63, 94, 0.4), 0 0 20px rgba(244, 63, 94, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(244, 63, 94, 0.6), 0 0 40px rgba(244, 63, 94, 0.25); }
+}
+.btn-glow-violet {
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4), 0 0 20px rgba(139, 92, 246, 0.15);
+  animation: glow-pulse-violet 2s ease-in-out infinite;
+}
+@keyframes glow-pulse-violet {
+  0%, 100% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.4), 0 0 20px rgba(139, 92, 246, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(139, 92, 246, 0.6), 0 0 40px rgba(139, 92, 246, 0.25); }
+}
+.btn-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-loading-shimmer {
+  position: relative;
+   overflow: hidden;
+  color: transparent !important;
+}
+.btn-loading-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+  animation: btn-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes btn-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  inset-inline-start: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  pointer-events: none;
+}
+.btn-ripple:active::after {
+  transform: scale(2.5);
+  opacity: 1;
+  transition: 0s;
+}
+.btn-group {
+  display: inline-flex;
+}
+.btn-group > :first-child { border-start-end-radius: 0; border-end-end-radius: 0; }
+.btn-group > :last-child { border-start-start-radius: 0; border-end-start-radius: 0; }
+.btn-group > :not(:first-child):not(:last-child) { border-radius: 0; }
+.btn-group > :not(:first-child) { margin-inline-start: -1px; }
+
+/* ──────────────────────────────────────
+   2. Accordion/Collapse Patterns — أنماط الأكورديون والانهيار
+   ────────────────────────────────────── */
+.accordion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow: hidden;
+}
+.accordion-item {
+  border: 1px solid var(--border-primary, #e2e8f0);
+  border-radius: var(--radius-md, 0.5rem);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+.accordion-item.open {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  background: var(--bg-primary, #fff);
+  font-weight: 600;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+.accordion-header:hover {
+  background: var(--bg-secondary, #f8fafc);
+}
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.accordion-item.open .accordion-body {
+  max-height: 500px;
+}
+.accordion-chevron {
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.accordion-item.open .accordion-chevron {
+  transform: rotate(180deg);
+}
+:is(.dark) .accordion-item {
+  border-color: var(--border-dark, #334155);
+}
+:is(.dark) .accordion-header {
+  background: var(--bg-primary-dark, #0f172a);
+  color: var(--text-primary-dark, #f1f5f9);
+}
+:is(.dark) .accordion-header:hover {
+  background: var(--bg-secondary-dark, #1e293b);
+}
+[dir="rtl"] .accordion-chevron {
+  transform: rotate(180deg);
+}
+[dir="rtl"] .accordion-item.open .accordion-chevron {
+  transform: rotate(0deg);
+}
+
+/* ──────────────────────────────────────
+   3. Modal/Dialog Patterns Enhanced — أنماط النوافذ المنبثقة المحسّنة
+   ────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.modal-panel {
+  background: var(--bg-primary, #fff);
+  border-radius: var(--radius-xl, 1rem);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 32rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modal-scale-in 0.25s ease;
+  position: relative;
+}
+@keyframes modal-scale-in {
+  0% { opacity: 0; scale: 0.95; }
+  100% { opacity: 1; scale: 1; }
+}
+.modal-panel-sm { max-width: 24rem; }
+.modal-panel-md { max-width: 32rem; }
+.modal-panel-lg { max-width: 48rem; }
+.modal-panel-xl { max-width: 64rem; }
+.modal-panel-slide-right {
+  animation: modal-slide-right 0.3s ease;
+}
+@keyframes modal-slide-right {
+  0% { opacity: 0; translate: -20px 0; }
+  100% { opacity: 1; translate: 0 0; }
+}
+[dir="rtl"] .modal-panel-slide-right {
+  animation: modal-slide-left 0.3s ease;
+}
+@keyframes modal-slide-left {
+  0% { opacity: 0; translate: 20px 0; }
+  100% { opacity: 1; translate: 0 0; }
+}
+.modal-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-end: 0.75rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  color: var(--text-secondary, #64748b);
+}
+.modal-close-btn:hover {
+  background: var(--bg-tertiary, #e2e8f0);
+}
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-primary, #e2e8f0);
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-primary, #fff);
+}
+.modal-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.modal-split > :first-child {
+  border-end-end-radius: 0;
+}
+.modal-split > :last-child {
+  border-start-start-radius: 0;
+}
+:is(.dark) .modal-panel {
+  background: var(--bg-primary-dark, #0f172a);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+:is(.dark) .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+:is(.dark) .modal-footer {
+  border-color: var(--border-dark, #334155);
+  background: var(--bg-primary-dark, #0f172a);
+}
+
+/* ──────────────────────────────────────
+   4. Notification/Alert Patterns — أنماط الإشعارات والتنبيهات
+   ────────────────────────────────────── */
+.alert-banner {
+  padding: 0.875rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  position: relative;
+  overflow: hidden;
+}
+.alert-inline {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md, 0.5rem);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+}
+.alert-floating {
+  position: fixed;
+  inset-block-start: 1rem;
+  inset-inline-end: 1rem;
+  z-index: 1100;
+  min-width: 20rem;
+  max-width: 26rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: alert-float-in 0.3s ease;
+}
+@keyframes alert-float-in {
+  0% { opacity: 0; translate: 0 -10px; }
+  100% { opacity: 1; translate: 0 0; }
+}
+.alert-dismissible {
+  padding-inline-end: 2.5rem;
+}
+.alert-info {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+.alert-success {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+.alert-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+.alert-danger {
+  background: #fff1f2;
+  color: #991b1b;
+  border-color: #fecdd3;
+}
+.alert-progress {
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  height: 3px;
+  background: var(--primary, #6366f1);
+  animation: alert-progress-shrink 5s linear forwards;
+}
+@keyframes alert-progress-shrink {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+:is(.dark) .alert-info {
+  background: rgba(30, 58, 138, 0.2);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+:is(.dark) .alert-success {
+  background: rgba(22, 101, 52, 0.2);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+:is(.dark) .alert-warning {
+  background: rgba(146, 64, 14, 0.2);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+:is(.dark) .alert-danger {
+  background: rgba(153, 27, 27, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+:is(.dark) .alert-floating {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* ──────────────────────────────────────
+   5. Skeleton Loading Patterns Enhanced — أنماط الهيكل العظمي المحسّنة
+   ────────────────────────────────────── */
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.skeleton-text span {
+  display: block;
+  height: 0.875rem;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: var(--bg-tertiary, #e2e8f0);
+}
+.skeleton-text span:last-child {
+  width: 65%;
+}
+.skeleton-heading {
+  height: 1.75rem;
+  width: 60%;
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-tertiary, #e2e8f0);
+  margin-block-end: 0.75rem;
+}
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, #e2e8f0);
+  flex-shrink: 0;
+}
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-tertiary, #e2e8f0);
+}
+.skeleton-card {
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 1px solid var(--border-primary, #e2e8f0);
+  padding: 1.25rem;
+  background: var(--bg-primary, #fff);
+}
+.skeleton-card .skeleton-image {
+  margin-block-end: 1rem;
+}
+.skeleton-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.skeleton-table-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.skeleton-table-row span {
+  height: 0.75rem;
+  flex: 1;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: var(--bg-tertiary, #e2e8f0);
+}
+.skeleton-table-row span:first-child {
+  flex: 0 0 40%;
+}
+.skeleton-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 120px;
+  padding: 1rem;
+}
+.skeleton-chart-bar {
+  flex: 1;
+  border-radius: var(--radius-sm, 0.25rem) var(--radius-sm, 0.25rem) 0 0;
+  background: var(--bg-tertiary, #e2e8f0);
+}
+@keyframes skeleton-pulse-alt {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton-pulse-alt {
+  animation: skeleton-pulse-alt 1.8s ease-in-out infinite;
+}
+:is(.dark) .skeleton-text span,
+:is(.dark) .skeleton-heading,
+:is(.dark) .skeleton-avatar,
+:is(.dark) .skeleton-image,
+:is(.dark) .skeleton-chart-bar,
+:is(.dark) .skeleton-table-row span {
+  background: var(--bg-tertiary-dark, #1e293b);
+}
+:is(.dark) .skeleton-card {
+  border-color: var(--border-dark, #334155);
+  background: var(--bg-primary-dark, #0f172a);
+}
+
+/* ──────────────────────────────────────
+   6. Empty State Patterns — أنماط الحالة الفارغة
+   ────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  gap: 1rem;
+}
+.empty-state-illustration {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-block-end: 0.5rem;
+  color: var(--text-quaternary, #cbd5e1);
+  opacity: 0.7;
+}
+.empty-state-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+.empty-state-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+  max-width: 24rem;
+  line-height: 1.6;
+}
+.empty-state-action {
+  margin-block-start: 0.5rem;
+}
+.empty-state-search .empty-state-illustration {
+  color: var(--text-quaternary, #cbd5e1);
+}
+.empty-state-error .empty-state-illustration {
+  color: #ef4444;
+  opacity: 0.8;
+}
+.empty-state-error .empty-state-title {
+  color: #dc2626;
+}
+.empty-state-offline .empty-state-illustration {
+  color: #f59e0b;
+  opacity: 0.8;
+}
+.empty-state-offline .empty-state-title {
+  color: #d97706;
+}
+:is(.dark) .empty-state-title {
+  color: var(--text-primary-dark, #f1f5f9);
+}
+:is(.dark) .empty-state-description {
+  color: var(--text-secondary-dark, #94a3b8);
+}
+
+/* ──────────────────────────────────────
+   7. Status Indicator System — نظام مؤشرات الحالة
+   ────────────────────────────────────── */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot-success { background: #22c55e; }
+.status-dot-warning { background: #f59e0b; }
+.status-dot-error { background: #ef4444; }
+.status-dot-info { background: #3b82f6; }
+.status-dot-neutral { background: var(--text-quaternary, #cbd5e1); }
+.status-dot-ping {
+  position: relative;
+}
+.status-dot-ping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: status-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.status-dot-success.status-dot-ping::after { background: #22c55e; }
+.status-dot-warning.status-dot-ping::after { background: #f59e0b; }
+.status-dot-error.status-dot-ping::after { background: #ef4444; }
+.status-dot-info.status-dot-ping::after { background: #3b82f6; }
+@keyframes status-ping {
+  0% { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  border: 1px solid var(--border-primary, #e2e8f0);
+}
+.status-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-tertiary, #e2e8f0);
+  overflow: hidden;
+}
+.status-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.status-ribbon {
+  position: absolute;
+  inset-block-start: 0.75rem;
+  inset-inline-start: -0.25rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary, #6366f1);
+  border-radius: 0 var(--radius-sm, 0.25rem) var(--radius-sm, 0.25rem) 0;
+}
+.status-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 0.25rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ──────────────────────────────────────
+   8. Hover Card / Popover Patterns — أنماط البطاقة العائمة والمنبثقة
+   ────────────────────────────────────── */
+.hover-card-trigger {
+  position: relative;
+  cursor: pointer;
+}
+.hover-card {
+  position: absolute;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  min-width: 16rem;
+  padding: 1rem;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-primary, #e2e8f0);
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  z-index: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateX(-50%) translateY(4px);
+}
+.hover-card-trigger:hover .hover-card,
+.hover-card-trigger:focus-within .hover-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.hover-card-enter {
+  animation: hover-card-pop 0.25s ease;
+}
+@keyframes hover-card-pop {
+  0% { opacity: 0; scale: 0.96; }
+  100% { opacity: 1; scale: 1; }
+}
+.hover-card-dark {
+  background: var(--bg-primary-dark, #0f172a);
+  border-color: var(--border-dark, #334155);
+  color: var(--text-primary-dark, #f1f5f9);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+.hover-card::after {
+  content: '';
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: var(--bg-primary, #fff);
+  border-inline-start: 1px solid var(--border-primary, #e2e8f0);
+  border-block-start: 1px solid var(--border-primary, #e2e8f0);
+}
+.hover-card-dark::after {
+  background: var(--bg-primary-dark, #0f172a);
+  border-color: var(--border-dark, #334155);
+}
+
+/* ──────────────────────────────────────
+   9. Switch/Toggle Patterns — أنماط المفاتيح/التبديل
+   ────────────────────────────────────── */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--bg-tertiary, #e2e8f0);
+  cursor: pointer;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s ease;
+}
+.switch-sm { width: 32px; height: 18px; border-radius: 9px; }
+.switch-sm::after { width: 14px; height: 14px; }
+.switch-md { width: 44px; height: 24px; border-radius: 12px; }
+.switch-lg { width: 56px; height: 30px; border-radius: 15px; }
+.switch-lg::after { width: 26px; height: 26px; }
+.switch-active {
+  background: var(--primary, #6366f1);
+}
+.switch-active::after {
+  transform: translateX(20px);
+}
+.switch-sm.switch-active::after {
+  transform: translateX(14px);
+}
+.switch-lg.switch-active::after {
+  transform: translateX(26px);
+}
+[dir="rtl"] .switch::after {
+  transition: transform 0.25s ease;
+}
+[dir="rtl"] .switch-active::after {
+  transform: translateX(-20px);
+}
+[dir="rtl"] .switch-sm.switch-active::after {
+  transform: translateX(-14px);
+}
+[dir="rtl"] .switch-lg.switch-active::after {
+  transform: translateX(-26px);
+}
+.switch-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.switch-with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 44px;
+  padding: 0 3px;
+}
+.switch-with-icon .icon-off,
+.switch-with-icon .icon-on {
+  font-size: 0.6875rem;
+  z-index: 1;
+  color: #fff;
+}
+:is(.dark) .switch {
+  background: var(--bg-tertiary-dark, #334155);
+}
+:is(.dark) .switch-active {
+  background: var(--primary, #6366f1);
+}
+
+/* ──────────────────────────────────────
+   10. Dropdown Menu Patterns — أنماط القائمة المنسدلة
+   ────────────────────────────────────── */
+.dropdown-menu {
+  position: absolute;
+  inset-block-start: calc(100% + 0.25rem);
+  inset-inline-start: 0;
+  min-width: 12rem;
+  padding: 0.375rem;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-primary, #e2e8f0);
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  z-index: 600;
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md, 0.5rem);
+  font-size: 0.875rem;
+  color: var(--text-primary, #0f172a);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.dropdown-item:hover {
+  background: var(--bg-secondary, #f8fafc);
+}
+.dropdown-item-danger {
+  color: #dc2626;
+}
+.dropdown-item-danger:hover {
+  background: #fef2f2;
+}
+.dropdown-divider {
+  height: 1px;
+  margin: 0.375rem 0;
+  background: var(--border-primary, #e2e8f0);
+}
+.dropdown-header {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-quaternary, #cbd5e1);
+}
+.dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.dropdown-trigger .dropdown-arrow {
+  transition: transform 0.2s ease;
+  font-size: 0.625rem;
+}
+[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg);
+}
+.dropdown-enter {
+  animation: dropdown-pop 0.2s ease;
+}
+@keyframes dropdown-pop {
+  0% { opacity: 0; scale: 0.95; transform: translateY(-4px); }
+  100% { opacity: 1; scale: 1; transform: translateY(0); }
+}
+:is(.dark) .dropdown-menu {
+  background: var(--bg-primary-dark, #0f172a);
+  border-color: var(--border-dark, #334155);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+:is(.dark) .dropdown-item {
+  color: var(--text-primary-dark, #f1f5f9);
+}
+:is(.dark) .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+:is(.dark) .dropdown-item-danger { color: #fca5a5; }
+:is(.dark) .dropdown-item-danger:hover { background: rgba(239, 68, 68, 0.1); }
+:is(.dark) .dropdown-header { color: var(--text-quaternary-dark, #475569); }
+:is(.dark) .dropdown-divider { background: var(--border-dark, #334155); }
+
+/* ──────────────────────────────────────
+   11. Chip/Filter Patterns — أنماط الرقائق/الفلاتر
+   ────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  border: 1px solid var(--border-primary, #e2e8f0);
+  white-space: nowrap;
+}
+.chip-interactive {
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chip-interactive:hover {
+  background: var(--bg-tertiary, #e2e8f0);
+}
+.chip-removable {
+  padding-inline-end: 0.375rem;
+}
+.chip-removable .chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  color: var(--text-quaternary, #cbd5e1);
+}
+.chip-removable .chip-remove:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary, #64748b);
+}
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chip-active {
+  background: var(--primary, #6366f1);
+  color: #fff;
+  border-color: var(--primary, #6366f1);
+}
+.chip-image {
+  padding: 0.125rem;
+  padding-inline-start: 0.125rem;
+  gap: 0.375rem;
+}
+.chip-image img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+:is(.dark) .chip {
+  background: var(--bg-secondary-dark, #1e293b);
+  color: var(--text-secondary-dark, #94a3b8);
+  border-color: var(--border-dark, #334155);
+}
+:is(.dark) .chip-interactive:hover {
+  background: var(--bg-tertiary-dark, #334155);
+}
+:is(.dark) .chip-removable .chip-remove:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+:is(.dark) .chip-active {
+  background: var(--primary, #6366f1);
+  color: #fff;
+  border-color: var(--primary, #6366f1);
+}
+
+/* ──────────────────────────────────────
+   12. Color System Utilities — أدوات نظام الألوان
+   ────────────────────────────────────── */
+.bg-gradient-indigo-purple {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+}
+.bg-gradient-emerald-teal {
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+}
+.bg-gradient-rose-orange {
+  background: linear-gradient(135deg, #f43f5e, #f97316);
+}
+.bg-gradient-sky-blue {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+}
+.bg-gradient-amber-yellow {
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+}
+.bg-gradient-violet-fuchsia {
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+}
+.bg-gradient-slate-gray {
+  background: linear-gradient(135deg, #64748b, #475569);
+}
+.bg-gradient-rainbow {
+  background: linear-gradient(135deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #a855f7);
+}
+.text-gradient-indigo-purple {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-emerald-teal {
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-rose-orange {
+  background: linear-gradient(135deg, #f43f5e, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-sky-blue {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-amber-yellow {
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-violet-fuchsia {
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-rainbow {
+  background: linear-gradient(135deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.border-gradient-indigo-purple {
+  border-image: linear-gradient(135deg, #6366f1, #a855f7) 1;
+}
+.border-gradient-emerald-teal {
+  border-image: linear-gradient(135deg, #10b981, #14b8a6) 1;
+}
+.border-gradient-rose-orange {
+  border-image: linear-gradient(135deg, #f43f5e, #f97316) 1;
+}
+.border-gradient-sky-blue {
+  border-image: linear-gradient(135deg, #0ea5e9, #3b82f6) 1;
+}
+.border-gradient-amber-yellow {
+  border-image: linear-gradient(135deg, #f59e0b, #eab308) 1;
+}
+.border-gradient-violet-fuchsia {
+  border-image: linear-gradient(135deg, #8b5cf6, #d946ef) 1;
+}
+.border-gradient-slate-gray {
+  border-image: linear-gradient(135deg, #64748b, #475569) 1;
+}
+.border-gradient-rainbow {
+  border-image: linear-gradient(135deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #a855f7) 1;
+}
+
+/* ──────────────────────────────────────
+   13. Spine/Ribbon Decorative Patterns — أنماط الشريط الزخرفي
+   ────────────────────────────────────── */
+.ribbon-corner-top-start {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ribbon-corner-top-start::after {
+  content: attr(data-label);
+  position: absolute;
+  inset-block-start: 14px;
+  inset-inline-start: -28px;
+  width: 100px;
+  padding: 0.25rem 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary, #6366f1);
+  transform: rotate(-45deg);
+}
+.ribbon-corner-top-end {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ribbon-corner-top-end::after {
+  content: attr(data-label);
+  position: absolute;
+  inset-block-start: 14px;
+  inset-inline-end: -28px;
+  width: 100px;
+  padding: 0.25rem 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary, #6366f1);
+  transform: rotate(45deg);
+}
+.ribbon-corner-bottom-start {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ribbon-corner-bottom-start::after {
+  content: attr(data-label);
+  position: absolute;
+  inset-block-end: 14px;
+  inset-inline-start: -28px;
+  width: 100px;
+  padding: 0.25rem 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary, #6366f1);
+  transform: rotate(45deg);
+}
+.ribbon-corner-bottom-end {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ribbon-corner-bottom-end::after {
+  content: attr(data-label);
+  position: absolute;
+  inset-block-end: 14px;
+  inset-inline-end: -28px;
+  width: 100px;
+  padding: 0.25rem 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary, #6366f1);
+  transform: rotate(-45deg);
+}
+.ribbon-flat {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary, #6366f1);
+}
+.spine-accent {
+  border-inline-start: 3px solid var(--primary, #6366f1);
+  padding-inline-start: 1rem;
+}
+.flag-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--primary, #6366f1);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+}
+
+/* ──────────────────────────────────────
+   14. Responsive Typography Scale — مقياس الطباعة المتجاوب
+   ────────────────────────────────────── */
+.text-responsive-xs {
+  font-size: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+}
+.text-responsive-sm {
+  font-size: clamp(0.8125rem, 0.75rem + 0.25vw, 0.875rem);
+}
+.text-responsive-base {
+  font-size: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+}
+.text-responsive-lg {
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+}
+.text-responsive-xl {
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.25rem);
+}
+.text-responsive-2xl {
+  font-size: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+}
+.text-responsive-3xl {
+  font-size: clamp(1.5rem, 1.25rem + 1.25vw, 1.875rem);
+}
+.text-responsive-4xl {
+  font-size: clamp(1.875rem, 1.5rem + 1.875vw, 2.25rem);
+}
+
+/* ═══ End CSS Round 42 ═══ */
+
 @media (prefers-reduced-motion: reduce) {
   .card-holographic, .card-holographic::after, .card-gradient-border::before { animation: none !important; }
   .state-loading-circular, .state-loading-dots__dot, .badge-notification-dot::after, .badge-status-online::before { animation: none !important; }
@@ -22552,4 +23712,18 @@ tr:hover .table-cell-actions {
   .scroll-reveal { opacity: 1 !important; translate: 0 0 !important; filter: none !important; transition: none !important; }
   .avatar-stack > *:hover { translate: 0 0 !important; }
   .tag-chip:hover { translate: 0 0 !important; }
+  /* CSS Round 42 — reduced-motion fallbacks */
+  .btn-glow-indigo, .btn-glow-emerald, .btn-glow-rose, .btn-glow-violet { animation: none !important; }
+  .btn-loading-shimmer::after { animation: none !important; }
+  .modal-panel { animation: none !important; }
+  .modal-panel-slide-right, [dir="rtl"] .modal-panel-slide-right { animation: none !important; }
+  .alert-floating { animation: none !important; }
+  .alert-progress { animation: none !important; }
+  .skeleton-pulse-alt { animation: none !important; }
+  .status-dot-ping::after { animation: none !important; }
+  .hover-card { transition: none !important; }
+  .hover-card-enter { animation: none !important; }
+  .switch::after { transition: none !important; }
+  .dropdown-enter { animation: none !important; }
+  .dropdown-trigger .dropdown-arrow { transition: none !important; }
 }
