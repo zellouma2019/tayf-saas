@@ -3596,3 +3596,101 @@ Task: QA + fixes + CSS Round 25 + new features
 3. SEO JSON-LD
 4. Multi-service cart
 5. DB-based order notes
+
+---
+Task ID: qa-fix-round23
+Agent: Main Agent
+Task: QA + critical timeout fix + CSS Round 26 + new features
+
+## Project Status
+- All pages work without JavaScript errors
+- Admin panel works correctly with full data
+- global-stats API now returns: 38 orders, 17,808 DZ revenue, 5 shops
+- FUNCTION_INVOCATION_TIMEOUT resolved
+- Dark mode works
+- Build passes
+
+## Critical Fix: global-stats FUNCTION_INVOCATION_TIMEOUT
+
+### Root Cause
+Turso DB queries were sequential (4 queries, each ~5s = 20s total), exceeding Vercel Hobby's 10s function limit.
+
+### Solution (3 changes)
+1. **maxDuration = 30**: Extended Vercel function timeout from 10s to 30s
+2. **Parallel queries**: Changed from 4 sequential to 2 parallel batches:
+   - Batch 1: statusCounts + totalRevenue (simple, no LEFT JOIN)
+   - Batch 2: recentOrders + shops (both with LEFT JOIN)
+3. **Simplified shops query**: Removed complex LEFT JOIN subquery for order aggregation; computed from recentOrders in-memory instead
+
+### Result
+- API response time: ~5-8s (down from 16-20s)
+- All data now returns correctly: shopStats(5), totalRevenue(17,808), totalOrders(38)
+- File: src/app/api/admin/global-stats/route.ts
+
+## New Features
+
+### 1. Quick Stats in Header
+- Mini stats bar in the header (desktop only, lg breakpoint)
+- Shows: total orders + shops count + total revenue
+- Uses icons: Package, Store, DollarSign
+- Updates automatically with global-stats refresh
+
+### 2. Order Internal Notes
+- Textarea in order detail dialog for writing internal notes
+- Saves to MerchantNote table via existing API (/api/orders/[id]/notes)
+- Loads existing note when dialog opens
+- Save button with loading state
+- File: src/app/page.tsx
+
+## CSS Round 26 (+380 lines)
+
+### Micro-interactions
+- ripple: Radial gradient on click
+- link-underline-anim: Smooth underline on hover
+- glow-pulse-primary: Pulsing glow for notifications
+- text-gradient-anim: Animated gradient text
+- card-spotlight: Mouse-following spotlight
+- blob-bg: Morphing blob background
+
+### Animation Utilities
+- sheet-slide-up: Bottom sheet animation
+- number-flash: Highlight number change
+- dropdown-enter: Dropdown appear animation
+- skeleton-img: Image skeleton pulse
+- counter-bump: Counter increment visual
+- accordion-content: CSS grid-based smooth accordion
+- nav-active-indicator: Active nav bar indicator
+
+### Visual Effects
+- border-shimmer: Animated border gradient
+- card-stacked: Stacked card depth effect
+- typewriter: Typewriter text effect
+- heading-gradient: Gradient heading text
+- scroll-progress: Scroll position indicator
+- badge-dot: Badge with notification dot
+- tooltip-css: CSS-only tooltip
+- loading-dots: Animated loading dots
+
+### Polish
+- chip-hover: Tag/chip lift on hover
+- card-focusable: Keyboard focus styles
+- ps-responsive: RTL-aware responsive padding
+- focus-within-ring improvements
+
+### Applied Classes
+- blob-bg: Welcome banner on overview
+- glow-pulse-primary: Today's orders badge
+- input-glow: Notes textarea
+
+## Commits
+- f2b72c1: fix(r23): global-stats timeout - parallel queries + maxDuration=30
+- 5ee8245: feat(r23): CSS R26, quick stats header, order notes, blob-bg
+
+## Recommendations
+1. UPLOADTHING_TOKEN in Vercel (not done yet!)
+2. Turso DB still slow (~5-8s per query) — consider migrating
+3. SEO JSON-LD structured data
+4. Multi-service cart
+5. Admin audit log (who changed what and when)
+6. Merchant dashboard mobile optimization
+7. og:image for social media sharing
