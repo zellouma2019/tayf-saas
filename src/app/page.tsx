@@ -146,9 +146,24 @@ export default function SuperAdminPage() {
   // تحميل الطلبات بشكل مستقل (لا يُعطّل عرض الإحصائيات)
   const loadOrders = useCallback(async () => {
     try {
-      const d = await adminFetch("/api/orders?noPreview=true&limit=100").then((r) => r.ok ? r.json() : null).catch(() => null);
+      const d = await fetch(`/api/orders?noPreview=true&limit=500&_t=${Date.now()}`, { cache: 'no-store' })
+        .then((r) => r.ok ? r.json() : null)
+        .catch(() => null);
       if (d && !d.error) {
-        setAllOrders(d.orders || []);
+        const orders = d.orders || [];
+        if (orders.length > 0) {
+          setAllOrders(orders);
+        } else if ((d.pagination?.total ?? 0) > 0) {
+          // Turso hiccup — retry once after delay
+          setTimeout(async () => {
+            try {
+              const d2 = await fetch(`/api/orders?noPreview=true&limit=500&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json());
+              if (d2.orders?.length > 0) setAllOrders(d2.orders);
+            } catch { /* silent */ }
+          }, 2000);
+        } else {
+          setAllOrders(orders);
+        }
       }
     } catch {
       // أخطاء الطلبات لا تُعطّل الواجهة — الإحصائيات كافية للعرض الأولي
@@ -177,6 +192,12 @@ export default function SuperAdminPage() {
     // 2) حمّل الطلبات في الخلفية (لا تُعطّل العرض)
     loadOrders();
 
+    // 3) تحديث تلقائي كل 45 ثانية
+    const interval = setInterval(() => {
+      loadStats();
+      loadOrders();
+    }, 45_000);
+
     // التحقق من الجلسة بالتوازي (يستخدم كاش sessionStorage لمدة 5 دقائق)
     // لا يُعطّل الواجهة أبداً — لو فشل الشبكة يبقى المستخدم يعمل
     verifySession().then(({ valid, adminName: name }) => {
@@ -186,6 +207,7 @@ export default function SuperAdminPage() {
         setAuthenticated(false);
       }
     });
+    return () => clearInterval(interval);
   }, [authenticated, loadStats, loadOrders]);
 
   const filteredOrders = useMemo(() => {
