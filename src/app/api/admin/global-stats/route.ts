@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { tursoQueries, tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
+import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
 // Vercel: Cache response at edge for 30 seconds, revalidate in background
 export const revalidate = 30;
@@ -12,9 +12,23 @@ export async function GET() {
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
 
-    // === 3 استعلامات بسيطة إلى Turso مباشرة (HTTP mode, بدون Prisma) ===
+    // === استعلامات متسلسلة إلى Turso (أكثر موثوقية من المتوازية) ===
 
-    // الاستعلام 1: إجمالي الإحصائيات
+    // الاستعلام 1: توزيع الحالات + آخر الطلبات (متوازيان عبر Promise.all)
+    const [statusRows, recentOrdersRaw] = await Promise.all([
+      tursoQuery(`SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status`),
+      tursoQuery(`
+        SELECT 
+          o.id, o.reference, o."serviceType", o."serviceName",
+          o.status, o.total, o.customer, o."createdAt",
+          o."shopId", s.name as shopName, s.slug as shopSlug
+        FROM "PrintOrder" o
+        LEFT JOIN "Shop" s ON o."shopId" = s.id
+        ORDER BY o."createdAt" DESC LIMIT 20
+      `),
+    ]);
+
+    // الاستعلام 2: إحصائيات عامة (بسيط — COUNT + SUM)
     const statsResult = await tursoQuery(`
       SELECT 
         COUNT(*) as totalOrders,
@@ -23,45 +37,28 @@ export async function GET() {
       FROM "PrintOrder"
     `, [todayISO]);
 
-    // الاستعلام 2: توزيع الحالات + المتاجر (موازي)
-    const [statusRows, shopsRaw] = await tursoQueries<Record<string, unknown>[]>([
-      { sql: `SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status` },
-      {
-        sql: `
-          SELECT 
-            s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
-            s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
-            s.country, s.language,
-            COALESCE(o.cnt, 0) as orderCount,
-            COALESCE(o.rev, 0) as shopRevenue,
-            COALESCE(o.tod, 0) as todayCount
-          FROM "Shop" s
-          LEFT JOIN (
-            SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(total), 0) as rev,
-                   COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
-            FROM "PrintOrder" GROUP BY "shopId"
-          ) o ON o."shopId" = s.id
-          ORDER BY s."createdAt" DESC
-        `,
-        args: [todayISO],
-      },
-    ]);
-
-    // الاستعلام 3: آخر الطلبات
-    const recentOrdersRaw = await tursoQuery(`
+    // الاستعلام 3: بيانات المتاجر (مع LEFT JOIN — منفصل لتجنب timeout المتوازي)
+    const shopsRaw = await tursoQuery(`
       SELECT 
-        o.id, o.reference, o."serviceType", o."serviceName",
-        o.status, o.total, o.customer, o."createdAt",
-        o."shopId", s.name as shopName, s.slug as shopSlug
-      FROM "PrintOrder" o
-      LEFT JOIN "Shop" s ON o."shopId" = s.id
-      ORDER BY o."createdAt" DESC LIMIT 20
-    `);
+        s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
+        s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
+        s.country, s.language,
+        COALESCE(o.cnt, 0) as orderCount,
+        COALESCE(o.rev, 0) as shopRevenue,
+        COALESCE(o.tod, 0) as todayCount
+      FROM "Shop" s
+      LEFT JOIN (
+        SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(CAST(total AS REAL)), 0) as rev,
+               COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
+        FROM "PrintOrder" GROUP BY "shopId"
+      ) o ON o."shopId" = s.id
+      ORDER BY s."createdAt" DESC
+    `, [todayISO]);
 
     const elapsed = Date.now() - startTime;
-    console.log(`[global-stats] loaded in ${elapsed}ms`);
+    console.log(`[global-stats] loaded in ${elapsed}ms — statusRows:${statusRows.length}, orders:${recentOrdersRaw.length}, shops:${shopsRaw.length}`);
 
-    // تجهيز البيانات — statusCounts first (needed by fallback)
+    // تجهيز البيانات — statusCounts first (needed by fallbacks)
     const statusCounts: Record<string, number> = {};
     for (const s of statusRows) {
       statusCounts[String(s.status)] = toNum(s.count);
@@ -69,15 +66,23 @@ export async function GET() {
 
     const statsRow = statsResult[0] || {};
     let totalOrders = toNum(statsRow.totalOrders);
-    const totalRevenue = toNum(statsRow.totalRevenue);
+    let totalRevenue = toNum(statsRow.totalRevenue);
     let todayOrders = toNum(statsRow.todayOrders);
 
-    // Fallback: إذا كان الاستعلام الأساسي أرجع 0، نحسب من statusCounts أو recentOrders
+    // Fallback 1: إذا كان totalOrders أرجع 0
     if (totalOrders === 0 && (statusRows.length > 0 || recentOrdersRaw.length > 0)) {
       const fromStatus = Object.values(statusCounts).reduce((s, v) => s + v, 0);
       if (fromStatus > 0) totalOrders = fromStatus;
       else if (recentOrdersRaw.length > 0) totalOrders = recentOrdersRaw.length;
     }
+
+    // Fallback 2: إذا كان totalRevenue أرجع 0 (مشكلة CAST)
+    if (totalRevenue === 0 && recentOrdersRaw.length > 0) {
+      const fromOrders = recentOrdersRaw.reduce((sum, o) => sum + toNum(o.total), 0);
+      if (fromOrders > 0) totalRevenue = Math.round(fromOrders);
+    }
+
+    // Fallback 3: إذا كان todayOrders أرجع 0 (مشكلة منطقة زمنية)
     if (todayOrders === 0 && recentOrdersRaw.length > 0) {
       const todayOrdersList = recentOrdersRaw.filter(o => {
         const created = String(o.createdAt || "");
@@ -86,25 +91,28 @@ export async function GET() {
       todayOrders = todayOrdersList.length;
     }
 
-    const shopStats = shopsRaw.map((s) => ({
-      id: String(s.id),
-      name: String(s.name),
-      slug: String(s.slug),
-      ownerName: s.ownerName ? String(s.ownerName) : null,
-      ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
-      phone: s.phone ? String(s.phone) : null,
-      isActive: Boolean(s.isActive),
-      trialDays: s.trialDays != null ? toNum(s.trialDays) : null,
-      trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
-      plan: String(s.plan || "free"),
-      adminPin: String(s.adminPin),
-      country: String(s.country || "DZ"),
-      language: String(s.language || "ar"),
-      orders: toNum(s.orderCount),
-      revenue: toNum(s.shopRevenue),
-      todayOrders: toNum(s.todayCount),
-      recentOrders: [] as never[],
-    }));
+    // Fallback 4: إذا كان shopsRaw فارغاً — نبني shopStats من بيانات الطلبات
+    const shopStats = shopsRaw.length > 0
+      ? shopsRaw.map((s) => ({
+          id: String(s.id),
+          name: String(s.name),
+          slug: String(s.slug),
+          ownerName: s.ownerName ? String(s.ownerName) : null,
+          ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
+          phone: s.phone ? String(s.phone) : null,
+          isActive: Boolean(s.isActive),
+          trialDays: s.trialDays != null ? toNum(s.trialDays) : null,
+          trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
+          plan: String(s.plan || "free"),
+          adminPin: String(s.adminPin),
+          country: String(s.country || "DZ"),
+          language: String(s.language || "ar"),
+          orders: toNum(s.orderCount),
+          revenue: toNum(s.shopRevenue),
+          todayOrders: toNum(s.todayCount),
+          recentOrders: [] as never[],
+        }))
+      : buildShopStatsFromOrders(recentOrdersRaw);
 
     const recentOrders = recentOrdersRaw.map((o) => {
       const order = o as Record<string, unknown>;
@@ -142,4 +150,56 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Fallback: بناء قائمة المتاجر من بيانات الطلبات عندما يفشل استعلام Shop
+ */
+function buildShopStatsFromOrders(orders: Record<string, unknown>[]) {
+  const shopMap = new Map<string, {
+    id: string; name: string; slug: string; orders: number; revenue: number;
+    shopId: string; isActive: boolean;
+  }>();
+
+  for (const o of orders) {
+    const shopId = String(o.shopId || "");
+    const shopName = o.shopName ? String(o.shopName) : "—";
+    const shopSlug = o.shopSlug ? String(o.shopSlug) : "";
+    if (!shopId) continue;
+
+    const existing = shopMap.get(shopId);
+    if (existing) {
+      existing.orders += 1;
+      existing.revenue += toNum(o.total);
+    } else {
+      shopMap.set(shopId, {
+        id: shopId,
+        name: shopName,
+        slug: shopSlug,
+        orders: 1,
+        revenue: toNum(o.total),
+        isActive: true,
+      });
+    }
+  }
+
+  return Array.from(shopMap.values()).map(s => ({
+    id: s.id,
+    name: s.name,
+    slug: s.slug,
+    ownerName: null,
+    ownerPhone: null,
+    phone: null,
+    isActive: s.isActive,
+    trialDays: null,
+    trialStartsAt: null,
+    plan: "free" as string,
+    adminPin: "" as string,
+    country: "DZ" as string,
+    language: "ar" as string,
+    orders: s.orders,
+    revenue: Math.round(s.revenue),
+    todayOrders: 0,
+    recentOrders: [] as never[],
+  }));
 }
