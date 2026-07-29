@@ -134,7 +134,7 @@ export default function SuperAdminPage() {
     else setRefreshing(true);
     setLoadError("");
     try {
-      const cacheBust = `&_=${Date.now()}`;
+      const cacheBust = `?_=${Date.now()}`;
       const [statsRes, ordersRes] = await Promise.all([
         fetch(`/api/admin/global-stats${cacheBust}`),
         fetch(`/api/orders${cacheBust}`),
@@ -472,6 +472,53 @@ export default function SuperAdminPage() {
   ] : [];
   const currentStatusIdx = selectedOrder ? statusTimeline.findIndex(s => s.key === selectedOrder.status) : -1;
 
+  // Export admin report to printable page
+  function exportAdminReport() {
+    const stats = globalStats;
+    const orders = allOrders;
+    if (!stats) { toast.error("لا توجد بيانات للتصدير"); return; }
+    const statusMap: Record<string,string> = { pending: "معلق", confirmed: "مؤكد", printing: "طباعة", ready: "جاهز", delivered: "تم التسليم", cancelled: "ملغى" };
+    const shopsHtml = (stats.shopStats || []).map((s: any) => 
+      `<tr><td>${s.name || '-'}</td><td>${s.orders || 0}</td><td>${(s.revenue || 0).toLocaleString()} د.ج</td></tr>`
+    ).join('');
+    const ordersHtml = orders.slice(0, 20).map((o: any) =>
+      `<tr><td>${o.reference || o.id}</td><td>${o.customer?.name || o.customer || '-'}</td><td>${o.serviceType || o.serviceName || '-'}</td><td>${statusMap[o.status] || o.status}</td><td>${(o.total || 0).toLocaleString()} د.ج</td></tr>`
+    ).join('');
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير طيف</title>
+    <style>*{font-family:Arial,sans-serif;box-sizing:border-box}body{padding:30px;max-width:800px;margin:auto;color:#333}
+    h1{text-align:center;color:#6366f1;border-bottom:3px solid #6366f1;padding-bottom:10px;margin-bottom:5px}
+    .date{text-align:center;color:#666;margin-bottom:20px;font-size:14px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center}
+    .stat-value{font-size:24px;font-weight:bold;color:#6366f1}
+    .stat-label{font-size:12px;color:#666;margin-top:4px}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px}
+    th{background:#6366f1;color:white;padding:10px;text-align:right;font-size:13px}
+    td{padding:8px 10px;border-bottom:1px solid #eee;font-size:13px}
+    tr:nth-child(even){background:#f8fafc}
+    .section-title{font-size:16px;font-weight:bold;color:#333;margin:20px 0 10px;padding-bottom:5px;border-bottom:2px solid #e2e8f0}
+    .footer{text-align:center;margin-top:30px;color:#999;font-size:12px}
+    @media print{body{padding:10px}}</style></head><body>
+    <h1>تقرير منصة طيف</h1>
+    <div class="date">${new Date().toLocaleDateString('ar-SA', {year:'numeric',month:'long',day:'numeric'})}</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-value">${stats.totalOrders || 0}</div><div class="stat-label">إجمالي الطلبات</div></div>
+      <div class="stat"><div class="stat-value">${(stats.totalRevenue || 0).toLocaleString()}</div><div class="stat-label">الإيرادات (د.ج)</div></div>
+      <div class="stat"><div class="stat-value">${stats.shopCount || 0}</div><div class="stat-label">المتاجر</div></div>
+      <div class="stat"><div class="stat-value">${stats.todayOrders || 0}</div><div class="stat-label">طلبات اليوم</div></div>
+    </div>
+    <div class="section-title">المتاجر</div>
+    <table><tr><th>المتجر</th><th>الطلبات</th><th>الإيرادات</th></tr>${shopsHtml || '<tr><td colspan="3" style="text-align:center">لا توجد بيانات</td></tr>'}</table>
+    <div class="section-title">آخر الطلبات</div>
+    <table><tr><th>الرقم</th><th>الزبون</th><th>الخدمة</th><th>الحالة</th><th>السعر</th></tr>${ordersHtml || '<tr><td colspan="5" style="text-align:center">لا توجد طلبات</td></tr>'}</table>
+    <div class="footer">تقرير تلقائي من منصة طيف — ${new Date().toISOString().split('T')[0]}</div>
+    </body></html>`);
+    win.document.close();
+    setTimeout(() => win.print(), 500);
+  }
+
   // Login gate
   if (!authenticated) {
     return <LoginGate onUnlock={() => setAuthenticated(true)} />;
@@ -650,6 +697,15 @@ export default function SuperAdminPage() {
             )}
             <ThemeToggle />
             {/* PDF Report button */}
+            <button
+              onClick={exportAdminReport}
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors admin-tooltip"
+              data-tip="تصدير التقرير"
+              title="تصدير التقرير"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline mr-1.5">تصدير التقرير</span>
+            </button>
             <a
               href="/api/admin/analytics"
               target="_blank"
@@ -658,7 +714,7 @@ export default function SuperAdminPage() {
               data-tip="تقرير PDF للإحصائيات"
               title="تقرير إحصائيات"
             >
-              <FileText className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" />
             </a>
             <button
               onClick={() => setCreateOpen(true)}
@@ -859,17 +915,20 @@ export default function SuperAdminPage() {
 
         {/* Shops Tab */}
         {!isInitialLoading && activeTab === "shops" && (
-          <div className="space-y-4">
+          <div className="space-y-4 widget-fade-in">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={shopSearch}
                   onChange={(e) => setShopSearch(e.target.value)}
-                  placeholder="بحث عن متجر..."
+                  placeholder="بحث عن متجر بالاسم أو الرابط..."
                   className="pr-10"
                 />
               </div>
+              <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
+                {filteredShops.length}/{safeShops.length} متجر
+              </span>
             </div>
             {safeShops.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

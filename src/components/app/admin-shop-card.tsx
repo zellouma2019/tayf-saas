@@ -256,34 +256,45 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
 
   return (
     <>
-    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-md transition-all overflow-hidden", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
-      {/* شريط لون المتجر في الأعلى */}
+    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-md transition-all overflow-hidden card-hover-glow card-entrance list-item-hover", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+      {/* شريط لون المتجر في الأعلى مع مؤشر الحالة */}
       <div
-        className="h-1.5"
-        style={{ background: shop.primaryColor ? `linear-gradient(to left, ${shop.primaryColor}, ${shop.primaryColor}cc)` : "linear-gradient(to left, #d4a853, #a88850)" }}
+        className={cn("h-1.5 status-bar")}
+        style={{ background: shop.primaryColor ? `linear-gradient(to left, ${shop.primaryColor}, ${shop.primaryColor}cc)` : "linear-gradient(to left, #d4a853, #a88850)", "--status-color": shop.isActive ? "#10b981" : "#f43f5e" } as React.CSSProperties}
       />
       <CardContent className="p-0">
         <div className="flex flex-col gap-4 p-5">
           {/* السطر الأول: اسم المتجر + الحالة + التجربة */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 relative">
                 <Store className="h-5 w-5 text-primary" />
+                {/* مؤشر الحالة المرئي */}
+                <span className={cn("absolute -top-0.5 -left-0.5 w-3 h-3 rounded-full border-2 border-card", shop.isActive ? "bg-emerald-500" : "bg-rose-500")} />
               </div>
               <div className="min-w-0">
                 <div className="font-bold text-sm truncate text-foreground">{getCountry(shop.country)?.flag} {shop.name}</div>
-                <div className="text-xs text-muted-foreground/70 truncate">
-                  {shop.ownerName && `${shop.ownerName} · `}
-                  {shop.orders} طلب · {formatDA(shop.revenue, shop.country)}
+                <div className="text-xs text-muted-foreground/70 truncate flex items-center gap-1.5">
+                  {shop.ownerName && <span>{shop.ownerName} · </span>}
+                  <span>{shop.orders} طلب</span>
+                  <span className="text-border">·</span>
+                  <span>{formatDA(shop.revenue, shop.country)}</span>
+                  {/* شارة الإيرادات */}
+                  {shop.revenue > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
+                      {formatDA(shop.revenue, shop.country)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-              <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
+              <span className={cn("inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-medium",
                 shop.isActive
                   ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
                   : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
-              }`}>
+              )}>
+                <span className={cn("w-1.5 h-1.5 rounded-full", shop.isActive ? "bg-emerald-500" : "bg-rose-500")} />
                 {shop.isActive ? "نشط" : "متوقف"}
               </span>
               <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
@@ -304,6 +315,22 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
               }`}>
                 {shop.paymentInfo ? "✓ مدفوع" : "غير مدفوع"}
               </span>
+            </div>
+          </div>
+
+          {/* إحصائيات سريعة */}
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-muted/50 rounded-lg p-2">
+              <div className="text-sm font-bold text-foreground">{shop.orders}</div>
+              <div className="text-[10px] text-muted-foreground/70">إجمالي الطلبات</div>
+            </div>
+            <div className="bg-emerald-50/60 dark:bg-emerald-950/20 rounded-lg p-2">
+              <div className="text-sm font-bold text-emerald-600">{formatDA(shop.revenue, shop.country)}</div>
+              <div className="text-[10px] text-muted-foreground/70">الإيرادات</div>
+            </div>
+            <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-lg p-2">
+              <div className="text-sm font-bold text-amber-600">{shop.todayOrders}</div>
+              <div className="text-[10px] text-muted-foreground/70">طلبات اليوم</div>
             </div>
           </div>
 

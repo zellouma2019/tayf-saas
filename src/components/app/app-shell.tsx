@@ -30,6 +30,7 @@ import {
   Store,
   Calculator,
   CheckCircle2,
+  ArrowUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -913,16 +914,19 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
 
       {/* زر العودة للأعلى */}
       <AnimatePresence>
-        {showBackTop && view !== "new" && (
+        {showBackTop && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-24 right-4 z-30 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors"
+            className="fixed bottom-24 left-4 z-30 w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors fab-ripple group"
             title="العودة للأعلى"
           >
-            <ChevronUp className="h-5 w-5" />
+            <ArrowUp className="h-5 w-5" />
+            <span className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none">
+              العودة للأعلى
+            </span>
           </motion.button>
         )}
       </AnimatePresence>

@@ -1752,145 +1752,211 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {/* ===== الخطوة 4: مراجعة الطلب ===== */}
         {step === 4 && selectedService && pricing && (
           <div className="space-y-4">
-            <div className="rounded-2xl border bg-card overflow-hidden card-holographic">
-              <div className="px-5 py-5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{selectedService.emoji}</span>
-                  <div>
-                    <div className="font-bold">{selectedService.name}</div>
-                    <div className="text-xs text-neutral-300 dark:text-neutral-600">{selectedService.description}</div>
+            {/* مؤشر التقدم المصغّر - عرض مراحل الطلب */}
+            <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-4">
+              <div className="flex items-center justify-between gap-1">
+                {STEP_LABELS.map((label, i) => {
+                  const isCompleted = i < step;
+                  const isActive = i === step;
+                  return (
+                    <div key={i} className="flex items-center gap-0 flex-1 min-w-0">
+                      <div className="flex flex-col items-center gap-1 min-w-0">
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 shrink-0 ${
+                          isCompleted
+                            ? "bg-emerald-500 text-white shadow-md shadow-emerald-200 dark:shadow-emerald-900/40"
+                            : isActive
+                              ? "bg-gradient-to-br from-primary to-primary text-white shadow-md shadow-violet-300 dark:shadow-violet-800/30 ring-2 ring-primary/30"
+                              : "bg-muted text-muted-foreground"
+                        }`}>
+                          {isCompleted ? <Check className="h-3.5 w-3.5" /> : <span>{i + 1}</span>}
+                        </div>
+                        <span className={`text-[8px] sm:text-[9px] font-medium leading-tight text-center truncate max-w-full ${
+                          isActive ? "text-primary" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground/40"
+                        }`}>
+                          {label}
+                        </span>
+                      </div>
+                      {i < STEP_LABELS.length - 1 && (
+                        <div className="flex-1 h-[2px] mx-1 rounded-full bg-muted dark:bg-muted overflow-hidden relative">
+                          <div className={`absolute inset-y-0 right-0 rounded-full transition-all duration-500 ${
+                            isCompleted ? "w-full bg-gradient-to-l from-emerald-400 to-emerald-500" : "w-0"
+                          }`} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* بطاقة الملخص مع تأثير الحدود المتدرجة */}
+            <div className="relative rounded-2xl overflow-hidden">
+              {/* حدود متدرجة */}
+              <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-primary/60 via-violet-500/40 to-emerald-500/40 opacity-80" />
+              <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-primary/30 via-violet-400/20 to-emerald-400/20" />
+              <div className="relative rounded-2xl border bg-card overflow-hidden card-holographic backdrop-blur-sm">
+                <div className="px-5 py-5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{selectedService.emoji}</span>
+                    <div>
+                      <div className="font-bold">{selectedService.name}</div>
+                      <div className="text-xs text-neutral-300 dark:text-neutral-600">{selectedService.description}</div>
+                    </div>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs text-neutral-300 dark:text-neutral-600">المجموع</div>
+                    {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
+                      <div>
+                        <div className="text-xs text-neutral-400 dark:text-neutral-500 line-through">{formatDA(pricing.total)}</div>
+                        <div className="text-2xl font-bold text-primary">{formatDA(finalPricing.total)}</div>
+                        <div className="text-xs text-emerald-400 font-medium">
+                          {finalPricing.appliedOfferNote}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-2xl font-bold text-primary">{formatDA(pricing.total)}</div>
+                    )}
                   </div>
                 </div>
-                <div className="text-left">
-                  <div className="text-xs text-neutral-300 dark:text-neutral-600">المجموع</div>
-                  {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
-                    <div>
-                      <div className="text-xs text-neutral-400 dark:text-neutral-500 line-through">{formatDA(pricing.total)}</div>
-                      <div className="text-2xl font-bold text-primary">{formatDA(finalPricing.total)}</div>
-                      <div className="text-xs text-emerald-400 font-medium">
-                        {finalPricing.appliedOfferNote}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-2xl font-bold text-primary">{formatDA(pricing.total)}</div>
-                  )}
-                </div>
-              </div>
-              <div className="p-5">
-                <h4 className="font-bold text-sm mb-3">تفاصيل الطلب</h4>
+                <div className="p-5">
+                  <h4 className="font-bold text-sm mb-3">تفاصيل الطلب</h4>
 
-                {/* ===== معاينة الملف المرفوع ===== */}
-                {fileName && (
-                  <div className="mb-4 flex gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                    {/* صورة المعاينة */}
-                    {analysis?.thumbnailUrl ? (
-                      <div className="shrink-0 relative">
-                        <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-primary/20 bg-white dark:bg-neutral-800 shadow-sm">
-                          
-                          <img
-                            src={analysis.thumbnailUrl}
-                            alt="معاينة الملف"
-                            className="w-full h-full object-cover"
-                          />
+                  {/* ===== معاينة الملف المرفوع ===== */}
+                  {fileName && (
+                    <div className="mb-4 flex gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                      {/* صورة المعاينة */}
+                      {analysis?.thumbnailUrl ? (
+                        <div className="shrink-0 relative">
+                          <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-primary/20 bg-white dark:bg-neutral-800 shadow-sm">
+                            <img
+                              src={analysis.thumbnailUrl}
+                              alt="معاينة الملف"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          {analysis.fileType === "PDF" && (
+                            <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
+                              PDF
+                            </div>
+                          )}
                         </div>
-                        {analysis.fileType === "PDF" && (
-                          <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
-                            PDF
+                      ) : (
+                        <div className="shrink-0 w-16 h-20 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-2xl">
+                          {analysis?.fileType === "PDF" ? "📄" : analysis?.fileType === "DOCX" ? "📝" : selectedService.emoji}
+                        </div>
+                      )}
+                      {/* معلومات الملف */}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 break-all">{fileName}</div>
+                        {analysis?.fileNature && (
+                          <div className="inline-block text-xs font-medium text-foreground bg-white dark:bg-neutral-800 border border-primary/20 rounded-full px-2 py-0.5">
+                            {analysis.fileNature}
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+                          {analysis?.fileType && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
+                              {analysis.fileType}
+                            </span>
+                          )}
+                          {analysis?.fileSizeKB && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
+                              📦 {analysis.fileSizeKB} ك.ب
+                            </span>
+                          )}
+                          {analysis?.pageCount && analysis.pageCount > 0 && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
+                              📄 {analysis.pageCount} صفحة
+                            </span>
+                          )}
+                          {analysis?.imageDimensions && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
+                              📐 {analysis.imageDimensions.width}×{analysis.imageDimensions.height}
+                            </span>
+                          )}
+                          {analysis?.isPortrait !== undefined && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
+                              {analysis.isPortrait ? "↕ عمودي" : "↔ أفقي"}
+                            </span>
+                          )}
+                        </div>
+                        {analysis?.confidence && (
+                          <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <span>✓</span> تحليل ذكي بدقة {analysis.confidence}%
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="shrink-0 w-16 h-20 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-2xl">
-                        {analysis?.fileType === "PDF" ? "📄" : analysis?.fileType === "DOCX" ? "📝" : selectedService.emoji}
-                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
+                    {currentSpec?.hasPrintRange && (
+                      <ReviewRow label="نطاق الطباعة" value={printRange === "all" ? "الملف كامل" : `صفحات: ${pageRange || "—"}`} />
                     )}
-                    {/* معلومات الملف */}
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 break-all">{fileName}</div>
-                      {analysis?.fileNature && (
-                        <div className="inline-block text-xs font-medium text-foreground bg-white dark:bg-neutral-800 border border-primary/20 rounded-full px-2 py-0.5">
-                          {analysis.fileNature}
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
-                        {analysis?.fileType && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
-                            {analysis.fileType}
-                          </span>
-                        )}
-                        {analysis?.fileSizeKB && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
-                            📦 {analysis.fileSizeKB} ك.ب
-                          </span>
-                        )}
-                        {analysis?.pageCount && analysis.pageCount > 0 && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
-                            📄 {analysis.pageCount} صفحة
-                          </span>
-                        )}
-                        {analysis?.imageDimensions && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
-                            📐 {analysis.imageDimensions.width}×{analysis.imageDimensions.height}
-                          </span>
-                        )}
-                        {analysis?.isPortrait !== undefined && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-primary/10">
-                            {analysis.isPortrait ? "↕ عمودي" : "↔ أفقي"}
-                          </span>
-                        )}
-                      </div>
-                      {analysis?.confidence && (
-                        <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                          <span>✓</span> تحليل ذكي بدقة {analysis.confidence}%
-                        </div>
-                      )}
+                    {currentSpec?.hasPageCount && (
+                      <ReviewRow label="عدد الصفحات" value={`${pages} ${currentSpec?.unit || "صفحة"}`} />
+                    )}
+                    <ReviewRow label="عدد النسخ" value={`${copies} ${currentSpec?.unit === "بطاقة" ? "بطاقة" : currentSpec?.unit === "صورة" ? "صورة" : currentSpec?.unit === "ملصق" ? "ملصق" : "نسخة"}`} />
+                    {/* عرض كل خيارات المواصفات المختارة ديناميكياً */}
+                    {currentSpec && currentSpec.sections.map((section) => {
+                      const selId = specOptions[section.optionKey];
+                      const opt = section.options.find((o) => o.id === selId);
+                      if (!opt) return null;
+                      return (
+                        <ReviewRow
+                          key={section.id}
+                          label={section.title}
+                          value={`${opt.emoji || ""} ${opt.label}`.trim()}
+                        />
+                      );
+                    })}
+                    <ReviewRow
+                      label="التسليم"
+                      value={DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label || deliveryMode}
+                    />
+                    <ReviewRow label="العميل" value={custName} />
+                    <ReviewRow label="الهاتف" value={custPhone} />
+                  </div>
+
+                  <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground">
+                    ℹ️ سيتم تأكيد السعر النهائي بعد مراجعة الملف
+                  </div>
+
+                  {/* بطاقة معلومات التواصل بتصميم محسّن */}
+                  <div className="mt-3 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+                    <div className="font-bold text-sm mb-1 flex items-center gap-2">
+                      <PhoneIcon className="h-4 w-4 text-primary" />
+                      سنتواصل معك قبل بدء الطباعة
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      سنتصل بك على الرقم أدناه لتأكيد الطلب والتفاصيل النهائية قبل تنفيذ الطباعة.
+                      تأكد من توفّرك لاستقبال المكالمة.
+                    </p>
+                    <div className="mt-2 flex items-center gap-2 text-sm font-bold text-neutral-900 dark:text-neutral-100" dir="ltr">
+                      📞 {custPhone}
                     </div>
                   </div>
-                )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
-                  {currentSpec?.hasPrintRange && (
-                    <ReviewRow label="نطاق الطباعة" value={printRange === "all" ? "الملف كامل" : `صفحات: ${pageRange || "—"}`} />
-                  )}
-                  {currentSpec?.hasPageCount && (
-                    <ReviewRow label="عدد الصفحات" value={`${pages} ${currentSpec?.unit || "صفحة"}`} />
-                  )}
-                  <ReviewRow label="عدد النسخ" value={`${copies} ${currentSpec?.unit === "بطاقة" ? "بطاقة" : currentSpec?.unit === "صورة" ? "صورة" : currentSpec?.unit === "ملصق" ? "ملصق" : "نسخة"}`} />
-                  {/* عرض كل خيارات المواصفات المختارة ديناميكياً */}
-                  {currentSpec && currentSpec.sections.map((section) => {
-                    const selId = specOptions[section.optionKey];
-                    const opt = section.options.find((o) => o.id === selId);
-                    if (!opt) return null;
-                    return (
-                      <ReviewRow
-                        key={section.id}
-                        label={section.title}
-                        value={`${opt.emoji || ""} ${opt.label}`.trim()}
-                      />
-                    );
-                  })}
-                  <ReviewRow
-                    label="التسليم"
-                    value={DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label || deliveryMode}
-                  />
-                  <ReviewRow label="العميل" value={custName} />
-                </div>
-
-                <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground">
-                  ℹ️ سيتم تأكيد السعر النهائي بعد مراجعة الملف
-                </div>
-
-                <div className="mt-3 p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
-                  <div className="font-bold text-sm mb-1 flex items-center gap-2">
-                    <PhoneIcon className="h-4 w-4 text-primary" />
-                    سنتواصل معك قبل بدء الطباعة
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    سنتصل بك على الرقم أدناه لتأكيد الطلب والتفاصيل النهائية قبل تنفيذ الطباعة.
-                    تأكد من توفّرك لاستقبال المكالمة.
-                  </p>
-                  <div className="mt-2 flex items-center gap-2 text-sm font-bold text-neutral-900 dark:text-neutral-100" dir="ltr">
-                    📞 {custPhone}
+                  {/* تأكيد السعر النهائي بتأكيد بصري */}
+                  <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-primary/10 via-violet-500/5 to-emerald-500/5 border border-primary/20 dark:border-primary/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          <span className="text-sm">💰</span>
+                        </div>
+                        <span className="text-sm font-semibold">السعر الإجمالي المقدّر</span>
+                      </div>
+                      <div className="text-left">
+                        {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground line-through">{formatDA(pricing.total)}</span>
+                            <span className="text-xl font-bold text-primary">{formatDA(finalPricing.total)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xl font-bold text-primary">{formatDA(pricing.total)}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -421,7 +421,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
     recentOrders: s.recentOrders ?? [],
   };
   return (
-    <div className="space-y-6 stagger-children">
+    <div className="space-y-6 stagger-children widget-fade-in">
       {/* شريط الترحيب */}
       <div className="aurora-bg rounded-2xl overflow-hidden fade-in-up" style={{ background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(212, 168, 83, 0.4))', backdropFilter: 'blur(16px)' }}>
         <div className="dot-pattern-gold absolute inset-0 opacity-10 pointer-events-none" />
@@ -494,7 +494,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-primary hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-primary hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
@@ -505,7 +505,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <SparklineMini values={[20, 23, 25, 28, 31, 35, 38]} color="#d4a853" />
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
@@ -515,7 +515,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           <SparklineMini values={[17200, 17800, 17400, 17900, 17100, 17600, 18000]} color="#10b981" />
         </div>
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-amber-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-amber-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
@@ -525,7 +525,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           <SparklineMini values={[0, 1, 0, 0, 3, 0, 2]} color="#f59e0b" />
         </div>
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-violet-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-violet-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number">
@@ -559,7 +559,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
             <BarChart3 className="h-4 w-4 text-primary" />
-            توزيع حالات الطلبات
+            <span className="text-gradient-section">توزيع حالات الطلبات</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -568,7 +568,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             if (totalOrders === 0) {
               return (
                 <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                  <div className="empty-state-icon"><Clock className="h-8 w-8 text-primary/30" /></div>
+                  <div className="empty-state-icon"><Clock className="h-8 w-8 text-primary/30 empty-bounce" /></div>
                   <p className="text-sm font-medium">لا توجد طلبات بعد لعرض التوزيع</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا بمجرد وصول أول طلب</p>
                 </div>
@@ -615,13 +615,13 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       </Card>
 
       {/* رسوم بيانية تحليلية */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 chart-fade-in">
         <PieChartCard stats={safeStats} />
         <RevenueBarChart stats={stats} />
       </div>
 
       {/* مخطط إيرادات الأسبوع + ذروة الطلب */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 chart-fade-in">
         <WeeklyRevenueChart stats={stats} />
         <PeakHoursChart stats={stats} />
       </div>
@@ -650,7 +650,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
                 <Crown className="h-4 w-4 text-gold-500" />
-                أفضل الزبائن
+                <span className="text-gradient-section">أفضل الزبائن</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -699,7 +699,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
               <Activity className="h-4 w-4 text-primary" />
-              آخر النشاطات
+              <span className="text-gradient-section">آخر النشاطات</span>
               <Badge variant="secondary" className="text-[10px] px-1.5 mr-auto">
                 {safeStats.recentOrders.length} نشاط
               </Badge>
@@ -836,12 +836,12 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {safeStats.shopStats && safeStats.shopStats.length > 1 && <ShopRankingWidget shops={safeStats.shopStats} />}
 
       {/* آخر الطلبات + النشاط */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 chart-fade-in">
         <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
               <Activity className="h-4 w-4 text-primary" />
-              النشاطات الأخيرة
+              <span className="text-gradient-section">النشاطات الأخيرة</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -855,7 +855,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
               <Clock className="h-4 w-4 text-primary" />
-              آخر الطلبات عبر المتاجر
+              <span className="text-gradient-section">آخر الطلبات عبر المتاجر</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -886,7 +886,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
               {!(safeStats.recentOrders?.length) && (
                 <div className="empty-state py-14">
                   <div className="empty-state-icon">
-                    <Package className="h-8 w-8 text-muted-foreground/25" />
+                    <Package className="h-8 w-8 text-muted-foreground/25 empty-bounce" />
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
                   <p className="text-[11px] text-muted-foreground/50 mt-1">ستظهر هنا آخر الطلبات من جميع المتاجر</p>

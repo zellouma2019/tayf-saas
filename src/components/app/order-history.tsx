@@ -45,9 +45,10 @@ function getStatusStyle(status: string) {
 /* ═══════════════════════ المكون الرئيسي ═══════════════════════ */
 interface OrderHistoryProps {
   onReorder?: (order: PrintOrderLite) => void;
+  orders?: PrintOrderLite[];
 }
 
-export function OrderHistory({ onReorder }: OrderHistoryProps) {
+export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryProps) {
   const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,8 +56,24 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const isPropsMode = propsOrders !== undefined;
+  const baseOrders = isPropsMode ? propsOrders! : orders;
+
+  // فلترة حسب رقم الهاتف (وضع البيانات الممرّرة فقط)
+  const phoneFilteredOrders = useMemo(() => {
+    if (!isPropsMode || !searched) return baseOrders;
+    const trimmed = phone.trim();
+    if (!trimmed) return baseOrders;
+    return baseOrders.filter((o) => o.customer?.phone?.includes(trimmed));
+  }, [isPropsMode, baseOrders, searched, phone]);
+
+  // العدد الإجمالي للعرض (قبل فلاتر الحالة والبحث)
+  const totalForDisplay = isPropsMode
+    ? (searched ? phoneFilteredOrders.length : baseOrders.length)
+    : orders.length;
+
   const filteredOrders = useMemo(() => {
-    let result = orders;
+    let result = isPropsMode ? phoneFilteredOrders : baseOrders;
     if (statusFilter !== "all") {
       result = result.filter((o) => o.status === statusFilter);
     }
@@ -70,13 +87,24 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
       );
     }
     return result;
-  }, [orders, statusFilter, searchQuery]);
+  }, [isPropsMode, phoneFilteredOrders, baseOrders, statusFilter, searchQuery]);
 
   const hasActiveFilters = statusFilter !== "all" || searchQuery.trim().length > 0;
 
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault();
     const trimmed = phone.trim();
+
+    // وضع البيانات الممرّرة: فلترة محلية بدون استدعاء API
+    if (isPropsMode) {
+      if (!trimmed) return;
+      setSearched(true);
+      setStatusFilter("all");
+      setSearchQuery("");
+      return;
+    }
+
+    // وضع API: استدعاء الخادم
     if (!trimmed || trimmed.length < 8) return;
     setLoading(true);
     setSearched(true);
@@ -94,6 +122,13 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
   }
 
   function handleClearFilters() {
+    setStatusFilter("all");
+    setSearchQuery("");
+  }
+
+  function handleShowAll() {
+    setPhone("");
+    setSearched(false);
     setStatusFilter("all");
     setSearchQuery("");
   }
@@ -121,16 +156,15 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
         </div>
       </div>
 
-      <Card className="border-border shadow-sm mb-4">
-        <CardContent className="p-4">
-          {/* حقل الإدخال */}
+      {/* قسم البحث برقم الهاتف */}
+      <div className="bg-muted/30 rounded-xl p-3 border border-border mb-4">
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
               <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="0560123456"
+                placeholder="أدخل رقم هاتفك لعرض طلباتك"
                 className="pr-9 h-12 text-base focus-visible:ring-gold-500/30 focus-visible:border-gold-500"
                 dir="ltr"
                 type="tel"
@@ -140,24 +174,42 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
               type="submit"
               size="lg"
               className="h-12 px-6 bg-gradient-to-l from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-violet-500/20 active:scale-[0.97] transition-all"
-              disabled={loading || phone.trim().length < 8}
+              disabled={loading || !phone.trim() || (!isPropsMode && phone.trim().length < 8)}
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Search className="h-4 w-4 ml-1.5" />
+                <Phone className="h-4 w-4 ml-1.5" />
               )}
               بحث
             </Button>
           </form>
-          <p className="text-xs text-center text-muted-foreground mt-2">
-            أدخل رقم الهاتف الذي استخدمته عند إنشاء الطلب
-          </p>
-        </CardContent>
-      </Card>
+      </div>
+
+      {/* شريط نتائج فلتر الهاتف */}
+      {isPropsMode && searched && phone.trim() && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between rounded-xl bg-muted/50 dark:bg-muted/20 border border-border px-4 py-2.5 mb-4"
+        >
+          <Badge variant="secondary" className="gap-1.5 font-normal">
+            <Phone className="h-3 w-3" />
+            {phoneFilteredOrders.length} طلب مطابق
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={handleShowAll}
+          >
+            عرض الكل
+          </Button>
+        </motion.div>
+      )}
 
       {/* فلاتر البحث */}
-      {searched && orders.length > 0 && (
+      {(searched || isPropsMode) && baseOrders.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -198,7 +250,7 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
       )}
 
       {/* حالة عدم وجود نتائج بعد الفلتر */}
-      {!loading && searched && orders.length > 0 && filteredOrders.length === 0 && (
+      {!loading && baseOrders.length > 0 && filteredOrders.length === 0 && (searched || isPropsMode) && (
         <Card>
           <CardContent className="py-10 text-center">
             <Filter className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
@@ -211,6 +263,19 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
             >
               مسح الفلاتر
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* لا توجد طلبات مطابقة لرقم الهاتف */}
+      {!loading && isPropsMode && searched && phone.trim() && phoneFilteredOrders.length === 0 && baseOrders.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="h-1 bg-gradient-to-l from-violet-500 to-amber-500" />
+          <CardContent className="py-16 text-center">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/50 dark:bg-muted/20 flex items-center justify-center mb-4">
+              <Phone className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-semibold text-foreground mb-1">لا توجد طلبات مسجلة بهذا الرقم</p>
           </CardContent>
         </Card>
       )}
@@ -231,7 +296,7 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
       )}
 
       {/* حالة عدم وجود نتائج */}
-      {!loading && searched && orders.length === 0 && (
+      {!loading && !isPropsMode && searched && orders.length === 0 && (
         <Card className="overflow-hidden">
           <div className="h-1 bg-gradient-to-l from-violet-500 to-amber-500" />
           <CardContent className="py-16 text-center">
@@ -247,12 +312,12 @@ export function OrderHistory({ onReorder }: OrderHistoryProps) {
       )}
 
       {/* قائمة الطلبات */}
-      {!loading && filteredOrders.length > 0 && (
+      {!loading && filteredOrders.length > 0 && (searched || isPropsMode) && (
         <div className="space-y-3">
           <div className="flex items-center justify-center gap-2">
             <div className="h-px flex-1 bg-border" />
             <p className="text-xs text-muted-foreground px-3">
-              {filteredOrders.length}{filteredOrders.length !== orders.length ? ` من ${orders.length}` : ""} طلب
+              {filteredOrders.length}{filteredOrders.length !== totalForDisplay ? ` من ${totalForDisplay}` : ""} طلب
             </p>
             <div className="h-px flex-1 bg-border" />
           </div>
