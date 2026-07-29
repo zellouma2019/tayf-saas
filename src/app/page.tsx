@@ -7,7 +7,7 @@ import {
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
-  FileText, Check, Square, X,
+  FileText, Check, Square, X, CheckSquare,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  STATUS_META, formatDA,
+  STATUS_META, STATUS_FLOW, formatDA, formatDateTimeAr,
 } from "@/lib/print-config";
 import { cn } from "@/lib/utils";
 import type { GlobalStats, GlobalOrder, ShopStat } from "@/lib/admin-types";
@@ -40,11 +40,16 @@ import {
 } from "recharts";
 import {
   isAuthenticated, verifySession, adminFetch,
-  clearSession, setFaviconBadge,
+  formatNumber, STATUS_COLORS, STATUS_BORDER_COLORS, STATUS_DOT_COLORS,
+  SERVICE_EMOJI, clearSession, setFaviconBadge,
 } from "@/lib/admin-utils";
 import { LoginGate } from "@/components/app/admin-login-gate";
 import { ShopManageCard } from "@/components/app/admin-shop-card";
 import { CreateShopDialog } from "@/components/app/admin-create-shop";
+import { OverviewTab } from "@/components/app/admin-overview-tab";
+import { SettingsTab } from "@/components/app/admin-settings-tab";
+import { SecurityTab } from "@/components/app/admin-security-tab";
+import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -59,7 +64,7 @@ export default function SuperAdminPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [shopFilter, setShopFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState<"overview" | "shops" | "orders">("overview");
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const [shopSearch, setShopSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<GlobalOrder | null>(null);
   // Date range filter
@@ -324,10 +329,13 @@ export default function SuperAdminPage() {
 
   if (!mounted) return <div className="min-h-screen bg-background" />;
 
-  const tabLabels = {
+  const tabLabels: Record<string, string> = {
     overview: "نظرة عامة",
     shops: "المتاجر",
     orders: "الطلبات",
+    settings: "الإعدادات",
+    security: "الأمان",
+    platform: "إعدادات المنصة",
   };
 
   return (
@@ -413,7 +421,7 @@ export default function SuperAdminPage() {
       {/* Tabs */}
       <div className="border-b border-border bg-card/50">
         <div className="px-4 flex items-center gap-1 overflow-x-auto">
-          {(["overview", "shops", "orders"] as const).map((tab) => (
+          {["overview", "shops", "orders", "settings", "security", "platform"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -565,307 +573,28 @@ export default function SuperAdminPage() {
 
         {/* ====== Loaded content (only show when NOT in initial load) ====== */}
         {!isInitialLoading && activeTab === "overview" && (
-          <div className="space-y-4">
-            {/* Welcome banner with quick stats - glass effect */}
-            <div className="rounded-xl glass-card border border-primary/20 p-4 flex items-center justify-between gap-4 summary-shimmer">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-semibold truncate">مرحباً بك في لوحة التحكم</h2>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {globalStats?.todayOrders && globalStats.todayOrders > 0 
-                      ? `لديك ${globalStats.todayOrders} طلب جديد اليوم — ${safeOrders.filter(o => o.status === "pending").length} بانتظار المراجعة`
-                      : `${safeShops.length} متجر نشط • ${safeOrders.filter(o => o.status === "pending").length} طلب بانتظار المراجعة`
-                    }
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => loadAll(false)}
-                className="text-xs text-primary hover:underline shrink-0 flex items-center gap-1"
-              >
-                <RefreshCw className={cn("h-3 w-3", refreshing && "animate-spin")} />
-                تحديث
-              </button>
-            </div>
-
-            {/* Stats cards - glass effect with gradient indicators */}
-            <div className="admin-grid-responsive animate-stagger">
-              {[
-                { label: "إجمالي الطلبات", value: globalStats?.totalOrders ?? safeOrders.length, icon: Package, color: "text-blue-600 dark:text-blue-400", gradient: "from-blue-500/10 to-blue-600/5", border: "border-blue-200 dark:border-blue-800/50" },
-                { label: "المتاجر", value: safeShops.length, icon: Store, color: "text-emerald-600 dark:text-emerald-400", gradient: "from-emerald-500/10 to-emerald-600/5", border: "border-emerald-200 dark:border-emerald-800/50" },
-                { label: "قيد الانتظار", value: safeOrders.filter(o => o.status === "pending").length, icon: Clock, color: "text-amber-600 dark:text-amber-400", gradient: "from-amber-500/10 to-amber-600/5", border: "border-amber-200 dark:border-amber-800/50" },
-                { label: "الإيرادات", value: `${(globalStats?.totalRevenue ?? 0).toLocaleString("ar-DZ")} د.ج`, icon: DollarSign, color: "text-violet-600 dark:text-violet-400", gradient: "from-violet-500/10 to-violet-600/5", border: "border-violet-200 dark:border-violet-800/50" },
-              ].map((card, i) => (
-                <div key={i} className={cn("rounded-xl glass-card p-4 card-hover-lift relative overflow-hidden", card.border)}>
-                  <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-br opacity-50 pointer-events-none", card.gradient)} />
-                  <div className="relative flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold tabular-nums animate-count-up">{card.value}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{card.label}</div>
-                    </div>
-                    <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center", card.gradient)}>
-                      <card.icon className={cn("h-5 w-5", card.color)} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Status distribution + quick stats row */}
-            {globalStats?.statusCounts && Object.keys(globalStats.statusCounts).length > 0 && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                {/* Pie Chart */}
-                <Card className="bg-card rounded-xl border border-border shadow-sm lg:col-span-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
-                      <BarChart3 className="h-4 w-4 text-primary" />
-                      توزيع الحالات
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex items-center justify-center">
-                    <div className="w-full max-w-[180px]">
-                      <PieChart width={180} height={180}>
-                        <Pie
-                          data={Object.entries(globalStats.statusCounts).map(([key, value]) => ({
-                            name: STATUS_META[key as keyof typeof STATUS_META]?.label || key,
-                            value: value as number,
-                          }))}
-                          cx="50%" cy="50%"
-                          innerRadius={45} outerRadius={70}
-                          paddingAngle={3}
-                          dataKey="value"
-                        >
-                          {Object.entries(globalStats.statusCounts).map(([key], index) => {
-                            const meta = STATUS_META[key as keyof typeof STATUS_META];
-                            const colors = ["#3b82f6", "#f59e0b", "#8b5cf6", "#10b981", "#ef4444", "#6366f1", "#ec4899", "#14b8a6"];
-                            return <Cell key={index} fill={colors[index % colors.length]} />;
-                          })}
-                        </Pie>
-                      </PieChart>
-                      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
-                        {Object.entries(globalStats.statusCounts).slice(0, 4).map(([key, value]) => (
-                          <div key={key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_META[key as keyof typeof STATUS_META]?.color?.replace(/text-|bg-|dark:/g, '') || "#888" }} />
-                            {STATUS_META[key as keyof typeof STATUS_META]?.label || key}: {value as number}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick status pills */}
-                <Card className="bg-card rounded-xl border border-border shadow-sm lg:col-span-2">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
-                      <Activity className="h-4 w-4 text-primary" />
-                      ملخص سريع
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {Object.entries(globalStats.statusCounts).map(([key, value]) => {
-                        const meta = STATUS_META[key as keyof typeof STATUS_META];
-                        return (
-                          <div key={key} className={cn("rounded-lg border p-3 text-center transition-colors hover:bg-muted/50", meta?.color ? `border-current/20` : "border-border")}>
-                            <div className="text-lg font-bold tabular-nums">{value as number}</div>
-                            <div className="text-[10px] text-muted-foreground">{meta?.label || key}</div>
-                          </div>
-                        );
-                      })}
-                      <div className="rounded-lg border border-border p-3 text-center">
-                        <div className="text-lg font-bold tabular-nums">{globalStats.todayOrders}</div>
-                        <div className="text-[10px] text-muted-foreground">طلبات اليوم</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Shop Revenue Comparison Chart */}
-            {safeShops.length > 0 && (
-              <Card className="bg-card rounded-xl border border-border shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
-                    <DollarSign className="h-4 w-4 text-violet-500" />
-                    مقارنة المتاجر — الطلبات والإيرادات
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="w-full h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={safeShops.filter(s => s.orders > 0 || s.revenue > 0).slice(0, 6).map(s => ({
-                        name: s.name?.length > 12 ? s.name.slice(0, 12) + '…' : s.name || s.slug,
-                        orders: s.orders,
-                        revenue: s.revenue,
-                      }))} layout="vertical" margin={{ right: 10, left: 10, top: 5, bottom: 5 }}>
-                        <XAxis type="number" tick={{ fontSize: 10 }} stroke="var(--color-muted-foreground)" />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} stroke="var(--color-muted-foreground)" width={80} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'var(--color-card)',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            color: 'var(--color-foreground)',
-                          }}
-                          labelStyle={{ color: 'var(--color-foreground)' }}
-                          itemStyle={{ color: 'var(--color-muted-foreground)' }}
-                        />
-                        <Bar dataKey="orders" fill="#3b82f6" radius={[0, 4, 4, 0]} name="الطلبات" />
-                        <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="الإيرادات (د.ج)" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Activity Timeline - Last 5 orders */}
-            {safeOrders.length > 0 && (
-              <Card className="bg-card rounded-xl border border-border shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
-                    <Clock className="h-4 w-4 text-blue-500" />
-                    آخر النشاطات
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {safeOrders.slice(0, 5).map((order, i) => (
-                      <div key={order.id} className="flex items-start gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className={cn(
-                            "w-2.5 h-2.5 rounded-full shrink-0 status-dot",
-                            STATUS_META[order.status as keyof typeof STATUS_META]?.color?.replace('text-', 'bg-') || "bg-muted-foreground"
-                          )} />
-                          {i < 4 && <div className="w-px h-full min-h-[20px] bg-border mt-1" />}
-                        </div>
-                        <div className="flex-1 min-w-0 pb-1">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="font-medium truncate">{order.customer?.name || "زبون"}</span>
-                            <ChevronLeft className="h-3 w-3 text-muted-foreground shrink-0" />
-                            <span className="text-muted-foreground truncate">{order.serviceType || "خدمة"}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                            <span>{order.shopName || "متجر"}</span>
-                            <span>•</span>
-                            <span>{formatDA(order.createdAt)}</span>
-                            {order.total > 0 && (
-                              <>
-                                <span>•</span>
-                                <span className="font-medium text-violet-500">{order.total.toLocaleString("ar-DZ")} د.ج</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Recent orders */}
-            <div className="rounded-xl border border-border bg-card">
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <h2 className="text-sm font-semibold">أحدث الطلبات</h2>
-                <button onClick={() => setActiveTab("orders")} className="text-xs text-primary hover:underline">
-                  عرض الكل
-                </button>
-              </div>
-              <div className="divide-y divide-border">
-                {safeOrders.slice(0, 10).map((order) => (
-                  <div
-                    key={order.id}
-                    onClick={() => setSelectedOrder(order)}
-                    className="p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-[10px] px-2 py-0",
-                          STATUS_META[order.status as keyof typeof STATUS_META]?.color || ""
-                        )}
-                      >
-                        {STATUS_META[order.status as keyof typeof STATUS_META]?.label || order.status}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
-                          {order.customer?.name || "زبون"} — {order.serviceType || "خدمة"}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground truncate">
-                          <span>{order.shopName || order.shopSlug || "متجر"}</span>
-                          <span>•</span>
-                          <span className="font-mono text-[10px]">{order.reference || order.id.slice(0, 10)}</span>
-                        </div>
-                      </div>
-                      <div className="text-left shrink-0">
-                        {order.total > 0 && (
-                          <div className="text-xs font-semibold text-violet-500 dark:text-violet-400 tabular-nums">
-                            {order.total.toLocaleString("ar-DZ")} <span className="text-[9px] font-normal">د.ج</span>
-                          </div>
-                        )}
-                        <div className="text-[10px] text-muted-foreground">
-                          {formatDA(order.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {safeOrders.length === 0 && (
-                  <div className="p-8 text-center text-muted-foreground text-sm">
-                    لا توجد طلبات حالياً
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Shops list */}
-            <div className="rounded-xl border border-border bg-card">
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <h2 className="text-sm font-semibold">المتاجر</h2>
-                <button onClick={() => setActiveTab("shops")} className="text-xs text-primary hover:underline">
-                  عرض الكل
-                </button>
-              </div>
-              <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredShops.map((shop) => (
-                  <ShopManageCard key={shop.slug} shop={shop} onCopyLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}`); toast.success('تم نسخ رابط المتجر'); }} onCopyAdminLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}?admin=1`); toast.success('تم نسخ رابط الإدارة'); }} onRefresh={() => loadAll(false)} />
-                ))}
-                {safeShops.length === 0 && (
-                  <div className="col-span-full">
-                    {/* Prominent empty state CTA */}
-                    <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/[0.03] p-8 flex flex-col items-center justify-center text-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Store className="h-8 w-8 text-primary" />
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="text-base font-semibold text-foreground">
-                          لم تنشئ أي متجر بعد
-                        </h3>
-                        <p className="text-sm text-muted-foreground max-w-sm">
-                          ابدأ بإنشاء متجرك الأول وابدأ بإدارة طلباتك بسهولة
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setCreateOpen(true)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 mt-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        إنشاء متجر جديد
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <OverviewTab
+            stats={globalStats}
+            lastUpdated={lastUpdated}
+            onOpenCreate={() => setCreateOpen(true)}
+            adminName=""
+            onRefresh={() => loadAll(false)}
+            onExport={() => {
+              const csv = filteredOrders.map(o =>
+                `${o.customer?.name || ""},${o.serviceName || o.serviceType || ""},${o.shopName || ""},${STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status},${o.total || 0},${formatDA(o.createdAt)}`
+              ).join("\n");
+              const header = "الزبون,الخدمة,المتجر,الحالة,المبلغ,التاريخ";
+              const blob = new Blob(["\ufeff" + header + "\n" + csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success("تم تصدير الطلبات");
+            }}
+            onSwitchToSettings={() => setActiveTab("settings")}
+          />
         )}
 
         {/* Shops Tab */}
@@ -1211,6 +940,27 @@ export default function SuperAdminPage() {
                 </Table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div className="tab-content-enter">
+            <SettingsTab />
+          </div>
+        )}
+
+        {/* Security Tab */}
+        {activeTab === "security" && (
+          <div className="tab-content-enter">
+            <SecurityTab />
+          </div>
+        )}
+
+        {/* Platform Settings Tab */}
+        {activeTab === "platform" && (
+          <div className="tab-content-enter">
+            <PlatformSettingsTab />
           </div>
         )}
       </main>
