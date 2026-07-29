@@ -356,7 +356,7 @@ export default function SuperAdminPage() {
 
           {activeTab === "orders" && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 stagger-children">
                 <div className="relative md:col-span-1"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث برقم الطلب، اسم، هاتف، أو متجر..." className="pr-10 text-sm h-10 rounded-lg focus:ring-ring focus:border-ring bg-background" /></div>
                 <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{stats?.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل الحالات" /></SelectTrigger><SelectContent><SelectItem value="all">كل الحالات</SelectItem>{STATUS_FLOW.map((s) => (<SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>))}<SelectItem value="cancelled">ملغي</SelectItem></SelectContent></Select>
