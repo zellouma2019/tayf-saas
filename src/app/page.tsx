@@ -151,21 +151,29 @@ export default function SuperAdminPage() {
   // تحميل الطلبات بشكل مستقل (لا يُعطّل عرض الإحصائيات)
   const loadOrders = useCallback(async () => {
     try {
-      const d = await fetch(`/api/orders?noPreview=true&limit=500`, { cache: 'no-store' })
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10_000); // 10 ثوانٍ كحد أقصى
+
+      const d = await fetch(`/api/orders?noPreview=true&limit=200`, { cache: 'no-store', signal: controller.signal })
         .then((r) => r.ok ? r.json() : null)
         .catch(() => null);
+      clearTimeout(timeout);
+
       if (d && !d.error) {
         const orders = d.orders || [];
         if (orders.length > 0) {
           setAllOrders(orders);
         } else if ((d.pagination?.total ?? 0) > 0) {
-          // Turso hiccup — retry once after delay
+          // Turso hiccup — retry once after delay with smaller limit
           setTimeout(async () => {
             try {
-              const d2 = await fetch(`/api/orders?noPreview=true&limit=500`, { cache: 'no-store' }).then(r => r.json());
+              const ctrl2 = new AbortController();
+              const t2 = setTimeout(() => ctrl2.abort(), 10_000);
+              const d2 = await fetch(`/api/orders?noPreview=true&limit=50`, { cache: 'no-store', signal: ctrl2.signal }).then(r => r.json());
+              clearTimeout(t2);
               if (d2.orders?.length > 0) setAllOrders(d2.orders);
             } catch { /* silent */ }
-          }, 2000);
+          }, 2500);
         } else {
           setAllOrders(orders);
         }
