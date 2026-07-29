@@ -64,6 +64,11 @@ import { MerchantRevenueBreakdown } from "@/components/app/merchant-revenue-brea
 import { DeliveryPerformanceWidget } from "@/components/app/delivery-performance-widget";
 import { CouponManagementWidget } from "@/components/app/coupon-management-widget";
 import { DailySalesSummary } from "@/components/app/daily-sales-summary";
+import { TeamWorkloadWidget } from "@/components/app/team-workload-widget";
+import { ProfitMarginChart } from "@/components/app/profit-margin-chart";
+import { CustomerRetentionWidget } from "@/components/app/customer-retention-widget";
+import { ServiceTimeTracker } from "@/components/app/service-time-tracker";
+import { PaymentMethodsWidget } from "@/components/app/payment-methods-widget";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -906,6 +911,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* ملخص المبيعات اليوم */}
       <DailySalesSummary />
+
+      {/* حمل العمل */}
+      <TeamWorkloadWidget />
+
+      {/* هوامش الربح */}
+      <ProfitMarginChart />
+
+      {/* الاحتفاظ بالعملاء */}
+      <CustomerRetentionWidget />
+
+      {/* زمن الخدمات */}
+      <ServiceTimeTracker />
+
+      {/* طرق الدفع */}
+      <PaymentMethodsWidget />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
