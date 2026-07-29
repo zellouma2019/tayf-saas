@@ -641,7 +641,7 @@ export default function SuperAdminPage() {
         )}
 
         {/* ====== Loaded content (only show when NOT in initial load) ====== */}
-        {!isInitialLoading && activeTab === "overview" && (
+        {!isInitialLoading && activeTab === "overview" && globalStats && (
           <OverviewTab
             stats={globalStats}
             lastUpdated={lastUpdated}
