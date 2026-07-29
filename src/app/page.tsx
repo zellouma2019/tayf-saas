@@ -52,7 +52,7 @@ import { SecurityTab } from "@/components/app/admin-security-tab";
 import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
 import { AdminErrorBoundary } from "@/components/app/error-boundary";
 
-const BUILD_HASH = "v4.8-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.8";
+const BUILD_HASH = "v4.9-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.9";
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -100,16 +100,15 @@ export default function SuperAdminPage() {
   // Load platform settings
   useEffect(() => {
     fetch("/api/super-admin/platform-settings")
-      .then((r) => {
-        const ct = r.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) throw new Error('non-JSON');
-        return r.json();
-      })
-      .then((d) => {
-        const s = d.settings || {};
-        setPlatformLogo(s.platformLogo || "");
-        setPlatformLogoDark(s.platformLogoDark || "");
-        setPlatformName(s.platformName || "طيف");
+      .then((r) => r.text())
+      .then((text) => {
+        try {
+          const d = JSON.parse(text);
+          const s = d.settings || {};
+          setPlatformLogo(s.platformLogo || "");
+          setPlatformLogoDark(s.platformLogoDark || "");
+          setPlatformName(s.platformName || "طيف");
+        } catch {}
       })
       .catch(() => {});
   }, []);
@@ -141,11 +140,12 @@ export default function SuperAdminPage() {
       ]);
       // Safe JSON parsing - handle non-JSON responses gracefully
       async function safeJson(res: Response) {
-        const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
           throw new Error(`API returned non-JSON response (${res.status})`);
         }
-        return res.json();
       }
       const statsData = await safeJson(statsRes);
       const ordersData = await safeJson(ordersRes);
@@ -1309,7 +1309,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50">
-                v4.6
+                v4.9
               </span>
             )}
             <span className={cn(
