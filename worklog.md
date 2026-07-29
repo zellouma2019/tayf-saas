@@ -6918,3 +6918,44 @@ Task: Fix 6 critical bugs + improve UI/UX + styling
 2. Test merchant dashboard after new deploy propagates
 3. Continue CSS/component improvement cycle
 4. Add WebSocket for real-time order notifications
+
+---
+Task ID: bugfix-round2-continued
+Agent: Main Agent (Cron Loop - continued)
+Task: Complete bug fixes, CSS cleanup, push to GitHub
+
+## Work Log:
+- Trimmed globals.css from 30,722 to 4,253 lines (-86%, -28,515 lines)
+  - This should resolve Vercel build OOM issues
+- Pushed all fixes to GitHub (7 commits total)
+- GitHub PAT updated by user (working)
+- Vercel deployment still showing old build (cached/not triggered)
+  - Likely needs Vercel webhook reconfiguration or manual deploy trigger
+- File upload tested successfully on live site (small files ≤500KB)
+
+## All Commits Pushed
+- e8104b3: refactor: trim globals.css from 30,722 to 4,253 lines (-86%)
+- 2870150: docs: update worklog with R48 QA fixes progress
+- b0d1dd0: feat(r48): CSS Round 48
+- 1ff0646: feat: admin panel animated tab transitions
+- e2f6e80: fix: admin panel UX improvements + defensive guards
+- e7d0d3e: fix: comprehensive defensive guards
+- e01c898: fix: add more defensive guards
+- 1bac3fe: fix: MerchantDashboard crash
+
+## Status
+- ✅ MerchantDashboard crash: Fixed (PrintQueueWidget undefined.filter)
+- ✅ Defensive guards: 5 files updated with Array.isArray and ||{} safety
+- ✅ CSS cleanup: 30K → 4K lines
+- ✅ Admin panel UX: AnimatePresence tab transitions
+- ✅ Back to Shop button in merchant dashboard
+- ✅ Footer sticky to bottom
+- ✅ File upload tested (small files)
+- ⚠️ Vercel deploy: Not reflecting latest code (same chunk hash)
+- ⚠️ UPLOADTHING_TOKEN: Hardcoded fallback exists, chunked fallback works
+
+## Risks
+1. Vercel deployment not updating — may need manual intervention
+2. Some CSS classes may have been removed that are dynamically generated
+3. Large file upload not tested
+4. Local build OOMs (known, Vercel builds separately)
