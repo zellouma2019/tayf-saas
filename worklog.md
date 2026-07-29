@@ -7029,3 +7029,57 @@ Stage Summary:
 - ✅ تم الدفع إلى GitHub (37f1f80) — Vercel سيُعيد النشر تلقائياً
 - ⚠️ admin-overview-tab.tsx يحتوي ~1414 سطر مع عشرات المكونات المستوردة — قد يسبب بطء في التجميع
 - ⚠️ توجد أخطاء SQLITE_ERROR (duplicate columns) في db-migrations — غير حرجة لكن يجب تنظيفها
+
+---
+Task ID: round43-style-feat
+Agent: Main Agent
+Task: تحسينات بصرية + ميزات جديدة + تنظيف المشروع
+
+## حالة المشروع الحالية
+- ✅ البناء يعمل بنجاح (0 أخطاء)
+- ✅ 6 commits مرفوعة إلى GitHub (zellouma2019/tayf-saas)
+- ⚠️ Vercel غير متصل بال webhook → يجب إعادة الربط يدوياً
+- ⚠️ الموقع الحي يخدم نسخة قديمة مخزنة مؤقتاً
+
+## التحسينات البصرية
+
+### 1. بوابة تسجيل الدخول (admin-login-gate.tsx)
+- خلفية متحركة بتدرج 4 ألوان (بنفسجي + ذهبي)
+- بطاقة زجاجية (glassmorphism) مع blur(24px) وثلاث طبقات ظل
+- خط متلألئ متحرك أعلى البطاقة
+- حركة fade-in + staggered text (framer-motion)
+- حقول إدخال محسنة مع حالات hover/focus/error
+- زر متميز مع hover lift + active press
+- دعم كامل للوضع الداكن
+- ~170 سطر CSS مخصص
+
+### 2. لوحة النظرة العامة (admin-overview-tab.tsx)
+- بطاقات KPI مع مؤشر حدود ملونة (primary/emerald/amber/violet)
+- بطاقات المتاجر: hover lift + ظل محسن
+- جدول الطلبات: حدود ملونة على hover + شارات أصغر
+- عناوين الأقسام: نقطة ملونة قبل العنوان
+- حالات فارغة محسنة (أيقونات أخف + توسيط أفضل)
+- شريط الترحيب: تدرج أخف + كتل أصغر
+- شبكات موحدة (gap-4/5) مع دعم الجوال
+
+### 3. صفحة الأدمن (page.tsx)
+- هيكلة تحميل (skeleton) لجميع التبويبات الثلاثة
+- شريط تقدم رفيع أثناء التحديث
+- نص متدرج ذهبي-بنفسجي لاسم المنصة
+- بطاقة CTA محسنة عند عدم وجود متاجر
+- شريط الأدوات يتكيف مع الشاشات الصغيرة
+
+## الملفات المحذوفة
+- 50 ملف مكون وهمي (-7,195 سطر) تم حذفها من المشروع
+
+## Commits المُرفعة
+- 7b91369: fix: restore working globals.css + fix 30 default import errors
+- 8959a72: fix: remove 50 mock demo widgets from admin overview
+- 9b55c4f: chore: delete 50 unused mock widget components (-8K+ lines)
+- aa00135: style: improve admin login gate with animated gradient, glassmorphism
+- a393634: style: polish admin overview - KPI indicators, table hover
+- d72cbe1: feat: loading skeletons, refresh indicator, gradient text
+
+## ⚠️ إجراء حرج مطلوب من المستخدم
+1. **إعادة ربط Vercel**: لوحة تحكم Vercel → tayf-saas → Settings → Git → ربط zellouma2019/tayf-saas
+2. **أو نشر يدوياً**: تثبيت Vercel CLI ثم `vercel --prod --token=YOUR_VERCEL_TOKEN`
