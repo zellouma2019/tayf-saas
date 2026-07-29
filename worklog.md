@@ -5918,3 +5918,147 @@ Task: QA + CSS Round 41 + 5 ميزات جديدة (Round 41)
 8. ملاحظات DB-based للطلبات
 9. دمج InventoryStockWidget في لوحة التاجر
 10. دمج OrderPriorityQueue في صفحة الطلبات
+
+---
+Task ID: round42
+Agent: Main Agent
+Task: QA + CSS Round 42 + 5 ميزات جديدة (Round 42)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 42 جولة CSS (23,729 سطر)
+- ✅ 119 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء (1 تحذير a11y — قديم)
+- ✅ تم النشر على Vercel (commit 85c8d48)
+- ⚠️ Turso DB بطء متقطع (لا يزال)
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel (لا يزال)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 160ms, CLS 0, TTFB 5.3ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| صفحة المتجر (موبايل 375×812) — تعمل | ✅ |
+| صفحة التتبع — تعمل | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح (31.9s) | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. تحليل الطلبات التفصيلي (Order Analytics Deep Dive)
+- مكون جديد: `src/components/app/order-analytics-deep-dive.tsx`
+- 4 بطاقات KPI: إجمالي الطلبات (156)، معدل الإنجاز (94%)، متوسط القيمة (850 د.ج)، وقت الاستجابة (12 دقيقة)
+- كل KPI مع سهم اتجاه + نسبة التغيير + مخطط SVG صغير
+- مخطط أشرطة أفقي لتوزيع الطلبات حسب أيام الأسبوع
+
+### 2. تفصيل الإيرادات (Merchant Revenue Breakdown)
+- مكون جديد: `src/components/app/merchant-revenue-breakdown.tsx`
+- مخطط SVG دائري: طباعة مستندات 35%، صور 25%، بانرات 20%، كروت 12%، أخرى 8%
+- عداد متحرك في المركز: 1,250,000 د.ج
+- قائمة وسائط مع نقاط ملونة + أرقام + نسب
+
+### 3. أداء التوصيل (Delivery Performance Widget)
+- مكون جديد: `src/components/app/delivery-performance-widget.tsx`
+- 3 مقاييس: متوسط التوصيل 2.5 يوم (أخضر)، نسبة في الوقت 91% (عنبري)، متأخرة 8 (أحمر)
+- خط زمني عمودي لـ 5 توصيلات حديثة مع شارات الحالة
+
+### 4. إدارة القسائم (Coupon Management Widget)
+- مكون جديد: `src/components/app/coupon-management-widget.tsx`
+- 4 قسائم: خصم 20% (نشط)، طباعة مجانية (نشط، تنتهي قريباً)، خصم 10% (منتهي)، تخفيض خاص (مسودة)
+- شريط ملخص: 4 نشطة، 243 مستخدم، 45,000 د.ج خصم
+- نبض تحذيري للقسائم التي تنتهي قريباً (3 أيام)
+
+### 5. ملخص المبيعات اليوم (Daily Sales Summary)
+- مكون جديد: `src/components/app/daily-sales-summary.tsx`
+- إجمالي: 38,500 د.ج مع عداد متحرك
+- مقارنة بالأمس: +15.2% ↑ (أخضر)
+- مخطط ساعات البيع (8 فترات)
+- أفضل 3 خدمات مبيعة اليوم
+
+## CSS Round 42 (+1,159 سطر)
+
+### 1. نظام الأزرار المتقدم (~62 سطر)
+- `.btn-3d`, `.btn-glow-*` (indigo/emerald/rose/violet)
+- `.btn-icon-only`, `.btn-icon-text`, `.btn-loading-shimmer`
+- `.btn-ripple`, `.btn-group`
+
+### 2. أكورديون/طي (~48 سطر)
+- `.accordion-container/item/header/body`
+- `.accordion-chevron` مع دوران + dark + RTL
+
+### 3. نوافذ منبثقة محسّنة (~74 سطر)
+- `.modal-overlay`, `.modal-panel` (sm/md/lg/xl)
+- `.modal-panel-slide-right`, `.modal-close-btn`
+- `.modal-footer`, `.modal-split` + dark
+
+### 4. إشعارات/تنبيهات (~72 سطر)
+- `.alert-banner/inline/floating/dismissible`
+- 4 متغيرات لونية + `.alert-progress` + dark
+
+### 5. هيكل تحميل محسّن (~76 سطر)
+- `.skeleton-text/heading/avatar/image/card/table/chart`
+- `.skeleton-pulse-alt` + dark
+
+### 6. حالات فارغة (~46 سطر)
+- `.empty-state` + مكونات فرعية
+- متغيرات: بحث/خطأ/غير متصل + dark
+
+### 7. مؤشرات الحالة (~66 سطر)
+- `.status-dot-*` (5 ألوان) + `.status-dot-ping`
+- `.status-badge/bar/ribbon/flag`
+
+### 8. بطاقة عائمة/منبثقة (~48 سطر)
+- `.hover-card-trigger/card/enter/dark`
+- سهم CSS للبطاقة
+
+### 9. مفتاح تبديل (~72 سطر)
+- `.switch` (sm/md/lg) + `.switch-active/disabled`
+- `.switch-label/with-icon` + RTL + dark
+
+### 10. قائمة منسدلة (~68 سطر)
+- `.dropdown-menu/item/item-danger/divider/header`
+- `.dropdown-trigger/enter` + dark
+
+### 11. رقائق/فلاتر (~66 سطر)
+- `.chip/interactive/removable/group/active/image` + dark
+
+### 12. نظام الألوان (~82 سطر)
+- 8 تدرجات خلفية، 7 تدرجات نص، 8 تدرجات حدود
+
+### 13. أنماط زخرفية (~84 سطر)
+- 4 شرائط زاوية، `.ribbon-flat`, `.spine-accent`, `.flag-banner`
+
+### 14. خط متجاوب (~22 سطر)
+- `.text-responsive-xs` حتى `.text-responsive-4xl` باستخدام `clamp()`
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 42 +1,159 سطر (إجمالي 23,729 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج 5 مكونات جديدة |
+| `src/components/app/order-analytics-deep-dive.tsx` | جديد: تحليل الطلبات |
+| `src/components/app/merchant-revenue-breakdown.tsx` | جديد: تفصيل الإيرادات |
+| `src/components/app/delivery-performance-widget.tsx` | جديد: أداء التوصيل |
+| `src/components/app/coupon-management-widget.tsx` | جديد: إدارة القسائم |
+| `src/components/app/daily-sales-summary.tsx` | جديد: ملخص المبيعات |
+
+## Commit
+- 85c8d48: feat(r42): CSS Round 42 (+1,159 lines, 23,729 total), order analytics deep dive, revenue breakdown, delivery performance, coupon management, daily sales summary
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 42 جولة CSS (23,729 سطر CSS)
+- 119 مكون تطبيقي + 5 مكونات جديدة في Round 42
+- إجمالي ~1,951 سطر جديدة في Round 42 (CSS + مكونات)
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع
+3. دمج BranchLocatorWidget في صفحة المتجر
+4. SEO JSON-LD structured data
+5. WebSocket للتحديثات الحية
+6. تكامل MaterialCostEstimator في new-order-wizard
+7. تحسين SEO مع og:image
+8. ملاحظات DB-based للطلبات
+9. دمج InventoryStockWidget في لوحة التاجر
+10. دمج DeliveryPerformanceWidget في صفحة الطلبات
