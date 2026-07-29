@@ -7406,3 +7406,105 @@ Task: تقييم المشروع + اختبار QA + تحسينات لوحة ال
 3. إضافة ميزة تغيير حالة الطلب من لوحة الإدارة
 4. إضافة تقارير PDF للإحصائيات
 5. تحسين أداء لوحة التاجر على الجوال (تحميل أسرع)
+
+---
+Task ID: round-48-cron
+Agent: Main Agent (Cron Agent Loop)
+Task: تقييم المشروع + اختبار QA + إصلاح أخطاء Turso + تحسينات بصرية + ميزات جديدة
+
+## حالة المشروع الحالية
+- ✅ Build ناجح بدون أخطاء (0 errors, 0 warnings)
+- ✅ تم رفع التعديلات إلى GitHub (commit 052456d)
+- ⚠️ Vercel لم ينشر التحديثات الأخيرة (6+ commits في الانتظار)
+- السبب: Vercel غير متصل بـ GitHub webhook
+
+## نتائج QA (عبر agent-browser)
+- ✅ صفحة المتجر `/s/al-riyan` تعمل بشكل صحيح
+- ✅ صفحة التتبع `/track` تعرض الواجهة
+- ✅ `/api/admin/global-stats` يُرجع بيانات صحيحة (39 طلب، 5 متاجر)
+- ⚠️ recentOrders/shopStats تعيد 0 — مشكلة في استعلام LEFT JOIN على Turso HTTP mode
+- ⚠️ لوحة الإدارة لا تزال تعرض البيانات القديمة على الموقع الحي (Vercel لم ينشر)
+
+## الأخطاء المُكتشفة وإصلاحها
+
+### 1. استعلام LEFT JOIN يُرجع فارغ على Turso (حرج)
+- **السبب**: استعلام `FROM "PrintOrder" o LEFT JOIN "Shop" s ON o."shopId" = s.id` يُرجع 0 صفوف بشكل متقطع على Turso HTTP mode
+- **التأثير**: shopStats تعرض orders:0، recentOrders فارغة، revenue = 0
+- **الحل**: إضافة fallback query بدون JOIN — استعلام بسيط من PrintOrder + ربط يدوي مع shop data
+- **الملف**: `src/app/api/admin/global-stats/route.ts`
+
+### 2. SUM(total) يُرجع 0 رغم وجود 39 طلب (متوسط)
+- **السبب**: `COALESCE(SUM(total), 0)` في الاستعلام المُوحد يُرجع 0 أحياناً
+- **الحل**: إضافة fallback 2b — استعلام مباشر `SELECT SUM(CAST(total AS INTEGER)) FROM "PrintOrder"` 
+- **الملف**: `src/app/api/admin/global-stats/route.ts`
+
+### 3. لا يوجد PATCH endpoint لتغيير حالة الطلب (متوسط)
+- **السبب**: الكود الأمامي يرسل PATCH لكن لا يوجد handler في `/api/orders/[id]`
+- **الحل**: إضافة PATCH handler كامل مع audit log وتحديث الطوابع الزمنية
+- **الملف**: `src/app/api/orders/[id]/route.ts`
+
+## الميزات الجديدة
+
+### 1. تغيير حالة الطلب مباشرة من لوحة الإدارة
+- قائمة منسدلة inline في جدول الطلبات (استبدال شارة الحالة الثابتة)
+- يتم التحديث فوراً مع toast تأكيد
+- يتضمن audit log تلقائي وتحديث الطوابع الزمنية (startedPrintingAt, etc.)
+- API جديد: `PATCH /api/orders/[id]` مع `{ status: "newStatus" }`
+
+### 2. مؤشر صحة البيانات (Data Health)
+- نقطة ملونة في Header: أخضر (صحي) / أصفر (fallback) / أحمر (خطأ)
+- tooltip عند التمرير يوضح سبب الحالة
+- يظهر فقط عند وجود مشكلة في البيانات
+
+### 3. شريط تحديث البيانات (Freshness Bar)
+- شريط رفيع أخضر/بنفسجي يتقلص تدريجياً (120 ثانية)
+- يُعاد تعيينه مع كل تحديث
+- يوضح للمستخدم مدى قدم البيانات المعروضة
+
+### 4. تلميحات اختصارات لوحة المفاتيح
+- شارة `<kbd>` في التذييل: `R` = تحديث
+- تصميم: خلفية muted مع حدود دقيقة
+
+## تحسينات بصرية
+
+### مكتبة CSS جديدة — Admin Dashboard v4.3 (~270 سطر)
+| الفئة | الوصف |
+|--------|---------|
+| `glass-card` | بطاقة زجاجية مع backdrop-blur وشفافية |
+| `gradient-border-flow` | حدود متدرجة متحركة بـ conic-gradient و @property --angle |
+| `status-dropdown-cell` | قائمة منسدلة مخصصة لتغيير الحالة مع سهم وسهم مخصص |
+| `health-dot` | نقطة صحة مع توهج (healthy/warning/error) + نبض |
+| `freshness-bar` | شريط تقلص تدريجي لتحديث البيانات |
+| `skeleton-improved` | تحميل محسّن مع shimmer أسرع وأكثر واقعية |
+| `order-row-accent` | حدود يمنى ملونة حسب حالة الطلب |
+| `order-status-transition` | انتقال سلس عند تغيير الحالة |
+| `summary-shimmer` | خلفية متلألئة للبطاقات المميزة |
+| `admin-grid-responsive` | شبكة متجاوبة للإحصائيات (2/2/4 أعمدة) |
+| `kbd-hint` | شارة اختصار لوحة المفاتيح |
+| `bell-urgent` | اهتزاز جرس مكثف للإشعارات العاجلة |
+| `copy-flash` | وميض عند النسخ للحافظة |
+| `admin-tooltip` | تلميح CSS نقي عند التمرير |
+
+### تحسينات إضافية
+- بطاقات KPI بتأثير زجاجي (glass-card بدلاً من bg-card)
+- شريط الترحيب بتأثير shimmer خفيف
+- Skeleton loading محسّن (skeleton-improved بدلاً من animate-pulse الأساسي)
+- إصدار v4.3 في التذييل
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/api/admin/global-stats/route.ts` | إضافة fallback query + revenue SUM fallback |
+| `src/app/api/orders/[id]/route.ts` | إضافة PATCH handler لتغيير الحالة |
+| `src/app/page.tsx` | glassmorphism + inline status + health indicator + keyboard hints |
+| `src/app/globals.css` | +270 سطر: مكتبة CSS v4.3 |
+
+## Commit
+- `052456d`: feat: admin dashboard v4.3 — inline status change, glassmorphism, data health, Turso fallback fix
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إعادة ربط Vercel بـ GitHub (أولوية قصوى - 6+ commits في الانتظار)
+2. اختبار تغيير حالة الطلب على الموقع الحي (بعد النشر)
+3. إضافة تقارير PDF للإحصائيات
+4. إضافة INDEX على shopId في Turso لتحسين الأداء
+5. تحسين لوحة تحكم التاجر بتطبيق CSS classes الجديدة
