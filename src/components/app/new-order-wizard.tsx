@@ -695,27 +695,87 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       let basicResult: RealFileAnalysis;
 
       if (isCDN) {
-        // تحليل سريع: معلومات أساسية فقط بدون pdfjs أو canvas
-        basicResult = {
-          detectedService: ext === "pdf" ? "document" : ext === "docx" ? "document" : "photo",
-          detectedServiceName: ext === "pdf" ? "طباعة مستند" : ext === "docx" ? "طباعة مستند" : "طباعة صورة",
-          pageCount: 1,
-          fileSizeKB: Math.round(f.size / 1024),
-          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
-          suggestedColor: "bw",
-          suggestedPaperSize: "A4",
-          suggestedPaperType: "normal",
-          suggestedBinding: "none",
-          confidence: 65,
-          insights: [`ملف مرفوع إلى CDN (${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت)`],
-          fileType: ext.toUpperCase(),
-          fileName: f.name,
-          fileSizeFormatted: f.size > 1024 * 1024
-            ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
-            : `${Math.round(f.size / 1024)} كيلوبايت`,
-        };
-        setTotalPages(1);
-        setPages(1);
+        // ملفات كبيرة: محاولة تحليل سريع (pdfjs للصفحات + نص)، ثم تخطي VLM
+        try {
+          if (ext === "pdf") {
+            // حتى الملفات الكبيرة يمكن تحليلها بـ pdfjs للحصول على عدد الصفحات الصحيح
+            basicResult = await analyzeFileReal(f);
+            setTotalPages(basicResult.pageCount);
+            setPages(basicResult.pageCount);
+          } else if (ext === "docx") {
+            // DOCX: تقدير من الحجم
+            const sizeKB = Math.round(f.size / 1024);
+            const pageCount = Math.max(1, Math.min(500, Math.round(sizeKB / 30)));
+            basicResult = {
+              detectedService: "document",
+              detectedServiceName: "طباعة مستند (Word)",
+              pageCount,
+              fileSizeKB: sizeKB,
+              fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+              suggestedColor: "bw",
+              suggestedPaperSize: "A4",
+              suggestedPaperType: "normal",
+              suggestedBinding: pageCount > 15 ? "spiral" : "none",
+              confidence: 82,
+              insights: [
+                `عدد الصفحات المقدّر: ${pageCount} (تقدير من حجم Word)`,
+                `ملف Word — ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت`,
+              ],
+              fileType: "DOCX",
+              fileName: f.name,
+              fileSizeFormatted: f.size > 1024 * 1024
+                ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
+                : `${Math.round(f.size / 1024)} كيلوبايت`,
+            };
+            setTotalPages(pageCount);
+            setPages(pageCount);
+          } else {
+            // صور كبيرة
+            basicResult = {
+              detectedService: "photo",
+              detectedServiceName: "طباعة صورة",
+              pageCount: 1,
+              fileSizeKB: Math.round(f.size / 1024),
+              fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+              suggestedColor: "color",
+              suggestedPaperSize: "A4",
+              suggestedPaperType: "glossy",
+              suggestedBinding: "none",
+              confidence: 70,
+              insights: [`صورة مرفوعة إلى CDN (${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت)`],
+              fileType: ext.toUpperCase(),
+              fileName: f.name,
+              fileSizeFormatted: f.size > 1024 * 1024
+                ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
+                : `${Math.round(f.size / 1024)} كيلوبايت`,
+            };
+            setTotalPages(1);
+            setPages(1);
+          }
+        } catch (analyzeErr) {
+          // فشل التحليل — نستخدم القيم الافتراضية
+          console.warn("[CDN analysis fallback]", analyzeErr);
+          basicResult = {
+            detectedService: ext === "pdf" || ext === "docx" ? "document" : "photo",
+            detectedServiceName: ext === "pdf" || ext === "docx" ? "طباعة مستند" : "طباعة صورة",
+            pageCount: 1,
+            fileSizeKB: Math.round(f.size / 1024),
+            fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+            suggestedColor: "bw",
+            suggestedPaperSize: "A4",
+            suggestedPaperType: "normal",
+            suggestedBinding: "none",
+            confidence: 60,
+            insights: [`ملف مرفوع إلى CDN (${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت)`, "تعذر التحليل التفصيلي — يرجى مراجعة الإعدادات يدوياً"],
+            fileType: ext.toUpperCase(),
+            fileName: f.name,
+            fileSizeFormatted: f.size > 1024 * 1024
+              ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
+              : `${Math.round(f.size / 1024)} كيلوبايت`,
+          };
+          setTotalPages(1);
+          setPages(1);
+        }
       } else {
         // ملفات صغيرة: تحليل كامل (pdfjs + canvas)
         basicResult = await analyzeFileReal(f);
@@ -759,7 +819,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setAnalysisPhase("ai-analysis");
 
       // ملفات كبيرة: تخطي VLM (لا توجد معاينة + الملف كبير)
-      if (isChunked) {
+      if (isCDN) {
         // تحليل سريع — لا حاجة لـ VLM على ملفات كبيرة بدون معاينة
         setTimeout(() => setAnalysisPhase("done"), 500);
       } else {

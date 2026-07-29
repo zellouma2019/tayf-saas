@@ -47,8 +47,17 @@ prompt
 /skills/
 tool-results/
 upload/
+uploads/
 qa-*.png
 screenshot-*.png
+
+# Test files & artifacts
+test-*.pdf
+admin-overview*.png
+merchant-dashboard*.png
+shop-page*.png
+verify-*.png
+public/uploads/
 
 # Database (user generates their own)
 db/*.db

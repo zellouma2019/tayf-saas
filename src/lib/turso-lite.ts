@@ -83,6 +83,32 @@ export async function tursoQuery<T = Record<string, unknown>>(
 }
 
 /**
+ * استعلام SQL مع تمييز الخطأ عن النتيجة الفارغة
+ * يُرجع { rows, error } بدلاً من مصفوفة فقط
+ * عند انتهاء المهلة أو الخطأ، يُرجع error:true لتمييزه عن Array(0)
+ */
+export async function tursoQuerySafe<T = Record<string, unknown>>(
+  sql: string,
+  args?: unknown[],
+  timeoutMs = 10000
+): Promise<{ rows: T[]; error?: string }> {
+  try {
+    const client = getTursoClient();
+    const result = await Promise.race([
+      client.execute({ sql, args: (args || []) as never[] }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`turso-lite timeout (${timeoutMs}ms)`)), timeoutMs)
+      ),
+    ]);
+    return { rows: result.rows as unknown as T[] };
+  } catch (e) {
+    const msg = (e as Error).message || "unknown";
+    console.error("[turso-lite] safe query failed:", msg);
+    return { rows: [], error: msg };
+  }
+}
+
+/**
  * استعلام SQL مع إمكانية تحديد مهلة مخصصة
  */
 export async function tursoQueryWithTimeout<T = Record<string, unknown>>(

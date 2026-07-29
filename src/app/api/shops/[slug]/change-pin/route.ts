@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuerySafe, tursoExecute } from "@/lib/turso-lite";
 import { withRateLimit } from "@/lib/rate-limit";
 
-/// تغيير كلمة مرور المتجر (PIN) — نقطة نهاية مخصصة
+/// تغيير كلمة مرور المتجر (PIN) — عبر turso-lite (أسرع من Prisma)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -26,7 +26,21 @@ export async function PUT(
       );
     }
 
-    const shop = await db.shop.findUnique({ where: { slug } });
+    // التحقق من المتجر وكلمة المرور الحالية عبر turso-lite
+    const { rows, error } = await tursoQuerySafe<{ adminPin: string }>(
+      `SELECT "adminPin" FROM "Shop" WHERE slug = ? LIMIT 1`,
+      [slug],
+      10000
+    );
+
+    if (error) {
+      return NextResponse.json(
+        { error: "مشكلة في الاتصال بقاعدة البيانات", code: "DB_ERROR" },
+        { status: 503 }
+      );
+    }
+
+    const shop = rows[0];
     if (!shop) {
       return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
     }
@@ -36,11 +50,11 @@ export async function PUT(
       return NextResponse.json({ error: "كلمة المرور الحالية غير صحيحة" }, { status: 401 });
     }
 
-    // تحديث كلمة المرور
-    await db.shop.update({
-      where: { slug },
-      data: { adminPin: newPin },
-    });
+    // تحديث كلمة المرور عبر turso-lite
+    await tursoExecute(
+      `UPDATE "Shop" SET "adminPin" = ?, "updatedAt" = ? WHERE slug = ?`,
+      [newPin, new Date().toISOString(), slug]
+    );
 
     return NextResponse.json({ success: true });
   } catch (e) {

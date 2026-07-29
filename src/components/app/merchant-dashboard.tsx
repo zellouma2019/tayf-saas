@@ -831,10 +831,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         setUnlocked(true);
         setPin("");
       } else {
-        handleWrongPin();
+        const data = await res.json().catch(() => ({}));
+        if (data.code === "DB_ERROR") {
+          // خطأ في قاعدة البيانات وليس كلمة المرور
+          toast.error("مشكلة في الاتصال", {
+            description: "تعذر الوصول لقاعدة البيانات، يرجى المحاولة مرة أخرى",
+          });
+          setPinError(false);
+        } else {
+          handleWrongPin();
+        }
       }
     } catch {
-      handleWrongPin();
+      toast.error("خطأ في الاتصال", {
+        description: "تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى",
+      });
     } finally {
       setVerifying(false);
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tursoQuery, tursoExecute } from "@/lib/turso-lite";
+import { tursoQuery, tursoQuerySafe, tursoExecute } from "@/lib/turso-lite";
 import { withRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -107,12 +107,25 @@ export async function PUT(
     const body = await req.json();
 
     // التحقق من كلمة المرور (إلزامي دائماً)
-    const rows = await tursoQuery<{ adminPin: string }>(
+    const { rows: pinRows, error: pinError } = await tursoQuerySafe<{ adminPin: string }>(
       `SELECT "adminPin" FROM "Shop" WHERE slug = ? LIMIT 1`,
-      [slug]
+      [slug],
+      10000
     );
-    const shop = rows[0];
-    if (!shop || !body.adminPin || shop.adminPin !== String(body.adminPin)) {
+
+    // إذا حدث خطأ في قاعدة البيانات (timeout أو اتصال)، أرجع خطأ مناسب
+    if (pinError) {
+      return NextResponse.json(
+        { error: "مشكلة في الاتصال بقاعدة البيانات، يرجى المحاولة مرة أخرى", code: "DB_ERROR" },
+        { status: 503 }
+      );
+    }
+
+    const shop = pinRows[0];
+    if (!shop) {
+      return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
+    }
+    if (!body.adminPin || shop.adminPin !== String(body.adminPin)) {
       return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 403 });
     }
 
