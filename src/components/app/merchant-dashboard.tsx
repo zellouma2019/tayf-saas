@@ -304,6 +304,7 @@ function TodayAchievementGauge({ achievement }: { achievement: { total: number; 
 // ===== المكون الرئيسي =====
 // ===== Quick Customer Phone Search =====
 function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
+  const safeOrders = Array.isArray(orders) ? orders : [];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Array<{ name: string; phone: string; orderCount: number }>>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -318,7 +319,7 @@ function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
     debounceRef.current = setTimeout(() => {
       const q = query.toLowerCase().trim();
       const customerMap = new Map<string, { name: string; phone: string; count: number }>();
-      orders.forEach((o) => {
+      safeOrders.forEach((o) => {
         const phone = o.customer?.phone || "";
         const name = o.customer?.name || "";
         if (phone.includes(q) || name.toLowerCase().includes(q)) {
@@ -3335,7 +3336,7 @@ function MobileOrderCard({
           <div>
             <div className="text-xs font-bold text-dark-700 mb-2">مواصفات الطباعة</div>
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(order.options)
+              {Object.entries(order.options || {})
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !["notes", "printRange", "pageRange", "totalPages"].includes(k))
                 .map(([k, v]) => (
                   <div key={k} className="rounded-xl bg-card shadow-sm border border-border px-3 py-2">
