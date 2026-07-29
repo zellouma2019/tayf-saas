@@ -4944,3 +4944,152 @@ Task: QA + CSS Round 34 + ميزات جديدة (Round 34)
 8. إضافة WebSocket للتحديثات الحية
 9. تحسين الـ SEO مع og:image للسوشيال ميديا
 10. دمج ShopTrustBadges في صفحة المتجر الرئيسية
+
+---
+Task ID: qa-fix-round35
+Agent: Main Agent
+Task: QA + CSS Round 35 + ميزات جديدة (Round 35)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ لوحة كفاءة الإنتاج مدمجة في النظرة العامة
+- ✅ طابور الطباعة في لوحة التاجر
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint (0 أخطاء، 1 تحذير a11y — قديم)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit 1026b1d)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (retry mechanism يعمل)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 741 عنصر نصي مُ rendering | ✅ |
+| تبويب الطلبات — بنية جدول ظاهرة | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الأزرار تعمل | ✅ |
+| البناء — ناجح بدون أخطاء | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. ويدجت طابور الطباعة (Print Queue Widget)
+- مكون جديد: `src/components/app/print-queue-widget.tsx`
+- عرض الوظيفة النشطة مع مؤقت
+- قائمة الانتظار مع ألوان الأولوية (عاجل/عالي/عادي/منخفض)
+- عدّاد الوظائف اليومية
+- أنيميشن AnimatePresence للانتقالات
+- مدمج في لوحة التاجر
+
+### 2. محسّب تكلفة المواد (Material Cost Estimator)
+- مكون جديد: `src/components/app/material-cost-estimator.tsx`
+- 3 أنواع ورق: سادة/لامع/كرافت مع بطاقات تفاعلية
+- 3 أحجام: A4/A3/A5 مع مؤشرات بصرية
+- 3 أوضاع ألوان: CMYK/RGB/أبيض وأسود مع شارات ملونة
+- حساب التكلفة التلقائي مع مضاعفات
+- تأثير motion على التكلفة
+
+### 3. لوحة كفاءة الإنتاج (Production Efficiency Dashboard)
+- مكون جديد: `src/components/app/production-efficiency-dashboard.tsx`
+- مقياس كفاءة SVG semicircle مع أنيميشن
+- بطاقة حالة الآلة (متصل/غير متصل/مشغول)
+- مؤشر الوردية (صباحي/مسائي/ليلي)
+- عدّاد وظائف مكتملة/بانتظار + متوسط الوقت
+- تنبيه انخفاض الكفاءة
+- مدمج في تبويب النظرة العامة
+
+### 4. معاينة رفع الملفات (File Upload Preview)
+- مكون جديد: `src/components/app/file-upload-preview.tsx`
+- منطقة رفع مع drag-and-drop
+- قائمة ملفات مع أيقونات النوع (PDF/DOCX/JPG/PNG)
+- شريط تقدم لكل ملف + شارة حجم ملونة
+- زر إزالة عند التمرير
+- ملخص الملفات + الحجم الإجمالي
+
+### 5. بطاقة فاتورة الطلب (Order Invoice Card)
+- مكون جديد: `src/components/app/order-invoice-card.tsx`
+- رأس فاتورة مع اسم المتجر + رقم + تاريخ
+- بنود: خدمة، صفحات×نسخ
+- مجاميع: خصم + ضريبة (9%) + المجموع
+- ختم "مدفوع" أو "ملغي"
+- تصميم receipt-style مع فواصل متقطعة
+
+## CSS Round 35 (+1850 سطر)
+
+### 1. بطاقات وظائف الطباعة والإنتاج (~180 سطر)
+- `.print-job-card` / `.print-job-priority` (4 مستويات)
+- `.print-job-thumbnail` / `.print-job-specs` / `.print-job-progress`
+- `.print-job-stage` (4 مراحل) / `.print-queue-item` / `.print-queue-active`
+- `.print-material-tag`
+
+### 2. لوحة الألوان والمواد (~150 سطر)
+- `.color-swatch` (دائري/مربع) / `.color-swatch-group` / `.color-swatch-selected`
+- `.paper-type-card` (سادة/لامع/كرافت) / `.paper-preview`
+- `.material-chip` / `.finishing-option` / `.color-picker-mini` / `.gradient-swatch`
+
+### 3. لوحة التحكم بالإنتاج (~150 سطر)
+- `.production-grid` / `.machine-card`
+- `.machine-online` / `.machine-offline` / `.machine-busy`
+- `.shift-indicator` (صباحي/مسائي/ليلي) / `.production-timer`
+- `.job-counter` / `.efficiency-meter` / `.downtime-alert` / `.production-summary`
+
+### 4. الفواتير والإيصالات (~130 سطر)
+- `.invoice-card` / `.invoice-header` / `.invoice-line-item`
+- `.invoice-subtotal` / `.invoice-tax` / `.invoice-total`
+- `.invoice-stamp` (مدفوع/ملغي) / `.receipt-style` / `.receipt-divider`
+- `.invoice-footer`
+
+### 5. الملفات والرفع (~100 سطر)
+- `.file-preview-card` / `.file-type-icon` (PDF/DOCX/JPG/PNG/AI/PSD)
+- `.upload-progress` / `.upload-dropzone-active`
+- `.file-list` / `.file-list-item` / `.file-size-badge`
+
+### 6. التقويم والجدولة (~100 سطر)
+- `.calendar-grid` / `.calendar-day` / `.calendar-day-active` / `.calendar-day-has-orders`
+- `.schedule-slot` / `.schedule-slot-booked` / `.schedule-slot-available`
+- `.timeline-horizontal` / `.deadline-indicator`
+
+### 7. مؤشرات الحالة المتقدمة (~120 سطر)
+- `.status-dot-multi` / `.status-bar-segmented` / `.status-flag`
+- `.status-pulse-ring` / `.status-countdown` / `.status-watermark`
+- `.status-gauge` / `.status-steps-vertical`
+
+### 8. خاص بصناعة الطباعة (~120 سطر)
+- `.paper-size-indicator` (A4/A3/A5/Letter) / `.crop-marks` / `.bleed-area`
+- `.fold-line` / `.spine-indicator` / `.color-mode-badge` (CMYK/RGB/Pantone)
+- `.resolution-badge` / `.print-ready-mark` / `.overprint-warning`
+- 13 keyframes + 4 @property (--progress, --gauge-circumference, --stage-index, --countdown-value)
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 35 +1850 سطر (إجمالي 15,777 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج ProductionEfficiencyDashboard |
+| `src/components/app/merchant-dashboard.tsx` | دمج OrderInvoiceCard + استخدام PrintQueueWidget الموجود |
+| `src/components/app/print-queue-widget.tsx` | جديد: طابور الطباعة |
+| `src/components/app/material-cost-estimator.tsx` | جديد: محسّب تكلفة المواد |
+| `src/components/app/production-efficiency-dashboard.tsx` | جديد: كفاءة الإنتاج |
+| `src/components/app/file-upload-preview.tsx` | جديد: معاينة رفع الملفات |
+| `src/components/app/order-invoice-card.tsx` | جديد: بطاقة الفاتورة |
+
+## Commit
+- 1026b1d: feat(r35): CSS Round 35, print queue widget, material cost estimator, production efficiency dashboard, file upload preview, order invoice card
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 35 جولة CSS (15,777 سطر CSS)
+- 83 مكون تطبيقي + 4 مكونات جديدة في Round 35 (PrintQueueWidget كان موجوداً)
+- إجمالي 2,480 سطر جديدة في Round 35
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع. يُنصح ببديل (PlanetScale, Neon, Supabase)
+3. تكامل MaterialCostEstimator في new-order-wizard.tsx
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. اختبار UploadThing CDN على الموقع الحي
+8. إضافة WebSocket للتحديثات الحية
+9. تحسين الـ SEO مع og:image للسوشيال ميديا
+10. دمج OrderInvoiceCard في order-detail-modal.tsx
