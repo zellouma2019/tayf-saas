@@ -169,7 +169,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
   return (
     <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="gradient-border-animated relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up glass-card" style={{ backgroundColor: 'rgba(124, 58, 237, 0.85)', backdropFilter: 'blur(16px)' }}>
+      <div className="gradient-border-animated blob-bg relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up glass-card" style={{ backgroundColor: 'rgba(124, 58, 237, 0.85)', backdropFilter: 'blur(16px)' }}>
         <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 animate-[pulse_5s_ease-in-out_infinite_1s]" />
         <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 animate-[pulse_6s_ease-in-out_infinite_2s]" />

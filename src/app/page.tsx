@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   RotateCcw, LayoutGrid, Settings, Lock, Menu, Download, SlidersHorizontal,
-  CheckSquare, Square, XCircle,
+  CheckSquare, Square, XCircle, Bell, Activity, TrendingUp, DollarSign,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { SystemHealthWidget } from "@/components/app/system-health-widget";
@@ -401,12 +401,27 @@ export default function SuperAdminPage() {
               <div className="min-w-0"><h1 className="text-sm font-semibold text-foreground truncate">{TAB_TITLES[activeTab] || "لوحة التحكم"}</h1><p className="text-xs text-muted-foreground truncate">{platformName} / {TAB_TITLES[activeTab] || "نظرة عامة"}</p></div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              {/* إحصائيات سريعة في الهيدر */}
+              <div className="hidden lg:flex items-center gap-4 pl-3 ml-2 border-r border-border">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Package className="h-3.5 w-3.5 text-primary" />
+                  <span className="font-bold text-foreground tabular-nums">{stats?.totalOrders ?? 0}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Store className="h-3.5 w-3.5 text-sky-500" />
+                  <span className="font-bold text-foreground tabular-nums">{(stats?.shopCount ?? 0) > 0 ? stats.shopCount : fallbackShops.length}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="font-bold text-foreground tabular-nums">{(stats?.totalRevenue ?? 0) > 0 ? formatDA(stats.totalRevenue) : "0"}</span>
+                </div>
+              </div>
               <SystemHealthWidget />
               <ThemeToggle />
               <button onClick={() => setCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 btn-shine"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
               <button onClick={() => loadAll(false)} className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors relative"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
               {stats?.todayOrders && stats.todayOrders > 0 && (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 glow-pulse-primary">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
@@ -607,6 +622,32 @@ function OrderDetailDialog({ order, onClose, onStatusChange, onDelete }: {
   onStatusChange: (id: string, shopId: string, status: string) => void;
   onDelete: (id: string, shopId: string) => void;
 }) {
+  const [note, setNote] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const noteLoaded = useRef(false);
+
+  // Load note when dialog opens
+  useEffect(() => {
+    if (!order?.id) { setNote(""); noteLoaded.current = false; return; }
+    noteLoaded.current = true;
+    fetch(`/api/orders/${order.id}/notes?shopId=${order.shopId || ""}`)
+      .then(r => r.json()).then(d => { if (d.note) setNote(d.note); }).catch(() => {});
+  }, [order?.id, order?.shopId]);
+
+  async function saveNote() {
+    if (!order?.id || !order?.shopId) return;
+    setNoteSaving(true);
+    try {
+      await fetch(`/api/orders/${order.id}/notes?shopId=${order.shopId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note, shopId: order.shopId }),
+      });
+      toast.success("تم حفظ الملاحظة");
+    } catch { toast.error("فشل حفظ الملاحظة"); }
+    setNoteSaving(false);
+  }
+
   return (
     <Dialog open={!!order} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-md sm:max-w-lg border-t-4 border-t-primary card-accent-top" dir="rtl">
@@ -629,6 +670,32 @@ function OrderDetailDialog({ order, onClose, onStatusChange, onDelete }: {
                   <SelectItem value="cancelled"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full shrink-0 bg-rose-400" />ملغي</span></SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            {/* ملاحظات داخلية */}
+            <div className="border-t border-border pt-4">
+              <Label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Activity className="h-3 w-3" />
+                ملاحظات داخلية
+              </Label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="أضف ملاحظة لهذا الطلب..."
+                rows={2}
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 resize-none input-glow placeholder:text-muted-foreground/40"
+              />
+              {note.trim() && (
+                <div className="flex justify-end mt-1.5">
+                  <button
+                    onClick={saveNote}
+                    disabled={noteSaving}
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {noteSaving ? <RefreshCw className="h-3 w-3 animate-spin" /> : null}
+                    {noteSaving ? "جارٍ الحفظ..." : "حفظ الملاحظة"}
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2 pt-2">
               <button className="flex-1 border border-border text-foreground hover:bg-accent rounded-lg px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5" onClick={() => openInNewTab(`/s/${order.shopSlug || ""}?admin=1`)}><ExternalLink className="h-4 w-4" /> فتح في الإدارة</button>
