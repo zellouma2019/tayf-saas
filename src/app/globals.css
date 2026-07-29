@@ -5769,3 +5769,973 @@ textarea:focus::placeholder {
     transform: rotateY(-180deg);
   }
 }
+
+/* ============================================================
+   CSS Round 29 — تحسينات بصرية متقدمة
+   Advanced Visual Enhancements for Tayf SaaS Platform
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   1. تفاعلات دقيقة متقدمة — Advanced Micro-interactions
+   ---------------------------------------------------------- */
+
+/* زر بتأثير عمق ثلاثي الأبعاد عند الضغط */
+.btn-depth {
+  position: relative;
+  box-shadow:
+    0 4px 0 var(--color-primary, hsl(262 83% 58%)),
+    0 6px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(0);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.btn-depth:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 var(--color-primary, hsl(262 83% 58%)),
+    0 8px 16px rgba(0, 0, 0, 0.2);
+}
+.btn-depth:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 0 0 var(--color-primary, hsl(262 83% 58%)),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+:is(.dark) .btn-depth {
+  box-shadow:
+    0 4px 0 hsl(262 60% 40%),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+}
+:is(.dark) .btn-depth:hover {
+  box-shadow:
+    0 5px 0 hsl(262 60% 40%),
+    0 8px 20px rgba(0, 0, 0, 0.5);
+}
+:is(.dark) .btn-depth:active {
+  box-shadow:
+    0 0 0 hsl(262 60% 40%),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* بطاقة تدور بشكل ثلاثي الأبعاد عند التمرير (CSS فقط) */
+.card-rotate-3d {
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+.card-rotate-3d > * {
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: rotateX(0) rotateY(0);
+}
+.card-rotate-3d:hover > * {
+  transform: rotateX(2deg) rotateY(-3deg);
+}
+.card-rotate-3d:active > * {
+  transform: rotateX(0) rotateY(0);
+}
+
+/* نص يظهر من الأسفل عند التمرير */
+.text-reveal {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+.text-reveal span {
+  display: inline-block;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.text-reveal:hover span {
+  transform: translateY(0);
+}
+
+/* أيقونة تدور بسلاسة عند تمرير المؤشر على العنصر الأب */
+.icon-spin-hover [class*="icon"],
+.icon-spin-hover svg {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.icon-spin-hover:hover [class*="icon"],
+.icon-spin-hover:hover svg {
+  transform: rotate(360deg);
+}
+
+/* خط سفلي ينمو من المركز عند التمرير */
+.underline-grow {
+  position: relative;
+  display: inline-block;
+}
+.underline-grow::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary, hsl(262 83% 58%));
+  border-radius: 1px;
+  transition: width 0.3s ease, left 0.3s ease;
+}
+.underline-grow:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+/* تأثير لمعان متحرك على النص */
+.shimmer-text {
+  background: linear-gradient(
+    110deg,
+    var(--color-foreground, #0f172a) 0%,
+    var(--color-foreground, #0f172a) 35%,
+    hsl(262 83% 78%) 50%,
+    var(--color-foreground, #0f172a) 65%,
+    var(--color-foreground, #0f172a) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text-slide 3s ease-in-out infinite;
+}
+@keyframes shimmer-text-slide {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* إطار ينبض مع توهج */
+.pulse-border {
+  position: relative;
+}
+.pulse-border::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--color-primary, hsl(262 83% 58%));
+  opacity: 0;
+  animation: pulse-border-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-border-glow {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.02); box-shadow: 0 0 12px var(--color-primary, hsl(262 83% 58%)); }
+}
+
+/* زر بتأثير موجي عند النقر (عناصر زائفة فقط) */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+  opacity: 0;
+}
+.ripple-btn:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 1;
+  transition: width 0s, height 0s, opacity 0s;
+}
+:is(.dark) .ripple-btn::after {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ----------------------------------------------------------
+   2. تحسينات التخطيط — Layout Enhancements
+   ---------------------------------------------------------- */
+
+/* تخطيط Masonry باستخدام CSS columns */
+.masonry-auto {
+  columns: 1;
+  column-gap: 1rem;
+}
+.masonry-auto > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+@media (min-width: 640px) {
+  .masonry-auto { columns: 2; }
+}
+@media (min-width: 1024px) {
+  .masonry-auto { columns: 3; }
+}
+@media (min-width: 1280px) {
+  .masonry-auto { columns: 4; }
+}
+
+/* شبكة تلقائية مع auto-fill و minmax */
+.grid-auto-fill {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+}
+
+/* تكديس عمودي مع فجوة — Vertical Stack Utilities */
+.stack-gap-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.stack-gap-3 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.stack-gap-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.stack-gap-5 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.stack-gap-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* تجميع أفقي للعناصر مع فجوة */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* انتقال سلس لت collapse/expand الشريط الجانبي */
+.sidebar-collapse-smooth {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* نسبة النسبة الذهبية (1.618:1) */
+.aspect-golden {
+  aspect-ratio: 1.618 / 1;
+}
+
+/* منطقة المحتوى مع إزاحة الشريط الجانبي */
+.container-sidebar {
+  margin-inline-start: var(--sidebar-width, 16rem);
+  transition: margin-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+}
+.container-sidebar:has(.sidebar-collapsed) {
+  margin-inline-start: var(--sidebar-collapsed-width, 4rem);
+}
+
+/* ----------------------------------------------------------
+   3. لوحة التحكم وعرض البيانات — Dashboard & Data Display
+   ---------------------------------------------------------- */
+
+/* بطاقة إحصائية مع حد متدرج يساري */
+.metric-card {
+  position: relative;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--color-card, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  overflow: hidden;
+}
+.metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, hsl(262 83% 58%), hsl(242 80% 55%));
+  border-radius: 0 4px 4px 0;
+}
+:is(.dark) .metric-card {
+  background: var(--color-card, hsl(222 47% 11%));
+  border-color: var(--color-border, hsl(222 47% 20%));
+}
+.metric-card.metric-success::before {
+  background: linear-gradient(to bottom, hsl(152 69% 46%), hsl(172 66% 50%));
+}
+.metric-card.metric-warning::before {
+  background: linear-gradient(to bottom, hsl(38 92% 50%), hsl(28 88% 52%));
+}
+.metric-card.metric-danger::before {
+  background: linear-gradient(to bottom, hsl(0 84% 60%), hsl(20 80% 55%));
+}
+
+/* أعمدة مخطط بياني متحركة */
+.chart-bar-animate {
+  --bar-height: 0%;
+  height: var(--bar-height);
+  transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(to top, hsl(262 83% 58%), hsl(262 80% 70%));
+  min-width: 24px;
+}
+.chart-bar-animate:hover {
+  filter: brightness(1.15);
+  transform: scaleY(1.02);
+  transform-origin: bottom;
+}
+:is(.dark) .chart-bar-animate {
+  background: linear-gradient(to top, hsl(262 60% 50%), hsl(262 55% 65%));
+}
+
+/* مؤشر خطوة مع خط رابط */
+.progress-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.progress-step::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  inset-inline-start: 50%;
+  width: calc(100% + 1.5rem);
+  height: 2px;
+  background: var(--color-border, #e2e8f0);
+  z-index: 0;
+}
+.progress-step:first-child::before {
+  display: none;
+}
+.progress-step .step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-muted-foreground, #64748b);
+  border: 2px solid var(--color-border, #e2e8f0);
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+.progress-step.active .step-dot {
+  background: var(--color-primary, hsl(262 83% 58%));
+  color: white;
+  border-color: var(--color-primary, hsl(262 83% 58%));
+  box-shadow: 0 0 0 4px hsl(262 83% 58% / 0.2);
+}
+.progress-step.completed .step-dot {
+  background: hsl(152 69% 46%);
+  border-color: hsl(152 69% 46%);
+  color: white;
+}
+
+/* صف بيانات مع تمييز عند التمرير ومؤشر انزلاق */
+.data-row {
+  position: relative;
+  transition: background 0.2s ease, padding-inline-start 0.2s ease;
+  padding-inline-start: 1rem;
+}
+.data-row::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+.data-row:hover {
+  background: var(--color-accent, hsl(262 83% 58% / 0.05));
+  padding-inline-start: 1.25rem;
+}
+.data-row:hover::before {
+  background: var(--color-primary, hsl(262 83% 58%));
+}
+
+/* شارة مؤشر أداء رئيسي مع ترميز لوني */
+.kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.kpi-badge.kpi-up {
+  background: hsl(152 69% 46% / 0.1);
+  color: hsl(152 69% 40%);
+}
+.kpi-badge.kpi-down {
+  background: hsl(0 84% 60% / 0.1);
+  color: hsl(0 84% 55%);
+}
+.kpi-badge.kpi-neutral {
+  background: hsl(215 20% 50% / 0.1);
+  color: hsl(215 20% 45%);
+}
+:is(.dark) .kpi-badge.kpi-up {
+  background: hsl(152 69% 46% / 0.15);
+  color: hsl(152 60% 65%);
+}
+:is(.dark) .kpi-badge.kpi-down {
+  background: hsl(0 84% 60% / 0.15);
+  color: hsl(0 70% 65%);
+}
+:is(.dark) .kpi-badge.kpi-neutral {
+  background: hsl(215 20% 50% / 0.15);
+  color: hsl(215 20% 70%);
+}
+
+/* حاوية خطوط المخططات المصغرة */
+.sparkline-wrap {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 32px;
+  padding: 2px 0;
+}
+.sparkline-wrap .spark-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--color-primary, hsl(262 83% 58%));
+  transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  min-height: 2px;
+  opacity: 0.6;
+}
+.sparkline-wrap:hover .spark-bar {
+  opacity: 1;
+}
+
+/* شريط مقارنة جنبًا إلى جنب */
+.comparison-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: var(--color-muted, #f1f5f9);
+}
+.comparison-bar .bar-fill {
+  height: 100%;
+  transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border-radius: 9999px;
+}
+.comparison-bar .bar-a {
+  background: var(--color-primary, hsl(262 83% 58%));
+}
+.comparison-bar .bar-b {
+  background: hsl(24 95% 53%);
+}
+
+/* نقطة مؤشر للمخططات المصغرة */
+.mini-chart-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.mini-chart-dot:hover {
+  transform: scale(1.8);
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ----------------------------------------------------------
+   4. تأثيرات الزجاج والنيومورفيزم — Glass & Neumorphism
+   ---------------------------------------------------------- */
+
+/* تأثير نيومورفي مرتفع (يعمل في الوضعين الفاتح والداكن) */
+.neu-raised {
+  background: var(--color-card, #f8fafc);
+  border-radius: 1rem;
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.07),
+    -6px -6px 12px rgba(255, 255, 255, 0.9);
+}
+:is(.dark) .neu-raised {
+  background: hsl(222 47% 11%);
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.03);
+}
+
+/* تأثير نيومورفي مضغوط/غائر */
+.neu-pressed {
+  background: var(--color-card, #f8fafc);
+  border-radius: 1rem;
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.06),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.85);
+}
+:is(.dark) .neu-pressed {
+  background: hsl(222 47% 11%);
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.35),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.02);
+}
+
+/* زجاجية قوية (ضبابية أكثر) */
+.glass-strong {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1rem;
+}
+:is(.dark) .glass-strong {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* زجاجية خفيفة (ضبابية أقل) */
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.75rem;
+}
+:is(.dark) .glass-subtle {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* تأثير إطار زجاجي */
+.glass-border {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+}
+:is(.dark) .glass-border {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* زجاج صقيعي مع ضبابية واعية بالاتجاه */
+.frost {
+  position: relative;
+  overflow: hidden;
+}
+.frost::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+}
+.frost > * {
+  position: relative;
+  z-index: 1;
+}
+:is(.dark) .frost::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+}
+
+/* ----------------------------------------------------------
+   5. الحالة والتغذية الراجعة — Status & Feedback
+   ---------------------------------------------------------- */
+
+/* نقطة حالة متحركة مع نبض */
+.status-dot-animated {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.status-dot-animated::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: status-dot-ring 2s ease-out infinite;
+  opacity: 0;
+}
+@keyframes status-dot-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2);   opacity: 0; }
+}
+.status-dot-animated.online  { background: hsl(152 69% 46%); color: hsl(152 69% 46%); }
+.status-dot-animated.busy    { background: hsl(38 92% 50%);  color: hsl(38 92% 50%); }
+.status-dot-animated.offline { background: hsl(0 0% 65%);     color: hsl(0 0% 65%); }
+.status-dot-animated.error   { background: hsl(0 84% 60%);   color: hsl(0 84% 60%); }
+
+/* شريط تحميل علوي (مشابه لـ NProgress) */
+.loading-bar-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  overflow: hidden;
+}
+.loading-bar-top::after {
+  content: "";
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--color-primary, hsl(262 83% 58%)), transparent);
+  animation: loading-bar-slide 1.2s ease-in-out infinite;
+  border-radius: 0 2px 2px 0;
+}
+@keyframes loading-bar-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* هيكل عظمي مع نبض مخصص */
+.skeleton-pulse-custom {
+  background: linear-gradient(
+    90deg,
+    var(--color-muted, #f1f5f9) 0%,
+    hsl(220 14% 96%) 50%,
+    var(--color-muted, #f1f5f9) 100%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-pulse-custom 2s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+@keyframes skeleton-pulse-custom {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+:is(.dark) .skeleton-pulse-custom {
+  background: linear-gradient(
+    90deg,
+    hsl(222 47% 17%) 0%,
+    hsl(222 47% 22%) 50%,
+    hsl(222 47% 17%) 100%
+  );
+  background-size: 400% 100%;
+}
+
+/* بطاقة حالة فارغة مُنسقة */
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  border: 2px dashed var(--color-border, #e2e8f0);
+  border-radius: 1rem;
+  background: var(--color-muted, hsl(220 14% 96% / 0.3));
+  color: var(--color-muted-foreground, #64748b);
+  gap: 1rem;
+}
+:is(.dark) .empty-state-card {
+  border-color: hsl(222 47% 25%);
+  background: hsl(222 47% 14% / 0.3);
+  color: hsl(215 20% 65%);
+}
+.empty-state-card .empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent, hsl(262 83% 58% / 0.08));
+  color: var(--color-muted-foreground, #94a3b8);
+  font-size: 1.5rem;
+}
+
+/* حاوية إشعارات Toast */
+.toast-container {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+  max-width: 400px;
+  width: calc(100% - 2rem);
+}
+.toast-container.toast-top-right {
+  top: 1rem;
+  inset-inline-end: 1rem;
+  align-items: flex-end;
+}
+.toast-container.toast-top-center {
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+.toast-container.toast-bottom-right {
+  bottom: 1rem;
+  inset-inline-end: 1rem;
+  align-items: flex-end;
+}
+.toast-container.toast-bottom-center {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+.toast-container > * {
+  pointer-events: auto;
+}
+
+/* شارة "جديد" مع حركة ارتداد */
+.badge-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 70% 55%));
+  color: white;
+  animation: badge-new-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px hsl(262 83% 58% / 0.3);
+}
+@keyframes badge-new-bounce {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ----------------------------------------------------------
+   6. الاستجابة والجوال — Responsive & Mobile
+   ---------------------------------------------------------- */
+
+/* حشوة منطقة آمنة سفلي للجوال (معالجة النوتش) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* حجم لمس أدنى (44×44 بكسل) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* إخفاء شريط التمرير مع الحفاظ على التمرير */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* حاوية تمرير أفقي مع Snapping */
+.snap-x-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline-start: 1rem;
+  gap: 1rem;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.snap-x-container::-webkit-scrollbar {
+  display: none;
+}
+.snap-x-container > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* تكديس على الجوال، صف على سطح المكتب */
+.mobile-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+@media (min-width: 768px) {
+  .mobile-stack {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* حجم خط متجاوب يتدرج حسب حجم الشاشة */
+.responsive-text {
+  font-size: clamp(0.875rem, 2vw + 0.5rem, 1.25rem);
+  line-height: 1.6;
+}
+.responsive-text-sm {
+  font-size: clamp(0.75rem, 1.5vw + 0.25rem, 1rem);
+  line-height: 1.5;
+}
+.responsive-text-lg {
+  font-size: clamp(1rem, 2.5vw + 0.5rem, 1.5rem);
+  line-height: 1.4;
+}
+
+/* ----------------------------------------------------------
+   7. الطباعة وإمكانية الوصول — Print & Accessibility
+   ---------------------------------------------------------- */
+
+/* حد تركيز مخصص (سميك ومزاح) */
+.focus-outline:focus-visible {
+  outline: 3px solid var(--color-primary, hsl(262 83% 58%));
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* رابط تخطي التنقل لإمكانية الوصول */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  padding: 0.75rem 1.5rem;
+  background: var(--color-primary, hsl(262 83% 58%));
+  color: white;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  z-index: 10000;
+  transition: top 0.2s ease;
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* مرئي فقط لقارئات الشاشة، يظهر عند التركيز */
+.sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* غلاف لتعطيل الحركات (يحترم تفضيل المستخدم) */
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* أدوات فاصل الصفحات للطباعة */
+.print-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.print-break-before {
+  break-before: auto;
+  page-break-before: auto;
+}
+.print-break-after {
+  break-after: auto;
+  page-break-after: auto;
+}
+@media print {
+  .print-break,
+  .print-break-before,
+  .print-break-after {
+    break-inside: avoid;
+    break-before: page;
+    break-after: page;
+  }
+}
+
+/* ----------------------------------------------------------
+   8. السمة والألوان — Theme & Color
+   ---------------------------------------------------------- */
+
+/* تدرج أساسي (بنفسجي إلى نيلي) */
+.gradient-primary {
+  background: linear-gradient(135deg, hsl(262 83% 58%), hsl(242 80% 55%));
+}
+
+/* تدرج دافئ (عنبري إلى وردي) */
+.gradient-warm {
+  background: linear-gradient(135deg, hsl(38 92% 50%), hsl(350 89% 60%));
+}
+
+/* تدرج بارد (سماوي إلى بنفسجي) */
+.gradient-cool {
+  background: linear-gradient(135deg, hsl(199 89% 48%), hsl(262 83% 58%));
+}
+
+/* تدرج نجاح (زمردي إلى فيروزي) */
+.gradient-success {
+  background: linear-gradient(135deg, hsl(152 69% 46%), hsl(172 66% 50%));
+}
+
+/* تدرج خطر (وردي إلى برتقالي) */
+.gradient-danger {
+  background: linear-gradient(135deg, hsl(350 89% 60%), hsl(20 90% 50%));
+}
+
+/* ظل نصي صغير */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ظل نصي متوسط */
+.text-shadow-md {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ظل نصي كبير */
+.text-shadow-lg {
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+:is(.dark) .text-shadow-sm {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+:is(.dark) .text-shadow-md {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+:is(.dark) .text-shadow-lg {
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+}

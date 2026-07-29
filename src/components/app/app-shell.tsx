@@ -298,7 +298,7 @@ export function AppShell() {
             <span className="truncate">اطلب خلال دقيقة</span>
           </div>
           {/* الحاسوب: كل المميزات */}
-          <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs">
+          <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs hide-scrollbar">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
               <span style={{ color: theme.topBar.accent }}>⚡</span>
               اطلب خلال دقيقة
@@ -674,7 +674,7 @@ export function AppShell() {
                 : undefined
             }
           >
-            <div className="max-w-7xl mx-auto px-4 py-10">
+            <div className="max-w-7xl mx-auto px-4 py-10 mobile-stack">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2.5 mb-3">
@@ -682,7 +682,7 @@ export function AppShell() {
                         <Printer className="h-5 w-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <div className="font-bold text-white">{displayBusinessName}</div>
+                        <div className="font-bold text-white responsive-text">{displayBusinessName}</div>
                         <div className="text-xs text-neutral-400">{displayTagline || "اطبع بسهولة"}</div>
                       </div>
                     </div>
@@ -692,7 +692,7 @@ export function AppShell() {
                   </div>
 
                   <div>
-                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2 responsive-text">
                       <div className="w-1 h-4 rounded-full" style={{ backgroundColor: theme.accent }} />
                       روابط سريعة
                     </h4>
@@ -727,7 +727,7 @@ export function AppShell() {
                   </div>
 
                   <div>
-                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2 responsive-text">
                       <div className="w-1 h-4 rounded-full" style={{ backgroundColor: theme.accent }} />
                       خدماتنا
                     </h4>
@@ -756,7 +756,7 @@ export function AppShell() {
                   </div>
 
                   <div>
-                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                    <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2 responsive-text">
                       <div className="w-1 h-4 rounded-full" style={{ backgroundColor: theme.accent }} />
                       تواصل معنا
                     </h4>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Activity, CheckCircle2, XCircle, Clock, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,13 +23,7 @@ export function SystemHealthWidget() {
   const [expanded, setExpanded] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
 
-  useEffect(() => {
-    runChecks();
-    const interval = setInterval(runChecks, 60000); // Check every 60s
-    return () => clearInterval(interval);
-  }, []);
-
-  async function runChecks() {
+  const runChecks = useCallback(async () => {
     const start = Date.now();
     const results = await Promise.all(
       CHECKS.map(async (check) => {
@@ -53,7 +47,13 @@ export function SystemHealthWidget() {
     );
     setChecks(results);
     setLastCheck(new Date());
-  }
+  }, []);
+
+  useEffect(() => {
+    runChecks();
+    const interval = setInterval(runChecks, 60000); // Check every 60s
+    return () => clearInterval(interval);
+  }, [runChecks]);
 
   const allOk = checks.every((c) => c.status === "ok");
   const anyError = checks.some((c) => c.status === "error");

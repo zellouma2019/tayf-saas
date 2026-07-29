@@ -56,6 +56,7 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -220,6 +221,22 @@ export default function SuperAdminPage() {
       }
     } catch { /* silent */ }
   }, []);
+
+  // تتبع التمرير لمؤشر التقدم
+  useEffect(() => {
+    if (!authenticated) return;
+    const container = document.getElementById('admin-scroll-container');
+    if (!container) return;
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight - container.clientHeight;
+      if (scrollHeight > 0) {
+        setScrollProgress(scrollTop > 100 ? Math.min((scrollTop / scrollHeight) * 100, 100) : 0);
+      }
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [authenticated]);
 
   // النسخة الموحدة للتحديث اليدوي (زر التحديث) — تحميل الاثنين معاً
   const loadAll = useCallback(async (useCache = true) => {
@@ -392,7 +409,19 @@ export default function SuperAdminPage() {
         mobileOpen={mobileOpen} onMobileToggle={() => setMobileOpen(!mobileOpen)}
         logo={<div className="flex items-center gap-3">{platformLogo ? (<img src={platformLogo} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt={platformName} className="w-9 h-9 rounded-xl shrink-0 dark:hidden" />)}{platformLogoDark ? (<img src={platformLogoDark} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover hidden dark:block" />) : (platformLogo ? (<img src={platformLogo} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt={platformName} className="w-9 h-9 rounded-xl shrink-0 hidden dark:block" />))}{!sidebarCollapsed && <div className="min-w-0"><div className="font-bold text-sm text-sidebar-primary-foreground truncate">{platformName}</div><div className="text-[10px] text-sidebar-foreground/50 truncate">لوحة التحكم</div></div>}</div>}
       />
-      <div className="flex-1 bg-background overflow-auto">
+      <div className="flex-1 bg-background overflow-auto" id="admin-scroll-container">
+        {/* مؤشر تقدم التمرير */}
+        <div
+          className={cn(
+            "fixed top-0 left-0 right-0 z-50 h-[3px] transition-opacity duration-300",
+            scrollProgress > 0 ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <div
+            className="h-full gradient-primary rounded-full transition-all duration-150 ease-out"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
         <header className="bg-background border-b border-border h-16 sticky top-0 z-30 px-4 sm:px-6">
           <div className="h-full flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">

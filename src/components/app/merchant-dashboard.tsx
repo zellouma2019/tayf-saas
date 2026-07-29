@@ -298,6 +298,83 @@ function TodayAchievementGauge({ achievement }: { achievement: { total: number; 
 }
 
 // ===== المكون الرئيسي =====
+// ===== Quick Customer Phone Search =====
+function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Array<{ name: string; phone: string; orderCount: number }>>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const q = query.toLowerCase().trim();
+      const customerMap = new Map<string, { name: string; phone: string; count: number }>();
+      orders.forEach((o) => {
+        const phone = o.customer?.phone || "";
+        const name = o.customer?.name || "";
+        if (phone.includes(q) || name.toLowerCase().includes(q)) {
+          const key = phone || name;
+          const existing = customerMap.get(key);
+          if (existing) {
+            existing.count += 1;
+          } else {
+            customerMap.set(key, { name, phone, count: 1 });
+          }
+        }
+      });
+      setResults(Array.from(customerMap.values()).slice(0, 8));
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, orders]);
+
+  return (
+    <div className="mb-5 relative">
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+        <Input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
+          placeholder="ابحث عن عميل بالاسم أو الهاتف..."
+          className="pr-10 text-sm h-10 rounded-lg focus:ring-ring focus:border-ring bg-background focus-outline input-glow"
+        />
+      </div>
+      {results.length > 0 && !selected && (
+        <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden cluster">
+          {results.map((c, idx) => (
+            <button
+              key={`${c.phone}-${idx}`}
+              onClick={() => setSelected(c.phone || c.name)}
+              className="w-full flex items-center justify-between px-4 py-3 text-right hover:bg-accent/50 transition-colors"
+            >
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-foreground truncate">{c.name || "—"}</div>
+                <div className="text-xs text-muted-foreground tabular-nums" dir="ltr">{c.phone || "—"}</div>
+              </div>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0 tabular-nums">
+                {c.orderCount} طلب
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {selected && (
+        <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+          <span className="text-foreground">{results.find(c => (c.phone || c.name) === selected)?.name}</span>
+          <span className="text-muted-foreground tabular-nums" dir="ltr">{selected}</span>
+          <button onClick={() => { setSelected(null); setQuery(""); }} className="mr-auto text-muted-foreground hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const { shop, hasFeature, refreshShop } = useShop();
   const [unlocked, setUnlocked] = useState(false);
@@ -1025,7 +1102,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* ملخص اليوم */}
-              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card">
+              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card neu-raised">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -1081,7 +1158,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
 
               {/* إجراءات سريعة */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-grid">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-grid cluster">
                 {[
                   { icon: Plus, label: "طلب جديد", color: "from-violet-500 to-violet-600", action: () => window.open(customerLink, '_blank') },
                   { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => setReportOpen(true) },
@@ -1405,7 +1482,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* شرائح التصفية السريعة - التاريخ */}
-              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1">
+              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1 cluster">
                 {[
                   { value: "all" as const, label: "الكل", icon: null },
                   { value: "today" as const, label: "اليوم", icon: <CalendarIcon className="h-3.5 w-3.5" /> },
@@ -1435,7 +1512,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* شرائح التصفية السريعة - الحالة */}
-              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1">
+              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1 cluster">
                 {quickFilters.map((f) => {
                   const dotColor: Record<string, string> = {
                     all: "bg-dark-400",
@@ -1715,6 +1792,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
             >
+            <QuickCustomerSearch orders={rawOrders} />
             <MerchantCustomers />
             </motion.div>
           )}

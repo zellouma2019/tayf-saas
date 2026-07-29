@@ -1,7 +1,10 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   STATUS_META, STATUS_FLOW, formatDA,
@@ -20,6 +23,9 @@ import { ActivityFeed } from "@/components/app/activity-feed";
 import { QuickStatsOverview } from "@/components/app/quick-stats-overview";
 import { PerformanceScoreWidget } from "@/components/app/performance-score-widget";
 import { StaleOrdersWidget } from "@/components/app/stale-orders-widget";
+import { AuditTrail } from "@/components/app/audit-trail";
+import { DailyTargetRing } from "@/components/app/daily-target-ring";
+import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Weekly Revenue Mini Bar Chart =====
 function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
@@ -161,7 +167,7 @@ function RevenueMetricCard({ icon: Icon, label, value, change, bgColor, textColo
   const isPositive = change > 0;
   const isNeutral = change === 0;
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm p-4 sm:p-5 card-hover-lift card-glow group">
+    <div className="metric-card bg-card rounded-xl border border-border shadow-sm p-4 sm:p-5 card-hover-lift card-glow group">
       <div className="flex items-start justify-between mb-3">
         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", bgColor)}>
           <Icon className={cn("h-5 w-5", textColor)} />
@@ -382,7 +388,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         <div className="relative z-10 p-6 sm:p-8 text-white">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2"><span className="online-dot" /><span>مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2 text-shadow-sm"><span className="online-dot" /><span className="gradient-primary">مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
               <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
             </div>
             {safeStats.totalOrders > 0 && (
@@ -413,7 +419,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
-        <div className="stat-tile card-glow group">
+        <div className="stat-tile card-glow group card-rotate-3d">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
@@ -423,7 +429,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="stat-tile card-glow group">
+        <div className="stat-tile card-glow group card-rotate-3d">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
@@ -432,7 +438,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <div className="icon-container-emerald group-hover:scale-110 transition-transform shrink-0"><DollarSign className="h-5 w-5" /></div>
           </div>
         </div>
-        <div className="stat-tile card-glow group">
+        <div className="stat-tile card-glow group card-rotate-3d">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
@@ -441,7 +447,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-amber-500/15"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
           </div>
         </div>
-        <div className="stat-tile card-glow group">
+        <div className="stat-tile card-glow group card-rotate-3d">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums">
@@ -457,6 +463,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* إحصائيات الإيرادات مع مخطط شريطي صغير */}
       <RevenueAnalyticsWidget stats={safeStats} />
+
+      {/* سجل الإجراءات (Audit Trail) */}
+      <AuditTrail />
 
       {/* إجراءات سريعة */}
       {(safeStats.shopStats.length ?? 0) > 0 && (
@@ -595,7 +604,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {/* ملخص المتاجر */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {safeStats.shopStats.map((shop) => (
-          <ShopOverviewCard key={shop.id} shop={shop} onRefresh={() => {}} />
+          <ShopQuickStatsPopover key={shop.id} shop={shop} />
         ))}
       </div>
 
@@ -621,13 +630,26 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       )}
 
       {/* إحصائيات سريعة مع SVG Progress Rings */}
-      <QuickStatsOverview
-        totalOrders={safeStats.totalOrders ?? 0}
-        completedOrders={(safeStats.statusCounts?.delivered ?? 0) + (safeStats.statusCounts?.completed ?? 0)}
-        pendingOrders={safeStats.statusCounts?.pending ?? 0}
-        totalRevenue={safeStats.totalRevenue ?? 0}
-        className="fade-in-up fade-in-up-delay-1"
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <QuickStatsOverview
+          totalOrders={safeStats.totalOrders ?? 0}
+          completedOrders={(safeStats.statusCounts?.delivered ?? 0) + (safeStats.statusCounts?.completed ?? 0)}
+          pendingOrders={safeStats.statusCounts?.pending ?? 0}
+          totalRevenue={safeStats.totalRevenue ?? 0}
+          className="fade-in-up fade-in-up-delay-1"
+        />
+        <DailyTargetRing
+          currentRevenue={(() => {
+            const today = new Date();
+            return (safeStats.recentOrders || []).filter(o => {
+              const d = new Date(o.createdAt);
+              return d.toDateString() === today.toDateString();
+            }).reduce((s, o) => s + (o.total || 0), 0);
+          })()}
+          targetRevenue={5000}
+          yesterdayTrend={12}
+        />
+      </div>
 
       {/* أداء المتاجر */}
       <PerformanceScoreWidget stats={stats} className="fade-in-up fade-in-up-delay-2 card-glow" />
@@ -974,5 +996,62 @@ function ShopRankingWidget({ shops }: { shops: GlobalStats["shopStats"] }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ===== Shop Quick Stats Popover =====
+function ShopQuickStatsPopover({ shop }: { shop: ShopStat }) {
+  const pendingCount = (shop.recentOrders || []).filter(o => o.status === "pending").length;
+  const lastOrder = (shop.recentOrders || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <div className="cursor-pointer">
+          <ShopOverviewCard shop={shop} onRefresh={() => {}} />
+        </div>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="center"
+        className="w-64 p-4 space-y-3 tooltip-premium border-border/80 dark:border-border/60"
+        dir="rtl"
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Store className="h-4 w-4 text-primary" />
+          <span className="text-sm font-bold text-foreground">{shop.name}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+              <PackageSearch className="h-3 w-3" />
+              <span>طلبات اليوم</span>
+            </div>
+            <div className="text-lg font-bold tabular-nums text-foreground">{shop.todayOrders}</div>
+          </div>
+          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+              <Wallet className="h-3 w-3" />
+              <span>إيرادات اليوم</span>
+            </div>
+            <div className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{formatDA(shop.revenue)}</div>
+          </div>
+          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+              <ClipboardList className="h-3 w-3" />
+              <span>معلّقة</span>
+            </div>
+            <div className="text-lg font-bold tabular-nums text-amber-600 dark:text-amber-400">{pendingCount}</div>
+          </div>
+          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+              <Timer className="h-3 w-3" />
+              <span>آخر طلب</span>
+            </div>
+            <div className="text-[11px] font-medium text-foreground tabular-nums truncate">{lastOrder ? getTimeAgo(lastOrder.createdAt) : "—"}</div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
