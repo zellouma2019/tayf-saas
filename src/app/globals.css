@@ -31643,3 +31643,132 @@ tr:hover .table-cell-actions {
   );
   background-size: 24px 24px;
 }
+
+/* ============================================
+   Admin Dashboard v4.5 — Round 50/51 Additions
+   ============================================ */
+
+/* Date filter popup */
+.date-filter-popup {
+  animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Bulk action bar */
+.bulk-action-bar {
+  animation: slide-down-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slide-down-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Selected row highlight */
+.row-selected {
+  background-color: color-mix(in oklch, var(--primary) 8%, var(--card)) !important;
+  border-left: 3px solid var(--primary);
+}
+
+/* Overflow text marquee for truncated content */
+.overflow-marquee {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overflow-marquee:hover {
+  white-space: nowrap;
+  animation: marquee-scroll 4s linear infinite;
+}
+@keyframes marquee-scroll {
+  0% { text-indent: 0; }
+  100% { text-indent: -50%; }
+}
+
+/* Order status timeline */
+.order-timeline {
+  direction: rtl;
+  padding: 0 8px;
+}
+.order-timeline-dot {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 10px;
+  line-height: 1;
+}
+.order-timeline-current {
+  animation: timeline-pulse 2s ease-in-out infinite;
+}
+@keyframes timeline-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 30%, transparent); }
+  50% { box-shadow: 0 0 0 8px color-mix(in oklch, var(--primary) 0%, transparent); }
+}
+.order-timeline-line {
+  top: 12px;
+  transition: background-color 0.4s ease;
+}
+
+/* Dialog slide-in animation */
+.dialog-slide-in {
+  animation: dialog-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dialog-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Quick view dialog */
+.quick-view-dialog {
+  animation: quick-view-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes quick-view-in {
+  from { opacity: 0; transform: scale(0.92) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Status pill animated (in order detail dialog) */
+.status-pill-animated {
+  animation: pill-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pill-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Info cell hover in order detail */
+.info-cell {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.info-cell:hover {
+  background-color: color-mix(in oklch, var(--muted) 80%, transparent);
+  transform: translateY(-1px);
+}
+
+/* Revenue gold gradient text */
+.revenue-gold {
+  background: linear-gradient(135deg, #d4a017, #f0c040, #d4a017);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gold-shimmer 3s ease-in-out infinite;
+}
+@keyframes gold-shimmer {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+/* Checkbox/selection animation */
+select option {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+
+/* Print-friendly styles */
+@media print {
+  .admin-pattern-bg { background-image: none !important; }
+  .freshness-bar { display: none !important; }
+  .bell-urgent { animation: none !important; }
+}
