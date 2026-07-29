@@ -33,6 +33,7 @@ import { RevenueForecastWidget } from "@/components/app/revenue-forecast-widget"
 import { QuickStatsRow } from "@/components/app/quick-stats-row";
 import { ServicePopularityChart } from "@/components/app/service-popularity-chart";
 import { CustomerReviewsWidget } from "@/components/app/customer-reviews-widget";
+import { ProductionEfficiencyDashboard } from "@/components/app/production-efficiency-dashboard";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -769,6 +770,16 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           { id: "2", customerName: "فاطمة الزهراء", rating: 4, comment: "جودة طباعة عالية جداً", date: "2026-07-27", verified: true },
           { id: "3", customerName: "محمد الأمين", rating: 5, comment: "أسرع مطبعة تعاملت معها", date: "2026-07-26", verified: false },
         ]}
+      />
+
+      {/* لوحة كفاءة الإنتاج */}
+      <ProductionEfficiencyDashboard
+        jobsCompleted={(safeStats.statusCounts?.delivered ?? 0) + (safeStats.statusCounts?.ready ?? 0)}
+        jobsPending={safeStats.statusCounts?.pending ?? 0}
+        avgTime={45}
+        efficiency={72}
+        machineStatus="online"
+        shift="morning"
       />
 
       {/* ترتيب المتاجر حسب الأداء */}
