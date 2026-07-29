@@ -7695,3 +7695,67 @@ Task: استعادة تبويبات لوحة الإدارة المحذوفة —
 2. اختبار التبويبات المُستعادة على الموقع الحي (بعد النشر)
 3. مراجعة الـ 50 widget المحذوفة — إعادة التي تعمل ببيانات حقيقية
 4. تحسين الأداء: تقليص عدد components في OverviewTab أو استخدام lazy loading
+
+---
+Task ID: round-51-cron
+Agent: Main Agent (Cron Agent Loop)
+Task: فحص شامل بعد شكوى المستخدم — تحقق من لوحة الإدارة والتاجر + إضافة CSS v4.5
+
+## حالة المشروع الحالية
+- ✅ Build ناجح بدون أخطاء (0 errors, 2 CSS warnings)
+- ✅ تم رفع التعديلات إلى GitHub (commit c3c8ccf)
+- ⚠️ Vercel لم ينشر التحديثات الأخيرة (8+ commits في الانتظار)
+- السبب: Vercel غير متصل بـ GitHub webhook
+
+## فحص لوحة الإدارة (page.tsx)
+- ✅ 6 تبويبات كاملة: overview, shops, orders, settings, security, platform
+- ✅ OverviewTab: 68KB مكون غني بـ 19+ widget (ActivityFeed, PerformanceScore, StaleOrders, AuditTrail, OrdersHeatmap, DailyTargetRing, WeeklyReportChart, ShopActivityFeed, RevenueForecast, etc.)
+- ✅ SettingsTab: إعدادات الخدمات، خيارات التوصيل، الإعدادات العامة
+- ✅ SecurityTab: تغيير كلمة المرور، إدارة الفريق
+- ✅ PlatformSettingsTab: العلامة التجارية، الشعار، الألوان، SEO، وضع الصيانة
+- ✅ ميزات Round 50 محفوظة: فلتر التاريخ، تحديد متعدد، عرض سريع، مسار الحالة
+
+## فحص لوحة تحكم التاجر (merchant-dashboard.tsx)
+- ✅ لم تتأثر — 3657 سطر بدون أي تغيير
+- ✅ 9 تبويبات: home, orders, settings, advancedSettings, customers, expenses, analytics, share, preview
+- ✅ جميع الميزات سليمة
+
+## سبب المشكلة التي أبلغ عنها المستخدم
+المستخدم شاهد النسخة القديمة على الموقع الحي (Vercel) التي لا تعكس الكود الحالي. النسخة المنشورة على tayf-saas.vercel.app تعرض v4.0 القديمة بينما الكود الحالي v4.5. السبب: Vercel غير متصل بـ GitHub webhook.
+
+## الإضافات البصرية — CSS v4.5 (~130 سطر)
+| الفئة | الوصف |
+|--------|---------|
+| `date-filter-popup` | قائمة منسدلة متحركة لفلتر التاريخ |
+| `bulk-action-bar` | شريط إجراءات جماعية مع انزلاق |
+| `row-selected` | تمييز الصف المحدد بلون رئيسي |
+| `overflow-marquee` | تمرير نص طويل عند التمرير |
+| `order-timeline` | مسار حالة الطلب مع نبض |
+| `order-timeline-dot` | نقطة مسار مع انتقال سلس |
+| `order-timeline-current` | نقطة الحالة الحالية مع نبض حلقي |
+| `dialog-slide-in` | حوار مع دخول متحرك |
+| `quick-view-dialog` | عرض سريع مع تكبير متحرك |
+| `status-pill-animated` | شارة حالة مع تكبير زنبركي |
+| `info-cell` | خلية معلومات مع تأثير رفع عند التمرير |
+| `revenue-gold` | نص ذهبي متدرج متلألئ للإيرادات |
+| `dropdown-in` | حركة دخول للقوائم المنسدلة |
+| `slide-down-in` | حركة انزلاق من الأعلى |
+| `timeline-pulse` | نبض حلقي لمسار الحالة |
+| `pill-pop` | تكبير زنبركي للشارات |
+| `gold-shimmer` | لمعان ذهبي متحرك |
+| `print` | أنماط طباعة (إخفاء عناصر غير ضرورية) |
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/globals.css` | +130 سطر: مكتبة CSS v4.5 |
+
+## Commit
+- `c3c8ccf`: feat: admin dashboard v4.5 — CSS animations, date filter, bulk actions, order timeline
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إعادة ربط Vercel بـ GitHub (أولوية قصوى — حاسم — 8+ commits في الانتظار)
+2. بعد النشر: اختبار جميع التبويبات الستة + ميزات Round 50 على الموقع الحي
+3. مراجعة مكونات OverviewTab — بعضها قد لا يعمل بدون بيانات حقيقية
+4. إضافة اختبارات Turso DB retry logic
+5. مراجعة أداء الصفحة — OverviewTab يحتوي 19+ مكونات
