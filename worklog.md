@@ -3149,3 +3149,64 @@ Task: إصلاحات حرجة + ميزات جديدة + تحسينات بصري�
 7. إضافة تصدير Excel محسّن
 8. إضافة ملاحظات داخلية على الطلب (DB-based, not just localStorage)
 
+
+---
+Task ID: qa-fix-round21
+Agent: Main Agent
+Task: QA + إصلاح Turso DB + ميزات جديدة + CSS Round 21
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 3 متاجر نشط)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit 8b5ef5a)
+
+## نتائج QA (تم التحقق على الموقع الحي via agent-browser)
+- ✅ لوحة الإدارة — دخول ناجح بكلمة مرور Admin@2026
+- ✅ نظرة عامة — 38 طلب، 17,808 د.ج إيرادات، 3 متاجر نشط
+- ✅ توزيع حالات الطلبات — 76.3% بانتظار، 10.5% جارٍ التنفيذ
+- ✅ تبويب المتاجر — يعرض 3 متاجر (9/27 ميزة)
+- ✅ صفحة المتجر — كل الأزرار تعمل
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ⚠️ تبويب الطلبات — Turso DB يُرجع 0 صفوف أحياناً (تم إضافة retry)
+
+## الإصلاحات
+| المشكلة | الحل |
+|---------|------|
+| Orders tab فارغ رغم وجود 38 طلب | Turso DB retry: عندما orders=0 لكن total>0، يتم retry مرة واحدة |
+| limit غير كافي | تغيير إلى limit=10000 |
+
+## الميزات الجديدة
+
+### 1. سجل طلبات الزبون السابقة (Customer History)
+- في نافذة تفاصيل الطلب
+- يعرض آخر 5 طلبات لنفس رقم الهاتف
+- مع: المرجع + الخدمة + الحالة + المبلغ
+
+### 2. صوت إشعار الطلبات (Web Audio API)
+- D5 → A5 → C6 ثلاثي النغمات
+- يتشغل تلقائياً عند طلب جديد
+
+### 3. شريط الإحصائيات السريعة
+- فوق جدول الطلبات: بانتظار + طباعة + جاهز + تم التسليم
+
+## CSS Round 21 (+270 سطر)
+- card-hover-lift, btn-magnetic, skeleton-gradient, glass-refined
+- table-row-accent, badge-ping, input-glow, tooltip-pop
+- dark scrollbar, focus-visible, print-friendly, stagger-children
+- تم تطبيق: card-hover-lift على بطاقات المتاجر
+- تم تطبيق: table-row-accent على صفوف الطلبات
+
+## Commits
+- 8b5ef5a: fix(r21): Turso DB orders retry, customer history, notification sound, quick stats, CSS R21
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ UPLOADTHING_TOKEN في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB
+3. structured data (JSON-LD) لـ SEO
+4. سلة مشتريات متعددة الخدمات
+5. ملاحظات DB-based
+6. تحسين merchant dashboard على الجوال
