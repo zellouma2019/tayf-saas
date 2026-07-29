@@ -3,6 +3,8 @@ import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
 // Dynamic — no edge caching (Turso DB returns stale/empty results intermittently)
 export const dynamic = 'force-dynamic';
+// Vercel Hobby: max 10s default, extend to 30s for slow Turso queries
+export const maxDuration = 30;
 
 export async function GET() {
   const startTime = Date.now();
@@ -12,11 +14,22 @@ export async function GET() {
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
 
-    // === استعلامات متسلسلة إلى Turso (أكثر موثوقية من المتوازية) ===
+    // === استعلامات مُحسّنة — 3 دفعات متوازية بدلاً من 4 متسلسلة ===
 
-    // الاستعلام 1: توزيع الحالات + آخر الطلبات (متوازيان عبر Promise.all)
-    const [statusRows, recentOrdersRaw] = await Promise.all([
+    // الدفعة 1: توزيع الحالات + إحصائيات عامة (بسيط — لا LEFT JOIN)
+    const [statusRows, statsResult] = await Promise.all([
       tursoQuery(`SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status`),
+      tursoQuery(`
+        SELECT 
+          COUNT(*) as totalOrders,
+          COALESCE(SUM(total), 0) as totalRevenue,
+          COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders
+        FROM "PrintOrder"
+      `, [todayISO]),
+    ]);
+
+    // الدفعة 2: آخر الطلبات + بيانات المتاجر (متوازيان)
+    const [recentOrdersRaw, shopsRaw] = await Promise.all([
       tursoQuery(`
         SELECT 
           o.id, o.reference, o."serviceType", o."serviceName",
@@ -26,35 +39,15 @@ export async function GET() {
         LEFT JOIN "Shop" s ON o."shopId" = s.id
         ORDER BY o."createdAt" DESC LIMIT 20
       `),
+      tursoQuery(`
+        SELECT 
+          s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
+          s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
+          s.country, s.language
+        FROM "Shop" s
+        ORDER BY s."createdAt" DESC
+      `),
     ]);
-
-    // الاستعلام 2: إحصائيات عامة (بسيط — COUNT + SUM)
-    // Turso DB أحياناً يُرجع SUM=0 → نحسب من statusCounts كـ fallback
-    const statsResult = await tursoQuery(`
-      SELECT 
-        COUNT(*) as totalOrders,
-        COALESCE(SUM(total), 0) as totalRevenue,
-        COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as todayOrders
-      FROM "PrintOrder"
-    `, [todayISO]);
-
-    // الاستعلام 3: بيانات المتاجر (مع LEFT JOIN — منفصل لتجنب timeout المتوازي)
-    const shopsRaw = await tursoQuery(`
-      SELECT 
-        s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
-        s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
-        s.country, s.language,
-        COALESCE(o.cnt, 0) as orderCount,
-        COALESCE(o.rev, 0) as shopRevenue,
-        COALESCE(o.tod, 0) as todayCount
-      FROM "Shop" s
-      LEFT JOIN (
-        SELECT "shopId", COUNT(*) as cnt, COALESCE(SUM(CAST(total AS REAL)), 0) as rev,
-               COUNT(CASE WHEN "createdAt" >= ? THEN 1 END) as tod
-        FROM "PrintOrder" GROUP BY "shopId"
-      ) o ON o."shopId" = s.id
-      ORDER BY s."createdAt" DESC
-    `, [todayISO]);
 
     const elapsed = Date.now() - startTime;
     console.log(`[global-stats] loaded in ${elapsed}ms — statusRows:${statusRows.length}, orders:${recentOrdersRaw.length}, shops:${shopsRaw.length}`);
@@ -94,27 +87,43 @@ export async function GET() {
       todayOrders = todayOrdersList.length;
     }
 
-    // Fallback 4: إذا كان shopsRaw فارغاً — نبني shopStats من بيانات الطلبات
+    // تجهيز shopStats: دمج بيانات المتاجر مع إحصائيات الطلبات (من recentOrders)
+    const shopOrderMap = new Map<string, { orders: number; revenue: number; today: number }>();
+    for (const o of recentOrdersRaw) {
+      const sid = String(o.shopId || "");
+      if (!sid) continue;
+      const existing = shopOrderMap.get(sid) || { orders: 0, revenue: 0, today: 0 };
+      existing.orders += 1;
+      existing.revenue += toNum(o.total);
+      const created = String(o.createdAt || "");
+      if (created >= todayISO) existing.today += 1;
+      shopOrderMap.set(sid, existing);
+    }
+
     const shopStats = shopsRaw.length > 0
-      ? shopsRaw.map((s) => ({
-          id: String(s.id),
-          name: String(s.name),
-          slug: String(s.slug),
-          ownerName: s.ownerName ? String(s.ownerName) : null,
-          ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
-          phone: s.phone ? String(s.phone) : null,
-          isActive: Boolean(s.isActive),
-          trialDays: s.trialDays != null ? toNum(s.trialDays) : null,
-          trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
-          plan: String(s.plan || "free"),
-          adminPin: String(s.adminPin),
-          country: String(s.country || "DZ"),
-          language: String(s.language || "ar"),
-          orders: toNum(s.orderCount),
-          revenue: toNum(s.shopRevenue),
-          todayOrders: toNum(s.todayCount),
-          recentOrders: [] as never[],
-        }))
+      ? shopsRaw.map((s) => {
+          const id = String(s.id);
+          const orderInfo = shopOrderMap.get(id) || { orders: 0, revenue: 0, today: 0 };
+          return {
+            id,
+            name: String(s.name),
+            slug: String(s.slug),
+            ownerName: s.ownerName ? String(s.ownerName) : null,
+            ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
+            phone: s.phone ? String(s.phone) : null,
+            isActive: Boolean(s.isActive),
+            trialDays: s.trialDays != null ? toNum(s.trialDays) : null,
+            trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
+            plan: String(s.plan || "free"),
+            adminPin: String(s.adminPin),
+            country: String(s.country || "DZ"),
+            language: String(s.language || "ar"),
+            orders: orderInfo.orders,
+            revenue: Math.round(orderInfo.revenue),
+            todayOrders: orderInfo.today,
+            recentOrders: [] as never[],
+          };
+        })
       : buildShopStatsFromOrders(recentOrdersRaw);
 
     const recentOrders = recentOrdersRaw.map((o) => {
