@@ -13925,4 +13925,1853 @@ dir="rtl" .product-card {
   }
 }
 
-/* ═══════════════════════════════════════════ End CSS Round 34 ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════ CSS Round 35 — Print & Production Studio UI ═══════════════════════════════════════════ */
+
+/* ─── Custom Properties — Print & Production ─── */
+/* خصائص مخصصة للطباعة والإنتاج */
+:root {
+  --print-job-radius: 0.75rem;
+  --print-job-border: 1px solid var(--color-border-subtle, #e5e7eb);
+  --print-job-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --print-urgent: #dc2626;
+  --print-urgent-bg: #fef2f2;
+  --print-high: #ea580c;
+  --print-high-bg: #fff7ed;
+  --print-normal: #2563eb;
+  --print-normal-bg: #eff6ff;
+  --print-low: #16a34a;
+  --print-low-bg: #f0fdf4;
+  --print-stage-size: 2rem;
+  --machine-online: #16a34a;
+  --machine-offline: #9ca3af;
+  --machine-busy: #d97706;
+  --invoice-border: 2px solid #374151;
+  --receipt-max-w: 320px;
+  --receipt-font: 'Courier New', Courier, monospace;
+  --swatch-size: 2rem;
+  --swatch-gap: 0.5rem;
+  --timeline-track: 4px;
+  --gauge-size: 80px;
+  --crop-mark-color: #ef4444;
+  --bleed-color: rgba(239, 68, 68, 0.15);
+  --fold-line-color: #3b82f6;
+}
+
+.dark {
+  --print-job-border: 1px solid var(--color-border-subtle, #374151);
+  --print-job-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --print-urgent-bg: #450a0a;
+  --print-high-bg: #431407;
+  --print-normal-bg: #172554;
+  --print-low-bg: #052e16;
+  --invoice-border: 2px solid #6b7280;
+  --bleed-color: rgba(239, 68, 68, 0.25);
+}
+
+/* ─── @keyframes — Print & Production Animations ─── */
+/* حركات الرسوم المتحركة للطباعة والإنتاج */
+@keyframes print-progress-fill {
+  0% { width: 0%; }
+  100% { width: var(--progress, 0%); }
+}
+
+@keyframes print-stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+}
+
+@keyframes machine-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes timer-tick {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes stamp-rotate {
+  0% { transform: rotate(-15deg) scale(0.8); opacity: 0; }
+  50% { transform: rotate(-15deg) scale(1.05); opacity: 1; }
+  100% { transform: rotate(-15deg) scale(1); opacity: 0.85; }
+}
+
+@keyframes pulse-ring-expand {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes countdown-flash {
+  0%, 100% { color: var(--print-urgent); }
+  50% { color: transparent; }
+}
+
+@keyframes upload-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gauge-fill-anim {
+  0% { stroke-dashoffset: var(--gauge-circumference); }
+}
+
+@keyframes crop-marks-draw {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes overprint-flash {
+  0%, 100% { background-color: rgba(234, 88, 12, 0.1); }
+  50% { background-color: rgba(234, 88, 12, 0.25); }
+}
+
+@keyframes dot-blink {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+}
+
+@keyframes shift-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
+}
+
+@keyframes watermark-fade {
+  0% { opacity: 0; }
+  100% { opacity: 0.07; }
+}
+
+/* ─── @property — CSS Houdini ─── */
+/* خصائص CSS هوديني */
+@property --progress {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: false;
+}
+
+@property --gauge-circumference {
+  syntax: '<length>';
+  initial-value: 226px;
+  inherits: false;
+}
+
+@property --stage-index {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+@property --countdown-value {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 1. Print Job Cards & Production / بطاقات مهام الطباعة والإنتاج ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Print job card with status indicator border / بطاقة مهمة طباعة مع مؤشر الحالة */
+.print-job-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--print-job-radius);
+  border: var(--print-job-border);
+  border-inline-start: 4px solid var(--color-border-subtle, #9ca3af);
+  background-color: var(--color-bg-primary, #ffffff);
+  box-shadow: var(--print-job-shadow);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.print-job-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .print-job-card {
+  background-color: var(--color-bg-primary, #1f2937);
+}
+
+/* Print job priority levels / مستويات أولوية مهمة الطباعة */
+.print-job-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  line-height: 1.25rem;
+}
+
+.print-job-priority[data-priority="urgent"] {
+  color: var(--print-urgent);
+  background-color: var(--print-urgent-bg);
+}
+
+.print-job-priority[data-priority="high"] {
+  color: var(--print-high);
+  background-color: var(--print-high-bg);
+}
+
+.print-job-priority[data-priority="normal"] {
+  color: var(--print-normal);
+  background-color: var(--print-normal-bg);
+}
+
+.print-job-priority[data-priority="low"] {
+  color: var(--print-low);
+  background-color: var(--print-low-bg);
+}
+
+/* Print job thumbnail container / حاوية صورة مصغرة لمهمة الطباعة */
+.print-job-thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: var(--color-bg-secondary, #f3f4f6);
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+}
+
+.print-job-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dark .print-job-thumbnail {
+  background-color: var(--color-bg-secondary, #374151);
+}
+
+/* Print job specifications list / قائمة مواصفات مهمة الطباعة */
+.print-job-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-bg-secondary, #f9fafb);
+  font-size: 0.8125rem;
+}
+
+.print-job-specs dt {
+  font-weight: 600;
+  color: var(--color-text-secondary, #6b7280);
+  margin-bottom: 0.125rem;
+}
+
+.print-job-specs dd {
+  color: var(--color-text-primary, #111827);
+}
+
+.dark .print-job-specs {
+  background-color: var(--color-bg-secondary, #1f2937);
+}
+
+/* Print job production progress bar / شريط تقدم إنتاج مهمة الطباعة */
+.print-job-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.print-job-progress [data-progress-track] {
+  flex: 1;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+  overflow: hidden;
+}
+
+.print-job-progress [data-progress-fill] {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--print-normal), #60a5fa);
+  animation: print-progress-fill 0.6s ease-out forwards;
+  --progress: 0%;
+}
+
+.print-job-progress [data-progress-label] {
+  min-width: 2.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+}
+
+/* Print job stage indicator / مؤشر مرحلة مهمة الطباعة */
+.print-job-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #6b7280);
+  background-color: var(--color-bg-secondary, #f3f4f6);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.print-job-stage[data-stage="received"] {
+  color: var(--print-normal);
+  border-color: var(--print-normal);
+  background-color: var(--print-normal-bg);
+}
+
+.print-job-stage[data-stage="processing"] {
+  color: var(--print-high);
+  border-color: var(--print-high);
+  background-color: var(--print-high-bg);
+  animation: print-stage-pulse 2s ease-in-out infinite;
+}
+
+.print-job-stage[data-stage="quality"] {
+  color: var(--machine-busy);
+  border-color: var(--machine-busy);
+  background-color: #fffbeb;
+}
+
+.print-job-stage[data-stage="done"] {
+  color: var(--print-low);
+  border-color: var(--print-low);
+  background-color: var(--print-low-bg);
+}
+
+.print-job-stage::before {
+  content: '';
+  width: var(--print-stage-size);
+  height: var(--print-stage-size);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Print queue item / عنصر في قائمة انتظار الطباعة */
+.print-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.print-queue-item:hover {
+  background-color: var(--color-bg-secondary, #f9fafb);
+}
+
+/* Currently printing item highlight / تمييز العنصر قيد الطباعة حالياً */
+.print-queue-active {
+  border-color: var(--print-normal);
+  background-color: var(--print-normal-bg);
+  box-shadow: 0 0 0 1px var(--print-normal);
+  animation: print-stage-pulse 2.5s ease-in-out infinite;
+}
+
+/* Print material / paper type tag / علامة نوع المادة/الورق */
+.print-material-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  background-color: var(--color-bg-tertiary, #f3f4f6);
+  color: var(--color-text-secondary, #6b7280);
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 2. Color & Material Palette / لوحة الألوان والمواد ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Color swatch circle or square / عينة لون دائرية أو مربعة */
+.color-swatch {
+  width: var(--swatch-size);
+  height: var(--swatch-size);
+  border-radius: 0.375rem;
+  border: 2px solid var(--color-border-subtle, #e5e7eb);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.color-swatch[data-shape="circle"] {
+  border-radius: 50%;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Color swatch group / مجموعة عينات الألوان */
+.color-swatch-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--swatch-gap);
+  align-items: center;
+}
+
+/* Color swatch selected state with checkmark / حالة العينة المحددة مع علامة اختيار */
+.color-swatch-selected {
+  border-color: var(--print-normal);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+.color-swatch-selected::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Paper type selector card / بطاقة اختيار نوع الورق */
+.paper-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 100px;
+  text-align: center;
+}
+
+.paper-type-card:hover {
+  border-color: var(--color-border-default, #9ca3af);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.paper-type-card[aria-selected="true"] {
+  border-color: var(--print-normal);
+  box-shadow: 0 0 0 1px var(--print-normal);
+}
+
+.dark .paper-type-card {
+  background-color: var(--color-bg-primary, #1f2937);
+}
+
+/* Paper texture preview / معاينة نسيج الورق */
+.paper-preview {
+  width: 100%;
+  aspect-ratio: 1 / 1.2;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  overflow: hidden;
+}
+
+.paper-preview[data-paper="matte"] {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+}
+
+.paper-preview[data-paper="glossy"] {
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 50%, #fafafa 100%);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.paper-preview[data-paper="kraft"] {
+  background: linear-gradient(135deg, #c4a882 0%, #b8956a 50%, #c4a882 100%);
+}
+
+/* Material selection chip / رقاقة اختيار المادة */
+.material-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #111827);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.material-chip:hover {
+  background-color: var(--color-bg-secondary, #f3f4f6);
+}
+
+.material-chip[aria-pressed="true"] {
+  background-color: var(--print-normal);
+  color: #ffffff;
+  border-color: var(--print-normal);
+}
+
+/* Finishing option (laminate, UV, emboss) / خيار التشطيب */
+.finishing-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px dashed var(--color-border-subtle, #d1d5db);
+  background-color: var(--color-bg-primary, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.finishing-option:hover {
+  border-style: solid;
+  border-color: var(--print-normal);
+  background-color: var(--print-normal-bg);
+}
+
+.finishing-option[aria-checked="true"] {
+  border-style: solid;
+  border-color: var(--print-normal);
+  background-color: var(--print-normal-bg);
+  color: var(--print-normal);
+}
+
+/* Mini inline color picker / منتقي ألوان مصغر مضمّن */
+.color-picker-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  cursor: pointer;
+}
+
+.color-picker-mini input[type="color"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+}
+
+.color-picker-mini input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker-mini input[type="color"]::-webkit-color-swatch {
+  border: 1px solid var(--color-border-subtle, #d1d5db);
+  border-radius: 0.25rem;
+}
+
+/* Gradient color preview / معاينة تدرج لوني */
+.gradient-swatch {
+  width: var(--swatch-size);
+  height: var(--swatch-size);
+  border-radius: 0.375rem;
+  border: 2px solid var(--color-border-subtle, #e5e7eb);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gradient-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 3. Production Dashboard Elements / عناصر لوحة تحكم الإنتاج ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Production floor grid layout / تخطيط شبكة أرضية الإنتاج */
+.production-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  padding: 1rem 0;
+}
+
+/* Printing machine status card / بطاقة حالة آلة الطباعة */
+.machine-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  box-shadow: var(--print-job-shadow);
+  transition: box-shadow 0.2s ease;
+}
+
+.machine-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .machine-card {
+  background-color: var(--color-bg-primary, #1f2937);
+}
+
+/* Machine online state / حالة الآلة المتصلة */
+.machine-online {
+  border-inline-start: 4px solid var(--machine-online);
+}
+
+.machine-online::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--machine-online);
+  flex-shrink: 0;
+}
+
+/* Machine offline state / حالة الآلة غير المتصلة */
+.machine-offline {
+  border-inline-start: 4px solid var(--machine-offline);
+  opacity: 0.7;
+}
+
+.machine-offline::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--machine-offline);
+  flex-shrink: 0;
+}
+
+/* Machine busy state / حالة الآلة المشغولة */
+.machine-busy {
+  border-inline-start: 4px solid var(--machine-busy);
+}
+
+.machine-busy::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--machine-busy);
+  flex-shrink: 0;
+  animation: machine-blink 1.5s ease-in-out infinite;
+}
+
+/* Work shift indicator / مؤشر وردية العمل */
+.shift-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.shift-indicator[data-shift="morning"] {
+  color: #d97706;
+  background-color: #fffbeb;
+  animation: shift-glow 3s ease-in-out infinite;
+}
+
+.shift-indicator[data-shift="evening"] {
+  color: #7c3aed;
+  background-color: #f5f3ff;
+}
+
+.shift-indicator[data-shift="night"] {
+  color: #6366f1;
+  background-color: #eef2ff;
+}
+
+/* Active job timer display / عرض مؤقت المهمة النشطة */
+.production-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-bg-secondary, #f3f4f6);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--color-text-primary, #111827);
+}
+
+.production-timer [data-timer-colon] {
+  animation: timer-tick 1s step-end infinite;
+}
+
+/* Daily/weekly job counter / عداد المهام اليومية/الأسبوعية */
+.job-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  background-color: var(--color-bg-secondary, #f9fafb);
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+}
+
+.job-counter [data-counter-value] {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--print-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+.job-counter [data-counter-label] {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #6b7280);
+  margin-top: 0.25rem;
+}
+
+/* Efficiency gauge / مقياس الكفاءة */
+.efficiency-meter {
+  position: relative;
+  width: var(--gauge-size);
+  height: calc(var(--gauge-size) / 2 + 12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.efficiency-meter svg {
+  width: var(--gauge-size);
+  height: calc(var(--gauge-size) / 2);
+  transform: rotate(180deg);
+}
+
+.efficiency-meter [data-gauge-track] {
+  fill: none;
+  stroke: var(--color-bg-tertiary, #e5e7eb);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.efficiency-meter [data-gauge-fill] {
+  fill: none;
+  stroke: var(--print-low);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: var(--gauge-circumference);
+  stroke-dashoffset: var(--gauge-circumference);
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+.efficiency-meter [data-gauge-value] {
+  position: absolute;
+  bottom: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+}
+
+/* Machine downtime alert banner / شريط تنبيه تعطل الآلة */
+.downtime-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--print-urgent-bg);
+  border: 1px solid var(--print-urgent);
+  color: var(--print-urgent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: overprint-flash 2s ease-in-out infinite;
+}
+
+/* End-of-shift summary card / بطاقة ملخص نهاية الوردية */
+.production-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 2px solid var(--print-normal);
+  background-color: var(--print-normal-bg);
+}
+
+.production-summary h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--print-normal);
+  margin: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.production-summary dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.375rem 1rem;
+  font-size: 0.875rem;
+}
+
+.production-summary dt {
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.production-summary dd {
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  text-align: start;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 4. Invoice & Receipt Styles / أنماط الفواتير والإيصالات ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Invoice display card / بطاقة عرض الفاتورة */
+.invoice-card {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  border: var(--invoice-border);
+  background-color: var(--color-bg-primary, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.dark .invoice-card {
+  background-color: var(--color-bg-primary, #1f2937);
+}
+
+/* Invoice header with logo and number / رأس الفاتورة مع الشعار والرقم */
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-border-subtle, #e5e7eb);
+  margin-bottom: 1.5rem;
+}
+
+.invoice-header [data-invoice-number] {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-header [data-invoice-date] {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/* Invoice line item row / صف عنصر في الفاتورة */
+.invoice-line-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--color-border-subtle, #f3f4f6);
+  font-size: 0.875rem;
+}
+
+.invoice-line-item:last-child {
+  border-bottom: none;
+}
+
+/* Invoice subtotal row / صف المجموع الفرعي */
+.invoice-subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/* Invoice tax row / صف الضريبة */
+.invoice-tax {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/* Invoice total row / صف الإجمالي */
+.invoice-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.75rem 0;
+  border-top: 2px solid var(--color-border-default, #374151);
+  margin-top: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+}
+
+/* Invoice stamp overlay / ختم فاتورة (مدفوع/ملغي) */
+.invoice-stamp {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  padding: 0.5rem 2rem;
+  border: 3px solid;
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: stamp-rotate 0.4s ease-out forwards;
+}
+
+.invoice-stamp[data-stamp="paid"] {
+  color: var(--print-low);
+  border-color: var(--print-low);
+  background-color: rgba(22, 163, 74, 0.1);
+}
+
+.invoice-stamp[data-stamp="cancelled"] {
+  color: var(--print-urgent);
+  border-color: var(--print-urgent);
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+/* Thermal receipt style / نمط الإيصال الحراري */
+.receipt-style {
+  max-width: var(--receipt-max-w);
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  font-family: var(--receipt-font);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-primary, #111827);
+  background-color: var(--color-bg-primary, #fafafa);
+  border-radius: 0.25rem;
+  border: 1px dashed var(--color-border-subtle, #d1d5db);
+}
+
+.dark .receipt-style {
+  background-color: var(--color-bg-primary, #111827);
+}
+
+/* Dashed divider for receipts / فاصل متقطع للإيصالات */
+.receipt-divider {
+  border: none;
+  border-top: 1px dashed var(--color-border-default, #9ca3af);
+  margin: 0.75rem 0;
+}
+
+/* Invoice footer with payment info / تذييل الفاتورة بمعلومات الدفع */
+.invoice-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border-subtle, #e5e7eb);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #6b7280);
+  text-align: center;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 5. File & Upload Enhancements / تحسينات الملفات والرفع ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Uploaded file preview card / بطاقة معاينة الملف المرفوع */
+.file-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  transition: box-shadow 0.15s ease;
+}
+
+.file-preview-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dark .file-preview-card {
+  background-color: var(--color-bg-primary, #1f2937);
+}
+
+/* File type icon (PDF, DOCX, JPG, PNG) / أيقونة نوع الملف */
+.file-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #ffffff;
+  flex-shrink: 0;
+  letter-spacing: 0.025em;
+}
+
+.file-type-icon[data-type="pdf"] {
+  background-color: #dc2626;
+}
+
+.file-type-icon[data-type="docx"] {
+  background-color: #2563eb;
+}
+
+.file-type-icon[data-type="jpg"],
+.file-type-icon[data-type="jpeg"] {
+  background-color: #d97706;
+}
+
+.file-type-icon[data-type="png"] {
+  background-color: #16a34a;
+}
+
+.file-type-icon[data-type="ai"] {
+  background-color: #f97316;
+}
+
+.file-type-icon[data-type="psd"] {
+  background-color: #7c3aed;
+}
+
+/* Upload progress with filename and percentage / تقدم الرفع مع اسم الملف والنسبة */
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-bg-secondary, #f9fafb);
+}
+
+.upload-progress [data-upload-filename] {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-progress [data-upload-bar] {
+  height: 6px;
+  border-radius: 9999px;
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+  overflow: hidden;
+}
+
+.upload-progress [data-upload-fill] {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--print-normal), #60a5fa);
+  background-size: 200% 100%;
+  animation: upload-shimmer 1.5s linear infinite;
+  transition: width 0.3s ease;
+}
+
+.upload-progress [data-upload-percent] {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #6b7280);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Active drag-over state / حالة السحب النشط */
+.upload-dropzone-active {
+  border: 2px dashed var(--print-normal);
+  background-color: var(--print-normal-bg);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* List of uploaded files / قائمة الملفات المرفوعة */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* Individual file in list with remove button / ملف فردي في القائمة مع زر حذف */
+.file-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  transition: background-color 0.15s ease;
+}
+
+.file-list-item:hover {
+  background-color: var(--color-bg-secondary, #f9fafb);
+}
+
+.file-list-item [data-file-remove] {
+  margin-inline-start: auto;
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+  color: var(--color-text-tertiary, #9ca3af);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.file-list-item [data-file-remove]:hover {
+  color: var(--print-urgent);
+  background-color: var(--print-urgent-bg);
+}
+
+/* File size indicator badge / شارة حجم الملف */
+.file-size-badge {
+  display: inline-flex;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  background-color: var(--color-bg-tertiary, #f3f4f6);
+  color: var(--color-text-tertiary, #9ca3af);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 6. Calendar & Scheduling / التقويم والجدولة ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Calendar month grid / شبكة تقويم الشهر */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+}
+
+/* Individual day cell / خلية اليوم الفردية */
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.375rem;
+  background-color: var(--color-bg-primary, #ffffff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary, #111827);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background-color: var(--color-bg-secondary, #f3f4f6);
+}
+
+.dark .calendar-day {
+  background-color: var(--color-bg-primary, #1f2937);
+}
+
+/* Selected/active day / اليوم المحدد/النشط */
+.calendar-day-active {
+  background-color: var(--print-normal);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.calendar-day-active:hover {
+  background-color: #1d4ed8;
+}
+
+/* Day with pending orders dot / يوم بنقطة طلبات معلقة */
+.calendar-day-has-orders::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--print-urgent);
+  position: absolute;
+  bottom: 4px;
+  animation: dot-blink 2s ease-in-out infinite;
+}
+
+/* Time slot in schedule / فترة زمنية في الجدول */
+.schedule-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* Booked slot state / حالة الفترة المحجوزة */
+.schedule-slot-booked {
+  background-color: var(--print-normal-bg);
+  border-color: var(--print-normal);
+  color: var(--print-normal);
+}
+
+/* Available slot state / حالة الفترة المتاحة */
+.schedule-slot-available {
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #111827);
+}
+
+.schedule-slot-available:hover {
+  background-color: var(--print-low-bg);
+  border-color: var(--print-low);
+}
+
+/* Horizontal timeline for scheduling / جدول زمني أفقي للجدولة */
+.timeline-horizontal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 1rem 0;
+  overflow-x: auto;
+}
+
+.timeline-horizontal::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  inset-inline: 0;
+  height: var(--timeline-track);
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+  border-radius: 9999px;
+  transform: translateY(-50%);
+}
+
+.timeline-horizontal > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Deadline proximity indicator / مؤشر قرب الموعد النهائي */
+.deadline-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.deadline-indicator[data-proximity="urgent"] {
+  color: var(--print-urgent);
+  animation: countdown-flash 1s step-end infinite;
+}
+
+.deadline-indicator[data-proximity="soon"] {
+  color: var(--print-high);
+}
+
+.deadline-indicator[data-proximity="ok"] {
+  color: var(--print-low);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 7. Advanced Status Indicators / مؤشرات الحالة المتقدمة ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Multi-color dot for complex status / نقطة متعددة الألوان للحالة المعقدة */
+.status-dot-multi {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.status-dot-multi::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: 60%;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: var(--print-low);
+}
+
+.status-dot-multi::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  width: 60%;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: var(--print-high);
+}
+
+/* Segmented status bar / شريط حالة مقسم */
+.status-bar-segmented {
+  display: flex;
+  height: 8px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+}
+
+.status-bar-segmented [data-segment] {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.status-bar-segmented [data-segment="done"] {
+  background-color: var(--print-low);
+}
+
+.status-bar-segmented [data-segment="in-progress"] {
+  background-color: var(--print-normal);
+}
+
+.status-bar-segmented [data-segment="pending"] {
+  background-color: var(--color-bg-tertiary, #d1d5db);
+}
+
+.status-bar-segmented [data-segment="delayed"] {
+  background-color: var(--print-urgent);
+}
+
+/* Flag-style status indicator / مؤشر حالة على شكل علم */
+.status-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.625rem 0.125rem 0.375rem;
+  border-radius: 0 0.25rem 0.25rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  position: relative;
+}
+
+[dir="rtl"] .status-flag {
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.status-flag::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -6px;
+  width: 0;
+  height: 0;
+  border-block: 0.75rem solid transparent;
+  border-inline-end: 6px solid currentColor;
+}
+
+[dir="rtl"] .status-flag::before {
+  inset-inline-start: auto;
+  inset-inline-end: -6px;
+  border-inline-end: none;
+  border-inline-start: 6px solid currentColor;
+}
+
+.status-flag[data-flag="warning"] {
+  background-color: var(--print-high);
+  color: var(--print-high);
+}
+
+.status-flag[data-flag="error"] {
+  background-color: var(--print-urgent);
+  color: var(--print-urgent);
+}
+
+.status-flag[data-flag="success"] {
+  background-color: var(--print-low);
+  color: var(--print-low);
+}
+
+.status-flag[data-flag="info"] {
+  background-color: var(--print-normal);
+  color: var(--print-normal);
+}
+
+/* Pulsing ring for active status / حلقة نابضة للحالة النشطة */
+.status-pulse-ring {
+  position: relative;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.status-pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: var(--print-low);
+}
+
+.status-pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--print-low);
+  animation: pulse-ring-expand 1.5s ease-out infinite;
+}
+
+/* Countdown timer for deadline / مؤقت عد تنازلي للموعد النهائي */
+.status-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background-color: var(--print-urgent-bg);
+  color: var(--print-urgent);
+}
+
+.status-countdown[data-urgent="true"] {
+  animation: countdown-flash 1.5s step-end infinite;
+}
+
+/* Watermark background text for status / علامة مائية خلفية لنص الحالة */
+.status-watermark {
+  position: relative;
+  overflow: hidden;
+}
+
+.status-watermark::after {
+  content: attr(data-watermark);
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--color-text-primary, #111827);
+  opacity: 0;
+  animation: watermark-fade 0.5s ease forwards;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.status-watermark > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Semicircle gauge for percentage status / مقياس نصف دائري لنسبة الحالة */
+.status-gauge {
+  position: relative;
+  width: var(--gauge-size);
+  height: calc(var(--gauge-size) / 2 + 10px);
+}
+
+.status-gauge svg {
+  width: var(--gauge-size);
+  height: calc(var(--gauge-size) / 2);
+  transform: rotate(180deg);
+}
+
+.status-gauge [data-gauge-track] {
+  fill: none;
+  stroke: var(--color-bg-tertiary, #e5e7eb);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.status-gauge [data-gauge-fill] {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: var(--gauge-circumference);
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+.status-gauge [data-gauge-fill][data-gauge-color="green"] {
+  stroke: var(--print-low);
+}
+
+.status-gauge [data-gauge-fill][data-gauge-color="yellow"] {
+  stroke: var(--machine-busy);
+}
+
+.status-gauge [data-gauge-fill][data-gauge-color="red"] {
+  stroke: var(--print-urgent);
+}
+
+.status-gauge [data-gauge-value] {
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+}
+
+/* Vertical step indicator / مؤشر خطوات عمودي */
+.status-steps-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-inline-start: 2rem;
+}
+
+.status-steps-vertical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: 0.625rem;
+  width: 2px;
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+}
+
+.status-steps-vertical [data-step] {
+  position: relative;
+  padding-block: 0.75rem;
+  padding-inline-start: 0.5rem;
+}
+
+.status-steps-vertical [data-step]::before {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  inset-inline-start: -1.75rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-bg-tertiary, #d1d5db);
+  background-color: var(--color-bg-primary, #ffffff);
+  z-index: 1;
+}
+
+.status-steps-vertical [data-step="completed"]::before {
+  background-color: var(--print-low);
+  border-color: var(--print-low);
+}
+
+.status-steps-vertical [data-step="active"]::before {
+  background-color: var(--print-normal);
+  border-color: var(--print-normal);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.status-steps-vertical [data-step="pending"]::before {
+  background-color: var(--color-bg-primary, #ffffff);
+  border-color: var(--color-bg-tertiary, #d1d5db);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── 8. Print Industry Specific / خاص بصناعة الطباعة ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Paper size visual indicator (A4/A3/A5/Letter) / مؤشر بصري لحجم الورق */
+.paper-size-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  background-color: var(--color-bg-primary, #ffffff);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.paper-size-indicator [data-paper-visual] {
+  border: 2px solid var(--color-text-secondary, #6b7280);
+  border-radius: 2px;
+  background-color: var(--color-bg-secondary, #f3f4f6);
+  flex-shrink: 0;
+}
+
+.paper-size-indicator [data-paper-visual="A4"] {
+  width: 16px;
+  height: 22px;
+}
+
+.paper-size-indicator [data-paper-visual="A3"] {
+  width: 22px;
+  height: 31px;
+}
+
+.paper-size-indicator [data-paper-visual="A5"] {
+  width: 12px;
+  height: 17px;
+}
+
+.paper-size-indicator [data-paper-visual="Letter"] {
+  width: 17px;
+  height: 22px;
+}
+
+/* Crop marks overlay for print preview / علامات القص للمعاينة */
+.crop-marks {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  animation: crop-marks-draw 0.3s ease-out forwards;
+}
+
+.crop-marks::before,
+.crop-marks::after {
+  content: '';
+  position: absolute;
+  background-color: var(--crop-mark-color);
+}
+
+.crop-marks::before {
+  top: 50%;
+  inset-inline: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.crop-marks::after {
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+/* Bleed area indicator / مؤشر منطقة النزيف */
+.bleed-area {
+  position: absolute;
+  inset: -3mm;
+  border: 1px dashed var(--crop-mark-color);
+  background-color: var(--bleed-color);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* Fold line indicator / مؤشر خط الطي */
+.fold-line {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 0;
+  border-inline-start: 1px dashed var(--fold-line-color);
+  pointer-events: none;
+  transform: translateX(-0.5px);
+}
+
+.fold-line[data-fold="horizontal"] {
+  inset-block-start: 50%;
+  inset-inline: 0;
+  height: 0;
+  border-inline-start: none;
+  border-block-start: 1px dashed var(--fold-line-color);
+  transform: translateY(-0.5px);
+}
+
+/* Book spine width indicator / مؤشر عرض كعب الكتاب */
+.spine-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  background-color: var(--color-bg-tertiary, #e5e7eb);
+  border: 1px solid var(--color-border-subtle, #d1d5db);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #6b7280);
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  min-height: 4rem;
+  border-radius: 2px;
+}
+
+/* CMYK/RGB/Pantone badge / شارة وضع الألوان */
+.color-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.color-mode-badge[data-mode="CMYK"] {
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
+.color-mode-badge[data-mode="RGB"] {
+  background-color: #eff6ff;
+  color: var(--print-normal);
+}
+
+.color-mode-badge[data-mode="Pantone"] {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* DPI resolution indicator / مؤشر دقة DPI */
+.resolution-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.resolution-badge[data-dpi="high"] {
+  background-color: var(--print-low-bg);
+  color: var(--print-low);
+}
+
+.resolution-badge[data-dpi="medium"] {
+  background-color: #fffbeb;
+  color: #92400e;
+}
+
+.resolution-badge[data-dpi="low"] {
+  background-color: var(--print-urgent-bg);
+  color: var(--print-urgent);
+}
+
+/* Print ready verification mark / علامة التحقق من جاهزية الطباعة */
+.print-ready-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--print-low-bg);
+  color: var(--print-low);
+  border: 1px solid var(--print-low);
+}
+
+.print-ready-mark::before {
+  content: '✓';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background-color: var(--print-low);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+/* Overprint issue warning / تحذير مشكلة الطباعة فوقية */
+.overprint-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--print-high);
+  background-color: var(--print-high-bg);
+  color: var(--print-high);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  animation: overprint-flash 2s ease-in-out infinite;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ─── prefers-reduced-motion Overrides / تجاوزات تقليل الحركة ─── */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .print-job-stage[data-stage="processing"] {
+    animation: none;
+  }
+  .print-queue-active {
+    animation: none;
+  }
+  .production-timer [data-timer-colon] {
+    animation: none;
+  }
+  .machine-busy::before {
+    animation: none;
+  }
+  .shift-indicator[data-shift="morning"] {
+    animation: none;
+  }
+  .invoice-stamp {
+    animation: none;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    opacity: 0.85;
+  }
+  .upload-progress [data-upload-fill] {
+    animation: none;
+  }
+  .status-pulse-ring::after {
+    animation: none;
+  }
+  .status-countdown[data-urgent="true"] {
+    animation: none;
+  }
+  .status-watermark::after {
+    animation: none;
+    opacity: 0.07;
+  }
+  .calendar-day-has-orders::after {
+    animation: none;
+  }
+  .deadline-indicator[data-proximity="urgent"] {
+    animation: none;
+  }
+  .downtime-alert {
+    animation: none;
+  }
+  .overprint-warning {
+    animation: none;
+  }
+  .crop-marks {
+    animation: none;
+    opacity: 1;
+  }
+  .print-job-progress [data-progress-fill] {
+    animation: none;
+    width: var(--progress, 0%);
+  }
+  .efficiency-meter [data-gauge-fill] {
+    transition: none;
+  }
+  .status-gauge [data-gauge-fill] {
+    transition: none;
+  }
+}
+
+/* ═══════════════════════════════════════════ End CSS Round 35 ═══════════════════════════════════════════ */
