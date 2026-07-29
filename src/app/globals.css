@@ -2358,3 +2358,265 @@ html.dark .glass-card {
   40% { content: '..'; }
   60%, 100% { content: '...'; }
 }
+
+/* ===== Round 19: Enhanced CSS Utilities ===== */
+
+/* Animated rotating gradient border */
+.gradient-border-animated {
+  position: relative;
+}
+.gradient-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--gradient-angle, 0deg), #8b5cf6, #f59e0b, #10b981, #3b82f6, #8b5cf6);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotate-gradient 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.gradient-border-animated:hover::before {
+  opacity: 1;
+}
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes rotate-gradient {
+  to { --gradient-angle: 360deg; }
+}
+
+/* Glass card 2.0 — premium glassmorphism */
+.glass-card-2 {
+  @apply backdrop-blur-xl border border-white/10 shadow-xl;
+  background: rgba(255, 255, 255, 0.05);
+}
+.dark .glass-card-2 {
+  @apply border-white/5;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Neon glow for dark mode */
+.neon-glow {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15), 0 0 45px rgba(139, 92, 246, 0.05);
+}
+.dark .neon-glow {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.25), 0 0 60px rgba(139, 92, 246, 0.1);
+}
+.neon-glow-gold {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15), 0 0 45px rgba(245, 158, 11, 0.05);
+}
+.dark .neon-glow-gold {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.1);
+}
+.neon-glow-emerald {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15), 0 0 45px rgba(16, 185, 129, 0.05);
+}
+.dark .neon-glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.1);
+}
+
+/* Enhanced rank badges */
+.rank-1 {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #78350f;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+.rank-2 {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af);
+  color: #374151;
+  box-shadow: 0 0 10px rgba(156, 163, 175, 0.3);
+}
+.rank-3 {
+  background: linear-gradient(135deg, #d97706, #92400e);
+  color: #fef3c7;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.3);
+}
+
+/* Shimmer loading skeleton */
+.shimmer-skeleton {
+  @apply relative overflow-hidden rounded-lg bg-muted;
+}
+.shimmer-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.06) 50%, transparent 100%);
+  animation: shimmer-slide 2s ease-in-out infinite;
+}
+.dark .shimmer-skeleton::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(245, 158, 11, 0.08) 50%, transparent 100%);
+}
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 3D card tilt on hover */
+.card-tilt-3d {
+  @apply transition-all duration-500 ease-out;
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+.card-tilt-3d:hover {
+  transform: translateY(-4px) rotateX(2deg) rotateY(-2deg);
+}
+
+/* Stagger animation for grid children */
+.stagger-grid > * {
+  animation: stagger-fade-in 0.5s ease-out both;
+}
+.stagger-grid > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-grid > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-grid > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-grid > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-grid > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-grid > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-grid > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-grid > *:nth-child(8) { animation-delay: 420ms; }
+@keyframes stagger-fade-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Progress ring glow */
+.progress-ring-glow {
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.3));
+}
+.dark .progress-ring-glow {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+
+/* Revenue goal progress bar */
+.goal-progress-bar {
+  @apply rounded-full overflow-hidden h-3 relative;
+  background: rgba(139, 92, 246, 0.1);
+}
+.goal-progress-bar .fill {
+  @apply h-full rounded-full transition-all duration-1000 ease-out;
+  background: linear-gradient(90deg, #8b5cf6, #f59e0b, #10b981);
+  background-size: 200% 100%;
+  animation: goal-shimmer 3s linear infinite;
+}
+@keyframes goal-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.goal-progress-bar.complete .fill {
+  background: linear-gradient(90deg, #10b981, #34d399);
+  animation: goal-celebrate 1s ease-in-out;
+}
+@keyframes goal-celebrate {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.2); }
+}
+
+/* Stale order warning pulse */
+.stale-warning {
+  @apply relative;
+}
+.stale-warning::after {
+  content: '';
+  @apply absolute -top-0.5 -left-0.5 w-2 h-2 rounded-full;
+  background: #f59e0b;
+  animation: stale-pulse 2s ease-in-out infinite;
+}
+@keyframes stale-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+/* Performance score ring */
+.score-ring {
+  @apply relative inline-flex items-center justify-center;
+}
+.score-ring svg {
+  @apply -rotate-90;
+}
+
+/* Floating action button enhanced */
+.fab-enhanced {
+  @apply relative overflow-hidden;
+}
+.fab-enhanced::after {
+  content: '';
+  @apply absolute inset-0 rounded-full opacity-0 transition-opacity duration-300;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+}
+.fab-enhanced:hover::after {
+  @apply opacity-100;
+}
+
+/* Table row hover micro-interaction */
+.table-row-hover {
+  @apply transition-all duration-200;
+}
+.table-row-hover:hover {
+  @apply bg-primary/[0.03] translate-x-0.5;
+}
+.dark .table-row-hover:hover {
+  @apply bg-primary/[0.06];
+}
+
+/* Status pill badge enhanced */
+.status-pill {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200;
+  border: 1px solid transparent;
+}
+.status-pill:hover {
+  @apply shadow-sm;
+  transform: scale(1.02);
+}
+
+/* Keyboard shortcut key */
+.kbd-enhanced {
+  @apply inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md text-[10px] font-mono font-bold;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Subtle entry animation */
+.fade-slide-up {
+  animation: fade-slide-up 0.4s ease-out both;
+}
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Notification dropdown enhancement */
+.notif-dropdown {
+  @apply shadow-2xl border border-border/50;
+  animation: notif-dropdown-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes notif-dropdown-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Quick action button */
+.quick-action-btn {
+  @apply flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200;
+  @apply hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97];
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+.quick-action-btn:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Confetti burst for goal completion */
+@keyframes confetti-burst {
+  0% { transform: scale(0) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+  100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}

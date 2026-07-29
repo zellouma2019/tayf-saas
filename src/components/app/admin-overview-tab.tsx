@@ -18,6 +18,7 @@ import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { cn } from "@/lib/utils";
 import { ActivityFeed } from "@/components/app/activity-feed";
 import { QuickStatsOverview } from "@/components/app/quick-stats-overview";
+import { PerformanceScoreWidget } from "@/components/app/performance-score-widget";
 
 // ===== Weekly Revenue Mini Bar Chart =====
 function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
@@ -132,18 +133,18 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
       )}
 
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-fade">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-grid">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-primary" /></div></div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 hover-scale-glow card-glow group stat-card-3d">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>
@@ -234,7 +235,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
         return (
-          <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+          <Card className="bg-card rounded-xl border border-border shadow-sm card-glow card-tilt-3d">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
                 <Crown className="h-4 w-4 text-gold-500" />
@@ -251,18 +252,18 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
               ) : (
                 <div className="divide-y divide-border">
                   {topCustomers.map((customer, index) => (
-                    <div key={customer.name} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-primary/5 transition-colors">
+                    <div key={customer.name} className="flex items-center justify-between px-4 sm:px-5 py-3 table-row-hover">
                       <div className="flex items-center gap-3 min-w-0">
                         <span className={cn(
-                          "inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold shrink-0",
+                          "inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-bold shrink-0 shadow-sm",
                           index === 0 ? "rank-1" : index === 1 ? "rank-2" : index === 2 ? "rank-3" : "rank-default"
                         )}>
-                          {index + 1}
+                          {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
                         </span>
                         <span className="text-sm font-medium text-foreground truncate">{customer.name}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs px-2 py-0.5 rounded-lg bg-primary/10 text-primary font-semibold tabular-nums">{customer.count} طلب</span>
+                        <span className="text-xs px-2 py-0.5 rounded-lg bg-primary/10 text-primary font-semibold tabular-nums status-pill">{customer.count} طلب</span>
                         <span className="text-sm font-bold text-foreground/80 tabular-nums">{formatDA(customer.total)}</span>
                       </div>
                     </div>
@@ -311,6 +312,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
         className="fade-in-up fade-in-up-delay-1"
       />
 
+      {/* أداء المتاجر */}
+      <PerformanceScoreWidget stats={stats} className="fade-in-up fade-in-up-delay-2 card-glow" />
+
       {/* آخر الطلبات + النشاط */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="bg-card rounded-xl border border-border shadow-sm">
@@ -338,7 +342,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
             <div className="divide-y divide-border">
               {(safeStats.recentOrders || []).slice(0, 10).map((order, idx) => (
                 <div key={order.id} className={cn(
-                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 transition-colors table-row-accent",
+                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 table-row-hover table-row-accent",
                   idx % 2 === 0 ? "table-row-even" : "table-row-odd"
                 )}>
                   <div className="flex items-center gap-3 min-w-0">

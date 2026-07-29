@@ -127,6 +127,7 @@ import { SHOP_THEMES } from "@/lib/themes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type FeatureKey } from "@/lib/shop-features";
 const PrintQueueWidget = dynamic(() => import("@/components/app/print-queue-widget").then((m) => ({ default: m.PrintQueueWidget })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const RevenueGoalWidget = dynamic(() => import("@/components/app/revenue-goal-widget").then((m) => ({ default: m.RevenueGoalWidget })), { ssr: false, loading: () => <DynamicSkeleton /> });
 // Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
 const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
 import { motion, AnimatePresence } from 'framer-motion';
@@ -877,10 +878,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="space-y-6"
             >
-              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-fade">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 hover-scale-glow card-glow group relative overflow-hidden",
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
@@ -961,7 +962,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
 
               {/* إجراءات سريعة */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-fade">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-grid">
                 {[
                   { icon: Plus, label: "طلب جديد", color: "from-violet-500 to-violet-600", action: () => window.open(customerLink, '_blank') },
                   { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => setReportOpen(true) },
@@ -983,12 +984,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 ))}
               </div>
 
-              {/* طابور الطباعة */}
-              <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
-                <CardContent className="pt-4">
-                  <PrintQueueWidget orders={orders} />
-                </CardContent>
-              </Card>
+              {/* هدف الإيرادات + طابور الطباعة */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <RevenueGoalWidget todayRevenue={todayRevenue} todayOrders={todayOrdersList.length} />
+                <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+                  <CardContent className="pt-4">
+                    <PrintQueueWidget orders={orders} />
+                  </CardContent>
+                </Card>
+              </div>
 
               {!(stats?.totalOrders ?? 0) && (
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
