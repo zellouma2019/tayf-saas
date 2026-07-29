@@ -747,7 +747,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                   >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none pulse-ring-rose">
+                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none pulse-ring-rose badge-pulse">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
@@ -1522,7 +1522,7 @@ function ChangeStatusSelect({
           تغيير الحالة
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-40">
+      <DropdownMenuContent align="start" className="w-40 dropdown-menu">
         {STATUS_FLOW.filter((s) => s !== order.status).map((s) => (
           <DropdownMenuItem key={s} onClick={() => { onChange(order, s); setOpen(false); }}>
             <span className="mr-2">{STATUS_META[s].emoji}</span>

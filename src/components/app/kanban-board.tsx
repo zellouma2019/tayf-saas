@@ -131,7 +131,7 @@ function SortableOrderCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-card rounded-xl border p-3 mb-2 transition-all duration-200 ${
+      className={`bg-card rounded-xl border p-3 mb-2 transition-all duration-200 list-item-draggable ${
         isDragging
           ? "shadow-xl ring-2 ring-primary/30 z-50 opacity-90 scale-[1.02]"
           : "hover:shadow-md hover:border-primary/20"
@@ -313,7 +313,7 @@ export function KanbanBoard({
                 <col.icon className="h-3.5 w-3.5" />
                 <span className="font-medium text-xs">{col.label}</span>
                 <span className="mr-auto flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 px-1.5 py-0.5 rounded-full tabular-nums">
+                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 px-1.5 py-0.5 rounded-full tabular-nums badge-dot">
                     {col.orders.length}
                   </span>
                   <WipIndicator count={col.orders.length} limit={col.key === 'printing' ? 5 : undefined} />

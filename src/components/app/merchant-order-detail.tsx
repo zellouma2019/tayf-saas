@@ -57,6 +57,7 @@ import {
 import { cn } from "@/lib/utils";
 import { PrintJobTicket } from "@/components/app/print-job-ticket";
 import { DirectPrintPreviewDialog } from "@/components/app/direct-print-preview-dialog";
+import { MerchantOrderNotes } from "./merchant-order-notes";
 
 // ===== أنواع =====
 
@@ -1065,6 +1066,13 @@ export function MerchantOrderDetail({
                 <Save className="h-3.5 w-3.5 ml-1" />
                 {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
               </Button>
+            </div>
+          )}
+
+          {/* ملاحظات التاجر */}
+          {order && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <MerchantOrderNotes orderId={order.id} shopId={shopId || ""} />
             </div>
           )}
         </div>

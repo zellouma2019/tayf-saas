@@ -7653,3 +7653,964 @@ textarea:focus::placeholder {
   transform: scale(0.94);
   transition: transform 0.1s ease;
 }
+
+/* =====================================================================
+   الجولة 31 — CSS Round 31: أدوات متقدمة للوحة التحكم
+   Advanced Dashboard, Buttons, Lists, Modals, Badges, Grid, Effects
+   ===================================================================== */
+
+/* ----------------------------------------------------------
+   1. بطاقات مقاييس لوحة التحكم — Dashboard Metric Cards
+   ---------------------------------------------------------- */
+
+/* بطاقة بتأثير توهج ناعم متحرك — Card with soft animated glow */
+.metric-glow {
+  border-radius: 1rem;
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  background: var(--card, white);
+  box-shadow: 0 0 0 0 rgba(212,168,83,0);
+  animation: metric-glow-pulse 3s ease-in-out infinite;
+  transition: box-shadow 0.3s ease;
+}
+.metric-glow:hover {
+  box-shadow: 0 0 24px 2px rgba(212,168,83,0.12), 0 4px 16px rgba(0,0,0,0.06);
+}
+@keyframes metric-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,83,0); }
+  50% { box-shadow: 0 0 16px 0 rgba(212,168,83,0.08); }
+}
+:is(.dark) .metric-glow {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.06);
+  animation-name: metric-glow-pulse-dark;
+}
+@keyframes metric-glow-pulse-dark {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,83,0); }
+  50% { box-shadow: 0 0 20px 0 rgba(212,168,83,0.06); }
+}
+
+/* بطاقة بحد متدرج يساري 4px — Card with 4px left gradient border */
+.metric-gradient-left {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  background: var(--card, white);
+  border-left: 4px solid transparent;
+  border-image: linear-gradient(to bottom, var(--color-primary, hsl(262 83% 58%)), var(--color-secondary, hsl(45 73% 58%))) 1;
+  border-radius: unset;
+  overflow: visible;
+}
+.metric-gradient-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  border-left: 4px solid transparent;
+  border-image: linear-gradient(to bottom, var(--color-primary, hsl(262 83% 58%)), var(--color-secondary, hsl(45 73% 58%))) 1;
+  pointer-events: none;
+  border-radius: unset;
+}
+:is(.dark) .metric-gradient-left {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* مؤشر اتجاه صاعد — Trend up indicator */
+.metric-trend-up {
+  color: hsl(160 84% 39%);
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.metric-trend-up::after {
+  content: '↑';
+  font-size: 0.7em;
+}
+
+/* مؤشر اتجاه هابط — Trend down indicator */
+.metric-trend-down {
+  color: hsl(0 84% 60%);
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.metric-trend-down::after {
+  content: '↓';
+  font-size: 0.7em;
+}
+
+/* حاوية أيقونة مربعة بتدرج — Square icon container with gradient */
+.metric-icon-box {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--color-primary, hsl(262 83% 58%)) 0%, var(--color-secondary, hsl(45 73% 58%)) 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(212,168,83,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.metric-icon-box:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(212,168,83,0.25);
+}
+:is(.dark) .metric-icon-box {
+  box-shadow: 0 2px 8px rgba(212,168,83,0.1);
+}
+
+/* رقم كبير بارز — Large bold number display */
+.metric-large-number {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground, hsl(240 10% 4%));
+}
+:is(.dark) .metric-large-number {
+  color: hsl(0 0% 95%);
+}
+
+/* ----------------------------------------------------------
+   2. أنماط أزرار متقدمة — Advanced Button Styles
+   ---------------------------------------------------------- */
+
+/* زر بخلفية متدرجة — Button with gradient background */
+.btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.625rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: white;
+  background: linear-gradient(135deg, var(--color-primary, hsl(262 83% 58%)), var(--color-secondary, hsl(45 73% 58%)));
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(212,168,83,0.2);
+}
+.btn-gradient:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(212,168,83,0.3);
+}
+.btn-gradient:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* زر محدد يتوهج عند التمرير — Outline button with hover glow */
+.btn-outline-glow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid var(--border, rgba(0,0,0,0.12));
+  border-radius: 0.625rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.btn-outline-glow:hover {
+  border-color: var(--color-primary, hsl(262 83% 58%));
+  box-shadow: 0 0 12px 1px rgba(212,168,83,0.15), 0 0 4px rgba(212,168,83,0.1);
+  color: var(--color-primary, hsl(262 83% 58%));
+}
+:is(.dark) .btn-outline-glow {
+  border-color: rgba(255,255,255,0.1);
+  color: hsl(0 0% 90%);
+}
+:is(.dark) .btn-outline-glow:hover {
+  border-color: hsl(262 60% 60%);
+  box-shadow: 0 0 16px 2px rgba(212,168,83,0.12);
+  color: hsl(262 60% 60%);
+}
+
+/* زر أيقونة دائري — Circular icon-only button */
+.btn-icon-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  background: var(--card, white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.btn-icon-round:hover {
+  background: var(--accent, hsl(262 83% 58%));
+  color: white;
+  box-shadow: 0 2px 12px rgba(212,168,83,0.25);
+  border-color: transparent;
+}
+:is(.dark) .btn-icon-round {
+  background: hsl(240 10% 12%);
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* مجموعة أزرار متصلة — Connected button group */
+.btn-group-connected {
+  display: inline-flex;
+  border-radius: 0.625rem;
+  overflow: hidden;
+  border: 1px solid var(--border, rgba(0,0,0,0.1));
+}
+.btn-group-connected > * {
+  border: none;
+  border-left: 1px solid var(--border, rgba(0,0,0,0.1));
+  background: var(--card, white);
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  color: var(--muted-foreground);
+}
+.btn-group-connected > *:hover {
+  background: var(--accent, hsl(262 83% 58%));
+  color: white;
+}
+.btn-group-connected > *:first-child {
+  border-left: none;
+  border-radius: 0 0 0 0.625rem;
+}
+.btn-group-connected > *:last-child {
+  border-radius: 0 0.625rem 0 0;
+}
+:is(.dark) .btn-group-connected {
+  border-color: rgba(255,255,255,0.08);
+}
+:is(.dark) .btn-group-connected > * {
+  background: hsl(240 10% 12%);
+  border-left-color: rgba(255,255,255,0.08);
+  color: hsl(240 5% 65%);
+}
+
+/* زر بحالة تحميل — Button with loading spinner */
+.btn-loading {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 8rem;
+  min-height: 2.5rem;
+  pointer-events: none;
+  color: transparent !important;
+}
+.btn-loading::after {
+  content: '';
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: btn-loading-spin 0.6s linear infinite;
+  position: absolute;
+}
+@keyframes btn-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ----------------------------------------------------------
+   3. قوائم وعناصر الأخبار المحسّنة — Enhanced List & Feed
+   ---------------------------------------------------------- */
+
+/* عنصر أخبار/نشاط — News feed / activity item */
+.feed-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-left: 3px solid var(--color-primary, hsl(262 83% 58%));
+  border-radius: 0 0.625rem 0.625rem 0;
+  background: var(--card, white);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+[dir="rtl"] .feed-item {
+  border-left: none;
+  border-right: 3px solid var(--color-primary, hsl(262 83% 58%));
+  border-radius: 0.625rem 0 0 0.625rem;
+}
+.feed-item:hover {
+  background: var(--muted, rgba(0,0,0,0.03));
+  border-color: var(--color-secondary, hsl(45 73% 58%));
+}
+:is(.dark) .feed-item {
+  background: hsl(240 10% 8%);
+  border-color: hsl(262 60% 45%);
+}
+:is(.dark) .feed-item:hover {
+  background: hsl(240 10% 11%);
+}
+
+/* عنصر أخبار جديد/غير مقروء — New/unread feed item */
+.feed-item-new {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-left: 3px solid hsl(217 91% 60%);
+  border-radius: 0 0.625rem 0.625rem 0;
+  background: var(--card, white);
+  transition: background 0.15s ease;
+}
+[dir="rtl"] .feed-item-new {
+  border-left: none;
+  border-right: 3px solid hsl(217 91% 60%);
+  border-radius: 0.625rem 0 0 0.625rem;
+}
+.feed-item-new::before {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  left: 0.75rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(217 91% 60%);
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+  animation: feed-dot-ping 2s ease-in-out infinite;
+}
+[dir="rtl"] .feed-item-new::before {
+  left: auto;
+  right: 0.75rem;
+}
+@keyframes feed-dot-ping {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+  50% { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
+}
+:is(.dark) .feed-item-new {
+  background: hsl(240 10% 8%);
+  border-color: hsl(217 75% 50%);
+}
+:is(.dark) .feed-item-new::before {
+  background: hsl(217 75% 50%);
+}
+
+/* عنصر قائمة يكشف أزرار عند التمرير — List item revealing actions on hover */
+.list-item-hover {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: background 0.15s ease;
+}
+.list-item-hover .list-item-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.list-item-hover:hover .list-item-actions,
+.list-item-hover:focus-within .list-item-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.list-item-hover:hover {
+  background: var(--muted, rgba(0,0,0,0.03));
+}
+:is(.dark) .list-item-hover:hover {
+  background: hsl(240 10% 11%);
+}
+
+/* عنصر قائمة قابل للسحب — Draggable list item */
+.list-item-draggable {
+  cursor: grab;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  border-radius: 0.625rem;
+}
+.list-item-draggable:active {
+  cursor: grabbing;
+}
+.list-item-draggable:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.list-item-draggable.dragging {
+  opacity: 0.8;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  transform: rotate(1deg);
+}
+
+/* خط زمني عمودي — Vertical timeline */
+.timeline-vertical {
+  position: relative;
+  padding-left: 2rem;
+}
+[dir="rtl"] .timeline-vertical {
+  padding-left: 0;
+  padding-right: 2rem;
+}
+.timeline-vertical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.5rem;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--color-primary, hsl(262 83% 58%)), var(--border, rgba(0,0,0,0.1)));
+}
+[dir="rtl"] .timeline-vertical::before {
+  left: auto;
+  right: 0.5rem;
+}
+.timeline-vertical > * {
+  position: relative;
+  padding-bottom: 1.25rem;
+}
+.timeline-vertical > *::before {
+  content: '';
+  position: absolute;
+  top: 0.25rem;
+  left: -1.625rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--color-primary, hsl(262 83% 58%));
+  border: 2px solid var(--card, white);
+  box-shadow: 0 0 0 2px var(--color-primary, hsl(262 83% 58%));
+}
+[dir="rtl"] .timeline-vertical > *::before {
+  left: auto;
+  right: -1.625rem;
+}
+:is(.dark) .timeline-vertical::before {
+  background: linear-gradient(to bottom, hsl(262 60% 45%), rgba(255,255,255,0.06));
+}
+:is(.dark) .timeline-vertical > *::before {
+  border-color: hsl(240 10% 8%);
+}
+
+/* ----------------------------------------------------------
+   4. تراكبات ونوافذ منبثقة — Overlay & Modal Enhancements
+   ---------------------------------------------------------- */
+
+/* خلفية شبه شفافة مع تمويه — Semi-transparent backdrop with blur */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
+  animation: overlay-fade-in 0.2s ease;
+}
+:is(.dark) .overlay-backdrop {
+  background: rgba(0,0,0,0.6);
+}
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* حاوية نافذة منبثقة — Modal container */
+.modal-card {
+  position: relative;
+  border-radius: 1rem;
+  background: var(--card, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: 0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  animation: modal-card-in 0.25s ease;
+  overflow: hidden;
+}
+@keyframes modal-card-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+:is(.dark) .modal-card {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+}
+
+/* نافذة منبثقة صغيرة — Small modal variant */
+.modal-card-sm {
+  max-width: 28rem;
+  margin: auto;
+}
+
+/* نافذة منبثقة كبيرة — Large modal variant */
+.modal-card-lg {
+  max-width: 56rem;
+  margin: auto;
+}
+
+/* درج ينزلق من اليمين — Slide-in drawer from right */
+.drawer-right {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: min(28rem, 85vw);
+  background: var(--card, white);
+  border-left: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: -8px 0 32px rgba(0,0,0,0.1);
+  z-index: 60;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+[dir="rtl"] .drawer-right {
+  right: auto;
+  left: 0;
+  border-left: none;
+  border-right: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: 8px 0 32px rgba(0,0,0,0.1);
+  transform: translateX(-100%);
+}
+.drawer-right.open {
+  transform: translateX(0);
+}
+:is(.dark) .drawer-right {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.3);
+}
+
+/* درج ينزلق من الأسفل — Slide-in drawer from bottom */
+.drawer-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-height: 70vh;
+  background: var(--card, white);
+  border-top: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.1);
+  z-index: 60;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+.drawer-bottom.open {
+  transform: translateY(0);
+}
+:is(.dark) .drawer-bottom {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* ----------------------------------------------------------
+   5. شارات وعلامات محسّنة — Badge & Tag Enhancements
+   ---------------------------------------------------------- */
+
+/* شارة نبضية لجذب الانتباه — Badge with pulse animation */
+.badge-pulse {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: white;
+  background: hsl(0 80% 55%);
+}
+.badge-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: hsl(0 80% 55%);
+  opacity: 0;
+  animation: badge-pulse-ring 1.5s ease-out infinite;
+  z-index: -1;
+}
+@keyframes badge-pulse-ring {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* شارة حالة بحد يساري ملون — Status badge with left colored border */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  padding-left: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-left: 3px solid var(--badge-color, hsl(160 84% 39%));
+  background: var(--card, white);
+  color: var(--foreground);
+}
+[dir="rtl"] .badge-status {
+  padding-left: 0.625rem;
+  padding-right: 0.5rem;
+  border-left: none;
+  border-right: 3px solid var(--badge-color, hsl(160 84% 39%));
+}
+:is(.dark) .badge-status {
+  background: hsl(240 10% 10%);
+}
+
+/* علامة/وسم قابل للإزالة — Removable tag/chip */
+.tag-removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--muted, rgba(0,0,0,0.05));
+  color: var(--muted-foreground);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.tag-removable:hover {
+  background: var(--accent, hsl(262 83% 58%));
+  color: white;
+  border-color: var(--accent, hsl(262 83% 58%));
+}
+.tag-removable .tag-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  font-size: 0.625rem;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+.tag-removable .tag-remove-btn:hover {
+  opacity: 1;
+}
+:is(.dark) .tag-removable {
+  background: hsl(240 10% 14%);
+  border-color: rgba(255,255,255,0.08);
+  color: hsl(240 5% 70%);
+}
+
+/* مجموعة علامات — Tag group with flex-wrap */
+.tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+/* ----------------------------------------------------------
+   6. تلميحات وقوائم منسدلة — Tooltip & Popover Polish
+   ---------------------------------------------------------- */
+
+/* ملاحظة: tooltip-arrow و badge-dot موجودة مسبقاً في الأعوام السابقة */
+
+/* حاوية نافذة منبثقة عائمة — Styled popover container */
+.popover-card {
+  position: relative;
+  border-radius: 0.75rem;
+  background: var(--popover, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.04);
+  padding: 1rem;
+  z-index: 50;
+  animation: popover-card-in 0.2s ease;
+}
+@keyframes popover-card-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+:is(.dark) .popover-card {
+  background: hsl(240 10% 10%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* حاوية قائمة منسدلة — Dropdown menu container */
+.dropdown-menu {
+  position: relative;
+  min-width: 10rem;
+  border-radius: 0.625rem;
+  background: var(--popover, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  padding: 0.25rem;
+  z-index: 50;
+  overflow: hidden;
+}
+:is(.dark) .dropdown-menu {
+  background: hsl(240 10% 10%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* عنصر قائمة منسدلة — Dropdown menu item */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.dropdown-item:hover {
+  background: var(--accent, hsl(262 83% 58%));
+  color: white;
+}
+:is(.dark) .dropdown-item {
+  color: hsl(240 5% 80%);
+}
+:is(.dark) .dropdown-item:hover {
+  background: hsl(262 60% 25%);
+  color: hsl(0 0% 95%);
+}
+
+/* فاصل قائمة منسدلة — Dropdown divider */
+.dropdown-divider {
+  height: 1px;
+  margin: 0.25rem 0.5rem;
+  background: var(--border, rgba(0,0,0,0.06));
+}
+:is(.dark) .dropdown-divider {
+  background: rgba(255,255,255,0.06);
+}
+
+/* ----------------------------------------------------------
+   7. شبكات متجاوبة — Responsive Grid Utilities
+   ---------------------------------------------------------- */
+
+/* شبكة 2 عمود — 1 col mobile, 2 col desktop */
+.grid-responsive-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .grid-responsive-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* شبكة 3 أعمدة — 1 → 2 → 3 */
+.grid-responsive-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .grid-responsive-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .grid-responsive-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* شبكة 4 أعمدة — 1 → 2 → 4 */
+.grid-responsive-4 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .grid-responsive-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .grid-responsive-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* شبكة تلقائية بأحجام صغيرة — Auto-fit small */
+.grid-auto-fit-sm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+}
+
+/* شبكة تلقائية بأحجام متوسطة — Auto-fit medium */
+.grid-auto-fit-md {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+/* شبكة تلقائية بأحجام كبيرة — Auto-fit large */
+.grid-auto-fit-lg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 1rem;
+}
+
+/* شبكة لوحة التحكم: شريط جانبي + محتوى — Dashboard grid */
+.grid-dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+@media (min-width: 1024px) {
+  .grid-dashboard {
+    grid-template-columns: 16rem 1fr;
+  }
+}
+@media (min-width: 1280px) {
+  .grid-dashboard {
+    grid-template-columns: 20rem 1fr;
+  }
+}
+
+/* ----------------------------------------------------------
+   8. تأثيرات بصرية خاصة — Special Effects
+   ---------------------------------------------------------- */
+
+/* حاوية تأثير الكونفيتي — Confetti burst container (CSS only) */
+.confetti-burst {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+}
+.confetti-burst::before,
+.confetti-burst::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  animation: confetti-fall 2s ease-out infinite;
+}
+.confetti-burst::before {
+  background: hsl(262 83% 58%);
+  box-shadow: 8px -4px 0 hsl(45 73% 58%), 16px 2px 0 hsl(0 80% 55%), 24px -6px 0 hsl(160 84% 39%);
+  top: 0;
+  left: 0;
+}
+.confetti-burst::after {
+  background: hsl(45 73% 58%);
+  box-shadow: -8px 4px 0 hsl(262 83% 58%), -16px -2px 0 hsl(217 91% 60%), -24px 6px 0 hsl(0 80% 55%);
+  top: 0;
+  left: 4px;
+  animation-delay: 0.4s;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(60px) rotate(360deg); opacity: 0; }
+}
+
+/* تأثير بارالاكس بطيء — Slow parallax scroll */
+.parallax-slow {
+  perspective: 1px;
+  overflow: hidden;
+  height: 100%;
+}
+.parallax-slow > * {
+  transform: translateZ(0);
+  transition: transform 0.3s ease;
+}
+
+/* شكل عضوي يتحول ببطء — Organic shape morphing */
+.morph-shape {
+  width: 6rem;
+  height: 6rem;
+  background: linear-gradient(135deg, var(--color-primary, hsl(262 83% 58%)), var(--color-secondary, hsl(45 73% 58%)));
+  animation: morph-blob 8s ease-in-out infinite;
+}
+@keyframes morph-blob {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 40% 70% 60%; }
+  75% { border-radius: 40% 30% 60% 50% / 60% 50% 40% 30%; }
+}
+
+/* نسيج ضوضاء خفيف — Subtle noise texture overlay */
+.noise-texture {
+  position: relative;
+}
+.noise-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+.noise-texture > * {
+  position: relative;
+  z-index: 1;
+}
+:is(.dark) .noise-texture::before {
+  opacity: 0.06;
+}
+
+/* بطاقة زجاجية مع لمعان متحرك — Glass card with moving shine */
+.glass-shine {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--card, white);
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.glass-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    transparent 40%,
+    rgba(255,255,255,0.08) 45%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.08) 55%,
+    transparent 60%
+  );
+  animation: glass-shine-sweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes glass-shine-sweep {
+  0% { transform: translateX(-30%) translateY(-30%) rotate(15deg); }
+  50% { transform: translateX(30%) translateY(30%) rotate(15deg); }
+  100% { transform: translateX(-30%) translateY(-30%) rotate(15deg); }
+}
+:is(.dark) .glass-shine {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+}
+:is(.dark) .glass-shine::after {
+  background: linear-gradient(
+    to bottom right,
+    transparent 40%,
+    rgba(255,255,255,0.03) 45%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.03) 55%,
+    transparent 60%
+  );
+}

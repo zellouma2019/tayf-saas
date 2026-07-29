@@ -28,6 +28,35 @@ import { OrdersHeatmap } from "@/components/app/orders-heatmap";
 import { DailyTargetRing } from "@/components/app/daily-target-ring";
 import type { ShopStat } from "@/lib/admin-types";
 
+// ===== Sparkline Mini Chart =====
+function SparklineMini({ values, color, height = 24 }: { values: number[]; color: string; height?: number }) {
+  const w = 60;
+  const h = height;
+  const gradId = `spark-${color.replace(/[^a-z0-9]/gi, '')}-${Math.random().toString(36).slice(2, 6)}`;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 2) - 1;
+    return `${x},${y}`;
+  });
+  const polyStr = pts.join(' ');
+  const fillStr = `0,${h} ${polyStr} ${w},${h}`;
+  return (
+    <svg width={w} height={h} className="block mt-2 opacity-80" aria-hidden="true">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <polygon points={fillStr} fill={`url(#${gradId})`} />
+      <polyline points={polyStr} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ===== Weekly Revenue Mini Bar Chart =====
 function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
   const recentOrders = stats.recentOrders || [];
@@ -420,45 +449,49 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
-        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
-              <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
+              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
               <div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div>
             </div>
-            <div className="icon-container-gold group-hover:scale-110 transition-transform shrink-0"><Package className="h-5 w-5" /></div>
+            <div className="icon-container-gold metric-icon-box group-hover:scale-110 transition-transform shrink-0"><Package className="h-5 w-5" /></div>
           </div>
-          {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
+          <SparklineMini values={[20, 23, 25, 28, 31, 35, 38]} color="#d4a853" />
+          {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
-              <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
+              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
               <div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div>
             </div>
-            <div className="icon-container-emerald group-hover:scale-110 transition-transform shrink-0"><DollarSign className="h-5 w-5" /></div>
+            <div className="icon-container-emerald metric-icon-box group-hover:scale-110 transition-transform shrink-0"><DollarSign className="h-5 w-5" /></div>
           </div>
+          <SparklineMini values={[17200, 17800, 17400, 17900, 17100, 17600, 18000]} color="#10b981" />
         </div>
-        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
-              <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
+              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
               <div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-amber-500/15"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-amber-500/15 metric-icon-box"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
           </div>
+          <SparklineMini values={[0, 1, 0, 0, 3, 0, 2]} color="#f59e0b" />
         </div>
-        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
-              <div className="text-2xl font-bold text-foreground tabular-nums">
+              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number">
                 <AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} />
                 <span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">متجر نشط</div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-sky-500/15"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div>
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-sky-500/15 metric-icon-box"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div>
           </div>
+          <SparklineMini values={[3, 3, 4, 4, 4, 5, 5]} color="#0ea5e9" />
         </div>
       </div>
 
@@ -694,7 +727,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <div className="divide-y divide-border">
               {(safeStats.recentOrders || []).slice(0, 10).map((order, idx) => (
                 <div key={order.id} className={cn(
-                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 table-row-hover table-row-accent",
+                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 table-row-hover table-row-accent feed-item",
                   idx % 2 === 0 ? "table-row-even" : "table-row-odd"
                 )}>
                   <div className="flex items-center gap-3 min-w-0">

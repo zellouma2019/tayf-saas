@@ -1112,7 +1112,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <div className="text-[11px] text-muted-foreground">الطلبات</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground counter-number">{todayOrdersList.length}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number metric-large-number">{todayOrdersList.length}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">الإيرادات</div>
@@ -1400,7 +1400,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               className="space-y-5"
             >
               {/* أزرار التبديل بين جدول ولوحة كانبان + وضع التحديد */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 btn-group-connected">
                 {viewMode === "table" && (
                   <button
                     type="button"
@@ -1512,7 +1512,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* شرائح التصفية السريعة - الحالة */}
-              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1 cluster">
+              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1 cluster tag-group">
                 {quickFilters.map((f) => {
                   const dotColor: Record<string, string> = {
                     all: "bg-dark-400",
