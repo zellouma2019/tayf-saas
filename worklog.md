@@ -8050,3 +8050,124 @@ Task: QA + fix build error + major feature additions + CSS v4.8 + deployment
 - PIN متجر الريان: 1234
 - Git repo: https://github.com/zellouma2019/tayf-saas
 - Live: https://tayf-saas.vercel.app
+---
+Task ID: Round 54
+Agent: Main Agent (Cron Loop)
+Task: QA + fix admin data loading + new features + CSS v4.9 + deployment
+
+## حالة المشروع الحالية
+
+### ✅ يعمل بشكل جيد:
+- **لوحة تحكم الزبون**: جميع المتاجر تعمل، طلب جديد، تتبع، سجل الطلبات
+- **لوحة تحكم التاجر**: 9+ تبويبات، PIN login يعمل (al-riyan/1234)
+- **تتبع الطلبات**: صفحة /track تعمل مع اختيار المتجر + بحث بالهاتف
+- **API endpoints**: جميع تعمل (/api/health ok, /api/admin/global-stats يعيد 39 طلب)
+- **Build**: ناجح بدون أخطاء (0 errors)
+- **GitHub**: latest commit 2d6184c
+
+### ❌ مشاكل مكتشفة:
+- **لوحة تحكم الإدمن**: تعمل محلياً لكن Vercel ينشر كود قديم
+  - Deploy hook يُشغّل بناء لكن من كود قديم
+  - Admin dashboard يعرض التبويبات لكن بدون بيانات (globalStats = null)
+  - تم إصلاح الكود محلياً لكن يحتاج Vercel لسحب الكود الجديد
+
+## نتائج QA (agent-browser)
+- ✅ Customer shop pages: تعمل بشكل كامل
+- ✅ API health: ok, db connected
+- ✅ API global-stats: يعيد 39 طلب، 6 متاجر (عملية)
+- ⚠️ Admin dashboard: يعرض التبويبات لكن بدون بيانات (كود قديم على Vercel)
+- ✅ زر "تصدير التقرير" ظاهر (ميزة v4.9)
+
+## الإصلاحات المُطبقة
+
+### 1. إصلاح خطأ تحميل بيانات الإدمن (حرج)
+- **السبب**: `cacheBust` كان `&_=` بدلاً من `?_=` — URL غير صالح → API يُرجع 404
+- **الحل**: تغيير إلى `?_=timestamp`
+- **إصلاح إضافي**: `safeJson` أصبح يقرأ `response.text()` ويحلل JSON يدوياً بدلاً من التحقق من `content-type` header
+  - بعض CDN/proxies يحذفون `content-type` header → خطأ "non-JSON" كاذب
+
+### 2. ميزات جديدة
+
+#### تصدير تقرير الإدارة (Admin Report Export)
+- زر "تصدير التقرير" في header لوحة الإدارة
+- يفتح نافذة جديدة مع تقرير منسّق:
+  - إحصائيات (طلبات، إيرادات، متاجر، طلبات اليوم)
+  - جدول المتاجر مع الطلبات والإيرادات
+  - آخر 20 طلب
+- RTL عربي مع تصميم أنيق
+- طباعة تلقائية
+
+#### تحسين لوحة المتاجر (Shops Tab)
+- بحث بالاسم أو الرابط
+- مؤشر حالة (نقطة خضراء/حمراء)
+- شريط حالة ملون أسفل كل بطاقة
+- إحصائيات سريعة (طلبات، إيرادات، طلبات اليوم)
+- شارة الإيرادات
+- عداد: "X من Y متجر"
+
+#### تحسين ملخص الطلب (Step 5)
+- مؤشر تقدم مضغوط مع checkmarks
+- بطاقة ملخص مع حدود متدرجة
+- إضافة رقم الهاتف في التفاصيل
+- بطاقة تأكيد السعر مع خلفية متدرجة
+
+#### زر العودة للأعلى (Back to Top)
+- زر عائم مع تأثير ripple
+- يظهر عند التمرير أكثر من 400px
+- tooltip عربي "العودة للأعلى"
+- يعمل في جميع الصفحات
+
+#### تحسين بحث الهاتف في سجل الطلبات
+- placeholder أوضح: "أدخل رقم هاتفك لعرض طلباتك"
+- تصميم محسّن مع خلفية خفيفة
+
+### 3. تحسينات CSS (v4.9)
+
+- `gradient-border` — حدود متدرجة متحركة للبطاقات المميزة
+- `hover-lift` — رفع عند hover مع ظل (light + dark)
+- `card-entrance` — دخول بطاقات سلس
+- `status-bar` — شريط حالة ملون أسفل البطاقات
+- `list-item-hover` — تفاعل عناصر القوائم
+- `text-value-gradient` — تدرج نصي للقيم (أخضر/بنفسجي)
+- `tag-hover` — تكبير الشارات عند hover
+- `loading-dots` — نقاط تحميل متحركة
+- `grid-auto-fit` — شبكة متجاوبة تلقائية
+- `focus-ring` — حلقة تركيز للوصول
+- `truncate-2` — اقتطاع نص سطرين
+- Dark mode glass card + border hover
+
+### 4. تطبيق CSS على المكونات
+- `widget-fade-in` على tabs
+- `card-hover-glow` على stat cards
+- `text-gradient-section` على عناوين الأقسام
+- `chart-fade-in` على حاويات الرسوم
+- `empty-bounce` على حالات فارغة
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|--------|
+| src/app/page.tsx | fix cacheBust + robust safeJson + export report + shops enhancements + v4.9 |
+| src/app/globals.css | +154 سطر CSS (v4.9 animations) |
+| src/components/app/admin-overview-tab.tsx | +CSS animations (widget-fade-in, card-hover-glow, gradient titles) |
+| src/components/app/admin-shop-card.tsx | +status dot, status-bar, revenue badge, quick stats grid |
+| src/components/app/app-shell.tsx | +back to top button with ripple |
+| src/components/app/new-order-wizard.tsx | +step 5 progress indicator, gradient summary, phone display |
+| src/components/app/order-history.tsx | +enhanced phone lookup UI |
+
+## الإصدارات
+- النسخة: v4.9
+- Commits: d1612cd (features), 2d6184c (robust JSON fix)
+- Vercel Jobs: YQ4vVLg48nuhGXSxYJ7U, 0zi3IskjWOpHmL1yCCAx
+
+## أولويات الجولة القادمة
+1. 🔴 **حرج**: ربط Vercel بـ GitHub يدوياً — الإدمن لا يعمل بكامل طاقته
+2. 🟡 اختبار ميزات v4.9 الجديدة على الموقع الحي
+3. 🟡 إضافة نظام إشعارات في الوقت الحقيقي (WebSocket/SSE)
+4. 🟢 تحسين أداء التحميل — lazy loading + code splitting
+5. 🟢 إضافة تقارير PDF للإحصائيات
+
+## الملاحظات
+- كلمة مرور الإدمن: Admin@2025
+- PIN متجر الريان: 1234
+- Git repo: https://github.com/zellouma2019/tayf-saas
+- Live: https://tayf-saas.vercel.app
