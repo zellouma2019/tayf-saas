@@ -3417,3 +3417,117 @@ Task: QA + إصلاح حرج لتحميل الطلبات + ميزات جديدة
 6. تحسين merchant dashboard على الجوال
 7. إضافة og:image للسوشيال ميديا
 8. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+
+---
+Task ID: qa-fix-round24
+Agent: Main Agent
+Task: QA + ميزات جديدة + تحسينات بصرية + CSS Round 24
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح
+- ✅ صفحة المتجر للزبون تعمل بشكل جيد
+- ✅ تتبع الطلبات يعمل
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ البناء ناجح بدون أخطاء
+- ⚠️ Turso DB لا يزال يعيد 0 صفوف بشكل متقطع (مشكلة أساسية في قاعدة البيانات)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 38 طلب، 27,769 د.ج | ✅ |
+| API الطلبات — يعيد 38 طلب | ✅ |
+| تبويب المتاجر — يعمل | ✅ |
+| صفحة المتجر (/s/al-riyan) | ✅ |
+| أخطاء JavaScript | ✅ لا أخطاء |
+
+## الإصلاحات
+
+### 1. إزالة cache على edge من API الطلبات (حرج)
+**المشكلة**: `s-maxage=3` على Vercel Edge كان يخزّن الاستجوبة الفارغة لمدة 3 ثوانٍ
+**الحل**: تغيير `Cache-Control` إلى `no-store` في `/api/orders` GET
+**الملف**: `src/app/api/orders/route.ts`
+
+### 2. تنظيف معلمات cache-busting
+**الملفات**: `src/app/page.tsx`, `src/components/app/admin-panel.tsx`
+- إزالة `_t=${Date.now()}` غير الضروري (لا يوجد cache الآن)
+
+## الميزات الجديدة
+
+### 1. تغيير الحالة بنقرة واحدة (Status Cycling)
+- النقر على شارة الحالة في جدول الطلبات يُغيّرها للحالة التالية تلقائياً
+- ترتيب الدورة: pending → printing → ready → delivered → cancelled → pending
+- مؤشر شريط صغير (ChevronLeft) يشير لإمكانية التغيير
+- **الملف**: `src/components/app/order-details-row.tsx`
+
+### 2. ذروة الطلب (Peak Hours Chart)
+- رسم بياني يُظهر ذروة الطلب خلال 24 ساعة
+- أعمدة بار بالألوان: بنفسجي للقمة، ذهبي للوقت الحالي، بنفسجي/أبيض للساعات العادية
+- 🔥 يشير للساعة الأكثر نشاطاً مع التسمية
+- عرض بجنب مخطط إيرادات الأسبوع في شبكة
+- **الملف**: `src/components/app/admin-overview-tab.tsx`
+
+### 3. صف ملخص جدول الطلبات (Table Footer)
+- صف سفلي في جدول الطلبات يعرض:
+  - عدد الطلبات المعروضة
+  - المجموع الإجمالي للأسعار
+  - إجمالي الربح (هامش على الشاشات الكبيرة)
+- **الملف**: `src/components/app/admin-panel.tsx`
+
+### 4. تحسين زر تبديل الوضع الداكن (Theme Toggle)
+- أيقونة الشمس والقمر بتأثير دوران سلس (rotate + scale)
+- انتقال سلس بين الحالتين مع opacity + transform
+- **الملف**: `src/components/app/theme-toggle.tsx`
+
+## CSS Round 24 (+220 سطر)
+
+### تحسينات النظام
+- **smooth theme transition**: انتقال سلس لجميع العناصر عند تغيير الوضع (200ms)
+- **no-theme-transition**: class لاستثناء العناصر من التأثير
+- **theme-transition-smooth**: class لانتقال أبطأ (300ms)
+
+### تأثيرات بصرية جديدة
+- **scroll-shadow-top/bottom**: ظلال تدرج عند التمرير في الحاويات القابلة
+- **glass-card-refined**: بطاقة زجاجية محسّنة مع backdrop-filter
+- **table-row-interactive**: صف جدول مع تأثير ظل داخلي عند التمرير
+- **card-elevated**: بطاقة ترتفع مع ظل متعدد الطبقات
+- **text-animated-gradient**: نص متدرج متحرك
+- **subtle-float**: حركة طفو خفيفة
+- **skeleton-card**: هيكل عظمي بتدرج 135°
+- **status-dot-ring**: نقطة حالة مع حلقة حولها
+- **hover-scale-micro**: تكبير/تصغير خفيف عند التمرير
+- **gradient-divider**: فاصل خطي متدرج
+- **tab-indicator-active**: مؤشر التبويب النشط
+- **badge-gradient**: شارة بتدرج لون
+- **focus-visible-ring**: حلقة تركيز عند التركيز
+- **pb-safe**: padding آمن للأجهزة المحمولة
+
+### تحسينات الطباعة
+- **print styles**: أنماط طباعة محسّنة (إخفاء الظلال)
+- **pb-safe**: padding آمن ل notch الأجهزة
+
+### الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/api/orders/route.ts` | Cache-Control: no-store |
+| `src/app/page.tsx` | تنظيف cache-busting |
+| `src/components/app/admin-panel.tsx` | fetchOrdersWithRetry cleaned + TableFooter |
+| `src/components/app/order-details-row.tsx` | Clickable status cycling |
+| `src/components/app/admin-overview-tab.tsx` | PeakHoursChart + grid layout |
+| `src/components/app/theme-toggle.tsx` | Sun/Moon rotation animation |
+| `src/app/globals.css` | CSS Round 24 +220 سطر |
+
+## Commits
+- 6de42ed: feat(r24): clickable status cycling, peak hours chart, table footer totals, theme toggle animation, CSS R24
+- bfb3aee: fix(r24): remove edge cache from orders API (no-store) — fixes stale empty response issue
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ UPLOADTHING_TOKEN في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB (مشكلة أساسية — استعلامات تعيد 0 صفوف بشكل متقطع)
+3. SEO structured data (JSON-LD) للصفحات الرئيسية
+4. سلة مشتريات متعددة الخدمات
+5. ملاحظات DB-based للطلبات
+6. تحسين merchant dashboard على الجوال
+7. إضافة og:image للسوشيال ميديا
+8. تحسينات على حاسبة الأسعار
