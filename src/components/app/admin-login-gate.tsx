@@ -205,7 +205,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
-      <Card className="w-full max-w-sm shadow-2xl border-border backdrop-blur-sm bg-card/80 relative z-10 overflow-hidden">
+      <Card className="w-full max-w-sm shadow-2xl border-border backdrop-blur-sm bg-card/80 relative z-10 overflow-hidden animated-gradient-border">
         {/* Animated gradient overlay */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-br from-violet-500/20 via-transparent to-amber-500/20 pointer-events-none"
@@ -314,7 +314,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-gradient-to-l from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.97] transition-all duration-150 focus-visible:ring-2 focus-visible:ring-gold-500/50"
+                  className="w-full h-11 bg-gradient-to-l from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.97] transition-all duration-150 focus-visible:ring-2 focus-visible:ring-gold-500/50 spring-press focus-ring"
                   disabled={verifying || !password.trim()}
                 >
                   {verifying ? (

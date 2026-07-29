@@ -7,6 +7,7 @@ import {
   RotateCcw, LayoutGrid, Settings, Lock, Menu, Download, SlidersHorizontal,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
+import { SystemHealthWidget } from "@/components/app/system-health-widget";
 import * as XLSX from "xlsx";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -286,6 +287,7 @@ export default function SuperAdminPage() {
               <div className="min-w-0"><h1 className="text-sm font-semibold text-foreground truncate">{TAB_TITLES[activeTab] || "لوحة التحكم"}</h1><p className="text-xs text-muted-foreground truncate">{platformName} / {TAB_TITLES[activeTab] || "نظرة عامة"}</p></div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <SystemHealthWidget />
               <ThemeToggle />
               <button onClick={() => setCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
               <button onClick={() => loadAll(false)} className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors relative"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>

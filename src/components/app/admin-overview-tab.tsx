@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { ActivityFeed } from "@/components/app/activity-feed";
 import { QuickStatsOverview } from "@/components/app/quick-stats-overview";
 import { PerformanceScoreWidget } from "@/components/app/performance-score-widget";
+import { StaleOrdersWidget } from "@/components/app/stale-orders-widget";
 
 // ===== Weekly Revenue Mini Bar Chart =====
 function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
@@ -314,6 +315,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
 
       {/* أداء المتاجر */}
       <PerformanceScoreWidget stats={stats} className="fade-in-up fade-in-up-delay-2 card-glow" />
+
+      {/* تنبيه الطلبات المتأخرة */}
+      <StaleOrdersWidget stats={stats} onRefresh={() => {}} />
 
       {/* آخر الطلبات + النشاط */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

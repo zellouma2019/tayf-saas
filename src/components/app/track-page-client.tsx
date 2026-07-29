@@ -257,7 +257,7 @@ export function TrackPageClient() {
                   onValueChange={setSelectedShop}
                   disabled={shopsLoading || shops.length === 0}
                 >
-                  <SelectTrigger className="w-full h-11 text-sm focus-visible:ring-gold-500/30 focus-visible:border-gold-500">
+                  <SelectTrigger className="w-full h-11 text-sm focus-visible:ring-gold-500/30 focus-visible:border-gold-500 focus-ring">
                     <SelectValue
                       placeholder={
                         shopsLoading

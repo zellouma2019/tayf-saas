@@ -83,26 +83,29 @@ function ShopLoader() {
     <div className="min-h-screen flex items-center justify-center bg-background animate-fade-in" dir="rtl">
       <div className="max-w-md w-full mx-auto p-8 text-center space-y-6">
         {/* Logo placeholder with pulse */}
-        <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 skeleton-shimmer flex items-center justify-center">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 skeleton-shimmer" />
+        <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 skeleton-sweep flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 skeleton-sweep" style={{ animationDelay: "0.2s" }} />
         </div>
         {/* Title skeleton */}
         <div className="space-y-3">
-          <Skeleton className="h-6 w-3/4 mx-auto rounded-lg" />
-          <Skeleton className="h-4 w-1/2 mx-auto rounded-lg" />
+          <Skeleton className="h-6 w-3/4 mx-auto rounded-lg skeleton-sweep" />
+          <Skeleton className="h-4 w-1/2 mx-auto rounded-lg skeleton-sweep" style={{ animationDelay: "0.1s" }} />
         </div>
         {/* Service cards skeleton */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 rounded-xl bg-card border border-border space-y-2">
-              <Skeleton className="h-8 w-8 rounded-lg mx-auto" />
-              <Skeleton className="h-3 w-3/4 mx-auto rounded" />
-              <Skeleton className="h-2 w-1/2 mx-auto rounded" />
+            <div key={i} className="p-4 rounded-xl bg-card border border-border space-y-2 fade-slide-up" style={{ animationDelay: `${i * 0.08}s` }}>
+              <Skeleton className="h-8 w-8 rounded-lg mx-auto skeleton-sweep" style={{ animationDelay: `${i * 0.1}s` }} />
+              <Skeleton className="h-3 w-3/4 mx-auto rounded skeleton-sweep" style={{ animationDelay: `${i * 0.1 + 0.1}s` }} />
+              <Skeleton className="h-2 w-1/2 mx-auto rounded skeleton-sweep" style={{ animationDelay: `${i * 0.1 + 0.2}s` }} />
             </div>
           ))}
         </div>
         {/* Loading text */}
-        <p className="text-xs text-muted-foreground animate-pulse-slow">جاري تحميل المتجر...</p>
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <span className="status-pulse inline-block w-1.5 h-1.5 rounded-full bg-primary" />
+          <span className="animate-pulse-slow">جاري تحميل المتجر...</span>
+        </div>
       </div>
     </div>
   );
@@ -111,9 +114,11 @@ function ShopLoader() {
 function ShopNotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full text-center">
-        <CardContent className="py-12">
-          <Store className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+      <Card className="max-w-md w-full text-center card-textured">
+        <CardContent className="py-12 px-6">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+            <Store className="h-8 w-8 text-muted-foreground/50" />
+          </div>
           <h2 className="text-xl font-bold mb-2 text-foreground">المتجر غير موجود</h2>
           <p className="text-sm text-muted-foreground">
             تأكد من صحة الرابط أو تواصل مع صاحب المتجر
