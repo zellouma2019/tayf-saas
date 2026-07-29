@@ -7602,3 +7602,96 @@ Task: تقييم المشروع + اختبار QA + إصلاح Turso retry + م�
 3. اختبار retry logic — تأكد من تقليل حالات البيانات الفارغة
 4. إضافة ميزة تصدير البيانات من لوحة تحكم التاجر
 5. تحسين أداء لوحة التاجر على الجوال
+
+---
+Task ID: round-51-restore
+Agent: Main Agent (Cron Agent Loop)
+Task: استعادة تبويبات لوحة الإدارة المحذوفة — نظرة عامة، إعدادات، أمان، إعدادات المنصة
+
+## حالة المشروع الحالية
+- ✅ Build ناجح بدون أخطاء (0 errors, 0 warnings)
+- ✅ Lint ناجح بدون أخطاء (0 errors)
+- ✅ تم رفع التعديلات إلى GitHub (commit 3138bb4)
+- ⚠️ Dev server (Turbopack) يواجه مشكلة موارد في الـ sandbox — لكن Build يعمل
+
+## المشكلة المُكتشفة
+
+### التنظيف المفرط في commits سابقة
+في commit `8959a72` و `9b55c4f`، تم حذف大量的 الميزات من لوحة الإدارة:
+
+**ما تم حذفه في `8959a72`:**
+- `OverviewTab` — نظرة عامة غنية بـ 19 widget
+- `SettingsTab` — إعدادات الخدمات والتوصيل والإعدادات العامة
+- `SecurityTab` — تغيير كلمة المرور + إدارة الفريق
+- `PlatformSettingsTab` — إعدادات المنصة (الشعار، الاسم، الألوان، SEO)
+- Dashboard sidebar
+- XLSX export
+- Sorting functionality
+- Session caching
+
+**ما تم حذفه في `9b55c4f`:**
+- 50 widget components (~7,195 سطر) — لكن أغلبها كان يعرض بيانات demo/mock
+
+## الميزات المُستعادة
+
+### 1. تبويب نظرة عامة (OverviewTab) — 19 widget حقيقي
+- Activity Feed (آخر النشاطات)
+- Quick Stats Overview (إحصائيات سريعة)
+- Performance Score Widget (نقاط الأداء)
+- Stale Orders Widget (طلبات قديمة)
+- Audit Trail (سجل التدقيق)
+- Orders Heatmap (خريطة حرارية للطلبات)
+- Daily Target Ring (حلقة الهدف اليومي)
+- Weekly Report Chart (رسم أسبوعي)
+- Shop Activity Feed (نشاط المتاجر)
+- Revenue Forecast Widget (توقع الإيرادات)
+- Quick Stats Row (صف الإحصائيات)
+- Production Efficiency Dashboard (كفاءة الإنتاج)
+- Metric Comparison Grid (مقارنة المؤشرات)
+- Live Activity Feed (نشاط مباشر)
+- Daily Goal Tracker (متتبع الأهداف)
+- Order Status Timeline (جدول حالات الطلب)
+- Staff Activity Widget (نشاط الموظفين)
+- Top Services Widget (أفضل الخدمات)
+- Customer Stats Widget (إحصائيات الزبائن)
+
+### 2. تبويب الإعدادات (SettingsTab)
+- إعدادات الخدمات (JSON editor)
+- خيارات التوصيل
+- الإعدادات العامة
+- حفظ وإعادة تحميل
+
+### 3. تبويب الأمان (SecurityTab)
+- تغيير كلمة المرور مع مؤشر القوة
+- إدارة أعضاء الفريق (إضافة/حذف/أدوار)
+- عرض آخر تسجيل دخول
+
+### 4. تبويب إعدادات المنصة (PlatformSettingsTab)
+- اسم المنصة والشعار (فاتح/داكن)
+- الشعار المفضل (favicon)
+- الألوان الرئيسية
+- معلومات الاتصال (بريد، هاتف، واتساب)
+- الوصف وعلامات SEO
+- وضع الصيانة
+- تكامل واتساب
+- الروابط الاجتماعية
+- إعدادات اللغة والعملة
+
+## لوحة تحكم التاجر — لم تتأثر
+- ✅ 10 تبويبات: home, orders, analytics, customers, expenses, settings, advancedSettings, share, preview
+- ✅ 3657 سطر — بدون أي تغيير
+- ✅ جميع الميزات سليمة
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/page.tsx` | إعادة استيراد OverviewTab, SettingsTab, SecurityTab, PlatformSettingsTab + تحديث activeTab إلى string |
+
+## Commit
+- `3138bb4`: fix: restore admin dashboard tabs — overview, settings, security, platform settings
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إعادة ربط Vercel بـ GitHub (أولوية قصوى - 8+ commits في الانتظار)
+2. اختبار التبويبات المُستعادة على الموقع الحي (بعد النشر)
+3. مراجعة الـ 50 widget المحذوفة — إعادة التي تعمل ببيانات حقيقية
+4. تحسين الأداء: تقليص عدد components في OverviewTab أو استخدام lazy loading
