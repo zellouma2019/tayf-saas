@@ -636,7 +636,7 @@ export function MerchantOrderDetail({
               مواصفات الطباعة
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {Object.entries(order.options)
+              {Object.entries(order.options || {})
                 .filter(
                   ([k, v]) =>
                     v !== undefined &&
