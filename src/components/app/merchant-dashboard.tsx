@@ -888,10 +888,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
         {/* Decorative grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
         {/* Decorative floating orbs */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-300/10 dark:bg-violet-700/10 rounded-full blur-3xl animate-float-gentle" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-300/10 dark:bg-amber-700/10 rounded-full blur-3xl animate-float-gentle animate-float-gentle-delay-2" />
+        <div className="pointer-events-none absolute top-1/4 left-1/4 w-64 h-64 bg-violet-300/10 dark:bg-violet-700/10 rounded-full blur-3xl animate-float-gentle" />
+        <div className="pointer-events-none absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-300/10 dark:bg-amber-700/10 rounded-full blur-3xl animate-float-gentle animate-float-gentle-delay-2" />
         <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-border relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 glass-card form-card">
           <CardContent className="p-8">
             <div className="text-center mb-8">
