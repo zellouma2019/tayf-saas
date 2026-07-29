@@ -7009,3 +7009,23 @@ Task: إصلاح مشكلة لوحة تحكم الأدمن (اختفاء + بي�
 3. إصلاح مشكلة رفع الملفات (UPLOADTHING_TOKEN)
 4. تنظيف المكونات الوهمية غير المستخدمة من المشروع
 5. تقليل حجم globals.css بشكل أكبر
+
+---
+Task ID: Admin-Page-Restore
+Agent: Main Agent
+Task: إصلاح لوحة تحكم الأدمن التي اختفت واستُبدلت بصفحة الجولة 42
+
+Work Log:
+- حلّلت لقطة الشاشة المرفقة: تأكد أن الصفحة الرئيسية تعرض "مكونات الجولة 42" بدلاً من لوحة تحكم الأدمن
+- فحصت git history ووجدت أن page.tsx استُبدلت في commit 4726558 (feat r42) بصفحة عرض المكونات الجديدة
+- استعدت page.tsx من commit 935fcf5 (الإصدار الأخير الذي يحتوي LoginGate)
+- أصلحت المشاكل: حذف SystemHealthWidget (غير موجود)، إصلاح prop interfaces لـ CreateShopDialog و ShopManageCard
+-Lint: 0 errors, 1 warning (غير متعلق)
+- Local test: GET / 200 نجح
+- Pushed to GitHub: commit 37f1f80
+
+Stage Summary:
+- ✅ لوحة تحكم الأدمن عادت للعمل مع LoginGate (كلمة المرور) في الصفحة الرئيسية
+- ✅ تم الدفع إلى GitHub (37f1f80) — Vercel سيُعيد النشر تلقائياً
+- ⚠️ admin-overview-tab.tsx يحتوي ~1414 سطر مع عشرات المكونات المستوردة — قد يسبب بطء في التجميع
+- ⚠️ توجد أخطاء SQLITE_ERROR (duplicate columns) في db-migrations — غير حرجة لكن يجب تنظيفها
