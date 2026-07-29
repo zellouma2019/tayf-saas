@@ -396,6 +396,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [rawOrders, setRawOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState("");
   const [statsLoading, setStatsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -745,6 +746,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   // تحميل كامل (موازي لكن مستقل)
   const loadAll = useCallback(() => {
+    setLastRefreshed(new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }));
     loadStats();
     loadOrders();
     refreshShop();
@@ -1089,6 +1091,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </Button>
+            {lastRefreshed && (
+              <span className="hidden md:inline text-[9px] text-muted-foreground/50 tabular-nums">
+                {lastRefreshed}
+              </span>
+            )}
           </div>
         </header>
 
@@ -1214,6 +1221,45 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </button>
                 ))}
               </div>
+
+              {/* توزيع أنواع الخدمات */}
+              {stats?.serviceCounts && stats.serviceCounts.length > 0 && (
+                <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+                  <CardContent className="pt-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Package className="h-4 w-4 text-gold-400" />
+                      أنواع الخدمات
+                    </h3>
+                    <div className="space-y-2.5">
+                      {stats.serviceCounts
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, 5)
+                        .map((svc) => {
+                          const maxCount = Math.max(...stats.serviceCounts.map(s => s.count), 1);
+                          const pct = Math.round((svc.count / maxCount) * 100);
+                          const svcEmoji: Record<string, string> = { document: "📄", photo: "🖼️", binding: "📚", poster: "🎨", card: "🎫", banner: "🎯" };
+                          return (
+                            <div key={svc.serviceType} className="group">
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="flex items-center gap-1.5 text-muted-foreground group-hover:text-foreground transition-colors">
+                                  <span>{svcEmoji[svc.serviceType] || "📋"}</span>
+                                  <span>{svc.serviceType === "document" ? "مستندات" : svc.serviceType === "photo" ? "صور" : svc.serviceType === "binding" ? "تجليد" : svc.serviceType}</span>
+                                </span>
+                                <span className="tabular-nums font-medium">{svc.count} طلب</span>
+                              </div>
+                              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-l from-gold-500 to-gold-400 rounded-full transition-all duration-700 group-hover:from-gold-400 group-hover:to-gold-300"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* هدف الإيرادات + طابور الطباعة */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3238,6 +3284,26 @@ const OPTION_LABELS: Record<string, string> = {
   posterSize: "حجم الملصق", material: "الخامة", sorting: "الترتيب", extras: "إضافات",
 };
 
+/// شارة عمر الطلب للجوال
+function MobileOrderAgeBadge({ createdAt, status }: { createdAt: string; status: string }) {
+  const ageMs = Date.now() - new Date(createdAt).getTime();
+  const ageHours = ageMs / (1000 * 60 * 60);
+  const ageDays = ageHours / 24;
+
+  if (status === "delivered" || status === "cancelled") return null;
+
+  if (ageHours < 1) {
+    return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">جديد</span>;
+  }
+  if (ageHours < 24) {
+    return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">{Math.floor(ageHours)}س</span>;
+  }
+  if (ageDays < 3) {
+    return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-medium">{Math.floor(ageDays)}ي</span>;
+  }
+  return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-medium badge-pulse">{Math.floor(ageDays)}ي ⚠️</span>;
+}
+
 function MobileOrderCard({
   order,
   onStatusChange,
@@ -3342,7 +3408,10 @@ function MobileOrderCard({
           </div>
         </div>
         <div className="mt-2.5 pt-2.5 border-t border-dark-100 flex items-center justify-between text-xs text-muted-foreground">
-          <span>{formatDateTimeAr(order.createdAt)}</span>
+          <div className="flex items-center gap-1.5">
+            <span>{formatDateTimeAr(order.createdAt)}</span>
+            <MobileOrderAgeBadge createdAt={order.createdAt} status={order.status} />
+          </div>
           <span className={cn("flex items-center gap-1 text-gold-400", expanded && "rotate-90", "transition-transform duration-200")}>
             <ChevronLeft className="h-3.5 w-3.5" />
             {expanded ? "إخفاء" : "عرض التفاصيل"}

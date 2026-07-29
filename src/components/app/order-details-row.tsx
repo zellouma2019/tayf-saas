@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote, Check, Star } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, FileText, Phone, MapPin, Clock, User, Package, RotateCcw, Copy, Printer, StickyNote, Check, Star, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { OrderTags } from "./order-tags";
@@ -67,6 +67,36 @@ interface OrderDetailsRowProps {
   onToggleFavorite?: () => void;
   note?: string;
   onSaveNote?: (note: string) => void;
+}
+
+/// شارة عمر الطلب — تُظهر منذ متى تم الإنشاء
+function OrderAgeBadge({ createdAt, status }: { createdAt: string; status: string }) {
+  const ageMs = Date.now() - new Date(createdAt).getTime();
+  const ageHours = ageMs / (1000 * 60 * 60);
+  const ageDays = ageHours / 24;
+
+  // Don't show badge for delivered/cancelled orders
+  if (status === "delivered" || status === "cancelled") return null;
+
+  // Under 1 hour: green "جديد"
+  if (ageHours < 1) {
+    return <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">جديد</span>;
+  }
+  // 1-24 hours: amber
+  if (ageHours < 24) {
+    return <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">{Math.floor(ageHours)}س</span>;
+  }
+  // 1-3 days: orange with icon
+  if (ageDays < 3) {
+    return <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-medium">{Math.floor(ageDays)}ي</span>;
+  }
+  // 3+ days: red with warning
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-medium badge-pulse">
+      <AlertTriangle className="h-2.5 w-2.5" />
+      {Math.floor(ageDays)}ي
+    </span>
+  );
 }
 
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
@@ -611,7 +641,10 @@ function TableRowInner({
         </button>
       </TableCell>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
-        {formatDateTimeAr(order.createdAt)}
+        <div className="flex items-center gap-1.5">
+          <span>{formatDateTimeAr(order.createdAt)}</span>
+          <OrderAgeBadge createdAt={order.createdAt} status={order.status} />
+        </div>
       </TableCell>
       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-center gap-0.5">
