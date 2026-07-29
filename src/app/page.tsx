@@ -51,6 +51,8 @@ import { SettingsTab } from "@/components/app/admin-settings-tab";
 import { SecurityTab } from "@/components/app/admin-security-tab";
 import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
 import { AdminErrorBoundary } from "@/components/app/error-boundary";
+import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
+import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
 
 const BUILD_HASH = "v4.6-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.6";
 
@@ -267,8 +269,66 @@ export default function SuperAdminPage() {
     return true;
   }
 
-  // Filter orders
+  // Safe data refs
   const safeOrders = Array.isArray(allOrders) ? allOrders : [];
+  const pendingCount = safeOrders.filter(o => o.status === "pending").length;
+
+  // Notification state
+  const [notifEvents, setNotifEvents] = useState<Array<{
+    id: string;
+    message: string;
+    type: 'order_new' | 'order_status' | 'system' | 'info';
+    time: string;
+    shopName?: string;
+  }>>([]);
+
+  // Generate notification events from orders
+  useEffect(() => {
+    const events: typeof notifEvents = [];
+    const recent = safeOrders.slice(0, 8);
+    recent.forEach((o) => {
+      if (o.status === "pending") {
+        events.push({
+          id: `new-${o.id}`,
+          message: `طلب جديد #${o.reference} — ${o.serviceName}`,
+          type: "order_new",
+          time: o.createdAt,
+          shopName: o.shopName,
+        });
+      } else if (o.status === "completed" || o.status === "delivered") {
+        events.push({
+          id: `done-${o.id}`,
+          message: `تم إنجاز الطلب #${o.reference}`,
+          type: "order_status",
+          time: o.createdAt,
+          shopName: o.shopName,
+        });
+      } else {
+        events.push({
+          id: `status-${o.id}`,
+          message: `طلب #${o.reference} — حالة: ${STATUS_META[o.status]?.label || o.status}`,
+          type: "info",
+          time: o.createdAt,
+          shopName: o.shopName,
+        });
+      }
+    });
+    if (pendingCount > 3) {
+      events.unshift({
+        id: "system-queue",
+        message: `${pendingCount} طلب معلق بانتظار المعالجة`,
+        type: "system",
+        time: new Date().toISOString(),
+      });
+    }
+    setNotifEvents(events);
+  }, [safeOrders, pendingCount]);
+
+  const handleMarkAllRead = useCallback(() => {
+    setNotifEvents([]);
+  }, []);
+
+  // Filter orders
   const filteredOrders = safeOrders.filter((o) => {
     if (statusFilter !== "all" && o.status !== statusFilter) return false;
     if (shopFilter !== "all") {
@@ -384,15 +444,12 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {/* Notification bell with pending count */}
-            {safeOrders.filter(o => o.status === "pending").length > 0 && (
-              <button className="relative p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors bell-urgent">
-                <Bell className="h-4 w-4" />
-                <span className="absolute -top-0.5 left-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
-                  {safeOrders.filter(o => o.status === "pending").length}
-                </span>
-              </button>
-            )}
+            {/* Notification Center */}
+            <AdminNotificationCenter
+              pendingCount={pendingCount}
+              events={notifEvents}
+              onMarkAllRead={handleMarkAllRead}
+            />
             {/* Data health indicator */}
             {dataHealth.status !== 'healthy' && (
               <div className="flex items-center gap-1 text-[10px] text-muted-foreground admin-tooltip" data-tip={dataHealth.message}>
