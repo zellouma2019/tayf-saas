@@ -1635,7 +1635,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {/* ===== الخطوة 4: مراجعة الطلب ===== */}
         {step === 4 && selectedService && pricing && (
           <div className="space-y-4">
-            <div className="rounded-2xl border bg-card overflow-hidden">
+            <div className="rounded-2xl border bg-card overflow-hidden card-holographic">
               <div className="px-5 py-5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{selectedService.emoji}</span>

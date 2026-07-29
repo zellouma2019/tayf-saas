@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDA, formatDateAr } from "@/lib/print-config";
+import { ExpenseCategoriesBreakdown } from "@/components/app/expense-categories-breakdown";
 
 const CATEGORIES = [
   { value: "paper", label: "ورق", emoji: "📄" },
@@ -379,7 +380,10 @@ function MerchantExpensesInner() {
         ))}
       </div>
 
-      {/* ===== التحميل ===== */}
+      {{/* ===== توزيع المصاريف حسب الفئة ===== */}}
+      <ExpenseCategoriesBreakdown expenses={{expenses}} />
+
+      {{/* ===== التحميل ===== */}}
       {isLoading && (
         <div className="py-16 text-center text-muted-foreground text-sm">
           <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />

@@ -115,6 +115,59 @@ function useEtaCountdown(estimatedHours: number, createdAt: string, status: stri
   return { timeLeft, progress };
 }
 
+
+/* ===== بطاقة ملخص حالات الطلبات ===== */
+function OrderStatusSummaryCard({ orders }: { orders: PrintOrderLite[] }) {
+  const pending = orders.filter((o) => o.status === "pending").length;
+  const ready = orders.filter((o) => o.status === "ready").length;
+  const completed = orders.filter((o) => o.status === "delivered").length;
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="h-1 bg-gradient-to-l from-violet-500 to-violet-400" />
+          <CardContent className="p-3.5 text-center">
+            <Package className="h-5 w-5 text-violet-500 mx-auto mb-1.5" />
+            <p className="text-lg font-bold tabular-nums text-foreground">{orders.length}</p>
+            <p className="text-[11px] text-muted-foreground">إجمالي الطلبات</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="h-1 bg-gradient-to-l from-amber-500 to-amber-400" />
+          <CardContent className="p-3.5 text-center">
+            <Hourglass className="h-5 w-5 text-amber-500 mx-auto mb-1.5" />
+            <p className="text-lg font-bold tabular-nums text-amber-600 dark:text-amber-400">{pending}</p>
+            <p className="text-[11px] text-muted-foreground">قيد الانتظار</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="h-1 bg-gradient-to-l from-emerald-500 to-emerald-400" />
+          <CardContent className="p-3.5 text-center">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto mb-1.5" />
+            <p className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{ready}</p>
+            <p className="text-[11px] text-muted-foreground">جاهز للاستلام</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="h-1 bg-gradient-to-l from-sky-500 to-sky-400" />
+          <CardContent className="p-3.5 text-center">
+            <Truck className="h-5 w-5 text-sky-500 mx-auto mb-1.5" />
+            <p className="text-lg font-bold tabular-nums text-sky-600 dark:text-sky-400">{completed}</p>
+            <p className="text-[11px] text-muted-foreground">تم التسليم</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}
+
 export function TrackPageClient() {
   const searchParams = useSearchParams();
   const prefillRef = searchParams.get("ref") || "";
@@ -243,7 +296,7 @@ export function TrackPageClient() {
         </div>
 
         {/* === Search Form === */}
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm form-card">
           <CardContent className="p-4 sm:p-5">
             <form onSubmit={handleSearch} className="space-y-3">
               {/* Shop Selector */}
@@ -285,7 +338,7 @@ export function TrackPageClient() {
                   رقم الطلب أو رقم الهاتف
                 </label>
                 <div className="flex gap-2">
-                  <div className="relative flex-1 search-input-enhanced rounded-xl">
+                  <div className="relative flex-1 search-input-enhanced rounded-xl input-animated-border">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={query}
@@ -385,7 +438,7 @@ export function TrackPageClient() {
         <AnimatePresence>
           {!loading && orders.length > 0 && (
             <motion.div
-              className="space-y-4"
+              className="space-y-4 animate-in"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: "easeOut" }}

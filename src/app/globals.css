@@ -6739,3 +6739,917 @@ textarea:focus::placeholder {
 :is(.dark) .text-shadow-lg {
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
 }
+
+/* ===========================================================
+   الجولة 30 — CSS Round 30
+   تأثيرات بطاقات متقدمة، نصوص، تنقل، نماذج، جداول، بيانات، تحميل
+   =========================================================== */
+
+/* ----------------------------------------------------------
+   1. تأثيرات بطاقات متقدمة — Advanced Card Effects
+   ---------------------------------------------------------- */
+
+/* خاصية مخصصة لتحريك التدرج */
+@property --card-gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* بطاقة بزجاجية فاخرة — Premium glassmorphism */
+.card-glass-morphism {
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+.card-glass-morphism::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(212, 168, 83, 0.4), rgba(124, 58, 237, 0.2), rgba(212, 168, 83, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+:is(.dark) .card-glass-morphism {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* بطاقة هولوغرافية — Holographic rainbow shimmer on hover */
+.card-holographic {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+.card-holographic::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(212, 168, 83, 0.12),
+    rgba(124, 58, 237, 0.12),
+    rgba(6, 182, 212, 0.12),
+    rgba(236, 72, 153, 0.12),
+    rgba(212, 168, 83, 0.12)
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  animation: holographic-rotate 4s linear infinite;
+}
+.card-holographic:hover::after {
+  opacity: 1;
+}
+@keyframes holographic-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* بطاقة بإطار متدرج متحرك — Animated gradient border */
+.card-gradient-border {
+  --card-gradient-angle: 0deg;
+  position: relative;
+  background: var(--card, white);
+  border-radius: 1rem;
+}
+.card-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--card-gradient-angle),
+    hsl(262 83% 58%),
+    hsl(38 92% 50%),
+    hsl(199 89% 48%),
+    hsl(262 83% 58%)
+  );
+  z-index: -1;
+  animation: gradient-border-spin 3s linear infinite;
+}
+.card-gradient-border::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background: var(--card, white);
+  z-index: -1;
+}
+:is(.dark) .card-gradient-border::after {
+  background: var(--card, hsl(240 10% 8%));
+}
+@keyframes gradient-border-spin {
+  to { --card-gradient-angle: 360deg; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card-gradient-border::before {
+    animation: gradient-border-spin 3s linear infinite;
+  }
+}
+
+/* بطاقات مكدسة — Stacked cards with offset on hover */
+.card-stack {
+  position: relative;
+}
+.card-stack::before,
+.card-stack::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 100%;
+  border-radius: 1rem;
+  background: var(--card, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: -1;
+}
+.card-stack::before {
+  transform: translateY(6px);
+  opacity: 0.5;
+}
+.card-stack::after {
+  transform: translateY(12px);
+  opacity: 0.3;
+}
+.card-stack:hover::before {
+  transform: translateY(4px) scale(0.98);
+  opacity: 0.4;
+}
+.card-stack:hover::after {
+  transform: translateY(8px) scale(0.96);
+  opacity: 0.2;
+}
+
+/* بطاقة بتأثير بقعة ضوء — Mouse-following spotlight (CSS only) */
+.card-spotlight {
+  position: relative;
+  overflow: hidden;
+}
+.card-spotlight::before {
+  content: '';
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(212, 168, 83, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  top: var(--spotlight-y, 50%);
+  left: var(--spotlight-x, 50%);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.card-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------
+   2. تأثيرات نصوص محسّنة — Enhanced Text Effects
+   ---------------------------------------------------------- */
+
+/* نص بتدرج متحرك مستمر — Continuously animated gradient text */
+.text-gradient-animated {
+  background: linear-gradient(
+    90deg,
+    hsl(262 83% 58%),
+    hsl(38 92% 50%),
+    hsl(199 89% 48%),
+    hsl(262 83% 58%)
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-text-shift 4s ease-in-out infinite;
+}
+@keyframes gradient-text-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* نص بتوهج ناعم — Text with soft glow */
+.text-glow {
+  text-shadow:
+    0 0 8px rgba(124, 58, 237, 0.3),
+    0 0 20px rgba(124, 58, 237, 0.15),
+    0 0 40px rgba(124, 58, 237, 0.05);
+}
+:is(.dark) .text-glow {
+  text-shadow:
+    0 0 12px rgba(124, 58, 237, 0.5),
+    0 0 30px rgba(124, 58, 237, 0.25),
+    0 0 50px rgba(124, 58, 237, 0.1);
+}
+
+/* نص محدد بالحدود — Text with outline/stroke */
+.text-stroke {
+  -webkit-text-stroke: 1.5px currentColor;
+  -webkit-text-fill-color: transparent;
+}
+
+/* نص يظهر بتأثير ضبابي — Text blurs in on load */
+.text-blur-in {
+  animation: blur-in 0.6s ease forwards;
+}
+@keyframes blur-in {
+  from {
+    filter: blur(8px);
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* حاوية عرض العدادات — Container for count-up numbers */
+.text-count-up {
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+}
+
+/* ----------------------------------------------------------
+   3. تحسينات التنقل والقوائم — Navigation & Menu Enhancements
+   ---------------------------------------------------------- */
+
+/* عنصر تنقل بحبوية — Pill-style nav item */
+.nav-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  color: var(--muted-foreground, #888);
+  background: transparent;
+}
+.nav-pill:hover {
+  background: var(--accent, rgba(124,58,237,0.08));
+  color: var(--foreground, #000);
+}
+.nav-pill.nav-pill-active,
+.nav-pill[aria-current="true"],
+.nav-pill[data-active="true"] {
+  background: var(--color-primary, hsl(262 83% 58%));
+  color: white;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+}
+
+/* شارة تراكب على التنقل — Badge overlay with bounce */
+.nav-badge {
+  position: relative;
+}
+.nav-badge::after {
+  content: attr(data-badge);
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: hsl(0 84% 60%);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.nav-badge:active::after {
+  animation: badge-bounce 0.3s ease;
+}
+@keyframes badge-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+/* درج تنقل منزلق — Slide-in drawer navigation */
+.nav-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  visibility: hidden;
+}
+.nav-drawer.nav-drawer-open {
+  pointer-events: auto;
+  visibility: visible;
+}
+.nav-drawer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.nav-drawer-open::before {
+  opacity: 1;
+}
+.nav-drawer-content {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  width: min(320px, 85vw);
+  height: 100%;
+  background: var(--card, white);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+[dir="rtl"] .nav-drawer-content {
+  transform: translateX(-100%);
+}
+.nav-drawer-open .nav-drawer-content {
+  transform: translateX(0);
+}
+
+/* فاصل مسار التنقل بتصميم متدرج — Breadcrumb separator */
+.nav-breadcrumb-separator {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  background: linear-gradient(135deg, var(--muted-foreground), var(--primary, hsl(262 83% 58%)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* شريط تنقل سفلي للجوال — Fixed bottom nav for mobile */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  background: var(--card, white);
+  border-top: 1px solid var(--border, rgba(0,0,0,0.08));
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 56px;
+}
+:is(.dark) .mobile-bottom-nav {
+  background: hsl(240 10% 8%);
+  border-top-color: rgba(255,255,255,0.06);
+}
+
+/* ----------------------------------------------------------
+   4. تحسينات النماذج والمدخلات — Form & Input Enhancements
+   ---------------------------------------------------------- */
+
+/* مدخل بإطار متدرج عند التركيز — Animated gradient border on focus */
+.input-animated-border {
+  position: relative;
+  border-radius: 0.75rem;
+}
+.input-animated-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    hsl(262 83% 58%),
+    hsl(38 92% 50%),
+    hsl(199 89% 48%),
+    hsl(262 83% 58%)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  animation: gradient-border-spin 3s linear infinite;
+}
+.input-animated-border:focus-within::before {
+  opacity: 1;
+}
+
+/* مدخل بتسمية عائمة — Floating label input */
+.input-floating-label {
+  position: relative;
+}
+.input-floating-label input,
+.input-floating-label textarea {
+  padding-top: 1.5rem;
+}
+.input-floating-label label {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  transition: all 0.2s ease;
+  transform-origin: right center;
+}
+[dir="ltr"] .input-floating-label label {
+  right: auto;
+  left: 0.75rem;
+  transform-origin: left center;
+}
+.input-floating-label input:focus ~ label,
+.input-floating-label input:not(:placeholder-shown) ~ label,
+.input-floating-label textarea:focus ~ label,
+.input-floating-label textarea:not(:placeholder-shown) ~ label {
+  top: 0.55rem;
+  transform: translateY(0) scale(0.75);
+  color: var(--color-primary, hsl(262 83% 58%));
+  font-weight: 600;
+}
+
+/* مجموعة مدخلات متصلة — Grouped inputs */
+.input-group {
+  display: flex;
+}
+.input-group > * {
+  border-radius: 0;
+}
+.input-group > *:first-child {
+  border-start-start-radius: 0.75rem;
+  border-end-start-radius: 0.75rem;
+}
+.input-group > *:last-child {
+  border-start-end-radius: 0.75rem;
+  border-end-end-radius: 0.75rem;
+}
+[dir="rtl"] .input-group > *:first-child {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: 0.75rem;
+  border-end-end-radius: 0.75rem;
+}
+[dir="rtl"] .input-group > *:last-child {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  border-start-start-radius: 0.75rem;
+  border-end-start-radius: 0.75rem;
+}
+.input-group > * + * {
+  border-inline-start: 0;
+}
+
+/* مدخل بأيقونة متحركة — Icon animates on focus */
+.input-icon-animated {
+  position: relative;
+}
+.input-icon-animated > svg,
+.input-icon-animated .input-icon {
+  transition: color 0.25s ease, transform 0.25s ease;
+  color: var(--muted-foreground);
+}
+.input-icon-animated:focus-within > svg,
+.input-icon-animated:focus-within .input-icon {
+  color: var(--color-primary, hsl(262 83% 58%));
+  transform: scale(1.15);
+}
+
+/* بطاقة نموذج — Form container card */
+.form-card {
+  background: var(--card, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.form-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border, rgba(0,0,0,0.08));
+  background: var(--muted, rgba(0,0,0,0.03));
+}
+.form-card-section {
+  padding: 1.5rem;
+}
+:is(.dark) .form-card {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.06);
+}
+:is(.dark) .form-card-header {
+  background: rgba(255,255,255,0.03);
+}
+
+/* ----------------------------------------------------------
+   5. تحسينات الجداول — Table Enhancements
+   ---------------------------------------------------------- */
+
+/* جدول حديث بزوايا مستديرة — Modern rounded table */
+.table-modern {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.table-modern thead {
+  background: var(--muted, rgba(0,0,0,0.03));
+}
+.table-modern th {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+.table-modern td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border, rgba(0,0,0,0.06));
+  font-size: 0.875rem;
+}
+.table-modern tbody tr {
+  transition: background-color 0.15s ease;
+}
+.table-modern tbody tr:hover {
+  background: rgba(124, 58, 237, 0.03);
+}
+:is(.dark) .table-modern tbody tr:hover {
+  background: rgba(124, 58, 237, 0.06);
+}
+
+/* رأس قابل للترتيب — Sortable column header */
+.table-sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.table-sortable::after {
+  content: '⇅';
+  margin-right: 0.5rem;
+  opacity: 0.3;
+  font-size: 0.7rem;
+}
+[dir="rtl"] .table-sortable::after {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+.table-sortable:hover::after {
+  opacity: 0.6;
+}
+.table-sortable[aria-sort="ascending"]::after {
+  content: '↑';
+  opacity: 0.8;
+}
+.table-sortable[aria-sort="descending"]::after {
+  content: '↓';
+  opacity: 0.8;
+}
+
+/* صف قابل للتوسيع — Expandable row */
+.table-expandable-row {
+  display: none;
+}
+.table-expandable-row.table-expandable-open {
+  display: table-row;
+  animation: row-expand 0.25s ease;
+}
+@keyframes row-expand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* رأس جدول ثابت — Sticky header */
+.table-sticky-header thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--card, white);
+}
+:is(.dark) .table-sticky-header thead {
+  background: hsl(240 10% 8%);
+}
+
+/* خلية مقطوعة مع تلميح — Truncated cell with tooltip on hover */
+.table-cell-truncate {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+}
+.table-cell-truncate:hover {
+  overflow: visible;
+  white-space: normal;
+  max-width: none;
+}
+
+/* ----------------------------------------------------------
+   6. الرسوم البيانية وتصور البيانات — Chart & Data Visualization
+   ---------------------------------------------------------- */
+
+/* حاوية رسم بياني — Styled chart container */
+.chart-container {
+  padding: 1.25rem;
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 1rem;
+  background: var(--card, white);
+}
+:is(.dark) .chart-container {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* وسيلة إيضاح الرسم البياني — Chart legend */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+.chart-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* تلميح الرسم البياني — Chart tooltip */
+.chart-tooltip {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--popover, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+:is(.dark) .chart-tooltip {
+  background: hsl(240 10% 10%);
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* شبكة بيانات — CSS Grid data display */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+/* بطاقة بيانات مصغرة — Mini data card for dashboards */
+.data-card-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--card, white);
+  border: 1px solid var(--border, rgba(0,0,0,0.06));
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.data-card-mini:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.data-card-mini-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.data-card-mini-label {
+  font-size: 0.65rem;
+  color: var(--muted-foreground);
+  line-height: 1.3;
+}
+:is(.dark) .data-card-mini {
+  background: hsl(240 10% 8%);
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* ----------------------------------------------------------
+   7. التحميل والتقدم — Loading & Progress
+   ---------------------------------------------------------- */
+
+/* محمل حلقة دوّارة — CSS-only spinning ring loader */
+.loader-ring {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border, rgba(0,0,0,0.1));
+  border-top-color: var(--color-primary, hsl(262 83% 58%));
+  border-radius: 50%;
+  animation: loader-ring-spin 0.8s linear infinite;
+}
+@keyframes loader-ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* محمل نقاط متحركة — Animated dots loader */
+.loader-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.loader-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary, hsl(262 83% 58%));
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+.loader-dots span:nth-child(2) { animation-delay: 0.15s; }
+.loader-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* شريط تقدم غير محدد — Indeterminate progress bar */
+.loader-bar-indeterminate {
+  position: relative;
+  height: 4px;
+  width: 100%;
+  background: var(--muted, rgba(0,0,0,0.06));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.loader-bar-indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--color-primary, hsl(262 83% 58%)), transparent);
+  border-radius: inherit;
+  animation: indeterminate-slide 1.5s ease-in-out infinite;
+}
+@keyframes indeterminate-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* هيكل عظمي على شكل بطاقة — Card-shaped skeleton */
+.skeleton-card {
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: var(--muted, rgba(0,0,0,0.04));
+  overflow: hidden;
+}
+.skeleton-card::after {
+  content: '';
+  display: block;
+  width: 60%;
+  height: 12px;
+  margin-top: 1rem;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--muted) 25%, rgba(212,168,83,0.06) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* هيكل عظمي متعدد الأسطر — Multi-line text skeleton */
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.skeleton-text span {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--muted) 25%, rgba(212,168,83,0.06) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+.skeleton-text span:nth-child(1) { width: 100%; }
+.skeleton-text span:nth-child(2) { width: 80%; }
+.skeleton-text span:nth-child(3) { width: 60%; }
+
+/* ----------------------------------------------------------
+   8. أدوات التحوير والحركات — Transition & Animation Utilities
+   ---------------------------------------------------------- */
+
+/* دخول عام — Generic entrance (fade + slide up) */
+.animate-in {
+  animation: anim-in 0.35s ease both;
+}
+@keyframes anim-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* دخول مع تكبير — Entrance with scale */
+.animate-in-scale {
+  animation: anim-in-scale 0.35s ease both;
+}
+@keyframes anim-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* دخول من اليمين — Entrance from right (RTL-aware) */
+.animate-in-slide-right {
+  animation: anim-slide-right 0.3s ease both;
+}
+@keyframes anim-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+[dir="rtl"] .animate-in-slide-right {
+  animation-name: anim-slide-left-rtl;
+}
+@keyframes anim-slide-left-rtl {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* خروج — Exit animation */
+.animate-out {
+  animation: anim-out 0.25s ease both;
+}
+@keyframes anim-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* تكبير عند التمرير — Scale on hover */
+.hover-scale-sm {
+  transition: transform 0.2s ease;
+}
+.hover-scale-sm:hover {
+  transform: scale(1.03);
+}
+.hover-scale-md {
+  transition: transform 0.2s ease;
+}
+.hover-scale-md:hover {
+  transform: scale(1.06);
+}
+.hover-scale-lg {
+  transition: transform 0.2s ease;
+}
+.hover-scale-lg:hover {
+  transform: scale(1.1);
+}
+
+/* ضغط عند النقر — Press/shrink on active */
+.press-sm:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+.press-md:active {
+  transform: scale(0.94);
+  transition: transform 0.1s ease;
+}

@@ -46,6 +46,7 @@ import { PageSkeleton } from "@/components/app/page-skeleton";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Intro } from "@/components/app/intro";
 import { CommandPalette } from "@/components/app/command-palette";
+import { ServicesComparison } from "@/components/app/services-comparison";
 import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { getCountry } from "@/lib/countries";
@@ -398,7 +399,7 @@ export function AppShell() {
             {/* اسم المتجر + السطر الفرعي */}
             <div className="flex flex-col items-start min-w-0 leading-tight">
               <span
-                className="font-extrabold text-base md:text-lg tracking-tight truncate max-w-[45vw] sm:max-w-[280px] transition-all duration-300"
+                className="font-extrabold text-base md:text-lg tracking-tight truncate max-w-[45vw] sm:max-w-[280px] transition-all duration-300 text-glow"
                 style={{
                   color: theme.header.text,
                   fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif",
@@ -435,7 +436,7 @@ export function AppShell() {
               <button
                 key={item.key}
                 onClick={() => handleNavClick(item.key)}
-                className="relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                className="relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors nav-pill hover-scale-sm press-sm"
                 style={{
                   color: isActive ? theme.nav.activeText : theme.header.text,
                 }}
@@ -607,6 +608,8 @@ export function AppShell() {
             </AnimatePresence>
             </Suspense>
           </div>
+n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062eu062fu0645u0627u062a */}
+        {view === "new" && <div className="mb-4"><ServicesComparison /></div>}
         </div>
 
         {/* شريط الإجراءات السريعة */}

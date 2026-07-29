@@ -24,6 +24,7 @@ import { QuickStatsOverview } from "@/components/app/quick-stats-overview";
 import { PerformanceScoreWidget } from "@/components/app/performance-score-widget";
 import { StaleOrdersWidget } from "@/components/app/stale-orders-widget";
 import { AuditTrail } from "@/components/app/audit-trail";
+import { OrdersHeatmap } from "@/components/app/orders-heatmap";
 import { DailyTargetRing } from "@/components/app/daily-target-ring";
 import type { ShopStat } from "@/lib/admin-types";
 
@@ -388,7 +389,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         <div className="relative z-10 p-6 sm:p-8 text-white">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2 text-shadow-sm"><span className="online-dot" /><span className="gradient-primary">مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2 text-shadow-sm"><span className="online-dot" /><span className="gradient-primary text-gradient-animated">مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
               <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
             </div>
             {safeStats.totalOrders > 0 && (
@@ -419,7 +420,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
-        <div className="stat-tile card-glow group card-rotate-3d">
+        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
@@ -429,7 +430,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="stat-tile card-glow group card-rotate-3d">
+        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
@@ -438,7 +439,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <div className="icon-container-emerald group-hover:scale-110 transition-transform shrink-0"><DollarSign className="h-5 w-5" /></div>
           </div>
         </div>
-        <div className="stat-tile card-glow group card-rotate-3d">
+        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
@@ -447,7 +448,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-amber-500/15"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
           </div>
         </div>
-        <div className="stat-tile card-glow group card-rotate-3d">
+        <div className="stat-tile card-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums">
@@ -543,6 +544,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         <WeeklyRevenueChart stats={stats} />
         <PeakHoursChart stats={stats} />
       </div>
+
+      {/* خريطة كثافة الطلبات */}
+      <OrdersHeatmap />
 
       {/* أفضل الزبائن */}
       {(() => {
@@ -665,7 +669,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* آخر الطلبات + النشاط */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Card className="bg-card rounded-xl border border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
               <Activity className="h-4 w-4 text-primary" />
@@ -735,7 +739,7 @@ function PieChartCard({ stats }: { stats: GlobalStats }) {
   const total = stats.totalOrders ?? 0;
   if (total === 0) {
     return (
-      <Card className="bg-card rounded-xl border border-border shadow-sm">
+      <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
             <Activity className="h-4 w-4 text-primary" />
@@ -755,7 +759,7 @@ function PieChartCard({ stats }: { stats: GlobalStats }) {
   const allStatuses = [...STATUS_FLOW, "cancelled"];
   const pieData = allStatuses.map((s) => ({ name: STATUS_META[s]?.label ?? "ملغي", value: stats.statusCounts?.[s] ?? 0, key: s })).filter((d) => d.value > 0);
   return (
-    <Card className="bg-card rounded-xl border border-border shadow-sm">
+    <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <Activity className="h-4 w-4 text-primary" />
@@ -796,7 +800,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
   const shops = stats.shopStats ?? [];
   if (shops.length === 0) {
     return (
-      <Card className="bg-card rounded-xl border border-border shadow-sm">
+      <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
             <TrendingUp className="h-4 w-4 text-primary" />
@@ -814,7 +818,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
   }
   const barData = shops.slice().sort((a, b) => b.revenue - a.revenue).slice(0, 10).map((s) => ({ name: s.name, revenue: s.revenue }));
   return (
-    <Card className="bg-card rounded-xl border border-border shadow-sm">
+    <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <TrendingUp className="h-4 w-4 text-primary" />

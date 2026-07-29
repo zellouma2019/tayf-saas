@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy } from "lucide-react";
+import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy, Check, Printer, Clock, PackageCheck, Truck, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +51,155 @@ interface OrderDetailModalProps {
   open: boolean;
   onClose: () => void;
   onStatusChange: (order: PrintOrderLite, status: string) => void;
+}
+
+/* ===== مسار حالة الطلب المرئي ===== */
+const TIMELINE_STATUSES = [
+  { key: "pending",   label: "بانتظار الطباعة", icon: Clock,       color: "amber" },
+  { key: "confirmed", label: "مؤكد",            icon: Check,       color: "sky" },
+  { key: "printing",  label: "جارٍ التنفيذ",    icon: Printer,     color: "blue" },
+  { key: "ready",     label: "جاهز للاستلام",  icon: PackageCheck, color: "emerald" },
+  { key: "delivered", label: "تم التسليم",      icon: Truck,       color: "emerald" },
+];
+
+function OrderStatusTimeline({ status }: { status: string }) {
+  const isCancelled = status === "cancelled";
+  const currentIndex = TIMELINE_STATUSES.findIndex((s) => s.key === status);
+
+  return (
+    <div className="rounded-xl bg-muted/30 dark:bg-muted/20 border border-border/50 p-4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+        <Clock className="h-3.5 w-3.5" />
+        <span className="font-medium">مسار الطلب</span>
+      </div>
+      {isCancelled ? (
+        <div className="flex items-center justify-center gap-2 py-2">
+          <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+            <XCircle className="h-4 w-4 text-rose-500" />
+          </div>
+          <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">تم إلغاء الطلب</span>
+        </div>
+      ) : (
+        <>
+          {/* === تخطيط أفقي للحاسوب === */}
+          <div className="relative flex items-start justify-between gap-1 max-sm:hidden">
+            {/* خلفية الخط الرابط */}
+            <div className="absolute top-4 right-[10%] left-[10%] h-0.5 bg-muted rounded-full" />
+            {/* الخط المكتمل */}
+            {currentIndex >= 1 && (
+              <div
+                className="absolute top-4 right-[10%] h-0.5 bg-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${(currentIndex / (TIMELINE_STATUSES.length - 1)) * 80}%` }}
+              />
+            )}
+            {TIMELINE_STATUSES.map((step, i) => {
+              const Icon = step.icon;
+              const isCompleted = i < currentIndex;
+              const isCurrent = i === currentIndex;
+              const isFuture = i > currentIndex;
+              const currentColorClass = isCurrent
+                ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
+                  : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
+                  : step.color === "blue" ? "bg-blue-500 border-blue-500 ring-blue-500/30"
+                  : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
+                : "";
+              const currentTextColorClass = isCurrent
+                ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
+                  : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
+                  : step.color === "blue" ? "text-blue-600 dark:text-blue-400"
+                  : "text-emerald-600 dark:text-emerald-400")
+                : "";
+              return (
+                <div key={step.key} className="relative z-10 flex flex-col items-center gap-1.5 progress-step" style={{ width: "20%" }}>
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                      isCompleted && "bg-emerald-500 border-emerald-500",
+                      isCurrent && `border-primary ${currentColorClass} ring-2 ring-offset-2 ring-offset-background status-dot-animated`,
+                      isFuture && "bg-card border-muted-foreground/20"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-3.5 w-3.5 text-white" />
+                    ) : (
+                      <Icon className={cn("h-3.5 w-3.5", isCurrent ? "text-white" : isFuture ? "text-muted-foreground/40" : "text-foreground")} />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-medium text-center leading-tight",
+                    isCurrent && currentTextColorClass,
+                    isCompleted && "text-emerald-600 dark:text-emerald-400",
+                    isFuture && "text-muted-foreground/50"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* === تخطيط عمودي للجوال === */}
+          <div className="sm:hidden space-y-0">
+            {TIMELINE_STATUSES.map((step, i) => {
+              const Icon = step.icon;
+              const isCompleted = i < currentIndex;
+              const isCurrent = i === currentIndex;
+              const isFuture = i > currentIndex;
+              const isLast = i === TIMELINE_STATUSES.length - 1;
+              const currentColorClass = isCurrent
+                ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
+                  : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
+                  : step.color === "blue" ? "bg-blue-500 border-blue-500 ring-blue-500/30"
+                  : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
+                : "";
+              const currentTextColorClass = isCurrent
+                ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
+                  : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
+                  : step.color === "blue" ? "text-blue-600 dark:text-blue-400"
+                  : "text-emerald-600 dark:text-emerald-400")
+                : "";
+              return (
+                <div key={step.key} className="relative flex items-start gap-3 progress-step">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 shrink-0",
+                        isCompleted && "bg-emerald-500 border-emerald-500",
+                        isCurrent && `border-primary ${currentColorClass} ring-2 ring-offset-2 ring-offset-background status-dot-animated`,
+                        isFuture && "bg-card border-muted-foreground/20"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-3.5 w-3.5 text-white" />
+                      ) : (
+                        <Icon className={cn("h-3.5 w-3.5", isCurrent ? "text-white" : isFuture ? "text-muted-foreground/40" : "text-foreground")} />
+                      )}
+                    </div>
+                    {!isLast && (
+                      <div className={cn(
+                        "w-0.5 h-6 rounded-full",
+                        isCompleted || isCurrent ? "bg-emerald-500" : "bg-muted"
+                      )} />
+                    )}
+                  </div>
+                  <div className={cn("pt-1.5", isLast && "pb-1")}>
+                    <span className={cn(
+                      "text-xs font-medium",
+                      isCurrent && currentTextColorClass,
+                      isCompleted && "text-emerald-600 dark:text-emerald-400",
+                      isFuture && "text-muted-foreground/50"
+                    )}>
+                      {step.label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function OrderDetailModal({
@@ -266,6 +415,8 @@ export function OrderDetailModal({
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* ===== مسار حالة الطلب ===== */}
+          <OrderStatusTimeline status={order.status} />
           {/* شريط الحالة + أزرار التواصل السريع */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-xs px-2.5 py-1 rounded-full border ${meta.bg} status-badge-pop`} key={order.status}>

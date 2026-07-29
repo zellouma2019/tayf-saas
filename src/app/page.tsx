@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { SystemHealthWidget } from "@/components/app/system-health-widget";
+import { KeyboardShortcutsOverlay } from "@/components/app/keyboard-shortcuts-overlay";
 import * as XLSX from "xlsx";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,8 @@ export default function SuperAdminPage() {
   const [platformName, setPlatformName] = useState("طيف");
   // قائمة المتاجر الاحتياطية (عند فشل global-stats في إرجاع shopStats)
   const [fallbackShops, setFallbackShops] = useState<ShopStat[]>([]);
+  // حالة نافذة اختصارات لوحة المفاتيح
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // تحميل إعدادات المنصة (الشعار)
   const loadPlatformSettings = useCallback(() => {
@@ -104,6 +107,21 @@ export default function SuperAdminPage() {
     }
     window.addEventListener("platform-settings-updated", onSettingsUpdated);
     return () => window.removeEventListener("platform-settings-updated", onSettingsUpdated);
+  }, []);
+
+  // الاستماع لمفتاح "?" لفتح نافذة الاختصارات
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      // تجاهل إذا كان المستخدم في حقل إدخال
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (e.key === "?" && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        setShortcutsOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const loadStats = useCallback(async (useCache = true) => {
@@ -632,6 +650,9 @@ export default function SuperAdminPage() {
         )}
       </div>
       <CreateShopDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={loadAll} />
+
+      {/* نافذة اختصارات لوحة المفاتيح */}
+      <KeyboardShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }
