@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
-// Vercel: Cache response at edge for 30 seconds, revalidate in background
-export const revalidate = 30;
+// Dynamic — no edge caching (Turso DB returns stale/empty results intermittently)
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const startTime = Date.now();
@@ -29,6 +29,7 @@ export async function GET() {
     ]);
 
     // الاستعلام 2: إحصائيات عامة (بسيط — COUNT + SUM)
+    // Turso DB أحياناً يُرجع SUM=0 → نحسب من statusCounts كـ fallback
     const statsResult = await tursoQuery(`
       SELECT 
         COUNT(*) as totalOrders,
@@ -76,11 +77,13 @@ export async function GET() {
       else if (recentOrdersRaw.length > 0) totalOrders = recentOrdersRaw.length;
     }
 
-    // Fallback 2: إذا كان totalRevenue أرجع 0 (مشكلة CAST)
+    // Fallback 2: إذا كان totalRevenue أرجع 0 (مشكلة CAST/aggregate في Turso)
     if (totalRevenue === 0 && recentOrdersRaw.length > 0) {
       const fromOrders = recentOrdersRaw.reduce((sum, o) => sum + toNum(o.total), 0);
       if (fromOrders > 0) totalRevenue = Math.round(fromOrders);
     }
+
+    // Fallback 2b: لو كلاهما صفر → revenue يبقى 0 (لا بيانات كافية)
 
     // Fallback 3: إذا كان todayOrders أرجع 0 (مشكلة منطقة زمنية)
     if (todayOrders === 0 && recentOrdersRaw.length > 0) {

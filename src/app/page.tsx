@@ -32,7 +32,7 @@ import {
 } from "@/lib/print-config";
 import { cn } from "@/lib/utils";
 import { DashboardSidebar } from "@/components/ui/dashboard-sidebar";
-import type { GlobalStats, GlobalOrder } from "@/lib/admin-types";
+import type { GlobalStats, GlobalOrder, ShopStat } from "@/lib/admin-types";
 import {
   isAuthenticated, verifySession, adminFetch, robustCopy, openInNewTab,
   SERVICE_EMOJI, STATUS_COLORS, STATUS_BORDER_COLORS, STATUS_DOT_COLORS,
@@ -71,6 +71,8 @@ export default function SuperAdminPage() {
   const [platformLogo, setPlatformLogo] = useState("");
   const [platformLogoDark, setPlatformLogoDark] = useState("");
   const [platformName, setPlatformName] = useState("طيف");
+  // قائمة المتاجر الاحتياطية (عند فشل global-stats في إرجاع shopStats)
+  const [fallbackShops, setFallbackShops] = useState<ShopStat[]>([]);
 
   // تحميل إعدادات المنصة (الشعار)
   const loadPlatformSettings = useCallback(() => {
@@ -170,10 +172,47 @@ export default function SuperAdminPage() {
     }
   }, []);
 
+  // تحميل المتاجر من /api/shops كـ fallback عندما global-stats يُرجع shopStats فارغة
+  const loadFallbackShops = useCallback(async () => {
+    try {
+      const d = await fetch('/api/shops', { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null).catch(() => null);
+      if (d && Array.isArray(d.shops) && d.shops.length > 0) {
+        const shops: ShopStat[] = d.shops.map((s: Record<string, unknown>) => ({
+          id: String(s.id),
+          name: String(s.name),
+          slug: String(s.slug),
+          ownerName: s.ownerName ? String(s.ownerName) : null,
+          ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
+          phone: s.phone ? String(s.phone) : null,
+          whatsapp: s.whatsapp ? String(s.whatsapp) : null,
+          email: s.email ? String(s.email) : null,
+          address: s.address ? String(s.address) : null,
+          primaryColor: s.primaryColor ? String(s.primaryColor) : null,
+          isActive: Boolean(s.isActive),
+          adminPin: String(s.adminPin || ""),
+          trialDays: s.trialDays != null ? Number(s.trialDays) : null,
+          trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
+          plan: String(s.plan || "free"),
+          features: s.features ? String(s.features) : null,
+          paymentInfo: s.paymentInfo ? String(s.paymentInfo) : null,
+          ownerNotes: s.ownerNotes ? String(s.ownerNotes) : null,
+          country: String(s.country || "DZ"),
+          language: String(s.language || "ar"),
+          orders: Number(s._count?.orders ?? 0),
+          revenue: 0,
+          todayOrders: 0,
+          recentOrders: [],
+        }));
+        setFallbackShops(shops);
+      }
+    } catch { /* silent */ }
+  }, []);
+
   // النسخة الموحدة للتحديث اليدوي (زر التحديث) — تحميل الاثنين معاً
   const loadAll = useCallback(async (useCache = true) => {
-    await Promise.allSettled([loadStats(useCache), loadOrders()]);
-  }, [loadStats, loadOrders]);
+    await Promise.allSettled([loadStats(useCache), loadOrders(), loadFallbackShops()]);
+  }, [loadStats, loadOrders, loadFallbackShops]);
 
   // عند Mount: تحقق سريع من الجلسة المحفوظة (عودة المستخدم)
   useEffect(() => {
@@ -191,8 +230,10 @@ export default function SuperAdminPage() {
     loadStats();
     // 2) حمّل الطلبات في الخلفية (لا تُعطّل العرض)
     loadOrders();
+    // 3) حمّل المتاجر من /api/shops كـ fallback
+    loadFallbackShops();
 
-    // 3) تحديث تلقائي كل 45 ثانية
+    // 4) تحديث تلقائي كل 45 ثانية
     const interval = setInterval(() => {
       loadStats();
       loadOrders();
@@ -358,7 +399,7 @@ export default function SuperAdminPage() {
             <div className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 stagger-children">
                 <div className="relative md:col-span-1"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث برقم الطلب، اسم، هاتف، أو متجر..." className="pr-10 text-sm h-10 rounded-lg focus:ring-ring focus:border-ring bg-background" /></div>
-                <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{stats?.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
+                <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{(stats?.shopStats?.length ?? 0) > 0 ? stats.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>)) : fallbackShops.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل الحالات" /></SelectTrigger><SelectContent><SelectItem value="all">كل الحالات</SelectItem>{STATUS_FLOW.map((s) => (<SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>))}<SelectItem value="cancelled">ملغي</SelectItem></SelectContent></Select>
                 <button onClick={exportToExcel} disabled={filteredOrders.length === 0} className="border border-border text-foreground hover:bg-accent rounded-lg px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed bg-background"><Download className="h-4 w-4" />تصدير Excel</button>
               </div>
@@ -420,23 +461,28 @@ export default function SuperAdminPage() {
           <OrderDetailDialog order={selectedOrder} onClose={() => setSelectedOrder(null)} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
 
           {/* تبويب المتاجر */}
-          {activeTab === "shops" && (
+          {activeTab === "shops" && (() => {
+            // استخدم shopStats من global-stats، وإذا كانت فارغة استخدم fallbackShops من /api/shops
+            const displayShops = (stats?.shopStats?.length ?? 0) > 0 ? stats.shopStats : fallbackShops;
+            const shopCount = (stats?.shopCount ?? 0) > 0 ? stats.shopCount : fallbackShops.length;
+            return (
             <div className="space-y-5">
               <div className="flex items-center justify-between px-1">
-                <div className="text-sm text-muted-foreground/70">{stats?.shopCount ?? 0} متجر</div>
+                <div className="text-sm text-muted-foreground/70">{shopCount} متجر</div>
                 <button onClick={() => setCreateOpen(true)} className="border border-border text-foreground hover:bg-accent rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر جديد</button>
               </div>
               <div className="relative"><Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" /><Input value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} placeholder="ابحث في المتاجر بالاسم أو الرابط..." className="pr-10 text-sm h-10 rounded-lg focus:ring-ring focus:border-ring bg-background" /></div>
-              {loading ? (<div className="text-center py-16 text-muted-foreground/70 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-violet-500" />جارٍ التحميل...</div>) : (stats?.shopStats.length ?? 0) === 0 ? (
+              {loading ? (<div className="text-center py-16 text-muted-foreground/70 text-sm"><RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-violet-500" />جارٍ التحميل...</div>) : displayShops.length === 0 ? (
                 <div className="bg-card rounded-xl border border-border shadow-sm"><div className="py-20 text-center"><div className="w-16 h-16 mx-auto rounded-2xl bg-background flex items-center justify-center mb-4"><Store className="h-8 w-8 text-muted-foreground/40" /></div><p className="font-semibold text-foreground mb-2">لا توجد متاجر بعد</p><p className="text-xs text-muted-foreground/70 mb-4">ابدأ بإنشاء متجرك الأول</p><button onClick={() => setCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5"><Plus className="h-4 w-4" /> إنشاء متجر</button></div></div>
               ) : (
                 <div className="space-y-4">
-                  {stats?.shopStats.filter((shop) => { if (!shopSearch.trim()) return true; const q = shopSearch.toLowerCase(); return shop.name.toLowerCase().includes(q) || shop.slug.toLowerCase().includes(q); }).map((shop) => (<ShopManageCard key={shop.id} shop={shop} onCopyLink={copyLink} onCopyAdminLink={copyAdminLink} onRefresh={loadAll} />))}
-                  {shopSearch.trim() && stats?.shopStats.filter((s) => { const q = shopSearch.toLowerCase(); return s.name.toLowerCase().includes(q) || s.slug.toLowerCase().includes(q); }).length === 0 && (<div className="text-center py-12 text-muted-foreground/70 text-sm">لا توجد متاجر تطابق البحث</div>)}
+                  {displayShops.filter((shop) => { if (!shopSearch.trim()) return true; const q = shopSearch.toLowerCase(); return shop.name.toLowerCase().includes(q) || shop.slug.toLowerCase().includes(q); }).map((shop) => (<ShopManageCard key={shop.id} shop={shop} onCopyLink={copyLink} onCopyAdminLink={copyAdminLink} onRefresh={loadAll} />))}
+                  {shopSearch.trim() && displayShops.filter((s) => { const q = shopSearch.toLowerCase(); return s.name.toLowerCase().includes(q) || s.slug.toLowerCase().includes(q); }).length === 0 && (<div className="text-center py-12 text-muted-foreground/70 text-sm">لا توجد متاجر تطابق البحث</div>)}
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {activeTab === "platformSettings" && <PlatformSettingsTab />}
           {activeTab === "settings" && <SettingsTab />}
