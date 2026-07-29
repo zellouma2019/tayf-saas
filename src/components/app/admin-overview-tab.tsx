@@ -54,6 +54,11 @@ import { BranchLocatorWidget } from "@/components/app/branch-locator-widget";
 import { ScheduleCalendarWidget } from "@/components/app/schedule-calendar-widget";
 import { AlertsDashboardWidget } from "@/components/app/alerts-dashboard-widget";
 import { AchievementBadgesWidget } from "@/components/app/achievement-badges-widget";
+import { ExpenseBudgetTracker } from "@/components/app/expense-budget-tracker";
+import { CustomerFeedbackChart } from "@/components/app/customer-feedback-chart";
+import { InventoryStockWidget } from "@/components/app/inventory-stock-widget";
+import { OrderPriorityQueue } from "@/components/app/order-priority-queue";
+import { ShopComparisonWidget } from "@/components/app/shop-comparison-widget";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -866,6 +871,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* الإنجازات */}
       <AchievementBadgesWidget />
+
+      {/* تتبّع الميزانية */}
+      <ExpenseBudgetTracker />
+
+      {/* تقييمات العملاء */}
+      <CustomerFeedbackChart />
+
+      {/* مخزون المواد */}
+      <InventoryStockWidget />
+
+      {/* طابور الأولوية */}
+      <OrderPriorityQueue />
+
+      {/* مقارنة المتاجر */}
+      <ShopComparisonWidget />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
