@@ -7,6 +7,7 @@ import {
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
+  FileText,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -177,6 +178,21 @@ export default function SuperAdminPage() {
     }
   }, [allOrders]);
 
+  // Keyboard shortcuts: Alt+R = refresh, Alt+1/2/3 = tabs
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.altKey && e.key === "r") {
+        e.preventDefault();
+        loadAll(false);
+      }
+      if (e.altKey && e.key === "1") setActiveTab("overview");
+      if (e.altKey && e.key === "2") setActiveTab("shops");
+      if (e.altKey && e.key === "3") setActiveTab("orders");
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [loadAll]);
+
   // Change order status inline
   const changeOrderStatus = useCallback(async (orderId: string, newStatus: string) => {
     try {
@@ -239,7 +255,7 @@ export default function SuperAdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-background flex flex-col admin-pattern-bg" dir="rtl">
       {/* Refresh progress bar + data freshness indicator */}
       {isRefreshing && (
         <div className="h-0.5 w-full bg-muted overflow-hidden">
@@ -253,7 +269,7 @@ export default function SuperAdminPage() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 admin-header-glass">
         <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {platformLogo ? (
@@ -289,6 +305,17 @@ export default function SuperAdminPage() {
               </div>
             )}
             <ThemeToggle />
+            {/* PDF Report button */}
+            <a
+              href="/api/admin/pdf-report"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors admin-tooltip"
+              data-tip="تقرير PDF للإحصائيات"
+              title="تقرير إحصائيات"
+            >
+              <FileText className="h-4 w-4" />
+            </a>
             <button
               onClick={() => setCreateOpen(true)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5"
@@ -339,7 +366,7 @@ export default function SuperAdminPage() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 p-4 space-y-4">
+      <main className="flex-1 p-4 space-y-4 tab-content-enter" key={activeTab}>
         {loadError && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm text-destructive flex items-center gap-2">
             <Shield className="h-4 w-4 shrink-0" />
@@ -974,7 +1001,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50">
-                v4.3
+                v4.4
               </span>
             )}
           </div>
@@ -983,8 +1010,10 @@ export default function SuperAdminPage() {
               {safeShops.length} متجر • {safeOrders.length} طلب
             </span>
             <div className="hidden lg:flex items-center gap-1.5">
-              <span className="kbd-hint" title="تحديث">R</span>
+              <span className="kbd-hint" title="تحديث">Alt+R</span>
               <span className="text-[8px] text-muted-foreground/30">تحديث</span>
+              <span className="kbd-hint ml-1" title="تبويب">1-3</span>
+              <span className="text-[8px] text-muted-foreground/30">تبويبات</span>
             </div>
             <button
               onClick={handleLogout}
@@ -1076,6 +1105,20 @@ export default function SuperAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Floating action button — Pending orders shortcut */}
+      {safeOrders.filter(o => o.status === "pending").length > 0 && (
+        <button
+          onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); }}
+          className="fixed bottom-6 left-6 z-40 bg-amber-500 hover:bg-amber-600 text-white rounded-full w-14 h-14 shadow-lg shadow-amber-500/30 flex items-center justify-center transition-all duration-300 hover:scale-110 quick-action-float group"
+          title={`${safeOrders.filter(o => o.status === "pending").length} طلب معلق`}
+        >
+          <Clock className="h-6 w-6 group-hover:animate-pulse" />
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 badge-pulse">
+            {safeOrders.filter(o => o.status === "pending").length}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

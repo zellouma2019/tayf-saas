@@ -1119,7 +1119,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300",
+                    "glass-card border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
