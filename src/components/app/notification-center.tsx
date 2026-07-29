@@ -78,7 +78,7 @@ export function NotificationCenter({ recentOrders, onViewAll }: NotificationCent
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "relative h-9 w-9 flex items-center justify-center rounded-lg border transition-colors",
+          "relative h-9 w-9 flex items-center justify-center rounded-lg border transition-all duration-200 hover-scale-sm focus-glow",
           "hover:bg-secondary text-muted-foreground hover:text-foreground",
           count > 0
             ? "border-rose-300 dark:border-rose-700"
@@ -100,7 +100,7 @@ export function NotificationCenter({ recentOrders, onViewAll }: NotificationCent
       {/* لوحة الإشعارات */}
       {open && (
         <div
-          className="absolute top-full left-0 mt-2 z-50 w-80 sm:w-96 rounded-xl glass-card shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+          className="absolute top-full left-0 mt-2 z-50 w-80 sm:w-96 rounded-xl card-frosted shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden border border-border"
           dir="rtl"
         >
           {/* رأس */}
@@ -138,14 +138,14 @@ export function NotificationCenter({ recentOrders, onViewAll }: NotificationCent
                 </p>
               </div>
             ) : (
-              <div>
+              <div className="stagger-children">
                 {recentOrders.map((order) => {
                   const meta = STATUS_META[order.status] || STATUS_META.pending;
                   const customerName = parseCustomerName(order.customer);
                   return (
                     <div
                       key={order.id}
-                      className="w-full text-right px-4 py-3 border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
+                      className="w-full text-right px-4 py-3 border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors cursor-default hover-scale-sm rounded-lg mx-1 my-0.5"
                     >
                       <div className="flex items-start gap-2.5">
                         <span className="text-base mt-0.5 shrink-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -374,30 +374,33 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
   return (
     <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="gradient-border-animated blob-bg relative overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-primary/80 to-primary/60 p-6 sm:p-8 text-white fade-in-up glass-card" style={{ backgroundColor: 'rgba(124, 58, 237, 0.85)', backdropFilter: 'blur(16px)' }}>
-        <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 animate-[pulse_4s_ease-in-out_infinite]" />
-        <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 animate-[pulse_5s_ease-in-out_infinite_1s]" />
-        <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 animate-[pulse_6s_ease-in-out_infinite_2s]" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2"><span className="online-dot" /><span>مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
-            <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
-          </div>
-          {safeStats.totalOrders > 0 && (
-            <div className="flex gap-4 sm:gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.todayOrders} formatFn={formatNumber} /></div>
-                <div className="text-[11px] text-white/60">طلبات اليوم</div>
-                <span className={cn("comparison-badge mt-1.5 inline-block text-[10px] px-2 py-0.5 rounded-full font-medium", safeStats.todayOrders > 0 ? "comparison-up" : "comparison-neutral")}>
-                  {safeStats.todayOrders > 0 ? "نشاط جيد" : "لا طلبات"}
-                </span>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.totalRevenue} formatFn={formatDA} /></div>
-                <div className="text-[11px] text-white/60">إجمالي الإيرادات</div>
-              </div>
+      <div className="aurora-bg rounded-2xl overflow-hidden fade-in-up" style={{ background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(212, 168, 83, 0.7))', backdropFilter: 'blur(16px)' }}>
+        <div className="dot-pattern-gold absolute inset-0 opacity-20 pointer-events-none" />
+        <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 morph-blob pointer-events-none" />
+        <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 morph-blob pointer-events-none" style={{ animationDelay: '-2s' }} />
+        <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 morph-blob pointer-events-none" style={{ animationDelay: '-4s' }} />
+        <div className="relative z-10 p-6 sm:p-8 text-white">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2"><span className="online-dot" /><span>مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
+              <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
             </div>
-          )}
+            {safeStats.totalOrders > 0 && (
+              <div className="flex gap-4 sm:gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.todayOrders} formatFn={formatNumber} /></div>
+                  <div className="text-[11px] text-white/60">طلبات اليوم</div>
+                  <span className={cn("comparison-badge mt-1.5 inline-block text-[10px] px-2 py-0.5 rounded-full font-medium", safeStats.todayOrders > 0 ? "comparison-up" : "comparison-neutral")}>
+                    {safeStats.todayOrders > 0 ? "نشاط جيد" : "لا طلبات"}
+                  </span>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.totalRevenue} formatFn={formatDA} /></div>
+                  <div className="text-[11px] text-white/60">إجمالي الإيرادات</div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -409,19 +412,46 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       )}
 
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-grid page-enter">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-primary" /></div></div>
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
+        <div className="stat-tile card-glow group">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
+              <div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div>
+            </div>
+            <div className="icon-container-gold group-hover:scale-110 transition-transform shrink-0"><Package className="h-5 w-5" /></div>
+          </div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
+        <div className="stat-tile card-glow group">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
+              <div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div>
+            </div>
+            <div className="icon-container-emerald group-hover:scale-110 transition-transform shrink-0"><DollarSign className="h-5 w-5" /></div>
+          </div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
+        <div className="stat-tile card-glow group">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
+              <div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-amber-500/15"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
+          </div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
-          <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
+        <div className="stat-tile card-glow group">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <div className="text-2xl font-bold text-foreground tabular-nums">
+                <AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} />
+                <span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">متجر نشط</div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-sky-500/15"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div>
+          </div>
         </div>
       </div>
 
@@ -605,6 +635,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {/* تنبيه الطلبات المتأخرة */}
       <StaleOrdersWidget stats={stats} onRefresh={() => {}} />
 
+      {/* أشهر الخدمات */}
+      <ServicePopularityWidget stats={safeStats} />
+
       {/* ترتيب المتاجر حسب الأداء */}
       {safeStats.shopStats && safeStats.shopStats.length > 1 && <ShopRankingWidget shops={safeStats.shopStats} />}
 
@@ -779,6 +812,85 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
             <Bar dataKey="revenue" fill="#d4a853" radius={[0, 6, 6, 0]} barSize={22} />
           </BarChart>
         </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ===== أشهر الخدمات المطلوبة =====
+function ServicePopularityWidget({ stats }: { stats: GlobalStats }) {
+  const recentOrders = stats.recentOrders || [];
+  const serviceMap = new Map<string, { name: string; count: number; revenue: number }>();
+
+  recentOrders.forEach((o) => {
+    const name = o.serviceName || "أخرى";
+    const existing = serviceMap.get(name);
+    if (existing) {
+      existing.count += 1;
+      existing.revenue += o.total || 0;
+    } else {
+      serviceMap.set(name, { name, count: 1, revenue: o.total || 0 });
+    }
+  });
+
+  const topServices = Array.from(serviceMap.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+
+  if (topServices.length === 0) return null;
+
+  const maxCount = topServices[0].count;
+  const SERVICE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    "طباعة مستند": FileText,
+    "طباعة صور": Printer,
+  };
+
+  return (
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-gradient-top fade-in-up">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+          <Star className="h-4 w-4 text-gold-500" />
+          أشهر الخدمات المطلوبة
+          <span className="text-[10px] text-muted-foreground font-normal mr-auto">آخر {recentOrders.length} طلب</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {topServices.map((service, index) => {
+            const Icon = SERVICE_ICONS[service.name] || FileText;
+            const pct = maxCount > 0 ? Math.round((service.count / maxCount) * 100) : 0;
+            return (
+              <div key={service.name} className="group flex items-center gap-3">
+                <div className={cn(
+                  "flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-transform group-hover:scale-110",
+                  index === 0 ? "bg-gold-500/15 text-gold-500 border border-gold-500/20" :
+                  "bg-muted text-muted-foreground border border-border"
+                )}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-foreground truncate">{service.name}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="chip chip-gold text-[10px] py-0 px-1.5">{service.count} طلب</span>
+                      <span className="text-xs font-bold text-foreground tabular-nums">{formatDA(service.revenue)}</span>
+                    </div>
+                  </div>
+                  <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-700 ease-out",
+                        index === 0 ? "bg-gradient-to-l from-gold-400 to-gold-500" :
+                        "bg-gradient-to-l from-primary/40 to-primary/25"
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );
