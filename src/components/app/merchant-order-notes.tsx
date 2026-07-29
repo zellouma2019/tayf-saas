@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Save, Trash2, Loader2, MessageSquare, Clock } from "lucide-react";
+import { Save, Trash2, Loader2, MessageSquare, Clock, StickyNote } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -21,6 +22,7 @@ interface StoredNote {
   id: string;
   text: string;
   createdAt: string;
+  authorName?: string;
 }
 
 interface MerchantOrderNotesProps {
@@ -34,7 +36,7 @@ function getStorageKey(orderId: string) {
   return `tayf-merchant-note-${orderId}`;
 }
 
-function loadNotes(orderId: string): StoredNote[] {
+function loadNotesFromStorage(orderId: string): StoredNote[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(getStorageKey(orderId));
@@ -45,7 +47,7 @@ function loadNotes(orderId: string): StoredNote[] {
   }
 }
 
-function saveNotes(orderId: string, notes: StoredNote[]) {
+function saveNotesToStorage(orderId: string, notes: StoredNote[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(getStorageKey(orderId), JSON.stringify(notes));
 }
@@ -63,7 +65,7 @@ function formatTimestamp(iso: string): string {
   } catch {
     return iso;
   }
-}
+  }
 
 export function MerchantOrderNotes({ orderId, shopId }: MerchantOrderNotesProps) {
   const [text, setText] = useState("");
@@ -71,10 +73,48 @@ export function MerchantOrderNotes({ orderId, shopId }: MerchantOrderNotesProps)
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // تحميل الملاحظات من الـ API ثم دمجها مع localStorage
+  const loadNotes = useCallback(async () => {
+    setLoading(true);
+    const localNotes = loadNotesFromStorage(orderId);
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}/notes?shopId=${encodeURIComponent(shopId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const apiNotes: StoredNote[] = (data.notes || []).map((n: any) => ({
+          id: n.id || Date.now().toString(36),
+          text: n.content || n.note || n.text || "",
+          createdAt: n.createdAt || new Date().toISOString(),
+          authorName: n.authorName || "المتجر",
+        }));
+
+        // دمج: أضف الملاحظات المحلية التي ليست في الـ API
+        const apiIds = new Set(apiNotes.map(n => n.id));
+        const merged = [
+          ...apiNotes,
+          ...localNotes.filter(ln => !apiIds.has(ln.id)),
+        ];
+
+        setNotes(merged);
+        if (merged.length > localNotes.length) {
+          saveNotesToStorage(orderId, merged);
+        }
+      } else {
+        setNotes(localNotes);
+      }
+    } catch {
+      setNotes(localNotes);
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId, shopId]);
 
   useEffect(() => {
-    setNotes(loadNotes(orderId));
-  }, [orderId]);
+    loadNotes();
+  }, [loadNotes]);
 
   const handleSave = useCallback(async () => {
     const trimmed = text.trim();
@@ -88,24 +128,25 @@ export function MerchantOrderNotes({ orderId, shopId }: MerchantOrderNotesProps)
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       text: trimmed,
       createdAt: new Date().toISOString(),
+      authorName: "المتجر",
     };
 
-    // Save to localStorage first (instant)
+    // حفظ محلياً فوراً
     const updated = [newNote, ...notes];
-    saveNotes(orderId, updated);
+    saveNotesToStorage(orderId, updated);
     setNotes(updated);
     setText("");
     setLastSaved(newNote.createdAt);
 
-    // Attempt DB save via API
+    // محاولة الحفظ عبر الـ API
     try {
       await fetch(`/api/orders/${orderId}/notes?shopId=${encodeURIComponent(shopId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note: trimmed, shopId }),
+        body: JSON.stringify({ content: trimmed, authorName: "المتجر", shopId }),
       });
     } catch {
-      // Silent — localStorage already saved
+      // صامت — localStorage تم الحفظ بالفعل
     }
 
     setSaving(false);
@@ -119,78 +160,49 @@ export function MerchantOrderNotes({ orderId, shopId }: MerchantOrderNotesProps)
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
     const updated = notes.filter((n) => n.id !== deleteTarget);
-    saveNotes(orderId, updated);
+    saveNotesToStorage(orderId, updated);
     setNotes(updated);
     setDeleteTarget(null);
     toast.success("تم حذف الملاحظة");
   }, [deleteTarget, notes, orderId]);
 
+  const handleQuickAdd = useCallback(() => {
+    if (text.trim()) handleSave();
+  }, [text, handleSave]);
+
   return (
-    <section className="bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4 space-y-3">
-      <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-r-primary pr-3">
-        <MessageSquare className="h-3.5 w-3.5" />
-        ملاحظات
+    <section className="space-y-3">
+      {/* عنوان القسم */}
+      <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground">
+        <StickyNote className="h-3.5 w-3.5 text-amber-500" />
+        📝 ملاحظات داخلية
       </h3>
 
-      {/* Input area */}
-      <div className="space-y-2">
-        <div className="relative">
-          <Textarea
-            value={text}
-            onChange={(e) => {
-              if (e.target.value.length <= MAX_CHARS) setText(e.target.value);
-            }}
-            className="text-sm min-h-[70px] rounded-lg border-border bg-background resize-none"
-            placeholder="أضف ملاحظة على هذا الطلب..."
-            dir="rtl"
-          />
-          <span
-            className={cn(
-              "absolute bottom-2 left-3 text-[10px] tabular-nums",
-              text.length >= MAX_CHARS
-                ? "text-rose-500"
-                : "text-muted-foreground/60"
-            )}
-          >
-            {text.length}/{MAX_CHARS}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saving || !text.trim()}
-            className="h-8 px-3 text-xs gap-1.5"
-          >
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5" />
-            )}
-            {saving ? "جارٍ الحفظ..." : "حفظ الملاحظة"}
-          </Button>
-          {lastSaved && (
-            <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              آخر حفظ: {formatTimestamp(lastSaved)}
-            </span>
-          )}
-        </div>
-      </div>
+      {/* فاصل */}
+      <div className="border-t border-border" />
 
-      {/* Notes list */}
-      {notes.length > 0 && (
-        <div className="space-y-2 max-h-48 overflow-y-auto">
+      {/* قائمة الملاحظات */}
+      {loading ? (
+        <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin ml-2" />
+          جارٍ تحميل الملاحظات...
+        </div>
+      ) : notes.length > 0 ? (
+        <div className="space-y-2 max-h-60 overflow-y-auto">
           {notes.map((note) => (
             <div
               key={note.id}
-              className="group relative flex items-start gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 border border-border/50 p-2.5 text-xs"
+              className="group relative flex items-start gap-2 rounded-lg bg-muted/50 dark:bg-muted/30 border border-border/50 p-2.5 text-xs"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-foreground leading-relaxed whitespace-pre-wrap break-words">{note.text}</p>
-                <span className="text-[10px] text-muted-foreground/60 mt-1 block">
-                  {formatTimestamp(note.createdAt)}
-                </span>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-foreground text-xs">{note.authorName || "المتجر"}</span>
+                  <span className="text-muted-foreground/60 flex items-center gap-0.5">
+                    <Clock className="h-2.5 w-2.5" />
+                    {formatTimestamp(note.createdAt)}
+                  </span>
+                </div>
+                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap break-words">{note.text}</p>
               </div>
               <button
                 onClick={() => handleDelete(note.id)}
@@ -202,9 +214,44 @@ export function MerchantOrderNotes({ orderId, shopId }: MerchantOrderNotesProps)
             </div>
           ))}
         </div>
+      ) : (
+        <p className="text-xs text-muted-foreground/60 text-center py-2">لا توجد ملاحظات بعد</p>
       )}
 
-      {/* Delete confirmation dialog */}
+      {/* حقل إضافة ملاحظة */}
+      <div className="flex items-center gap-2">
+        <Input
+          value={text}
+          onChange={(e) => {
+            if (e.target.value.length <= MAX_CHARS) setText(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleQuickAdd();
+            }
+          }}
+          className="text-sm h-9 rounded-lg border-border bg-background flex-1"
+          placeholder="أضف ملاحظة داخلية..."
+          dir="rtl"
+          disabled={saving}
+        />
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={saving || !text.trim()}
+          className="h-9 px-3 text-xs gap-1.5 shrink-0"
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Save className="h-3.5 w-3.5" />
+          )}
+          {saving ? "..." : "إضافة"}
+        </Button>
+      </div>
+
+      {/* حذف الملاحظة — تأكيد */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>

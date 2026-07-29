@@ -1037,17 +1037,16 @@ export function MerchantOrderDetail({
                 <FileCheck className="h-3.5 w-3.5 ml-1" />
                 فاتورة
               </Button>
-              {hasReceiptPrinting && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { if (order) printReceipt(order, shopName, shopPhone, shopAddress); }}
-                  className="h-9 text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
-                >
-                  <Printer className="h-3.5 w-3.5 ml-1" />
-                  إيصال
-                </Button>
-              )}
+              {/* طباعة الإيصال — متاح دائماً */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { if (order) printReceipt(order, shopName, shopPhone, shopAddress); }}
+                className="h-9 text-xs rounded-lg border-dark-200 hover:bg-gold-500/5 transition-all duration-200"
+              >
+                <Printer className="h-3.5 w-3.5 ml-1" />
+                طباعة الإيصال
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

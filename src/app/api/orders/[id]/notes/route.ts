@@ -1,80 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tursoQuery } from "@/lib/turso-lite";
+import { tursoQuery, tursoExecute } from "@/lib/turso-lite";
 
-// POST: Save a merchant note for an order
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const body = await req.json();
-    const { note, shopId } = body;
-
-    if (!note || typeof note !== "string" || !note.trim()) {
-      return NextResponse.json({ error: "الملاحظة مطلوبة" }, { status: 400 });
-    }
-
-    // Check if a note already exists for this order+shop combination
-    const existing = await tursoQuery(
-      `SELECT id FROM "MerchantNote" WHERE "orderId" = ? AND "shopId" = ? LIMIT 1`,
-      [id, shopId || ""]
+    const result = await tursoQuery(
+      `SELECT n.*, u.name as authorName FROM "OrderNote" n LEFT JOIN "User" u ON n.authorId = u.id WHERE n.orderId = ? ORDER BY n."createdAt" DESC`,
+      [id],
     );
-
-    if (existing.length > 0) {
-      // Update existing note
-      await tursoQuery(
-        `UPDATE "MerchantNote" SET note = ?, "updatedAt" = ? WHERE id = ?`,
-        [note.trim(), new Date().toISOString(), existing[0].id]
-      );
-    } else {
-      // Create new note
-      await tursoQuery(
-        `INSERT INTO "MerchantNote" ("orderId", "shopId", note", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?)`,
-        [id, shopId || "", note.trim(), new Date().toISOString(), new Date().toISOString()]
-      );
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (e) {
-    console.error('[orders/[id]/notes]', e);
-    return NextResponse.json(
-      { error: "فشل حفظ الملاحظة" },
-      { status: 500 },
-    );
+    return NextResponse.json(result.rows);
+  } catch (error) {
+    console.error("[order-notes GET]", error);
+    return NextResponse.json({ error: "Failed to fetch notes" }, { status: 500 });
   }
 }
 
-// GET: Retrieve notes for an order
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const shopId = req.nextUrl.searchParams.get("shopId");
-
-    // Ensure the MerchantNote table exists
-    await tursoQuery(`CREATE TABLE IF NOT EXISTS "MerchantNote" (
-      id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(12)))),
-      "orderId" TEXT NOT NULL,
-      "shopId" TEXT NOT NULL DEFAULT '',
-      note TEXT NOT NULL,
-      "createdAt" TEXT NOT NULL,
-      "updatedAt" TEXT NOT NULL
-    )`);
-
-    const rows = await tursoQuery(
-      `SELECT * FROM "MerchantNote" WHERE "orderId" = ? AND "shopId" = ? LIMIT 1`,
-      [id, shopId || ""]
-    );
-
-    if (rows.length > 0) {
-      return NextResponse.json({ note: rows[0].note });
+    const { content, authorId = "system", authorName = "النظام" } = await request.json();
+    if (!content?.trim()) {
+      return NextResponse.json({ error: "Note content is required" }, { status: 400 });
     }
-    return NextResponse.json({ note: "" });
-  } catch (e) {
-    console.error('[orders/[id]/notes]', e);
-    return NextResponse.json({ note: "" }, { status: 500 });
+    // Ensure OrderNote table exists
+    try {
+      await tursoQuery(`SELECT 1 FROM "OrderNote" LIMIT 1`, []);
+    } catch {
+      await tursoExecute(`CREATE TABLE IF NOT EXISTS "OrderNote" (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        orderId TEXT NOT NULL,
+        content TEXT NOT NULL,
+        authorId TEXT DEFAULT 'system',
+        authorName TEXT DEFAULT 'النظام',
+        createdAt TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (orderId) REFERENCES "PrintOrder"(id)
+      )`, []);
+    }
+    const noteId = 'note-' + Math.random().toString(36).substring(2, 10);
+    await tursoExecute(
+      `INSERT INTO "OrderNote" (id, orderId, content, authorId, authorName, "createdAt") VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+      [noteId, id, content, authorId, authorName],
+    );
+    return NextResponse.json({ success: true, note: { id: noteId, content, authorName, createdAt: new Date().toISOString() } });
+  } catch (error) {
+    console.error("[order-notes POST]", error);
+    return NextResponse.json({ error: "Failed to add note" }, { status: 500 });
   }
 }

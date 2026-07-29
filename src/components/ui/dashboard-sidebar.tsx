@@ -129,7 +129,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
         'transition-all duration-200 ease-in-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         isActive
-          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_12px_rgba(212,168,83,0.15)]'
+          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_12px_rgba(212,168,83,0.15)] sidebar-active-glow'
           : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
       )}
     >

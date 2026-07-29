@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, Download, TrendingUp,
@@ -65,6 +65,8 @@ export default function SuperAdminPage() {
   const [lastUpdated, setLastUpdated] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [shopFilter, setShopFilter] = useState("all");
   const [activeTab, setActiveTab] = useState<string>("overview");
@@ -78,6 +80,7 @@ export default function SuperAdminPage() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   // Quick view
   const [quickViewOrder, setQuickViewOrder] = useState<GlobalOrder | null>(null);
   // Data health tracking
@@ -196,7 +199,7 @@ export default function SuperAdminPage() {
     }
   }, [allOrders]);
 
-  // Keyboard shortcuts: Alt+R = refresh, Alt+1/2/3 = tabs
+  // Keyboard shortcuts: Alt+R = refresh, Alt+1/2/3 = tabs, Ctrl+K = search
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.altKey && e.key === "r") {
@@ -206,10 +209,37 @@ export default function SuperAdminPage() {
       if (e.altKey && e.key === "1") setActiveTab("overview");
       if (e.altKey && e.key === "2") setActiveTab("shops");
       if (e.altKey && e.key === "3") setActiveTab("orders");
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearchOpen(true);
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [loadAll]);
+
+  // Close global search dropdown on outside click or Escape
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (searchInputRef.current && !searchInputRef.current.parentElement?.contains(target)) {
+        setSearchOpen(false);
+      }
+    }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        searchInputRef.current?.blur();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   // Auto-refresh: poll every 30 seconds when authenticated
   useEffect(() => {
@@ -360,19 +390,39 @@ export default function SuperAdminPage() {
   }, [selectedIds.size, filteredOrders]);
   const applyBulkStatus = useCallback(async () => {
     if (!bulkStatus || selectedIds.size === 0) return;
-    const promises = Array.from(selectedIds).map(id =>
-      fetch(`/api/orders/${id}`, {
-        method: 'PATCH',
+    try {
+      const res = await fetch(`/api/orders/bulk-status`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: bulkStatus }),
-      }).catch(() => null)
-    );
-    await Promise.all(promises);
-    toast.success(`تم تحديث ${selectedIds.size} طلب`);
-    setSelectedIds(new Set());
-    setBulkStatus("");
-    loadAll(false);
+        body: JSON.stringify({ orderIds: Array.from(selectedIds), status: bulkStatus }),
+      });
+      if (!res.ok) throw new Error('فشل التحديث');
+      toast.success(`تم تحديث ${selectedIds.size} طلب`);
+      setSelectedIds(new Set());
+      setBulkStatus("");
+      loadAll(false);
+    } catch {
+      toast.error('خطأ', { description: 'فشل تحديث حالة الطلبات' });
+    }
   }, [bulkStatus, selectedIds, loadAll]);
+
+  const applyBulkDelete = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    try {
+      const res = await fetch(`/api/orders/bulk`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      if (!res.ok) throw new Error('فشل الحذف');
+      toast.success(`تم حذف ${selectedIds.size} طلب`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      loadAll(false);
+    } catch {
+      toast.error('خطأ', { description: 'فشل حذف الطلبات' });
+    }
+  }, [selectedIds, loadAll]);
 
   const shops = globalStats?.shopStats || fallbackShops;
   const safeShops = Array.isArray(shops) ? shops : [];
@@ -381,6 +431,36 @@ export default function SuperAdminPage() {
     const q = shopSearch.toLowerCase();
     return (s.name || "").toLowerCase().includes(q) || (s.slug || "").toLowerCase().includes(q);
   });
+
+  // Global search results
+  const globalSearchResults = useMemo(() => {
+    if (!search.trim()) return { orders: [], shops: [], customers: [] };
+    const q = search.toLowerCase().trim();
+    const matchedOrders = safeOrders.filter((o) => {
+      const haystack = `${o.reference || o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.shopName} ${o.serviceType || o.serviceName}`.toLowerCase();
+      return haystack.includes(q);
+    }).slice(0, 5);
+    const matchedShops = safeShops.filter((s) => {
+      const haystack = `${s.name || ''} ${s.slug || ''} ${s.ownerName || ''} ${s.phone || ''}`.toLowerCase();
+      return haystack.includes(q);
+    }).slice(0, 5);
+    // Extract unique customers from orders
+    const customerMap = new Map<string, { name: string; phone: string }>();
+    safeOrders.forEach((o) => {
+      const name = o.customer?.name || '';
+      const phone = o.customer?.phone || '';
+      if ((name || phone) && !customerMap.has(phone || name)) {
+        customerMap.set(phone || name, { name, phone });
+      }
+    });
+    const matchedCustomers = Array.from(customerMap.values()).filter((c) => {
+      const haystack = `${c.name} ${c.phone}`.toLowerCase();
+      return haystack.includes(q);
+    }).slice(0, 5);
+    return { orders: matchedOrders, shops: matchedShops, customers: matchedCustomers };
+  }, [search, safeOrders, safeShops]);
+
+  const hasGlobalResults = globalSearchResults.orders.length > 0 || globalSearchResults.shops.length > 0 || globalSearchResults.customers.length > 0;
 
   // Status timeline for order detail
   const statusTimeline = selectedOrder ? [
@@ -440,6 +520,115 @@ export default function SuperAdminPage() {
                 <span className="text-gradient-platform font-semibold">{platformName}</span>{" / "}{tabLabels[activeTab] || "نظرة عامة"}
               </p>
             </div>
+          </div>
+          {/* Global Search */}
+          <div className="relative max-w-xs flex-1 min-w-[180px]">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              ref={searchInputRef}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)}
+              placeholder="بحث شامل... Ctrl+K"
+              className="pr-10 h-9 text-sm"
+            />
+            {/* Search Results Dropdown */}
+            {searchOpen && search.trim() && (
+              <div className="absolute top-full mt-1 left-0 right-0 z-[60] rounded-xl border border-border bg-card shadow-xl overflow-hidden min-w-[320px]">
+                {hasGlobalResults ? (
+                  <div className="max-h-[360px] overflow-y-auto py-1">
+                    {/* Orders */}
+                    {globalSearchResults.orders.length > 0 && (
+                      <div>
+                        <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground bg-muted/50 flex items-center gap-1.5">
+                          <Package className="h-3 w-3" /> الطلبات
+                        </div>
+                        {globalSearchResults.orders.map((o) => (
+                          <button
+                            key={o.id}
+                            onClick={() => { setActiveTab("orders"); setSearchOpen(false); }}
+                            className="w-full text-right px-3 py-2.5 text-sm flex items-center gap-3 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">
+                                #{o.reference || o.id} — {o.customer?.name || '—'}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {o.serviceType || o.serviceName} · {o.shopName}
+                              </div>
+                            </div>
+                            <Badge
+                              className="shrink-0 text-[10px] px-1.5 py-0"
+                              style={{
+                                backgroundColor: STATUS_COLORS[o.status as keyof typeof STATUS_COLORS] || '#6b7280',
+                                color: '#fff',
+                              }}
+                            >
+                              {STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status}
+                            </Badge>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {/* Shops */}
+                    {globalSearchResults.shops.length > 0 && (
+                      <div>
+                        <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground bg-muted/50 flex items-center gap-1.5 border-t border-border">
+                          <Store className="h-3 w-3" /> المتاجر
+                        </div>
+                        {globalSearchResults.shops.map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => { setActiveTab("shops"); setSearchOpen(false); }}
+                            className="w-full text-right px-3 py-2.5 text-sm flex items-center gap-3 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{s.name || s.slug}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {s.orders || 0} طلب · {s.revenue || 0} ر.س
+                              </div>
+                            </div>
+                            {s.isActive !== false ? (
+                              <span className="shrink-0 h-2 w-2 rounded-full bg-green-500" />
+                            ) : (
+                              <span className="shrink-0 h-2 w-2 rounded-full bg-gray-400" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {/* Customers */}
+                    {globalSearchResults.customers.length > 0 && (
+                      <div>
+                        <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground bg-muted/50 flex items-center gap-1.5 border-t border-border">
+                          <Users className="h-3 w-3" /> العملاء
+                        </div>
+                        {globalSearchResults.customers.map((c) => (
+                          <button
+                            key={c.phone || c.name}
+                            onClick={() => {
+                              setActiveTab("orders");
+                              setSearch(c.phone || c.name);
+                              setSearchOpen(false);
+                            }}
+                            className="w-full text-right px-3 py-2.5 text-sm flex items-center gap-3 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{c.name || '—'}</div>
+                              <div className="text-xs text-muted-foreground truncate">{c.phone || '—'}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    لا توجد نتائج لـ "{search.trim()}"
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {/* Notification bell with pending count */}
@@ -841,17 +1030,23 @@ export default function SuperAdminPage() {
             {/* Bulk action bar */}
             {selectedIds.size > 0 && (
               <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-3 flex-wrap bulk-action-bar">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <CheckSquare className="h-4 w-4 text-primary" />
-                  <span>تم اختيار {selectedIds.size} طلب</span>
-                </div>
+                <Badge variant="secondary" className="font-medium tabular-nums">
+                  {selectedIds.size} طلب محدد
+                </Badge>
                 <div className="flex-1" />
+                <button
+                  onClick={toggleSelectAll}
+                  className="h-8 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground text-sm transition-colors flex items-center gap-1.5"
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                  {selectedIds.size === filteredOrders.length && filteredOrders.length > 0 ? 'إلغاء التحديد' : 'تحديد الكل'}
+                </button>
                 <select
                   value={bulkStatus}
                   onChange={(e) => setBulkStatus(e.target.value)}
                   className="h-8 px-3 rounded-lg border border-border bg-background text-sm"
                 >
-                  <option value="">تغيير الحالة إلى...</option>
+                  <option value="">تحديث الحالة</option>
                   {Object.entries(STATUS_META).map(([key, meta]) => (
                     <option key={key} value={key}>{meta.label}</option>
                   ))}
@@ -861,7 +1056,14 @@ export default function SuperAdminPage() {
                   disabled={!bulkStatus}
                   className="h-8 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium disabled:opacity-40 transition-colors"
                 >
-                  تطبيق
+                  تحديث الحالة
+                </button>
+                <button
+                  onClick={() => setBulkDeleteOpen(true)}
+                  className="h-8 px-3 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 text-sm font-medium transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  حذف المحدد
                 </button>
                 <button
                   onClick={() => { setSelectedIds(new Set()); setBulkStatus(""); }}
@@ -1267,6 +1469,27 @@ export default function SuperAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف الطلبات</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف {selectedIds.size} طلب المحدد؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={applyBulkDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              حذف {selectedIds.size} طلب
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Floating action button — Pending orders shortcut */}
       {safeOrders.filter(o => o.status === "pending").length > 0 && (

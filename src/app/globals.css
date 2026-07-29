@@ -30719,3 +30719,235 @@ tr:hover .table-cell-actions {
   .tooltip, .popover-panel { transition: none !important; }
   .toast-action { transition: none !important; }
 }
+
+/* ===== v4.8 — Merchant Dashboard Enhancements ===== */
+
+/* Merchant stat card hover lift */
+.merchant-stat-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.merchant-stat-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+.dark .merchant-stat-lift:hover {
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated counter for numbers */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-count-up {
+  animation: countUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Revenue shimmer effect */
+@keyframes revenueShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.revenue-shimmer {
+  background: linear-gradient(90deg, currentColor 40%, rgba(16, 185, 129, 0.6) 50%, currentColor 60%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.revenue-shimmer:hover {
+  animation: revenueShimmer 2s linear infinite;
+}
+
+/* Order card slide in from right (RTL) */
+@keyframes slideInRTL {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.slide-in-rtl {
+  animation: slideInRTL 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Pulse for pending order badge */
+@keyframes pendingPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.pending-pulse {
+  animation: pendingPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Progress bar animation */
+@keyframes progressGrow {
+  from { width: 0; }
+}
+.animate-progress {
+  animation: progressGrow 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Floating action button ripple */
+@keyframes fabRipple {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+  100% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
+}
+.fab-ripple {
+  animation: fabRipple 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Keyboard shortcut tooltip */
+.kbd-tooltip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.06), rgba(0,0,0,0.03));
+  border: 1px solid rgba(0,0,0,0.08);
+  font-size: 11px;
+  font-family: monospace;
+  color: rgba(0,0,0,0.5);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+.kbd-tooltip:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: rgba(139, 92, 246, 0.8);
+}
+.dark .kbd-tooltip {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+}
+.dark .kbd-tooltip:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Merchant sidebar active indicator */
+@keyframes sidebarGlow {
+  0%, 100% { box-shadow: inset 3px 0 8px -4px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: inset 3px 0 12px -4px rgba(139, 92, 246, 0.6); }
+}
+.sidebar-active-glow {
+  animation: sidebarGlow 3s ease-in-out infinite;
+}
+
+/* Empty state illustration bounce */
+@keyframes emptyBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.empty-bounce {
+  animation: emptyBounce 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Chart container smooth appear */
+@keyframes chartFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.chart-fade-in {
+  animation: chartFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Toast notification slide */
+@keyframes toastSlide {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.toast-slide {
+  animation: toastSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ===== v4.8b — Additional Polish ===== */
+
+/* Gradient text for section titles */
+.text-gradient-section {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover glow effect */
+.card-hover-glow {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.card-hover-glow:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+.dark .card-hover-glow:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.25), 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth scrollbar for RTL */
+.scrollbar-smooth::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-smooth::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-smooth::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 3px;
+}
+.scrollbar-smooth::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.4);
+}
+
+/* Widget fade in stagger */
+@keyframes widgetFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.widget-fade-in > * {
+  opacity: 0;
+  animation: widgetFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.widget-fade-in > *:nth-child(1) { animation-delay: 0ms; }
+.widget-fade-in > *:nth-child(2) { animation-delay: 60ms; }
+.widget-fade-in > *:nth-child(3) { animation-delay: 120ms; }
+.widget-fade-in > *:nth-child(4) { animation-delay: 180ms; }
+.widget-fade-in > *:nth-child(5) { animation-delay: 240ms; }
+.widget-fade-in > *:nth-child(6) { animation-delay: 300ms; }
+.widget-fade-in > *:nth-child(7) { animation-delay: 360ms; }
+.widget-fade-in > *:nth-child(8) { animation-delay: 420ms; }
+.widget-fade-in > *:nth-child(9) { animation-delay: 480ms; }
+.widget-fade-in > *:nth-child(10) { animation-delay: 540ms; }
+
+/* Skeleton shimmer loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(128,128,128,0.1) 25%, rgba(128,128,128,0.2) 50%, rgba(128,128,128,0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Merchant header gradient */
+.merchant-header-gradient {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+.dark .merchant-header-gradient {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+}
+
+/* Responsive table */
+.table-responsive-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-responsive-wrapper table {
+  min-width: 600px;
+}
+@media (max-width: 768px) {
+  .table-responsive-wrapper table {
+    min-width: 100%;
+    font-size: 13px;
+  }
+}

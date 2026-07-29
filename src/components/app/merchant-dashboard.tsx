@@ -57,6 +57,7 @@ import {
   Users,
   Calendar as CalendarIcon,
   Star,
+  Share2,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { OrderInvoiceCard } from "@/components/app/order-invoice-card";
@@ -450,6 +451,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   // حالة التقرير
   const [reportOpen, setReportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [reportFrom, setReportFrom] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -655,31 +657,26 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }
 
   function exportCSV() {
-    if (orders.length === 0) return;
-    const BOM = "\uFEFF";
-    const header = "رقم الطلب,اسم العميل,الهاتف,الخدمة,الحالة,المجموع,التاريخ\n";
-    const rows = orders.map((o) => {
-      const customer = o.customer || {};
-      const c = JSON.parse(JSON.stringify(customer));
-      const name = String(c.name || "").replace(/,/g, ";");
-      const phone = String(c.phone || "").replace(/,/g, ";");
-      const service = String(o.serviceName || o.serviceType).replace(/,/g, ";");
-      const status = STATUS_META[o.status]?.label || o.status;
-      const total = o.total || 0;
-      const date = formatDateTimeAr(o.createdAt).replace(/,/g, " ");
-      return `${o.reference},${name},${phone},${service},${status},${total},${date}`;
-    }).join("\n");
-    const csv = BOM + header + rows;
+    if (!rawOrders.length) { toast.error("لا توجد بيانات للتصدير"); return; }
+    const headers = ["رقم الطلب", "اسم الزبون", "الخدمة", "الحالة", "السعر", "التاريخ"];
+    const statusMap: Record<string, string> = { pending: "معلق", confirmed: "مؤكد", printing: "طباعة", ready: "جاهز", delivered: "تم التسليم", cancelled: "ملغى" };
+    const rows = rawOrders.map(o => [
+      o.reference || o.id,
+      o.customer?.name || "",
+      o.serviceName || o.serviceType || "",
+      statusMap[o.status] || STATUS_META[o.status]?.label || o.status,
+      o.total?.toString() || "0",
+      formatDateTimeAr(o.createdAt) || o.createdAt
+    ]);
+    const csv = "\uFEFF" + [headers, ...rows].map(r => r.map(c => `"${(c || "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const dateStr = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `orders-${shop?.slug || "export"}-${dateStr}.csv`;
-    document.body.appendChild(a);
+    a.download = `orders-${shopSlug}-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast.success("تم تصدير الطلبات بنجاح");
   }
 
   async function deleteOrder(id: string) {
@@ -1039,7 +1036,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             >
               <Bell className="h-4.5 w-4.5 text-muted-foreground" />
               {pendingCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1 -left-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse pending-pulse">
                   {pendingCount > 99 ? "99+" : pendingCount}
                 </span>
               )}
@@ -1092,7 +1089,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated",
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated merchant-stat-lift",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
@@ -1101,7 +1098,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     }} />
                     <div className="relative flex items-start justify-between">
                       <div className="min-w-0">
-                        <div className="text-xl sm:text-2xl font-bold tabular-nums truncate text-foreground">{c.value}</div>
+                        <div className={cn("text-xl sm:text-2xl font-bold tabular-nums truncate text-foreground animate-count-up", c.title === "إجمالي الإيرادات" && "revenue-shimmer")}>{c.value}</div>
                         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">{c.title}{c.trend && (c.trend === "up" ? <ArrowUp className="h-3 w-3 text-emerald-500" /> : <ArrowDown className="h-3 w-3 text-rose-500" />)}</div>
                       </div>
                       <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110", c.bg)}>
@@ -1131,7 +1128,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">الإيرادات</div>
-                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number">{formatDA(todayRevenue)}</div>
+                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number revenue-shimmer">{formatDA(todayRevenue)}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
@@ -1226,7 +1223,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
                       transition={{ duration: 0.5, ease: "easeOut", y: { duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } }}
-                      className="text-4xl mb-3"
+                      className="text-4xl mb-3 empty-bounce"
                     >
                       🎉
                     </MotionDiv>
@@ -1253,6 +1250,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       <button onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ الرابط!"); }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card hover:bg-secondary border border-border text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                         <Copy className="h-4 w-4" />
                         نسخ الرابط
+                      </button>
+                      <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:shadow-violet-500/30">
+                        <Share2 className="h-4 w-4" />
+                        مشاركة
                       </button>
                     </MotionDiv>
                   </div>
@@ -1292,7 +1293,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : !stats?.recentOrders?.length ? (
                     <div className="py-14 flex flex-col items-center">
-                      <Inbox className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                      <Inbox className="h-10 w-10 text-muted-foreground/30 mb-3 empty-bounce" />
                       <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
                       <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا آخر الطلبات الواردة</p>
                       <a
@@ -1321,7 +1322,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                         const nextStatus = o.status === "pending" ? "printing" : o.status === "printing" ? "ready" : o.status === "ready" ? "delivered" : null;
                         const nextStatusMeta = nextStatus ? STATUS_META[nextStatus] : null;
                         return (
-                          <div key={o.id} className={cn("flex items-center justify-between px-4 sm:px-6 py-3.5 gap-3 hover:bg-secondary transition-colors duration-150 border-r-[3px]", o.status === "pending" && "animate-pulse-slow", statusBorderMap[o.status] || "border-r-border")}>
+                          <div key={o.id} className={cn("flex items-center justify-between px-4 sm:px-6 py-3.5 gap-3 hover:bg-secondary transition-colors duration-150 border-r-[3px] slide-in-rtl", o.status === "pending" && "animate-pulse-slow", statusBorderMap[o.status] || "border-r-border")}>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span
@@ -1384,7 +1385,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                           </div>
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-gradient-to-l from-primary to-primary/60 transition-all duration-700"
+                              className="h-full rounded-full bg-gradient-to-l from-primary to-primary/60 transition-all duration-700 animate-progress"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -1398,7 +1399,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               )}
 
               {/* التحليلات */}
-              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden chart-fade-in">
                 <AdminAnalytics stats={stats} orders={orders} />
               </div>
             </motion.div>
@@ -1576,7 +1577,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-16 text-center">
-                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
                       <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
@@ -1687,7 +1688,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-10 text-center">
-                      <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2 empty-bounce" />
                       <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
@@ -1707,7 +1708,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-16 text-center">
-                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
                       <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
                     </div>
                   ) : (
@@ -1790,7 +1791,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
             >
-            <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden chart-fade-in">
               <div className="p-4 sm:p-6">
                 <MerchantAnalytics stats={stats} orders={rawOrders} />
               </div>
@@ -2096,6 +2097,75 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   إنشاء التقرير
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== نافذة مشاركة رابط المتجر ===== */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-violet-600" />
+              مشاركة رابط المتجر
+            </DialogTitle>
+            <DialogDescription>
+              شارك رابط متجرك مع زبائنك عبر وسائل التواصل
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={customerLink}
+                className="text-left font-mono text-sm"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  navigator.clipboard.writeText(customerLink);
+                  toast.success("تم نسخ الرابط!");
+                  setShareOpen(false);
+                }}
+              >
+                <Copy className="h-4 w-4 ml-1" />
+                نسخ
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent("اطبع أونلاين من " + (shop?.name || "المتجر") + " — " + customerLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.163 0-4.186-.67-5.849-1.81l-.406-.29-2.96.99.99-2.96-.29-.406A9.96 9.96 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                واتساب
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(customerLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                تيليجرام
+              </a>
+            </div>
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(customerLink);
+                toast.success("تم نسخ الرابط!");
+                setShareOpen(false);
+              }}
+            >
+              <Copy className="h-4 w-4 ml-2" />
+              نسخ الرابط
             </Button>
           </div>
         </DialogContent>
