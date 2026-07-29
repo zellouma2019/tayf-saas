@@ -3277,3 +3277,143 @@ Task: QA + إصلاح Turso DB بالـ JOIN + كشف الطلبات المكر�
 4. تحسين التجربة التجريبية
 5. سلة مشتريات متعددة الخدمات
 6. SEO structured data (JSON-LD)
+
+---
+Task ID: qa-fix-round23
+Agent: Main Agent
+Task: QA + إصلاح حرج لتحميل الطلبات + ميزات جديدة + CSS Round 23
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح — **تبويب الطلبات يعرض 38 طلب الآن!**
+- ✅ صفحة المتجر للزبون تعمل بشكل جيد
+- ✅ تتبع الطلبات يعمل
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ البناء ناجح بدون أخطاء
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 38 طلب، 27,769 د.ج | ✅ |
+| تبويب الطلبات — **يعرض 38 طلب الآن** | ✅ (كان يعرض 0!) |
+| تبويب المتاجر — 5 متاجر | ✅ |
+| صفحة المتجر (/s/al-riyan) | ✅ |
+| صفحة التتبع (/track) | ✅ |
+| أخطاء JavaScript | ✅ لا أخطاء |
+
+## الإصلاحات الحرجة
+
+### 1. تبويب الطلبات يعرض 0 طلب (السبب الجذري + الحل)
+**المشكلة**: `fetch("/api/orders?limit=10000")` كان يُرجع بيانات فارغة بسبب:
+- HTTP cache على Vercel Edge (`s-maxage=3` يعيد بيانات قديمة/فارغة)
+- لا يوجد cache-busting في طلبات الـ fetch
+- Turso DB أحياناً يُرجع 0 صفوف مع LEFT JOIN
+
+**الحل المُطبق على ملفين**:
+
+#### `src/components/app/admin-panel.tsx`:
+- `fetchOrdersWithRetry()`: دالة جديدة مع 3 محاولات + تأخير تصاعدي (1.5s × attempt)
+- `cache: 'no-store'` لمنع التخزين المؤقت
+- `_t=${Date.now()}` كـ cache-buster في URL
+- تحديث تلقائي كل 45 ثانية
+- إعادة محاولة تلقائية إذا orders.length === 0 و stats.totalOrders > 0
+- الحفاظ على آخر بيانات ناجحة (لا تُمسح عند الخطأ)
+
+#### `src/app/page.tsx`:
+- نفس إصلاح cache-busting + retry في `loadOrders()`
+- تحديث تلقائي كل 45 ثانية
+- زيادة limit من 100 إلى 500
+
+### الملفات المُعدلة للإصلاح
+| الملف | التغيير |
+|------|---------|
+| `src/components/app/admin-panel.tsx` | fetchOrdersWithRetry + cache-bust + auto-refresh |
+| `src/app/page.tsx` | loadOrders cache-bust + retry + auto-refresh |
+
+## الميزات الجديدة
+
+### 1. أزرار التواصل السريع في نافذة تفاصيل الطلب
+- **واتساب**: إرسال رسالة تلقائية بالعميل مع حالة الطلب
+- **اتصال**: زر dial مباشر (`tel:`)
+- **نسخ الرقم**: نسخ رقم الهاتف للحافظة مع toast
+- جميع الأزرار ملونة (emerald/sky/violet) مع أيقونات
+- الملف: `order-detail-modal.tsx`
+
+### 2. Skeleton Loading متقدم
+- بدلاً من دوّار التحميل العادي، عرض هيكل عظمي للجدول
+- 5 صفوف متحركة (shimmer) في نسخة الحاسوب
+- 3 بطاقات متحركة في نسخة الجوال
+- الملف: `admin-panel.tsx`
+
+### 3. إعادة محاولة ذكية
+- زر "إعادة تحميل" يظهر عندما:
+  - الطلبات = 0 لكن stats.totalOrders > 0
+  - المستخدم يمكن النقر يدوياً لإعادة التحميل
+- رسالة واضحة: "يتم إعادة المحاولة... جارٍ تحميل البيانات"
+
+### 4. مؤشر "جارٍ التحديث" على السبورة
+- عند تحديث البيانات في الخلفية، يظهر شارة متحركة
+- لا يُعطّل استخدام السبورة أثناء التحديث
+
+### 5. تحديث تلقائي (Auto-refresh)
+- لوحة الإدارة: كل 45 ثانية
+- صفحة الإدارة الرئيسية (page.tsx): كل 45 ثانية
+- تحديث الإحصائيات + الطلبات معاً
+
+## CSS Round 23 (+260 سطر)
+
+### حركات جديدة (Animations)
+- `status-badge-pop`: تكبير/تصغير شارة الحالة
+- `shimmer-sweep`: تأثير لمعان للـ loading
+- `pulse-glow`: توهج نابض للإشعارات
+- `stagger-children`: ظهور متتالي للأبناء (10 عناصر)
+- `badge-bounce`: ارتداد الشارات
+- `notif-slide`: انزلاق الإشعارات
+- `border-rotate`: حدود متدرجة متحركة (conic-gradient)
+- `fade-in-up`: ظهور من الأسفل
+- `slide-in-right`: انزلاق من اليمين (RTL)
+- `glow-pulse`: توهج نابض
+
+### تأثيرات تفاعلية (Effects)
+- `btn-magnetic`: انكماش الزر عند الضغط
+- `gradient-text`: نص متدرج الألوان
+- `ripple-effect`: تموج عند التمرير
+- `card-glow`: توهج البطاقة عند التمرير
+- `table-row-highlight`: تمييز صف الجدول
+- `focus-ring-offset`: حلقة تركيز مع إزاحة
+- `select-smooth`: انتقال سلس للقائمة المنسدلة
+
+### تحسينات
+- `skeleton-gradient`: تحسين هيكل التحميل العظمي
+- `progress-indeterminate`: شريط تقدم غير محدد
+- `accordion-smooth`: توسيع/折叠 سلس
+
+### المكونات المُحدَّثة
+- بطاقات الإحصائيات: `stagger-children` + `card-glow`
+- صفوف الجدول: `table-row-highlight`
+- شارة الحالة: `status-badge-pop`
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/components/app/admin-panel.tsx` | fetchOrdersWithRetry + skeletons + auto-refresh + Kanban overlay |
+| `src/app/page.tsx` | loadOrders cache-bust + retry + auto-refresh + stagger-children |
+| `src/components/app/order-detail-modal.tsx` | WhatsApp + Call + Copy buttons |
+| `src/components/app/order-details-row.tsx` | table-row-highlight class |
+| `src/app/globals.css` | CSS Round 23 +260 سطر |
+
+## Commits
+- a1aab7a: fix(r23): orders loading fix with cache-busting + 3-retry, WhatsApp quick-send, skeleton loading, CSS R23
+- da8e92c: fix(r23): page.tsx orders loading with cache-bust + retry + auto-refresh 45s
+- c04f480: style(r23): stagger-children on stat cards + polish
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ UPLOADTHING_TOKEN في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB (مشكلة أساسية مع LEFT JOIN)
+3. SEO structured data (JSON-LD)
+4. سلة مشتريات متعددة الخدمات
+5. ملاحظات DB-based للطلبات
+6. تحسين merchant dashboard على الجوال
+7. إضافة og:image للسوشيال ميديا
+8. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
