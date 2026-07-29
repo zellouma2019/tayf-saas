@@ -3694,3 +3694,152 @@ Turso DB queries were sequential (4 queries, each ~5s = 20s total), exceeding Ve
 5. Admin audit log (who changed what and when)
 6. Merchant dashboard mobile optimization
 7. og:image for social media sharing
+
+---
+Task ID: qa-fix-round25
+Agent: Main Agent
+Task: CSS Round 27 + ميزات جديدة + تحسينات بصرية + إصلاح حرج
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل جيد (overview + orders + shops)
+- ✅ صفحة المتجر للزبون تعمل بشكل جيد
+- ✅ تتبع الطلبات يعمل
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ Build ينجح بدون أخطاء
+- ✅ Lint ينجح بدون تحذيرات
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع (~8s للاستعلامات)
+
+## الإصلاح الحرج: خطأ CSS Parsing
+### المشكلة
+`var(--muted-foreground/10)` و `var(--muted-foreground/30)` في globals.css سببت خطأ parsing:
+```
+Parsing CSS source code failed - Unexpected token Delim('/')
+```
+
+### الحل
+- تحويل `var(--muted-foreground/10)` → `oklch(from var(--muted-foreground) l c h / 0.1)`
+- تحويل `var(--muted-foreground/30)` → `oklch(from var(--muted-foreground) l c h / 0.3)`
+
+## الميزات الجديدة
+
+### 1. مركز الإشعارات (Notification Center)
+- زر "الإشعارات" في الشريط العلوي مع badge عدد الإشعارات
+- لوحة منسدلة تعرض آخر الطلبات كإشعارات نشاط
+- كل إشعار يعرض: رقم الطلب + اسم الزبون + اسم المتجر + الحالة + الوقت النسبي
+- حالة فارغة: "لا توجد إشعارات جديدة"
+- زر "عرض الكل" للانتقال لتبويب الطلبات
+- إغلاق بالنقر خارج اللوحة أو Escape
+- تصميم glass-card مع dark mode
+
+### 2. تحليلات الإيرادات (Revenue Analytics Widget)
+- بطاقة "إحصائيات الإيرادات" في تبويب النظرة العامة
+- 3 مقاييس: إجمالي الإيرادات + متوسط الطلب + أعلى إيراد يومي
+- كل مقياس بأيقونة + قيمة + مؤشر التغير المئوي (↑ أخضر / ↓ أحمر)
+- مخطط أعمدة CSS-only لآخر 7 أيام (بدون مكتبة خارجية)
+- أعمدة متناسبة مع إبراز يوم الذروة واليوم الحالي
+- دعم الوضع الداكن
+
+### 3. إجراءات سريعة (Quick Actions Panel)
+- 4 أزرار إجراء سريع في شبكة متجاوبة (2x2 جوال / 4 أعمدة حاسوب)
+- "إنشاء متجر جديد" — يفتح CreateShopDialog
+- "تصدير التقرير" — يصدّر البيانات Excel
+- "تحديث البيانات" — يحديث جميع البيانات
+- "إعدادات المنصة" — ينتقل لتبويب الإعدادات
+- تأثير btn-3d + card-hover-lift
+
+### 4. مؤشر صحة المتجر (Shop Health Status)
+- شارة صغيرة بجانب كل متجر في قائمة المتاجر
+- "نشط" (أخضر badge-success-pulse) — متجر لديه طلبات
+- "بطيء" (كهرماني badge-warning) — متجر بدون طلبات
+- "غير نشط" (أحمر badge-error) — متجر معطل
+
+### 5. مقياس إنجاز التاجر (Performance Gauge)
+- حلقة تقدم SVG متحركة في لوحة تحكم التاجر
+- يعرض نسبة الإنجاز اليومي (الطلبات المكتملة / الإجمالي)
+- ألوان: أخضر >70% / كهرماني 40-70% / أحمر <40%
+- نص تحفيزي حسب النسبة
+
+### 6. أزرار المشاركة في صفحة نجاح الطلب
+- زر "مشاركة على واتساب" — يفتح wa.me مع تفاصيل الطلب
+- زر "نسخ رابط الطلب" — ينسخ رابط التتبع للحافظة
+- شارة "تم استلام الطلب بنجاح ✅"
+- تأثير btn-3d + toast إشعار
+
+## CSS Round 27 (+462 سطر)
+### زجاجي (Glass Morphism)
+- glass-sidebar, glass-tooltip
+
+### حركات متقدمة
+- float-animation, shimmer-loading, fade-scale-in, slide-in-right (RTL), slide-in-bottom
+
+### بطاقات
+- card-gradient-border (حد متدرج), card-hover-lift (رفع عند التمرير)
+
+### نصوص
+- text-shadow-soft, text-shadow-glow, text-shimmer-effect
+
+### أزرار
+- btn-3d (تأثير ثلاثي الأبعاد), btn-glow (توهج), btn-outline-animated (حد متحرك)
+
+### تخطيط
+- container-narrow/wide, stack-vertical/horizontal
+
+### تمرير
+- reveal-on-scroll, reveal-scale-on-scroll
+
+### شارات
+- badge-success/warning/error/info + badge-*-pulse
+
+### جداول
+- table-row-hover-lift, table-stripe-alternating, table-header-gradient
+
+### جانبي
+- sidebar-active-item, sidebar-collapsed-item
+
+### رسوم بيانية
+- chart-bar-animated, chart-value-tooltip
+
+### طباعة
+- print-only, screen-only, print-break-inside-avoid
+
+### خاص
+- @media (prefers-reduced-motion: reduce) — يعطّل كل الحركات
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 27 +462 سطر + إصلاح var/opacity |
+| `src/app/page.tsx` | إضافة NotificationCenter + Quick Actions props |
+| `src/components/app/notification-center.tsx` | ملف جديد: مركز الإشعارات |
+| `src/components/app/admin-overview-tab.tsx` | Revenue Analytics + Quick Actions |
+| `src/components/app/admin-shop-card.tsx` | مؤشر صحة المتجر |
+| `src/components/app/merchant-dashboard.tsx` | مقياس إنجاز SVG |
+| `src/components/app/order-success.tsx` | أزرار المشاركة |
+
+## نتائج QA على الموقع الحي (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية (لوحة الإدارة) | ✅ تعرض 38 طلب + 5 متاجر + 17,808 د.ج |
+| مركز الإشعارات | ✅ يعرض 16+ إشعار مع "عرض الكل" |
+| مؤشر صحة المتاجر | ✅ جميع المتاجر الخمسة تعرض "نشط" |
+| الوضع الداكن | ✅ يعمل بشكل صحيح |
+| صفحة المتجر (/s/al-riyan) | ✅ تعرض الخدمات + الحاسبة + الفوتر |
+| صفحة التتبع (/track) | ✅ تعرض البحث والتعليمات |
+| الجوال (375x812) | ✅ تصميم متجاوب يعمل |
+| تحليلات الإيرادات | ✅ تظهر في النظرة العامة |
+| مقياس الإنجاز | ✅ يظهر في لوحة التاجر |
+| Build + Lint | ✅ بدون أخطاء |
+
+## Commits
+- e358077: feat(r25): CSS Round 27, revenue analytics, notification center, shop health, performance gauge, share buttons
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ UPLOADTHING_TOKEN في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB (بطء متقطع ~8s)
+3. SEO JSON-LD structured data
+4. سلة مشتريات متعددة الخدمات
+5. ملاحظات DB-based للطلبات
+6. تحسين merchant dashboard على الجوال
+7. og:image للسوشيال ميديا
+8. Admin audit log (من غيّر ماذا ومتى)
