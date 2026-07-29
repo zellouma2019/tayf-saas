@@ -79,6 +79,11 @@ import { MonthlyTargetProgress } from "@/components/app/monthly-target-progress"
 import { TopCustomersWidget } from "@/components/app/top-customers-widget";
 import { PrintQualityMonitor } from "@/components/app/print-quality-monitor";
 import { EmployeePerformanceChart } from "@/components/app/employee-performance-chart";
+import { BusinessHoursWidget } from "@/components/app/business-hours-widget";
+import { SeasonalDemandWidget } from "@/components/app/seasonal-demand-widget";
+import { CostBreakdownWidget } from "@/components/app/cost-breakdown-widget";
+import { FeedbackSentimentWidget } from "@/components/app/feedback-sentiment-widget";
+import { OrderFulfillmentTimeline } from "@/components/app/order-fulfillment-timeline";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -966,6 +971,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* أداء الموظفين */}
       <EmployeePerformanceChart />
+
+      {/* ساعات العمل */}
+      <BusinessHoursWidget />
+
+      {/* الطلب الموسمي */}
+      <SeasonalDemandWidget />
+
+      {/* تحليل التكاليف */}
+      <CostBreakdownWidget />
+
+      {/* تحليل المشاعر */}
+      <FeedbackSentimentWidget />
+
+      {/* مسار تنفيذ الطلبات */}
+      <OrderFulfillmentTimeline />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard

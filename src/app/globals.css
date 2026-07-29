@@ -27328,6 +27328,1114 @@ tr:hover .table-cell-actions {
 
 /* ═══ End CSS Round 45 ═══ */
 
+/* ═══ CSS Round 46 ═══ */
+
+/* ─────────────────────────────────────────────
+   القسم 1 — أنماط التحديد والإبراز / Selection & Highlight Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --selection-bg: rgba(99, 102, 241, 0.25);
+  --selection-fg: inherit;
+  --highlight-bg: #fef08a;
+  --highlight-green-bg: #bbf7d0;
+  --highlight-blue-bg: #bfdbfe;
+  --highlight-pink-bg: #fbcfe8;
+}
+
+.selection-accent::selection {
+  background: var(--selection-bg, rgba(99, 102, 241, 0.25));
+  color: var(--selection-fg, inherit);
+}
+.selection-accent::-moz-selection {
+  background: var(--selection-bg, rgba(99, 102, 241, 0.25));
+  color: var(--selection-fg, inherit);
+}
+.selection-accent::selection {
+  background: var(--selection-bg);
+}
+[dir="rtl"] .selection-accent::selection {
+  background: var(--selection-bg);
+}
+
+.highlight-text {
+  background: var(--highlight-bg, #fef08a);
+  padding-inline: 0.25em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.highlight-text-yellow {
+  background: var(--highlight-bg, #fef08a);
+  color: #713f12;
+  padding-inline: 0.25em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.highlight-text-green {
+  background: var(--highlight-green-bg, #bbf7d0);
+  color: #14532d;
+  padding-inline: 0.25em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.highlight-text-blue {
+  background: var(--highlight-blue-bg, #bfdbfe);
+  color: #1e3a5f;
+  padding-inline: 0.25em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.highlight-text-pink {
+  background: var(--highlight-pink-bg, #fbcfe8);
+  color: #831843;
+  padding-inline: 0.25em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.mark-important {
+  background: linear-gradient(120deg, rgba(255, 234, 0, 0.4) 0%, rgba(255, 234, 0, 0.7) 100%);
+  padding-inline: 0.2em;
+  border-radius: 0.15em;
+  border-bottom: 2px solid #eab308;
+  font-weight: 600;
+}
+
+.text-decoration-fancy {
+  text-decoration: underline wavy rgba(99, 102, 241, 0.6);
+  text-underline-offset: 0.25em;
+}
+.text-decoration-dotted {
+  text-decoration: underline dotted rgba(99, 102, 241, 0.5);
+  text-underline-offset: 0.3em;
+  text-decoration-thickness: 2px;
+}
+.text-decoration-dashed {
+  text-decoration: underline dashed rgba(99, 102, 241, 0.5);
+  text-underline-offset: 0.3em;
+  text-decoration-thickness: 2px;
+}
+
+.strikethrough-animated {
+  position: relative;
+  display: inline-block;
+}
+.strikethrough-animated::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 50%;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.4s ease;
+}
+.strikethrough-animated.active::after {
+  width: 100%;
+}
+
+.underline-gradient {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+}
+.underline-gradient::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-end: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: inset-inline-start;
+  transition: transform 0.3s ease;
+}
+.underline-gradient:hover::after,
+.underline-gradient:focus::after {
+  transform: scaleX(1);
+}
+@media (prefers-color-scheme: dark) {
+  .highlight-text { background: rgba(254, 240, 138, 0.25); color: #fef08a; }
+  .mark-important { background: linear-gradient(120deg, rgba(234, 179, 8, 0.2) 0%, rgba(234, 179, 8, 0.4) 100%); }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 2 — أنماط البطاقات المكدسة / Card Stack / Stack Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --stack-offset: 8px;
+  --stack-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-stack {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.card-stack-item {
+  position: relative;
+  border-radius: 0.75rem;
+  box-shadow: var(--stack-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+.card-stack > .card-stack-item + .card-stack-item {
+  margin-block-start: calc(var(--stack-offset, 8px) * -1);
+  margin-inline-start: var(--stack-offset, 8px);
+}
+
+.card-stack-3 > .card-stack-item:nth-child(1) { z-index: 3; transform: rotate(-1deg); }
+.card-stack-3 > .card-stack-item:nth-child(2) { z-index: 2; transform: rotate(0.5deg); }
+.card-stack-3 > .card-stack-item:nth-child(3) { z-index: 1; transform: rotate(1.5deg); }
+
+.card-stack-4 > .card-stack-item:nth-child(1) { z-index: 4; transform: rotate(-1.5deg); }
+.card-stack-4 > .card-stack-item:nth-child(2) { z-index: 3; transform: rotate(-0.5deg); }
+.card-stack-4 > .card-stack-item:nth-child(3) { z-index: 2; transform: rotate(0.5deg); }
+.card-stack-4 > .card-stack-item:nth-child(4) { z-index: 1; transform: rotate(1.5deg); }
+
+.card-stack-5 > .card-stack-item:nth-child(1) { z-index: 5; transform: rotate(-2deg); }
+.card-stack-5 > .card-stack-item:nth-child(2) { z-index: 4; transform: rotate(-1deg); }
+.card-stack-5 > .card-stack-item:nth-child(3) { z-index: 3; transform: rotate(0deg); }
+.card-stack-5 > .card-stack-item:nth-child(4) { z-index: 2; transform: rotate(1deg); }
+.card-stack-5 > .card-stack-item:nth-child(5) { z-index: 1; transform: rotate(2deg); }
+
+.card-stack:hover .card-stack-item {
+  transform: rotate(0deg) translateY(-4px);
+}
+.card-stack:hover .card-stack-item:hover {
+  z-index: 10;
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+.card-stack-fan > .card-stack-item:nth-child(1) { transform: rotate(-12deg) translateY(0); z-index: 3; }
+.card-stack-fan > .card-stack-item:nth-child(2) { transform: rotate(-4deg) translateY(-4px); z-index: 2; }
+.card-stack-fan > .card-stack-item:nth-child(3) { transform: rotate(4deg) translateY(-4px); z-index: 2; }
+.card-stack-fan > .card-stack-item:nth-child(4) { transform: rotate(12deg) translateY(0); z-index: 1; }
+.card-stack-fan:hover > .card-stack-item:nth-child(1) { transform: rotate(-20deg) translateY(-8px); }
+.card-stack-fan:hover > .card-stack-item:nth-child(4) { transform: rotate(20deg) translateY(-8px); }
+
+.card-stack-cascade > .card-stack-item + .card-stack-item {
+  margin-block-start: 0;
+  margin-inline-start: 0;
+  transform: translateY(100%) scale(0.95);
+  opacity: 0.8;
+}
+.card-stack-cascade:hover > .card-stack-item:nth-child(1) { transform: translateY(-8px); }
+.card-stack-cascade:hover > .card-stack-item:nth-child(2) { transform: translateY(-4px) scale(0.98); opacity: 0.9; }
+.card-stack-cascade:hover > .card-stack-item:nth-child(3) { transform: translateY(0) scale(1); opacity: 1; }
+
+@media (prefers-color-scheme: dark) {
+  .card-stack-item { background: var(--card-bg, #1e293b); border-color: var(--border-color, #334155); }
+  .card-stack:hover .card-stack-item:hover { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4); }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 3 — أنماط العلامة المائية والخلفية / Watermark & Background Pattern Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --watermark-color: rgba(0, 0, 0, 0.04);
+  --watermark-size: 120px;
+  --pattern-dot-color: rgba(0, 0, 0, 0.06);
+  --pattern-dot-size: 6px;
+  --pattern-grid-color: rgba(0, 0, 0, 0.05);
+  --pattern-grid-size: 40px;
+}
+
+.watermark {
+  position: relative;
+}
+.watermark::before {
+  content: "DRAFT";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 5rem;
+  font-weight: 900;
+  color: var(--watermark-color);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+  letter-spacing: 0.3em;
+  user-select: none;
+}
+.watermark-diagonal::before {
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 4rem;
+}
+
+.pattern-dots {
+  background-image: radial-gradient(circle, var(--pattern-dot-color) 1px, transparent 1px);
+  background-size: var(--pattern-dot-size, 6px) var(--pattern-dot-size, 6px);
+}
+
+.pattern-grid {
+  background-image:
+    linear-gradient(var(--pattern-grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pattern-grid-color) 1px, transparent 1px);
+  background-size: var(--pattern-grid-size, 40px) var(--pattern-grid-size, 40px);
+}
+
+.pattern-diagonal-lines {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.04) 10px,
+    rgba(0, 0, 0, 0.04) 11px
+  );
+}
+
+.pattern-zigzag {
+  background:
+    linear-gradient(135deg, var(--pattern-grid-color) 25%, transparent 25%) -20px 0,
+    linear-gradient(225deg, var(--pattern-grid-color) 25%, transparent 25%) -20px 0,
+    linear-gradient(315deg, var(--pattern-grid-color) 25%, transparent 25%),
+    linear-gradient(45deg, var(--pattern-grid-color) 25%, transparent 25%);
+  background-size: 40px 40px;
+  background-color: transparent;
+}
+
+.pattern-circles {
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 30%,
+    rgba(0, 0, 0, 0.03) 30%,
+    rgba(0, 0, 0, 0.03) 31%,
+    transparent 31%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.03) 60%,
+    rgba(0, 0, 0, 0.03) 61%,
+    transparent 61%
+  );
+  background-size: 60px 60px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --watermark-color: rgba(255, 255, 255, 0.05);
+    --pattern-dot-color: rgba(255, 255, 255, 0.08);
+    --pattern-grid-color: rgba(255, 255, 255, 0.06);
+  }
+  .pattern-diagonal-lines {
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 4 — أنماط التسميات وسحابة العلامات / Label & Tag Cloud Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --tag-radius: 9999px;
+  --tag-padding: 0.35em 0.75em;
+  --tag-bg: #f1f5f9;
+  --tag-fg: #475569;
+  --tag-border: #e2e8f0;
+}
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+.tag-cloud-item {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--tag-padding);
+  border-radius: var(--tag-radius);
+  background: var(--tag-bg);
+  color: var(--tag-fg);
+  border: 1px solid var(--tag-border);
+  font-size: 0.875rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+  white-space: nowrap;
+}
+.tag-cloud-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.tag-cloud-item-sm { font-size: 0.7rem; padding: 0.2em 0.55em; }
+.tag-cloud-item-md { font-size: 0.875rem; }
+.tag-cloud-item-lg { font-size: 1rem; padding: 0.4em 0.9em; }
+.tag-cloud-item-xl { font-size: 1.15rem; padding: 0.5em 1.1em; font-weight: 600; }
+.tag-cloud-item-accent {
+  background: var(--color-primary, #6366f1);
+  color: #fff;
+  border-color: var(--color-primary, #6366f1);
+}
+
+.tag-cloud-animated .tag-cloud-item {
+  animation: tag-float 4s ease-in-out infinite;
+}
+.tag-cloud-animated .tag-cloud-item:nth-child(2n) { animation-delay: -1s; }
+.tag-cloud-animated .tag-cloud-item:nth-child(3n) { animation-delay: -2s; }
+.tag-cloud-animated .tag-cloud-item:nth-child(4n) { animation-delay: -0.5s; }
+
+@keyframes tag-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.label-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15em 0.55em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.375rem;
+  background: var(--tag-bg);
+  color: var(--tag-fg);
+  vertical-align: middle;
+}
+.label-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.label-group .label-inline + .label-inline {
+  margin-inline-start: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tag-bg: #1e293b;
+    --tag-fg: #cbd5e1;
+    --tag-border: #334155;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 5 — تأثيرات التوهج والنيون / Glow & Neon Effects
+   ───────────────────────────────────────────── */
+:root {
+  --glow-sm: 0 0 8px 2px rgba(99, 102, 241, 0.15);
+  --glow-md: 0 0 16px 4px rgba(99, 102, 241, 0.25);
+  --glow-lg: 0 0 32px 8px rgba(99, 102, 241, 0.35);
+  --neon-indigo: #6366f1;
+  --neon-cyan: #22d3ee;
+  --neon-pink: #ec4899;
+  --neon-green: #22c55e;
+}
+
+.glow-sm { box-shadow: var(--glow-sm); }
+.glow-md { box-shadow: var(--glow-md); }
+.glow-lg { box-shadow: var(--glow-lg); }
+
+.glow-primary { box-shadow: var(--glow-md); }
+.glow-accent { box-shadow: 0 0 16px 4px rgba(168, 85, 247, 0.25); }
+.glow-success { box-shadow: 0 0 16px 4px rgba(34, 197, 94, 0.25); }
+.glow-warning { box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.25); }
+.glow-danger { box-shadow: 0 0 16px 4px rgba(239, 68, 68, 0.25); }
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(99, 102, 241, 0.5), 0 0 20px rgba(99, 102, 241, 0.3);
+}
+.glow-text-primary { text-shadow: 0 0 10px rgba(99, 102, 241, 0.5), 0 0 20px rgba(99, 102, 241, 0.3); }
+.glow-text-accent { text-shadow: 0 0 10px rgba(168, 85, 247, 0.5), 0 0 20px rgba(168, 85, 247, 0.3); }
+.glow-text-success { text-shadow: 0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3); }
+.glow-text-warning { text-shadow: 0 0 10px rgba(245, 158, 11, 0.5), 0 0 20px rgba(245, 158, 11, 0.3); }
+.glow-text-danger { text-shadow: 0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3); }
+
+.neon-border {
+  border: 2px solid var(--neon-indigo);
+  box-shadow: 0 0 8px var(--neon-indigo), inset 0 0 8px rgba(99, 102, 241, 0.1);
+}
+.neon-border-indigo {
+  border: 2px solid var(--neon-indigo);
+  box-shadow: 0 0 8px var(--neon-indigo), inset 0 0 8px rgba(99, 102, 241, 0.1);
+}
+.neon-border-cyan {
+  border: 2px solid var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan), inset 0 0 8px rgba(34, 211, 238, 0.1);
+}
+.neon-border-pink {
+  border: 2px solid var(--neon-pink);
+  box-shadow: 0 0 8px var(--neon-pink), inset 0 0 8px rgba(236, 72, 153, 0.1);
+}
+.neon-border-green {
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green), inset 0 0 8px rgba(34, 197, 94, 0.1);
+}
+
+.glow-pulse {
+  animation: glow-pulse-anim 2s ease-in-out infinite;
+}
+@keyframes glow-pulse-anim {
+  0%, 100% { box-shadow: var(--glow-sm); }
+  50% { box-shadow: var(--glow-lg); }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glow-sm: 0 0 12px 4px rgba(99, 102, 241, 0.3);
+    --glow-md: 0 0 24px 8px rgba(99, 102, 241, 0.4);
+    --glow-lg: 0 0 48px 16px rgba(99, 102, 241, 0.5);
+  }
+  .neon-border, .neon-border-indigo {
+    box-shadow: 0 0 14px var(--neon-indigo), 0 0 28px rgba(99, 102, 241, 0.3), inset 0 0 14px rgba(99, 102, 241, 0.15);
+  }
+  .neon-border-cyan {
+    box-shadow: 0 0 14px var(--neon-cyan), 0 0 28px rgba(34, 211, 238, 0.3), inset 0 0 14px rgba(34, 211, 238, 0.15);
+  }
+  .neon-border-pink {
+    box-shadow: 0 0 14px var(--neon-pink), 0 0 28px rgba(236, 72, 153, 0.3), inset 0 0 14px rgba(236, 72, 153, 0.15);
+  }
+  .neon-border-green {
+    box-shadow: 0 0 14px var(--neon-green), 0 0 28px rgba(34, 197, 94, 0.3), inset 0 0 14px rgba(34, 197, 94, 0.15);
+  }
+  .glow-text, .glow-text-primary {
+    text-shadow: 0 0 14px rgba(99, 102, 241, 0.7), 0 0 28px rgba(99, 102, 241, 0.5), 0 0 42px rgba(99, 102, 241, 0.3);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 6 — أنماط النسخ / Clipboard / Copy Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --copy-bg: #f1f5f9;
+  --copy-fg: #475569;
+  --copy-copied-bg: #dcfce7;
+  --copy-copied-fg: #166534;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4em 0.8em;
+  border-radius: 0.5rem;
+  background: var(--copy-bg);
+  color: var(--copy-fg);
+  border: 1px solid var(--border-color, #e2e8f0);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.copy-btn:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.copy-btn:active {
+  transform: translateY(0);
+}
+
+.copy-btn-copied {
+  background: var(--copy-copied-bg);
+  color: var(--copy-copied-fg);
+  border-color: #86efac;
+}
+.copy-btn-copied:hover {
+  background: #bbf7d0;
+}
+
+.copy-feedback {
+  position: absolute;
+  inset-block-start: -2rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 0.25em 0.6em;
+  background: #166534;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.copy-feedback.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.copy-tooltip {
+  position: relative;
+}
+.copy-tooltip::after {
+  content: attr(data-tooltip, "Copy");
+  position: absolute;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-start: 50%;
+  transform: translateX(-50%) scale(0.9);
+  padding: 0.3em 0.6em;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 0.7rem;
+  border-radius: 0.375rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.copy-tooltip:hover::after,
+.copy-tooltip:focus-within::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --copy-bg: #1e293b;
+    --copy-fg: #cbd5e1;
+    --copy-copied-bg: #14532d;
+    --copy-copied-fg: #86efac;
+  }
+  .copy-btn { border-color: #334155; }
+  .copy-btn:hover { background: #334155; }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 7 — أنماط السحب والترتيب / Drag Handle / Sortable Patterns
+   ───────────────────────────────────────────── */
+.drag-handle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 20px;
+  height: 20px;
+  cursor: grab;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+  user-select: none;
+}
+.drag-handle:hover { opacity: 0.8; }
+.drag-handle:active { cursor: grabbing; }
+.drag-handle::before,
+.drag-handle::after {
+  content: "";
+  display: flex;
+  flex-wrap: wrap;
+  width: 12px;
+  gap: 3px;
+}
+.drag-handle::before {
+  content: "⠿";
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.drag-handle-horizontal {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  cursor: grab;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+  user-select: none;
+}
+.drag-handle-horizontal:hover { opacity: 0.8; }
+.drag-handle-horizontal::before {
+  content: "⋯";
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+.drag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  transition: all 0.2s ease;
+  position: relative;
+}
+.drag-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.drag-item-dragging {
+  opacity: 0.6;
+  transform: scale(1.02);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  cursor: grabbing;
+}
+
+.drag-item-placeholder {
+  border: 2px dashed var(--border-color, #cbd5e1);
+  border-radius: 0.5rem;
+  background: rgba(99, 102, 241, 0.04);
+  min-height: 3.5rem;
+  transition: all 0.2s ease;
+}
+
+.drag-item-drop-target {
+  border-color: var(--color-primary, #6366f1);
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.sortable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sortable-list .drag-item + .drag-item {
+  margin-block-start: 0;
+}
+
+.sortable-list-ghost {
+  opacity: 0.3;
+  background: rgba(99, 102, 241, 0.05);
+  border: 2px dashed var(--color-primary, #6366f1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .drag-item { background: var(--card-bg, #1e293b); border-color: #334155; }
+  .drag-item-dragging { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4); }
+  .drag-item-placeholder { border-color: #475569; background: rgba(99, 102, 241, 0.06); }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 8 — أنماط المسافة البادئة والشجرة / Indent / Tree Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --tree-indent: 1.5rem;
+  --tree-line-color: #cbd5e1;
+  --tree-toggle-color: #94a3b8;
+}
+
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tree-item {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.375rem;
+  transition: background 0.15s ease;
+  cursor: default;
+  gap: 0.35rem;
+}
+.tree-item:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.tree-item-expandable {
+  cursor: pointer;
+  font-weight: 500;
+}
+.tree-item-expandable::before {
+  content: "";
+  display: inline-flex;
+  width: 0;
+  height: 0;
+  border-inline-start: 5px solid var(--tree-toggle-color);
+  border-block-start: 4px solid transparent;
+  border-block-end: 4px solid transparent;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tree-item-expanded > .tree-item-expandable::before,
+.tree-item-expanded::before {
+  transform: rotate(90deg);
+}
+
+.tree-item-leaf {
+  padding-inline-start: calc(0.5rem + 10px);
+}
+
+.tree-connector {
+  position: relative;
+}
+.tree-connector::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 1px;
+  height: 100%;
+  background: var(--tree-line-color);
+}
+.tree-connector::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0;
+  width: 1rem;
+  height: 1px;
+  background: var(--tree-line-color);
+}
+
+.tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--tree-toggle-color);
+  transition: background 0.15s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+.tree-toggle:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+.tree-item-expanded > .tree-toggle {
+  transform: rotate(90deg);
+}
+
+.tree-indent-1 { padding-inline-start: calc(var(--tree-indent) * 1); }
+.tree-indent-2 { padding-inline-start: calc(var(--tree-indent) * 2); }
+.tree-indent-3 { padding-inline-start: calc(var(--tree-indent) * 3); }
+.tree-indent-4 { padding-inline-start: calc(var(--tree-indent) * 4); }
+.tree-indent-5 { padding-inline-start: calc(var(--tree-indent) * 5); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tree-line-color: #475569;
+    --tree-toggle-color: #64748b;
+  }
+  .tree-item:hover { background: rgba(99, 102, 241, 0.08); }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 9 — أنماط شارة الإشعارات والحبوب / Notification Badge / Pill Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --pill-radius: 9999px;
+  --pill-padding: 0.25em 0.7em;
+  --pill-font-size: 0.75rem;
+}
+
+.notif-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: var(--pill-padding);
+  border-radius: var(--pill-radius);
+  background: #ef4444;
+  color: #fff;
+  font-size: var(--pill-font-size);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+.notif-pill-urgent {
+  animation: notif-pulse 1.5s ease-in-out infinite;
+}
+@keyframes notif-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+.notif-pill-count-up {
+  transition: transform 0.2s ease;
+}
+.notif-pill-count-up.bump {
+  animation: count-bump 0.3s ease;
+}
+@keyframes count-bump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: var(--pill-padding);
+  border-radius: var(--pill-radius);
+  font-size: var(--pill-font-size);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.status-pill::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-pill-success { background: #dcfce7; color: #166534; }
+.status-pill-success::before { background: #22c55e; }
+.status-pill-warning { background: #fef3c7; color: #92400e; }
+.status-pill-warning::before { background: #f59e0b; }
+.status-pill-danger { background: #fee2e2; color: #991b1b; }
+.status-pill-danger::before { background: #ef4444; }
+.status-pill-info { background: #dbeafe; color: #1e40af; }
+.status-pill-info::before { background: #3b82f6; }
+.status-pill-neutral { background: #f1f5f9; color: #475569; }
+.status-pill-neutral::before { background: #94a3b8; }
+
+.label-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3em 0.85em;
+  border-radius: var(--pill-radius);
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--tag-bg, #f1f5f9);
+  color: var(--tag-fg, #475569);
+  border: 1px solid var(--tag-border, #e2e8f0);
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .notif-pill { background: #dc2626; }
+  .status-pill-success { background: #14532d; color: #86efac; }
+  .status-pill-warning { background: #78350f; color: #fde68a; }
+  .status-pill-danger { background: #7f1d1d; color: #fca5a5; }
+  .status-pill-info { background: #1e3a5f; color: #93c5fd; }
+  .status-pill-neutral { background: #1e293b; color: #94a3b8; }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 10 — تأثيرات اللمعان والسحابة / Shimmer / Sheen Effects
+   ───────────────────────────────────────────── */
+:root {
+  --shimmer-bg: #f1f5f9;
+  --shimmer-highlight: rgba(255, 255, 255, 0.6);
+  --shimmer-speed: 2s;
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--shimmer-bg);
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--shimmer-highlight) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: shimmer-move var(--shimmer-speed, 2s) ease-in-out infinite;
+}
+
+.shimmer-fast {
+  --shimmer-speed: 1s;
+}
+.shimmer-fast::after {
+  animation-duration: var(--shimmer-speed);
+}
+
+.shimmer-dark {
+  background: #334155;
+}
+.shimmer-dark::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes shimmer-move {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  animation: sheen-sweep 3s ease-in-out infinite;
+}
+
+.sheen-on-hover::after {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.sheen-on-hover:hover::after {
+  animation: sheen-sweep 3s ease-in-out 1;
+  opacity: 1;
+}
+
+@keyframes sheen-sweep {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shimmer-bg: #1e293b;
+    --shimmer-highlight: rgba(255, 255, 255, 0.04);
+  }
+  .sheen::after {
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 55%, transparent 60%);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 11 — أدوات الرؤية عند نقاط التوقف / Responsive Breakpoint Visibility Utilities
+   ───────────────────────────────────────────── */
+.hide-mobile {
+  display: none;
+}
+@media (min-width: 640px) {
+  .hide-mobile { display: revert; }
+}
+
+.hide-tablet {
+  display: none;
+}
+@media (max-width: 639.99px), (min-width: 1025px) {
+  .hide-tablet { display: revert; }
+}
+
+.hide-desktop {
+  display: none;
+}
+@media (max-width: 1024px) {
+  .hide-desktop { display: revert; }
+}
+
+.show-mobile-only {
+  display: none;
+}
+@media (max-width: 639.99px) {
+  .show-mobile-only { display: revert; }
+}
+
+.show-tablet-only {
+  display: none;
+}
+@media (min-width: 640px) and (max-width: 1024px) {
+  .show-tablet-only { display: revert; }
+}
+
+.show-desktop-only {
+  display: none;
+}
+@media (min-width: 1025px) {
+  .show-desktop-only { display: revert; }
+}
+
+.show-mobile-tablet {
+  display: none;
+}
+@media (max-width: 1024px) {
+  .show-mobile-tablet { display: revert; }
+}
+
+.show-tablet-desktop {
+  display: none;
+}
+@media (min-width: 640px) {
+  .show-tablet-desktop { display: revert; }
+}
+
+/* ─────────────────────────────────────────────
+   القسم 12 — أنماط حبس التركيز والتراكب / Focus-Trap / Overlay Focus Patterns
+   ───────────────────────────────────────────── */
+:root {
+  --focus-ring-color: rgba(99, 102, 241, 0.5);
+  --focus-ring-width: 3px;
+}
+
+.focus-trap {
+  position: relative;
+}
+.focus-trap-active {
+  outline: none;
+}
+.focus-trap-active *:focus {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
+.overlay-focus-ring {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+  border-radius: inherit;
+  transition: outline-color 0.15s ease, outline-offset 0.15s ease;
+}
+
+.focus-scope {
+  contain: layout;
+}
+.focus-scope > *:focus {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
+.focus-highlight {
+  position: relative;
+}
+.focus-highlight:focus {
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+  border-radius: inherit;
+  z-index: 1;
+}
+.focus-highlight:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+.focus-highlight:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+.focus-outline-offset-2:focus-visible { outline-offset: 2px; }
+.focus-outline-offset-4:focus-visible { outline-offset: 4px; }
+.focus-outline-offset-8:focus-visible { outline-offset: 8px; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --focus-ring-color: rgba(129, 140, 248, 0.6);
+  }
+  .focus-trap-active *:focus { outline-color: #818cf8; }
+  .focus-scope > *:focus { outline-color: #818cf8; }
+  .overlay-focus-ring { outline-color: rgba(129, 140, 248, 0.5); }
+}
+
+/* ═══ End CSS Round 46 ═══ */
+
 @media (prefers-reduced-motion: reduce) {
   .card-holographic, .card-holographic::after, .card-gradient-border::before { animation: none !important; }
   .state-loading-circular, .state-loading-dots__dot, .badge-notification-dot::after, .badge-status-online::before { animation: none !important; }
@@ -27413,4 +28521,28 @@ tr:hover .table-cell-actions {
   .form-step-exit { animation: none !important; }
   .shake-on-error, .bounce-once, .wiggle, .float-animation, .pulse-soft, .flash-once { animation: none !important; }
   .hover-rotate, .hover-rotate-90, .hover-scale-110, .press-scale { transition: none !important; transform: none !important; }
+  /* CSS Round 46 — reduced-motion fallbacks */
+  .strikethrough-animated::after { transition: none !important; }
+  .underline-gradient::after { transition: none !important; transform: scaleX(0) !important; }
+  .underline-gradient:hover::after, .underline-gradient:focus::after { transform: scaleX(0) !important; }
+  .card-stack-item { transition: none !important; }
+  .card-stack:hover .card-stack-item { transform: none !important; }
+  .card-stack-fan > .card-stack-item, .card-stack-fan:hover > .card-stack-item { transition: none !important; }
+  .card-stack-cascade > .card-stack-item + .card-stack-item { transition: none !important; }
+  .tag-cloud-item { transition: none !important; }
+  .tag-cloud-animated .tag-cloud-item { animation: none !important; }
+  .glow-pulse { animation: none !important; box-shadow: var(--glow-md) !important; }
+  .copy-feedback { transition: none !important; }
+  .copy-tooltip::after { transition: none !important; }
+  .drag-item { transition: none !important; }
+  .drag-item-dragging { transition: none !important; transform: none !important; }
+  .drag-item-placeholder { transition: none !important; }
+  .tree-item { transition: none !important; }
+  .tree-item-expandable::before { transition: none !important; }
+  .tree-toggle { transition: none !important; transform: none !important; }
+  .notif-pill-urgent { animation: none !important; box-shadow: none !important; }
+  .notif-pill-count-up.bump { animation: none !important; }
+  .shimmer::after, .shimmer-fast::after, .shimmer-dark::after { animation: none !important; }
+  .sheen::after { animation: none !important; }
+  .sheen-on-hover::after { animation: none !important; transition: none !important; }
 }
