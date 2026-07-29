@@ -20557,7 +20557,599 @@ dir="rtl" .product-card {
   50% { transform: translateY(-3px); }
 }
 
-/* ═══ End CSS Round 38 ═══ */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* CSS Round 39 — أنماط متقدمة للأزرار والبطاقات والنماذج والأدوات — Advanced Buttons, Cards, Forms & Utilities             */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* ═══ 1. Advanced Button Patterns — أنماط الأزرار المتقدمة ═══ */
+/* Button morph — زر بتغيير الشكل */
+.btn-morph {
+  border-radius: var(--radius-lg, 8px);
+  transition: border-radius 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+}
+.btn-morph:hover { border-radius: var(--radius-full, 9999px); transform: scale(1.03); }
+
+/* Button glow variants — أزرار متوهجة */
+.btn-glow-indigo { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); transition: box-shadow 0.3s ease; }
+.btn-glow-indigo:hover { box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.35); }
+.btn-glow-emerald { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); transition: box-shadow 0.3s ease; }
+.btn-glow-emerald:hover { box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.35); }
+.btn-glow-rose { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); transition: box-shadow 0.3s ease; }
+.btn-glow-rose:hover { box-shadow: 0 0 20px 4px rgba(244, 63, 94, 0.35); }
+.btn-glow-amber { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transition: box-shadow 0.3s ease; }
+.btn-glow-amber:hover { box-shadow: 0 0 20px 4px rgba(245, 158, 11, 0.35); }
+
+/* Button ripple — تأثير الموجة */
+.btn-ripple { position: relative; overflow: hidden; }
+.btn-ripple::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 70%);
+  transform: scale(0); opacity: 0; transition: transform 0.5s ease, opacity 0.3s ease;
+  border-radius: inherit;
+}
+.btn-ripple:active::after { transform: scale(2.5); opacity: 1; transition: transform 0s, opacity 0s; }
+
+/* Button gradient variants — أزرار متدرجة */
+.btn-gradient-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; transition: opacity 0.2s, transform 0.2s; }
+.btn-gradient-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+.btn-gradient-sunset { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; transition: opacity 0.2s, transform 0.2s; }
+.btn-gradient-sunset:hover { opacity: 0.92; transform: translateY(-1px); }
+.btn-gradient-ocean { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff; transition: opacity 0.2s, transform 0.2s; }
+.btn-gradient-ocean:hover { opacity: 0.92; transform: translateY(-1px); }
+.btn-gradient-aurora { background: linear-gradient(135deg, #10b981, #6366f1, #ec4899); color: #fff; transition: opacity 0.2s, transform 0.2s; background-size: 200% 200%; animation: aurora-shift 3s ease infinite; }
+.btn-gradient-fire { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; transition: opacity 0.2s, transform 0.2s; }
+.btn-gradient-fire:hover { opacity: 0.92; transform: translateY(-1px); }
+@keyframes aurora-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+/* Button 3D — زر ثلاثي الأبعاد */
+.btn-3d {
+  transform: translateY(0); box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 6px 12px rgba(0,0,0,0.1);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); }
+
+/* Button shine — تأثير اللمعان */
+.btn-shine { position: relative; overflow: hidden; }
+.btn-shine::before {
+  content: ""; position: absolute; top: -50%; inset-inline-start: -60%; width: 40%; height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: skewX(-20deg); transition: none;
+}
+.btn-shine:hover::before { animation: shine-sweep 0.6s ease forwards; }
+@keyframes shine-sweep { to { inset-inline-start: 120%; } }
+
+/* Button loading — زر في حالة التحميل */
+.btn-loading { pointer-events: none; opacity: 0.7; }
+.btn-loading::before {
+  content: ""; display: inline-block; width: 16px; height: 16px;
+  border: 2px solid currentColor; border-top-color: transparent;
+  border-radius: 50%; animation: btn-spin 0.6s linear infinite;
+  margin-inline-end: 8px; vertical-align: middle;
+}
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
+/* Button groups — مجموعة أزرار */
+.btn-group-h { display: flex; border-radius: var(--radius-lg, 8px); overflow: hidden; }
+.btn-group-h > * { border-radius: 0; }
+.btn-group-h > *:not(:last-child) { border-inline-end-width: 0; }
+.btn-group-v { display: flex; flex-direction: column; border-radius: var(--radius-lg, 8px); overflow: hidden; }
+.btn-group-v > * { border-radius: 0; }
+.btn-group-v > *:not(:last-child) { border-bottom-width: 0; }
+.btn-group-pill .btn-group-h, .btn-group-pill.btn-group-h { border-radius: var(--radius-full, 9999px); }
+
+/* ═══ 2. Advanced Card Patterns — أنماط البطاقات المتقدمة ═══ */
+/* Card parallax — بطاقة بارالاكس */
+.card-parallax { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card-parallax:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.15); }
+
+/* Card reveal — بطاقة كشف المحتوى */
+.card-reveal { position: relative; overflow: hidden; }
+.card-reveal .card-reveal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s ease; padding: 24px; text-align: center;
+}
+.card-reveal:hover .card-reveal-overlay { opacity: 1; }
+
+/* Card flip — بطاقة انقلاب ثلاثية الأبعاد */
+.card-flip { perspective: 1000px; }
+.card-flap-inner {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d; position: relative;
+}
+.card-flip:hover .card-flap-inner { transform: rotateY(180deg); }
+[dir="rtl"] .card-flip:hover .card-flap-inner { transform: rotateY(-180deg); }
+.card-flap-front, .card-flap-back {
+  backface-visibility: hidden; position: absolute; inset: 0;
+}
+.card-flap-back { transform: rotateY(180deg); }
+[dir="rtl"] .card-flap-back { transform: rotateY(-180deg); }
+
+/* Card expandable — بطاقة قابلة للتوسيع */
+.card-expandable { overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
+.card-expandable[aria-expanded="true"] { box-shadow: 0 8px 24px -4px rgba(0,0,0,0.12); }
+
+/* Card stat hero — بطاقة إحصائية رئيسية */
+.card-stat-hero {
+  background: linear-gradient(135deg, var(--primary, #6366f1), var(--primary-dark, #4f46e5));
+  color: #fff; padding: 32px; border-radius: var(--radius-xl, 16px);
+}
+.card-stat-hero .stat-value { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; line-height: 1; }
+.card-stat-hero .stat-label { font-size: 0.875rem; opacity: 0.85; margin-block-start: 4px; }
+
+/* Card social proof — بطاقة شهادة */
+.card-social-proof {
+  position: relative; padding: 24px;
+  border-radius: var(--radius-xl, 16px);
+}
+.card-social-proof::before {
+  content: "\201C"; position: absolute; top: 8px; inset-inline-start: 16px;
+  font-size: 4rem; line-height: 1; color: var(--primary, #6366f1); opacity: 0.15;
+  font-family: Georgia, serif;
+}
+
+/* Card milestone — بطاقة إنجاز */
+.card-milestone {
+  border: 2px dashed var(--border, #e2e8f0); border-radius: var(--radius-xl, 16px);
+  padding: 24px; text-align: center; position: relative;
+}
+.card-milestone.achieved { border-style: solid; border-color: var(--success, #10b981); }
+.card-milestone .milestone-icon { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 50%; }
+
+/* Card countdown — بطاقة عد تنازلي */
+.card-countdown {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  text-align: center; padding: 16px;
+}
+.card-countdown .countdown-unit {
+  display: flex; flex-direction: column; align-items: center;
+}
+.card-countdown .countdown-value {
+  font-size: 1.75rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  background: var(--bg-primary, #0f172a); color: #fff; padding: 8px 12px;
+  border-radius: var(--radius-lg, 8px); min-width: 56px;
+}
+.card-countdown .countdown-label { font-size: 0.7rem; color: var(--text-muted, #64748b); margin-block-start: 4px; }
+
+/* ═══ 3. Modal & Overlay Patterns — أنماط النوافذ المنبثقة والطبقات ═══ */
+/* Modal backdrop — خلفية النافذة المنبثقة */
+.modal-backdrop-blur { backdrop-filter: blur(8px); background: rgba(0,0,0,0.4); }
+.modal-backdrop-dark { background: rgba(0,0,0,0.7); }
+.modal-backdrop-light { background: rgba(255,255,255,0.6); backdrop-filter: blur(4px); }
+.modal-backdrop-gradient { background: linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.6)); }
+
+/* Modal enter animations — حركات دخول النوافذ */
+.modal-enter-slide-up { animation: modal-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.modal-enter-scale { animation: modal-scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.modal-enter-flip { animation: modal-flip-in 0.4s ease forwards; }
+@keyframes modal-slide-up { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes modal-scale-in { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes modal-flip-in { from { transform: perspective(600px) rotateX(10deg); opacity: 0; } to { transform: perspective(600px) rotateX(0); opacity: 1; } }
+
+/* Drawer — درج جانبي */
+.drawer-left { transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.drawer-left.open { transform: translateX(0); }
+.drawer-right { transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.drawer-right.open { transform: translateX(0); }
+[dir="rtl"] .drawer-left { transform: translateX(100%); }
+[dir="rtl"] .drawer-left.open { transform: translateX(0); }
+[dir="rtl"] .drawer-right { transform: translateX(-100%); }
+[dir="rtl"] .drawer-right.open { transform: translateX(0); }
+.drawer-top { transform: translateY(-100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.drawer-top.open { transform: translateY(0); }
+.drawer-bottom { transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.drawer-bottom.open { transform: translateY(0); }
+
+/* Bottom sheet — ورقة سفلية للجوال */
+.bottom-sheet {
+  position: fixed; bottom: 0; inset-inline: 0;
+  max-height: 90vh; border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
+  background: var(--bg-primary, #fff); box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+  padding: 12px 16px 24px; z-index: 50;
+}
+.bottom-sheet-handle {
+  width: 40px; height: 4px; background: var(--border, #e2e8f0);
+  border-radius: var(--radius-full, 9999px); margin: 0 auto 16px;
+}
+
+/* ═══ 4. Advanced Form Patterns — أنماط النماذج المتقدمة ═══ */
+/* Floating label — تسمية عائمة */
+.form-floating { position: relative; }
+.form-floating input, .form-floating textarea { padding-block-start: 1.25rem; padding-block-end: 0.5rem; }
+.form-floating label {
+  position: absolute; top: 50%; inset-inline-start: 12px;
+  transform: translateY(-50%); font-size: 0.9rem; color: var(--text-muted, #64748b);
+  pointer-events: none; transition: all 0.2s ease;
+}
+.form-floating input:focus ~ label,
+.form-floating input:not(:placeholder-shown) ~ label,
+.form-floating textarea:focus ~ label,
+.form-floating textarea:not(:placeholder-shown) ~ label {
+  top: 6px; transform: translateY(0); font-size: 0.7rem; color: var(--primary, #6366f1);
+}
+
+/* Form steps — خطوات النموذج */
+.form-steps-horizontal {
+  display: flex; align-items: center; gap: 0;
+}
+.form-steps-horizontal .form-step {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; position: relative;
+}
+.form-steps-horizontal .form-step::after {
+  content: ""; flex: 1; height: 2px; min-width: 24px;
+  background: var(--border, #e2e8f0); margin-inline-start: 8px;
+}
+.form-steps-horizontal .form-step:last-child::after { display: none; }
+.form-steps-horizontal .form-step.active::after { background: var(--primary, #6366f1); }
+.form-steps-horizontal .form-step.completed::after { background: var(--success, #10b981); }
+
+/* Password strength — قوة كلمة المرور */
+.form-password-strength {
+  display: flex; gap: 4px; margin-block-start: 6px;
+}
+.form-password-strength .strength-bar {
+  flex: 1; height: 4px; border-radius: var(--radius-full, 9999px);
+  background: var(--bg-tertiary, #e2e8f0); transition: background 0.3s ease;
+}
+.form-password-strength[data-strength="1"] .strength-bar:nth-child(1) { background: #ef4444; }
+.form-password-strength[data-strength="2"] .strength-bar:nth-child(-n+2) { background: #f97316; }
+.form-password-strength[data-strength="3"] .strength-bar:nth-child(-n+3) { background: #f59e0b; }
+.form-password-strength[data-strength="4"] .strength-bar { background: #10b981; }
+
+/* Toggle switches — مفاتيح التبديل */
+.form-toggle-pill {
+  position: relative; width: 44px; height: 24px; border-radius: var(--radius-full, 9999px);
+  background: var(--bg-tertiary, #cbd5e1); cursor: pointer;
+  transition: background 0.2s ease;
+}
+.form-toggle-pill::after {
+  content: ""; position: absolute; top: 2px; inset-inline-start: 2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+.form-toggle-pill.active { background: var(--primary, #6366f1); }
+.form-toggle-pill.active::after { transform: translateX(20px); }
+[dir="rtl"] .form-toggle-pill.active::after { transform: translateX(-20px); }
+
+/* Form search expanded — حقل بحث قابل للتوسيع */
+.form-search-expanded {
+  width: 40px; height: 40px; border-radius: var(--radius-full, 9999px);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+  padding: 0; overflow: hidden; border: 2px solid var(--border, #e2e8f0);
+}
+.form-search-expanded:focus, .form-search-expanded.expanded {
+  width: 280px; padding: 0 16px; border-color: var(--primary, #6366f1);
+}
+.form-search-expanded::placeholder { opacity: 0; transition: opacity 0.2s; }
+.form-search-expanded:focus::placeholder, .form-search-expanded.expanded::placeholder { opacity: 1; }
+
+/* Character counter — عداد الأحرف */
+.form-character-counter {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.75rem; color: var(--text-muted, #64748b); margin-block-start: 4px;
+}
+.form-character-counter.warning { color: #f59e0b; }
+.form-character-counter.danger { color: #ef4444; font-weight: 600; }
+
+/* Fieldset styles — أنماط مجموعة الحقول */
+.form-fieldset-default fieldset {
+  border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius-lg, 8px);
+  padding: 16px; margin-block-end: 16px;
+}
+.form-fieldset-bordered fieldset {
+  border: 2px solid var(--primary, #6366f1); border-radius: var(--radius-xl, 12px);
+  padding: 20px;
+}
+.form-fieldset-bordered fieldset legend {
+  padding: 0 8px; font-weight: 600; color: var(--primary, #6366f1);
+}
+
+/* ═══ 5. Table & Data Grid Advanced — جداول البيانات المتقدمة ═══ */
+/* Data table striped — جدول متناوب الألوان */
+.data-table-striped tbody tr:nth-child(even) { background: var(--bg-secondary, #f8fafc); }
+.data-table-striped tbody tr:nth-child(even):hover { background: var(--bg-tertiary, #f1f5f9); }
+
+/* Data table sortable — جدول قابل للترتيب */
+.data-table-sortable th { cursor: pointer; user-select: none; position: relative; }
+.data-table-sortable th::after {
+  content: "⇅"; margin-inline-start: 4px; opacity: 0.3; font-size: 0.7rem;
+  transition: opacity 0.2s;
+}
+.data-table-sortable th:hover::after { opacity: 0.6; }
+.data-table-sortable th.sort-asc::after { content: "↑"; opacity: 1; }
+.data-table-sortable th.sort-desc::after { content: "↓"; opacity: 1; }
+
+/* Data table fixed header — رأس جدول ثابت */
+.data-table-fixed-header { position: relative; max-height: 400px; overflow-y: auto; }
+.data-table-fixed-header thead { position: sticky; top: 0; z-index: 10; background: var(--bg-primary, #fff); }
+
+/* Data table expandable row — صف قابل للتوسيع */
+.data-table-expandable-row td { padding: 0 !important; }
+.data-table-expandable-content {
+  overflow: hidden; max-height: 0;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+.data-table-expandable-content.open { max-height: 500px; padding: 16px; }
+
+/* Data table cell variants — متغيرات خلايا الجدول */
+.data-table-cell-truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.data-table-cell-numeric { font-variant-numeric: tabular-nums; text-align: end; }
+.data-table-cell-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+/* Data table empty — حالة فارغة */
+.data-table-empty {
+  text-align: center; padding: 48px 24px; color: var(--text-muted, #64748b);
+}
+.data-table-empty-icon { font-size: 2.5rem; margin-block-end: 12px; opacity: 0.3; }
+
+/* Data table summary row — صف المجاميع */
+.data-table-summary-row td {
+  font-weight: 700; background: var(--bg-secondary, #f8fafc);
+  border-top: 2px solid var(--border, #e2e8f0);
+}
+
+/* Data table compact — جدول مضغوط */
+.data-table-compact th, .data-table-compact td { padding: 6px 10px; font-size: 0.8rem; }
+
+/* Data table bordered — جدول محدد */
+.data-table-bordered th, .data-table-bordered td { border: 1px solid var(--border, #e2e8f0); }
+
+/* ═══ 6. Dashboard Layout Patterns — أنماط تخطيط لوحة التحكم ═══ */
+.dash-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.dash-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.dash-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 1023px) { .dash-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 639px) { .dash-grid-2, .dash-grid-3, .dash-grid-4 { grid-template-columns: 1fr; } }
+
+.dash-widget-sm { padding: 12px; }
+.dash-widget-md { padding: 20px; }
+.dash-widget-lg { padding: 24px; }
+.dash-widget-full { grid-column: 1 / -1; }
+
+.dash-kpi-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.dash-chart-row {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 16px;
+}
+@media (max-width: 1023px) { .dash-chart-row { grid-template-columns: 1fr; } }
+
+.dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; border-bottom: 1px solid var(--border, #e2e8f0);
+  margin-block-end: 16px; flex-wrap: wrap; gap: 12px;
+}
+
+.dash-split-h {
+  display: grid; grid-template-columns: 280px 1fr; gap: 20px;
+}
+@media (max-width: 1023px) { .dash-split-h { grid-template-columns: 1fr; } }
+.dash-split-v {
+  display: grid; grid-template-rows: auto 1fr; gap: 20px;
+}
+
+/* ═══ 7. Micro Interaction Library — مكتبة التفاعلات الصغيرة ═══ */
+.micro-bounce { animation: micro-bounce 0.4s ease; }
+@keyframes micro-bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+.micro-shake { animation: micro-shake 0.4s ease; }
+@keyframes micro-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+.micro-pulse-ring { position: relative; }
+.micro-pulse-ring::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid currentColor; opacity: 0;
+  animation: pulse-ring-out 1.5s ease-out infinite;
+}
+@keyframes pulse-ring-out { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(1.4); opacity: 0; } }
+
+.micro-float-up { animation: micro-float-up 0.6s ease forwards; }
+@keyframes micro-float-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+
+.micro-scale-pop { animation: micro-scale-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+@keyframes micro-scale-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.micro-progress-fill {
+  position: relative; overflow: hidden;
+}
+.micro-progress-fill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: progress-shimmer 1.5s ease infinite;
+}
+@keyframes progress-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+.micro-number-roll {
+  display: inline-block; overflow: hidden; height: 1.2em;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.micro-slide-reveal {
+  position: relative; overflow: hidden;
+}
+.micro-slide-reveal > * {
+  transform: translateY(100%); opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+.micro-slide-reveal.visible > * { transform: translateY(0); opacity: 1; }
+
+/* ═══ 8. Marketing & Landing Page — أنماط التسويق والصفحات الرئيسية ═══ */
+.hero-section-centered {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 80px 24px; min-height: 60vh;
+  background: linear-gradient(180deg, var(--bg-primary, #fff) 0%, var(--bg-secondary, #f8fafc) 100%);
+}
+.hero-section-centered h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.1; }
+.hero-section-centered p { max-width: 600px; font-size: 1.125rem; color: var(--text-muted, #64748b); margin-block: 16px; }
+
+.hero-section-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+  padding: 80px 24px; min-height: 60vh;
+}
+@media (max-width: 1023px) { .hero-section-split { grid-template-columns: 1fr; } }
+
+.feature-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+.feature-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.feature-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+@media (max-width: 1023px) { .feature-grid-3, .feature-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 639px) { .feature-grid-2, .feature-grid-3, .feature-grid-4 { grid-template-columns: 1fr; } }
+
+.feature-item {
+  text-align: center; padding: 32px 20px;
+  border-radius: var(--radius-xl, 16px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-item:hover { transform: translateY(-4px); box-shadow: 0 12px 32px -8px rgba(0,0,0,0.1); }
+.feature-item .feature-icon {
+  width: 56px; height: 56px; border-radius: var(--radius-xl, 16px);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; font-size: 1.5rem;
+}
+
+.stats-counter-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 32px; text-align: center; padding: 48px 24px;
+}
+.stats-counter-row .counter-value { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; }
+.stats-counter-row .counter-label { font-size: 0.875rem; color: var(--text-muted, #64748b); margin-block-start: 4px; }
+
+.cta-section {
+  text-align: center; padding: 64px 24px;
+  background: linear-gradient(135deg, var(--primary, #6366f1), var(--primary-dark, #4f46e5));
+  color: #fff; border-radius: var(--radius-2xl, 24px); margin: 0 24px;
+}
+.cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 800; margin-block-end: 12px; }
+
+.faq-accordion { border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius-lg, 8px); overflow: hidden; }
+.faq-item { border-bottom: 1px solid var(--border, #e2e8f0); }
+.faq-item:last-child { border-bottom: none; }
+.faq-question {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; cursor: pointer; font-weight: 600;
+  transition: background 0.2s;
+}
+.faq-question:hover { background: var(--bg-secondary, #f8fafc); }
+.faq-answer {
+  overflow: hidden; max-height: 0; padding: 0 20px;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  color: var(--text-muted, #64748b);
+}
+.faq-answer.open { max-height: 200px; padding-block-end: 16px; }
+
+.logo-cloud {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 32px; padding: 32px 24px; opacity: 0.5;
+}
+.logo-cloud img, .logo-cloud svg { height: 32px; width: auto; filter: grayscale(1); transition: filter 0.3s, opacity 0.3s; }
+.logo-cloud img:hover, .logo-cloud svg:hover { filter: grayscale(0); opacity: 1; }
+
+/* ═══ 9. Utility Enhancements — أدوات مساعدة محسّنة ═══ */
+.text-balance { text-wrap: balance; }
+.text-pretty { text-wrap: pretty; }
+.truncate-1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.truncate-2, .truncate-3, .truncate-4, .truncate-5 {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.truncate-3 { -webkit-line-clamp: 3; }
+.truncate-4 { -webkit-line-clamp: 4; }
+.truncate-5 { -webkit-line-clamp: 5; }
+
+.container-breakout {
+  width: 100vw; position: relative;
+  inset-inline-start: 50%; transform: translateX(-50%);
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.scroll-margin-top { scroll-margin-top: 80px; }
+.scroll-margin-top-lg { scroll-margin-top: 120px; }
+
+.snap-x { scroll-snap-type: x mandatory; }
+.snap-y { scroll-snap-type: y mandatory; }
+.snap-start { scroll-snap-align: start; }
+.snap-center { scroll-snap-align: center; }
+.snap-none { scroll-snap-type: none; }
+
+.will-change-transform { will-change: transform; }
+.will-change-opacity { will-change: opacity; }
+.will-change-auto { will-change: auto; }
+
+/* ═══ 10. Print-Specific Enhancements — تحسينات خاصة بالطباعة ═══ */
+.press-proof-pending { border: 2px dashed #f59e0b; position: relative; }
+.press-proof-pending::after { content: "بانتظار الموافقة"; position: absolute; top: 8px; inset-inline-end: 8px; font-size: 0.65rem; background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 4px; }
+.press-proof-approved { border: 2px solid #10b981; }
+.press-proof-approved::after { content: "تمت الموافقة ✓"; position: absolute; top: 8px; inset-inline-end: 8px; font-size: 0.65rem; background: #10b981; color: #fff; padding: 2px 8px; border-radius: 4px; }
+.press-proof-rejected { border: 2px solid #ef4444; }
+.press-proof-rejected::after { content: "مرفوض ✗"; position: absolute; top: 8px; inset-inline-end: 8px; font-size: 0.65rem; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 4px; }
+
+.gang-run-layout {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
+  border: 2px solid var(--border, #e2e8f0); padding: 8px; border-radius: var(--radius-lg, 8px);
+}
+.gang-run-layout .gang-item {
+  border: 1px dashed var(--border, #cbd5e1); padding: 12px;
+  text-align: center; font-size: 0.75rem; color: var(--text-muted, #64748b);
+  position: relative;
+}
+
+.imposition-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #333; }
+.imposition-4up { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0; border: 1px solid #333; }
+.imposition-8up { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr; gap: 0; border: 1px solid #333; }
+.imposition-2up > *, .imposition-4up > *, .imposition-8up > * { border: 1px dashed #999; }
+
+.die-cut-line {
+  position: relative; border: 2px solid #ef4444; border-style: dashed;
+  border-radius: var(--radius-xl, 16px); margin: 12px;
+}
+.die-cut-line::before {
+  content: "خط القص"; position: absolute; top: -10px; inset-inline-start: 12px;
+  font-size: 0.6rem; color: #ef4444; background: #fff; padding: 0 4px;
+}
+
+.spot-varnish-preview {
+  position: relative;
+}
+.spot-varnish-preview .varnish-area {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+  border: 1px dashed rgba(255,255,255,0.3); border-radius: var(--radius-md, 6px);
+}
+
+.emboss-deboss-preview { box-shadow: 2px 2px 4px rgba(0,0,0,0.2), -1px -1px 2px rgba(255,255,255,0.1); border-radius: var(--radius-md, 6px); }
+
+.foil-stamp-preview {
+  background: linear-gradient(135deg, #d4a853, #f5d78e, #d4a853);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; font-weight: 700;
+}
+
+.color-bar-test {
+  display: flex; height: 8px; border-radius: var(--radius-sm, 4px); overflow: hidden;
+}
+.color-bar-test span { flex: 1; }
+.color-bar-test span:nth-child(1) { background: #000; }
+.color-bar-test span:nth-child(2) { background: #00c; }
+.color-bar-test span:nth-child(3) { background: #0c0; }
+.color-bar-test span:nth-child(4) { background: #ff0; }
+.color-bar-test span:nth-child(5) { background: #f00; }
+
+.registration-marks {
+  position: relative; padding: 16px;
+}
+.registration-marks::before, .registration-marks::after {
+  content: "+"; position: absolute; font-size: 12px; color: #333; font-weight: bold;
+}
+.registration-marks::before { top: 0; left: 0; }
+.registration-marks::after { top: 0; right: 0; }
+
+/* ═══ End CSS Round 39 ═══ */
 
 @media (prefers-reduced-motion: reduce) {
   .card-holographic, .card-holographic::after, .card-gradient-border::before { animation: none !important; }
@@ -20572,4 +21164,10 @@ dir="rtl" .product-card {
   .notif-badge-shake { animation: none !important; }
   .deco-border-glow::before { animation: none !important; }
   .deco-float-badge { animation: none !important; }
+  .btn-gradient-aurora { animation: none !important; }
+  .micro-bounce, .micro-shake, .micro-float-up, .micro-scale-pop { animation: none !important; }
+  .micro-pulse-ring::after { animation: none !important; }
+  .micro-progress-fill::after { animation: none !important; }
+  .btn-shine::before { animation: none !important; }
+  .btn-loading::before { animation: none !important; }
 }
