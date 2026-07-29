@@ -333,7 +333,7 @@ export default function SuperAdminPage() {
               </div>
               <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredShops.map((shop) => (
-                  <ShopManageCard key={shop.slug} shop={shop} onUpdate={() => loadAll(false)} />
+                  <ShopManageCard key={shop.slug} shop={shop} onCopyLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}`); toast.success('تم نسخ رابط المتجر'); }} onCopyAdminLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}?admin=1`); toast.success('تم نسخ رابط الإدارة'); }} onRefresh={() => loadAll(false)} />
                 ))}
                 {safeShops.length === 0 && !loading && (
                   <div className="col-span-full p-8 text-center text-muted-foreground text-sm">
@@ -361,7 +361,7 @@ export default function SuperAdminPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredShops.map((shop) => (
-                <ShopManageCard key={shop.slug} shop={shop} onUpdate={() => loadAll(false)} />
+                <ShopManageCard key={shop.slug} shop={shop} onCopyLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}`); toast.success('تم نسخ رابط المتجر'); }} onCopyAdminLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}?admin=1`); toast.success('تم نسخ رابط الإدارة'); }} onRefresh={() => loadAll(false)} />
               ))}
             </div>
           </div>
@@ -468,7 +468,7 @@ export default function SuperAdminPage() {
       {/* Create Shop Dialog */}
       <CreateShopDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onClose={() => setCreateOpen(false)}
         onCreated={() => { setCreateOpen(false); loadAll(false); }}
       />
 
