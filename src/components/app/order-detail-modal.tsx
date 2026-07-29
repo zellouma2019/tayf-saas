@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +73,35 @@ export function OrderDetailModal({
   }[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  // سجل طلبات الزبون السابقة
+  const [customerHistory, setCustomerHistory] = useState<{
+    id: string;
+    reference: string;
+    serviceType: string;
+    serviceName: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  }[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const fetchCustomerHistory = useCallback(async () => {
+    if (!order?.customer?.phone) return;
+    setHistoryLoading(true);
+    try {
+      const phone = order.customer.phone;
+      const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}&limit=10`);
+      if (res.ok) {
+        const data = await res.json();
+        setCustomerHistory((data.orders || []).filter((o: { id: string }) => o.id !== order.id));
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [order]);
+
   const fetchAuditLogs = useCallback(async () => {
     if (!order) return;
     setAuditLoading(true);
@@ -93,9 +122,11 @@ export function OrderDetailModal({
     if (open && order) {
       setShowAudit(false);
       setAuditLogs([]);
+      setCustomerHistory([]);
       fetchAuditLogs();
+      fetchCustomerHistory();
     }
-  }, [open, order, fetchAuditLogs]);
+  }, [open, order, fetchAuditLogs, fetchCustomerHistory]);
 
   // حقول التعديل
   const [editName, setEditName] = useState("");
@@ -307,6 +338,56 @@ export function OrderDetailModal({
               </div>
             </div>
           </section>
+
+          {/* سجل طلبات الزبون السابقة */}
+          {order.customer?.phone && (
+            <section className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                  <History className="h-3.5 w-3.5 text-muted-foreground" />
+                  طلبات سابقة
+                </h3>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {customerHistory.length}
+                </Badge>
+              </div>
+              {historyLoading ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="skeleton-gradient h-8 rounded-md" />
+                  ))}
+                </div>
+              ) : customerHistory.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  لا توجد طلبات سابقة لهذا الرقم
+                </p>
+              ) : (
+                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                  {customerHistory.slice(0, 5).map((prev) => (
+                    <div
+                      key={prev.id}
+                      className="flex items-center justify-between text-xs rounded-md bg-background/50 border px-2.5 py-1.5 hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-muted-foreground">{prev.reference}</span>
+                        <span className="text-muted-foreground">·</span>
+                        <span>{prev.serviceName || prev.serviceType}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={cn("text-[10px] px-1.5 py-0", STATUS_META[prev.status]?.color)}
+                        >
+                          {STATUS_META[prev.status]?.label || prev.status}
+                        </Badge>
+                        <span className="font-semibold tabular-nums">{formatDA(prev.total)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
           {/* مواصفات الطباعة — للقراءة فقط */}
           <section>

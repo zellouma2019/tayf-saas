@@ -77,7 +77,7 @@ export function ShopOverviewCard({ shop, onRefresh }: {
   onRefresh: () => void;
 }) {
   return (
-    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden card-glow group", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden card-glow group card-hover-lift", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
       <div className="h-1 bg-gradient-to-l from-gold-400 via-gold-500 to-primary" />
       <CardHeader className="pb-2 px-5 pt-4">
         <div className="flex items-center justify-between">

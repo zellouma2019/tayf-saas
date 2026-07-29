@@ -90,6 +90,26 @@ interface Notification {
   createdAt: string;
 }
 
+// 🔔 صوت إشعار بسيط باستخدام Web Audio API
+function playNotificationSound() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+    osc.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.2); // C6
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    /* silent — Web Audio not supported */
+  }
+}
+
 /// هل الملف من نوع صورة؟
 function isImageFile(fileType: string | null): boolean {
   if (!fileType) return false;
@@ -203,6 +223,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             for (const n of newNotifs) {
               if (n.type === "new_order") {
                 showBrowserNotification(n.title, n.body);
+                playNotificationSound();
               }
             }
           }
@@ -281,25 +302,39 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     Promise.all([
       fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
       // Admin sees ALL orders — use fetch directly (not shopApi which filters by shopId)
-      fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
+      fetch("/api/orders?limit=10000").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
       .then(([s, o]) => {
         if (s) setStats(s);
-        const rawOrders = Array.isArray(o?.orders) ? o.orders : [];
-        // تأمين بيانات العميل لكل طلب
-        const safeOrders = rawOrders.map((order: Record<string, unknown>) => ({
-          ...order,
-          customer: order.customer && typeof order.customer === "object"
-            ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
-            : { name: "", phone: "", deliveryMethod: "pickup" },
-        }));
-        setOrders(safeOrders);
+        let rawOrders = Array.isArray(o?.orders) ? o.orders : [];
+        // Turso DB fallback: if SELECT returns 0 but pagination.total > 0, retry once
+        const totalFromPagination = o?.pagination?.total;
+        if (rawOrders.length === 0 && totalFromPagination > 0) {
+          fetch("/api/orders?limit=10000")
+            .then((r2) => r2.json())
+            .then((o2) => {
+              const retryOrders = Array.isArray(o2?.orders) ? o2.orders : [];
+              if (retryOrders.length > 0) setOrders(safeMapOrders(retryOrders));
+            })
+            .catch(() => {});
+          return; // don't set empty orders, wait for retry
+        }
+        setOrders(safeMapOrders(rawOrders));
       })
       .catch((err) => {
         console.error("loadAll error:", err);
         setOrders([]);
       })
       .finally(() => setLoading(false));
+  }
+
+  function safeMapOrders(rawOrders: Record<string, unknown>[]) {
+    return rawOrders.map((order) => ({
+      ...order,
+      customer: order.customer && typeof order.customer === "object"
+        ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
+        : { name: "", phone: "", deliveryMethod: "pickup" },
+    }));
   }
 
   useEffect(() => {
@@ -831,6 +866,37 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                   </p>
                 </div>
               ) : (
+                <>
+                {/* شريط الإحصائيات السريعة */}
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/30 border-b text-xs flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span className="text-muted-foreground">بانتظار:</span>
+                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'pending').length}</span>
+                  </div>
+                  <div className="w-px h-4 bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-violet-500" />
+                    <span className="text-muted-foreground">طباعة:</span>
+                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'printing').length}</span>
+                  </div>
+                  <div className="w-px h-4 bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-muted-foreground">جاهز:</span>
+                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'ready').length}</span>
+                  </div>
+                  <div className="w-px h-4 bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-sky-500" />
+                    <span className="text-muted-foreground">تم التسليم:</span>
+                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'delivered').length}</span>
+                  </div>
+                  <div className="mr-auto flex items-center gap-1 text-muted-foreground">
+                    <Package className="h-3.5 w-3.5" />
+                    <span>المجموع: <span className="font-semibold text-foreground">{orders.length}</span></span>
+                  </div>
+                </div>
                 <div className="overflow-x-auto custom-scroll">
                   <Table>
                     <TableHeader>
@@ -872,6 +938,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                     </TableBody>
                   </Table>
                 </div>
+                </>
               )}
             </CardContent>
           </Card>

@@ -527,7 +527,7 @@ function TableRowInner({
   const [localNote, setLocalNote] = useState(note || "");
   return (
     <tr
-      className={`hover:bg-amber-50/30 dark:hover:bg-amber-950/20 cursor-pointer transition-colors ${expanded ? "bg-amber-50/50 dark:bg-amber-950/20" : ""} ${selected ? "bg-rose-50/40 dark:bg-rose-950/20" : ""}`}
+      className={`hover:bg-amber-50/30 dark:hover:bg-amber-950/20 cursor-pointer transition-colors table-row-accent ${expanded ? "bg-amber-50/50 dark:bg-amber-950/20" : ""} ${selected ? "bg-rose-50/40 dark:bg-rose-950/20" : ""}`}
       onClick={() => {
         if (onClick) onClick(order);
         else onToggle();
