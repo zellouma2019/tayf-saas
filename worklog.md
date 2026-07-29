@@ -6777,3 +6777,56 @@ Task: إصلاح مشاكل حرجة + تقليل حجم المشروع + دعم
 3. 🟡 تحسين تحليل DOCX باستخدام mammoth.js
 4. 🟡 تحسين VLM للملفات الكبيرة (تحليل صفحات متعددة)
 5. 🟢 متابعة التحسينات (CSS + مكونات جديدة)
+---
+Task ID: bugfix-round2
+Agent: Main Agent (Cron Loop)
+Task: Fix 6 critical bugs + improve UI/UX + styling
+
+## Work Log:
+- Reviewed worklog.md (6,780 lines) to understand project history
+- Performed QA on live Vercel site (tayf-saas.vercel.app)
+- Identified root cause of MerchantDashboard crash: PrintQueueWidget called with invalid `jobs` prop instead of `orders`, making `orders` undefined → `.filter()` crash
+- Removed duplicate PrintQueueWidget call (line 1262-1274 in merchant-dashboard.tsx)
+- Added Array.isArray() safety guards in:
+  - PrintQueueWidget (print-queue-widget.tsx)
+  - MerchantAnalytics (merchant-analytics.tsx) - all 7 useMemo hooks
+  - AdminAnalytics computeAnalytics (admin-analytics.tsx)
+  - QuickCustomerSearch (merchant-dashboard.tsx)
+- Fixed Object.entries(order.options || {}) in 3 files:
+  - merchant-dashboard.tsx
+  - order-details-row.tsx (2 locations)
+  - merchant-order-detail.tsx
+- Improved admin panel tab switching with AnimatePresence transitions
+- Added "Back to Shop" button in merchant dashboard header
+- Fixed footer sticky to bottom on customer shop page
+- Tested file upload on live site — works for small files (base64 path)
+- Updated GitHub token (user-provided PAT)
+
+## Commits
+- e2f6e80: fix: admin panel UX improvements + defensive guards
+- e7d0d3e: fix: comprehensive defensive guards for merchant dashboard filter crash
+- 7d195fb: chore: force Vercel redeploy v2
+- e01c898: fix: add more defensive guards for undefined array props
+- 1bac3fe: fix: MerchantDashboard crash - PrintQueueWidget undefined.filter() error
+
+## QA Results (Vercel Live)
+| Test | Result |
+|------|--------|
+| Customer shop page load | ✅ |
+| File upload (small file ≤500KB) | ✅ |
+| Print settings step after upload | ✅ |
+| Merchant dashboard PIN screen | ✅ |
+| Merchant dashboard after login | ❌ (old deploy still cached) |
+| Admin panel tab switching | ✅ (after deploy) |
+
+## Pending Issues
+1. Vercel deploy slow — new code may take 5-10 min to propagate
+2. UPLOADTHING_TOKEN hardcoded fallback may be expired — fallback chunked upload works
+3. Large file upload (>500KB) not tested on live site yet
+4. Turso DB slow queries (known issue, 8-9s)
+
+## Recommendations
+1. Add UPLOADTHING_TOKEN to Vercel env vars for CDN uploads
+2. Test merchant dashboard after new deploy propagates
+3. Continue CSS/component improvement cycle
+4. Add WebSocket for real-time order notifications
