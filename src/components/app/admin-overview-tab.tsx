@@ -84,6 +84,11 @@ import { SeasonalDemandWidget } from "@/components/app/seasonal-demand-widget";
 import { CostBreakdownWidget } from "@/components/app/cost-breakdown-widget";
 import { FeedbackSentimentWidget } from "@/components/app/feedback-sentiment-widget";
 import { OrderFulfillmentTimeline } from "@/components/app/order-fulfillment-timeline";
+import { ShippingTrackerWidget } from "@/components/app/shipping-tracker-widget";
+import { MarketingCampaignWidget } from "@/components/app/marketing-campaign-widget";
+import { SupplierManagementWidget } from "@/components/app/supplier-management-widget";
+import { QuickReportsWidget } from "@/components/app/quick-reports-widget";
+import { ColorMaterialPreview } from "@/components/app/color-material-preview";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -986,6 +991,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* مسار تنفيذ الطلبات */}
       <OrderFulfillmentTimeline />
+
+      {/* متتبع الشحنات */}
+      <ShippingTrackerWidget />
+
+      {/* الحملات التسويقية */}
+      <MarketingCampaignWidget />
+
+      {/* إدارة الموردين */}
+      <SupplierManagementWidget />
+
+      {/* التقارير السريعة */}
+      <QuickReportsWidget />
+
+      {/* معاينة الألوان والمواد */}
+      <ColorMaterialPreview />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
