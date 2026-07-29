@@ -7,7 +7,7 @@ import {
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
-  FileText,
+  FileText, Check, Square, X, Filter, ChevronDown,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,16 @@ export default function SuperAdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "shops" | "orders">("overview");
   const [shopSearch, setShopSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<GlobalOrder | null>(null);
+  // Date range filter
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month" | "custom">("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  // Quick view
+  const [quickViewOrder, setQuickViewOrder] = useState<GlobalOrder | null>(null);
   // Data health tracking
   const [dataHealth, setDataHealth] = useState<{ status: 'healthy' | 'warning' | 'error'; message: string }>({ status: 'healthy', message: '' });
   // Platform settings
@@ -217,6 +227,29 @@ export default function SuperAdminPage() {
     setAllOrders([]);
   }
 
+  // Date range helper
+  function isInDateRange(dateStr: string): boolean {
+    if (dateFilter === "all") return true;
+    const d = new Date(dateStr);
+    const now = new Date();
+    if (dateFilter === "today") {
+      return d.toDateString() === now.toDateString();
+    }
+    if (dateFilter === "week") {
+      const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
+      return d >= weekAgo;
+    }
+    if (dateFilter === "month") {
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }
+    if (dateFilter === "custom" && dateFrom && dateTo) {
+      const from = new Date(dateFrom); from.setHours(0,0,0,0);
+      const to = new Date(dateTo); to.setHours(23,59,59,999);
+      return d >= from && d <= to;
+    }
+    return true;
+  }
+
   // Filter orders
   const safeOrders = Array.isArray(allOrders) ? allOrders : [];
   const filteredOrders = safeOrders.filter((o) => {
@@ -230,8 +263,41 @@ export default function SuperAdminPage() {
       const searchable = `${o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.shopName} ${o.serviceType}`.toLowerCase();
       if (!searchable.includes(s)) return false;
     }
+    // Date range filter
+    if (!isInDateRange(o.createdAt)) return false;
     return true;
   });
+
+  // Bulk actions
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === filteredOrders.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredOrders.map(o => o.id)));
+    }
+  }, [selectedIds.size, filteredOrders]);
+  const applyBulkStatus = useCallback(async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    const promises = Array.from(selectedIds).map(id =>
+      fetch(`/api/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: bulkStatus }),
+      }).catch(() => null)
+    );
+    await Promise.all(promises);
+    toast.success(`تم تحديث ${selectedIds.size} طلب`);
+    setSelectedIds(new Set());
+    setBulkStatus("");
+    loadAll(false);
+  }, [bulkStatus, selectedIds, loadAll]);
 
   const shops = globalStats?.shopStats || fallbackShops;
   const safeShops = Array.isArray(shops) ? shops : [];
@@ -240,6 +306,16 @@ export default function SuperAdminPage() {
     const q = shopSearch.toLowerCase();
     return (s.name || "").toLowerCase().includes(q) || (s.slug || "").toLowerCase().includes(q);
   });
+
+  // Status timeline for order detail
+  const statusTimeline = selectedOrder ? [
+    { key: "pending", label: "تم الاستلام", time: selectedOrder.createdAt },
+    { key: "confirmed", label: "تم التأكيد", time: null },
+    { key: "printing", label: "جاري الطباعة", time: null },
+    { key: "ready", label: "جاهز للتسليم", time: null },
+    { key: "delivered", label: "تم التسليم", time: null },
+  ] : [];
+  const currentStatusIdx = selectedOrder ? statusTimeline.findIndex(s => s.key === selectedOrder.status) : -1;
 
   // Login gate
   if (!authenticated) {
@@ -873,6 +949,63 @@ export default function SuperAdminPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {/* Date range filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDateFilter(!showDateFilter)}
+                  className={cn(
+                    "h-10 px-3 rounded-lg border text-sm flex items-center gap-1.5 transition-colors",
+                    dateFilter !== "all"
+                      ? "border-primary/50 bg-primary/5 text-primary"
+                      : "border-border bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {dateFilter === "all" ? "الفترة" : dateFilter === "today" ? "اليوم" : dateFilter === "week" ? "هذا الأسبوع" : dateFilter === "month" ? "هذا الشهر" : "مخصص"}
+                  </span>
+                </button>
+                {showDateFilter && (
+                  <div className="absolute top-full mt-1 right-0 z-50 rounded-xl border border-border bg-card shadow-lg p-3 min-w-[200px] date-filter-popup">
+                    <div className="space-y-1.5">
+                      {[
+                        { key: "all" as const, label: "جميع الأوقات", icon: "∞" },
+                        { key: "today" as const, label: "اليوم", icon: "☀" },
+                        { key: "week" as const, label: "آخر 7 أيام", icon: "📅" },
+                        { key: "month" as const, label: "هذا الشهر", icon: "🗓" },
+                        { key: "custom" as const, label: "مخصص", icon: "⚙" },
+                      ].map(opt => (
+                        <button
+                          key={opt.key}
+                          onClick={() => { setDateFilter(opt.key); if (opt.key !== "custom") setShowDateFilter(false); }}
+                          className={cn(
+                            "w-full text-right px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors",
+                            dateFilter === opt.key ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          <span>{opt.icon}</span>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    {dateFilter === "custom" && (
+                      <div className="mt-3 pt-3 border-t border-border space-y-2">
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-muted-foreground whitespace-nowrap">من</label>
+                          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="flex-1 h-8 px-2 rounded-md border border-border bg-background text-sm" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-muted-foreground whitespace-nowrap">إلى</label>
+                          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="flex-1 h-8 px-2 rounded-md border border-border bg-background text-sm" />
+                        </div>
+                        <button onClick={() => setShowDateFilter(false)} className="w-full h-8 rounded-md bg-primary text-primary-foreground text-sm font-medium">
+                          تطبيق
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               {/* Export button */}
               <button
                 onClick={() => {
@@ -898,10 +1031,49 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Orders count bar */}
-            {(statusFilter !== "all" || shopFilter !== "all" || search) && (
+            {(statusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all") && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{filteredOrders.length} من {safeOrders.length} طلب</span>
+                <button onClick={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); }} className="text-primary hover:underline">مسح الفلاتر</button>
+              </div>
+            )}
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{filteredOrders.length} من {safeOrders.length} طلب</span>
                 <button onClick={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); }} className="text-primary hover:underline">مسح الفلاتر</button>
+              </div>
+            )}
+
+            {/* Bulk action bar */}
+            {selectedIds.size > 0 && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-3 flex-wrap bulk-action-bar">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <CheckSquare className="h-4 w-4 text-primary" />
+                  <span>تم اختيار {selectedIds.size} طلب</span>
+                </div>
+                <div className="flex-1" />
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                  className="h-8 px-3 rounded-lg border border-border bg-background text-sm"
+                >
+                  <option value="">تغيير الحالة إلى...</option>
+                  {Object.entries(STATUS_META).map(([key, meta]) => (
+                    <option key={key} value={key}>{meta.label}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={applyBulkStatus}
+                  disabled={!bulkStatus}
+                  className="h-8 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium disabled:opacity-40 transition-colors"
+                >
+                  تطبيق
+                </button>
+                <button
+                  onClick={() => { setSelectedIds(new Set()); setBulkStatus(""); }}
+                  className="h-8 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground text-sm transition-colors"
+                >
+                  إلغاء
+                </button>
               </div>
             )}
 
@@ -911,6 +1083,14 @@ export default function SuperAdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10 text-center">
+                        <button onClick={toggleSelectAll} className="p-1 rounded hover:bg-muted/80 transition-colors" title="تحديد الكل">
+                          {selectedIds.size === filteredOrders.length && filteredOrders.length > 0
+                            ? <Check className="h-4 w-4 text-primary" />
+                            : <Square className="h-4 w-4 text-muted-foreground" />
+                          }
+                        </button>
+                      </TableHead>
                       <TableHead className="text-right">الزبون</TableHead>
                       <TableHead className="text-right">الخدمة</TableHead>
                       <TableHead className="text-right">المتجر</TableHead>
@@ -927,12 +1107,42 @@ export default function SuperAdminPage() {
                         onClick={() => setSelectedOrder(order)}
                         className={cn(
                           "cursor-pointer hover:bg-muted/50 table-row-highlight order-row-accent",
-                          `status-${order.status}`
+                          `status-${order.status}`,
+                          selectedIds.has(order.id) && "row-selected"
                         )}
                       >
-                        <TableCell className="font-medium">{order.customer?.name || "—"}</TableCell>
-                        <TableCell>{order.serviceName || order.serviceType || "—"}</TableCell>
-                        <TableCell>{order.shopName || order.shopSlug || "—"}</TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => toggleSelect(order.id)}
+                            className={cn(
+                              "p-1 rounded transition-colors",
+                              selectedIds.has(order.id) ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            {selectedIds.has(order.id)
+                              ? <Check className="h-4 w-4" />
+                              : <Square className="h-4 w-4" />
+                            }
+                          </button>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {order.customer?.name || "—"}
+                            {order.customer?.phone && (
+                              <span className="text-[10px] text-muted-foreground" dir="ltr">{order.customer.phone}</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="overflow-marquee inline-block max-w-[120px]" title={order.serviceName || order.serviceType || ""}>
+                            {order.serviceName || order.serviceType || "—"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground overflow-marquee inline-block max-w-[100px]">
+                            {order.shopName || order.shopSlug || "—"}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <div className="status-dropdown-cell" onClick={(e) => e.stopPropagation()}>
                             <select
@@ -949,8 +1159,19 @@ export default function SuperAdminPage() {
                             </select>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium tabular-nums text-sm">{order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{formatDA(order.createdAt)}</TableCell>
+                        <TableCell className="font-medium tabular-nums text-sm">
+                          <span className={cn(order.total > 0 && "revenue-gold")}>
+                            {order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          <div className="flex flex-col gap-0.5">
+                            <span>{formatDA(order.createdAt)}</span>
+                            <span className="text-[9px] text-muted-foreground/50" dir="ltr">
+                              {new Date(order.createdAt).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             <button
@@ -959,6 +1180,13 @@ export default function SuperAdminPage() {
                               title="عرض التفاصيل"
                             >
                               <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setQuickViewOrder(order)}
+                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                              title="عرض سريع"
+                            >
+                              <Zap className="h-3.5 w-3.5" />
                             </button>
                             <a
                               href={`/s/${order.shopSlug || "default"}?admin=1`}
@@ -976,8 +1204,11 @@ export default function SuperAdminPage() {
                     ))}
                     {filteredOrders.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          لا توجد طلبات
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Package className="h-8 w-8 text-muted-foreground/30" />
+                            <span>لا توجد طلبات</span>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -1001,7 +1232,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50">
-                v4.4
+                v4.5
               </span>
             )}
           </div>
@@ -1033,9 +1264,9 @@ export default function SuperAdminPage() {
         onCreated={() => { setCreateOpen(false); loadAll(false); }}
       />
 
-      {/* Order Detail Dialog */}
+      {/* Order Detail Dialog — Enhanced with status timeline */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden dialog-slide-in" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
           <DialogTitle className="sr-only">تفاصيل الطلب</DialogTitle>
           {selectedOrder && (
             <div className="p-6">
@@ -1045,7 +1276,7 @@ export default function SuperAdminPage() {
                   <h3 className="text-lg font-bold">تفاصيل الطلب</h3>
                   <p className="text-xs text-muted-foreground mt-0.5 font-mono">{selectedOrder.reference || selectedOrder.id}</p>
                 </div>
-                <Badge variant="outline" className={cn(STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.color)}>
+                <Badge variant="outline" className={cn("status-pill-animated", STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.color)}>
                   {STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.label || selectedOrder.status}
                 </Badge>
               </div>
@@ -1053,32 +1284,68 @@ export default function SuperAdminPage() {
               {selectedOrder.total > 0 && (
                 <div className="mb-4 rounded-xl bg-gradient-to-l from-violet-500/10 to-blue-500/10 border border-violet-200/50 dark:border-violet-800/30 p-4 text-center">
                   <p className="text-xs text-muted-foreground mb-1">المبلغ الإجمالي</p>
-                  <p className="text-2xl font-bold tabular-nums">{selectedOrder.total.toLocaleString("ar-DZ")} <span className="text-sm font-normal">د.ج</span></p>
+                  <p className="text-2xl font-bold tabular-nums revenue-gold">{selectedOrder.total.toLocaleString("ar-DZ")} <span className="text-sm font-normal">د.ج</span></p>
                 </div>
               )}
+              {/* Status timeline */}
+              <div className="mb-4 p-4 rounded-xl bg-muted/30 border border-border">
+                <h4 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+                  <Activity className="h-3.5 w-3.5" />
+                  مسار الحالة
+                </h4>
+                <div className="flex items-start gap-0 order-timeline">
+                  {statusTimeline.map((step, idx) => {
+                    const isCompleted = idx <= currentStatusIdx;
+                    const isCurrent = idx === currentStatusIdx;
+                    return (
+                      <div key={step.key} className="flex-1 flex flex-col items-center relative">
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300 order-timeline-dot",
+                          isCompleted ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                          isCurrent && "order-timeline-current ring-4 ring-primary/20"
+                        )}>
+                          {isCompleted ? "✓" : idx + 1}
+                        </div>
+                        <span className={cn(
+                          "text-[9px] mt-1.5 text-center leading-tight whitespace-nowrap",
+                          isCurrent ? "font-semibold text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground/50"
+                        )}>
+                          {step.label}
+                        </span>
+                        {idx < statusTimeline.length - 1 && (
+                          <div className={cn(
+                            "absolute top-3 right-full w-full h-0.5 order-timeline-line",
+                            idx < currentStatusIdx ? "bg-primary" : "bg-muted"
+                          )} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الزبون</p>
                     <p className="font-medium mt-0.5">{selectedOrder.customer?.name || selectedOrder.customerName || "—"}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الهاتف</p>
                     <p className="font-medium mt-0.5" dir="ltr">{selectedOrder.customer?.phone || selectedOrder.customerPhone || "—"}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الخدمة</p>
                     <p className="font-medium mt-0.5">{selectedOrder.serviceName || selectedOrder.serviceType || "—"}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">المتجر</p>
                     <p className="font-medium mt-0.5">{selectedOrder.shopName || selectedOrder.shopSlug || "—"}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">تاريخ الإنشاء</p>
                     <p className="font-medium mt-0.5">{formatDA(selectedOrder.createdAt)}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">معرف الطلب</p>
                     <p className="font-medium mt-0.5 font-mono text-xs">{selectedOrder.id.slice(0, 12)}...</p>
                   </div>
@@ -1099,6 +1366,79 @@ export default function SuperAdminPage() {
                 >
                   <ExternalLink className="h-4 w-4" />
                   فتح في لوحة المتجر
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(selectedOrder.reference || selectedOrder.id); toast.success("تم نسخ معرف الطلب"); }}
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick View Popover — compact order preview */}
+      <Dialog open={!!quickViewOrder} onOpenChange={() => setQuickViewOrder(null)}>
+        <DialogContent className="max-w-xs p-0 gap-0 overflow-hidden quick-view-dialog" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogTitle className="sr-only">عرض سريع</DialogTitle>
+          {quickViewOrder && (
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-2.5 h-2.5 rounded-full",
+                    STATUS_META[quickViewOrder.status as keyof typeof STATUS_META]?.color?.replace('text-', 'bg-') || "bg-muted"
+                  )} />
+                  <span className="text-xs font-mono text-muted-foreground">{quickViewOrder.reference || quickViewOrder.id.slice(0, 10)}</span>
+                </div>
+                <button onClick={() => setQuickViewOrder(null)} className="p-1 rounded hover:bg-muted/80 text-muted-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الزبون</span>
+                  <span className="font-medium">{quickViewOrder.customer?.name || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الهاتف</span>
+                  <span className="font-medium font-mono text-xs" dir="ltr">{quickViewOrder.customer?.phone || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الخدمة</span>
+                  <span className="font-medium">{quickViewOrder.serviceName || quickViewOrder.serviceType || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">المتجر</span>
+                  <span className="font-medium">{quickViewOrder.shopName || "—"}</span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">المبلغ</span>
+                  <span className="font-bold tabular-nums revenue-gold">{quickViewOrder.total ? `${quickViewOrder.total.toLocaleString("ar-DZ")} د.ج` : "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">التاريخ</span>
+                  <span className="text-xs">{formatDA(quickViewOrder.createdAt)}</span>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => { setQuickViewOrder(null); setSelectedOrder(quickViewOrder); }}
+                  className="flex-1 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1"
+                >
+                  <Eye className="h-3 w-3" />
+                  تفاصيل كاملة
+                </button>
+                <a
+                  href={`/s/${quickViewOrder.shopSlug || "default"}?admin=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-8 px-3 rounded-lg border border-border text-xs flex items-center justify-center gap-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
             </div>
