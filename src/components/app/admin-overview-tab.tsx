@@ -134,18 +134,18 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
       )}
 
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-grid">
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-grid page-enter">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-primary p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div></div><div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-primary" /></div></div>
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-3 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-emerald-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div><div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div></div><div className="w-11 h-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-amber-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div><div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div></div><div className="w-11 h-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div></div>
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated">
+        <div className="bg-card rounded-xl border border-border shadow-sm border-t-2 border-t-sky-400 p-5 sm:p-6 card-glow group card-tilt-3d gradient-border-animated card-hover-lift">
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>

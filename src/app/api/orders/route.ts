@@ -165,18 +165,36 @@ export async function GET(req: NextRequest) {
 
     // استعلامان موازيان: الطلبات + العدد الإجمالي
     // turso-lite يستخدم HTTP mode مباشرة (أسرع 10x من Prisma على Vercel)
-    const [orderRows, countRows] = await Promise.all([
-      tursoQuery(
-        `${ORDERS_LIST_SQL} ${whereClause} ORDER BY o."createdAt" DESC LIMIT ? OFFSET ?`,
-        [...args, limit, offset]
-      ),
-      tursoQuery<{ cnt: unknown }>(
-        `SELECT COUNT(*) as cnt FROM "PrintOrder" o ${whereClause}`,
-        args
-      ),
-    ]);
+    let orderRows = await tursoQuery(
+      `${ORDERS_LIST_SQL} ${whereClause} ORDER BY o."createdAt" DESC LIMIT ? OFFSET ?`,
+      [...args, limit, offset]
+    );
+    const countRows = await tursoQuery<{ cnt: unknown }>(
+      `SELECT COUNT(*) as cnt FROM "PrintOrder" o ${whereClause}`,
+      args
+    );
 
+    // Turso DB fallback: if LEFT JOIN query returns 0 but COUNT > 0,
+    // retry with simpler query (no JOIN)
     const total = toNum(countRows[0]?.cnt);
+    if ((orderRows as unknown[]).length === 0 && total > 0) {
+      const SIMPLE_ORDERS_SQL = `
+        SELECT
+          id, reference, "serviceType", "serviceName",
+          "fileName", "fileType", "fileSize",
+          options, customer, delivery, pricing,
+          "estimatedHours", status, pages, copies, total,
+          "createdAt", "updatedAt", "readyAt", "deliveredAt",
+          "startedPrintingAt", "completedPrintingAt",
+          cost, tags, "adminNotes", "shopId",
+          NULL as "shopName", NULL as "shopSlug"
+        FROM "PrintOrder"
+      `;
+      orderRows = await tursoQuery(
+        `${SIMPLE_ORDERS_SQL} ${whereClause} ORDER BY "createdAt" DESC LIMIT ? OFFSET ?`,
+        [...args, limit, offset]
+      );
+    }
 
     return NextResponse.json({
       orders: (orderRows as Record<string, unknown>[]).map((o) => {

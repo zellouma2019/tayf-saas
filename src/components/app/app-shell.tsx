@@ -838,13 +838,15 @@ export function AppShell() {
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-500">
-                  © {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة
-                  <div className="mt-2 flex items-center justify-center gap-2">
-                    <span className="text-neutral-600">يعمل بفضل</span>
-                    <a href="/" className="inline-flex items-center gap-1 text-gold-400 hover:text-gold-300 transition-colors font-medium">
+                <div className="mt-8 pt-6 border-t border-neutral-800 dark:border-neutral-700/50 text-center text-xs text-neutral-500">
+                  <p className="text-neutral-400">© {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة</p>
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <a
+                      href="/"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-l from-gold-500/10 to-primary/10 border border-gold-500/20 dark:border-gold-500/10 text-gold-400 hover:text-gold-300 hover:border-gold-500/30 transition-all hover:shadow-sm hover:shadow-gold-500/10 dark:hover:shadow-gold-500/5 font-medium"
+                    >
                       {platformLogoUrl ? (<img src={platformLogoUrl} alt="طيف" className="w-4 h-4 inline dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" />)}{platformLogoDarkUrl || platformLogoUrl ? (<img src={platformLogoDarkUrl || platformLogoUrl} alt="طيف" className="w-4 h-4 inline hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" />)}
-                      طيف
+                      <span>يعمل بفضل طيف</span>
                     </a>
                   </div>
                 </div>

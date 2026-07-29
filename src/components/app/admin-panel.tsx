@@ -329,12 +329,23 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   }
 
   function safeMapOrders(rawOrders: Record<string, unknown>[]) {
-    return rawOrders.map((order) => ({
-      ...order,
-      customer: order.customer && typeof order.customer === "object"
-        ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
-        : { name: "", phone: "", deliveryMethod: "pickup" },
-    }));
+    return rawOrders.map((order) => {
+      const safe = {
+        ...order,
+        customer: order.customer && typeof order.customer === "object"
+          ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
+          : { name: "", phone: "", deliveryMethod: "pickup" },
+      };
+      // كشف الطلبات المكررة: نفس الهاتف + نفس نوع الخدمة + نفس عدد الصفحات خلال 24 ساعة
+      const sameDayOrders = rawOrders.filter((o) => {
+        if (o.id === order.id) return false;
+        const oCustomer = o.customer && typeof o.customer === "object" ? o.customer : {};
+        if (!oCustomer.phone || oCustomer.phone !== safe.customer.phone) return false;
+        const timeDiff = Math.abs(new Date(String(order.createdAt)).getTime() - new Date(String(o.createdAt)).getTime());
+        return timeDiff < 24 * 60 * 60 * 1000 && o.serviceType === order.serviceType && o.pages === order.pages;
+      });
+      return { ...safe, _possibleDuplicate: sameDayOrders.length > 0 };
+    });
   }
 
   useEffect(() => {

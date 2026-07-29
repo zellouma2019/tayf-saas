@@ -3068,3 +3068,268 @@ html.dark .glass-card {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.35);
 }
+
+/* ============================================================
+   CSS Round 22 — Dark mode polish, micro-interactions,
+   professional animations, and RTL refinements
+   ============================================================ */
+
+/* Smooth page transitions */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: page-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Ripple effect on buttons */
+@keyframes ripple-effect {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.15) 10%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  transition: none;
+}
+.ripple:active::after {
+  animation: ripple-effect 0.5s ease-out;
+}
+
+/* Card entrance with scale */
+@keyframes card-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.card-enter {
+  animation: card-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Gradient text for headings */
+.heading-gradient {
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Dark mode: Subtle glow for cards */
+.dark .card-glow-dark {
+  box-shadow: 0 0 20px -8px hsl(var(--primary) / 0.08);
+}
+
+/* Status indicator with animation */
+.status-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.status-indicator.active::before {
+  animation: status-blink 2s ease-in-out infinite;
+}
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Tooltip with better positioning */
+.tooltip-wrapper {
+  position: relative;
+}
+.tooltip-wrapper .tooltip-content {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 50;
+}
+.tooltip-wrapper:hover .tooltip-content {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Smooth collapse for sidebar */
+.sidebar-collapsed {
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Badge with dot */
+.badge-dot {
+  position: relative;
+  padding-left: 18px;
+}
+.badge-dot::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Loading shimmer for cards */
+@keyframes card-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.card-shimmer {
+  background: linear-gradient(90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.06) 40%,
+    hsl(var(--muted)) 80%
+  );
+  background-size: 400px 100%;
+  animation: card-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Enhanced focus ring for RTL */
+[dir="rtl"] :focus-visible {
+  outline-offset: 2px;
+}
+
+/* Better dark mode text contrast */
+.dark .text-soft {
+  color: hsl(var(--foreground) / 0.85);
+}
+
+/* Notification dropdown animation */
+@keyframes dropdown-enter {
+  from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dropdown-animate {
+  animation: dropdown-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Smooth icon rotation */
+.icon-spin-smooth {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.icon-spin-smooth:hover {
+  transform: rotate(15deg);
+}
+
+/* Gradient border without @property fallback */
+.gradient-border {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.3));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* Order status transition */
+.status-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Better mobile tap targets */
+@media (max-width: 640px) {
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Responsive text */
+@media (max-width: 640px) {
+  .text-responsive {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+}
+
+/* Number formatting */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth scrollbar for webkit */
+.scrollbar-smooth::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-smooth::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-smooth::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 3px;
+}
+.scrollbar-smooth::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+
+/* Inverted card for stats */
+.stat-card-inverted {
+  background: hsl(var(--primary));
+  color: white;
+}
+.stat-card-inverted .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Skeleton pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Float animation for FAB */
+@keyframes fab-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.fab-float {
+  animation: fab-float 3s ease-in-out infinite;
+}
+
+/* Subtle background pattern */
+.bg-pattern {
+  background-image: radial-gradient(hsl(var(--muted-foreground) / 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Dark mode pattern */
+.dark .bg-pattern {
+  background-image: radial-gradient(hsl(var(--muted-foreground) / 0.06) 1px, transparent 1px);
+}

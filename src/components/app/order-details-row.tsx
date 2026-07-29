@@ -545,6 +545,11 @@ function TableRowInner({
       <TableCell className="font-mono text-xs whitespace-nowrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           {order.reference}
+          {order._possibleDuplicate && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/30" title="طلب محتمل مكرر">
+              ⚠️
+            </span>
+          )}
           <OrderTags orderId={order.id} size="sm" />
           {order.statusNotes && (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/30" title={order.statusNotes}>
