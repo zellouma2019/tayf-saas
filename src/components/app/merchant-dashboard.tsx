@@ -477,25 +477,28 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   // فلترة + ترتيب الطلبات بالذاكرة
   const orders = useMemo(() => {
-    let result = rawOrders;
+    let result = Array.isArray(rawOrders) ? [...rawOrders] : [];
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (x) =>
-          x.reference.toLowerCase().includes(q) ||
-          x.customer.name.toLowerCase().includes(q) ||
-          x.customer.phone.includes(search),
+        (x) => {
+          try {
+            return x.reference?.toLowerCase().includes(q) ||
+              x.customer?.name?.toLowerCase().includes(q) ||
+              x.customer?.phone?.includes(search);
+          } catch { return false; }
+        },
       );
     }
     // فلترة التاريخ والمفضلة
     if (quickDateFilter === "today") {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      result = result.filter((o) => new Date(o.createdAt) >= today);
+      result = result.filter((o) => { try { return new Date(o.createdAt) >= today; } catch { return false; } });
     } else if (quickDateFilter === "week") {
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); weekAgo.setHours(0, 0, 0, 0);
-      result = result.filter((o) => new Date(o.createdAt) >= weekAgo);
+      result = result.filter((o) => { try { return new Date(o.createdAt) >= weekAgo; } catch { return false; } });
     } else if (quickDateFilter === "favorites") {
-      result = result.filter((o) => favoriteOrders.has(o.id));
+      result = result.filter((o) => { try { return favoriteOrders.has(o.id); } catch { return false; } });
     }
     // ترتيب
     result = [...result].sort((a, b) => {
@@ -510,12 +513,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }, [rawOrders, search, sortField, sortDir, quickDateFilter, favoriteOrders]);
 
   // حسابات الربح (قبل أي return مبكر)
-  const totalCost = useMemo(() => rawOrders.reduce((s, o) => s + (o.cost || 0), 0), [rawOrders]);
+  const totalCost = useMemo(() => (Array.isArray(rawOrders) ? rawOrders : []).reduce((s, o) => s + (o.cost || 0), 0), [rawOrders]);
   const totalProfit = (stats?.totalRevenue ?? 0) - totalCost;
   const todayOrdersList = useMemo(() => {
+    const safeRaw = Array.isArray(rawOrders) ? rawOrders : [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return rawOrders.filter((o) => new Date(o.createdAt) >= today);
+    return safeRaw.filter((o) => { try { return new Date(o.createdAt) >= today; } catch { return false; } });
   }, [rawOrders]);
   const todayRevenue = useMemo(() => todayOrdersList.reduce((s, o) => s + o.total, 0), [todayOrdersList]);
   const todayCost = useMemo(() => todayOrdersList.reduce((s, o) => s + (o.cost || 0), 0), [todayOrdersList]);
@@ -729,7 +733,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`);
       if (res.ok) {
         const o = await res.json();
-        setRawOrders(o.orders || []);
+        const fetched = Array.isArray(o?.orders) ? o.orders : [];
+        setRawOrders(fetched);
       }
     } catch {
       /* silent */
