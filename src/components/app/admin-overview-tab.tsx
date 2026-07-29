@@ -69,6 +69,11 @@ import { ProfitMarginChart } from "@/components/app/profit-margin-chart";
 import { CustomerRetentionWidget } from "@/components/app/customer-retention-widget";
 import { ServiceTimeTracker } from "@/components/app/service-time-tracker";
 import { PaymentMethodsWidget } from "@/components/app/payment-methods-widget";
+import { PeakHoursHeatmap } from "@/components/app/peak-hours-heatmap";
+import { ReferralTrackerWidget } from "@/components/app/referral-tracker-widget";
+import { WasteReductionWidget } from "@/components/app/waste-reduction-widget";
+import { ClientCommunicationWidget } from "@/components/app/client-communication-widget";
+import { MachineMaintenanceWidget } from "@/components/app/machine-maintenance-widget";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -926,6 +931,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* طرق الدفع */}
       <PaymentMethodsWidget />
+
+      {/* ساعات الذروة */}
+      <PeakHoursHeatmap />
+
+      {/* مصادر الإحالة */}
+      <ReferralTrackerWidget />
+
+      {/* تقليل الهدر */}
+      <WasteReductionWidget />
+
+      {/* تواصل العملاء */}
+      <ClientCommunicationWidget />
+
+      {/* صيانة الآلات */}
+      <MachineMaintenanceWidget />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
