@@ -6959,3 +6959,53 @@ Task: Complete bug fixes, CSS cleanup, push to GitHub
 2. Some CSS classes may have been removed that are dynamically generated
 3. Large file upload not tested
 4. Local build OOMs (known, Vercel builds separately)
+
+---
+Task ID: round43-fix
+Agent: Main Agent
+Task: إصلاح مشكلة لوحة تحكم الأدمن (اختفاء + بيانات وهمية) + إصلاح البناء
+
+## الوضع الحالي
+- ⚠️ الموقع الحي (tayf-saas.vercel.app) يخدم نسخة مخزنة مؤقتاً من بناء قديم
+- ⚠️ Vercel غير متصل بـ GitHub webhook → يجب تفعيل الربط يدوياً من لوحة تحكم Vercel
+- ✅ البناء المحلي يعمل بنجاح (0 أخطاء)
+- ✅ تم إصلاح جميع أخطاء الاستيراد والـ CSS
+
+## الإصلاحات المُطبقة
+
+### 1. إصلاح globals.css
+- السبب: وكيل cron أضاف 31,266 سطر CSS ثم حذفها → تلف البنية
+- الحل: استعادة globals.css من آخر بناء عامل (commit 1ff0646)
+- إزالة تعليق JavaScript غير صالح في نهاية الملف (// Deploy trigger)
+- النتيجة: 30,721 سطر (الحجم الأصلي العامل)
+
+### 2. إصلاح 30 خطأ استيراد في admin-overview-tab.tsx
+- السبب: وكلاء cron أنشأوا المكونات كـ `export default` لكن OverviewTab يستوردها كـ named exports
+- الحل: تحويل 30 استيراد من named إلى default import
+- المكونات المُصلحة: ExpenseBudgetTracker, CustomerFeedbackChart, InventoryStockWidget, OrderPriorityQueue, ShopComparisonWidget, OrderAnalyticsDeepDive, MerchantRevenueBreakdown, DeliveryPerformanceWidget, CouponManagementWidget, DailySalesSummary, TeamWorkloadWidget, ProfitMarginChart, CustomerRetentionWidget, ServiceTimeTracker, PaymentMethodsWidget, PeakHoursHeatmap, ReferralTrackerWidget, WasteReductionWidget, ClientCommunicationWidget, MachineMaintenanceWidget, OrderRevenueDistribution, MonthlyTargetProgress, TopCustomersWidget, PrintQualityMonitor, EmployeePerformanceChart, BusinessHoursWidget, SeasonalDemandWidget, CostBreakdownWidget, FeedbackSentimentWidget, OrderFulfillmentTimeline
+
+### 3. إزالة 50 عنصر واجهة وهمية من لوحة النظرة العامة
+- السبب: وكلاء cron أضافوا عناصر تعرض بيانات تجريبية ثابتة (156 تقييم، 4.7 نجوم، إيرادات وهمية)
+- الحل: إزالة جميع العناصر الوهمية والاحتفاظ فقط بالعناصر التي تستخدم بيانات API حقيقية
+- النتيجة: تقليل الملف من 1414 إلى 1196 سطر
+
+### 4. إصلاح GitHub remote
+- السبب: الـ remote كان يشير إلى Z-ai-solutions/tayf-saas (غير موجود)
+- الحل: تصحيح إلى zellouma2019/tayf-saas (المستودع الصحيح)
+
+## Commits المُرفعة
+- 7b91369: fix: restore working globals.css + fix 30 default import errors
+- 8959a72: fix: remove 50 mock demo widgets from admin overview
+
+## ⚠️ إجراء مطلوب من المستخدم
+المستخدم يجب أن يربط Vercel بالمستودع الصحيح:
+1. افتح لوحة تحكم Vercel → tayf-saas project → Settings → Git
+2. ربط المستودع: zellouma2019/tayf-saas
+3. أو نشر يدوياً عبر: vercel --prod
+
+## التوصيات للمرحلة القادمة
+1. إعادة ربط Vercel بـ GitHub (أولوية حرجة)
+2. اختبار لوحة الأدمن بعد النشر
+3. إصلاح مشكلة رفع الملفات (UPLOADTHING_TOKEN)
+4. تنظيف المكونات الوهمية غير المستخدمة من المشروع
+5. تقليل حجم globals.css بشكل أكبر
