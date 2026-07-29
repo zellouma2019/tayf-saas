@@ -3037,3 +3037,115 @@ Task: تحسينات بصرية شاملة + ميزات جديدة (Round 19)
 7. إضافة ميزة سلة مشتريات متعددة الخدمات
 8. إضافة لوحة معلومات بيئية (System Health Dashboard)
 
+---
+Task ID: qa-fix-round20
+Agent: Main Agent
+Task: إصلاحات حرجة + ميزات جديدة + تحسينات بصرية (Round 20)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع البيانات الحية (38 طلب، 3 متجر نشط)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم إصلاح مشكلة shopStats فارغة + totalRevenue = 0
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء
+- ✅ الإحصائيات — 38 طلب، 17,808 د.ج إيرادات (كانت 0 د.ج!)
+- ✅ المتاجر — 3 متاجر نشط (كان 0!)
+- ✅ تبويب المتاجر — يعرض 3 متاجر مع تفاصيل (كان فارغاً!)
+- ✅ صفحة المتجر — تعمل بدون أخطاء
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+
+## الإصلاحات الحرجة
+
+### 1. shopStats فارغة + totalRevenue = 0 في global-stats
+**المشكلة**: `tursoQueries` (موازية) كانت تفشل بصمت لاستعلام المتاجر → `shopStats: []` و `totalRevenue: 0`
+**الحل**: 
+- استبدال `tursoQueries` بـ `Promise.all` + `tursoQuery` منفصلة (أكثر موثوقية)
+- إضافة fallback لـ totalRevenue من recentOrders
+- إضافة fallback لـ shopStats من بيانات الطلبات (`buildShopStatsFromOrders`)
+- النتيجة: 38 طلب، 17,808 د.ج، 3 متاجر نشط
+
+### الملفات المُعدلة للإصلاح
+| الملف | التغيير |
+|------|---------|
+| `src/app/api/admin/global-stats/route.ts` | إعادة كتابة: استعلامات منفصلة + 4 fallbacks |
+
+## الميزات الجديدة
+
+### 1. كشف الطلبات المتأخرة (Stale Orders Detection)
+- مكون جديد: `src/components/app/stale-orders-widget.tsx`
+- كشف تلقائي للطلبات المعلقة أكثر من 24 ساعة
+- 3 مستويات خطورة: خفيف (>24h)، تحذير (>48h)، حرج (>72h)
+- ألوان مختلفة حسب الخطورة (أصفر/برتقالي/أحمر)
+- زر إيقاف تنبيه فردي أو جماعي
+- حفظ الحالة في localStorage
+- مدمج في لوحة نظرة عامة بعد أداء المتاجر
+
+### 2. مراقب صحة النظام (System Health Widget)
+- مكون جديد: `src/components/app/system-health-widget.tsx`
+- فحص صحة API تلقائي كل 60 ثانية
+- عرض زمن الاستجابة (latency)
+- أيقونة WiFi خضراء/حمراء حسب الحالة
+- عرض تفصيلي عند النقر (expanded view)
+- مدمج في شريط الرأس الرئيسي بجانب تبديل الوضع الليلي
+
+## التحسينات البصرية (Round 20)
+
+### CSS جديدة (+180 سطر)
+- `.scroll-fade-x` — حاوية أفقية مع حواف متلاشية
+- `.text-gradient-rainbow` — نص متدرج متعدد الألوان
+- `.animated-gradient-border` — حدود متدرجة دوّارة (conic-gradient + @property)
+- `.card-textured` — بطاقة مع ملمس نوي خفيف
+- `.spring-press` — ضغط مرن عند النقر
+- `.focus-ring` — حلقة تركيز محسّنة لإمكانية الوصول
+- `.skeleton-sweep` — تحميل متلألئ مع حركة مسح
+- `.number-transition` — انتقال أرقام سلس
+- `.stagger-1` إلى `.stagger-6` — تأخير ظهور متتالي
+- `.tooltip-arrow` — سهم تلميح
+- `.scrollbar-thin` — شريط تمرير رفيع محسّن
+- `.table-header-sticky` — رأس جدول ثابت
+- `.badge-glow` — شارة متوهجة
+- `.toast-slide-in` — حركة دخول الإشعارات
+- `.status-pulse` — نبض حالة
+- `.expand-enter` — حركة توسع
+- `.glow-shadow-*` — ظلال متوهجة للوضع الداكن (violet, amber, emerald, rose, cyan)
+
+### تحسينات المكونات
+- **صفحة تسجيل الدخول**: animated-gradient-border + spring-press + focus-ring
+- **ShopLoader**: skeleton-sweep + fade-slide-up + status-pulse dot + تأخير متتالي
+- **ShopNotFound**: card-textured + أيقونة محسّنة في إطار
+- **صفحة التتبع**: focus-ring على حقول الإدخال
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/api/admin/global-stats/route.ts` | إعادة كتابة: استعلامات منفصلة + 4 fallbacks |
+| `src/app/globals.css` | +180 سطر: CSS Round 20 |
+| `src/components/app/stale-orders-widget.tsx` | جديد: كشف الطلبات المتأخرة |
+| `src/components/app/system-health-widget.tsx` | جديد: مراقب صحة النظام |
+| `src/components/app/admin-overview-tab.tsx` | دمج StaleOrdersWidget |
+| `src/components/app/admin-login-gate.tsx` | animated-gradient-border + spring-press + focus-ring |
+| `src/components/app/shop-page.tsx` | ShopLoader محسّن + ShopNotFound محسّن |
+| `src/app/page.tsx` | دمج SystemHealthWidget في الرأس |
+| `src/components/app/track-page-client.tsx` | focus-ring على SelectTrigger |
+
+## Commits
+- 844d089: fix(r20): resolve shopStats empty + totalRevenue 0 — split tursoQueries to sequential + fallbacks
+- e68f9aa: feat(r20): stale orders widget, system health, enhanced CSS (R20), improved loader + login visuals
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مراقبة Turso DB — shopStats تعمل الآن لكن مراقبة مستمرة
+2. إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel
+3. تحسينات على حاسبة الأسعار (أسعار قابلة للتخصيص لكل متجر)
+4. إضافة ميزة سلة مشتريات متعددة الخدمات
+5. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+6. إضافة structured data (JSON-LD) لـ SEO
+7. إضافة تصدير Excel محسّن
+8. إضافة ملاحظات داخلية على الطلب (DB-based, not just localStorage)
+
