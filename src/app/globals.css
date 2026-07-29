@@ -10523,3 +10523,1414 @@ textarea:focus::placeholder {
 :is(.dark) .dark-divider-horizontal {
   background: rgba(255,255,255,0.06);
 }
+
+/* ═══════════════════════════════════════════ CSS Round 33 — Dashboard Polish & Micro-interactions ═══════════════════════════════════════════ */
+
+/* ----------------------------------------------------------
+   1. Dashboard Widget Enhancements — تحسينات عناصر لوحة التحكم
+   ---------------------------------------------------------- */
+
+/* عنصر زجاجي — Glassmorphism widget with backdrop blur */
+.widget-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.widget-glass:hover {
+  border-color: rgba(212, 168, 83, 0.25);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(212, 168, 83, 0.1);
+}
+@media (prefers-color-scheme: light) {
+  :is(.dark) .widget-glass {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.02) 0%,
+      rgba(0, 0, 0, 0.01) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* عنصر بحد متحرك — Widget with animated gradient border */
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.widget-bordered {
+  position: relative;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: var(--card, #141416);
+  overflow: hidden;
+}
+.widget-bordered::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    var(--primary, #d4a853),
+    transparent 40%,
+    var(--primary, #d4a853) 60%,
+    transparent 100%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  animation: widget-border-rotate 4s linear infinite;
+  pointer-events: none;
+}
+@keyframes widget-border-rotate {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+/* عنصر قابل للطي — Collapsible widget with smooth animation */
+.widget-collapsible {
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease;
+  max-height: 2000px;
+  opacity: 1;
+}
+.widget-collapsible.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* عنصر قليل الإظهار — Minimized widget showing only header */
+.widget-minimized {
+  max-height: 3.5rem;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.widget-minimized .widget-body,
+.widget-minimized .widget-footer {
+  display: none;
+}
+
+/* أزرار رأس العنصر — Action buttons aligned to the left in widget header */
+.widget-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+.widget-header-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground, #7a7568);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.widget-header-actions button:hover {
+  background: rgba(212, 168, 83, 0.1);
+  color: var(--primary, #d4a853);
+}
+
+/* شبكة بنيوية — Masonry-like dashboard layout using CSS columns */
+.dashboard-grid-masonry {
+  column-count: 1;
+  column-gap: 1.25rem;
+}
+@media (min-width: 640px) {
+  .dashboard-grid-masonry {
+    column-count: 2;
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-grid-masonry {
+    column-count: 3;
+  }
+}
+@media (min-width: 1280px) {
+  .dashboard-grid-masonry {
+    column-count: 4;
+  }
+}
+.dashboard-grid-masonry > * {
+  break-inside: avoid;
+  margin-bottom: 1.25rem;
+}
+
+/* شريط جانبي مضغوط — Ultra-compact sidebar for small screens */
+.dashboard-sidebar-compact {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dashboard-sidebar-compact .sidebar-label {
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.dashboard-sidebar-compact .sidebar-nav-item {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* رأس لوحة التحكم الثابت — Sticky dashboard header with blur */
+.dashboard-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(20, 20, 22, 0.85);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  padding: 1rem 1.5rem;
+  transition: background 0.3s ease;
+}
+@media (prefers-color-scheme: light) {
+  :is(.dark) .dashboard-header-sticky {
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+}
+@media (max-width: 640px) {
+  .dashboard-header-sticky {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* ----------------------------------------------------------
+   2. Data Table Enhancements — تحسينات جداول البيانات
+   ---------------------------------------------------------- */
+
+/* صف يبرز عند التمرير — Row that highlights on hover with accent border */
+.table-hover-row {
+  position: relative;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+.table-hover-row::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  border-radius: 0 3px 3px 0;
+  transition: background 0.15s ease;
+}
+.table-hover-row:hover {
+  background-color: rgba(212, 168, 83, 0.06);
+}
+.table-hover-row:hover::before {
+  background: var(--primary, #d4a853);
+}
+
+/* صف محدد — Selected state with primary color */
+.table-selected-row {
+  background-color: rgba(212, 168, 83, 0.12) !important;
+  border-inline-start: 3px solid var(--primary, #d4a853);
+}
+.table-selected-row td {
+  font-weight: 500;
+}
+
+/* رأس مجموعة — Group header row */
+.table-group-header {
+  background-color: rgba(212, 168, 83, 0.08);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary, #d4a853);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid rgba(212, 168, 83, 0.2);
+}
+.table-group-header td {
+  padding-top: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+/* صف الملخص — Summary/total row at bottom */
+.table-summary-row {
+  background-color: rgba(212, 168, 83, 0.05);
+  border-top: 2px solid var(--border, rgba(255, 255, 255, 0.12));
+  font-weight: 700;
+}
+.table-summary-row td {
+  padding-top: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* خلية رقمية — Numeric cells with tabular nums and RTL-aware alignment */
+.table-cell-numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  text-align: start;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  direction: ltr;
+  unicode-bidi: bidi-override;
+}
+
+/* خلية الحالة — Status cell with colored dot */
+.table-cell-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.table-cell-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-color, #6b7280);
+  flex-shrink: 0;
+}
+.table-cell-status.status-success::before {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+}
+.table-cell-status.status-error::before {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+.table-cell-status.status-warning::before {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+.table-cell-status.status-pending::before {
+  background: #6b7280;
+}
+
+/* خلية الإجراءات — Actions cell with hover-reveal buttons */
+.table-cell-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.table-hover-row:hover .table-cell-actions,
+tr:hover .table-cell-actions {
+  opacity: 1;
+}
+.table-cell-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-foreground, #7a7568);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.table-cell-actions button:hover {
+  background: rgba(212, 168, 83, 0.12);
+  color: var(--primary, #d4a853);
+  border-color: rgba(212, 168, 83, 0.2);
+}
+
+/* غلاف الجدول المتجاوب — Horizontal scroll wrapper with fade edges */
+.table-responsive-wrapper {
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 83, 0.3) transparent;
+}
+.table-responsive-wrapper::before,
+.table-responsive-wrapper::after {
+  content: "";
+  position: sticky;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  z-index: 2;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.table-responsive-wrapper::before {
+  background: linear-gradient(to left, transparent, var(--card, #141416));
+  inset-inline-start: 0;
+}
+.table-responsive-wrapper::after {
+  background: linear-gradient(to right, transparent, var(--card, #141416));
+  inset-inline-end: 0;
+}
+
+/* الحالة الفارغة للجدول — Empty state placeholder */
+.table-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: var(--muted-foreground, #7a7568);
+  text-align: center;
+}
+.table-empty-state svg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+.table-empty-state p {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* حالة التحميل للجدول — Loading state with skeleton rows */
+.table-loading tr {
+  pointer-events: none;
+}
+.table-loading td {
+  position: relative;
+  color: transparent !important;
+  overflow: hidden;
+}
+.table-loading td::after {
+  content: "";
+  position: absolute;
+  inset: 0.25rem;
+  inset-inline: 0.5rem;
+  height: 1rem;
+  border-radius: 0.375rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: table-skeleton-pulse 1.5s ease-in-out infinite;
+}
+@keyframes table-skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ----------------------------------------------------------
+   3. Form & Input Refinements — تحسينات النماذج والحقول
+   ---------------------------------------------------------- */
+
+/* مجموعة حقول — Group of related fields with shared label */
+.field-group {
+  position: relative;
+}
+.field-group .field-group-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground, #7a7568);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.field-group .field-group-items {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .field-group .field-group-items {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+.field-group .field-group-items > * {
+  margin-bottom: 0;
+}
+
+/* حقل به خطأ — Error state with red border and shake */
+.field-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444;
+  animation: field-shake 0.4s ease-in-out;
+}
+@keyframes field-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+/* حقل ناجح — Success state with green indicator */
+.field-success {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 1px #22c55e;
+}
+.field-success::after {
+  content: "✓";
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #22c55e;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* تلميح الحقل — Hint text below field */
+.field-hint {
+  display: block;
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: rgba(212, 168, 83, 0.7);
+  line-height: 1.4;
+}
+
+/* قائمة منسدلة مخصصة — Custom styled select */
+.select-custom {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a7568' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  padding-inline-start: 2.25rem;
+  padding-inline-end: 1rem;
+  cursor: pointer;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 0.5rem;
+  background-color: var(--card, #141416);
+  color: var(--foreground, #e8e4dc);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.select-custom:focus {
+  border-color: var(--primary, #d4a853);
+  box-shadow: 0 0 0 2px rgba(212, 168, 83, 0.2);
+  outline: none;
+}
+
+/* حقل نص متزايد الطول — Auto-growing textarea */
+.textarea-auto {
+  field-sizing: content;
+  min-height: 3.5rem;
+  resize: none;
+  overflow: hidden;
+  transition: min-height 0.2s ease;
+}
+
+/* حقل إدخال RTL — RTL-aware input */
+.input-rtl {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
+}
+
+/* حقل مع بادئة — Input with prefix text */
+.input-with-prefix {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.input-with-prefix .input-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-inline-end: none;
+  border-radius: 0.5rem 0 0 0.5rem;
+  color: var(--muted-foreground, #7a7568);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+[dir="rtl"] .input-with-prefix .input-prefix {
+  border-radius: 0 0.5rem 0.5rem 0;
+  border-inline-end: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-inline-start: none;
+}
+.input-with-prefix input {
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+[dir="rtl"] .input-with-prefix input {
+  border-radius: 0.5rem 0 0 0.5rem !important;
+}
+
+/* حقل مع لاحقة — Input with suffix text */
+.input-with-suffix {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.input-with-suffix .input-suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-inline-start: none;
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--muted-foreground, #7a7568);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+[dir="rtl"] .input-with-suffix .input-suffix {
+  border-radius: 0.5rem 0 0 0.5rem;
+  border-inline-start: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-inline-end: none;
+}
+.input-with-suffix input {
+  border-radius: 0.5rem 0 0 0.5rem !important;
+}
+[dir="rtl"] .input-with-suffix input {
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+/* حقل رفع ملفات مصمم — Styled file upload with drag state */
+.file-input-styled {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: 2px dashed var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+.file-input-styled:hover {
+  border-color: rgba(212, 168, 83, 0.4);
+  background: rgba(212, 168, 83, 0.04);
+}
+.file-input-styled.drag-over {
+  border-color: var(--primary, #d4a853);
+  background: rgba(212, 168, 83, 0.08);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.15);
+  transform: scale(1.01);
+}
+.file-input-styled input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-input-styled svg {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted-foreground, #7a7568);
+  opacity: 0.6;
+}
+.file-input-styled p {
+  font-size: 0.85rem;
+  color: var(--muted-foreground, #7a7568);
+}
+
+/* ----------------------------------------------------------
+   4. Notification & Toast System — نظام الإشعارات والتنبيهات
+   ---------------------------------------------------------- */
+
+/* حاوية التنبيهات — Fixed container for toast notifications */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  inset-inline-end: 1rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+/* تنبيه منبثق — Individual toast with slide-in animation */
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--card, #141416);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-size: 0.875rem;
+  color: var(--foreground, #e8e4dc);
+  animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+.toast.exiting {
+  opacity: 0;
+  transform: translateX(100%);
+}
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* تنبيه نجاح — Success toast variant */
+.toast-success {
+  border-inline-start: 4px solid #22c55e;
+  background: linear-gradient(to left, rgba(34, 197, 94, 0.08), var(--card, #141416));
+}
+
+/* تنبيه خطأ — Error toast variant */
+.toast-error {
+  border-inline-start: 4px solid #ef4444;
+  background: linear-gradient(to left, rgba(239, 68, 68, 0.08), var(--card, #141416));
+}
+
+/* تنبيه تحذير — Warning toast variant */
+.toast-warning {
+  border-inline-start: 4px solid #f59e0b;
+  background: linear-gradient(to left, rgba(245, 158, 11, 0.08), var(--card, #141416));
+}
+
+/* تنبيه معلومات — Info toast variant */
+.toast-info {
+  border-inline-start: 4px solid #3b82f6;
+  background: linear-gradient(to left, rgba(59, 130, 246, 0.08), var(--card, #141416));
+}
+
+/* تنبيه قابل للإغلاق — Toast with close button */
+.toast-dismissable {
+  padding-inline-end: 3rem;
+}
+.toast-dismissable .toast-close {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground, #7a7568);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.toast-dismissable .toast-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--foreground, #e8e4dc);
+}
+
+/* شريط تقدم التنبيه — Auto-dismiss progress bar */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  height: 3px;
+  background: var(--primary, #d4a853);
+  border-radius: 0 0 0 0.75rem;
+  animation: toast-progress-shrink 5s linear forwards;
+}
+@keyframes toast-progress-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* مجموعة شارات الإشعارات — Stacked badges */
+.notification-badge-stack {
+  position: relative;
+  display: inline-flex;
+}
+.notification-badge-stack .badge-count {
+  position: absolute;
+  inset-inline-end: -0.375rem;
+  top: -0.375rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes badge-pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+/* عنصر إشعار غير مقروء — Unread notification with accent */
+.notification-item-unread {
+  border-inline-start: 3px solid var(--primary, #d4a853);
+  background: rgba(212, 168, 83, 0.04);
+}
+.notification-item-unread::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary, #d4a853);
+  flex-shrink: 0;
+  animation: notification-pulse 2s ease-in-out infinite;
+}
+@keyframes notification-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ----------------------------------------------------------
+   5. Advanced Micro-interactions — تفاعلات دقيقة متقدمة
+   ---------------------------------------------------------- */
+
+/* ارتفاع عند التمرير — Lift effect on hover */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* توهج أساسي عند التمرير — Primary glow on hover */
+.hover-glow-primary {
+  transition: box-shadow 0.3s ease;
+}
+.hover-glow-primary:hover {
+  box-shadow: 0 0 16px rgba(212, 168, 83, 0.25),
+              0 0 32px rgba(212, 168, 83, 0.1);
+}
+
+/* خط سفلي متحرك — Animated underline from right in RTL */
+.hover-underline-animated {
+  position: relative;
+  display: inline-block;
+}
+.hover-underline-animated::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  inset-inline-end: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary, #d4a853);
+  border-radius: 1px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-underline-animated:hover::after {
+  width: 100%;
+  inset-inline-end: auto;
+  inset-inline-start: 0;
+}
+
+/* خلفية متلاشية — Background fade on hover */
+.hover-bg-fade {
+  transition: background-color 0.2s ease;
+}
+.hover-bg-fade:hover {
+  background-color: rgba(212, 168, 83, 0.06);
+}
+
+/* تقليل عند الضغط — Scale down on active/press */
+.press-scale {
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+.press-scale:active {
+  transform: scale(0.96);
+}
+
+/* حلقة تركيز أساسية — Primary focus ring */
+.focus-ring-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.3);
+  border-color: var(--primary, #d4a853);
+}
+
+/* تأثير موجة — Material-design ripple effect */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-effect::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    rgba(212, 168, 83, 0.3) 10%,
+    transparent 10.01%
+  );
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.6s ease;
+}
+.ripple-effect:active::after {
+  transform: scale(0);
+  opacity: 1;
+  transition: 0s;
+}
+
+/* تأثير مغناطيسي — Subtle magnetic pull (CSS approximation) */
+.magnetic-hover {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.magnetic-hover:hover {
+  transform: translate(
+    calc(var(--mouse-x, 0) * 0.02),
+    calc(var(--mouse-y, 0) * 0.02)
+  );
+}
+
+/* ----------------------------------------------------------
+   6. Loading States Refinement — تحسينات حالات التحميل
+   ---------------------------------------------------------- */
+
+/* طبقة التحميل — Overlay with spinner */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 22, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
+  border-radius: inherit;
+}
+.loading-overlay::after {
+  content: "";
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--primary, #d4a853);
+  border-radius: 50%;
+  animation: loading-overlay-spin 0.7s linear infinite;
+}
+@keyframes loading-overlay-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* شريط التحميل العلوي — NProgress-style top bar */
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 200;
+  background: transparent;
+  overflow: hidden;
+}
+.loading-bar::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    var(--primary, #d4a853),
+    rgba(212, 168, 83, 0.7),
+    var(--primary, #d4a853)
+  );
+  background-size: 200% 100%;
+  animation: loading-bar-indeterminate 1.5s ease-in-out infinite;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 8px rgba(212, 168, 83, 0.5);
+}
+@keyframes loading-bar-indeterminate {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* هيكل عظمي متماوج — Skeleton with wave animation */
+.loading-skeleton-wave {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0.375rem;
+  min-height: 1rem;
+}
+.loading-skeleton-wave::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.8s ease-in-out infinite;
+}
+@keyframes skeleton-wave {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.loading-skeleton-wave.skeleton-text {
+  height: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+.loading-skeleton-wave.skeleton-heading {
+  height: 1.5rem;
+  width: 60%;
+  margin-bottom: 1rem;
+}
+.loading-skeleton-wave.skeleton-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+}
+.loading-skeleton-wave.skeleton-image {
+  width: 100%;
+  height: 10rem;
+}
+
+/* عنصر نائب للمحتوى — Placeholder mimicking content structure */
+.loading-content-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+.loading-content-placeholder .placeholder-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.loading-content-placeholder .placeholder-header .loading-skeleton-wave {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.loading-content-placeholder .placeholder-header .placeholder-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.loading-content-placeholder .placeholder-header .placeholder-lines .loading-skeleton-wave:last-child {
+  width: 50%;
+}
+
+/* تحميل مضمّن — Inline loading indicator */
+.loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.loading-inline::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(212, 168, 83, 0.2);
+  border-top-color: var(--primary, #d4a853);
+  border-radius: 50%;
+  animation: loading-inline-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes loading-inline-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* تحميل مجزأ — Chunked loading with multiple bars */
+.loading-chunked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.loading-chunked .chunk {
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+.loading-chunked .chunk:nth-child(1) { width: 100%; }
+.loading-chunked .chunk:nth-child(2) { width: 80%; }
+.loading-chunked .chunk:nth-child(3) { width: 90%; }
+.loading-chunked .chunk:nth-child(4) { width: 60%; }
+.loading-chunked .chunk:nth-child(5) { width: 70%; }
+.loading-chunked .chunk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 168, 83, 0.2),
+    transparent
+  );
+  animation: chunked-load 2s ease-in-out infinite;
+}
+@keyframes chunked-load {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ----------------------------------------------------------
+   7. Responsive & Mobile Enhancements — تحسينات الاستجابة والهاتف
+   ---------------------------------------------------------- */
+
+/* شبكة متجاوبة — Adaptive grid from 1 to 4 columns */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1280px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* بطاقة هاتفية — Card optimized for mobile */
+.mobile-card {
+  width: 100%;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: var(--card, #141416);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  touch-action: manipulation;
+}
+.mobile-card:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+@media (min-width: 768px) {
+  .mobile-card {
+    padding: 1.5rem;
+  }
+}
+
+/* شريط تنقل سفلي — Bottom navigation bar for mobile */
+.mobile-nav-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0.5rem 0.25rem;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(20, 20, 22, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+.mobile-nav-bar .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--muted-foreground, #7a7568);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  min-height: 3.5rem;
+  justify-content: center;
+}
+.mobile-nav-bar .nav-item.active {
+  color: var(--primary, #d4a853);
+}
+.mobile-nav-bar .nav-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ورقة هاتفية — Bottom sheet for mobile */
+.mobile-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  max-height: 80vh;
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: var(--card, #141416);
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+.mobile-sheet.open {
+  transform: translateY(0);
+}
+.mobile-sheet .sheet-drag-handle {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.mobile-sheet .sheet-drag-handle::after {
+  content: "";
+  width: 2.5rem;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--muted-foreground, #7a7568);
+  opacity: 0.3;
+}
+
+/* قابل للسحب أفقياً — Container hinting at horizontal swipe */
+.mobile-swipeable {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  scrollbar-width: none;
+  display: flex;
+  gap: 0.75rem;
+  padding-inline: 1rem;
+}
+.mobile-swipeable::-webkit-scrollbar {
+  display: none;
+}
+.mobile-swipeable > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* رد فعل اللمس — Visual feedback on touch */
+.touch-feedback {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+.touch-feedback:active {
+  opacity: 0.7;
+  transform: scale(0.97);
+}
+
+/* حشوة آمنة أسفل — Safe area bottom padding for notched phones */
+.safe-bottom-padding {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-bottom-padding-gutter {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* ----------------------------------------------------------
+   8. Accessibility & Motion — إمكانية الوصول والحركة
+   ---------------------------------------------------------- */
+
+/* مرئي فقط لقارئ الشاشة عند التركيز — Screen reader only but focusable */
+.sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: inherit;
+}
+
+/* حلقة التركيز عند Focus-Visible — Focus ring only for keyboard, not mouse */
+.focus-visible-ring:focus {
+  outline: none;
+}
+.focus-visible-ring:focus-visible {
+  outline: 2px solid var(--primary, #d4a853);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+.focus-visible-ring:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* حركة آمنة — Apply only when user prefers motion */
+.motion-safe {
+  transition-property: transform, opacity, box-shadow;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* تقليل الحركة — Apply only when user prefers reduced motion */
+.motion-reduce {
+  transition: none !important;
+  animation: none !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .motion-reduce {
+    transition-property: transform, opacity;
+    transition-duration: 0.3s;
+  }
+}
+
+/* تباين عالي — High contrast mode styles */
+.high-contrast {
+  border-width: 2px !important;
+  border-color: var(--foreground, #e8e4dc) !important;
+}
+.high-contrast * {
+  text-shadow: none !important;
+}
+.high-contrast .high-contrast-border {
+  border-width: 2px;
+  border-color: currentColor;
+}
+
+/* ----------------------------------------------------------
+   Prefers Reduced Motion Overrides — تجاوزات تقليل الحركة
+   ---------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-bordered::before {
+    animation: none;
+  }
+  .toast {
+    animation: none;
+  }
+  .toast.exiting {
+    opacity: 0;
+    transform: none;
+  }
+  .toast-progress {
+    animation: none;
+    width: 100%;
+  }
+  .notification-badge-stack .badge-count {
+    animation: none;
+  }
+  .notification-item-unread::before {
+    animation: none;
+  }
+  .hover-lift:hover {
+    transform: none;
+  }
+  .hover-underline-animated::after {
+    transition: none;
+  }
+  .press-scale:active {
+    transform: none;
+  }
+  .ripple-effect::after {
+    transition: none;
+    animation: none;
+  }
+  .magnetic-hover:hover {
+    transform: none;
+  }
+  .loading-overlay::after {
+    animation-duration: 2s;
+  }
+  .loading-bar::after {
+    animation-duration: 4s;
+  }
+  .loading-skeleton-wave::after {
+    animation: none;
+  }
+  .loading-inline::before {
+    animation-duration: 2s;
+  }
+  .loading-chunked .chunk::after {
+    animation: none;
+  }
+  .mobile-card:active {
+    transform: none;
+  }
+  .mobile-sheet {
+    transition: none;
+  }
+  .table-loading td::after {
+    animation: none;
+  }
+  .widget-collapsible,
+  .dashboard-sidebar-compact {
+    transition: none;
+  }
+  .field-error {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════ End CSS Round 33 ═══════════════════════════════════════════ */

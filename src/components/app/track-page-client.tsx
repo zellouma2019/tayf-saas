@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OrderTimelineVisualizer } from "@/components/app/order-timeline-visualizer";
 import {
   Select,
   SelectContent,
@@ -635,6 +636,14 @@ function TrackedOrderCard({ order }: { order: PrintOrderLite }) {
             <p className="text-xs font-medium text-rose-600 dark:text-rose-400">تم إلغاء هذا الطلب</p>
           </div>
         )}
+
+        {/* === مسار حالة الطلب المرئي === */}
+        <OrderTimelineVisualizer
+          orderId={order.reference}
+          currentStatus={order.status}
+          createdAt={order.createdAt}
+          updatedAt={order.updatedAt}
+        />
 
         {/* === Order details grid === */}
         <div className="grid grid-cols-2 gap-2 text-sm">

@@ -2,6 +2,7 @@
 
 import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -28,6 +29,8 @@ import { OrdersHeatmap } from "@/components/app/orders-heatmap";
 import { DailyTargetRing } from "@/components/app/daily-target-ring";
 import { WeeklyReportChart } from "@/components/app/weekly-report-chart";
 import { ShopActivityFeed } from "@/components/app/shop-activity-feed";
+import { RevenueForecastWidget } from "@/components/app/revenue-forecast-widget";
+import { QuickStatsRow } from "@/components/app/quick-stats-row";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -714,6 +717,25 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           yesterdayTrend={12}
         />
       </div>
+
+      {/* صف الإحصائيات السريعة */}
+      <QuickStatsRow
+        stats={[
+          { label: "إجمالي الطلبات", value: safeStats.totalOrders, icon: <Package className="h-4 w-4" />, color: "text-violet-600", bg: "bg-violet-100 dark:bg-violet-900/30" },
+          { label: "الإيرادات", value: formatDA(safeStats.totalRevenue), icon: <DollarSign className="h-4 w-4" />, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
+          { label: "طلبات اليوم", value: safeStats.todayOrders, icon: <Zap className="h-4 w-4" />, trend: "+5%", color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-900/30" },
+          { label: "المتاجر النشطة", value: safeStats.activeShopCount, icon: <Store className="h-4 w-4" />, color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-900/30" },
+          { label: "بانتظار", value: safeStats.statusCounts?.pending ?? 0, icon: <Clock className="h-4 w-4" />, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30" },
+          { label: "جاهز للتسليم", value: safeStats.statusCounts?.ready ?? 0, icon: <PackageSearch className="h-4 w-4" />, color: "text-teal-600", bg: "bg-teal-100 dark:bg-teal-900/30" },
+        ]}
+      />
+
+      {/* توقعات الإيرادات */}
+      <RevenueForecastWidget
+        currentMonthRevenue={safeStats.totalRevenue ?? 0}
+        daysRemaining={Math.max(0, 30 - new Date().getDate())}
+        dailyAverage={safeStats.todayOrders > 0 ? Math.round((safeStats.totalRevenue ?? 0) / Math.max(1, new Date().getDate())) : 0}
+      />
 
       {/* أداء المتاجر */}
       <PerformanceScoreWidget stats={stats} className="fade-in-up fade-in-up-delay-2 card-glow" />
