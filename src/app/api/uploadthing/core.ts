@@ -20,6 +20,10 @@ export const ourFileRouter = {
       maxFileSize: "50MB",
       maxFileCount: 1,
     },
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+      maxFileSize: "50MB",
+      maxFileCount: 1,
+    },
     "image/webp": { maxFileSize: "50MB", maxFileCount: 1 },
   }).onUploadComplete(async ({ file }) => {
     console.log("[uploadthing] Upload complete:", file.name, file.size, "bytes →", file.url);

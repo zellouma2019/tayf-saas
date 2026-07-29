@@ -6,7 +6,8 @@ export type ServiceType =
   | "binding"
   | "copy"
   | "card"
-  | "poster";
+  | "poster"
+  | "spreadsheet";
 
 // ===== أنواع الخيارات =====
 export interface SpecOption {

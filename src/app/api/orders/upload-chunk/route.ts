@@ -3,7 +3,7 @@ import { createClient, type Client } from "@libsql/client";
 
 // حجم الملف الأقصى: 50 ميغابايت
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const ACCEPTED_EXTENSIONS = ["pdf", "docx", "jpg", "jpeg", "png", "webp"];
+const ACCEPTED_EXTENSIONS = ["pdf", "docx", "xlsx", "jpg", "jpeg", "png", "webp"];
 
 const MIME_MAP: Record<string, string> = {
   pdf: "application/pdf",
@@ -12,6 +12,7 @@ const MIME_MAP: Record<string, string> = {
   jpeg: "image/jpeg",
   png: "image/png",
   webp: "image/webp",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 };
 
 /**

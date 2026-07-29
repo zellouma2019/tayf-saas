@@ -568,11 +568,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
   async function processFile(f: File) {
     // التحقق من الصيغة
-    const ACCEPTED = [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
+    const ACCEPTED = [".pdf", ".docx", ".xlsx", ".jpg", ".jpeg", ".png", ".webp"];
     const ext = (f.name.split(".").pop() || "").toLowerCase();
     if (!ACCEPTED.includes(`.${ext}`)) {
       setAnalysisPhase("error");
-      setUploadError(`صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: ${ACCEPTED.join(", ")}`);
+      setUploadError(`صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: PDF, Word, Excel, صور (JPG, PNG, WebP)`);
       return;
     }
     // التحقق من الحجم — حد أقصى 50 ميغا
@@ -729,6 +729,63 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             };
             setTotalPages(pageCount);
             setPages(pageCount);
+          } else if (ext === "xlsx") {
+            // XLSX: تحليل باستخدام مكتبة xlsx
+            try {
+              const XLSX = await import("xlsx");
+              const arrayBuffer = await f.arrayBuffer();
+              const workbook = XLSX.read(arrayBuffer, { type: "array" });
+              const sheetCount = workbook.SheetNames.length;
+              // تقدير الصفحات المطبوعة (كل ورقة = صفحة تقريباً)
+              const pageCount = Math.max(1, sheetCount);
+              basicResult = {
+                detectedService: "spreadsheet",
+                detectedServiceName: "طباعة جدول بيانات (Excel)",
+                pageCount,
+                fileSizeKB: Math.round(f.size / 1024),
+                fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+                suggestedColor: "bw",
+                suggestedPaperSize: "A4",
+                suggestedPaperType: "normal",
+                suggestedBinding: "none",
+                confidence: 90,
+                insights: [
+                  `عدد الأوراق: ${sheetCount}`,
+                  `أسماء الأوراق: ${workbook.SheetNames.slice(0, 5).join(", ")}${sheetCount > 5 ? "..." : ""}`,
+                  `ملف Excel — ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت`,
+                ],
+                fileType: "XLSX",
+                fileName: f.name,
+                fileSizeFormatted: f.size > 1024 * 1024
+                  ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
+                  : `${Math.round(f.size / 1024)} كيلوبايت`,
+              };
+              setTotalPages(pageCount);
+              setPages(pageCount);
+            } catch (xlsxErr) {
+              console.warn("[xlsx analysis failed]", xlsxErr);
+              const sizeKB = Math.round(f.size / 1024);
+              basicResult = {
+                detectedService: "spreadsheet",
+                detectedServiceName: "طباعة جدول بيانات (Excel)",
+                pageCount: 1,
+                fileSizeKB: sizeKB,
+                fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+                suggestedColor: "bw",
+                suggestedPaperSize: "A4",
+                suggestedPaperType: "normal",
+                suggestedBinding: "none",
+                confidence: 75,
+                insights: [`ملف Excel — ${(f.size / (1024 * 1024)).toFixed(1)} ميغابايت`],
+                fileType: "XLSX",
+                fileName: f.name,
+                fileSizeFormatted: f.size > 1024 * 1024
+                  ? `${(f.size / (1024 * 1024)).toFixed(2)} ميجابايت`
+                  : `${Math.round(f.size / 1024)} كيلوبايت`,
+              };
+              setTotalPages(1);
+              setPages(1);
+            }
           } else {
             // صور كبيرة
             basicResult = {
@@ -756,8 +813,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           // فشل التحليل — نستخدم القيم الافتراضية
           console.warn("[CDN analysis fallback]", analyzeErr);
           basicResult = {
-            detectedService: ext === "pdf" || ext === "docx" ? "document" : "photo",
-            detectedServiceName: ext === "pdf" || ext === "docx" ? "طباعة مستند" : "طباعة صورة",
+            detectedService: ext === "xlsx" ? "spreadsheet" : ext === "pdf" || ext === "docx" ? "document" : "photo",
+            detectedServiceName: ext === "xlsx" ? "طباعة جدول بيانات" : ext === "pdf" || ext === "docx" ? "طباعة مستند" : "طباعة صورة",
             pageCount: 1,
             fileSizeKB: Math.round(f.size / 1024),
             fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,

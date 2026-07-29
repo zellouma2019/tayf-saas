@@ -157,6 +157,9 @@ export async function analyzeFileReal(file: File): Promise<RealFileAnalysis> {
   if (ext === "docx" || ext === "doc") {
     return analyzeDocx(file, sizeKB, sizeMB);
   }
+  if (ext === "xlsx" || ext === "xls") {
+    return analyzeXlsx(file, sizeKB, sizeMB);
+  }
   // افتراضي
   return defaultAnalysis(file.name, ext, sizeKB, sizeMB);
 }
@@ -696,6 +699,60 @@ async function analyzeDocx(
     confidence,
     insights,
     fileType: "DOCX",
+    fileName: file.name,
+  };
+}
+
+/// تحليل ملف Excel حقيقي باستخدام مكتبة xlsx
+async function analyzeXlsx(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  let sheetCount = 1;
+  const insights: string[] = [];
+
+  try {
+    const XLSX = await import("xlsx");
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    sheetCount = workbook.SheetNames.length;
+
+    insights.push(`عدد الأوراق: ${sheetCount}`);
+    if (sheetCount <= 10) {
+      insights.push(`أسماء الأوراق: ${workbook.SheetNames.join(", ")}`);
+    } else {
+      insights.push(`أسماء الأوراق: ${workbook.SheetNames.slice(0, 5).join(", ")}... (${sheetCount - 5} أخرى)`);
+    }
+
+    // تحليل ورقة العمل الأولى لتقدير عدد الصفوف والأعمدة
+    try {
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      const rowCount = jsonData.length;
+      const colCount = jsonData.length > 0 ? (jsonData[0] as unknown[]).length : 0;
+      insights.push(`الورقة الأولى: ${rowCount} صف × ${colCount} عمود`);
+    } catch {}
+  } catch (err) {
+    console.warn("[analyzeXlsx] Failed to parse xlsx:", err);
+    insights.push("تعذر التحليل التفصيلي — يتم استخدام القيم الافتراضية");
+  }
+
+  const pageCount = Math.max(1, sheetCount);
+
+  return {
+    detectedService: "spreadsheet" as ServiceType,
+    detectedServiceName: "طباعة جدول بيانات (Excel)",
+    pageCount,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: "bw",
+    suggestedPaperSize: "A4",
+    suggestedPaperType: "normal",
+    suggestedBinding: "none",
+    confidence: 90,
+    insights,
+    fileType: "XLSX",
     fileName: file.name,
   };
 }

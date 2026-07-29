@@ -8,7 +8,8 @@ export type ServiceType =
   | "binding"
   | "copy"
   | "card"
-  | "poster";
+  | "poster"
+  | "spreadsheet";
 
 export interface ServiceDef {
   type: ServiceType;
@@ -76,6 +77,15 @@ export const SERVICES: ServiceDef[] = [
     popularity: 20,
     basePricePerPage: 50,
     accepts: ["PDF", "JPG", "PNG"],
+  },
+  {
+    type: "spreadsheet",
+    name: "جداول بيانات",
+    emoji: "📊",
+    description: "طباعة ملفات Excel وجداول البيانات",
+    popularity: 15,
+    basePricePerPage: 5,
+    accepts: ["PDF", "XLSX", "JPG", "PNG"],
   },
 ];
 
