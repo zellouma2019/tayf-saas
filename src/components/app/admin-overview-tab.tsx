@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer, RefreshCw, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -459,6 +459,38 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <span>آخر تحديث: {lastUpdated}</span>
         </div>
       )}
+
+      {/* إجراءات سريعة دائمة */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children fade-in-up">
+        <button onClick={onOpenCreate} className="quick-action-btn group" dir="rtl">
+          <div className="icon-wrapper">
+            <Store className="h-5 w-5 text-primary" />
+          </div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">إنشاء متجر</p>
+          <p className="text-[10px] text-muted-foreground">أضف متجر جديد</p>
+        </button>
+        <button onClick={onRefresh} className="quick-action-btn group" dir="rtl">
+          <div className="icon-wrapper">
+            <RefreshCw className="h-5 w-5 text-emerald-500" />
+          </div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">تحديث البيانات</p>
+          <p className="text-[10px] text-muted-foreground">جلب أحدث الطلبات</p>
+        </button>
+        <button onClick={onExport} className="quick-action-btn group" dir="rtl">
+          <div className="icon-wrapper">
+            <Download className="h-5 w-5 text-violet-500" />
+          </div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">تصدير التقرير</p>
+          <p className="text-[10px] text-muted-foreground">تحميل CSV</p>
+        </button>
+        <button onClick={onSwitchToSettings} className="quick-action-btn group" dir="rtl">
+          <div className="icon-wrapper">
+            <Settings className="h-5 w-5 text-amber-500" />
+          </div>
+          <p className="text-xs font-semibold text-foreground mb-0.5">إعدادات المنصة</p>
+          <p className="text-[10px] text-muted-foreground">تخصيص الهوية</p>
+        </button>
+      </div>
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">

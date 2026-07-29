@@ -50,6 +50,9 @@ import { OverviewTab } from "@/components/app/admin-overview-tab";
 import { SettingsTab } from "@/components/app/admin-settings-tab";
 import { SecurityTab } from "@/components/app/admin-security-tab";
 import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
+import { AdminErrorBoundary } from "@/components/app/error-boundary";
+
+const BUILD_HASH = "v4.6-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.6";
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -339,6 +342,7 @@ export default function SuperAdminPage() {
   };
 
   return (
+    <AdminErrorBoundary>
     <div className="min-h-screen bg-background flex flex-col admin-pattern-bg" dir="rtl">
       {/* Refresh progress bar + data freshness indicator */}
       {isRefreshing && (
@@ -755,14 +759,14 @@ export default function SuperAdminPage() {
                 title="تصدير CSV"
               >
                 <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">تصدير</span>
+                <span className="hidden sm:inline">تصدير CSV</span>
               </button>
             </div>
 
             {/* Orders count bar */}
             {(statusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all") && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{filteredOrders.length} من {safeOrders.length} طلب</span>
+                <span><span className="order-count-badge">{filteredOrders.length}</span> من <span className="order-count-badge">{safeOrders.length}</span> طلب</span>
                 <button onClick={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); }} className="text-primary hover:underline">مسح الفلاتر</button>
               </div>
             )}
@@ -977,9 +981,15 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50">
-                v4.5
+                v4.6
               </span>
             )}
+            <span className={cn(
+              "perf-indicator",
+              safeOrders.length > 0 && (Date.now() - new Date(safeOrders[0]?.createdAt || 0).getTime()) < 300000 ? "perf-good" : "perf-warn"
+            )}>
+              {safeOrders.length > 0 && (Date.now() - new Date(safeOrders[0]?.createdAt || 0).getTime()) < 300000 ? "● نشط" : "● خامد"}
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-[9px] text-muted-foreground/40 tabular-nums">
@@ -988,7 +998,7 @@ export default function SuperAdminPage() {
             <div className="hidden lg:flex items-center gap-1.5">
               <span className="kbd-hint" title="تحديث">Alt+R</span>
               <span className="text-[8px] text-muted-foreground/30">تحديث</span>
-              <span className="kbd-hint ml-1" title="تبويب">1-3</span>
+              <span className="kbd-hint ml-1" title="تبويب">1-6</span>
               <span className="text-[8px] text-muted-foreground/30">تبويبات</span>
             </div>
             <button
@@ -1205,5 +1215,6 @@ export default function SuperAdminPage() {
         </button>
       )}
     </div>
+    </AdminErrorBoundary>
   );
 }

@@ -31772,3 +31772,26 @@ select option {
   .freshness-bar { display: none !important; }
   .bell-urgent { animation: none !important; }
 }
+
+/* v4.6 - Enhanced Quick Actions & Performance Indicators */
+.quick-action-btn { position: relative; overflow: hidden; border-radius: 0.75rem; border: 1px solid var(--border); background: oklch(from var(--card) l c h / 0.8); padding: 1rem; text-align: center; transition: all 0.3s; }
+.quick-action-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: oklch(from var(--primary) l c h / 0.3); transform: translateY(-2px); }
+.quick-action-btn .icon-wrapper { margin: 0 auto 0.5rem; width: 3rem; height: 3rem; border-radius: 0.75rem; background: oklch(from var(--primary) l c h / 0.1); display: flex; align-items: center; justify-content: center; transition: transform 0.3s; }
+.quick-action-btn:hover .icon-wrapper { transform: scale(1.1); }
+.perf-indicator { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 9px; border-radius: 9999px; padding: 0.125rem 0.5rem; }
+.perf-good { background: oklch(0.95 0.05 160); color: oklch(0.45 0.15 160); }
+.perf-warn { background: oklch(0.95 0.08 85); color: oklch(0.55 0.15 85); }
+.perf-bad { background: oklch(0.95 0.05 25); color: oklch(0.45 0.15 25); }
+.bulk-action-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: oklch(from var(--primary) l c h / 0.05); border-bottom: 1px solid oklch(from var(--primary) l c h / 0.2); border-radius: 0.75rem 0.75rem 0 0; }
+.order-count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 1.25rem; height: 1.25rem; border-radius: 9999px; background: oklch(from var(--primary) l c h / 0.1); color: var(--primary); font-size: 11px; font-weight: 700; padding: 0 0.375rem; }
+.order-detail-field { padding: 0.5rem 0.75rem; border-radius: 0.5rem; background: var(--muted); font-size: 0.75rem; }
+
+/* v4.6 Additional - Smooth animations and micro-interactions */
+@keyframes slide-down-fade { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.quick-action-btn { animation: slide-down-fade 0.4s ease-out both; }
+.quick-action-btn:nth-child(1) { animation-delay: 0ms; }
+.quick-action-btn:nth-child(2) { animation-delay: 80ms; }
+.quick-action-btn:nth-child(3) { animation-delay: 160ms; }
+.quick-action-btn:nth-child(4) { animation-delay: 240ms; }
+.online-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse-soft 2s ease-in-out infinite; box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
