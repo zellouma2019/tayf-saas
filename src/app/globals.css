@@ -30719,3 +30719,173 @@ tr:hover .table-cell-actions {
   .tooltip, .popover-panel { transition: none !important; }
   .toast-action { transition: none !important; }
 }
+
+/* ============================================
+   Admin Login Gate - custom styles
+   ============================================ */
+
+/* Subtle animated gradient background for login gate */
+@keyframes login-bg-shift {
+  0%, 100% { background-position: 0% 50%; }
+  25% { background-position: 100% 0%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 0% 100%; }
+}
+.login-gate-bg {
+  background: linear-gradient(
+    135deg,
+    var(--background) 0%,
+    color-mix(in oklch, var(--primary) 6%, var(--background)) 25%,
+    color-mix(in oklch, var(--background) 85%, #8b5cf6) 50%,
+    color-mix(in oklch, var(--primary) 4%, var(--background)) 75%,
+    var(--background) 100%
+  );
+  background-size: 400% 400%;
+  animation: login-bg-shift 20s ease-in-out infinite;
+}
+.dark .login-gate-bg {
+  background: linear-gradient(
+    135deg,
+    var(--background) 0%,
+    color-mix(in oklch, var(--primary) 8%, var(--background)) 25%,
+    color-mix(in oklch, var(--background) 80%, #8b5cf6) 50%,
+    color-mix(in oklch, var(--primary) 5%, var(--background)) 75%,
+    var(--background) 100%
+  );
+  background-size: 400% 400%;
+  animation: login-bg-shift 20s ease-in-out infinite;
+}
+
+/* Login gate card refined glassmorphism */
+.login-gate-card {
+  border-radius: 1.25rem;
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--border) 60%, transparent),
+    0 8px 40px -8px color-mix(in oklch, var(--foreground) 8%, transparent),
+    0 20px 60px -16px color-mix(in oklch, var(--primary) 6%, transparent);
+}
+.dark .login-gate-card {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--border) 40%, transparent),
+    0 8px 40px -8px rgba(0,0,0,0.4),
+    0 20px 60px -16px color-mix(in oklch, var(--primary) 8%, transparent);
+}
+
+/* Login gate input - polished */
+.login-gate-input {
+  background: color-mix(in oklch, var(--muted) 50%, transparent);
+  border: 1.5px solid color-mix(in oklch, var(--border) 70%, transparent);
+  border-radius: 0.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 2px color-mix(in oklch, var(--foreground) 3%, transparent);
+}
+.login-gate-input:hover {
+  border-color: color-mix(in oklch, var(--border) 100%, transparent);
+  background: color-mix(in oklch, var(--muted) 70%, transparent);
+}
+.login-gate-input:focus {
+  border-color: var(--primary);
+  background: var(--background);
+  box-shadow:
+    0 0 0 3px color-mix(in oklch, var(--primary) 15%, transparent),
+    inset 0 1px 2px color-mix(in oklch, var(--foreground) 2%, transparent);
+}
+.login-gate-input.input-error {
+  border-color: var(--destructive);
+}
+.login-gate-input.input-error:focus {
+  box-shadow:
+    0 0 0 3px color-mix(in oklch, var(--destructive) 15%, transparent),
+    inset 0 1px 2px color-mix(in oklch, var(--foreground) 2%, transparent);
+}
+.dark .login-gate-input {
+  background: color-mix(in oklch, var(--muted) 30%, transparent);
+  border-color: color-mix(in oklch, var(--border) 50%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+.dark .login-gate-input:hover {
+  background: color-mix(in oklch, var(--muted) 50%, transparent);
+  border-color: color-mix(in oklch, var(--border) 80%, transparent);
+}
+.dark .login-gate-input:focus {
+  background: color-mix(in oklch, var(--card) 80%, var(--background));
+}
+
+/* Login gate button - premium feel */
+.login-gate-btn {
+  border-radius: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px -2px color-mix(in oklch, var(--primary) 30%, transparent);
+}
+.login-gate-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 20px -2px color-mix(in oklch, var(--primary) 40%, transparent);
+  transform: translateY(-0.5px);
+}
+.login-gate-btn:active:not(:disabled) {
+  transform: translateY(0.5px) scale(0.98);
+  box-shadow: 0 1px 6px -1px color-mix(in oklch, var(--primary) 25%, transparent);
+}
+.login-gate-btn:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+.dark .login-gate-btn {
+  box-shadow: 0 2px 16px -2px color-mix(in oklch, var(--primary) 20%, transparent);
+}
+.dark .login-gate-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 24px -2px color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+/* Logo icon glow */
+.login-gate-logo {
+  box-shadow:
+    0 4px 16px -2px color-mix(in oklch, var(--primary) 25%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--primary) 10%, transparent);
+}
+.dark .login-gate-logo {
+  box-shadow:
+    0 4px 20px -2px color-mix(in oklch, var(--primary) 30%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--primary) 15%, transparent);
+}
+
+/* Password toggle button */
+.login-gate-pw-toggle {
+  transition: all 0.2s ease;
+  border-radius: 0.375rem;
+  padding: 0.25rem;
+}
+.login-gate-pw-toggle:hover {
+  background: color-mix(in oklch, var(--muted) 60%, transparent);
+}
+.dark .login-gate-pw-toggle:hover {
+  background: color-mix(in oklch, var(--muted) 40%, transparent);
+}
+
+/* Shimmer top line on card */
+.login-gate-shimmer-line {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--primary) 50%, transparent),
+    color-mix(in oklch, #f59e0b 40%, transparent),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+.dark .login-gate-shimmer-line {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--primary) 60%, transparent),
+    color-mix(in oklch, #f59e0b 50%, transparent),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}

@@ -1065,11 +1065,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <Store className="h-4 w-4 text-muted-foreground" />
             </a>
             <ThemeToggle />
-            <div className="hidden lg:flex items-center gap-1 text-[10px] text-muted-foreground/50">
-              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px]">Alt+N</kbd>
-              <span>طلب</span>
-              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px] ml-1">Alt+R</kbd>
-              <span>تحديث</span>
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border/60 text-muted-foreground/70">
+              <kbd className="px-1.5 py-0.5 rounded-md bg-card border border-border text-[9px] font-mono shadow-[0_1px_0_rgba(0,0,0,0.05)]">Alt+N</kbd>
+              <span className="text-[10px]">طلب</span>
+              <kbd className="px-1.5 py-0.5 rounded-md bg-card border border-border text-[9px] font-mono shadow-[0_1px_0_rgba(0,0,0,0.05)]">Alt+R</kbd>
+              <span className="text-[10px]">تحديث</span>
             </div>
             <a
               href={customerLink}
@@ -1112,7 +1112,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated",
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
@@ -1121,7 +1121,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     }} />
                     <div className="relative flex items-start justify-between">
                       <div className="min-w-0">
-                        <div className="text-xl sm:text-2xl font-bold tabular-nums truncate text-foreground">{c.value}</div>
+                        <div className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate text-foreground tracking-tight">{c.value}</div>
                         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">{c.title}{c.trend && (c.trend === "up" ? <ArrowUp className="h-3 w-3 text-emerald-500" /> : <ArrowDown className="h-3 w-3 text-rose-500" />)}</div>
                       </div>
                       <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110", c.bg)}>
@@ -1137,7 +1137,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* ملخص اليوم */}
-              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card neu-raised card-stack">
+              <div className="bg-gradient-to-l from-violet-50 via-indigo-50/80 to-sky-50/60 dark:from-violet-950/30 dark:via-indigo-950/25 dark:to-sky-950/30 border border-violet-200/60 dark:border-violet-800/30 rounded-2xl p-5 sm:p-6 card-glow glass-card neu-raised card-stack shadow-lg shadow-violet-200/20 dark:shadow-violet-900/10">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -1147,19 +1147,19 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <div className="text-[11px] text-muted-foreground">الطلبات</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground counter-number metric-large-number">{todayOrdersList.length}</div>
+                        <div className="text-xl font-extrabold tabular-nums text-foreground counter-number metric-large-number tracking-tight">{todayOrdersList.length}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">الإيرادات</div>
-                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number">{formatDA(todayRevenue)}</div>
+                        <div className="text-xl font-extrabold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number tracking-tight">{formatDA(todayRevenue)}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground counter-number">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
+                        <div className="text-xl font-extrabold tabular-nums text-foreground counter-number tracking-tight">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">مكتملة</div>
-                        <div className="text-lg font-bold tabular-nums text-violet-600 dark:text-violet-400 counter-number">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                        <div className="text-xl font-extrabold tabular-nums text-violet-600 dark:text-violet-400 counter-number tracking-tight">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
                       </div>
                     </div>
                   </div>
@@ -1175,14 +1175,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* شريط ملخص اليوم */}
               {stats && (stats.todayOrders || 0) > 0 && (
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                  <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
                     <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <div>
                       <div className="text-[11px] text-muted-foreground">اليوم</div>
                       <div className="text-sm font-bold tabular-nums">{stats.todayOrders || 0}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                  <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
                     <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     <div>
                       <div className="text-[11px] text-muted-foreground">إيرادات</div>
@@ -1690,10 +1690,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                           إلغاء
                         </button>
                       )}
-                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
+                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 dark:bg-gold-900/50 text-gold-600 dark:text-gold-400" : "text-muted-foreground hover:text-foreground")}>
                         {sortDir === "desc" ? "الأحدث" : "الأقدم"}
                       </button>
-                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
+                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 dark:bg-gold-900/50 text-gold-600 dark:text-gold-400" : "text-muted-foreground hover:text-foreground")}>
                         الأعلى سعراً
                       </button>
                     </div>
@@ -2466,7 +2466,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
     <div className="max-w-2xl mx-auto space-y-6">
       {/* ===== عنوان التاجر ===== */}
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gold-50 flex items-center justify-center">
+        <div className="w-11 h-11 rounded-xl bg-gold-50 dark:bg-gold-950/30 flex items-center justify-center">
           <User className="h-5 w-5 text-gold-500" />
         </div>
         <div>
@@ -2510,7 +2510,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                     onChange={handleLogoUpload}
                     disabled={uploading}
                   />
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gold-50 hover:bg-gold-100 transition-all duration-200 border border-gold-200/60">
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gold-50 dark:bg-gold-950/30 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-all duration-200 border border-gold-200/60 dark:border-gold-700/30">
                     <Upload className="h-4 w-4 text-gold-500" />
                     <span className="text-sm font-medium text-gold-600">
                       {uploading ? "جارٍ الرفع..." : "اختر صورة"}
@@ -3086,7 +3086,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-gold-50 flex items-center justify-center mb-4 border border-gold-200/60">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-gold-50 dark:bg-gold-950/30 flex items-center justify-center mb-4 border border-gold-200/60">
           <Link2 className="h-8 w-8 text-gold-500" />
         </div>
         <h2 className="text-xl font-bold text-foreground">مشاركة متجرك</h2>
@@ -3097,7 +3097,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50/80 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 flex items-center justify-center">
               <Link2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div>

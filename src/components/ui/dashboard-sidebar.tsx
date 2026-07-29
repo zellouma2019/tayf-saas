@@ -126,19 +126,31 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       className={cn(
         'relative flex w-full items-center gap-3 rounded-lg',
         collapsed ? 'justify-center px-0 py-2.5' : 'px-4 py-2.5',
-        'transition-all duration-200 ease-in-out',
+        'transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         isActive
-          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_12px_rgba(212,168,83,0.15)]'
+          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_16px_rgba(212,168,83,0.12)]'
           : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
       )}
     >
-      {/* Active indicator bar with glow */}
+      {/* Active indicator: gradient bottom border */}
       <span
         className={cn(
-          'absolute right-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-200',
+          'absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full transition-all duration-300',
           isActive
-            ? 'bg-sidebar-primary opacity-100 shadow-[0_0_10px_rgba(212,168,83,0.6)]'
+            ? 'opacity-100 scale-x-100'
+            : 'opacity-0 scale-x-0',
+        )}
+        style={{
+          background: isActive ? 'linear-gradient(90deg, #d4a853, #8b5cf6, #d4a853)' : 'transparent',
+        }}
+      />
+      {/* Active side glow accent */}
+      <span
+        className={cn(
+          'absolute right-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-300',
+          isActive
+            ? 'bg-sidebar-primary opacity-100 shadow-[0_0_12px_rgba(212,168,83,0.5)]'
             : 'bg-transparent opacity-0',
         )}
       />
