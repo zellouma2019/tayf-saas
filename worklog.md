@@ -3843,3 +3843,92 @@ Parsing CSS source code failed - Unexpected token Delim('/')
 6. تحسين merchant dashboard على الجوال
 7. og:image للسوشيال ميديا
 8. Admin audit log (من غيّر ماذا ومتى)
+
+---
+Task ID: r28-styling-features
+Agent: Main Agent
+Task: CSS Round 28 + Styling Improvements + New Features
+
+## الوضع الحالي
+- ✅ CSS Round 28 مُضافة (+746 سطر CSS جديد)
+- ✅ شريط الترحيب بتصميم aurora + morph-blob + dot-pattern
+- ✅ بطاقات الإحصائيات بتصميم stat-tile مع أيقونات colored
+- ✅ عنصر جديد: أشهر الخدمات المطلوبة (Service Popularity Widget)
+- ✅ تحسين مركز الإشعارات: card-frosted + stagger + hover-scale
+- ✅ Build ناجح + رفع على GitHub (commit a006c38)
+- ✅ تحقق على الموقع الحي: لا أخطاء JS
+
+## CSS Round 28 — التفاصيل الكاملة (+746 سطر)
+### تأثيرات الخلفية
+- aurora-bg — تدرجات متحركة بنظام الألوان الأساسية
+- dot-pattern, dot-pattern-dense, dot-pattern-gold — نقاط متكررة
+- grid-pattern, grid-pattern-gold — خطوط شبكية
+
+### بطاقات متقدمة
+- card-frosted — زجاجي مع blur و saturate
+- card-spotlight — إضاءة عند التمرير (mouse tracking)
+- card-gradient-top — حد علوي متدرج
+- card-breathe — تنفس إضاءة متكرر
+
+### حدود متحركة
+- border-animated-gradient — حد يدور حول البطاقة (CSS @property)
+- tooltip-premium — تلميح احترافي مع سهم
+
+### عناصر إضافية
+- stat-tile — بطاقة إحصائيات مع حاشية ديكورية
+- glow-gold/emerald/violet/rose — توهجات ملونة
+- skeleton-shimmer — تحميل هيكلي متحرك
+- timeline-item, timeline-dot, timeline-dot-active/done — خط زمن للحالة
+- pulse-ring — حلقة نابض للإشعارات
+- confetti-container — قصاصرات نجاح
+- stagger-children — ظهور متتالي للأبناء
+- text-gradient-gold, text-gradient-primary, text-gradient-emerald — نص متدرج
+- focus-glow — حلقة تركيز متوهجة
+- icon-container-gold/emerald/violet — حاوِ أيقونات ملونة
+- chip/chip-gold/chip-emerald/chip-violet/chip-rose/chip-neutral — وسوم ملونة
+- hover-underline — خط سفلي متحرك عند التمرير
+- morph-blob — شكل متحرك عضوي
+- flip-card — بطاقة تقلب عند التمرير
+- وغيرها الكثير...
+
+## التعديلات على المكونات
+
+### 1. admin-overview-tab.tsx
+- شريط الترحيب: aurora-bg + dot-pattern-gold + morph-blob (3 أشكال متحركة)
+- بطاقات الإحصائيات: stat-tile بدلاً من bg-card + icon-container-gold/emerald
+- عنصر جديد: ServicePopularityWidget — أشهر الخدمات مع progress bars + chips
+
+### 2. notification-center.tsx
+- زر الإشعارات: hover-scale-sm + focus-glow
+- شارة العدد: badge-stack + pulse-ring (حلقة نابضة)
+- لوحة الإشعارات: card-frosted بدلاً من glass-card
+- عناصر الإشعارات: stagger-children + hover-scale-sm
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 28 +746 سطر |
+| `src/components/app/admin-overview-tab.tsx` | aurora banner + stat-tiles + ServicePopularity |
+| `src/components/app/notification-center.tsx` | card-frosted + hover-scale + pulse-ring |
+
+## التحقق على الموقع الحي (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة (فاتح) | ✅ شريط ترحيب aurora مع morph blobs |
+| لوحة الإدارة (داكن) | ✅ يعمل بشكل صحيح |
+| JS Errors | ✅ لا أخطاء |
+| Build | ✅ بدون أخطاء |
+| Vercel Deploy | ✅ commit a006c38 منشور |
+
+## Commit
+- a006c38: feat(r28): CSS Round 28, aurora welcome banner, stat tiles, service popularity widget, improved notifications
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ UPLOADTHING_TOKEN في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB (بطء متقطع ~8s على cold start)
+3. تحسين order-success.tsx مع confetti-container عند إنشاء طلب ناجح
+4. تحسين merchant-dashboard.tsx على الموبايل (التصميم الحالي مزدحم)
+5. إضافة scroll-progress-bar في الصفحة الرئيسية
+6. SEO JSON-LD structured data للمتاجر
+7. تحسين app-shell.tsx footbar مع morph-blob أو aurora
+8. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
