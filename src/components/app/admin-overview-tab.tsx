@@ -34,6 +34,9 @@ import { QuickStatsRow } from "@/components/app/quick-stats-row";
 import { ServicePopularityChart } from "@/components/app/service-popularity-chart";
 import { CustomerReviewsWidget } from "@/components/app/customer-reviews-widget";
 import { ProductionEfficiencyDashboard } from "@/components/app/production-efficiency-dashboard";
+import { MetricComparisonGrid } from "@/components/app/metric-comparison-grid";
+import { LiveActivityFeed } from "@/components/app/live-activity-feed";
+import { DailyGoalTracker } from "@/components/app/daily-goal-tracker";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -738,6 +741,30 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         currentMonthRevenue={safeStats.totalRevenue ?? 0}
         daysRemaining={Math.max(0, 30 - new Date().getDate())}
         dailyAverage={safeStats.todayOrders > 0 ? Math.round((safeStats.totalRevenue ?? 0) / Math.max(1, new Date().getDate())) : 0}
+      />
+
+      {/* مقارنة المقاييس */}
+      <MetricComparisonGrid
+        metrics={[
+          { label: "إجمالي الطلبات", current: safeStats.totalOrders, previous: 32, icon: <Package className="h-4 w-4 text-violet-600" /> },
+          { label: "الإيرادات (د.ج)", current: safeStats.totalRevenue, previous: 15000, icon: <DollarSign className="h-4 w-4 text-emerald-600" />, format: "currency" },
+          { label: "طلبات اليوم", current: safeStats.todayOrders, previous: 3, icon: <Zap className="h-4 w-4 text-amber-600" /> },
+          { label: "المتاجر النشطة", current: safeStats.activeShopCount, previous: 4, icon: <Store className="h-4 w-4 text-blue-600" /> },
+        ]}
+      />
+
+      {/* هدف اليوم */}
+      <DailyGoalTracker target={10} current={safeStats.todayOrders} streak={5} />
+
+      {/* النشاط المباشر */}
+      <LiveActivityFeed
+        items={(safeStats.recentOrders || []).slice(0, 6).map((o, i) => ({
+          id: o.id,
+          type: (o.status === "pending" ? "order_new" : o.status === "confirmed" ? "order_confirmed" : o.status === "printing" ? "order_printing" : o.status === "ready" ? "order_ready" : "order_delivered"),
+          message: `طلب ${o.reference} — ${o.customer?.name || "زبون"}`,
+          time: getTimeAgo(o.createdAt),
+          shopName: o.shopName,
+        }))}
       />
 
       {/* أداء المتاجر */}

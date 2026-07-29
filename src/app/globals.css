@@ -15775,3 +15775,1170 @@ dir="rtl" .product-card {
 }
 
 /* ═══════════════════════════════════════════ End CSS Round 35 ═══════════════════════════════════════════ */
+
+/* ═══ CSS Round 36 — Dark Mode Deep & Animation Library ═══ */
+/* ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 1. Dark Mode Enhancements — تحسينات الوضع الداكن                                                                     */
+/* Surfaces, glass effects, text hierarchy, borders, gradients, vignette, and noise overlays for deep dark themes          */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Deep surface layers — طبقات السطح العميقة */
+.dark-surface-1 {
+  background-color: var(--color-dark-surface-1, #0a0a0f);
+}
+.dark-surface-2 {
+  background-color: var(--color-dark-surface-2, #12121a);
+}
+.dark-surface-3 {
+  background-color: var(--color-dark-surface-3, #1a1a25);
+}
+
+/* Dark glass morphism — زجاجية الوضع الداكن */
+.dark-glass {
+  background-color: var(--color-dark-glass-bg, rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(var(--blur-glass, 16px)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--blur-glass, 16px)) saturate(1.2);
+  border: 1px solid var(--color-dark-glass-border, rgba(255, 255, 255, 0.08));
+}
+
+/* Elevated dark surface — سطح داكن مرتفع */
+.dark-elevated {
+  background-color: var(--color-dark-elevated, #1e1e2a);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Inset dark surface — سطح داكن غائر */
+.dark-inset {
+  background-color: var(--color-dark-inset, #08080c);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark text hierarchy — هرمية النصوص الداكنة */
+.dark-text-primary {
+  color: var(--color-dark-text-primary, #f0f0f5);
+}
+.dark-text-secondary {
+  color: var(--color-dark-text-secondary, #a0a0b0);
+}
+.dark-text-muted {
+  color: var(--color-dark-text-muted, #606070);
+}
+
+/* Dark border hierarchy — هرمية الحدود الداكنة */
+.dark-border-subtle {
+  border-color: var(--color-dark-border-subtle, rgba(255, 255, 255, 0.06));
+}
+.dark-border-medium {
+  border-color: var(--color-dark-border-medium, rgba(255, 255, 255, 0.12));
+}
+.dark-border-strong {
+  border-color: var(--color-dark-border-strong, rgba(255, 255, 255, 0.22));
+}
+
+/* Mesh gradient overlay — تدرج شبكي */
+.dark-gradient-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, var(--color-mesh-1, rgba(120, 80, 255, 0.15)), transparent 50%),
+    radial-gradient(ellipse at 80% 20%, var(--color-mesh-2, rgba(0, 200, 255, 0.12)), transparent 50%),
+    radial-gradient(ellipse at 50% 90%, var(--color-mesh-3, rgba(255, 60, 120, 0.10)), transparent 50%),
+    var(--color-dark-surface-1, #0a0a0f);
+}
+
+/* Vignette overlay — تأثير الحواف المعتمة */
+.dark-vignette {
+  position: relative;
+}
+.dark-vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Noise texture overlay — نسيج الضوضاء */
+.dark-noise {
+  position: relative;
+}
+.dark-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: var(--noise-opacity, 0.03);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* .dark class variants — متغيرات فئة .dark */
+.dark .dark-surface-1 {
+  background-color: var(--color-dark-surface-1, #0a0a0f);
+}
+.dark .dark-surface-2 {
+  background-color: var(--color-dark-surface-2, #12121a);
+}
+.dark .dark-surface-3 {
+  background-color: var(--color-dark-surface-3, #1a1a25);
+}
+.dark .dark-glass {
+  background-color: var(--color-dark-glass-bg, rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(var(--blur-glass, 16px)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--blur-glass, 16px)) saturate(1.2);
+  border: 1px solid var(--color-dark-glass-border, rgba(255, 255, 255, 0.08));
+}
+.dark .dark-elevated {
+  background-color: var(--color-dark-elevated, #1e1e2a);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.dark .dark-inset {
+  background-color: var(--color-dark-inset, #08080c);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.dark .dark-text-primary {
+  color: var(--color-dark-text-primary, #f0f0f5);
+}
+.dark .dark-text-secondary {
+  color: var(--color-dark-text-secondary, #a0a0b0);
+}
+.dark .dark-text-muted {
+  color: var(--color-dark-text-muted, #606070);
+}
+.dark .dark-border-subtle {
+  border-color: var(--color-dark-border-subtle, rgba(255, 255, 255, 0.06));
+}
+.dark .dark-border-medium {
+  border-color: var(--color-dark-border-medium, rgba(255, 255, 255, 0.12));
+}
+.dark .dark-border-strong {
+  border-color: var(--color-dark-border-strong, rgba(255, 255, 255, 0.22));
+}
+.dark .dark-gradient-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, var(--color-mesh-1, rgba(120, 80, 255, 0.15)), transparent 50%),
+    radial-gradient(ellipse at 80% 20%, var(--color-mesh-2, rgba(0, 200, 255, 0.12)), transparent 50%),
+    radial-gradient(ellipse at 50% 90%, var(--color-mesh-3, rgba(255, 60, 120, 0.10)), transparent 50%),
+    var(--color-dark-surface-1, #0a0a0f);
+}
+
+/* prefers-color-scheme dark — تفضيل الوضع الداكن */
+@media (prefers-color-scheme: dark) {
+  .dark-surface-1 {
+    background-color: var(--color-dark-surface-1, #0a0a0f);
+  }
+  .dark-surface-2 {
+    background-color: var(--color-dark-surface-2, #12121a);
+  }
+  .dark-surface-3 {
+    background-color: var(--color-dark-surface-3, #1a1a25);
+  }
+  .dark-glass {
+    background-color: var(--color-dark-glass-bg, rgba(255, 255, 255, 0.04));
+    backdrop-filter: blur(var(--blur-glass, 16px)) saturate(1.2);
+    -webkit-backdrop-filter: blur(var(--blur-glass, 16px)) saturate(1.2);
+    border: 1px solid var(--color-dark-glass-border, rgba(255, 255, 255, 0.08));
+  }
+  .dark-elevated {
+    background-color: var(--color-dark-elevated, #1e1e2a);
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.4),
+      0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+  .dark-inset {
+    background-color: var(--color-dark-inset, #08080c);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+  .dark-text-primary {
+    color: var(--color-dark-text-primary, #f0f0f5);
+  }
+  .dark-text-secondary {
+    color: var(--color-dark-text-secondary, #a0a0b0);
+  }
+  .dark-text-muted {
+    color: var(--color-dark-text-muted, #606070);
+  }
+  .dark-border-subtle {
+    border-color: var(--color-dark-border-subtle, rgba(255, 255, 255, 0.06));
+  }
+  .dark-border-medium {
+    border-color: var(--color-dark-border-medium, rgba(255, 255, 255, 0.12));
+  }
+  .dark-border-strong {
+    border-color: var(--color-dark-border-strong, rgba(255, 255, 255, 0.22));
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 2. Entrance Animations — حركات الظهور                                                                            */
+/* Elements animate in when they appear: rise, fall, slide, scale, rotate, flip, blur, glitch, and typewriter effects        */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise-distance, 24px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes rise-fast {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rise-slow {
+  from { opacity: 0; transform: translateY(48px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fall {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--fall-distance, -24px) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-distance, 40px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--slide-distance, -40px) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes scale-up {
+  from {
+    opacity: 0;
+    transform: scale(var(--scale-from, 0.85));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes scale-down {
+  from {
+    opacity: 0;
+    transform: scale(var(--scale-from-big, 1.15));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes rotate-in {
+  from {
+    opacity: 0;
+    transform: rotate(var(--rotate-from, -15deg)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+@keyframes flip-x {
+  from {
+    opacity: 0;
+    transform: perspective(600px) rotateX(var(--flip-angle, -40deg));
+  }
+  to {
+    opacity: 1;
+    transform: perspective(600px) rotateX(0deg);
+  }
+}
+@keyframes flip-y {
+  from {
+    opacity: 0;
+    transform: perspective(600px) rotateY(var(--flip-angle, -40deg));
+  }
+  to {
+    opacity: 1;
+    transform: perspective(600px) rotateY(0deg);
+  }
+}
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(var(--blur-amount, 12px));
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+@keyframes glitch-in {
+  0% {
+    opacity: 0;
+    transform: translate(var(--glitch-x, -4px), var(--glitch-y, 2px));
+    clip-path: inset(20% 0 40% 0);
+  }
+  20% {
+    opacity: 0.6;
+    transform: translate(var(--glitch-x2, 3px), var(--glitch-y2, -1px));
+    clip-path: inset(60% 0 10% 0);
+  }
+  40% {
+    opacity: 0.8;
+    transform: translate(var(--glitch-x3, -2px), 0);
+    clip-path: inset(10% 0 70% 0);
+  }
+  60% {
+    opacity: 0.9;
+    transform: translate(1px, var(--glitch-y4, 1px));
+    clip-path: inset(30% 0 30% 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes typewriter-line {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Entrance animation classes — فئات حركات الظهور */
+.anim-rise {
+  animation: rise var(--anim-duration, 0.6s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-rise-fast {
+  animation: rise-fast var(--anim-duration-fast, 0.3s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-rise-slow {
+  animation: rise-slow var(--anim-duration-slow, 0.9s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-fall {
+  animation: fall var(--anim-duration, 0.6s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-slide-left {
+  animation: slide-left var(--anim-duration, 0.5s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-slide-right {
+  animation: slide-right var(--anim-duration, 0.5s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-scale-up {
+  animation: scale-up var(--anim-duration, 0.5s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-scale-down {
+  animation: scale-down var(--anim-duration, 0.5s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-rotate-in {
+  animation: rotate-in var(--anim-duration, 0.6s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-flip-x {
+  animation: flip-x var(--anim-duration, 0.7s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-flip-y {
+  animation: flip-y var(--anim-duration, 0.7s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-blur-in {
+  animation: blur-in var(--anim-duration, 0.6s) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.anim-glitch {
+  animation: glitch-in var(--anim-duration, 0.8s) steps(1) both;
+}
+.anim-typewriter-line {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-inline-end: 2px solid var(--color-typewriter-cursor, currentColor);
+  animation: typewriter-line var(--typewriter-duration, 2s) steps(var(--typewriter-steps, 30), end) both,
+             blink-cursor var(--cursor-blink, 0.75s) step-end infinite;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { border-inline-end-color: var(--color-typewriter-cursor, currentColor); }
+  50% { border-inline-end-color: transparent; }
+}
+
+/* Stagger delays for children — تأخيرات متدرجة للعناصر الفرعية */
+.stagger-2 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-2 > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-3 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-3 > *:nth-child(2) { animation-delay: 70ms; }
+.stagger-3 > *:nth-child(3) { animation-delay: 140ms; }
+.stagger-4 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-4 > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-4 > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-4 > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-5 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-5 > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-5 > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-5 > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-5 > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-6 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-6 > *:nth-child(2) { animation-delay: 45ms; }
+.stagger-6 > *:nth-child(3) { animation-delay: 90ms; }
+.stagger-6 > *:nth-child(4) { animation-delay: 135ms; }
+.stagger-6 > *:nth-child(5) { animation-delay: 180ms; }
+.stagger-6 > *:nth-child(6) { animation-delay: 225ms; }
+.stagger-7 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-7 > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-7 > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-7 > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-7 > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-7 > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-7 > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-8 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-8 > *:nth-child(2) { animation-delay: 35ms; }
+.stagger-8 > *:nth-child(3) { animation-delay: 70ms; }
+.stagger-8 > *:nth-child(4) { animation-delay: 105ms; }
+.stagger-8 > *:nth-child(5) { animation-delay: 140ms; }
+.stagger-8 > *:nth-child(6) { animation-delay: 175ms; }
+.stagger-8 > *:nth-child(7) { animation-delay: 210ms; }
+.stagger-8 > *:nth-child(8) { animation-delay: 245ms; }
+.stagger-9 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-9 > *:nth-child(2) { animation-delay: 32ms; }
+.stagger-9 > *:nth-child(3) { animation-delay: 64ms; }
+.stagger-9 > *:nth-child(4) { animation-delay: 96ms; }
+.stagger-9 > *:nth-child(5) { animation-delay: 128ms; }
+.stagger-9 > *:nth-child(6) { animation-delay: 160ms; }
+.stagger-9 > *:nth-child(7) { animation-delay: 192ms; }
+.stagger-9 > *:nth-child(8) { animation-delay: 224ms; }
+.stagger-9 > *:nth-child(9) { animation-delay: 256ms; }
+.stagger-10 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-10 > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-10 > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-10 > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-10 > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-10 > *:nth-child(6) { animation-delay: 150ms; }
+.stagger-10 > *:nth-child(7) { animation-delay: 180ms; }
+.stagger-10 > *:nth-child(8) { animation-delay: 210ms; }
+.stagger-10 > *:nth-child(9) { animation-delay: 240ms; }
+.stagger-10 > *:nth-child(10) { animation-delay: 270ms; }
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 3. Exit Animations — حركات الاختفاء                                                                            */
+/* Elements animate out when leaving: fade, slide, scale, flip, blur, explode, and collapse effects                     */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@keyframes exit-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes exit-slide-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--exit-slide-distance, 30px));
+  }
+}
+@keyframes exit-slide-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--exit-slide-distance, -40px) * -1));
+  }
+}
+@keyframes exit-slide-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(var(--exit-slide-distance, 40px));
+  }
+}
+@keyframes exit-scale-down {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--exit-scale-to, 0.8));
+  }
+}
+@keyframes exit-flip {
+  from {
+    opacity: 1;
+    transform: perspective(600px) rotateX(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: perspective(600px) rotateX(var(--exit-flip-angle, 45deg));
+  }
+}
+@keyframes exit-blur {
+  from {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  to {
+    opacity: 0;
+    filter: blur(var(--exit-blur-amount, 10px));
+  }
+}
+@keyframes exit-explode {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(var(--exit-explode-scale, 1.4));
+  }
+}
+@keyframes exit-collapse {
+  from {
+    opacity: 1;
+    max-height: var(--exit-collapse-height, 500px);
+    transform: scaleY(1);
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: scaleY(0.8);
+  }
+}
+@keyframes exit-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--exit-slide-distance, -30px) * -1));
+  }
+}
+
+/* Exit animation classes — فئات حركات الاختفاء */
+.anim-exit-fade {
+  animation: exit-fade var(--exit-duration, 0.3s) var(--exit-ease, ease-in) both;
+}
+.anim-exit-slide-down {
+  animation: exit-slide-down var(--exit-duration, 0.35s) var(--exit-ease, ease-in) both;
+}
+.anim-exit-slide-left {
+  animation: exit-slide-left var(--exit-duration, 0.35s) var(--exit-ease, ease-in) both;
+}
+.anim-exit-slide-right {
+  animation: exit-slide-right var(--exit-duration, 0.35s) var(--exit-ease, ease-in) both;
+}
+.anim-exit-scale-down {
+  animation: exit-scale-down var(--exit-duration, 0.3s) var(--exit-ease, ease-in) both;
+}
+.anim-exit-flip {
+  animation: exit-flip var(--exit-duration, 0.4s) var(--exit-ease, ease-in) both;
+  transform-origin: top center;
+}
+.anim-exit-blur {
+  animation: exit-blur var(--exit-duration, 0.35s) var(--exit-ease, ease-in) both;
+}
+.anim-exit-explode {
+  animation: exit-explode var(--exit-duration, 0.45s) var(--exit-ease, cubic-bezier(0.55, 0.06, 0.68, 0.19)) both;
+}
+.anim-exit-collapse {
+  animation: exit-collapse var(--exit-duration, 0.4s) var(--exit-ease, ease-in) both;
+  overflow: hidden;
+}
+.anim-exit-slide-up {
+  animation: exit-slide-up var(--exit-duration, 0.35s) var(--exit-ease, ease-in) both;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 4. Loop / Continuous Animations — حركات مستمرة وحلقات                                                              */
+/* Infinite animations: float, pulse, shimmer, marquee, spin, breathe, wave, sway, and ripple                          */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--float-distance, -8px)); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: var(--pulse-opacity, 0.7); }
+}
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 var(--glow-size, 4px) var(--glow-color, rgba(99, 102, 241, 0.3));
+  }
+  50% {
+    box-shadow: 0 0 var(--glow-size-peak, 20px) var(--glow-color-peak, rgba(99, 102, 241, 0.6));
+  }
+}
+@keyframes shimmer {
+  0% { background-position: var(--shimmer-start, -200%) center; }
+  100% { background-position: var(--shimmer-end, 200%) center; }
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(var(--marquee-direction, -1) * 100%)); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes spin-medium {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes spin-fast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(var(--breathe-scale, 1.03));
+    opacity: var(--breathe-opacity, 0.92);
+  }
+}
+@keyframes wave-motion {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(var(--wave-y, -4px)) rotate(var(--wave-rotate, 1deg)); }
+  75% { transform: translateY(var(--wave-y, -4px)) rotate(calc(var(--wave-rotate, 1deg) * -1)); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(var(--sway-angle, 3deg)); }
+  75% { transform: rotate(calc(var(--sway-angle, 3deg) * -1)); }
+}
+@keyframes ripple-continuous {
+  0% {
+    box-shadow: 0 0 0 0 var(--ripple-color, rgba(99, 102, 241, 0.4));
+  }
+  70% {
+    box-shadow: 0 0 0 var(--ripple-size, 14px) var(--ripple-color-fade, rgba(99, 102, 241, 0));
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--ripple-color-fade, rgba(99, 102, 241, 0));
+  }
+}
+
+/* Loop animation classes — فئات الحركات المستمرة */
+.anim-float {
+  animation: float var(--float-duration, 3s) var(--float-ease, ease-in-out) infinite;
+}
+.anim-pulse-soft {
+  animation: pulse-soft var(--pulse-duration, 2s) ease-in-out infinite;
+}
+.anim-pulse-glow {
+  animation: pulse-glow var(--pulse-glow-duration, 2s) ease-in-out infinite;
+}
+.anim-shimmer {
+  background-size: var(--shimmer-bg-size, 200%) 100%;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--shimmer-color, rgba(255, 255, 255, 0.08)) 50%,
+    transparent 100%
+  );
+  animation: shimmer var(--shimmer-duration, 2s) linear infinite;
+}
+.anim-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee var(--marquee-duration, 10s) linear infinite;
+}
+.anim-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+.anim-spin-medium {
+  animation: spin-medium 4s linear infinite;
+}
+.anim-spin-fast {
+  animation: spin-fast 1.5s linear infinite;
+}
+.anim-breathe {
+  animation: breathe var(--breathe-duration, 4s) ease-in-out infinite;
+}
+.anim-wave {
+  animation: wave-motion var(--wave-duration, 2.5s) ease-in-out infinite;
+}
+.anim-sway {
+  animation: sway var(--sway-duration, 3s) ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.anim-ripple-continuous {
+  animation: ripple-continuous var(--ripple-duration, 1.5s) ease-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 5. Interactive States — حالات التفاعل                                                                            */
+/* Hover, press, focus, and drag micro-interactions for enhanced user experience                                        */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@keyframes hover-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(var(--hover-bounce-height, -6px)); }
+  60% { transform: translateY(calc(var(--hover-bounce-height, -6px) * -0.5)); }
+}
+@keyframes hover-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(var(--wobble-angle, 4deg)); }
+  40% { transform: rotate(calc(var(--wobble-angle, 4deg) * -0.7)); }
+  60% { transform: rotate(calc(var(--wobble-angle, 4deg) * 0.4)); }
+  80% { transform: rotate(calc(var(--wobble-angle, 4deg) * -0.2)); }
+}
+@keyframes hover-jelly {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(0.95, 1.05); }
+  50% { transform: scale(1.05, 0.95); }
+  75% { transform: scale(0.98, 1.02); }
+  100% { transform: scale(1, 1); }
+}
+@keyframes hover-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 var(--hover-glow-base, 2px) var(--hover-glow-color, rgba(99, 102, 241, 0.2));
+  }
+  50% {
+    box-shadow: 0 0 var(--hover-glow-peak, 16px) var(--hover-glow-color-peak, rgba(99, 102, 241, 0.5));
+  }
+}
+@keyframes press-squish {
+  0% { transform: scale(1); }
+  50% { transform: scale(var(--squish-scale, 0.94)); }
+  100% { transform: scale(1); }
+}
+
+/* Interactive hover classes — فئات التفاعل عند التمرير */
+.anim-hover-bounce:hover {
+  animation: hover-bounce 0.5s ease;
+}
+.anim-hover-wobble:hover {
+  animation: hover-wobble 0.6s ease;
+}
+.anim-hover-jelly:hover {
+  animation: hover-jelly 0.5s ease;
+}
+.anim-hover-tilt {
+  transition: transform var(--tilt-transition, 0.2s) ease;
+}
+.anim-hover-tilt:hover {
+  transform: perspective(500px) rotateX(var(--tilt-x, -2deg)) rotateY(var(--tilt-y, 3deg));
+}
+.anim-hover-glow-pulse:hover {
+  animation: hover-glow-pulse 1.2s ease-in-out infinite;
+}
+
+/* Press / active interaction — تفاعل الضغط */
+.anim-press-squish:active {
+  animation: press-squish 0.15s ease;
+  transform: scale(var(--squish-scale, 0.94));
+}
+
+/* Focus interaction — تفاعل التركيز */
+.anim-focus-expand:focus-visible {
+ outline: none;
+ transform: scale(var(--focus-expand-scale, 1.02));
+  box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgba(99, 102, 241, 0.5));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Drag interaction — تفاعل السحب */
+.anim-drag-lift {
+  cursor: grab;
+  transition: transform var(--drag-transition, 0.2s) ease, box-shadow var(--drag-transition, 0.2s) ease;
+}
+.anim-drag-lift:active {
+  cursor: grabbing;
+  transform: scale(var(--drag-lift-scale, 1.04)) translateY(calc(var(--drag-lift-y, -4px) * -1));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: var(--z-drag-lift, 50);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 6. Animation Orchestration — تنسيق الحركات                                                                         */
+/* Container-level orchestration patterns: sequential, stagger, cascade, wave, and random delays                         */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Orchestration container — حاوية التنسيق */
+.orchestration-container > * {
+  opacity: 0;
+  animation-fill-mode: both;
+}
+
+/* Sequential: one after another — تسلسلي: واحداً تلو الآخر */
+.orchestrate-sequential > * {
+  animation-timing-function: var(--orch-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.orchestrate-sequential > *:nth-child(1) { animation-delay: 0ms; }
+.orchestrate-sequential > *:nth-child(2) { animation-delay: var(--orch-sequential-delay, 200ms); }
+.orchestrate-sequential > *:nth-child(3) { animation-delay: calc(var(--orch-sequential-delay, 200ms) * 2); }
+.orchestrate-sequential > *:nth-child(4) { animation-delay: calc(var(--orch-sequential-delay, 200ms) * 3); }
+.orchestrate-sequential > *:nth-child(5) { animation-delay: calc(var(--orch-sequential-delay, 200ms) * 4); }
+.orchestrate-sequential > *:nth-child(6) { animation-delay: calc(var(--orch-sequential-delay, 200ms) * 5); }
+.orchestrate-sequential > *:nth-child(n+7) { animation-delay: calc(var(--orch-sequential-delay, 200ms) * 6); }
+
+/* Stagger: even spacing — متدرج: تباعد متساوٍ */
+.orchestrate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.orchestrate-stagger > *:nth-child(2) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 1); }
+.orchestrate-stagger > *:nth-child(3) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 2); }
+.orchestrate-stagger > *:nth-child(4) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 3); }
+.orchestrate-stagger > *:nth-child(5) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 4); }
+.orchestrate-stagger > *:nth-child(6) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 5); }
+.orchestrate-stagger > *:nth-child(7) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 6); }
+.orchestrate-stagger > *:nth-child(8) { animation-delay: calc(var(--orch-stagger-interval, 100ms) * 7); }
+
+/* Cascade: accelerating — متتالي: متسارع */
+.orchestrate-cascade > *:nth-child(1) { animation-delay: 0ms; }
+.orchestrate-cascade > *:nth-child(2) { animation-delay: calc(var(--orch-cascade-base, 60ms) * 1); }
+.orchestrate-cascade > *:nth-child(3) { animation-delay: calc(var(--orch-cascade-base, 60ms) * 1.5); }
+.orchestrate-cascade > *:nth-child(4) { animation-delay: calc(var(--orch-cascade-base, 60ms) * 2); }
+.orchestrate-cascade > *:nth-child(5) { animation-delay: calc(var(--orch-cascade-base, 60ms) * 2.5); }
+.orchestrate-cascade > *:nth-child(6) { animation-delay: calc(var(--orch-cascade-base, 60ms) * 3); }
+
+/* Wave: sine-based — موجة: قائمة على الجيب */
+.orchestrate-wave > *:nth-child(1) { animation-delay: 0ms; }
+.orchestrate-wave > *:nth-child(2) { animation-delay: 50ms; }
+.orchestrate-wave > *:nth-child(3) { animation-delay: 90ms; }
+.orchestrate-wave > *:nth-child(4) { animation-delay: 120ms; }
+.orchestrate-wave > *:nth-child(5) { animation-delay: 140ms; }
+.orchestrate-wave > *:nth-child(6) { animation-delay: 150ms; }
+.orchestrate-wave > *:nth-child(7) { animation-delay: 155ms; }
+.orchestrate-wave > *:nth-child(8) { animation-delay: 150ms; }
+
+/* Random: pseudo-random delays — عشوائي: تأخيرات شبه عشوائية */
+.orchestrate-random > *:nth-child(odd) { animation-delay: var(--orch-random-a, 80ms); }
+.orchestrate-random > *:nth-child(even) { animation-delay: var(--orch-random-b, 200ms); }
+.orchestrate-random > *:nth-child(3n) { animation-delay: var(--orch-random-c, 320ms); }
+.orchestrate-random > *:nth-child(5n) { animation-delay: var(--orch-random-d, 150ms); }
+
+/* Fine-grained animation delays — تأخيرات دقيقة للحركات */
+.anim-delay-100 { animation-delay: 100ms; }
+.anim-delay-200 { animation-delay: 200ms; }
+.anim-delay-300 { animation-delay: 300ms; }
+.anim-delay-400 { animation-delay: 400ms; }
+.anim-delay-500 { animation-delay: 500ms; }
+.anim-delay-600 { animation-delay: 600ms; }
+.anim-delay-700 { animation-delay: 700ms; }
+.anim-delay-800 { animation-delay: 800ms; }
+.anim-delay-900 { animation-delay: 900ms; }
+.anim-delay-1000 { animation-delay: 1000ms; }
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 7. Advanced Shadows — ظلال متقدمة                                                                              */
+/* Colored shadows, inner shadows, neon glow effects, layered/ambient/retro shadow styles                                */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Colored shadows — ظلال ملونة */
+.shadow-color-violet {
+  box-shadow: 0 4px 14px var(--shadow-violet, rgba(139, 92, 246, 0.3));
+}
+.shadow-color-emerald {
+  box-shadow: 0 4px 14px var(--shadow-emerald, rgba(16, 185, 129, 0.3));
+}
+.shadow-color-rose {
+  box-shadow: 0 4px 14px var(--shadow-rose, rgba(244, 63, 94, 0.3));
+}
+.shadow-color-amber {
+  box-shadow: 0 4px 14px var(--shadow-amber, rgba(245, 158, 11, 0.3));
+}
+.shadow-color-sky {
+  box-shadow: 0 4px 14px var(--shadow-sky, rgba(14, 165, 233, 0.3));
+}
+
+/* Large inner shadows — ظلال داخلية كبيرة */
+.shadow-inner-lg {
+  box-shadow: inset 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.shadow-inner-xl {
+  box-shadow: inset 0 6px 24px rgba(0, 0, 0, 0.35), inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Neon glow shadows — ظلال توهج نيون */
+.shadow-neon-blue {
+  box-shadow:
+    0 0 var(--neon-spread, 7px) var(--neon-blue-1, rgba(59, 130, 246, 0.5)),
+    0 0 var(--neon-spread-lg, 20px) var(--neon-blue-2, rgba(59, 130, 246, 0.25)),
+    0 0 var(--neon-spread-xl, 40px) var(--neon-blue-3, rgba(59, 130, 246, 0.1));
+}
+.shadow-neon-pink {
+  box-shadow:
+    0 0 var(--neon-spread, 7px) var(--neon-pink-1, rgba(236, 72, 153, 0.5)),
+    0 0 var(--neon-spread-lg, 20px) var(--neon-pink-2, rgba(236, 72, 153, 0.25)),
+    0 0 var(--neon-spread-xl, 40px) var(--neon-pink-3, rgba(236, 72, 153, 0.1));
+}
+.shadow-neon-green {
+  box-shadow:
+    0 0 var(--neon-spread, 7px) var(--neon-green-1, rgba(34, 197, 94, 0.5)),
+    0 0 var(--neon-spread-lg, 20px) var(--neon-green-2, rgba(34, 197, 94, 0.25)),
+    0 0 var(--neon-spread-xl, 40px) var(--neon-green-3, rgba(34, 197, 94, 0.1));
+}
+.shadow-neon-purple {
+  box-shadow:
+    0 0 var(--neon-spread, 7px) var(--neon-purple-1, rgba(168, 85, 247, 0.5)),
+    0 0 var(--neon-spread-lg, 20px) var(--neon-purple-2, rgba(168, 85, 247, 0.25)),
+    0 0 var(--neon-spread-xl, 40px) var(--neon-purple-3, rgba(168, 85, 247, 0.1));
+}
+
+/* Layered shadow — ظلال متعددة الطبقات */
+.shadow-layered {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.07),
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.05),
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    0 16px 32px rgba(0, 0, 0, 0.03);
+}
+
+/* Ambient shadow — ظل محيطي */
+.shadow-ambient {
+  box-shadow:
+    0 0 40px var(--ambient-color, rgba(99, 102, 241, 0.08)),
+    0 0 80px var(--ambient-color-spread, rgba(99, 102, 241, 0.04));
+}
+
+/* Retro shadow — ظل كلاسيكي */
+.shadow-retro {
+  box-shadow:
+    var(--retro-x, 4px) var(--retro-y, 4px) 0px var(--retro-color, rgba(0, 0, 0, 0.25));
+  border: 2px solid var(--retro-border, rgba(0, 0, 0, 0.1));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* 8. Glass Variants — متغيرات الزجاجية                                                                             */
+/* Subtle through ultra glass intensity, plus glass-styled input, toolbar, modal, sidebar, and pill components              */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Glass card variants — متغيرات بطاقة زجاجية */
+.glass-card-subtle {
+  background-color: var(--glass-subtle-bg, rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(var(--glass-subtle-blur, 8px));
+  -webkit-backdrop-filter: blur(var(--glass-subtle-blur, 8px));
+  border: 1px solid var(--glass-subtle-border, rgba(255, 255, 255, 0.05));
+}
+.glass-card-medium {
+  background-color: var(--glass-medium-bg, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(var(--glass-medium-blur, 16px)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-medium-blur, 16px)) saturate(1.1);
+  border: 1px solid var(--glass-medium-border, rgba(255, 255, 255, 0.1));
+}
+.glass-card-strong {
+  background-color: var(--glass-strong-bg, rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(var(--glass-strong-blur, 24px)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--glass-strong-blur, 24px)) saturate(1.3);
+  border: 1px solid var(--glass-strong-border, rgba(255, 255, 255, 0.15));
+}
+.glass-card-ultra {
+  background-color: var(--glass-ultra-bg, rgba(255, 255, 255, 0.15));
+  backdrop-filter: blur(var(--glass-ultra-blur, 40px)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-ultra-blur, 40px)) saturate(1.5);
+  border: 1px solid var(--glass-ultra-border, rgba(255, 255, 255, 0.2));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* Glass input — حقل إدخال زجاجي */
+.glass-input {
+  background-color: var(--glass-input-bg, rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(var(--glass-input-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--glass-input-blur, 12px));
+  border: 1px solid var(--glass-input-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-input, 8px);
+  padding-block: var(--glass-input-py, 10px);
+  padding-inline: var(--glass-input-px, 14px);
+  color: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.glass-input:focus {
+  border-color: var(--glass-input-focus-border, rgba(99, 102, 241, 0.5));
+  box-shadow: 0 0 0 3px var(--glass-input-focus-ring, rgba(99, 102, 241, 0.15));
+}
+
+/* Glass toolbar — شريط أدوات زجاجي */
+.glass-toolbar {
+  background-color: var(--glass-toolbar-bg, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(var(--glass-toolbar-blur, 20px)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--glass-toolbar-blur, 20px)) saturate(1.2);
+  border-block-end: 1px solid var(--glass-toolbar-border, rgba(255, 255, 255, 0.08));
+  padding-block: var(--glass-toolbar-py, 8px);
+  padding-inline: var(--glass-toolbar-px, 16px);
+}
+
+/* Glass modal — نافذة منبثقة زجاجية */
+.glass-modal {
+  background-color: var(--glass-modal-bg, rgba(255, 255, 255, 0.08));
+  backdrop-filter: blur(var(--glass-modal-blur, 32px)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--glass-modal-blur, 32px)) saturate(1.3);
+  border: 1px solid var(--glass-modal-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-modal, 16px);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Glass sidebar — شريط جانبي زجاجي */
+.glass-sidebar {
+  background-color: var(--glass-sidebar-bg, rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(var(--glass-sidebar-blur, 24px)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--glass-sidebar-blur, 24px)) saturate(1.15);
+  border-inline-end: 1px solid var(--glass-sidebar-border, rgba(255, 255, 255, 0.07));
+}
+
+/* Glass pill — حبوبة زجاجية */
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--glass-pill-bg, rgba(255, 255, 255, 0.07));
+  backdrop-filter: blur(var(--glass-pill-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--glass-pill-blur, 12px));
+  border: 1px solid var(--glass-pill-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-pill, 9999px);
+  padding-block: var(--glass-pill-py, 6px);
+  padding-inline: var(--glass-pill-px, 16px);
+  font-size: var(--glass-pill-font-size, 0.85rem);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* Reduced Motion Override — تجاوز تقليل الحركة                                                                       */
+/* Respect user preference for reduced motion by disabling all non-essential animations                                    */
+/* احترام تفضيل المستخدم لتقليل الحركة عن طريق تعطيل جميع الحركات غير الأساسية */
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Entrance animations — حركات الظهور */
+  .anim-rise,
+  .anim-rise-fast,
+  .anim-rise-slow,
+  .anim-fall,
+  .anim-slide-left,
+  .anim-slide-right,
+  .anim-scale-up,
+  .anim-scale-down,
+  .anim-rotate-in,
+  .anim-flip-x,
+  .anim-flip-y,
+  .anim-blur-in,
+  .anim-glitch,
+  .anim-typewriter-line {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+    width: auto !important;
+  }
+
+  /* Exit animations — حركات الاختفاء */
+  .anim-exit-fade,
+  .anim-exit-slide-down,
+  .anim-exit-slide-left,
+  .anim-exit-slide-right,
+  .anim-exit-scale-down,
+  .anim-exit-flip,
+  .anim-exit-blur,
+  .anim-exit-explode,
+  .anim-exit-collapse,
+  .anim-exit-slide-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    max-height: none !important;
+  }
+
+  /* Loop / continuous animations — حركات مستمرة */
+  .anim-float,
+  .anim-pulse-soft,
+  .anim-pulse-glow,
+  .anim-shimmer,
+  .anim-marquee,
+  .anim-spin-slow,
+  .anim-spin-medium,
+  .anim-spin-fast,
+  .anim-breathe,
+  .anim-wave,
+  .anim-sway,
+  .anim-ripple-continuous {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Interactive animations — حركات التفاعل */
+  .anim-hover-bounce:hover,
+  .anim-hover-wobble:hover,
+  .anim-hover-jelly:hover,
+  .anim-hover-glow-pulse:hover {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .anim-press-squish:active {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .anim-focus-expand:focus-visible {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Orchestration delays — تأخيرات التنسيق */
+ .stagger-2 > *,
+ .stagger-3 > *,
+ .stagger-4 > *,
+ .stagger-5 > *,
+ .stagger-6 > *,
+ .stagger-7 > *,
+ .stagger-8 > *,
+ .stagger-9 > *,
+ .stagger-10 > *,
+ .orchestrate-sequential > *,
+ .orchestrate-stagger > *,
+ .orchestrate-cascade > *,
+ .orchestrate-wave > *,
+ .orchestrate-random > *,
+ .orchestration-container > * {
+    animation-delay: 0ms !important;
+    opacity: 1 !important;
+  }
+
+  .anim-delay-100,
+  .anim-delay-200,
+  .anim-delay-300,
+  .anim-delay-400,
+  .anim-delay-500,
+  .anim-delay-600,
+  .anim-delay-700,
+  .anim-delay-800,
+  .anim-delay-900,
+  .anim-delay-1000 {
+    animation-delay: 0ms !important;
+  }
+}
+
+/* ═══ End CSS Round 36 ═══ */
