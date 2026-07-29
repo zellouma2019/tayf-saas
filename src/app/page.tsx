@@ -43,8 +43,9 @@ export default function SuperAdminPage() {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [allOrders, setAllOrders] = useState<GlobalOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [lastUpdated, setLastUpdated] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -58,6 +59,11 @@ export default function SuperAdminPage() {
   const [platformName, setPlatformName] = useState("طيف");
   // Fallback shops
   const [fallbackShops, setFallbackShops] = useState<ShopStat[]>([]);
+
+  // Whether initial data load has completed at least once
+  const dataLoaded = globalStats !== null || fallbackShops.length > 0 || allOrders.length > 0;
+  const isInitialLoading = loading && !dataLoaded;
+  const isRefreshing = refreshing || (loading && dataLoaded);
 
   // Load platform settings
   useEffect(() => {
@@ -89,6 +95,7 @@ export default function SuperAdminPage() {
   // Load all data after authentication
   const loadAll = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
+    else setRefreshing(true);
     setLoadError("");
     try {
       const cacheBust = `&_=${Date.now()}`;
@@ -114,6 +121,7 @@ export default function SuperAdminPage() {
       setLoadError(err instanceof Error ? err.message : "فشل في تحميل البيانات");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -177,9 +185,16 @@ export default function SuperAdminPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col" dir="rtl">
+      {/* Refresh progress bar */}
+      {isRefreshing && (
+        <div className="h-0.5 w-full bg-muted overflow-hidden">
+          <div className="h-full w-1/2 bg-primary animate-admin-progress rounded-full" />
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {platformLogo ? (
               <img src={platformLogo} alt={platformName} className="w-8 h-8 rounded-lg shrink-0 object-cover dark:hidden" />
@@ -191,11 +206,11 @@ export default function SuperAdminPage() {
                 {tabLabels[activeTab] || "لوحة التحكم"}
               </h1>
               <p className="text-xs text-muted-foreground truncate">
-                {platformName} / {tabLabels[activeTab] || "نظرة عامة"}
+                <span className="text-gradient-platform font-semibold">{platformName}</span>{" / "}{tabLabels[activeTab] || "نظرة عامة"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <ThemeToggle />
             <button
               onClick={() => setCreateOpen(true)}
@@ -209,7 +224,7 @@ export default function SuperAdminPage() {
               className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors"
               title="تحديث"
             >
-              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+              <RefreshCw className={cn("h-4 w-4", (loading || refreshing) && "animate-spin")} />
             </button>
           </div>
         </div>
@@ -251,8 +266,120 @@ export default function SuperAdminPage() {
           </div>
         )}
 
-        {/* Overview Tab */}
-        {activeTab === "overview" && (
+        {/* ====== Skeleton state for initial load ====== */}
+        {isInitialLoading && activeTab === "overview" && (
+          <div className="space-y-4">
+            {/* 4 skeleton KPI cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-7 w-16 bg-muted animate-pulse rounded-lg" />
+                      <div className="h-3 w-24 bg-muted animate-pulse rounded-lg" />
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Skeleton for recent orders */}
+            <div className="rounded-xl border border-border bg-card">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div className="h-4 w-24 bg-muted animate-pulse rounded-lg" />
+                <div className="h-3 w-16 bg-muted animate-pulse rounded-lg" />
+              </div>
+              <div className="divide-y divide-border">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="p-3 flex items-center gap-3">
+                    <div className="h-5 w-16 bg-muted animate-pulse rounded-lg" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-3/4 bg-muted animate-pulse rounded-lg" />
+                      <div className="h-3 w-1/2 bg-muted animate-pulse rounded-lg" />
+                    </div>
+                    <div className="h-3 w-14 bg-muted animate-pulse rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Skeleton for shops list */}
+            <div className="rounded-xl border border-border bg-card">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div className="h-4 w-20 bg-muted animate-pulse rounded-lg" />
+                <div className="h-3 w-16 bg-muted animate-pulse rounded-lg" />
+              </div>
+              <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 w-28 bg-muted animate-pulse rounded-lg" />
+                        <div className="h-3 w-20 bg-muted animate-pulse rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isInitialLoading && activeTab === "shops" && (
+          <div className="space-y-4">
+            <div className="h-10 w-full max-w-md bg-muted animate-pulse rounded-lg" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 w-28 bg-muted animate-pulse rounded-lg" />
+                      <div className="h-3 w-20 bg-muted animate-pulse rounded-lg" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isInitialLoading && activeTab === "orders" && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="h-10 flex-1 min-w-[200px] bg-muted animate-pulse rounded-lg" />
+              <div className="h-10 w-36 bg-muted animate-pulse rounded-lg" />
+              <div className="h-10 w-40 bg-muted animate-pulse rounded-lg" />
+            </div>
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right">الزبون</TableHead>
+                    <TableHead className="text-right">الخدمة</TableHead>
+                    <TableHead className="text-right">المتجر</TableHead>
+                    <TableHead className="text-right">الحالة</TableHead>
+                    <TableHead className="text-right">التاريخ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded-lg" /></TableCell>
+                      <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded-lg" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded-lg" /></TableCell>
+                      <TableCell><div className="h-5 w-14 bg-muted animate-pulse rounded-lg" /></TableCell>
+                      <TableCell><div className="h-3 w-14 bg-muted animate-pulse rounded-lg" /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+
+        {/* ====== Loaded content (only show when NOT in initial load) ====== */}
+        {!isInitialLoading && activeTab === "overview" && (
           <div className="space-y-4">
             {/* Stats cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -315,7 +442,7 @@ export default function SuperAdminPage() {
                     </div>
                   </div>
                 ))}
-                {safeOrders.length === 0 && !loading && (
+                {safeOrders.length === 0 && (
                   <div className="p-8 text-center text-muted-foreground text-sm">
                     لا توجد طلبات حالياً
                   </div>
@@ -335,9 +462,29 @@ export default function SuperAdminPage() {
                 {filteredShops.map((shop) => (
                   <ShopManageCard key={shop.slug} shop={shop} onCopyLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}`); toast.success('تم نسخ رابط المتجر'); }} onCopyAdminLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}?admin=1`); toast.success('تم نسخ رابط الإدارة'); }} onRefresh={() => loadAll(false)} />
                 ))}
-                {safeShops.length === 0 && !loading && (
-                  <div className="col-span-full p-8 text-center text-muted-foreground text-sm">
-                    لا توجد متاجر بعد — أنشئ أول متجر
+                {safeShops.length === 0 && (
+                  <div className="col-span-full">
+                    {/* Prominent empty state CTA */}
+                    <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/[0.03] p-8 flex flex-col items-center justify-center text-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Store className="h-8 w-8 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-foreground">
+                          لم تنشئ أي متجر بعد
+                        </h3>
+                        <p className="text-sm text-muted-foreground max-w-sm">
+                          ابدأ بإنشاء متجرك الأول وابدأ بإدارة طلباتك بسهولة
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setCreateOpen(true)}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 mt-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        إنشاء متجر جديد
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -346,7 +493,7 @@ export default function SuperAdminPage() {
         )}
 
         {/* Shops Tab */}
-        {activeTab === "shops" && (
+        {!isInitialLoading && activeTab === "shops" && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
@@ -359,16 +506,39 @@ export default function SuperAdminPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredShops.map((shop) => (
-                <ShopManageCard key={shop.slug} shop={shop} onCopyLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}`); toast.success('تم نسخ رابط المتجر'); }} onCopyAdminLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}?admin=1`); toast.success('تم نسخ رابط الإدارة'); }} onRefresh={() => loadAll(false)} />
-              ))}
-            </div>
+            {safeShops.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredShops.map((shop) => (
+                  <ShopManageCard key={shop.slug} shop={shop} onCopyLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}`); toast.success('تم نسخ رابط المتجر'); }} onCopyAdminLink={(slug) => { navigator.clipboard.writeText(`https://tayf-saas.vercel.app/s/${slug}?admin=1`); toast.success('تم نسخ رابط الإدارة'); }} onRefresh={() => loadAll(false)} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/[0.03] p-12 flex flex-col items-center justify-center text-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Store className="h-8 w-8 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-semibold text-foreground">
+                    لم تنشئ أي متجر بعد
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    ابدأ بإنشاء متجرك الأول وابدأ بإدارة طلباتك بسهولة
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCreateOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 mt-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  إنشاء متجر جديد
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* Orders Tab */}
-        {activeTab === "orders" && (
+        {!isInitialLoading && activeTab === "orders" && (
           <div className="space-y-4">
             {/* Filters */}
             <div className="flex items-center gap-3 flex-wrap">

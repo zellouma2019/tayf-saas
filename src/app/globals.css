@@ -30889,3 +30889,23 @@ tr:hover .table-cell-actions {
   background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
 }
+
+/* ===== Admin Loading States ===== */
+
+/* Progress bar animation for refresh indicator */
+@keyframes admin-progress {
+  0% { transform: translateX(100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+.animate-admin-progress {
+  animation: admin-progress 1.5s ease-in-out infinite;
+}
+
+/* Platform name gradient for header */
+.text-gradient-platform {
+  background: linear-gradient(135deg, #d4a853, #e8c97a, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
