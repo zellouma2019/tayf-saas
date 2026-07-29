@@ -26,6 +26,8 @@ import { StaleOrdersWidget } from "@/components/app/stale-orders-widget";
 import { AuditTrail } from "@/components/app/audit-trail";
 import { OrdersHeatmap } from "@/components/app/orders-heatmap";
 import { DailyTargetRing } from "@/components/app/daily-target-ring";
+import { WeeklyReportChart } from "@/components/app/weekly-report-chart";
+import { ShopActivityFeed } from "@/components/app/shop-activity-feed";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -498,6 +500,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {/* إحصائيات الإيرادات مع مخطط شريطي صغير */}
       <RevenueAnalyticsWidget stats={safeStats} />
 
+      {/* التقرير الأسبوعي */}
+      <WeeklyReportChart stats={safeStats} />
+
       {/* سجل الإجراءات (Audit Trail) */}
       <AuditTrail />
 
@@ -644,6 +649,28 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <ShopQuickStatsPopover key={shop.id} shop={shop} />
         ))}
       </div>
+
+      {/* النشاطات الأخيرة عبر المتاجر */}
+      {safeStats.recentOrders.length > 0 && (
+        <Card className="widget card-gradient-top fade-in-up" dir="rtl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+              <Activity className="h-4 w-4 text-primary" />
+              آخر النشاطات
+              <Badge variant="secondary" className="text-[10px] px-1.5 mr-auto">
+                {safeStats.recentOrders.length} نشاط
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ShopActivityFeed
+              shopName="المنصة"
+              orders={safeStats.recentOrders.slice(0, 8)}
+              limit={8}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* بطاقات الإجراءات السريعة */}
       {(safeStats.shopStats.length ?? 0) === 0 && (

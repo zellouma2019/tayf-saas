@@ -136,6 +136,7 @@ const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").
 const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
 const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <DynamicSkeleton /> });
 const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const CustomerLoyaltyBadge = dynamic(() => import("@/components/app/customer-loyalty-badge").then((m) => ({ default: m.CustomerLoyaltyBadge })), { ssr: false });
 const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <DynamicSkeleton /> });
 const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <DynamicSkeleton /> });
 const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <DynamicSkeleton /> });
@@ -1793,6 +1794,40 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
             >
             <QuickCustomerSearch orders={rawOrders} />
+            {/* شارة الولاء للزبون الأكثر طلبات */}
+            {(() => {
+              const customerCounts = new Map<string, { name: string; orders: number; total: number; firstDate: string }>();
+              rawOrders.forEach(o => {
+                const key = o.customerPhone || o.customerName || "unknown";
+                const existing = customerCounts.get(key);
+                if (existing) {
+                  existing.orders += 1;
+                  existing.total += o.total || 0;
+                } else {
+                  customerCounts.set(key, {
+                    name: o.customerName || "زبون",
+                    orders: 1,
+                    total: o.total || 0,
+                    firstDate: o.createdAt || new Date().toISOString(),
+                  });
+                }
+              });
+              const top = Array.from(customerCounts.values()).sort((a, b) => b.orders - a.orders)[0];
+              if (!top || top.orders < 2) return null;
+              return (
+                <div className="mb-4 p-4 rounded-xl border border-border/50 bg-card stat-card animate-fade-up">
+                  <h4 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <Star className="h-3 w-3 text-amber-500" />
+                    أفضل زبون
+                  </h4>
+                  <CustomerLoyaltyBadge
+                    orderCount={top.orders}
+                    totalSpent={top.total}
+                    sinceDate={new Date(top.firstDate).toLocaleDateString('ar-DZ', { month: 'short', year: 'numeric' })}
+                  />
+                </div>
+              );
+            })()}
             <MerchantCustomers />
             </motion.div>
           )}

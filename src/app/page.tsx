@@ -10,6 +10,8 @@ import {
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { SystemHealthWidget } from "@/components/app/system-health-widget";
 import { KeyboardShortcutsOverlay } from "@/components/app/keyboard-shortcuts-overlay";
+import { AdvancedSearchModal } from "@/components/app/advanced-search-modal";
+import type { AdvancedSearchFilters } from "@/components/app/advanced-search-modal";
 import * as XLSX from "xlsx";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +83,8 @@ export default function SuperAdminPage() {
   const [fallbackShops, setFallbackShops] = useState<ShopStat[]>([]);
   // حالة نافذة اختصارات لوحة المفاتيح
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  // حالة نافذة البحث المتقدم
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
   // تحميل إعدادات المنصة (الشعار)
   const loadPlatformSettings = useCallback(() => {
@@ -535,6 +539,7 @@ export default function SuperAdminPage() {
                 <Select value={shopFilter} onValueChange={setShopFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل المتاجر" /></SelectTrigger><SelectContent><SelectItem value="all">كل المتاجر</SelectItem>{(stats?.shopStats?.length ?? 0) > 0 ? stats.shopStats.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>)) : fallbackShops.map((s) => (<SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>))}</SelectContent></Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="text-sm h-10 rounded-lg border-border bg-background"><SelectValue placeholder="كل الحالات" /></SelectTrigger><SelectContent><SelectItem value="all">كل الحالات</SelectItem>{STATUS_FLOW.map((s) => (<SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>))}<SelectItem value="cancelled">ملغي</SelectItem></SelectContent></Select>
                 <button onClick={exportToExcel} disabled={filteredOrders.length === 0} className="border border-border text-foreground hover:bg-accent rounded-lg px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed bg-background"><Download className="h-4 w-4" />تصدير Excel</button>
+                <button onClick={() => setAdvancedSearchOpen(true)} className="border border-border text-foreground hover:bg-accent rounded-lg px-3 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 bg-background"><SlidersHorizontal className="h-4 w-4" />بحث متقدم</button>
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground/70 px-1">
                 <span>المعروض: <b className="text-foreground/60">{filteredOrders.length}</b> من {allOrders.length}</span>
@@ -653,6 +658,19 @@ export default function SuperAdminPage() {
 
       {/* نافذة اختصارات لوحة المفاتيح */}
       <KeyboardShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+
+      {/* نافذة البحث المتقدم */}
+      <AdvancedSearchModal
+        open={advancedSearchOpen}
+        onOpenChange={setAdvancedSearchOpen}
+        onSearch={(filters: AdvancedSearchFilters) => {
+          setSearch(filters.query || "");
+          if (filters.status && filters.status !== "all") setStatusFilter(filters.status);
+          if (filters.shopSlug && filters.shopSlug !== "all") setShopFilter(filters.shopSlug);
+          toast.success("تم تطبيق البحث المتقدم");
+        }}
+        shops={(globalStats?.shopStats || fallbackShops).map(s => ({ slug: s.slug, name: s.name }))}
+      />
     </div>
   );
 }
