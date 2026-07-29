@@ -60,6 +60,8 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { OrderInvoiceCard } from "@/components/app/order-invoice-card";
+import ShopCustomizationPreview from "@/components/app/shop-customization-preview";
+import QuickActionsToolbar from "@/components/app/quick-actions-toolbar";
 import type { LucideIcon } from "lucide-react";
 import {
   Printer as PrinterIcon,
@@ -1870,6 +1872,9 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
             >
             <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            <div className="mt-6">
+              <ShopCustomizationPreview />
+            </div>
             </motion.div>
           )}
 
@@ -3561,6 +3566,7 @@ function ChangeStatusSelect({
         </div>
       </DialogContent>
     </Dialog>
+    <QuickActionsToolbar />
     </>
   );
 }

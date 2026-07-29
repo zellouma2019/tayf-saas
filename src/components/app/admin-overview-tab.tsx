@@ -37,6 +37,8 @@ import { ProductionEfficiencyDashboard } from "@/components/app/production-effic
 import { MetricComparisonGrid } from "@/components/app/metric-comparison-grid";
 import { LiveActivityFeed } from "@/components/app/live-activity-feed";
 import { DailyGoalTracker } from "@/components/app/daily-goal-tracker";
+import OrderAnalyticsSummary from "@/components/app/order-analytics-summary";
+import ExpenseCategoryBreakdown from "@/components/app/expense-category-breakdown";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -798,6 +800,12 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           { id: "3", customerName: "محمد الأمين", rating: 5, comment: "أسرع مطبعة تعاملت معها", date: "2026-07-26", verified: false },
         ]}
       />
+
+      {/* ملخص التحليلات */}
+      <OrderAnalyticsSummary />
+
+      {/* توزيع المصاريف */}
+      <ExpenseCategoryBreakdown />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
