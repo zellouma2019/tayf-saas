@@ -5147,3 +5147,177 @@ Task: QA + CSS Round 36 + ميزات جديدة (Round 36)
 
 ## Commit
 - 6ae4381: feat(r36): CSS Round 36 (+1167 lines), metric comparison, live activity feed, smart data table, daily goal tracker, permissions matrix
+
+---
+Task ID: round37
+Agent: Main Agent
+Task: QA + CSS Round 37 + ميزات جديدة (Round 37)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 37 جولة CSS (18,594 سطر)
+- ✅ 94 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء (1 تحذير a11y — قديم)
+- ✅ تم النشر على Vercel (commit 31c1b31)
+- ⚠️ Turso DB بطء متقطع (لا يزال)
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel (لا يزال)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 1.9s, CLS 0, TTFB 5.9ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| لا أخطاء في Console | ✅ |
+| صفحة المتجر (/s/al-riyan) — تعمل | ✅ |
+| لوحة الإدارة — دخول ناجح | ✅ |
+| تبويب الطلبات — بنية ظاهرة | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح بدون أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. ملخص التحليلات (Order Analytics Summary)
+- مكون جديد: `src/components/app/order-analytics-summary.tsx`
+- محدد فترات (اليوم/الأسبوع/الشهر/السنة) مع تبويبات حبوبية
+- 4 مقاييس: إجمالي الطلبات، الإيرادات، متوسط قيمة الطلب، نسبة الإنجاز
+- مؤشر تغيير نسبي (أخضر/أحمر/رمادي)
+- رسم SVG sparkline لكل مقياس
+- حركة stagger عند تغيير الفترة
+- مدمج في تبويب النظرة العامة
+
+### 2. معاينة تخصيص المتجر (Shop Customization Preview)
+- مكون جديد: `src/components/app/shop-customization-preview.tsx`
+- بطاقة معاينة حية تعكس التغييرات فورياً
+- 3 لوحات ألوان (نيلي/زمردي/عنبري) مع معاينة مباشرة
+- 3 خيارات خط (عصري/كلاسيكي/مدمج)
+- 2 تخطيط (عصري/كلاسيكي)
+- حركة AnimatePresence عند التبديل
+- مدمج في تبويب إعدادات لوحة التاجر
+
+### 3. تتبع التسليم (Delivery Tracker Map)
+- مكون جديد: `src/components/app/delivery-tracker-map.tsx`
+- 6 خطوات: تم الطلب → تم التأكيد → قيد الإنتاج → فحص الجودة → جاهز → تم التسليم
+- شريط تقدم متحرك SVG
+- حلقة نبض للخطوة النشطة
+- لوحة تفاصيل: وقت متوقع، معلومات السائق، عنوان التسليم، رقم الطلب
+- تفاعلي — انقر لتغيير الخطوة النشطة
+- مدمج في صفحة تتبع الطلب
+
+### 4. توزيع المصاريف (Expense Category Breakdown)
+- مكون جديد: `src/components/app/expense-category-breakdown.tsx`
+- رسم SVG donut مع 5 فئات: ورق، حبر، عمالة، معدات، أخرى
+- نص مركزي بإجمالي المصاريف
+- وسيلة إيضاح مع النسب المئوية
+- رسم متحرك عند التحميل
+- تمييز الفئة عند التمرير
+- مدمج في تبويب النظرة العامة
+
+### 5. شريط الإجراءات السريعة (Quick Actions Toolbar)
+- مكون جديد: `src/components/app/quick-actions-toolbar.tsx`
+- زر FAB عائم (أسفل اليسار في RTL)
+- 5 إجراءات: طلب جديد، إضافة عميل، طباعة سريعة، مسح QR، تقرير يومي
+- حركة تمدد Spring عند الفتح
+- إغلاق عند النقر خارجاً أو الضغط على Escape
+- كل إجراء بأيقونة ملونة + تلميح
+- مدمج في لوحة التاجر
+
+## CSS Round 37 (+1650 سطر)
+
+### 1. بطاقات متقدمة (~180 سطر)
+- `.card-spotlight` / `.card-holographic` / `.card-gradient-border`
+- `.card-3d-tilt` / `.card-stacked` / `.card-morph`
+- `.card-news` / `.card-ecommerce` (مع badges + actions)
+
+### 2. تصوير البيانات (~150 سطر)
+- `.chart-container` / `.chart-tooltip` / `.chart-legend-*`
+- `.data-bar` / `.data-bar-stacked` / `.data-bar-animated`
+- `.data-summary` / `.data-grid-*` / `.data-ring`
+
+### 3. نماذج ومدخلات (~200 سطر)
+- `.input-group-merged` / `.input-otp` / `.input-toggle-group`
+- `.input-slider-custom` / `.input-file-styled` / `.input-tags`
+- `.input-rating-stars` / `.form-section` / `.form-step-indicator`
+- `.input-autocomplete` / `.input-color-picker` / `.input-date-range`
+
+### 4. أنماط التنقل (~200 سطر)
+- `.nav-breadcrumb` / `.nav-tabs-vertical` / `.nav-tabs-pill`
+- `.nav-mega-menu` / `.nav-stepper-horizontal` / `.nav-stepper-vertical`
+- `.nav-sticky-glass` / `.nav-fullscreen-overlay` / `.nav-floating`
+
+### 5. إشعارات وتعليقات (~150 سطر)
+- `.badge-notification-dot` / `.badge-counter` / `.badge-status-*`
+- `.toast-stack` / `.toast-progress-bar`
+- `.tooltip-multiline` / `.skeleton-*` / `.badge-progress`
+
+### 6. تخطيط وشبكة (~100 سطر)
+- `.grid-masonry` / `.grid-auto-fill-responsive` / `.grid-dashlet`
+- `.layout-split-screen` / `.layout-overlay-panel`
+- `.layout-horizontal-scroll-snap` / `.layout-fullscreen-hero`
+- `.grid-sidebar-content` / `.layout-with-aside` / `.grid-media`
+
+### 7. خاص بصناعة الطباعة (~200 سطر)
+- `.print-preview-page` (A4/A3/Letter)
+- `.print-spec-card` / `.binding-preview` (spiral/staple/perfect)
+- `.color-separation-preview` (CMYK) / `.trim-mark-overlay`
+- `.paper-texture-*` (5 أنواع: smooth/linen/laid/vellum/kraft)
+- `.ink-coverage-indicator` / `.proof-stamp` / `.fold-guide`
+- `.print-job-ticket` / `.color-pantone-swatch` / `.gang-sheet-layout`
+- `.bleed-indicator` / `.imposition-layout` (2x2/2x1)
+
+### 8. تفاعلات صغيرة وحالات (~200 سطر)
+- `.state-empty` / `.state-error` / `.state-success`
+- `.state-loading-circular` / `.state-loading-dots`
+- `.hover-card-lift` / `.hover-glow` / `.hover-underline-grow`
+- `.hover-icon-bounce` / `.focus-ring-custom` / `.active-press`
+- `.disabled-blur` / `.selected-highlight`
+- `.drag-ghost` / `.drop-target-active`
+- `.expand-collapse` / `.resizable-handle`
+
+### 9. تحسينات الطباعة (~100 سطر)
+- `.text-gradient` (3 متغيرات) / `.text-outline`
+- `.text-shadow-soft` / `.text-shadow-glow` / `.text-shadow-retro`
+- `.text-truncate-*` (2-5 أسطر) / `.text-highlight-marker`
+- `.heading-display` / `.heading-section` / `.heading-accent`
+
+### 10. أدوات الاستجابة (~100 سطر)
+- `.hide-mobile/tablet/desktop` / `.show-mobile/tablet/desktop`
+- `.container-narrow` / `.container-wide`
+- `.scrollable-x` / `.scrollable-y` (مع شريط تمرير مخصص)
+- `.safe-area-inset`
+- `.aspect-ratio-*` (6 نسب)
+- `.grid-cols-responsive` (1-4 أعمدة)
+- `.text-responsive-*` (6 أحجام متجاوبة)
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 37 +1650 سطر (إجمالي 18,594 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج OrderAnalyticsSummary + ExpenseCategoryBreakdown |
+| `src/components/app/track-page-client.tsx` | دمج DeliveryTrackerMap |
+| `src/components/app/merchant-dashboard.tsx` | دمج ShopCustomizationPreview + QuickActionsToolbar |
+| `src/components/app/order-analytics-summary.tsx` | جديد: ملخص التحليلات |
+| `src/components/app/shop-customization-preview.tsx` | جديد: تخصيص المتجر |
+| `src/components/app/delivery-tracker-map.tsx` | جديد: تتبع التسليم |
+| `src/components/app/expense-category-breakdown.tsx` | جديد: توزيع المصاريف |
+| `src/components/app/quick-actions-toolbar.tsx` | جديد: شريط الإجراءات السريعة |
+
+## Commit
+- 31c1b31: feat(r37): CSS Round 37 (+1650 lines), order analytics, shop customization preview, delivery tracker, expense breakdown, quick actions toolbar
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 37 جولة CSS (18,594 سطر CSS)
+- 94 مكون تطبيقي + 5 مكونات جديدة في Round 37
+- إجمالي ~2,250 سطر جديدة في Round 37 (CSS + مكونات)
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع. يُنصح ببديل (PlanetScale, Neon, Supabase)
+3. تكامل MaterialCostEstimator في new-order-wizard.tsx
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. اختبار UploadThing CDN على الموقع الحي
+8. إضافة WebSocket للتحديثات الحية
+9. تحسين الـ SEO مع og:image للسوشيال ميديا
+10. دمج QuickActionsToolbar في لوحة الإدارة أيضاً
