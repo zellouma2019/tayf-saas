@@ -51,7 +51,6 @@ import { SettingsTab } from "@/components/app/admin-settings-tab";
 import { SecurityTab } from "@/components/app/admin-security-tab";
 import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
 import { AdminErrorBoundary } from "@/components/app/error-boundary";
-import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
 
 const BUILD_HASH = "v4.8-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v4.8";
 
@@ -443,12 +442,15 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {/* Notification Center */}
-            <AdminNotificationCenter
-              pendingCount={pendingCount}
-              events={notifEvents}
-              onMarkAllRead={handleMarkAllRead}
-            />
+            {/* Notification bell with pending count */}
+            {pendingCount > 0 && (
+              <button className="relative p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors bell-urgent">
+                <Bell className="h-4 w-4" />
+                <span className="absolute -top-0.5 left-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
+                  {pendingCount}
+                </span>
+              </button>
+            )}
             {/* Data health indicator */}
             {dataHealth.status !== 'healthy' && (
               <div className="flex items-center gap-1 text-[10px] text-muted-foreground admin-tooltip" data-tip={dataHealth.message}>
