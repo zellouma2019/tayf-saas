@@ -5474,3 +5474,156 @@ Task: QA + CSS Round 38 + ميزات جديدة (Round 38)
 8. إضافة WebSocket للتحديثات الحية
 9. تحسين الـ SEO مع og:image للسوشيال ميديا
 10. دمج StaffActivityWidget في لوحة التاجر
+
+---
+Task ID: round39
+Agent: Main Agent
+Task: QA + CSS Round 39 + ميزات جديدة (Round 39)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 39 جولة CSS (21,173 سطر)
+- ✅ 104 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء (1 تحذير a11y — قديم)
+- ✅ تم النشر على Vercel (commit 91e6b71)
+- ⚠️ Turso DB بطء متقطع (لا يزال)
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel (لا يزال)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 152ms, CLS 0, TTFB 5.6ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| لا أخطاء في Console | ✅ |
+| صفحة المتجر (/s/al-riyan) — تعمل | ✅ |
+| صفحة التتبع (/track) — تعمل | ✅ |
+| الوضع الداكن (375×812) — يعمل | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح بدون أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. رسم الإيرادات (Revenue Chart Widget)
+- مكون جديد: `src/components/app/revenue-chart-widget.tsx`
+- رسم SVG تفاعلي مع 12 شهر من بيانات الإيرادات
+- إجمالي 7,120,000 د.ج مع نمو +18.5%
+- تلميح تفاعلي عند التمرير
+- حركة رسم الخط عند التحميل (pathLength animation)
+- تدرج لوني أسفل الخط
+
+### 2. أداء فريق العمل (Team Performance Chart)
+- مكون جديد: `src/components/app/team-performance-chart.tsx`
+- رسم أشرطة أفقي لـ 5 أعضاء: أحمد (95%)، فاطمة (88%)، محمد (76%)، سارة (92%)، يوسف (83%)
+- ألوان حسب الأداء: أخضر >90%، أزرق >80%، عنبري >70%
+- إحصائيات: مهمات، متوسط الوقت، تقييم النجوم
+- حركة staggered entrance
+
+### 3. مسار معالجة الطلبات (Order Flow Diagram)
+- مكون جديد: `src/components/app/order-flow-diagram.tsx`
+- مخطط خط أنابيب: طلب جديد (100%) → مراجعة (85%) → طباعة (70%) → فحص (60%) → مكتمل (55%)
+- نسب التسرب بين المراحل
+- حركة بيانات متدفقة
+- متوسط وقت المعالجة: 4.2 ساعات
+
+### 4. تحليلات المتجر (Shop Analytics Card)
+- مكون جديد: `src/components/app/shop-analytics-card.tsx`
+- بطاقة شاملة لمتجر واحد
+- 4 KPI: طلبات الشهر، الإيرادات، معدل التسليم، متوسط المعالجة
+- رسم sparkline 7 أيام
+- توزيع الخدمات مع أشرطة تقدم
+- أزرار: عرض التفاصيل، تصدير التقرير
+
+### 5. إعدادات الإشعارات (Notification Preferences)
+- مكون جديد: `src/components/app/notification-preferences.tsx`
+- 5 فئات إشعارات مع مفاتيح تبديل تفاعلية
+- 3 قنوات: بريد، رسائل، إشعارات التطبيق
+- ساعات الهدوء: من 22:00 إلى 08:00
+- زر حفظ الإعدادات
+
+## CSS Round 39 (+598 سطر)
+
+### 1. أنماط الأزرار المتقدمة (~80 سطر)
+- `.btn-morph`, `.btn-glow-*` (4 ألوان), `.btn-ripple`
+- `.btn-gradient-*` (5 متغيرات), `.btn-3d`, `.btn-shine`, `.btn-loading`
+- `.btn-group-h/v` (مجموعات أفقية وعمودية)
+
+### 2. أنماط البطاقات المتقدمة (~75 سطر)
+- `.card-parallax`, `.card-reveal`, `.card-flip`
+- `.card-expandable`, `.card-stat-hero`, `.card-social-proof`
+- `.card-milestone`, `.card-countdown`
+
+### 3. النوافذ المنبثقة والطبقات (~40 سطر)
+- `.modal-backdrop-*` (blur, dark, light, gradient)
+- `.modal-enter-*` (slide-up, scale, flip)
+- `.drawer-*` (4 اتجاهات مع دعم RTL)
+- `.bottom-sheet`, `.bottom-sheet-handle`
+
+### 4. النماذج المتقدمة (~95 سطر)
+- `.form-floating` (تسمية عائمة)
+- `.form-steps-horizontal`, `.form-password-strength`
+- `.form-toggle-pill` (مفتاح تبديل RTL)
+- `.form-search-expanded`, `.form-character-counter`
+- `.form-fieldset-*` (3 أنماط)
+
+### 5. جداول البيانات المتقدمة (~50 سطر)
+- `.data-table-*` (striped, sortable, fixed-header, expandable)
+- `.data-table-cell-*`, `.data-table-empty`, `.data-table-summary-row`
+
+### 6. تخطيط لوحة التحكم (~35 سطر)
+- `.dash-grid-*` (2/3/4 أعمدة متجاوبة)
+- `.dash-widget-*`, `.dash-kpi-row`, `.dash-chart-row`
+- `.dash-header`, `.dash-split-*`
+
+### 7. مكتبة التفاعلات الصغيرة (~45 سطر)
+- `.micro-bounce/shake/pulse-ring/float-up/scale-pop`
+- `.micro-progress-fill`, `.micro-number-roll`, `.micro-slide-reveal`
+
+### 8. التسويق والصفحات الرئيسية (~70 سطر)
+- `.hero-section-*` (centered, split)
+- `.feature-grid-*`, `.feature-item`
+- `.stats-counter-row`, `.cta-section`
+- `.faq-accordion`, `.logo-cloud`
+
+### 9. أدوات مساعدة محسّنة (~35 سطر)
+- `.text-balance/pretty`, `.truncate-*` (1-5 أسطر)
+- `.container-breakout`, `.visually-hidden`
+- `.scroll-margin-*`, `.snap-*`, `.will-change-*`
+
+### 10. تحسينات خاصة بالطباعة (~73 سطر)
+- `.press-proof-*` (pending, approved, rejected)
+- `.gang-run-layout`, `.imposition-*` (2up, 4up, 8up)
+- `.die-cut-line`, `.spot-varnish-preview`
+- `.emboss-deboss-preview`, `.foil-stamp-preview`
+- `.color-bar-test`, `.registration-marks`
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 39 +598 سطر (إجمالي 21,173 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج 5 مكونات جديدة |
+| `src/components/app/revenue-chart-widget.tsx` | جديد: رسم الإيرادات |
+| `src/components/app/team-performance-chart.tsx` | جديد: أداء الفريق |
+| `src/components/app/order-flow-diagram.tsx` | جديد: مسار الطلبات |
+| `src/components/app/shop-analytics-card.tsx` | جديد: تحليلات المتجر |
+| `src/components/app/notification-preferences.tsx` | جديد: إعدادات الإشعارات |
+
+## Commit
+- 91e6b71: feat(r39): CSS Round 39 (+598 lines), revenue chart, team performance, order flow, shop analytics, notification preferences
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 39 جولة CSS (21,173 سطر CSS)
+- 104 مكون تطبيقي + 5 مكونات جديدة في Round 39
+- إجمالي ~1,188 سطر جديدة في Round 39
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع. يُنصح ببديل (PlanetScale, Neon, Supabase)
+3. دمج ShopAnalyticsCard في لوحة التاجر
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. إضافة WebSocket للتحديثات الحية
+8. تحسين الـ SEO مع og:image للسوشيال ميديا
+9. تكامل MaterialCostEstimator في new-order-wizard
+10. اختبار شامل على الموقع الحي مع agent-browser
