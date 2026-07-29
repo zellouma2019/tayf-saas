@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, FileText, ImageIcon, File, Trash2 } from "lucide-react";
+import { Upload, X, FileText, Image, File, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileItem {
@@ -21,7 +21,7 @@ interface FileUploadPreviewProps {
 
 function getFileIcon(type: string) {
   if (type.includes("pdf")) return <FileText className="h-5 w-5 text-rose-500" />;
-  if (type.includes("image") || type.includes("jpg") || type.includes("png")) return <ImageIcon className="h-5 w-5 text-sky-500" />;
+  if (type.includes("image") || type.includes("jpg") || type.includes("png")) return <Image className="h-5 w-5 text-sky-500" />;
   if (type.includes("doc") || type.includes("word")) return <FileText className="h-5 w-5 text-blue-500" />;
   return <File className="h-5 w-5 text-zinc-500" />;
 }

@@ -304,7 +304,6 @@ function TodayAchievementGauge({ achievement }: { achievement: { total: number; 
 // ===== المكون الرئيسي =====
 // ===== Quick Customer Phone Search =====
 function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
-  const safeOrders = Array.isArray(orders) ? orders : [];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Array<{ name: string; phone: string; orderCount: number }>>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -319,7 +318,7 @@ function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
     debounceRef.current = setTimeout(() => {
       const q = query.toLowerCase().trim();
       const customerMap = new Map<string, { name: string; phone: string; count: number }>();
-      safeOrders.forEach((o) => {
+      orders.forEach((o) => {
         const phone = o.customer?.phone || "";
         const name = o.customer?.name || "";
         if (phone.includes(q) || name.toLowerCase().includes(q)) {
@@ -396,7 +395,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [rawOrders, setRawOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastRefreshed, setLastRefreshed] = useState("");
   const [statsLoading, setStatsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -478,28 +476,25 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   // فلترة + ترتيب الطلبات بالذاكرة
   const orders = useMemo(() => {
-    let result = Array.isArray(rawOrders) ? [...rawOrders] : [];
+    let result = rawOrders;
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (x) => {
-          try {
-            return x.reference?.toLowerCase().includes(q) ||
-              x.customer?.name?.toLowerCase().includes(q) ||
-              x.customer?.phone?.includes(search);
-          } catch { return false; }
-        },
+        (x) =>
+          x.reference.toLowerCase().includes(q) ||
+          x.customer.name.toLowerCase().includes(q) ||
+          x.customer.phone.includes(search),
       );
     }
     // فلترة التاريخ والمفضلة
     if (quickDateFilter === "today") {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      result = result.filter((o) => { try { return new Date(o.createdAt) >= today; } catch { return false; } });
+      result = result.filter((o) => new Date(o.createdAt) >= today);
     } else if (quickDateFilter === "week") {
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); weekAgo.setHours(0, 0, 0, 0);
-      result = result.filter((o) => { try { return new Date(o.createdAt) >= weekAgo; } catch { return false; } });
+      result = result.filter((o) => new Date(o.createdAt) >= weekAgo);
     } else if (quickDateFilter === "favorites") {
-      result = result.filter((o) => { try { return favoriteOrders.has(o.id); } catch { return false; } });
+      result = result.filter((o) => favoriteOrders.has(o.id));
     }
     // ترتيب
     result = [...result].sort((a, b) => {
@@ -514,13 +509,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }, [rawOrders, search, sortField, sortDir, quickDateFilter, favoriteOrders]);
 
   // حسابات الربح (قبل أي return مبكر)
-  const totalCost = useMemo(() => (Array.isArray(rawOrders) ? rawOrders : []).reduce((s, o) => s + (o.cost || 0), 0), [rawOrders]);
+  const totalCost = useMemo(() => rawOrders.reduce((s, o) => s + (o.cost || 0), 0), [rawOrders]);
   const totalProfit = (stats?.totalRevenue ?? 0) - totalCost;
   const todayOrdersList = useMemo(() => {
-    const safeRaw = Array.isArray(rawOrders) ? rawOrders : [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return safeRaw.filter((o) => { try { return new Date(o.createdAt) >= today; } catch { return false; } });
+    return rawOrders.filter((o) => new Date(o.createdAt) >= today);
   }, [rawOrders]);
   const todayRevenue = useMemo(() => todayOrdersList.reduce((s, o) => s + o.total, 0), [todayOrdersList]);
   const todayCost = useMemo(() => todayOrdersList.reduce((s, o) => s + (o.cost || 0), 0), [todayOrdersList]);
@@ -734,8 +728,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`);
       if (res.ok) {
         const o = await res.json();
-        const fetched = Array.isArray(o?.orders) ? o.orders : [];
-        setRawOrders(fetched);
+        setRawOrders(o.orders || []);
       }
     } catch {
       /* silent */
@@ -746,7 +739,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   // تحميل كامل (موازي لكن مستقل)
   const loadAll = useCallback(() => {
-    setLastRefreshed(new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }));
     loadStats();
     loadOrders();
     refreshShop();
@@ -1052,26 +1044,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </span>
               )}
             </button>
-            <a
-              href={customerLink}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary text-xs font-medium transition-colors"
-            >
-              <Store className="h-3.5 w-3.5" />
-              <span>العودة للمتجر</span>
-            </a>
-            <a
-              href={customerLink}
-              className="sm:hidden p-2.5 rounded-lg hover:bg-secondary transition-colors"
-              title="العودة للمتجر"
-            >
-              <Store className="h-4 w-4 text-muted-foreground" />
-            </a>
             <ThemeToggle />
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border/60 text-muted-foreground/70">
-              <kbd className="px-1.5 py-0.5 rounded-md bg-card border border-border text-[9px] font-mono shadow-[0_1px_0_rgba(0,0,0,0.05)]">Alt+N</kbd>
-              <span className="text-[10px]">طلب</span>
-              <kbd className="px-1.5 py-0.5 rounded-md bg-card border border-border text-[9px] font-mono shadow-[0_1px_0_rgba(0,0,0,0.05)]">Alt+R</kbd>
-              <span className="text-[10px]">تحديث</span>
+            <div className="hidden lg:flex items-center gap-1 text-[10px] text-muted-foreground/50">
+              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px]">Alt+N</kbd>
+              <span>طلب</span>
+              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px] ml-1">Alt+R</kbd>
+              <span>تحديث</span>
             </div>
             <a
               href={customerLink}
@@ -1091,11 +1069,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </Button>
-            {lastRefreshed && (
-              <span className="hidden md:inline text-[9px] text-muted-foreground/50 tabular-nums">
-                {lastRefreshed}
-              </span>
-            )}
           </div>
         </header>
 
@@ -1119,7 +1092,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(
-                    "glass-card border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300",
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated",
                     c.borderColor,
                   )}>
                     {/* Gradient glow on hover */}
@@ -1128,7 +1101,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     }} />
                     <div className="relative flex items-start justify-between">
                       <div className="min-w-0">
-                        <div className="text-2xl sm:text-3xl font-extrabold tabular-nums truncate text-foreground tracking-tight">{c.value}</div>
+                        <div className="text-xl sm:text-2xl font-bold tabular-nums truncate text-foreground">{c.value}</div>
                         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">{c.title}{c.trend && (c.trend === "up" ? <ArrowUp className="h-3 w-3 text-emerald-500" /> : <ArrowDown className="h-3 w-3 text-rose-500" />)}</div>
                       </div>
                       <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110", c.bg)}>
@@ -1144,7 +1117,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* ملخص اليوم */}
-              <div className="bg-gradient-to-l from-violet-50 via-indigo-50/80 to-sky-50/60 dark:from-violet-950/30 dark:via-indigo-950/25 dark:to-sky-950/30 border border-violet-200/60 dark:border-violet-800/30 rounded-2xl p-5 sm:p-6 card-glow glass-card neu-raised card-stack shadow-lg shadow-violet-200/20 dark:shadow-violet-900/10">
+              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card neu-raised card-stack">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -1154,19 +1127,19 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <div className="text-[11px] text-muted-foreground">الطلبات</div>
-                        <div className="text-xl font-extrabold tabular-nums text-foreground counter-number metric-large-number tracking-tight">{todayOrdersList.length}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number metric-large-number">{todayOrdersList.length}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">الإيرادات</div>
-                        <div className="text-xl font-extrabold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number tracking-tight">{formatDA(todayRevenue)}</div>
+                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number">{formatDA(todayRevenue)}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
-                        <div className="text-xl font-extrabold tabular-nums text-foreground counter-number tracking-tight">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">مكتملة</div>
-                        <div className="text-xl font-extrabold tabular-nums text-violet-600 dark:text-violet-400 counter-number tracking-tight">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                        <div className="text-lg font-bold tabular-nums text-violet-600 dark:text-violet-400 counter-number">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
                       </div>
                     </div>
                   </div>
@@ -1182,14 +1155,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* شريط ملخص اليوم */}
               {stats && (stats.todayOrders || 0) > 0 && (
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-                  <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
                     <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <div>
                       <div className="text-[11px] text-muted-foreground">اليوم</div>
                       <div className="text-sm font-bold tabular-nums">{stats.todayOrders || 0}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
                     <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     <div>
                       <div className="text-[11px] text-muted-foreground">إيرادات</div>
@@ -1221,45 +1194,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                   </button>
                 ))}
               </div>
-
-              {/* توزيع أنواع الخدمات */}
-              {stats?.serviceCounts && stats.serviceCounts.length > 0 && (
-                <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
-                  <CardContent className="pt-4">
-                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <Package className="h-4 w-4 text-gold-400" />
-                      أنواع الخدمات
-                    </h3>
-                    <div className="space-y-2.5">
-                      {stats.serviceCounts
-                        .sort((a, b) => b.count - a.count)
-                        .slice(0, 5)
-                        .map((svc) => {
-                          const maxCount = Math.max(...stats.serviceCounts.map(s => s.count), 1);
-                          const pct = Math.round((svc.count / maxCount) * 100);
-                          const svcEmoji: Record<string, string> = { document: "📄", photo: "🖼️", binding: "📚", poster: "🎨", card: "🎫", banner: "🎯" };
-                          return (
-                            <div key={svc.serviceType} className="group">
-                              <div className="flex items-center justify-between text-xs mb-1">
-                                <span className="flex items-center gap-1.5 text-muted-foreground group-hover:text-foreground transition-colors">
-                                  <span>{svcEmoji[svc.serviceType] || "📋"}</span>
-                                  <span>{svc.serviceType === "document" ? "مستندات" : svc.serviceType === "photo" ? "صور" : svc.serviceType === "binding" ? "تجليد" : svc.serviceType}</span>
-                                </span>
-                                <span className="tabular-nums font-medium">{svc.count} طلب</span>
-                              </div>
-                              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-l from-gold-500 to-gold-400 rounded-full transition-all duration-700 group-hover:from-gold-400 group-hover:to-gold-300"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* هدف الإيرادات + طابور الطباعة */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1736,10 +1670,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                           إلغاء
                         </button>
                       )}
-                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 dark:bg-gold-900/50 text-gold-600 dark:text-gold-400" : "text-muted-foreground hover:text-foreground")}>
+                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
                         {sortDir === "desc" ? "الأحدث" : "الأقدم"}
                       </button>
-                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 dark:bg-gold-900/50 text-gold-600 dark:text-gold-400" : "text-muted-foreground hover:text-foreground")}>
+                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
                         الأعلى سعراً
                       </button>
                     </div>
@@ -2512,7 +2446,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
     <div className="max-w-2xl mx-auto space-y-6">
       {/* ===== عنوان التاجر ===== */}
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gold-50 dark:bg-gold-950/30 flex items-center justify-center">
+        <div className="w-11 h-11 rounded-xl bg-gold-50 flex items-center justify-center">
           <User className="h-5 w-5 text-gold-500" />
         </div>
         <div>
@@ -2556,7 +2490,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
                     onChange={handleLogoUpload}
                     disabled={uploading}
                   />
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gold-50 dark:bg-gold-950/30 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-all duration-200 border border-gold-200/60 dark:border-gold-700/30">
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gold-50 hover:bg-gold-100 transition-all duration-200 border border-gold-200/60">
                     <Upload className="h-4 w-4 text-gold-500" />
                     <span className="text-sm font-medium text-gold-600">
                       {uploading ? "جارٍ الرفع..." : "اختر صورة"}
@@ -3132,7 +3066,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-gold-50 dark:bg-gold-950/30 flex items-center justify-center mb-4 border border-gold-200/60">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-gold-50 flex items-center justify-center mb-4 border border-gold-200/60">
           <Link2 className="h-8 w-8 text-gold-500" />
         </div>
         <h2 className="text-xl font-bold text-foreground">مشاركة متجرك</h2>
@@ -3143,7 +3077,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
       <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50/80 flex items-center justify-center">
               <Link2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
@@ -3284,26 +3218,6 @@ const OPTION_LABELS: Record<string, string> = {
   posterSize: "حجم الملصق", material: "الخامة", sorting: "الترتيب", extras: "إضافات",
 };
 
-/// شارة عمر الطلب للجوال
-function MobileOrderAgeBadge({ createdAt, status }: { createdAt: string; status: string }) {
-  const ageMs = Date.now() - new Date(createdAt).getTime();
-  const ageHours = ageMs / (1000 * 60 * 60);
-  const ageDays = ageHours / 24;
-
-  if (status === "delivered" || status === "cancelled") return null;
-
-  if (ageHours < 1) {
-    return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">جديد</span>;
-  }
-  if (ageHours < 24) {
-    return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">{Math.floor(ageHours)}س</span>;
-  }
-  if (ageDays < 3) {
-    return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-medium">{Math.floor(ageDays)}ي</span>;
-  }
-  return <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-medium badge-pulse">{Math.floor(ageDays)}ي ⚠️</span>;
-}
-
 function MobileOrderCard({
   order,
   onStatusChange,
@@ -3408,10 +3322,7 @@ function MobileOrderCard({
           </div>
         </div>
         <div className="mt-2.5 pt-2.5 border-t border-dark-100 flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <span>{formatDateTimeAr(order.createdAt)}</span>
-            <MobileOrderAgeBadge createdAt={order.createdAt} status={order.status} />
-          </div>
+          <span>{formatDateTimeAr(order.createdAt)}</span>
           <span className={cn("flex items-center gap-1 text-gold-400", expanded && "rotate-90", "transition-transform duration-200")}>
             <ChevronLeft className="h-3.5 w-3.5" />
             {expanded ? "إخفاء" : "عرض التفاصيل"}
@@ -3424,7 +3335,7 @@ function MobileOrderCard({
           <div>
             <div className="text-xs font-bold text-dark-700 mb-2">مواصفات الطباعة</div>
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(order.options || {})
+              {Object.entries(order.options)
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !["notes", "printRange", "pageRange", "totalPages"].includes(k))
                 .map(([k, v]) => (
                   <div key={k} className="rounded-xl bg-card shadow-sm border border-border px-3 py-2">

@@ -11,7 +11,6 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tayf-saas.vercel.app"),
   title: {
     default: "طيف — منصة إدارة المطابع الذكية",
     template: "%s | طيف",

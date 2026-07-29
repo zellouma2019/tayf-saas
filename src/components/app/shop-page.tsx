@@ -168,7 +168,7 @@ function ShopAppInner({ slug }: { slug: string }) {
 function ShopApp({ slug }: { slug: string }) {
   return (
     <Suspense fallback={<ShopLoader />}>
-      <div className="min-h-screen flex flex-col safe-bottom">
+      <div className="min-h-screen safe-bottom">
         <ShopAppInner slug={slug} />
       </div>
     </Suspense>

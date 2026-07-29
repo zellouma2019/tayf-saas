@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer, RefreshCw, Download } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,14 +31,64 @@ import { WeeklyReportChart } from "@/components/app/weekly-report-chart";
 import { ShopActivityFeed } from "@/components/app/shop-activity-feed";
 import { RevenueForecastWidget } from "@/components/app/revenue-forecast-widget";
 import { QuickStatsRow } from "@/components/app/quick-stats-row";
+import { ServicePopularityChart } from "@/components/app/service-popularity-chart";
+import { CustomerReviewsWidget } from "@/components/app/customer-reviews-widget";
 import { ProductionEfficiencyDashboard } from "@/components/app/production-efficiency-dashboard";
 import { MetricComparisonGrid } from "@/components/app/metric-comparison-grid";
 import { LiveActivityFeed } from "@/components/app/live-activity-feed";
 import { DailyGoalTracker } from "@/components/app/daily-goal-tracker";
+import OrderAnalyticsSummary from "@/components/app/order-analytics-summary";
+import ExpenseCategoryBreakdown from "@/components/app/expense-category-breakdown";
 import { OrderStatusTimeline } from "@/components/app/order-status-timeline";
 import { StaffActivityWidget } from "@/components/app/staff-activity-widget";
 import { TopServicesWidget } from "@/components/app/top-services-widget";
 import { CustomerStatsWidget } from "@/components/app/customer-stats-widget";
+import { PrintQueueManager } from "@/components/app/print-queue-manager";
+import { RevenueChartWidget } from "@/components/app/revenue-chart-widget";
+import { TeamPerformanceChart } from "@/components/app/team-performance-chart";
+import { OrderFlowDiagram } from "@/components/app/order-flow-diagram";
+import { ShopAnalyticsCard } from "@/components/app/shop-analytics-card";
+import { NotificationPreferences } from "@/components/app/notification-preferences";
+import { QuickSearchWidget } from "@/components/app/quick-search-widget";
+import { BranchLocatorWidget } from "@/components/app/branch-locator-widget";
+import { ScheduleCalendarWidget } from "@/components/app/schedule-calendar-widget";
+import { AlertsDashboardWidget } from "@/components/app/alerts-dashboard-widget";
+import { AchievementBadgesWidget } from "@/components/app/achievement-badges-widget";
+import ExpenseBudgetTracker from "@/components/app/expense-budget-tracker";
+import CustomerFeedbackChart from "@/components/app/customer-feedback-chart";
+import InventoryStockWidget from "@/components/app/inventory-stock-widget";
+import OrderPriorityQueue from "@/components/app/order-priority-queue";
+import ShopComparisonWidget from "@/components/app/shop-comparison-widget";
+import OrderAnalyticsDeepDive from "@/components/app/order-analytics-deep-dive";
+import MerchantRevenueBreakdown from "@/components/app/merchant-revenue-breakdown";
+import DeliveryPerformanceWidget from "@/components/app/delivery-performance-widget";
+import CouponManagementWidget from "@/components/app/coupon-management-widget";
+import DailySalesSummary from "@/components/app/daily-sales-summary";
+import TeamWorkloadWidget from "@/components/app/team-workload-widget";
+import ProfitMarginChart from "@/components/app/profit-margin-chart";
+import CustomerRetentionWidget from "@/components/app/customer-retention-widget";
+import ServiceTimeTracker from "@/components/app/service-time-tracker";
+import PaymentMethodsWidget from "@/components/app/payment-methods-widget";
+import PeakHoursHeatmap from "@/components/app/peak-hours-heatmap";
+import ReferralTrackerWidget from "@/components/app/referral-tracker-widget";
+import WasteReductionWidget from "@/components/app/waste-reduction-widget";
+import ClientCommunicationWidget from "@/components/app/client-communication-widget";
+import MachineMaintenanceWidget from "@/components/app/machine-maintenance-widget";
+import OrderRevenueDistribution from "@/components/app/order-revenue-distribution";
+import MonthlyTargetProgress from "@/components/app/monthly-target-progress";
+import TopCustomersWidget from "@/components/app/top-customers-widget";
+import PrintQualityMonitor from "@/components/app/print-quality-monitor";
+import EmployeePerformanceChart from "@/components/app/employee-performance-chart";
+import BusinessHoursWidget from "@/components/app/business-hours-widget";
+import SeasonalDemandWidget from "@/components/app/seasonal-demand-widget";
+import CostBreakdownWidget from "@/components/app/cost-breakdown-widget";
+import FeedbackSentimentWidget from "@/components/app/feedback-sentiment-widget";
+import OrderFulfillmentTimeline from "@/components/app/order-fulfillment-timeline";
+import { ShippingTrackerWidget } from "@/components/app/shipping-tracker-widget";
+import { MarketingCampaignWidget } from "@/components/app/marketing-campaign-widget";
+import { SupplierManagementWidget } from "@/components/app/supplier-management-widget";
+import { QuickReportsWidget } from "@/components/app/quick-reports-widget";
+import { ColorMaterialPreview } from "@/components/app/color-material-preview";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -93,7 +143,7 @@ function WeeklyRevenueChart({ stats }: { stats: GlobalStats }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <CalendarDays className="h-4 w-4 text-gold-500" />
           إيرادات الأسبوع
           <span className="text-xs text-muted-foreground font-normal mr-auto tabular-nums">{formatDA(totalWeek)}</span>
@@ -151,7 +201,7 @@ function PeakHoursChart({ stats }: { stats: GlobalStats }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm card-elevated">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <Clock className="h-4 w-4 text-violet-500" />
           ذروة الطلب
           <span className="text-xs text-muted-foreground font-normal mr-auto">
@@ -271,7 +321,7 @@ function RevenueAnalyticsWidget({ stats }: { stats: GlobalStats }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm card-glow overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <BarChart2 className="h-4 w-4 text-gold-500" />
           إحصائيات الإيرادات
           <span className="text-[10px] text-muted-foreground font-normal mr-auto">آخر 7 أيام</span>
@@ -362,7 +412,7 @@ function QuickActionsPanel({ onOpenCreate, onRefresh, onExport, onSwitchToSettin
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <Zap className="h-4 w-4 text-amber-500" />
           إجراءات سريعة
         </CardTitle>
@@ -421,14 +471,14 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
     recentOrders: s.recentOrders ?? [],
   };
   return (
-    <div className="space-y-6 stagger-children">
+    <div className="space-y-6">
       {/* شريط الترحيب */}
-      <div className="aurora-bg rounded-2xl overflow-hidden fade-in-up" style={{ background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(212, 168, 83, 0.4))', backdropFilter: 'blur(16px)' }}>
-        <div className="dot-pattern-gold absolute inset-0 opacity-10 pointer-events-none" />
-        <div className="absolute -left-10 -top-10 w-32 h-32 rounded-full bg-white/[0.07] morph-blob pointer-events-none" />
-        <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-white/[0.04] morph-blob pointer-events-none" style={{ animationDelay: '-2s' }} />
-        <div className="absolute left-1/3 top-1/4 w-12 h-12 rounded-full bg-white/[0.04] morph-blob pointer-events-none" style={{ animationDelay: '-4s' }} />
-        <div className="relative z-10 p-5 sm:p-7 md:p-8 text-white">
+      <div className="aurora-bg rounded-2xl overflow-hidden fade-in-up" style={{ background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(212, 168, 83, 0.7))', backdropFilter: 'blur(16px)' }}>
+        <div className="dot-pattern-gold absolute inset-0 opacity-20 pointer-events-none" />
+        <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-white/10 morph-blob pointer-events-none" />
+        <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/5 morph-blob pointer-events-none" style={{ animationDelay: '-2s' }} />
+        <div className="absolute left-1/3 top-1/4 w-16 h-16 rounded-full bg-white/5 morph-blob pointer-events-none" style={{ animationDelay: '-4s' }} />
+        <div className="relative z-10 p-6 sm:p-8 text-white">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2 text-shadow-sm"><span className="online-dot" /><span className="gradient-primary text-gradient-animated">مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
@@ -460,41 +510,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         </div>
       )}
 
-      {/* إجراءات سريعة دائمة */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children fade-in-up">
-        <button onClick={onOpenCreate} className="quick-action-btn group" dir="rtl">
-          <div className="icon-wrapper">
-            <Store className="h-5 w-5 text-primary" />
-          </div>
-          <p className="text-xs font-semibold text-foreground mb-0.5">إنشاء متجر</p>
-          <p className="text-[10px] text-muted-foreground">أضف متجر جديد</p>
-        </button>
-        <button onClick={onRefresh} className="quick-action-btn group" dir="rtl">
-          <div className="icon-wrapper">
-            <RefreshCw className="h-5 w-5 text-emerald-500" />
-          </div>
-          <p className="text-xs font-semibold text-foreground mb-0.5">تحديث البيانات</p>
-          <p className="text-[10px] text-muted-foreground">جلب أحدث الطلبات</p>
-        </button>
-        <button onClick={onExport} className="quick-action-btn group" dir="rtl">
-          <div className="icon-wrapper">
-            <Download className="h-5 w-5 text-violet-500" />
-          </div>
-          <p className="text-xs font-semibold text-foreground mb-0.5">تصدير التقرير</p>
-          <p className="text-[10px] text-muted-foreground">تحميل CSV</p>
-        </button>
-        <button onClick={onSwitchToSettings} className="quick-action-btn group" dir="rtl">
-          <div className="icon-wrapper">
-            <Settings className="h-5 w-5 text-amber-500" />
-          </div>
-          <p className="text-xs font-semibold text-foreground mb-0.5">إعدادات المنصة</p>
-          <p className="text-[10px] text-muted-foreground">تخصيص الهوية</p>
-        </button>
-      </div>
-
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-primary hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
@@ -505,7 +523,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <SparklineMini values={[20, 23, 25, 28, 31, 35, 38]} color="#d4a853" />
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
@@ -515,7 +533,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           <SparklineMini values={[17200, 17800, 17400, 17900, 17100, 17600, 18000]} color="#10b981" />
         </div>
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-amber-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
@@ -525,7 +543,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           <SparklineMini values={[0, 1, 0, 0, 3, 0, 2]} color="#f59e0b" />
         </div>
-        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-violet-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile card-glow metric-glow group card-rotate-3d card-spotlight">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number">
@@ -557,7 +575,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {/* توزيع الحالات */}
       <Card className="bg-muted/50 rounded-xl border border-border shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+          <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
             <BarChart3 className="h-4 w-4 text-primary" />
             توزيع حالات الطلبات
           </CardTitle>
@@ -568,7 +586,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             if (totalOrders === 0) {
               return (
                 <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                  <div className="empty-state-icon"><Clock className="h-8 w-8 text-primary/30" /></div>
+                  <div className="empty-state-icon"><Clock className="h-8 w-8 text-primary/60" /></div>
                   <p className="text-sm font-medium">لا توجد طلبات بعد لعرض التوزيع</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا بمجرد وصول أول طلب</p>
                 </div>
@@ -621,7 +639,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       </div>
 
       {/* مخطط إيرادات الأسبوع + ذروة الطلب */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <WeeklyRevenueChart stats={stats} />
         <PeakHoursChart stats={stats} />
       </div>
@@ -648,7 +666,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         return (
           <Card className="bg-card rounded-xl border border-border shadow-sm card-glow card-tilt-3d">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+              <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
                 <Crown className="h-4 w-4 text-gold-500" />
                 أفضل الزبائن
               </CardTitle>
@@ -656,7 +674,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <CardContent className="p-0">
               {topCustomers.length === 0 ? (
                 <div className="py-10 flex flex-col items-center text-muted-foreground">
-                  <Users className="h-8 w-8 text-muted-foreground/20 mb-2" />
+                  <Users className="h-8 w-8 text-muted-foreground/30 mb-2" />
                   <p className="text-sm font-medium">لا يوجد زبائن بعد</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا أفضل الزبائن بناءً على عدد الطلبات</p>
                 </div>
@@ -697,7 +715,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {safeStats.recentOrders.length > 0 && (
         <Card className="widget card-gradient-top fade-in-up" dir="rtl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+            <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
               <Activity className="h-4 w-4 text-primary" />
               آخر النشاطات
               <Badge variant="secondary" className="text-[10px] px-1.5 mr-auto">
@@ -717,7 +735,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* بطاقات الإجراءات السريعة */}
       {(safeStats.shopStats.length ?? 0) === 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 fade-in-up fade-in-up-delay-1">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4 fade-in-up fade-in-up-delay-1">
           <button onClick={onOpenCreate} className="group bg-card rounded-xl border border-border shadow-sm p-5 text-right hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-glow-subtle">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-primary" /></div>
             <h3 className="text-sm font-bold text-foreground mb-1">إنشاء متجرك الأول</h3>
@@ -810,6 +828,35 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       {/* أشهر الخدمات */}
       <ServicePopularityWidget stats={safeStats} />
 
+      {/* مخطط شعبية الخدمات */}
+      <ServicePopularityChart
+        services={[
+          { name: "طباعة مستند", count: 18, percentage: 47 },
+          { name: "طباعة صور", count: 8, percentage: 21 },
+          { name: "تجليد", count: 5, percentage: 13 },
+          { name: "بطاقات", count: 4, percentage: 11 },
+          { name: "ملصقات", count: 3, percentage: 8 },
+        ]}
+      />
+
+      {/* تقييمات الزبائن */}
+      <CustomerReviewsWidget
+        shopName="المنصة"
+        averageRating={4.7}
+        totalReviews={156}
+        reviews={[
+          { id: "1", customerName: "أحمد بن علي", rating: 5, comment: "خدمة ممتازة وسريعة، أنصح الجميع!", date: "2026-07-28", verified: true },
+          { id: "2", customerName: "فاطمة الزهراء", rating: 4, comment: "جودة طباعة عالية جداً", date: "2026-07-27", verified: true },
+          { id: "3", customerName: "محمد الأمين", rating: 5, comment: "أسرع مطبعة تعاملت معها", date: "2026-07-26", verified: false },
+        ]}
+      />
+
+      {/* ملخص التحليلات */}
+      <OrderAnalyticsSummary />
+
+      {/* توزيع المصاريف */}
+      <ExpenseCategoryBreakdown />
+
       {/* مسار حالة الطلب */}
       <OrderStatusTimeline currentStatus="printing" />
 
@@ -821,6 +868,144 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* إحصائيات العملاء */}
       <CustomerStatsWidget />
+
+      {/* مدير قائمة الطباعة */}
+      <PrintQueueManager />
+
+      {/* رسم الإيرادات */}
+      <RevenueChartWidget />
+
+      {/* أداء فريق العمل */}
+      <TeamPerformanceChart />
+
+      {/* مسار معالجة الطلبات */}
+      <OrderFlowDiagram />
+
+      {/* تحليلات المتجر */}
+      <ShopAnalyticsCard />
+
+      {/* إعدادات الإشعارات */}
+      <NotificationPreferences />
+
+      {/* بحث سريع */}
+      <QuickSearchWidget />
+
+      {/* مواقع الفروع */}
+      <BranchLocatorWidget />
+
+      {/* لوحة التنبيهات */}
+      <AlertsDashboardWidget />
+
+      {/* جدول المواعيد */}
+      <ScheduleCalendarWidget />
+
+      {/* الإنجازات */}
+      <AchievementBadgesWidget />
+
+      {/* تتبّع الميزانية */}
+      <ExpenseBudgetTracker />
+
+      {/* تقييمات العملاء */}
+      <CustomerFeedbackChart />
+
+      {/* مخزون المواد */}
+      <InventoryStockWidget />
+
+      {/* طابور الأولوية */}
+      <OrderPriorityQueue />
+
+      {/* مقارنة المتاجر */}
+      <ShopComparisonWidget />
+
+      {/* تحليل الطلبات التفصيلي */}
+      <OrderAnalyticsDeepDive />
+
+      {/* تفصيل الإيرادات */}
+      <MerchantRevenueBreakdown />
+
+      {/* أداء التوصيل */}
+      <DeliveryPerformanceWidget />
+
+      {/* إدارة القسائم */}
+      <CouponManagementWidget />
+
+      {/* ملخص المبيعات اليوم */}
+      <DailySalesSummary />
+
+      {/* حمل العمل */}
+      <TeamWorkloadWidget />
+
+      {/* هوامش الربح */}
+      <ProfitMarginChart />
+
+      {/* الاحتفاظ بالعملاء */}
+      <CustomerRetentionWidget />
+
+      {/* زمن الخدمات */}
+      <ServiceTimeTracker />
+
+      {/* طرق الدفع */}
+      <PaymentMethodsWidget />
+
+      {/* ساعات الذروة */}
+      <PeakHoursHeatmap />
+
+      {/* مصادر الإحالة */}
+      <ReferralTrackerWidget />
+
+      {/* تقليل الهدر */}
+      <WasteReductionWidget />
+
+      {/* تواصل العملاء */}
+      <ClientCommunicationWidget />
+
+      {/* صيانة الآلات */}
+      <MachineMaintenanceWidget />
+
+      {/* توزيع إيرادات الطلبات */}
+      <OrderRevenueDistribution />
+
+      {/* أهداف الشهر */}
+      <MonthlyTargetProgress />
+
+      {/* أفضل العملاء */}
+      <TopCustomersWidget />
+
+      {/* مراقبة جودة الطباعة */}
+      <PrintQualityMonitor />
+
+      {/* أداء الموظفين */}
+      <EmployeePerformanceChart />
+
+      {/* ساعات العمل */}
+      <BusinessHoursWidget />
+
+      {/* الطلب الموسمي */}
+      <SeasonalDemandWidget />
+
+      {/* تحليل التكاليف */}
+      <CostBreakdownWidget />
+
+      {/* تحليل المشاعر */}
+      <FeedbackSentimentWidget />
+
+      {/* مسار تنفيذ الطلبات */}
+      <OrderFulfillmentTimeline />
+
+      {/* متتبع الشحنات */}
+      <ShippingTrackerWidget />
+
+      {/* الحملات التسويقية */}
+      <MarketingCampaignWidget />
+
+      {/* إدارة الموردين */}
+      <SupplierManagementWidget />
+
+      {/* التقارير السريعة */}
+      <QuickReportsWidget />
+
+      {/* معاينة الألوان والمواد */}
+      <ColorMaterialPreview />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
@@ -839,7 +1024,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+            <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
               <Activity className="h-4 w-4 text-primary" />
               النشاطات الأخيرة
             </CardTitle>
@@ -853,7 +1038,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
         <Card className="bg-card rounded-xl border border-border shadow-sm lg:col-span-2">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+            <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
               <Clock className="h-4 w-4 text-primary" />
               آخر الطلبات عبر المتاجر
             </CardTitle>
@@ -862,7 +1047,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
             <div className="divide-y divide-border">
               {(safeStats.recentOrders || []).slice(0, 10).map((order, idx) => (
                 <div key={order.id} className={cn(
-                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 table-row-hover table-row-accent feed-item hover:border-l-2 hover:border-l-primary hover:bg-primary/[0.03] transition-colors border-l-2 border-l-transparent",
+                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 table-row-hover table-row-accent feed-item",
                   idx % 2 === 0 ? "table-row-even" : "table-row-odd"
                 )}>
                   <div className="flex items-center gap-3 min-w-0">
@@ -876,7 +1061,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-bold text-foreground">{formatDA(order.total)}</span>
-                    <span className={cn("text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1", STATUS_COLORS[order.status] || "")}>
+                    <span className={cn("text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5", STATUS_COLORS[order.status] || "")}>
                       <span className={cn("status-dot", `status-dot-${order.status}`)} />
                       {STATUS_META[order.status]?.label || order.status}
                     </span>
@@ -886,7 +1071,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
               {!(safeStats.recentOrders?.length) && (
                 <div className="empty-state py-14">
                   <div className="empty-state-icon">
-                    <Package className="h-8 w-8 text-muted-foreground/25" />
+                    <Package className="h-8 w-8 text-muted-foreground/40" />
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
                   <p className="text-[11px] text-muted-foreground/50 mt-1">ستظهر هنا آخر الطلبات من جميع المتاجر</p>
@@ -909,14 +1094,14 @@ function PieChartCard({ stats }: { stats: GlobalStats }) {
     return (
       <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+          <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
             <Activity className="h-4 w-4 text-primary" />
             توزيع حالات الطلبات - مخطط دائري
           </CardTitle>
         </CardHeader>
         <CardContent dir="rtl">
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Clock className="h-10 w-10 text-muted-foreground/20 mb-3" />
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+            <Clock className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm">لا توجد طلبات بعد لعرض المخطط</p>
           </div>
         </CardContent>
@@ -929,7 +1114,7 @@ function PieChartCard({ stats }: { stats: GlobalStats }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <Activity className="h-4 w-4 text-primary" />
           توزيع حالات الطلبات - مخطط دائري
         </CardTitle>
@@ -970,14 +1155,14 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
     return (
       <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+          <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
             <TrendingUp className="h-4 w-4 text-primary" />
             مقارنة إيرادات المتاجر
           </CardTitle>
         </CardHeader>
         <CardContent dir="rtl">
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Store className="h-10 w-10 text-muted-foreground/20 mb-3" />
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+            <Store className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm">لا توجد متاجر بعد لعرض المقارنة</p>
           </div>
         </CardContent>
@@ -988,7 +1173,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <TrendingUp className="h-4 w-4 text-primary" />
           مقارنة إيرادات المتاجر
         </CardTitle>
@@ -1042,7 +1227,7 @@ function ServicePopularityWidget({ stats }: { stats: GlobalStats }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm card-gradient-top fade-in-up">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <Star className="h-4 w-4 text-gold-500" />
           أشهر الخدمات المطلوبة
           <span className="text-[10px] text-muted-foreground font-normal mr-auto">آخر {recentOrders.length} طلب</span>
@@ -1108,7 +1293,7 @@ function ShopRankingWidget({ shops }: { shops: GlobalStats["shopStats"] }) {
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm fade-in-up">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
           <Crown className="h-4 w-4 text-amber-500" />
           ترتيب المتاجر حسب الأداء
         </CardTitle>
@@ -1179,7 +1364,7 @@ function ShopQuickStatsPopover({ shop }: { shop: ShopStat }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="cursor-pointer hover:-translate-y-[2px] hover:shadow-lg transition-all duration-200 rounded-xl">
+        <div className="cursor-pointer">
           <ShopOverviewCard shop={shop} onRefresh={() => {}} />
         </div>
       </PopoverTrigger>

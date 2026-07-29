@@ -61,14 +61,13 @@ export function safeJson<T = Record<string, unknown>>(str: string | null, fallba
 /**
  * استعلام SQL مباشر على Turso — بدون Prisma fallback
  * مهلة 8 ثواني — تُرجع مصفوفة فارغة عند الفشل (degradation graciosa)
- * ⚠️ يحتوي على retry تلقائي (محاولة واحدة إضافية) لمعالجة فشل Turso المتقطع
  */
 export async function tursoQuery<T = Record<string, unknown>>(
   sql: string,
   args?: unknown[]
 ): Promise<T[]> {
-  const client = getTursoClient();
-  const tryQuery = async (): Promise<T[]> => {
+  try {
+    const client = getTursoClient();
     const result = await Promise.race([
       client.execute({ sql, args: (args || []) as never[] }),
       new Promise<never>((_, reject) =>
@@ -76,23 +75,10 @@ export async function tursoQuery<T = Record<string, unknown>>(
       ),
     ]);
     return result.rows as unknown as T[];
-  };
-
-  // المحاولة الأولى
-  try {
-    return await tryQuery();
-  } catch (e1) {
-    console.warn("[turso-lite] query attempt 1 failed:", (e1 as Error).message);
-    // Retry مرة واحدة بعد تأخير قصير (مشكلة Turso HTTP المتقطعة)
-    await new Promise(r => setTimeout(r, 300));
-    try {
-      const rows = await tryQuery();
-      console.log("[turso-lite] query retry succeeded, rows:", rows.length);
-      return rows;
-    } catch (e2) {
-      console.error("[turso-lite] query attempt 2 failed:", (e2 as Error).message);
-      return [];
-    }
+  } catch (e) {
+    console.error("[turso-lite] query failed:", (e as Error).message);
+    // إرجاع فارغ بدلاً من Prisma fallback (نفس DB = نفس المشكلة)
+    return [];
   }
 }
 
@@ -172,14 +158,13 @@ export async function tursoQueries<T extends unknown[]>(
 
 /**
  * تنفيذ عملية كتابة (INSERT/UPDATE/DELETE) مباشرة على Turso
- * ⚠️ يحتوي على retry تلقائي (محاولة واحدة إضافية) لمعالجة فشل Turso المتقطع
  */
 export async function tursoExecute<T = Record<string, unknown>>(
   sql: string,
   args?: unknown[]
 ): Promise<{ rows: T[]; lastInsertRowid: bigint | null; rowsAffected: number }> {
-  const client = getTursoClient();
-  const tryExec = async () => {
+  try {
+    const client = getTursoClient();
     const result = await Promise.race([
       client.execute({ sql, args: (args || []) as never[] }),
       new Promise<never>((_, reject) =>
@@ -191,17 +176,8 @@ export async function tursoExecute<T = Record<string, unknown>>(
       lastInsertRowid: result.lastInsertRowid ?? null,
       rowsAffected: result.rowsAffected,
     };
-  };
-  try {
-    return await tryExec();
-  } catch (e1) {
-    console.warn("[turso-lite] execute attempt 1 failed:", (e1 as Error).message);
-    await new Promise(r => setTimeout(r, 300));
-    try {
-      return await tryExec();
-    } catch (e2) {
-      console.error("[turso-lite] execute attempt 2 failed:", (e2 as Error).message);
-      return { rows: [], lastInsertRowid: null, rowsAffected: 0 };
-    }
+  } catch (e) {
+    console.error("[turso-lite] execute failed:", (e as Error).message);
+    return { rows: [], lastInsertRowid: null, rowsAffected: 0 };
   }
 }
