@@ -3531,3 +3531,68 @@ Task: QA + ميزات جديدة + تحسينات بصرية + CSS Round 24
 6. تحسين merchant dashboard على الجوال
 7. إضافة og:image للسوشيال ميديا
 8. تحسينات على حاسبة الأسعار
+
+---
+Task ID: qa-fix-round22
+Agent: Main Agent
+Task: QA + fixes + CSS Round 25 + new features
+
+## Project Status
+- All pages work without JavaScript errors
+- Admin panel works (overview + orders + shops)
+- Customer shop page works
+- Order tracking works
+- Dark mode works
+- Build passes without errors
+- Turso DB intermittently returns empty results (LEFT JOIN slow ~16s + sometimes 0 rows)
+
+## Critical Fixes
+
+### 1. global-stats API: force-dynamic (removed edge cache revalidate=30)
+- File: src/app/api/admin/global-stats/route.ts
+- Changed from revalidate=30 to dynamic='force-dynamic'
+
+### 2. Shops tab empty: fallback from /api/shops
+- When global-stats returns empty shopStats, loads from /api/shops directly
+- File: src/app/page.tsx
+
+### 3. Orders API timeout: AbortController + smaller retry
+- Added 10s timeout, retry with limit=50 on empty results
+- File: src/app/page.tsx
+
+## New Features
+
+### 1. Bulk Order Actions
+- Checkboxes in table header + rows + mobile cards
+- Select all / clear selection
+- Bulk status change bar with dropdown + apply button
+- File: src/app/page.tsx
+
+### 2. Favicon Badge (pending orders count)
+- Dynamic canvas-based badge on browser tab icon
+- Updates with stats changes
+- Files: src/lib/admin-utils.ts (setFaviconBadge), src/app/page.tsx
+
+### 3. Shop Performance Ranking Widget
+- Top 5 shops by orders with medal icons
+- Progress bars + revenue display
+- File: src/components/app/admin-overview-tab.tsx
+
+## CSS Round 25 (+370 lines)
+- btn-shine, animated-border-gradient, stagger-list, input-glow
+- status-breathing, cursor-blink, card-accent-top, noise-overlay
+- press-effect, hover-lift-shadow, focus-within-ring, progress-striped
+- Custom ::selection, placeholder transitions, webkit scrollbar
+- Container queries support
+
+## Commits
+- 569f29a: fix(r22): shops fallback + force-dynamic
+- 8919766: feat(r22): CSS R25, bulk actions, favicon badge, shop ranking
+- bff0194: fix(r22): fetch timeout + smaller retry
+
+## Recommendations
+1. UPLOADTHING_TOKEN in Vercel (not done yet!)
+2. Turso DB root cause — LEFT JOIN slow/empty → consider alternative DB
+3. SEO JSON-LD
+4. Multi-service cart
+5. DB-based order notes
