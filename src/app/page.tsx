@@ -146,7 +146,7 @@ export default function SuperAdminPage() {
   // تحميل الطلبات بشكل مستقل (لا يُعطّل عرض الإحصائيات)
   const loadOrders = useCallback(async () => {
     try {
-      const d = await fetch(`/api/orders?noPreview=true&limit=500&_t=${Date.now()}`, { cache: 'no-store' })
+      const d = await fetch(`/api/orders?noPreview=true&limit=500`, { cache: 'no-store' })
         .then((r) => r.ok ? r.json() : null)
         .catch(() => null);
       if (d && !d.error) {
@@ -157,7 +157,7 @@ export default function SuperAdminPage() {
           // Turso hiccup — retry once after delay
           setTimeout(async () => {
             try {
-              const d2 = await fetch(`/api/orders?noPreview=true&limit=500&_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json());
+              const d2 = await fetch(`/api/orders?noPreview=true&limit=500`, { cache: 'no-store' }).then(r => r.json());
               if (d2.orders?.length > 0) setAllOrders(d2.orders);
             } catch { /* silent */ }
           }, 2000);

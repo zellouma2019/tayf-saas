@@ -256,8 +256,8 @@ export async function GET(req: NextRequest) {
       },
     }, {
       headers: {
-        // cache قصير على edge (3 ثواني) لتقليل ضغط Turso
-        "Cache-Control": "public, max-age=0, s-maxage=3",
+        // لا تخزن مؤقتاً على edge — البيانات تتغير بسرعة مع طلبات جديدة
+        "Cache-Control": "no-store",
       },
     });
   } catch (e) {

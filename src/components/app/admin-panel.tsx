@@ -305,7 +305,6 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       try {
         const res = await fetch("/api/orders?limit=500&noPreview=true", {
           cache: 'no-store',
-          headers: { 'x-t': String(Date.now()) },
         });
         const data = await res.json();
         const rawOrders = Array.isArray(data?.orders) ? data.orders : [];
