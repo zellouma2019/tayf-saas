@@ -31113,3 +31113,105 @@ tr:hover .table-cell-actions {
 .animate-shake {
   animation: shake 0.5s ease;
 }
+
+/* ===== Admin Dashboard v4.2 Additions ===== */
+
+/* KPI card shimmer border effect */
+@keyframes kpi-border-glow {
+  0%, 100% { border-color: color-mix(in oklch, var(--primary) 30%, transparent); }
+  50% { border-color: color-mix(in oklch, var(--primary) 60%, transparent); }
+}
+.kpi-card-glow {
+  animation: kpi-border-glow 3s ease-in-out infinite;
+}
+
+/* Smooth tab indicator transition */
+.tab-indicator {
+  position: relative;
+}
+.tab-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center;
+}
+.tab-indicator.active::after {
+  transform: scaleX(1);
+}
+
+/* Notification bell swing */
+@keyframes bell-swing {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(12deg); }
+  30% { transform: rotate(-10deg); }
+  45% { transform: rotate(6deg); }
+  60% { transform: rotate(-4deg); }
+  75% { transform: rotate(2deg); }
+}
+.bell-swing:hover {
+  animation: bell-swing 0.8s ease;
+}
+
+/* Action button ripple */
+.action-btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+.action-btn-ripple::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  transform: scale(0.5);
+  border-radius: inherit;
+}
+.action-btn-ripple:hover::before {
+  opacity: 0.1;
+  transform: scale(1);
+}
+
+/* Card entrance stagger with subtle translate */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.card-enter {
+  animation: card-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Gradient text for platform branding */
+.text-gradient-platform {
+  background: linear-gradient(135deg, var(--primary) 0%, color-mix(in oklch, var(--primary) 70%, #e8c060) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Empty state breathing animation */
+@keyframes empty-breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.02); }
+}
+.empty-breathe {
+  animation: empty-breathe 3s ease-in-out infinite;
+}
+
+/* Chart tooltip custom styling */
+.chart-tooltip-custom {
+  border-radius: 8px !important;
+  backdrop-filter: blur(8px) !important;
+}

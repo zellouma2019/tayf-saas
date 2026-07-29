@@ -5,6 +5,7 @@ import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, Download, TrendingUp,
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
+  ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,9 @@ import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Card, CardContent, CardHeader, CardTitle,
+} from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -30,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { GlobalStats, GlobalOrder, ShopStat } from "@/lib/admin-types";
 import {
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
   isAuthenticated, verifySession, adminFetch,
@@ -152,11 +156,11 @@ export default function SuperAdminPage() {
 
   // Set favicon badge
   useEffect(() => {
-    if (globalStats?.orders) {
-      const pending = globalStats.orders.filter((o: GlobalOrder) => o.status === "pending").length;
+    if (allOrders.length > 0) {
+      const pending = allOrders.filter((o) => o.status === "pending").length;
       setFaviconBadge(pending);
     }
-  }, [globalStats]);
+  }, [allOrders]);
 
   // Handle logout
   function handleLogout() {
@@ -176,13 +180,13 @@ export default function SuperAdminPage() {
     }
     if (search) {
       const s = search.toLowerCase();
-      const searchable = `${o.id} ${o.customerName} ${o.customerPhone} ${o.shopName} ${o.serviceType}`.toLowerCase();
+      const searchable = `${o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.shopName} ${o.serviceType}`.toLowerCase();
       if (!searchable.includes(s)) return false;
     }
     return true;
   });
 
-  const shops = globalStats?.shops || fallbackShops;
+  const shops = globalStats?.shopStats || fallbackShops;
   const safeShops = Array.isArray(shops) ? shops : [];
   const filteredShops = safeShops.filter((s) => {
     if (!shopSearch) return true;
@@ -231,6 +235,15 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Notification bell with pending count */}
+            {safeOrders.filter(o => o.status === "pending").length > 0 && (
+              <button className="relative p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors bell-swing">
+                <Bell className="h-4 w-4" />
+                <span className="absolute -top-0.5 left-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
+                  {safeOrders.filter(o => o.status === "pending").length}
+                </span>
+              </button>
+            )}
             <ThemeToggle />
             <button
               onClick={() => setCreateOpen(true)}
@@ -526,6 +539,90 @@ export default function SuperAdminPage() {
               </div>
             )}
 
+            {/* Shop Revenue Comparison Chart */}
+            {safeShops.length > 0 && (
+              <Card className="bg-card rounded-xl border border-border shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+                    <DollarSign className="h-4 w-4 text-violet-500" />
+                    مقارنة المتاجر — الطلبات والإيرادات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="w-full h-[220px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={safeShops.filter(s => s.orders > 0 || s.revenue > 0).slice(0, 6).map(s => ({
+                        name: s.name?.length > 12 ? s.name.slice(0, 12) + '…' : s.name || s.slug,
+                        orders: s.orders,
+                        revenue: s.revenue,
+                      }))} layout="vertical" margin={{ right: 10, left: 10, top: 5, bottom: 5 }}>
+                        <XAxis type="number" tick={{ fontSize: 10 }} stroke="var(--color-muted-foreground)" />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} stroke="var(--color-muted-foreground)" width={80} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--color-card)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            color: 'var(--color-foreground)',
+                          }}
+                          labelStyle={{ color: 'var(--color-foreground)' }}
+                          itemStyle={{ color: 'var(--color-muted-foreground)' }}
+                        />
+                        <Bar dataKey="orders" fill="#3b82f6" radius={[0, 4, 4, 0]} name="الطلبات" />
+                        <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="الإيرادات (د.ج)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Activity Timeline - Last 5 orders */}
+            {safeOrders.length > 0 && (
+              <Card className="bg-card rounded-xl border border-border shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    آخر النشاطات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {safeOrders.slice(0, 5).map((order, i) => (
+                      <div key={order.id} className="flex items-start gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className={cn(
+                            "w-2.5 h-2.5 rounded-full shrink-0 status-dot",
+                            STATUS_META[order.status as keyof typeof STATUS_META]?.color?.replace('text-', 'bg-') || "bg-muted-foreground"
+                          )} />
+                          {i < 4 && <div className="w-px h-full min-h-[20px] bg-border mt-1" />}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-1">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="font-medium truncate">{order.customer?.name || "زبون"}</span>
+                            <ChevronLeft className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="text-muted-foreground truncate">{order.serviceType || "خدمة"}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                            <span>{order.shopName || "متجر"}</span>
+                            <span>•</span>
+                            <span>{formatDA(order.createdAt)}</span>
+                            {order.total > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="font-medium text-violet-500">{order.total.toLocaleString("ar-DZ")} د.ج</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Recent orders */}
             <div className="rounded-xl border border-border bg-card">
               <div className="p-4 border-b border-border flex items-center justify-between">
@@ -539,7 +636,7 @@ export default function SuperAdminPage() {
                   <div
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
-                    className="p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                    className="p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
                   >
                     <div className="flex items-center gap-3">
                       <Badge
@@ -553,14 +650,23 @@ export default function SuperAdminPage() {
                       </Badge>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate">
-                          {order.customerName || "زبون"} — {order.serviceType || "خدمة"}
+                          {order.customer?.name || "زبون"} — {order.serviceType || "خدمة"}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {order.shopName || order.shopSlug || "متجر"} • {order.id}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground truncate">
+                          <span>{order.shopName || order.shopSlug || "متجر"}</span>
+                          <span>•</span>
+                          <span className="font-mono text-[10px]">{order.reference || order.id.slice(0, 10)}</span>
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDA(order.createdAt)}
+                      <div className="text-left shrink-0">
+                        {order.total > 0 && (
+                          <div className="text-xs font-semibold text-violet-500 dark:text-violet-400 tabular-nums">
+                            {order.total.toLocaleString("ar-DZ")} <span className="text-[9px] font-normal">د.ج</span>
+                          </div>
+                        )}
+                        <div className="text-[10px] text-muted-foreground">
+                          {formatDA(order.createdAt)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -740,6 +846,7 @@ export default function SuperAdminPage() {
                       <TableHead className="text-right">الحالة</TableHead>
                       <TableHead className="text-right">المبلغ</TableHead>
                       <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">إجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -749,7 +856,7 @@ export default function SuperAdminPage() {
                         onClick={() => setSelectedOrder(order)}
                         className="cursor-pointer hover:bg-muted/50 table-row-highlight"
                       >
-                        <TableCell className="font-medium">{order.customer?.name || order.customerName || "—"}</TableCell>
+                        <TableCell className="font-medium">{order.customer?.name || "—"}</TableCell>
                         <TableCell>{order.serviceName || order.serviceType || "—"}</TableCell>
                         <TableCell>{order.shopName || order.shopSlug || "—"}</TableCell>
                         <TableCell>
@@ -759,11 +866,32 @@ export default function SuperAdminPage() {
                         </TableCell>
                         <TableCell className="font-medium tabular-nums text-sm">{order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{formatDA(order.createdAt)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                              title="عرض التفاصيل"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <a
+                              href={`/s/${order.shopSlug || "default"}?admin=1`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                              title="فتح في لوحة المتجر"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ArrowUpRight className="h-3.5 w-3.5" />
+                            </a>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {filteredOrders.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           لا توجد طلبات
                         </TableCell>
                       </TableRow>
@@ -788,7 +916,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50">
-                v4.1
+                v4.2
               </span>
             )}
           </div>
