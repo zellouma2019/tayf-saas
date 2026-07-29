@@ -1259,20 +1259,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </div>
               )}
 
-              {/* طابور الطباعة */}
-              <PrintQueueWidget
-                jobs={orders.slice(0, 5).map(o => ({
-                  id: o.id,
-                  orderRef: o.reference,
-                  customerName: o.customer?.name || "—",
-                  serviceName: o.serviceName || "—",
-                  pages: o.pages || 1,
-                  copies: o.copies || 1,
-                  priority: (o.total || 0) > 3000 ? "high" : "normal",
-                  status: o.status === "printing" ? "printing" : o.status === "ready" ? "done" : "queued",
-                }))}
-              />
-
               {/* آخر الطلبات */}
               <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                 <div className="border-b border-border px-4 sm:px-6 pt-5 pb-3">

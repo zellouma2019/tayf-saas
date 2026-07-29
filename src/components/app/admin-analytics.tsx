@@ -218,7 +218,7 @@ export function AdminAnalytics({ stats }: AdminAnalyticsProps) {
     };
   }, []);
 
-  const analytics = useMemo(() => computeAnalytics(orders), [orders]);
+  const analytics = useMemo(() => computeAnalytics(Array.isArray(orders) ? orders : []), [orders]);
 
   if (loading) {
     return (

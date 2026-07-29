@@ -142,6 +142,7 @@ function SectionHeader({ title }: { title: string }) {
 // ===== المكون الرئيسي =====
 export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
   // ---- حسابات مشتقة ----
+  const safeOrders = Array.isArray(orders) ? orders : [];
 
   // إيراد الأسبوع الحالي
   const weekRevenue = useMemo(() => {
@@ -150,10 +151,10 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - ((dayOfWeek + 1) % 7));
     weekStart.setHours(0, 0, 0, 0);
-    return orders
+    return safeOrders
       .filter((o) => new Date(o.createdAt) >= weekStart)
       .reduce((s, o) => s + o.total, 0);
-  }, [orders]);
+  }, [safeOrders]);
 
   // إيراد الأسبوع السابق للمقارنة
   const prevWeekRevenue = useMemo(() => {
@@ -164,13 +165,13 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
     thisWeekStart.setHours(0, 0, 0, 0);
     const prevWeekStart = new Date(thisWeekStart);
     prevWeekStart.setDate(prevWeekStart.getDate() - 7);
-    return orders
+    return safeOrders
       .filter((o) => {
         const d = new Date(o.createdAt);
         return d >= prevWeekStart && d < thisWeekStart;
       })
       .reduce((s, o) => s + o.total, 0);
-  }, [orders]);
+  }, [safeOrders]);
 
   const weekTrendPercent = useMemo(() => {
     if (prevWeekRevenue === 0) return weekRevenue > 0 ? 100 : 0;
@@ -181,10 +182,10 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
   const todayRevenue = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return orders
+    return safeOrders
       .filter((o) => new Date(o.createdAt) >= today)
       .reduce((s, o) => s + o.total, 0);
-  }, [orders]);
+  }, [safeOrders]);
 
   // إيراد الأمس للمقارنة
   const yesterdayRevenue = useMemo(() => {
@@ -193,13 +194,13 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayEnd = new Date(today);
-    return orders
+    return safeOrders
       .filter((o) => {
         const d = new Date(o.createdAt);
         return d >= yesterday && d < yesterdayEnd;
       })
       .reduce((s, o) => s + o.total, 0);
-  }, [orders]);
+  }, [safeOrders]);
 
   const todayTrendPercent = useMemo(() => {
     if (yesterdayRevenue === 0) return todayRevenue > 0 ? 100 : 0;
@@ -228,7 +229,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       d.setHours(0, 0, 0, 0);
       const next = new Date(d);
       next.setDate(next.getDate() + 1);
-      const count = orders.filter((o) => {
+      const count = safeOrders.filter((o) => {
         const od = new Date(o.createdAt);
         return od >= d && od < next;
       }).length;
@@ -238,12 +239,12 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       });
     }
     return result;
-  }, [orders]);
+  }, [safeOrders]);
 
   // ---- 3. بيانات أفضل الخدمات ----
   const topServicesData = useMemo(() => {
     const serviceMap: Record<string, { count: number; revenue: number; name: string }> = {};
-    orders.forEach((o) => {
+    safeOrders.forEach((o) => {
       const key = o.serviceType || "document";
       if (!serviceMap[key]) {
         serviceMap[key] = {
@@ -259,7 +260,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 6)
       .map((s) => ({ name: s.name, count: s.count }));
-  }, [orders]);
+  }, [safeOrders]);
 
   // ---- 4. بيانات الإيرادات اليومية (آخر 7 أيام) ----
   const dailyRevenueData = useMemo(() => {
@@ -270,7 +271,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       d.setHours(0, 0, 0, 0);
       const next = new Date(d);
       next.setDate(next.getDate() + 1);
-      const revenue = orders
+      const revenue = safeOrders
         .filter((o) => {
           const od = new Date(o.createdAt);
           return od >= d && od < next;
@@ -282,7 +283,7 @@ export function MerchantAnalytics({ stats, orders }: MerchantAnalyticsProps) {
       });
     }
     return result;
-  }, [orders]);
+  }, [safeOrders]);
 
   const totalRevenue = stats?.totalRevenue ?? 0;
 

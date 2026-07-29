@@ -31,8 +31,9 @@ interface QueueItem {
 }
 
 export function PrintQueueWidget({ orders, className = "" }: PrintQueueWidgetProps) {
+  const safeOrders = Array.isArray(orders) ? orders : [];
   const queueData = useMemo(() => {
-    const queue = orders.filter(o =>
+    const queue = safeOrders.filter(o =>
       o.status === "confirmed" || o.status === "printing" || o.status === "pending"
     ).map(o => ({
       id: o.id,
@@ -51,7 +52,7 @@ export function PrintQueueWidget({ orders, className = "" }: PrintQueueWidgetPro
     const confirmed = queue.filter(o => o.status === "confirmed").length;
 
     return { queue: queue.slice(0, 8), totalRevenue, printing, pending, confirmed, total: queue.length };
-  }, [orders]);
+  }, [safeOrders]);
 
   const getStatusInfo = (status: string) => {
     switch (status) {
