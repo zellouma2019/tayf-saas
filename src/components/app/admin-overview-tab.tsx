@@ -39,6 +39,11 @@ import { LiveActivityFeed } from "@/components/app/live-activity-feed";
 import { DailyGoalTracker } from "@/components/app/daily-goal-tracker";
 import OrderAnalyticsSummary from "@/components/app/order-analytics-summary";
 import ExpenseCategoryBreakdown from "@/components/app/expense-category-breakdown";
+import { OrderStatusTimeline } from "@/components/app/order-status-timeline";
+import { StaffActivityWidget } from "@/components/app/staff-activity-widget";
+import { TopServicesWidget } from "@/components/app/top-services-widget";
+import { CustomerStatsWidget } from "@/components/app/customer-stats-widget";
+import { PrintQueueManager } from "@/components/app/print-queue-manager";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -806,6 +811,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* توزيع المصاريف */}
       <ExpenseCategoryBreakdown />
+
+      {/* مسار حالة الطلب */}
+      <OrderStatusTimeline currentStatus="printing" />
+
+      {/* نشاط فريق العمل */}
+      <StaffActivityWidget />
+
+      {/* أفضل الخدمات */}
+      <TopServicesWidget />
+
+      {/* إحصائيات العملاء */}
+      <CustomerStatsWidget />
+
+      {/* مدير قائمة الطباعة */}
+      <PrintQueueManager />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard

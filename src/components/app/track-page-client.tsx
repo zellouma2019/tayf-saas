@@ -28,6 +28,7 @@ import { OrderTimelineVisualizer } from "@/components/app/order-timeline-visuali
 import { FeedbackRating } from "@/components/app/feedback-rating";
 import { ShopTrustBadges } from "@/components/app/shop-trust-badges";
 import DeliveryTrackerMap from "@/components/app/delivery-tracker-map";
+import { OrderStatusTimeline } from "@/components/app/order-status-timeline";
 import {
   Select,
   SelectContent,
@@ -695,6 +696,9 @@ function TrackedOrderCard({ order }: { order: PrintOrderLite }) {
           avgRating={4.7}
           yearsActive={2}
         />
+
+        {/* مسار حالة الطلب */}
+        <OrderStatusTimeline currentStatus={order?.status} />
 
         {/* تتبع التسليم */}
         <DeliveryTrackerMap />
