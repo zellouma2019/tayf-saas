@@ -4804,3 +4804,143 @@ Task: QA + CSS Round 33 + ميزات جديدة (Round 33)
 8. اختبار UploadThing CDN على الموقع الحي
 9. إضافة WebSocket للتحديثات الحية
 10. تحسين الـ SEO مع og:image للسوشيال ميديا
+
+---
+Task ID: qa-fix-round34
+Agent: Main Agent
+Task: QA + CSS Round 34 + ميزات جديدة (Round 34)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata + مسار حالة الطلب + تقييمات + شارات ثقة
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي + تقييم بعد التسليم
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint (0 أخطاء، 0 تحذيرات)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit 6c6296a)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع (~9s في نظام الصحة)
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (retry mechanism يعمل)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 38 طلب، 5 متاجر، 17,808 د.ج | ✅ |
+| تبويب الطلبات — بنية جدول + زر "بحث متقدم" | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الأزرار تعمل | ✅ |
+| البناء — ناجح بدون أخطاء | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. ويدجت تقييمات الزبائن (Customer Reviews Widget)
+- مكون جديد: `src/components/app/customer-reviews-widget.tsx`
+- متوسط التقييم (رقم كبير) + عرض النجوم + العدد الإجمالي
+- قائمة 3-5 مراجعات مع: حرف أول اسم، تاريخ، نجوم، تعليق
+- شارة "متحقق" للمراجعات الموثقة
+- زر "عرض الكل"
+- مدمج في تبويب النظرة العامة
+
+### 2. بطاقة ملخص الطلب (Order Summary Card)
+- مكون جديد: `src/components/app/order-summary-card.tsx`
+- عرض مدمج: رقم الطلب، الزبون، الخدمة، صفحات×نسخ، المجموع، حالة، التاريخ
+- شارة الخدمة ملونة حسب النوع
+- تأثير hover-lift
+
+### 3. مخطط شعبية الخدمات (Service Popularity Chart)
+- مكون جديد: `src/components/app/service-popularity-chart.tsx`
+- أعمدة أفقية متدرجة مع ترتيب
+- أرقام الترتيب + الأعداد + النسب المئوية
+- أنيميشن دخول متتالي مع Framer Motion
+- مدمج في تبويب النظرة العامة
+
+### 4. شارات ثقة المتجر (Shop Trust Badges)
+- مكون جديد: `src/components/app/shop-trust-badges.tsx`
+- 4 شارات: متجر موثق، دفع آمن، ضمان الجودة، توصيل سريع
+- شريط إثبات اجتماعي "تم طلب X مرة"
+- شبكة 2×2 مع أنيميشن spring
+- مدمج في صفحة التتبع
+
+### 5. تقييم وإرسال تغذية راجعة (Feedback Rating)
+- مكون جديد: `src/components/app/feedback-rating.tsx`
+- تقييم تفاعلي بـ 5 نجوم
+- نموذج تغذية راجعة اختياري بعد التقييم
+- شكر بعد الإرسال مع أنيميشن
+- 4 حالات: تقييم ← تعليق ← إرسال ← شكر
+- مدمج في صفحة التتبع (يظهر فقط عند "تم التسليم")
+
+## CSS Round 34 (+1992 سطر)
+
+### 1. بطاقات المنتجات والخدمات (~180 سطر)
+- `.product-card` / `.product-card-featured` / `.product-card-hover`
+- `.service-badge` (5 أنواع) / `.price-tag` / `.price-original` / `.price-discount`
+- `.service-rating` / `.service-card-grid`
+
+### 2. الطلبات والدفع (~180 سطر)
+- `.order-summary` / `.order-item` / `.order-total`
+- `.checkout-step` / `.checkout-step-active` / `.checkout-step-complete`
+- `.payment-method-card` / `.coupon-input` / `.delivery-option`
+
+### 3. ملف الزبون والحساب (~150 سطر)
+- `.profile-card` / `.avatar-ring` / `.avatar-group`
+- `.member-badge` (4 مستويات) / `.stats-bar` / `.achievement-card`
+- `.preference-toggle` / `.account-section`
+
+### 4. البحث والاكتشاف (~120 سطر)
+- `.search-hero` / `.search-suggestion` / `.search-category`
+- `.filter-panel` / `.filter-chip` / `.sort-dropdown`
+- `.result-card` / `.no-results`
+
+### 5. الإثبات الاجتماعي والثقة (~100 سطر)
+- `.trust-badge` / `.review-card` / `.review-stars`
+- `.testimonial-card` / `.social-proof-bar`
+- `.guarantee-badge` / `.verified-review`
+
+### 6. واجهة التقييم والتغذية الراجعة (~100 سطر)
+- `.rating-input` / `.rating-display` / `.feedback-form`
+- `.feedback-type-selector` / `.sentiment-indicator`
+- `.progress-feedback` / `.nps-score`
+
+### 7. عناصر زخرفية وعلامات تجارية (~120 سطر)
+- `.brand-stripe` / `.logo-mark` / `.watermark`
+- `.divider-ornament` / `.corner-accent` / `.ribbon` / `.ribbon-corner`
+- `.frame-border` / `.pattern-dots-3d`
+
+### 8. أدوات RTL خاصة (~50 سطر)
+- `.rtl-text-align` / `.rtl-flip` / `.rtl-swap`
+- `.rtl-border-radius` / `.rtl-logical-spacing` / `.rtl-scroll-indicator`
+- 2 keyframes جديدة + 2 @property (--ribbon-angle, --progress-width)
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 34 +1992 سطر (إجمالي 13,928 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج ServicePopularityChart + CustomerReviewsWidget |
+| `src/components/app/track-page-client.tsx` | دمج FeedbackRating + ShopTrustBadges |
+| `src/components/app/customer-reviews-widget.tsx` | جديد: تقييمات الزبائن |
+| `src/components/app/order-summary-card.tsx` | جديد: ملخص الطلب |
+| `src/components/app/service-popularity-chart.tsx` | جديد: شعبية الخدمات |
+| `src/components/app/shop-trust-badges.tsx` | جديد: شارات الثقة |
+| `src/components/app/feedback-rating.tsx` | جديد: التقييم والتغذية |
+
+## Commit
+- 6c6296a: feat(r34): CSS Round 34, customer reviews, order summary card, service popularity chart, shop trust badges, feedback rating
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 34 جولة CSS (13,928 سطر CSS)
+- 78 مكون تطبيقي + 5 مكونات جديدة في Round 34
+- إجمالي 3,020 سطر جديدة في Round 34
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع (~9s). يُنصح ببديل (PlanetScale, Neon, Supabase)
+3. تكامل OrderSummaryCard في تبويب الطلبات
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. اختبار UploadThing CDN على الموقع الحي
+8. إضافة WebSocket للتحديثات الحية
+9. تحسين الـ SEO مع og:image للسوشيال ميديا
+10. دمج ShopTrustBadges في صفحة المتجر الرئيسية
