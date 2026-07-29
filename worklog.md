@@ -6704,3 +6704,76 @@ Task: إصلاح الأخطاء الحرجة من لقطات الشاشة + تق
 - البناء المحلي يتوقف عند OOM (مشكلة معروفة، Vercel يبني بنجاح)
 - تم التحقق من نشر Vercel عبر agent-browser
 - المشاكل المتبقية: Turso DB بطء (لا يمكن إصلاحه محلياً)، UPLOADTHING_TOKEN
+
+---
+Task ID: bugfix-round1
+Agent: Main Agent
+Task: إصلاح مشاكل حرجة + تقليل حجم المشروع + دعم xlsx
+
+## حالة المشروع الحالية
+- ✅ تم إصلاح 3 مشاكل حرجة
+- ⚠️ GitHub Token منتهي الصلاحية — لا يمكن git push
+- ⚠️ يحتاج المستخدم لتوليد Personal Access Token جديد
+- ✅ حجم المشروع: 7.2MB tracked (كان 90MB)
+- ✅ .git directory: 5.9MB (كان 64MB)
+
+## الإصلاحات المنفذة
+
+### 1. تسجيل دخول لوحة التحكم التاجر (pointer-events)
+- **الملف**: `src/components/app/merchant-dashboard.tsx`
+- **المشكلة**: عناصر زخرفية (overlay + orbs) تعترض أحداث اللمس على الموبايل
+- **الحل**: إضافة `pointer-events-none` إلى 3 عناصر زخرفية في شاشة PIN
+- **التأثير**: الآن يمكن للمستخدم النقر على حقل كلمة المرور وزر الدخول بدون اعتراض
+
+### 2. تقليل حجم المشروع من 90MB إلى أقل من 15MB
+- **الأدوات**: git-filter-repo لإزالة الملفات الكبيرة من التاريخ
+- **الملفات المحذوفة من التاريخ**:
+  - test-3mb.pdf (3.1MB)
+  - test-5mb.pdf (5.2MB)
+  - test-7mb.pdf (7.3MB)
+  - test-7mb-v2.pdf (7.3MB)
+  - test-10mb.pdf (10.5MB)
+  - test-15mb.pdf (15.7MB)
+  - uploads/file_1784309026597_*.png (2MB + 1.7MB)
+- **النتيجة**:
+  - tracked files: 7.2MB (كان ~49MB)
+  - .git directory: 5.9MB (كان 64MB)
+  - المجموع: ~13MB (كان ~113MB)
+
+### 3. دعم رفع وتحليل ملفات Excel (.xlsx)
+- **الملفات المعدلة**:
+  - `src/components/app/new-order-wizard.tsx` — إضافة xlsx للقائمة المقبولة + تحليل CDN
+  - `src/lib/file-analyzer.ts` — إضافة دالة `analyzeXlsx()` جديدة
+  - `src/lib/print-config.ts` — إضافة نوع خدمة "spreadsheet"
+  - `src/lib/service-specs.ts` — إضافة "spreadsheet" للأنواع
+  - `src/app/api/uploadthing/core.ts` — إضافة MIME type لـ xlsx
+  - `src/app/api/orders/upload-chunk/route.ts` — إضافة xlsx للصيغ المقبولة
+- **الوظائف الجديدة**:
+  - رفع ملفات .xlsx عبر CDN (uploadthing) أو fallback
+  - تحليل حقيقي: عدد الأوراق، أسماء الأوراق، صفوف × أعمدة
+  - نوع خدمة جديد: "جداول بيانات" مع سعر 5 د.ج/صفحة
+
+## Commit
+- 816a3f1: fix: merchant login pointer-events, xlsx upload/analysis support, git history cleanup (90MB→7.2MB)
+
+## ⚠️ مشكلة حظرت: GitHub Token منتهي
+- `git push` يفشل بـ "Invalid username or token"
+- يحتاج المستخدم لتوليد Personal Access Token جديد من GitHub
+- الخطوات:
+  1. اذهب إلى GitHub → Settings → Developer settings → Personal access tokens
+  2. أنشئ token جديد مع صلاحية `repo`
+  3. حدّث Remote URL: `git remote set-url origin https://zellouma2019:NEW_TOKEN@github.com/zellouma2019/tayf-saas.git`
+  4. `git push --force origin main` (force مطلوب لأن التاريخ أُعيد كتابته)
+
+## ⚠️ مشاكل معلقة (تحتاج تدخل المستخدم)
+1. **UPLOADTHING_TOKEN في Vercel** — يجب إضافته يدوياً في Vercel Dashboard
+2. **Turso DB بطء** — معروف، يحتاج مراقبة
+3. **تحليل AI غير دقيق للملفات الكبيرة** — VLM يحلل فقط أول صفحة
+4. **تحليل DOCX** — لا يزال تقديري (حجم الملف ÷ 30)، يمكن تحسينه بـ mammoth.js
+
+## التوصيات للمرحلة القادمة
+1. 🔴 **أولوية قصوى**: توليد GitHub PAT جديد و push
+2. 🔴 إضافة UPLOADTHING_TOKEN إلى Vercel env vars
+3. 🟡 تحسين تحليل DOCX باستخدام mammoth.js
+4. 🟡 تحسين VLM للملفات الكبيرة (تحليل صفحات متعددة)
+5. 🟢 متابعة التحسينات (CSS + مكونات جديدة)
