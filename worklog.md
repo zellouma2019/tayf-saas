@@ -5760,3 +5760,161 @@ Task: QA + CSS Round 40 + ميزات جديدة (Round 40)
 6. تكامل MaterialCostEstimator في new-order-wizard
 7. تحسين SEO مع og:image
 8. ملاحظات DB-based للطلبات
+
+---
+Task ID: round41
+Agent: Main Agent
+Task: QA + CSS Round 41 + 5 ميزات جديدة (Round 41)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 41 جولة CSS (22,555 سطر)
+- ✅ 114 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء (1 تحذير a11y — قديم)
+- ✅ تم النشر على Vercel (commit b544f02)
+- ⚠️ Turso DB بطء متقطع (لا يزال)
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel (لا يزال)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 344ms, CLS 0, TTFB 6.8ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح (30.5s) | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. تتبّع الميزانية (Expense Budget Tracker)
+- مكون جديد: `src/components/app/expense-budget-tracker.tsx`
+- 4 فئات ميزانية: المواد الخام، الصيانة، الرواتب، التسويق
+- أشرطة تقدم متحركة بألوان: أخضر (< 75%)، عنبري (75-90%)، أحمر (> 90%)
+- ملخص إجمالي الميزانية مع المبلغ المتبقي
+- AnimatePresence لحركة الأشرطة
+
+### 2. تقييمات العملاء (Customer Feedback Chart)
+- مكون جديد: `src/components/app/customer-feedback-chart.tsx`
+- تقييم إجمالي: 4.7/5 مع عرض النجوم
+- توزيع التقييمات: 5★ (65%) إلى 1★ (2%)
+- 3 فئات مع مؤشرات تقدم SVG دائرية: جودة الطباعة (92%)، السرعة (78%)، خدمة العملاء (85%)
+- staggerChildren لحركة الدخول
+
+### 3. مخزون المواد (Inventory Stock Widget)
+- مكون جديد: `src/components/app/inventory-stock-widget.tsx`
+- 6 مواد: ورق A4، A3، لاصق، صور، حبر أسود، حبر ملون
+- ألوان مستوى المخزون: أخضر (> 60%)، عنبري (30-60%)، أحمر (< 30%)
+- زر "إعادة طلب" نابض للمواد منخفضة المخزون
+- عداد تنبيهات المخزون المنخفض
+
+### 4. طابور الأولوية (Order Priority Queue)
+- مكون جديد: `src/components/app/order-priority-queue.tsx`
+- 3 أعمدة: 🔴 عاجل (2 طلب)، 🟡 متوسط (3 طلب)، 🟢 عادي (3 طلب)
+- بطاقات طلب مع: رقم الطلب، اسم الزبون، نوع الخدمة، الوقت المتبقي
+- AnimatePresence لحركة البطاقات
+- زر "إعادة ترتيب"
+
+### 5. مقارنة المتاجر (Shop Comparison Widget)
+- مكون جديد: `src/components/app/shop-comparison-widget.tsx`
+- مقارنة 3 متاجر: الريان، النور، الأمل
+- 5 مقاييس: الطلبات، الإيرادات، وقت التسليم، التقييم، معدل الإنجاز
+- ترتيب ذهبي/فضي/برونزي لكل مقياس
+- شريط مقارنة الإيرادات + عرض تقييم النجوم
+
+## CSS Round 41 (+1,092 سطر)
+
+### 1. نظام التلميحات (~125 سطر)
+- `.tooltip-trigger`, `.tooltip-bubble[data-pos]` (top/bottom/start/end)
+- أسهم CSS لكل اتجاه
+- 3 أحجام + dark mode
+
+### 2. فتات التنقل (~44 سطر)
+- `.breadcrumb-nav`, `.breadcrumb-item`, `.breadcrumb-separator`
+- `.breadcrumb-active` + اقتطاع
+
+### 3. نظام التبويبات (~85 سطر)
+- `.tab-nav`, `.tab-item.active` مع تسطير متحرك
+- `.tab-panel` + حركة دخول
+- متغير الأقراص + التبويبات العمودية
+
+### 4. الترقيم (~63 سطر)
+- `.pagination`, `.pagination-btn` (active/disabled/hover)
+- `.pagination-ellipsis` + أحجام sm/lg
+
+### 5. خطوات التقدم المحسّنة (~92 سطر)
+- `.stepper` (أفقي وعمودي)
+- `.stepper-step.completed/.active/.pending`
+- `.stepper-connector` + نبض + RTL
+
+### 6. الصورة الرمزية والهوية (~90 سطر)
+- `.avatar-ring` (conic gradient)
+- `.avatar-initials` (xs-xl)
+- `.avatar-stack` + `.avatar-status-dot` (online/offline/busy/away)
+- `.user-identity-card`
+
+### 7. نظام الشارات والوسوم المحسّن (~106 سطر)
+- `.badge-soft` (6 ألوان)، `.badge-outline` (4 ألوان)
+- `.badge-dot-indicator`, `.badge-removable`
+- `.tag-list`, `.tag-chip` + `.badge-count-up` animation
+
+### 8. مساعدات تصور البيانات (~80 سطر)
+- `.chart-container`, `.chart-legend` (أفقي/عمودي)
+- `.chart-legend-item`, `.data-grid-pattern`
+- `.chart-tooltip`, `.sparkline-container`
+
+### 9. نظام إشعارات التنبيهات (~86 سطر)
+- `.toast-container` (4 مواقع)
+- `.toast-success/error/warning/info`
+- enter/exit animations + `.toast-progress` + RTL + dark mode
+
+### 10. منطقة إسقاط الملفات المحسّنة (~97 سطر)
+- `.dropzone`, `.dropzone-active` (glow+scale)
+- `.dropzone-reject` (shake animation)
+- `.dropzone-preview-grid`, `.dropzone-file-item`
+
+### 11. أنماط الطباعة (~48 سطر)
+- `@media print` — إخفاء التنقل/الأزرار/النوافذ
+- ألوان الطباعة + فواصل الصفحات + عناصر print-only
+
+### 12. حركات التمرير (~51 سطر)
+- `.scroll-fade-in`, `.scroll-slide-up`, `.scroll-slide-right`
+- `.scroll-scale-in`, `.scroll-reveal`
+- `.parallax-slow/.medium/.fast`
+
+### 13. تحسينات الوضع الداكن (~30 سطر)
+- تجاوزات لفتات، مخططات، شارات، ترقيم، تدرجات، ظلال، حدود
+
+### 14. إضافات RTL (~32 سطر)
+- `.rtl-safe-rotate`, `.rtl-border-directional`
+- `.rtl-gradient`, `.rtl-text-gradient`
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 41 +1,092 سطر (إجمالي 22,555 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج 5 مكونات جديدة |
+| `src/components/app/expense-budget-tracker.tsx` | جديد: تتبّع الميزانية |
+| `src/components/app/customer-feedback-chart.tsx` | جديد: تقييمات العملاء |
+| `src/components/app/inventory-stock-widget.tsx` | جديد: مخزون المواد |
+| `src/components/app/order-priority-queue.tsx` | جديد: طابور الأولوية |
+| `src/components/app/shop-comparison-widget.tsx` | جديد: مقارنة المتاجر |
+
+## Commit
+- b544f02: feat(r41): CSS Round 41 (+1,092 lines, 22,555 total), expense budget tracker, customer feedback, inventory stock, order priority queue, shop comparison
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 41 جولة CSS (22,555 سطر CSS)
+- 114 مكون تطبيقي + 5 مكونات جديدة في Round 41
+- إجمالي ~1,857 سطر جديدة في Round 41 (CSS + مكونات)
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع
+3. دمج BranchLocatorWidget في صفحة المتجر
+4. SEO JSON-LD structured data
+5. WebSocket للتحديثات الحية
+6. تكامل MaterialCostEstimator في new-order-wizard
+7. تحسين SEO مع og:image
+8. ملاحظات DB-based للطلبات
+9. دمج InventoryStockWidget في لوحة التاجر
+10. دمج OrderPriorityQueue في صفحة الطلبات
