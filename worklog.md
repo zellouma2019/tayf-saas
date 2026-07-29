@@ -4297,3 +4297,133 @@ Task: QA + CSS Round 30 + ميزات جديدة (Round 30)
 6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
 7. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
 8. اختبار UploadThing CDN على الموقع الحي
+
+---
+Task ID: qa-fix-round31
+Agent: Main Agent
+Task: QA + CSS Round 31 + ميزات جديدة (Round 31)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata + مقارنة الخدمات
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint (0 أخطاء، 0 تحذيرات)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit ad80ed0)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (retry mechanism يعمل)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 38 طلب، خريطة كثافة، مقارنة إيرادات | ✅ |
+| تبويب الطلبات — بنية جدول ظاهرة | ✅ |
+| تبويب المتاجر — 5 متاجر | ✅ |
+| صفحة المتجر — زر "عرض المقارنة" ظاهر | ✅ |
+| صفحة التتبع — واجهة البحث تعمل | ✅ |
+| البناء — ناجح | ✅ |
+| Lint — 0 أخطاء | ✅ |
+
+## الميزات الجديدة
+
+### 1. رسوم بيانية مصغّرة Sparkline في بطاقات الإحصائيات
+- مكون `SparklineMini` مدمج في admin-overview-tab.tsx
+- رسم SVG مصغّر (60×24px) يعرض آخر 7 قيم
+- تدرج لوني تحت الخط
+- 4 رسوم بيانية: الطلبات، الإيرادات، طلبات اليوم، المتاجر النشطة
+- بيانات واقعية تحاكي الاتجاه الفعلي
+
+### 2. ملاحظات التاجر مع التخزين المحلي
+- مكون جديد: `merchant-order-notes.tsx`
+- إضافة/حذف ملاحظات لكل طلب
+- تخزين محلي (localStorage) بمفتاح `tayf-merchant-note-{orderId}`
+- حد أقصى 500 حرف مع عداد
+- مدمج في merchant-order-detail.tsx (داخل نافذة تفاصيل الطلب)
+
+## CSS Round 31 (+960 سطر)
+
+### بطاقات مقاييس Dashboard
+- `.metric-glow` — توهج متحرك على البطاقات
+- `.metric-gradient-left` — حد جانبي متدرج
+- `.metric-trend-up` / `.metric-trend-down` — مؤشر اتجاه ملون
+- `.metric-icon-box` — حاوية أيقونة مربعة بتدرج
+- `.metric-large-number` — رقم كبير مع تباعد أرقام
+
+### أزرار متقدمة
+- `.btn-gradient` — زر بتدرج لوني
+- `.btn-outline-glow` — زر محيطي يتوهج عند التمرير
+- `.btn-icon-round` — زر دائري
+- `.btn-group-connected` — مجموعة أزرار متصلة
+- `.btn-loading` — زر مع مؤشر تحميل
+
+### قوائم وتغذية
+- `.feed-item` — عنصر نشاط بحد جانبي وتأثير تمرير
+- `.feed-item-new` — عنصر جديد مع نقطة زرقاء
+- `.list-item-hover` — عنصر قائمة يكشف أزرار عند التمرير
+- `.list-item-draggable` — عنصر قابل للسحب
+- `.timeline-vertical` — خط زمني عمودي
+
+### نوافذ وأطباق
+- `.overlay-backdrop` — خلفية ضبابية
+- `.modal-card` / `.modal-card-sm` / `.modal-card-lg` — حاويات النوافذ
+- `.drawer-right` / `.drawer-bottom` — أدراج منزلقة
+
+### شارات ووسوم
+- `.badge-pulse` — شارة نابضة
+- `.badge-status` — شارة حالة بحد جانبي
+- `.tag-removable` — وسم قابل للإزالة
+- `.tag-group` — مجموعة وسوم
+
+### تلميحات وقوائم منسدلة
+- `.popover-card` — نافذة منبثقة مصممة
+- `.dropdown-menu` / `.dropdown-item` / `.dropdown-divider`
+
+### شبكات متجاوبة
+- `.grid-responsive-2/3/4` — شبكات 1→N أعمدة
+- `.grid-auto-fit-sm/md/lg` — شبكة تلقائية
+- `.grid-dashboard` — تخطيط لوحة تحكم
+
+### تأثيرات خاصة
+- `.confetti-burst` — قصاصرات
+- `.parallax-slow` — تأثير المنظور
+- `.morph-shape` — شكل عضوي متحرك
+- `.noise-texture` — ملمس ضوضي خفيف
+- `.glass-shine` — لمعان زجاجي متحرك
+
+### تطبيق CSS على المكونات
+- `admin-overview-tab.tsx`: metric-glow، metric-large-number، metric-icon-box، feed-item
+- `merchant-dashboard.tsx`: btn-group-connected، tag-group، metric-large-number
+- `admin-panel.tsx`: badge-pulse، dropdown-menu
+- `order-details-row.tsx`: list-item-hover
+- `kanban-board.tsx`: badge-dot، list-item-draggable
+- `order-detail-modal.tsx`: modal-card-lg
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 31 +960 سطر |
+| `src/components/app/admin-overview-tab.tsx` | SparklineMini + CSS R31 |
+| `src/components/app/merchant-order-detail.tsx` | دمج MerchantOrderNotes |
+| `src/components/app/merchant-order-notes.tsx` | جديد: ملاحظات التاجر |
+| `src/components/app/admin-panel.tsx` | CSS R31 (badge-pulse, dropdown-menu) |
+| `src/components/app/kanban-board.tsx` | CSS R31 (badge-dot, list-item-draggable) |
+| `src/components/app/merchant-dashboard.tsx` | CSS R31 (btn-group-connected, tag-group) |
+| `src/components/app/order-details-row.tsx` | CSS R31 (list-item-hover) |
+| `src/components/app/order-detail-modal.tsx` | CSS R31 (modal-card-lg) |
+| `src/components/app/track-page-client.tsx` | CSS R31 (delivery estimate) |
+
+## Commits
+- ad80ed0: feat(r31): CSS Round 31, sparkline mini charts, merchant order notes integration, metric glow, feed items
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع (~8s)
+3. تحسين merchant-dashboard.tsx على الموبايل
+4. SEO JSON-LD structured data
+5. ملاحظات DB-based للطلبات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. إضافة flip-card لعرض معلومات المتجر
+8. اختبار UploadThing CDN على الموقع الحي
