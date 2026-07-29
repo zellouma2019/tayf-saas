@@ -193,6 +193,110 @@ interface AdminStats {
 type MerchantTab = "home" | "orders" | "customers" | "expenses" | "analytics" | "settings" | "advancedSettings" | "share" | "preview";
 type OrderViewMode = "table" | "kanban";
 
+// ===== مقياس إنجاز اليوم =====
+function TodayAchievementGauge({ achievement }: { achievement: { total: number; completed: number; percentage: number } }) {
+  const [animatedPct, setAnimatedPct] = useState(0);
+  const pct = achievement.percentage;
+  const color = pct > 70 ? "emerald" : pct >= 40 ? "amber" : "rose";
+  const strokeColor =
+    color === "emerald"
+      ? "#10b981"
+      : color === "amber"
+        ? "#f59e0b"
+        : "#f43f5e";
+  const trackColor =
+    color === "emerald"
+      ? "rgba(16,185,129,0.15)"
+      : color === "amber"
+        ? "rgba(245,158,11,0.15)"
+        : "rgba(244,63,94,0.15)";
+  const textColorClass =
+    color === "emerald"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : color === "amber"
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-rose-600 dark:text-rose-400";
+  const bgClass =
+    color === "emerald"
+      ? "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/10"
+      : color === "amber"
+        ? "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/10"
+        : "from-rose-50 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/10";
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatedPct(pct), 100);
+    return () => clearTimeout(timer);
+  }, [pct]);
+
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (animatedPct / 100) * circumference;
+
+  return (
+    <div className={cn(
+      "flex items-center gap-5 p-4 sm:p-5 rounded-xl border bg-gradient-to-l",
+      bgClass,
+      color === "emerald" && "border-emerald-200 dark:border-emerald-800/40",
+      color === "amber" && "border-amber-200 dark:border-amber-800/40",
+      color === "rose" && "border-rose-200 dark:border-rose-800/40",
+      "card-glow",
+    )}>
+      {/* دائرة التقدم */}
+      <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+        <svg
+          viewBox="0 0 128 128"
+          className="w-full h-full -rotate-90"
+          style={{ transform: "rotate(-90deg)" }}
+        >
+          {/* المسار الخلفي */}
+          <circle
+            cx="64" cy="64" r={radius}
+            fill="none"
+            stroke={trackColor}
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+          {/* مسار التقدم المتحرك */}
+          <circle
+            cx="64" cy="64" r={radius}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            style={{
+              transition: "stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={cn("text-xl font-bold tabular-nums", textColorClass)}>
+            {animatedPct}%
+          </span>
+        </div>
+      </div>
+
+      {/* النص */}
+      <div className="min-w-0">
+        <div className="text-sm font-bold text-foreground">إنجاز اليوم</div>
+        <div className="text-xs text-muted-foreground mt-0.5">
+          {achievement.completed} من {achievement.total} طلب مكتمل
+        </div>
+        <div className={cn("text-[11px] font-medium mt-1.5", textColorClass)}>
+          {pct >= 80
+            ? "أداء ممتاز! 🎉"
+            : pct >= 60
+              ? "أداء جيد 👍"
+              : pct >= 40
+                ? "استمر في العمل 💪"
+                : "يحتاج تسريع ⚡"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== المكون الرئيسي =====
 export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const { shop, hasFeature, refreshShop } = useShop();
@@ -333,6 +437,17 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }, [rawOrders]);
   const todayRevenue = useMemo(() => todayOrdersList.reduce((s, o) => s + o.total, 0), [todayOrdersList]);
   const todayCost = useMemo(() => todayOrdersList.reduce((s, o) => s + (o.cost || 0), 0), [todayOrdersList]);
+  const todayAchievement = useMemo(() => {
+    if (todayOrdersList.length === 0) return null;
+    const completed = todayOrdersList.filter(
+      (o) => o.status === "delivered" || o.status === "ready"
+    ).length;
+    return {
+      total: todayOrdersList.length,
+      completed,
+      percentage: Math.round((completed / todayOrdersList.length) * 100),
+    };
+  }, [todayOrdersList]);
   const serviceBreakdown = useMemo(() => {
     const map = new Map<string, { count: number; revenue: number }>();
     rawOrders.forEach((o) => {
@@ -878,6 +993,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="space-y-6"
             >
+              {/* ===== مقياس إنجاز اليوم ===== */}
+              {todayAchievement && todayAchievement.total > 0 && (
+                <TodayAchievementGauge achievement={todayAchievement} />
+              )}
               <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
                 {statCards.map((c, i) => (
                   <div key={i} className={cn(

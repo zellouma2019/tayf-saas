@@ -92,22 +92,32 @@ export function ShopOverviewCard({ shop, onRefresh }: {
               </div>
             </div>
           </div>
-          <span className={`text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium ${
-            shop.isActive
-              ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
-              : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
-          }`}>
-            {shop.isActive ? "نشط" : "متوقف"}
-          </span>
-          {shop.plan === "pro" || shop.plan === "paid" ? (
-            <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-primary/10 text-primary flex items-center gap-1">
-              <Crown className="h-3 w-3" /> PRO
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* شارة الصحة */}
+            {shop.orders > 0 ? (
+              <span className="badge-success badge-success-pulse text-[10px] px-1.5 py-0.5">نشط</span>
+            ) : !shop.isActive ? (
+              <span className="badge-error text-[10px] px-1.5 py-0.5">غير نشط</span>
+            ) : (
+              <span className="badge-warning text-[10px] px-1.5 py-0.5">بطيء</span>
+            )}
+            <span className={`text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium ${
+              shop.isActive
+                ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
+            }`}>
+              {shop.isActive ? "نشط" : "متوقف"}
             </span>
-          ) : (
-            <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600">
-              مجاني
-            </span>
-          )}
+            {shop.plan === "pro" || shop.plan === "paid" ? (
+              <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-primary/10 text-primary flex items-center gap-1">
+                <Crown className="h-3 w-3" /> PRO
+              </span>
+            ) : (
+              <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600">
+                مجاني
+              </span>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="px-5 pb-5 space-y-4">

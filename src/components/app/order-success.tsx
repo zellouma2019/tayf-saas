@@ -23,6 +23,7 @@ import {
   MessageCircle,
   Star,
   Printer,
+  Share2,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { cn } from "@/lib/utils";
@@ -392,33 +393,42 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             )}
 
             {/* ===== مشاركة حالة الطلب ===== */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="w-full border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 h-10 sm:h-11"
-                onClick={() => {
-                  const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
-                  navigator.clipboard.writeText(trackUrl).then(() =>
-                    toast.success("تم نسخ رابط التتبّع", { description: "شاركه مع أصدقائك" })
-                  );
-                }}
-              >
-                <Copy className="h-4 w-4" />
-                نسخ رابط التتبّع
-              </Button>
-              <Button
-                className="w-full bg-[#25D366] hover:bg-[#1da851] text-white h-12 sm:h-14 border-0 text-base sm:text-lg font-bold shadow-lg shadow-[#25D366]/25 animate-[pulse-shadow_2s_ease-in-out_infinite]"
-                onClick={() => {
-                  const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
-                  const text = `📋 طلب جديد على طيف!\n\n🔖 رقم الطلب: ${order.reference}\n🖨️ الخدمة: ${order.serviceName}\n💰 السعر: ${formatDA(order.total)}\n⏰ التسليم المتوقع: ${order.estimatedHours} ساعة\n\n📎 تابع طلبك هنا:\n${trackUrl}`;
-                  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-                  window.open(whatsappUrl, "_blank");
-                  toast.success("تم فتح واتساب", { description: "شارك تفاصيل طلبك" });
-                }}
-              >
-                <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                شارك عبر واتساب
-              </Button>
+            <div className="space-y-2.5">
+              <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                <Share2 className="h-3.5 w-3.5" />
+                شارك حالة طلبك
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full h-10 sm:h-11 btn-3d border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800"
+                  onClick={() => {
+                    const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
+                    navigator.clipboard.writeText(trackUrl).then(() =>
+                      toast.success("تم نسخ رابط الطلب", { description: "يمكنك مشاركته مع أي شخص" })
+                    );
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  نسخ رابط الطلب
+                </Button>
+                <Button
+                  className="w-full h-10 sm:h-11 btn-3d bg-[#25D366] hover:bg-[#1da851] text-white border-0 font-bold shadow-lg shadow-[#25D366]/25"
+                  onClick={() => {
+                    const trackUrl = `${window.location.origin}${window.location.pathname}?track=${order.reference}`;
+                    const text = `📋 طلب جديد على طيف!\n\n🔖 رقم الطلب: ${order.reference}\n🖨️ الخدمة: ${order.serviceName}\n💰 السعر: ${formatDA(order.total)}\n⏰ التسليم المتوقع: ${order.estimatedHours} ساعة\n\n📎 تابع طلبك هنا:\n${trackUrl}`;
+                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    window.open(whatsappUrl, "_blank");
+                    toast.success("تم فتح واتساب", { description: "شارك تفاصيل طلبك" });
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  مشاركة على واتساب
+                </Button>
+              </div>
+              <div className="flex justify-center">
+                <span className="badge-success text-[10px] px-2.5 py-1 rounded-full">تم استلام الطلب بنجاح ✅</span>
+              </div>
             </div>
 
             {/* ===== أزرار الإجراءات ===== */}

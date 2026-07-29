@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown } from "lucide-react";
+import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -149,11 +149,216 @@ function PeakHoursChart({ stats }: { stats: GlobalStats }) {
   );
 }
 
-export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
+// ===== مكون بطاقة المقياس الواحد (للإيرادات) =====
+function RevenueMetricCard({ icon: Icon, label, value, change, bgColor, textColor }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  change: number;
+  bgColor: string;
+  textColor: string;
+}) {
+  const isPositive = change > 0;
+  const isNeutral = change === 0;
+  return (
+    <div className="bg-card rounded-xl border border-border shadow-sm p-4 sm:p-5 card-hover-lift card-glow group">
+      <div className="flex items-start justify-between mb-3">
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", bgColor)}>
+          <Icon className={cn("h-5 w-5", textColor)} />
+        </div>
+        <span className={cn(
+          "text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5",
+          isPositive && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+          !isPositive && !isNeutral && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+          isNeutral && "bg-muted text-muted-foreground"
+        )}>
+          {isPositive ? <ArrowUpLeft className="h-3 w-3" /> : !isNeutral ? <ArrowDownLeft className="h-3 w-3" /> : null}
+          {isNeutral ? "\u2014" : `${Math.abs(change)}%`}
+        </span>
+      </div>
+      <div className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mb-1">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+// ===== بطاقة إحصائيات الإيرادات مع مخطط شريطي صغير =====
+function RevenueAnalyticsWidget({ stats }: { stats: GlobalStats }) {
+  const recentOrders = stats.recentOrders || [];
+  const today = new Date();
+
+  // حساب إيرادات آخر 7 أيام
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+  const dayLabels = ['سبت', 'أحد', 'اثن', 'ثلا', 'أرب', 'خمي', 'جمع'];
+  const dailyRevenue = days.map(d => {
+    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+    return recentOrders
+      .filter(o => { const t = new Date(o.createdAt); return t >= dayStart && t <= dayEnd; })
+      .reduce((s, o) => s + (o.total || 0), 0);
+  });
+  const maxDailyRev = Math.max(...dailyRevenue, 1);
+  const totalRevenue = stats.totalRevenue ?? 0;
+  const totalOrders = stats.totalOrders ?? 0;
+  const avgOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+  const peakDailyRev = Math.max(...dailyRevenue);
+
+  // حساب نسب التغير (مقارنة آخر 3 أيام بأول 3 أيام)
+  const last3 = dailyRevenue.slice(4).reduce((s, v) => s + v, 0);
+  const first3 = dailyRevenue.slice(0, 3).reduce((s, v) => s + v, 0);
+  const revChange = first3 > 0 ? Math.round(((last3 - first3) / first3) * 100) : 0;
+
+  // نسبة متوسط الطلب
+  const avgAll = dailyRevenue.reduce((s, v) => s + v, 0) / Math.max(dailyRevenue.filter(v => v > 0).length, 1);
+  const avgChange = avgAll > 0 ? Math.round(((avgOrder - avgAll) / avgAll) * 100) : 0;
+
+  const hasData = totalRevenue > 0 || dailyRevenue.some(v => v > 0);
+  if (!hasData) return null;
+
+  return (
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+          <BarChart2 className="h-4 w-4 text-gold-500" />
+          إحصائيات الإيرادات
+          <span className="text-[10px] text-muted-foreground font-normal mr-auto">آخر 7 أيام</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* صف المقاييس الثلاثة */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <RevenueMetricCard icon={Wallet} label="إجمالي الإيرادات" value={formatDA(totalRevenue)} change={revChange} bgColor="bg-primary/10" textColor="text-primary" />
+          <RevenueMetricCard icon={ShoppingBag} label="متوسط الطلب" value={formatDA(avgOrder)} change={avgChange} bgColor="bg-gold-500/10" textColor="text-gold-600 dark:text-gold-400" />
+          <RevenueMetricCard icon={Flame} label="أعلى إيراد يومي" value={formatDA(peakDailyRev)} change={0} bgColor="bg-amber-500/10" textColor="text-amber-600 dark:text-amber-400" />
+        </div>
+
+        {/* مخطط شريطي صغير (CSS فقط) */}
+        <div className="flex items-end gap-1.5 sm:gap-2 h-20 px-1">
+          {dailyRevenue.map((rev, i) => {
+            const height = Math.max(6, (rev / maxDailyRev) * 100);
+            const isToday = i === 6;
+            const isPeak = rev === peakDailyRev && rev > 0;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-foreground bg-popover border border-border rounded-md px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm z-10 tabular-nums pointer-events-none">
+                  {rev > 0 ? formatDA(rev) : '0'}
+                </div>
+                <div className="w-full flex justify-center flex-1 items-end">
+                  <div
+                    className={cn(
+                      "rounded-t-md transition-all duration-700 ease-out w-full max-w-[36px] cursor-default",
+                      isToday
+                        ? "bg-gradient-to-t from-gold-500 to-gold-300 dark:from-gold-600 dark:to-gold-400 shadow-sm shadow-gold-500/25"
+                        : isPeak
+                          ? "bg-gradient-to-t from-emerald-500 to-emerald-300 dark:from-emerald-600 dark:to-emerald-400 shadow-sm shadow-emerald-500/20"
+                          : "bg-gradient-to-t from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/15 hover:from-primary/30 hover:to-primary/20"
+                    )}
+                    style={{ height: `${height}%` }}
+                  />
+                </div>
+                <span className={cn("text-[9px] tabular-nums leading-none", isToday ? "font-bold text-gold-600 dark:text-gold-400" : "text-muted-foreground/60")}>
+                  {dayLabels[i]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ===== لوحة الإجراءات السريعة =====
+function QuickActionsPanel({ onOpenCreate, onRefresh, onExport, onSwitchToSettings }: {
+  onOpenCreate: () => void;
+  onRefresh?: () => void;
+  onExport?: () => void;
+  onSwitchToSettings?: () => void;
+}) {
+  const actions = [
+    {
+      label: "إنشاء متجر جديد",
+      icon: Store,
+      color: "bg-primary/10 text-primary",
+      hoverColor: "hover:bg-primary/15",
+      onClick: onOpenCreate,
+    },
+    {
+      label: "تصدير التقرير",
+      icon: ArrowDownRight,
+      color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      hoverColor: "hover:bg-emerald-500/15",
+      onClick: onExport,
+    },
+    {
+      label: "تحديث البيانات",
+      icon: Zap,
+      color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      hoverColor: "hover:bg-amber-500/15",
+      onClick: onRefresh,
+    },
+    {
+      label: "إعدادات المنصة",
+      icon: Settings,
+      color: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+      hoverColor: "hover:bg-sky-500/15",
+      onClick: onSwitchToSettings,
+    },
+  ];
+
+  return (
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground/80">
+          <Zap className="h-4 w-4 text-amber-500" />
+          إجراءات سريعة
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.label}
+                onClick={action.onClick}
+                disabled={!action.onClick}
+                className={cn(
+                  "group flex flex-col items-center gap-3 rounded-xl border border-border bg-background p-4 sm:p-5",
+                  "card-hover-lift btn-3d transition-all duration-200",
+                  "hover:border-primary/30 dark:hover:border-primary/40",
+                  "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                )}
+              >
+                <div className={cn(
+                  "w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110",
+                  action.color,
+                  action.hoverColor
+                )}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-semibold text-foreground text-center leading-relaxed">{action.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRefresh, onExport, onSwitchToSettings }: {
   stats: GlobalStats;
   lastUpdated: string;
   onOpenCreate: () => void;
   adminName?: string;
+  onRefresh?: () => void;
+  onExport?: () => void;
+  onSwitchToSettings?: () => void;
 }) {
   const s = stats ?? {} as GlobalStats;
   const safeStats: GlobalStats = {
@@ -219,6 +424,14 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName }: {
           <div className="flex items-start justify-between"><div className="min-w-0"><div className="text-2xl font-bold text-foreground tabular-nums"><AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} /><span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span></div><div className="text-xs text-muted-foreground mt-1">متجر نشط</div></div><div className="w-11 h-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div></div>
         </div>
       </div>
+
+      {/* إحصائيات الإيرادات مع مخطط شريطي صغير */}
+      <RevenueAnalyticsWidget stats={safeStats} />
+
+      {/* إجراءات سريعة */}
+      {(safeStats.shopStats.length ?? 0) > 0 && (
+        <QuickActionsPanel onOpenCreate={onOpenCreate} onRefresh={onRefresh} onExport={onExport} onSwitchToSettings={onSwitchToSettings} />
+      )}
 
       {/* توزيع الحالات */}
       <Card className="bg-muted/50 rounded-xl border border-border shadow-sm">

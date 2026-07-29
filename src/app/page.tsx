@@ -5,7 +5,7 @@ import {
   Plus, Store, RefreshCw, Shield, Package, Clock,
   Search, ExternalLink, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   RotateCcw, LayoutGrid, Settings, Lock, Menu, Download, SlidersHorizontal,
-  CheckSquare, Square, XCircle, Bell, Activity, TrendingUp, DollarSign,
+  CheckSquare, Square, XCircle, Activity, TrendingUp, DollarSign,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { SystemHealthWidget } from "@/components/app/system-health-widget";
@@ -46,6 +46,7 @@ import { SettingsTab } from "@/components/app/admin-settings-tab";
 import { SecurityTab } from "@/components/app/admin-security-tab";
 import { OverviewTab } from "@/components/app/admin-overview-tab";
 import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
+import { NotificationCenter } from "@/components/app/notification-center";
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -417,6 +418,7 @@ export default function SuperAdminPage() {
                 </div>
               </div>
               <SystemHealthWidget />
+              <NotificationCenter recentOrders={stats?.recentOrders ?? []} onViewAll={() => setActiveTab("orders")} />
               <ThemeToggle />
               <button onClick={() => setCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 btn-shine"><Plus className="h-4 w-4" /><span className="hidden sm:inline">إنشاء متجر</span></button>
               <button onClick={() => loadAll(false)} className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors relative"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
@@ -440,7 +442,7 @@ export default function SuperAdminPage() {
           </div>
         ) : (
         <div className="p-4 sm:p-6 space-y-6">
-          {activeTab === "overview" && stats && <OverviewTab stats={stats} lastUpdated={lastUpdated} onOpenCreate={() => setCreateOpen(true)} adminName={adminName} />}
+          {activeTab === "overview" && stats && <OverviewTab stats={stats} lastUpdated={lastUpdated} onOpenCreate={() => setCreateOpen(true)} adminName={adminName} onRefresh={() => loadAll(false)} onExport={exportToExcel} onSwitchToSettings={() => setActiveTab("platformSettings")} />}
           {activeTab === "overview" && !stats && !loading && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               {loadError ? (
