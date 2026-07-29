@@ -5321,3 +5321,156 @@ Task: QA + CSS Round 37 + ميزات جديدة (Round 37)
 8. إضافة WebSocket للتحديثات الحية
 9. تحسين الـ SEO مع og:image للسوشيال ميديا
 10. دمج QuickActionsToolbar في لوحة الإدارة أيضاً
+
+---
+Task ID: round38
+Agent: Main Agent
+Task: QA + CSS Round 38 + ميزات جديدة (Round 38)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 38 جولة CSS (20,575 سطر)
+- ✅ 99 مكون تطبيقي (5 مكونات جديدة)
+- ✅ Build ناجح، Lint 0 أخطاء (1 تحذير a11y — قديم)
+- ✅ تم النشر على Vercel (commit e7f809c)
+- ⚠️ Turso DB بطء متقطع (لا يزال)
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel (لا يزال)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| الصفحة الرئيسية — تحميل ناجح | ✅ |
+| LCP 172ms, CLS 0, TTFB 5.9ms | ✅ |
+| لا أخطاء JavaScript | ✅ |
+| لا أخطاء في Console | ✅ |
+| صفحة المتجر (/s/al-riyan) — تعمل | ✅ |
+| تبويب الطلبات — بنية ظاهرة | ✅ |
+| الوضع الداكن (375×812) — يعمل | ✅ |
+| Lint — 0 أخطاء | ✅ |
+| Build — ناجح بدون أخطاء | ✅ |
+| Git Push — ناجح | ✅ |
+
+## الميزات الجديدة
+
+### 1. مسار حالة الطلب (Order Status Timeline)
+- مكون جديد: `src/components/app/order-status-timeline.tsx`
+- 6 خطوات: تم الاستلام → قيد المراجعة → قيد الطباعة → فحص الجودة → جاهز → تم التسليم
+- خط أفقي (سطح المكتب) وعمودي (الجوال)
+- خطوة نشطة مع نبض متحرك
+- ألوان: أخضر (مكتمل)، نيلي (نشط)، رمادي (معلق)
+- شريط تقدم مع نسبة مئوية
+- حركة staggered entrance
+- مدمج في النظرة العامة + صفحة التتبع
+
+### 2. نشاط فريق العمل (Staff Activity Widget)
+- مكون جديد: `src/components/app/staff-activity-widget.tsx`
+- 5 أعضاء: أحمد (طباعة)، فاطمة (تصميم)، محمد (خدمة العملاء)، سارة (فحص)، يوسف (تسليم)
+- صور رمزية بالأحرف الأولى + مؤشر حالة (متصل/مشغول/غير متصل)
+- شريط مساهمة لكل عضو مع أنيميشن
+- تقييم نجوم
+- ملخص إجمالي المهام
+
+### 3. أفضل الخدمات (Top Services Widget)
+- مكون جديد: `src/components/app/top-services-widget.tsx`
+- ترتيب أفضل 5 خدمات مع ذهبية/فضية/برونزية
+- عدّاد متحرك للأرقام
+- شريط إيرادات لكل خدمة
+- إجمالي الإيرادات في الأعلى
+
+### 4. إحصائيات العملاء (Customer Stats Widget)
+- مكون جديد: `src/components/app/customer-stats-widget.tsx`
+- 4 بطاقات: إجمالي العملاء، جدد الشهر، معدل العودة، متوسط قيمة الطلب
+- حلقة تقدم SVG لمعدل العودة
+- قائمة أفضل العملاء مع طلباتهم
+- متوافق مع الوضع الداكن
+
+### 5. مدير قائمة الطباعة (Print Queue Manager)
+- مكون جديد: `src/components/app/print-queue-manager.tsx`
+- 6 وظائف تجريبية في 3 أقسام: في الانتظار، قيد الطباعة، مكتمل
+- شارات الأولوية: عادي (رمادي)، عاجل (وردي)، VIP (ذهبي)
+- أزرار إجراء: إيقاف مؤقت / إلغاء / تخطي
+- مؤشر سرعة (صفحات/دقيقة)
+- AnimatePresence + layout للحركات
+
+## CSS Round 38 (+1981 سطر)
+
+### 1. شريط التمرير والفيض (~80 سطر)
+- `.scrollbar-thin/thick/rounded/hidden/auto-hide`
+- `.overflow-fade-*` (4 اتجاهات)
+- `.overscroll-none/contain`
+
+### 2. تلميحات ونوافذ منبثقة (~165 سطر)
+- `.tooltip-arrow-*` (4 مثلثات CSS)
+- `.tooltip-dark/light`, `.tooltip-multiline-truncate`
+- `.popover-slide-*` (4 اتجاهات)
+
+### 3. هيكل تحميل (~185 سطر)
+- `.skeleton-shimmer/pulse-soft/wave`
+- `.skeleton-text-*`, `.skeleton-card/avatar/image/chart/table`
+
+### 4. جداول الأسعار (~250 سطر)
+- `.pricing-card/featured`, `.pricing-toggle-*`
+- `.pricing-badge-popular/best-value`
+- `.pricing-comparison-table`
+
+### 5. مسار الحالة (~155 سطر)
+- `.status-timeline`, `.status-step-*`
+- `.status-timeline-rtl`
+
+### 6. نظام شارات الإشعارات (~90 سطر)
+- `.notif-badge-*` (نقطة/عدد/حبة)
+- `.notif-badge-animate`, `.notif-badge-shake`
+
+### 7. مساعدات المخططات (~225 سطر)
+- `.chart-area-gradient`, `.chart-grid-lines`
+- `.viz-sparkline-container`, `.viz-gauge`, `.viz-progress-ring`
+
+### 8. إمكانية الوصول والحركة (~115 سطر)
+- `.focus-visible-ring`, `.a11y-sr-only/skip-link`
+- `.motion-reduce/safe`, `.high-contrast-mode`
+
+### 9. تحسينات RTL (~65 سطر)
+- `.rtl-flip`, `.rtl-safe-shadow/border`
+- `.rtl-progress`, `.rtl-scroll-snap`
+
+### 10. خاص بالطباعة (~440 سطر)
+- `.paper-stock-card`, `.color-swatch-group`
+- `.binding-option-card`, `.finishing-option`
+- `.proof-overlay`, `.job-ticket-printable`
+- `.material-selector`, `.quantity-break-table`
+
+### 11. أدوات زخرفية (~160 سطر)
+- `.deco-gradient-text-*`, `.deco-glow-box`
+- `.deco-border-glow`, `.deco-dots-pattern`
+- `.deco-divider-*` (موجة/مسننة/نقاط)
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 38 +1981 سطر (إجمالي 20,575 سطر) |
+| `src/components/app/admin-overview-tab.tsx` | دمج 5 مكونات جديدة |
+| `src/components/app/track-page-client.tsx` | دمج OrderStatusTimeline |
+| `src/components/app/order-status-timeline.tsx` | جديد: مسار حالة الطلب |
+| `src/components/app/staff-activity-widget.tsx` | جديد: نشاط فريق العمل |
+| `src/components/app/top-services-widget.tsx` | جديد: أفضل الخدمات |
+| `src/components/app/customer-stats-widget.tsx` | جديد: إحصائيات العملاء |
+| `src/components/app/print-queue-manager.tsx` | جديد: مدير قائمة الطباعة |
+
+## Commit
+- e7f809c: feat(r38): CSS Round 38 (+1981 lines), order status timeline, staff activity, top services, customer stats, print queue manager
+
+## حالة المشروع / التقييم
+- المنصة مستقرة ومتطورة: 38 جولة CSS (20,575 سطر CSS)
+- 99 مكون تطبيقي + 5 مكونات جديدة في Round 38
+- إجمالي ~3,200 سطر جديدة في Round 38 (CSS + مكونات)
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع. يُنصح ببديل (PlanetScale, Neon, Supabase)
+3. دمج PrintQueueManager في لوحة التاجر أيضاً
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. اختبار UploadThing CDN على الموقع الحي
+8. إضافة WebSocket للتحديثات الحية
+9. تحسين الـ SEO مع og:image للسوشيال ميديا
+10. دمج StaffActivityWidget في لوحة التاجر
