@@ -211,6 +211,15 @@ export default function SuperAdminPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [loadAll]);
 
+  // Auto-refresh: poll every 30 seconds when authenticated
+  useEffect(() => {
+    if (!authenticated) return;
+    const interval = setInterval(() => {
+      loadAll(false); // silent refresh
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [authenticated, loadAll]);
+
   // Change order status inline
   const changeOrderStatus = useCallback(async (orderId: string, newStatus: string) => {
     try {
@@ -834,7 +843,7 @@ export default function SuperAdminPage() {
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 table-row-highlight order-row-accent",
+                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent",
                           `status-${order.status}`,
                           selectedIds.has(order.id) && "row-selected"
                         )}
