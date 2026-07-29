@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true,  // v4.8.2-hotfix
   },
   reactStrictMode: false,
   allowedDevOrigins: [
