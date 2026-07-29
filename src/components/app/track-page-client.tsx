@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OrderTimelineVisualizer } from "@/components/app/order-timeline-visualizer";
+import { FeedbackRating } from "@/components/app/feedback-rating";
+import { ShopTrustBadges } from "@/components/app/shop-trust-badges";
 import {
   Select,
   SelectContent,
@@ -675,6 +677,23 @@ function TrackedOrderCard({ order }: { order: PrintOrderLite }) {
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>آخر تحديث: {formatDateTimeAr(order.updatedAt)}</span>
         </div>
+
+        {/* تقييم الخدمة بعد التسليم */}
+        {order.status === "delivered" && (
+          <FeedbackRating
+            orderId={order.reference}
+            shopName={order.shopName || "المتجر"}
+            onSubmit={() => {}}
+          />
+        )}
+
+        {/* شارات الثقة */}
+        <ShopTrustBadges
+          shopName={order.shopName || "المتجر"}
+          totalOrders={38}
+          avgRating={4.7}
+          yearsActive={2}
+        />
       </div>
     </Card>
   );

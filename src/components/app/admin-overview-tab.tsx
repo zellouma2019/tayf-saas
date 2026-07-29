@@ -31,6 +31,8 @@ import { WeeklyReportChart } from "@/components/app/weekly-report-chart";
 import { ShopActivityFeed } from "@/components/app/shop-activity-feed";
 import { RevenueForecastWidget } from "@/components/app/revenue-forecast-widget";
 import { QuickStatsRow } from "@/components/app/quick-stats-row";
+import { ServicePopularityChart } from "@/components/app/service-popularity-chart";
+import { CustomerReviewsWidget } from "@/components/app/customer-reviews-widget";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -745,6 +747,29 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* أشهر الخدمات */}
       <ServicePopularityWidget stats={safeStats} />
+
+      {/* مخطط شعبية الخدمات */}
+      <ServicePopularityChart
+        services={[
+          { name: "طباعة مستند", count: 18, percentage: 47 },
+          { name: "طباعة صور", count: 8, percentage: 21 },
+          { name: "تجليد", count: 5, percentage: 13 },
+          { name: "بطاقات", count: 4, percentage: 11 },
+          { name: "ملصقات", count: 3, percentage: 8 },
+        ]}
+      />
+
+      {/* تقييمات الزبائن */}
+      <CustomerReviewsWidget
+        shopName="المنصة"
+        averageRating={4.7}
+        totalReviews={156}
+        reviews={[
+          { id: "1", customerName: "أحمد بن علي", rating: 5, comment: "خدمة ممتازة وسريعة، أنصح الجميع!", date: "2026-07-28", verified: true },
+          { id: "2", customerName: "فاطمة الزهراء", rating: 4, comment: "جودة طباعة عالية جداً", date: "2026-07-27", verified: true },
+          { id: "3", customerName: "محمد الأمين", rating: 5, comment: "أسرع مطبعة تعاملت معها", date: "2026-07-26", verified: false },
+        ]}
+      />
 
       {/* ترتيب المتاجر حسب الأداء */}
       {safeStats.shopStats && safeStats.shopStats.length > 1 && <ShopRankingWidget shops={safeStats.shopStats} />}

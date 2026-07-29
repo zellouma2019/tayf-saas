@@ -11934,3 +11934,1995 @@ tr:hover .table-cell-actions {
 }
 
 /* ═══════════════════════════════════════════ End CSS Round 33 ═══════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════ CSS Round 34 — E-commerce Polish & Customer Experience ═══════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────
+   1. Product & Service Cards — بطاقات المنتجات والخدمات
+   ────────────────────────────────────────────── */
+
+/* بطاقة المنتج الأساسية — Base product card with shadow, border, hover lift */
+.product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 1px solid var(--border-color, #e5e7eb);
+  background-color: var(--bg-card, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+}
+dir="rtl" .product-card {
+  text-align: right;
+}
+@media (prefers-color-scheme: dark) {
+  .product-card {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+/* بطاقة منتج مميزة بلون ذهبي — Featured product card with gold accent border */
+.product-card-featured {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 2px solid var(--color-gold, #d4a017);
+  background-color: var(--bg-card, #ffffff);
+  box-shadow: 0 4px 12px rgba(212, 160, 23, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.product-card-featured::before {
+  content: "★";
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-start: 0.5rem;
+  font-size: 1.25rem;
+  color: var(--color-gold, #d4a017);
+  z-index: 2;
+}
+.product-card-featured:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 16px 32px rgba(212, 160, 23, 0.2), 0 4px 8px rgba(0, 0, 0, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  .product-card-featured {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--color-gold-dark, #e6b422);
+  }
+}
+
+/* تأثير التحويم مع تكبير الصورة — Hover state with image zoom and content shift */
+.product-card-hover {
+  position: relative;
+  overflow: hidden;
+}
+.product-card-hover .product-card-image,
+.product-card-hover img {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.product-card-hover:hover .product-card-image,
+.product-card-hover:hover img {
+  transform: scale(1.08);
+}
+.product-card-hover .product-card-content {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.product-card-hover:hover .product-card-content {
+  transform: translateY(-4px);
+}
+.product-card-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.product-card-hover:hover::after {
+  opacity: 1;
+}
+
+/* شارة نوع الخدمة — Service type badge */
+.service-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.service-badge[data-type="document"] {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+.service-badge[data-type="photo"] {
+  background-color: #fdf4ff;
+  color: #9333ea;
+}
+.service-badge[data-type="binding"] {
+  background-color: #fefce8;
+  color: #a16207;
+}
+.service-badge[data-type="large-format"] {
+  background-color: #f0fdf4;
+  color: #15803d;
+}
+.service-badge[data-type="sticker"] {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+@media (prefers-color-scheme: dark) {
+  .service-badge[data-type="document"] { background-color: #1e3a5f; color: #93c5fd; }
+  .service-badge[data-type="photo"] { background-color: #3b1764; color: #d8b4fe; }
+  .service-badge[data-type="binding"] { background-color: #422006; color: #fde68a; }
+  .service-badge[data-type="large-format"] { background-color: #052e16; color: #86efac; }
+  .service-badge[data-type="sticker"] { background-color: #431407; color: #fed7aa; }
+}
+
+/* عرض السعر مع العملة — Stylized price display with currency */
+.price-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.125rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary, #2563eb);
+  line-height: 1;
+}
+.price-tag .currency {
+  font-size: 0.75em;
+  font-weight: 500;
+  opacity: 0.7;
+  margin-inline-start: 0.125rem;
+}
+.price-tag .fraction {
+  font-size: 0.65em;
+  font-weight: 600;
+}
+@media (prefers-color-scheme: dark) {
+  .price-tag {
+    color: var(--color-primary-dark, #60a5fa);
+  }
+}
+
+/* السعر الأصلي مشطوب — Strikethrough original price */
+.price-original {
+  font-size: 0.875rem;
+  color: var(--text-muted, #9ca3af);
+  text-decoration: line-through;
+  text-decoration-color: #ef4444;
+  text-decoration-thickness: 1.5px;
+}
+
+/* شارة نسبة الخصم — Discount percentage badge */
+.price-discount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-radius: 9999px;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+}
+
+/* عرض تقييم الخدمة بالنجوم — Star rating display for services */
+.service-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--color-gold, #d4a017);
+  font-size: 0.875rem;
+  line-height: 1;
+}
+.service-rating .rating-value {
+  margin-inline-start: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+.service-rating .rating-count {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+  font-weight: 400;
+}
+
+/* شبكة بطاقات الخدمات المتجاوبة — Responsive grid layout for service cards */
+.service-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+@media (max-width: 640px) {
+  .service-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  .service-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+
+/* ──────────────────────────────────────────────
+   2. Order & Checkout Components — مكونات الطلبات والدفع
+   ────────────────────────────────────────────── */
+
+/* بطاقة ملخص الطلب — Order summary card with items list */
+.order-summary {
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+ padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.order-summary .summary-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  color: var(--text-primary, #111827);
+}
+@media (prefers-color-scheme: dark) {
+  .order-summary {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+/* صف عنصر الطلب — Individual order item row */
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--border-color-light, #f3f4f6);
+}
+.order-item:last-child {
+  border-bottom: none;
+}
+.order-item .item-image {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md, 0.5rem);
+  object-fit: cover;
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+.order-item .item-details {
+  flex: 1;
+  min-width: 0;
+}
+.order-item .item-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.order-item .item-qty {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+}
+.order-item .item-price {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  white-space: nowrap;
+}
+
+/* صف المجموع مع التأكيد — Total row with emphasis */
+.order-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  margin-top: 0.75rem;
+  border-top: 2px solid var(--border-color, #e5e7eb);
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+}
+.order-total .total-amount {
+  color: var(--color-primary, #2563eb);
+  font-size: 1.25rem;
+}
+@media (prefers-color-scheme: dark) {
+  .order-total .total-amount {
+    color: var(--color-primary-dark, #60a5fa);
+  }
+}
+
+/* مؤشر خطوة الدفع — Checkout wizard step indicator */
+.checkout-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted, #9ca3af);
+  position: relative;
+  transition: color 0.2s ease;
+}
+.checkout-step .step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* خطوة الدفع النشطة مع التوهج — Active step with glow */
+.checkout-step-active {
+  color: var(--color-primary, #2563eb);
+  font-weight: 700;
+}
+.checkout-step-active .step-number {
+  background-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+@media (prefers-color-scheme: dark) {
+  .checkout-step-active {
+    color: var(--color-primary-dark, #60a5fa);
+  }
+  .checkout-step-active .step-number {
+    background-color: var(--color-primary-dark, #60a5fa);
+    border-color: var(--color-primary-dark, #60a5fa);
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.15);
+  }
+}
+
+/* خطوة مكتملة مع علامة الصح — Completed step with check */
+.checkout-step-complete {
+  color: var(--color-success, #16a34a);
+}
+.checkout-step-complete .step-number {
+  background-color: var(--color-success, #16a34a);
+  border-color: var(--color-success, #16a34a);
+  color: #ffffff;
+}
+
+/* بطاقة اختيار طريقة الدفع — Payment method selector card */
+.payment-method-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  background-color: var(--bg-card, #ffffff);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.payment-method-card:hover {
+  border-color: var(--color-primary, #2563eb);
+  background-color: var(--bg-hover, #f8fafc);
+}
+.payment-method-card.selected {
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background-color: rgba(37, 99, 235, 0.03);
+}
+.payment-method-card .method-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--bg-muted, #f3f4f6);
+  flex-shrink: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .payment-method-card {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+  .payment-method-card:hover {
+    background-color: var(--bg-hover-dark, #293548);
+  }
+  .payment-method-card .method-icon {
+    background-color: var(--bg-muted-dark, #374151);
+  }
+}
+
+/* حقل إدخال كود الخصم — Coupon/promo code input field */
+.coupon-input {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.coupon-input input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  border: 1.5px dashed var(--border-color, #d1d5db);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--bg-input, #ffffff);
+  color: var(--text-primary, #111827);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.coupon-input input:focus {
+  border-style: solid;
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.coupon-input input::placeholder {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-muted, #9ca3af);
+}
+@media (prefers-color-scheme: dark) {
+  .coupon-input input {
+    background-color: var(--bg-input-dark, #111827);
+    border-color: var(--border-color-dark, #4b5563);
+    color: var(--text-primary-dark, #f3f4f6);
+  }
+}
+
+/* بطاقة خيار التوصيل — Delivery option card with radio */
+.delivery-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  background-color: var(--bg-card, #ffffff);
+}
+.delivery-option:hover {
+  border-color: var(--color-primary, #2563eb);
+  background-color: var(--bg-hover, #f8fafc);
+}
+.delivery-option.selected {
+  border-color: var(--color-primary, #2563eb);
+  background-color: rgba(37, 99, 235, 0.04);
+}
+.delivery-option .radio-dot {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease;
+}
+.delivery-option.selected .radio-dot {
+  border-color: var(--color-primary, #2563eb);
+}
+.delivery-option.selected .radio-dot::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--color-primary, #2563eb);
+}
+.delivery-option .delivery-info {
+  flex: 1;
+  min-width: 0;
+}
+.delivery-option .delivery-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+.delivery-option .delivery-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+}
+.delivery-option .delivery-price {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  white-space: nowrap;
+}
+
+
+/* ──────────────────────────────────────────────
+   3. Customer Profile & Account — الملف الشخصي والحساب
+   ────────────────────────────────────────────── */
+
+/* بطاقة رأس الملف الشخصي — Customer profile header card */
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 2rem 1.5rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.profile-card .profile-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+.profile-card .profile-email {
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b7280);
+}
+.profile-card .profile-joined {
+  font-size: 0.7rem;
+  color: var(--text-muted, #9ca3af);
+}
+@media (prefers-color-scheme: dark) {
+  .profile-card {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+/* الصورة الرمزية مع إطار ملون — Avatar with colored ring border */
+.avatar-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(
+    var(--color-primary, #2563eb),
+    var(--color-gold, #d4a017),
+    var(--color-success, #16a34a),
+    var(--color-primary, #2563eb)
+  );
+ animation: avatar-ring-spin 6s linear infinite;
+}
+.avatar-ring img,
+.avatar-ring .avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card, #ffffff);
+  object-fit: cover;
+}
+@keyframes avatar-ring-spin {
+  to { background: conic-gradient(
+    var(--color-success, #16a34a),
+    var(--color-primary, #2563eb),
+    var(--color-gold, #d4a017),
+    var(--color-success, #16a34a)
+  ); }
+}
+
+/* مجموعة صور رمزية متداخلة — Overlapping avatars for team/group */
+.avatar-group {
+  display: flex;
+  flex-direction: row-reverse;
+}
+[dir="rtl"] .avatar-group {
+  flex-direction: row;
+}
+.avatar-group .avatar-item {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card, #ffffff);
+  object-fit: cover;
+  margin-inline-start: -0.5rem;
+  position: relative;
+  transition: transform 0.15s ease, z-index 0s;
+}
+.avatar-group .avatar-item:first-child {
+  margin-inline-start: 0;
+}
+.avatar-group .avatar-item:hover {
+  transform: translateY(-2px) scale(1.1);
+  z-index: 10;
+}
+.avatar-group .avatar-more {
+  background-color: var(--bg-muted, #f3f4f6);
+  color: var(--text-muted, #6b7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+/* شارة مستوى العضوية — Membership level badge */
+.member-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.member-badge[data-level="bronze"] {
+  background: linear-gradient(135deg, #92400e, #b45309);
+  color: #fef3c7;
+}
+.member-badge[data-level="silver"] {
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  color: #f9fafb;
+}
+.member-badge[data-level="gold"] {
+  background: linear-gradient(135deg, #92400e, #d4a017);
+  color: #fffbeb;
+}
+.member-badge[data-level="platinum"] {
+  background: linear-gradient(135deg, #1e3a5f, #3b82f6);
+  color: #eff6ff;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* شريط الإحصائيات الأفقي — Horizontal stats bar with segments */
+.stats-bar {
+  display: flex;
+  height: 0.5rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: var(--bg-muted, #f3f4f6);
+  width: 100%;
+}
+.stats-bar .stats-segment {
+  height: 100%;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+}
+.stats-bar .stats-segment:first-child {
+ border-start-start-radius: 9999px;
+  border-end-start-radius: 9999px;
+}
+.stats-bar .stats-segment:last-child {
+  border-start-end-radius: 9999px;
+  border-end-end-radius: 9999px;
+}
+
+/* بطاقة الإنجاز — Achievement/unlock card */
+.achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fffbeb, #fefce8);
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-lg, 0.75rem);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.achievement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(253, 230, 138, 0.3);
+}
+.achievement-card .achievement-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.achievement-card .achievement-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #92400e;
+}
+.achievement-card .achievement-desc {
+  font-size: 0.75rem;
+  color: #a16207;
+}
+.achievement-card.locked {
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+  border-color: #e5e7eb;
+  opacity: 0.6;
+}
+.achievement-card.locked .achievement-title {
+  color: var(--text-muted, #6b7280);
+}
+.achievement-card.locked .achievement-desc {
+  color: var(--text-muted, #9ca3af);
+}
+@media (prefers-color-scheme: dark) {
+  .achievement-card {
+    background: linear-gradient(135deg, #422006, #451a03);
+    border-color: #92400e;
+  }
+  .achievement-card .achievement-title { color: #fde68a; }
+  .achievement-card .achievement-desc { color: #fcd34d; }
+  .achievement-card.locked {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    border-color: #374151;
+  }
+}
+
+/* مفتاح التبديل للتفضيلات — Toggle switch for preferences */
+.preference-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.preference-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.preference-toggle .toggle-track {
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background-color: var(--border-color, #d1d5db);
+  transition: background-color 0.25s ease;
+  position: relative;
+}
+.preference-toggle .toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.preference-toggle input:checked + .toggle-track {
+  background-color: var(--color-primary, #2563eb);
+}
+.preference-toggle input:checked + .toggle-track::after {
+  transform: translateX(1.25rem);
+}
+[dir="rtl"] .preference-toggle input:checked + .toggle-track::after {
+  transform: translateX(-1.25rem);
+}
+
+/* بطاقة قسم إعدادات الحساب — Account settings section card */
+.account-section {
+  padding: 1.25rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+}
+.account-section .section-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color-light, #f3f4f6);
+}
+.account-section .section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+}
+.account-section .section-row + .section-row {
+  border-top: 1px solid var(--border-color-light, #f3f4f6);
+}
+.account-section .row-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #4b5563);
+}
+.account-section .row-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+@media (prefers-color-scheme: dark) {
+  .account-section {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+
+/* ──────────────────────────────────────────────
+   4. Search & Discovery — البحث والاكتشاف
+   ────────────────────────────────────────────── */
+
+/* حقل البحث الكبير للصفحات الرئيسية — Large search input for landing pages */
+.search-hero {
+  position: relative;
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+}
+.search-hero input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  padding-inline-start: 3rem;
+  font-size: 1.0625rem;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 9999px;
+  background-color: var(--bg-card, #ffffff);
+  color: var(--text-primary, #111827);
+  outline: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.search-hero input:focus {
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.12);
+}
+.search-hero .search-icon {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 1.125rem;
+  transform: translateY(-50%);
+  color: var(--text-muted, #9ca3af);
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .search-hero input {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+    color: var(--text-primary-dark, #f3f4f6);
+  }
+}
+
+/* عنصر اقتراح البحث — Search suggestion dropdown item */
+.search-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-radius: var(--radius-md, 0.5rem);
+}
+.search-suggestion:hover,
+.search-suggestion.highlighted {
+  background-color: var(--bg-hover, #f0f5ff);
+}
+.search-suggestion .suggestion-icon {
+  color: var(--text-muted, #9ca3af);
+  flex-shrink: 0;
+}
+.search-suggestion mark {
+  background-color: rgba(37, 99, 235, 0.12);
+  color: var(--color-primary, #2563eb);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* زر/شريحة فلتر الفئة — Category filter chip/button */
+.search-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #4b5563);
+  background-color: var(--bg-muted, #f3f4f6);
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.search-category:hover {
+  background-color: var(--bg-hover, #e5e7eb);
+  color: var(--text-primary, #111827);
+}
+.search-category.active {
+  background-color: var(--color-primary, #2563eb);
+  color: #ffffff;
+  border-color: var(--color-primary, #2563eb);
+}
+@media (prefers-color-scheme: dark) {
+  .search-category {
+    background-color: var(--bg-muted-dark, #374151);
+    color: var(--text-secondary-dark, #d1d5db);
+  }
+  .search-category:hover {
+    background-color: var(--bg-hover-dark, #4b5563);
+  }
+}
+
+/* لوحة الفلاتر القابلة للطي — Collapsible filter panel */
+.filter-panel {
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filter-panel .filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color-light, #f3f4f6);
+}
+.filter-panel .filter-body {
+  padding: 0.875rem 1rem;
+}
+@media (prefers-color-scheme: dark) {
+  .filter-panel {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+/* شريحة الفلتر النشط مع إزالة — Active filter chip with remove */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-primary, #2563eb);
+  background-color: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 9999px;
+}
+.filter-chip .chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background-color: rgba(37, 99, 235, 0.15);
+  color: var(--color-primary, #2563eb);
+  font-size: 0.625rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.filter-chip .chip-remove:hover {
+  background-color: var(--color-primary, #2563eb);
+  color: #ffffff;
+}
+
+/* قائمة منسدلة للترتيب — Sort options dropdown */
+.sort-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+.sort-dropdown .sort-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #4b5563);
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.sort-dropdown .sort-trigger:hover {
+  border-color: var(--color-primary, #2563eb);
+}
+.sort-dropdown .sort-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-start: 0;
+  min-width: 10rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  padding: 0.25rem;
+}
+.sort-dropdown .sort-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #4b5563);
+  text-align: start;
+  border-radius: var(--radius-sm, 0.25rem);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.sort-dropdown .sort-option:hover {
+  background-color: var(--bg-hover, #f3f4f6);
+}
+.sort-dropdown .sort-option.active {
+  color: var(--color-primary, #2563eb);
+  font-weight: 600;
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+/* بطاقة نتيجة البحث مع تمييز — Search result card with highlight */
+.result-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  background-color: var(--bg-card, #ffffff);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.result-card:hover {
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+.result-card .result-thumb {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-md, 0.5rem);
+  object-fit: cover;
+  flex-shrink: 0;
+  background-color: var(--bg-muted, #f3f4f6);
+}
+.result-card .result-body {
+  flex: 1;
+  min-width: 0;
+}
+.result-card .result-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin-bottom: 0.25rem;
+}
+.result-card .result-title mark {
+  background-color: rgba(37, 99, 235, 0.12);
+  color: var(--color-primary, #2563eb);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.result-card .result-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+}
+@media (prefers-color-scheme: dark) {
+  .result-card {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+/* حالة عدم وجود نتائج — No search results state */
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+.no-results .no-results-icon {
+  font-size: 3rem;
+  opacity: 0.4;
+}
+.no-results .no-results-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+.no-results .no-results-desc {
+  font-size: 0.875rem;
+  color: var(--text-muted, #6b7280);
+  max-width: 20rem;
+}
+
+
+/* ──────────────────────────────────────────────
+   5. Social Proof & Trust — الدليل الاجتماعي والثقة
+   ────────────────────────────────────────────── */
+
+/* شارة الثقة والأمان — Trust/security badge */
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-success, #16a34a);
+  background-color: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+  border-radius: var(--radius-md, 0.5rem);
+}
+.trust-badge .trust-icon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+.trust-badge[data-type="secure"] {
+  color: #1d4ed8;
+  background-color: rgba(29, 78, 216, 0.06);
+  border-color: rgba(29, 78, 216, 0.15);
+}
+.trust-badge[data-type="verified"] {
+  color: #7c3aed;
+  background-color: rgba(124, 58, 237, 0.06);
+  border-color: rgba(124, 58, 237, 0.15);
+}
+
+/* بطاقة تقييم العميل — Customer review card */
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1.125rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  transition: box-shadow 0.2s ease;
+}
+.review-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.review-card .review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.review-card .reviewer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.review-card .reviewer-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+.review-card .review-date {
+  font-size: 0.7rem;
+  color: var(--text-muted, #9ca3af);
+}
+.review-card .review-text {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary, #4b5563);
+}
+@media (prefers-color-scheme: dark) {
+  .review-card {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+/* عرض النجوم للتقييم — Star rating display */
+.review-stars {
+  display: inline-flex;
+  gap: 0.0625rem;
+  color: var(--color-gold, #d4a017);
+  font-size: 0.875rem;
+}
+.review-stars .star-empty {
+  color: var(--border-color, #d1d5db);
+}
+.review-stars .star-half {
+  position: relative;
+}
+
+/* بطاقة شهادة العملاء — Testimonial quote card */
+.testimonial-card {
+  position: relative;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-lg, 0.75rem);
+}
+.testimonial-card::before {
+  content: "\201C";
+  position: absolute;
+  top: -0.25rem;
+  inset-inline-start: 0.75rem;
+  font-size: 3rem;
+  color: var(--color-primary, #2563eb);
+  opacity: 0.15;
+  line-height: 1;
+}
+.testimonial-card .testimonial-text {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #1e3a5f;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+.testimonial-card .testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.testimonial-card .author-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+.testimonial-card .author-role {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+}
+@media (prefers-color-scheme: dark) {
+  .testimonial-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-color: #334155;
+  }
+  .testimonial-card .testimonial-text {
+    color: #94a3b8;
+  }
+}
+
+/* شريط الدليل الاجتماعي — "X people ordered today" bar */
+.social-proof-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #4b5563);
+  background-color: rgba(37, 99, 235, 0.04);
+  border-radius: 9999px;
+  animation: social-proof-pulse 3s ease-in-out infinite;
+}
+.social-proof-bar .proof-icon {
+  font-size: 1rem;
+}
+.social-proof-bar .proof-count {
+  font-weight: 700;
+  color: var(--color-primary, #2563eb);
+}
+@keyframes social-proof-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* شارة ضمان الرضا — Satisfaction guarantee badge */
+.guarantee-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  text-align: center;
+  border: 1px dashed var(--border-color, #d1d5db);
+  border-radius: var(--radius-lg, 0.75rem);
+  background-color: var(--bg-card, #ffffff);
+}
+.guarantee-badge .guarantee-icon {
+  font-size: 2rem;
+  color: var(--color-success, #16a34a);
+}
+.guarantee-badge .guarantee-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+.guarantee-badge .guarantee-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.4;
+}
+@media (prefers-color-scheme: dark) {
+  .guarantee-badge {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #4b5563);
+  }
+}
+
+/* مؤشر الشراء المُتحقق منه — Verified purchase indicator */
+.verified-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-success, #16a34a);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+.verified-review .verified-icon {
+  font-size: 0.75rem;
+}
+
+
+/* ──────────────────────────────────────────────
+   6. Feedback & Rating UI — واجهة التقييم والتعليقات
+   ────────────────────────────────────────────── */
+
+/* إدخال التقييم التفاعلي — Interactive star rating input */
+.rating-input {
+  display: inline-flex;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+.rating-input .rating-star {
+  font-size: 1.5rem;
+  color: var(--border-color, #d1d5db);
+  transition: color 0.15s ease, transform 0.15s ease;
+  line-height: 1;
+}
+.rating-input .rating-star:hover,
+.rating-input .rating-star.hovered {
+  color: var(--color-gold, #d4a017);
+  transform: scale(1.15);
+}
+.rating-input .rating-star.active {
+  color: var(--color-gold, #d4a017);
+}
+.rating-input .rating-star:active {
+  transform: scale(0.95);
+}
+
+/* عرض التقييم الثابت — Static star display */
+.rating-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.0625rem;
+  color: var(--color-gold, #d4a017);
+  font-size: 1rem;
+  line-height: 1;
+}
+.rating-display .star-filled {
+  color: var(--color-gold, #d4a017);
+}
+.rating-display .star-empty {
+  color: var(--border-color, #d1d5db);
+}
+.rating-display .rating-number {
+  margin-inline-start: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+/* بطاقة نموذج التعليقات — Feedback form card */
+.feedback-form {
+  padding: 1.5rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.feedback-form .form-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: 1rem;
+}
+.feedback-form .form-textarea {
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--bg-input, #ffffff);
+  color: var(--text-primary, #111827);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.feedback-form .form-textarea:focus {
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.feedback-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.875rem;
+}
+@media (prefers-color-scheme: dark) {
+  .feedback-form {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+  .feedback-form .form-textarea {
+    background-color: var(--bg-input-dark, #111827);
+    border-color: var(--border-color-dark, #4b5563);
+    color: var(--text-primary-dark, #f3f4f6);
+  }
+}
+
+/* منتقي نوع التعليق — Feedback type selector */
+.feedback-type-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.feedback-type-selector .type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #4b5563);
+  background-color: var(--bg-muted, #f3f4f6);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.feedback-type-selector .type-option:hover {
+  border-color: var(--border-color, #d1d5db);
+  background-color: var(--bg-hover, #e5e7eb);
+}
+.feedback-type-selector .type-option.active {
+  border-color: var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+  background-color: rgba(37, 99, 235, 0.06);
+}
+.feedback-type-selector .type-option[data-type="bug"] { color: #dc2626; }
+.feedback-type-selector .type-option[data-type="bug"].active { border-color: #dc2626; background-color: rgba(220, 38, 38, 0.06); }
+.feedback-type-selector .type-option[data-type="feature"] { color: #7c3aed; }
+.feedback-type-selector .type-option[data-type="feature"].active { border-color: #7c3aed; background-color: rgba(124, 58, 237, 0.06); }
+.feedback-type-selector .type-option[data-type="question"] { color: #0891b2; }
+.feedback-type-selector .type-option[data-type="question"].active { border-color: #0891b2; background-color: rgba(8, 145, 178, 0.06); }
+
+/* مؤشر المشاعر — Positive/neutral/negative indicator */
+.sentiment-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+.sentiment-indicator[data-sentiment="positive"] {
+  color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.1);
+}
+.sentiment-indicator[data-sentiment="neutral"] {
+  color: #d97706;
+  background-color: rgba(217, 119, 6, 0.1);
+}
+.sentiment-indicator[data-sentiment="negative"] {
+  color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+/* التعليق مع مؤشر التقدم — Feedback with progress indicator */
+.progress-feedback {
+  position: relative;
+}
+.progress-feedback .progress-track {
+  width: 100%;
+  height: 0.25rem;
+  background-color: var(--bg-muted, #f3f4f6);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.progress-feedback .progress-fill {
+  height: 100%;
+  background-color: var(--color-primary, #2563eb);
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.progress-feedback .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+  margin-top: 0.25rem;
+}
+
+/* عرض درجة الترويج — Net Promoter Score display */
+.nps-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  text-align: center;
+}
+.nps-score .nps-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.nps-score .nps-number[data-range="promoter"] {
+  color: #16a34a;
+}
+.nps-score .nps-number[data-range="passive"] {
+  color: #d97706;
+}
+.nps-score .nps-number[data-range="detractor"] {
+  color: #dc2626;
+}
+.nps-score .nps-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.nps-score .nps-bar {
+  display: flex;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.nps-score .nps-bar .nps-segment {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+.nps-score .nps-bar .nps-segment.detractors {
+  background-color: #dc2626;
+}
+.nps-score .nps-bar .nps-segment.passives {
+  background-color: #d97706;
+}
+.nps-score .nps-bar .nps-segment.promoters {
+  background-color: #16a34a;
+}
+@media (prefers-color-scheme: dark) {
+  .nps-score {
+    background-color: var(--bg-card-dark, #1f2937);
+    border-color: var(--border-color-dark, #374151);
+  }
+}
+
+
+/* ──────────────────────────────────────────────
+   7. Decorative & Branding Elements — عناصر الزخرفة والهوية البصرية
+   ────────────────────────────────────────────── */
+
+/* شريط لون العلامة التجارية — Brand color stripe accent */
+.brand-stripe {
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary, #2563eb),
+    var(--color-gold, #d4a017),
+    var(--color-success, #16a34a)
+  );
+  width: 100%;
+}
+.brand-stripe.thick {
+  height: 6px;
+}
+.brand-stripe.thin {
+  height: 2px;
+}
+
+/* حاوية الشعار المنسق — Styled logo container */
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md, 0.5rem);
+  background: linear-gradient(135deg, var(--color-primary, #2563eb), #1d4ed8);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.125rem;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+ flex-shrink: 0;
+}
+.logo-mark.lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  font-size: 1.375rem;
+}
+.logo-mark.sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.875rem;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+/* علامة مائية للنص — Watermark text overlay */
+.watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.watermark::after {
+  content: attr(data-text);
+  font-size: 4rem;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+  transform: rotate(-30deg);
+  user-select: none;
+  letter-spacing: 0.1em;
+}
+@media (prefers-color-scheme: dark) {
+  .watermark::after {
+    color: rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* فاصل زخرفي — Decorative divider with ornament */
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+.divider-ornament::before,
+.divider-ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to var(--dir, right),
+    transparent,
+    var(--border-color, #d1d5db)
+  );
+}
+.divider-ornament::after {
+  background: linear-gradient(
+    to var(--dir, left),
+    transparent,
+    var(--border-color, #d1d5db)
+  );
+}
+.divider-ornament .ornament-symbol {
+  font-size: 1.125rem;
+  color: var(--text-muted, #9ca3af);
+  flex-shrink: 0;
+}
+
+/* زاوية زخرفية — Corner decoration */
+.corner-accent {
+  position: relative;
+}
+.corner-accent::before,
+.corner-accent::after {
+  content: "";
+  position: absolute;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-color: var(--color-primary, #2563eb);
+  border-style: solid;
+  pointer-events: none;
+}
+.corner-accent::before {
+  top: -1px;
+  inset-inline-start: -1px;
+  border-width: 2px 0 0 2px;
+  border-start-start-radius: var(--radius-lg, 0.75rem);
+}
+.corner-accent::after {
+  bottom: -1px;
+  inset-inline-end: -1px;
+  border-width: 0 2px 2px 0;
+  border-end-end-radius: var(--radius-lg, 0.75rem);
+}
+
+/* شريط راibbon — Ribbon banner */
+.ribbon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 1.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--color-primary, #2563eb);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.ribbon[data-color="sale"] {
+  background-color: #dc2626;
+}
+.ribbon[data-color="new"] {
+  background-color: #16a34a;
+}
+.ribbon[data-color="hot"] {
+  background-color: #ea580c;
+}
+
+/* شريط الزاوية — Corner ribbon */
+.ribbon-corner {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  width: 5rem;
+  height: 5rem;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+.ribbon-corner span {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 1.125rem;
+  inset-inline-end: -1.375rem;
+  width: 7.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--color-primary, #2563eb);
+  transform: rotate(45deg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+.ribbon-corner[data-color="sale"] span {
+  background-color: #dc2626;
+}
+
+/* إطار زخرفي — Decorative frame border */
+.frame-border {
+  position: relative;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.75rem);
+  padding: 1rem;
+}
+.frame-border::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed var(--border-color-light, #f3f4f6);
+  border-radius: calc(var(--radius-lg, 0.75rem) - 4px);
+  pointer-events: none;
+}
+
+/* نمط نقاط ثلاثي الأبعاد — 3D dot pattern background */
+.pattern-dots-3d {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--color-primary, #2563eb) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 12px 12px;
+  background-position: 0 0;
+}
+.pattern-dots-3d.subtle {
+  opacity: 0.15;
+}
+.pattern-dots-3d.medium {
+  opacity: 0.3;
+}
+.pattern-dots-3d.dense {
+  background-size: 8px 8px;
+}
+
+
+/* ──────────────────────────────────────────────
+   8. RTL-Specific Utilities — أدوات الاتجاه من اليمين لليسار
+   ────────────────────────────────────────────── */
+
+/* فرض محاذاة النص RTL — Force RTL text alignment */
+.rtl-text-align {
+  text-align: right;
+  direction: rtl;
+}
+[dir="ltr"] .rtl-text-align {
+  text-align: right;
+}
+
+/* عكس الاتجاه لمحتوى LTR — Flip direction for LTR content */
+.rtl-flip {
+  transform: scaleX(-1);
+}
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(1);
+}
+
+/* تبديل اليسار/يمين — Swap left/right properties */
+.rtl-swap {
+  direction: rtl;
+}
+[dir="rtl"] .rtl-swap {
+  direction: ltr;
+}
+
+/* نصف قطر حدود غير متماثل لـ RTL — Asymmetric border radius for RTL */
+.rtl-border-radius {
+  border-start-start-radius: 0;
+  border-start-end-radius: var(--radius-lg, 0.75rem);
+  border-end-start-radius: 0;
+  border-end-end-radius: var(--radius-lg, 0.75rem);
+}
+[dir="rtl"] .rtl-border-radius {
+  border-start-start-radius: var(--radius-lg, 0.75rem);
+  border-start-end-radius: 0;
+  border-end-start-radius: var(--radius-lg, 0.75rem);
+  border-end-end-radius: 0;
+}
+
+/* استخدام خصائص التباعد المنطقية — Use logical spacing properties */
+.rtl-logical-spacing {
+  padding-block: 1rem;
+  padding-inline: 1.25rem;
+  margin-block: 0;
+  margin-inline: auto;
+}
+.rtl-logical-spacing.compact {
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+}
+.rtl-logical-spacing.spacious {
+  padding-block: 1.5rem;
+  padding-inline: 2rem;
+}
+
+/* مؤشر التمرير لمعارض RTL — Scroll indicator for RTL carousels */
+.rtl-scroll-indicator {
+  position: relative;
+}
+.rtl-scroll-indicator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 100%;
+  background: linear-gradient(to right, var(--bg-card, #ffffff), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.rtl-scroll-indicator.can-scroll-start::after {
+  opacity: 1;
+}
+.rtl-scroll-indicator::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 100%;
+  background: linear-gradient(to left, var(--bg-card, #ffffff), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.rtl-scroll-indicator.can-scroll-end::before {
+  opacity: 1;
+}
+@media (prefers-color-scheme: dark) {
+  .rtl-scroll-indicator::after {
+    background: linear-gradient(to right, var(--bg-card-dark, #1f2937), transparent);
+  }
+  .rtl-scroll-indicator::before {
+    background: linear-gradient(to left, var(--bg-card-dark, #1f2937), transparent);
+  }
+}
+
+
+/* ──────────────────────────────────────────────
+   @property CSS Houdini — خصائص مخصصة متحركة
+   ────────────────────────────────────────────── */
+
+@property --ribbon-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 45deg;
+}
+
+@property --progress-width {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+
+/* ──────────────────────────────────────────────
+   Reduced Motion — تقليل الحركة
+   ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card,
+  .product-card-featured {
+    transition: none;
+  }
+  .product-card:hover,
+  .product-card-featured:hover {
+    transform: none;
+  }
+  .product-card-hover .product-card-image,
+  .product-card-hover img,
+  .product-card-hover .product-card-content,
+  .product-card-hover::after {
+    transition: none;
+  }
+  .product-card-hover:hover img {
+    transform: none;
+  }
+  .product-card-hover:hover .product-card-content {
+    transform: none;
+  }
+  .avatar-ring {
+    animation: none;
+  }
+  .social-proof-bar {
+    animation: none;
+  }
+  .achievement-card {
+    transition: none;
+  }
+  .achievement-card:hover {
+    transform: none;
+  }
+  .stats-bar .stats-segment {
+    transition: none;
+  }
+  .preference-toggle .toggle-track {
+    transition: none;
+  }
+  .preference-toggle .toggle-track::after {
+    transition: none;
+  }
+  .filter-panel {
+    transition: none;
+  }
+  .progress-feedback .progress-fill {
+    transition: none;
+  }
+  .nps-score .nps-bar .nps-segment {
+    transition: none;
+  }
+  .rating-input .rating-star {
+    transition: none;
+  }
+  .rating-input .rating-star:hover,
+  .rating-input .rating-star:active {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════ End CSS Round 34 ═══════════════════════════════════════════ */
