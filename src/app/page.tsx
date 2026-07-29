@@ -7,7 +7,7 @@ import {
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
-  FileText, Check, Square, X, Filter, ChevronDown,
+  FileText, Check, Square, X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -1035,11 +1035,6 @@ export default function SuperAdminPage() {
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{filteredOrders.length} من {safeOrders.length} طلب</span>
                 <button onClick={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); }} className="text-primary hover:underline">مسح الفلاتر</button>
-              </div>
-            )}
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{filteredOrders.length} من {safeOrders.length} طلب</span>
-                <button onClick={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); }} className="text-primary hover:underline">مسح الفلاتر</button>
               </div>
             )}
 
