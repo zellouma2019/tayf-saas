@@ -5093,3 +5093,57 @@ Task: QA + CSS Round 35 + ميزات جديدة (Round 35)
 8. إضافة WebSocket للتحديثات الحية
 9. تحسين الـ SEO مع og:image للسوشيال ميديا
 10. دمج OrderInvoiceCard في order-detail-modal.tsx
+
+---
+Task ID: qa-fix-round36
+Agent: Main Agent
+Task: QA + CSS Round 36 + ميزات جديدة (Round 36)
+
+## حالة المشروع الحالية
+- ✅ المنصة مستقرة: 36 جولة CSS (16,944 سطر)
+- ✅ 88 مكون تطبيقي
+- ✅ Build ناجح، Lint 0 أخطاء
+- ✅ تم النشر على Vercel (commit 6ae4381)
+- ⚠️ Turso DB بطء متقطع
+- ⚠️ UPLOADTHING_TOKEN غير موجود في Vercel
+
+## الميزات الجديدة
+
+### 1. شبكة مقارنة المقاييس (Metric Comparison Grid)
+- 4 بطاقات: طلبات، إيرادات، طلبات اليوم، المتاجر
+- نسبة التغيير مع ألوان (أخضر/أحمر/رمادي)
+- مقارنة أعمدة مصغّرة (أسبوع vs أسبوع)
+- مدمج في النظرة العامة
+
+### 2. النشاط المباشر (Live Activity Feed)
+- 8 أنواع أحداث: جديد، مؤكد، طباعة، جاهز، تسليم
+- أيقونات ملونة + نقطة بث حي
+- مدمج في النظرة العامة
+
+### 3. جدول بيانات ذكي (Smart Data Table)
+- أعمدة قابلة للترتيب + حركة AnimatePresence
+- صفوف بديلة + حالة فارغة
+- تذييل مع عدد النتائج
+
+### 4. متتبع هدف اليوم (Daily Goal Tracker)
+- حلقة SVG متحركة مع نسبة مئوية
+- عدّاد تتابع (streak)
+- تأثير confetti عند الإنجاز
+
+### 5. مصفوفة الصلاحيات (Permissions Matrix)
+- 4 فئات: طلبات، متاجر، إعدادات، تقارير
+- تبديل الكل/لا شيء لكل فئة
+- تصفية بالفئة + إظهار/إخفاء التفاصيل
+
+## CSS Round 36 (+1167 سطر)
+- تحسينات الوضع الداكن (9 surfaces + glass + vignette + noise)
+- مكتبة أنيميشن دخول (rise, fall, slide, scale, flip, blur, glitch, typewriter)
+- مكتبة أنيميشن خروج (fade, slide, scale, flip, blur, explode, collapse)
+- أنيميشن مستمرة (float, pulse, shimmer, marquee, spin, breathe, wave, sway)
+- حالات تفاعلية (bounce, wobble, jelly, tilt, squish, expand, lift)
+- تنسيق الأنيميشن (sequential, stagger, cascade, wave, random + delay utilities)
+- ظلال متقدمة (ملونة، neon، layered، ambient، retro)
+- زجاجي متنوع (subtle/medium/strong/ultra + input/toolbar/modal/sidebar/pill)
+
+## Commit
+- 6ae4381: feat(r36): CSS Round 36 (+1167 lines), metric comparison, live activity feed, smart data table, daily goal tracker, permissions matrix
