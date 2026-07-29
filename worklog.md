@@ -3210,3 +3210,70 @@ Task: QA + إصلاح Turso DB + ميزات جديدة + CSS Round 21
 4. سلة مشتريات متعددة الخدمات
 5. ملاحظات DB-based
 6. تحسين merchant dashboard على الجوال
+
+---
+Task ID: qa-fix-round22
+Agent: Main Agent
+Task: QA + إصلاح Turso DB بالـ JOIN + كشف الطلبات المكررة + CSS Round 22
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 17,808 د.ج إيرادات)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ البناء ناجح بدون أخطاء
+- ⚠️ Turso DB يُرجع 0 صفوف أحياناً مع LEFT JOIN (تم إضافة fallback بدون JOIN)
+
+## نتائج QA (agent-browser)
+- ✅ لوحة الإدارة — دخول ناجح، بيانات حية
+- ✅ نظرة عامة — 38 طلب، 17,808 د.ج
+- ✅ تبويب المتاجر — 3 متاجر (9/27 ميزة)
+- ✅ صفحة المتجر — كل الأزرار تعمل
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ⚠️ تبويب الطلبات — لا يزال يعرض 0 أحياناً (Turso DB مشكلة أساسية)
+
+## الإصلاحات
+
+### 1. Turso DB — Fallback بدون LEFT JOIN (حرج)
+**المشكلة**: استعلام LEFT JOIN مع Shop يعيد 0 صفوف رغم COUNT=38
+**الحل**: إضافة fallback باستخدام استعلام بسيط بدون JOIN عند فشل الاستعلام الرئيسي
+- `src/app/api/orders/route.ts`: SIMPLE_ORDERS_SQL fallback (NULL shopName/shopSlug)
+
+### الملفات المُعدلة للإصلاح
+| الملف | التغيير |
+|------|---------|
+| `src/app/api/orders/route.ts` | Fallback بدون LEFT JOIN |
+
+## الميزات الجديدة
+
+### 1. كشف الطلبات المكررة (Duplicate Detection)
+- في admin-panel.tsx: كشف تلقائي للطلبات المحتملة المكررة
+- المعايير: نفس الهاتف + نفس نوع الخدمة + نفس عدد الصفحات خلال 24 ساعة
+- شارة ⚠️ صفراء تظهر بجانب المرجع في جدول الطلبات
+- الملفات: admin-panel.tsx + order-details-row.tsx
+
+### 2. شارة "يعمل بفضل طيف" محسّنة
+- تصميم pill/badge مع gradient خلفية ذهبية/بنفسجية
+- hover effects مع shadow
+- الملف: app-shell.tsx
+
+## CSS Round 22 (+200 سطر)
+- page-enter, ripple, card-enter, heading-gradient
+- card-shimmer, dropdown-animate, fab-float
+- bg-pattern, scrollbar-smooth, tap-target
+- stat-card-inverted, skeleton-pulse
+- status-transition, gradient-border
+
+### تحسينات المكونات
+- بطاقات الإحصائيات: card-hover-lift + page-enter
+- الفوتر: شارة "يعمل بفضل طيف" محسّنة
+
+## Commits
+- 66b6f83: fix(r22): Turso DB fallback without JOIN, duplicate detection, CSS R22, footer badge
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ مشكلة Turso DB أساسية — LEFT JOIN مع Shop يفشل. يجب مراجعة الفهارس أو التبديل لقاعدة بيانات أخرى
+2. ⚠️ UPLOADTHING_TOKEN في Vercel (لم يُنفذ بعد!)
+3. إضافة ملاحظات DB-based للطلبات
+4. تحسين التجربة التجريبية
+5. سلة مشتريات متعددة الخدمات
+6. SEO structured data (JSON-LD)
