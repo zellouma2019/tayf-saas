@@ -462,7 +462,7 @@ export default function SuperAdminPage() {
             <ThemeToggle />
             {/* PDF Report button */}
             <a
-              href="/api/admin/pdf-report"
+              href="/api/admin/analytics"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors admin-tooltip"
