@@ -74,6 +74,11 @@ import { ReferralTrackerWidget } from "@/components/app/referral-tracker-widget"
 import { WasteReductionWidget } from "@/components/app/waste-reduction-widget";
 import { ClientCommunicationWidget } from "@/components/app/client-communication-widget";
 import { MachineMaintenanceWidget } from "@/components/app/machine-maintenance-widget";
+import { OrderRevenueDistribution } from "@/components/app/order-revenue-distribution";
+import { MonthlyTargetProgress } from "@/components/app/monthly-target-progress";
+import { TopCustomersWidget } from "@/components/app/top-customers-widget";
+import { PrintQualityMonitor } from "@/components/app/print-quality-monitor";
+import { EmployeePerformanceChart } from "@/components/app/employee-performance-chart";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -946,6 +951,21 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* صيانة الآلات */}
       <MachineMaintenanceWidget />
+
+      {/* توزيع إيرادات الطلبات */}
+      <OrderRevenueDistribution />
+
+      {/* أهداف الشهر */}
+      <MonthlyTargetProgress />
+
+      {/* أفضل العملاء */}
+      <TopCustomersWidget />
+
+      {/* مراقبة جودة الطباعة */}
+      <PrintQualityMonitor />
+
+      {/* أداء الموظفين */}
+      <EmployeePerformanceChart />
 
       {/* لوحة كفاءة الإنتاج */}
       <ProductionEfficiencyDashboard
