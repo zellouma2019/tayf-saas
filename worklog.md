@@ -3932,3 +3932,191 @@ Task: CSS Round 28 + Styling Improvements + New Features
 6. SEO JSON-LD structured data للمتاجر
 7. تحسين app-shell.tsx footbar مع morph-blob أو aurora
 8. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
+
+---
+Task ID: qa-fix-round29
+Agent: Main Agent
+Task: QA + CSS Round 29 + ميزات جديدة + إصلاحات Lint (Round 29)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint (0 أخطاء، 0 تحذيرات)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit e0a621d)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع (~8s للاستعلامات)
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (تم إضافة retry mechanism)
+
+## نتائج QA (تم التحقق على الموقع الحي via agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح | ✅ |
+| نظرة عامة — 38 طلب، 17,808 د.ج، 5 متاجر | ✅ |
+| مركز الإشعارات — يعرض 9+ إشعار | ✅ |
+| تبويب الطلبات — بنية جدول ظاهرة (بيانات تعتمد على Turso) | ✅ |
+| تبويب المتاجر — 5 متاجر | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الأزرار تعمل | ✅ |
+| الوضع الداكن — يعمل بدون أخطاء بصرية | ✅ |
+| أخطاء JavaScript — لا أخطاء | ✅ |
+| البناء — ناجح بدون أخطاء | ✅ |
+| Lint — 0 أخطاء | ✅ |
+
+## الإصلاحات
+
+### 1. خطأ Lint: runChecks accessed before declaration
+**المشكلة**: في `system-health-widget.tsx`، دالة `runChecks` كانت معرّفة بعد useEffect لكن مستخدمة فيه (TDZ)
+**الحل**: تحويل إلى `useCallback` + تقديم التعريف قبل useEffect
+**الملف**: `src/components/app/system-health-widget.tsx`
+
+### 2. خطأ Lint: JSX in try/catch
+**المشكلة**: في `src/app/s/[slug]/page.tsx`، JSON-LD script tag كان يُبنى داخل try/catch
+**الحل**: فصل JSON.stringify عن JSX — بناء الـ JSON string في try/catch، ثم JSX خارجها
+**الملف**: `src/app/s/[slug]/page.tsx`
+
+## الميزات الجديدة
+
+### 1. شريط تقدم التمرير (Scroll Progress Indicator)
+- شريط رفيع (3px) بتدرج بنفسجي في أعلى صفحة الإدارة
+- يتقدم مع تمرير الصفحة
+- يظهر فقط عند التمرير أكثر من 100px
+- حركة opacity سلسة للظهور والاختفاء
+- **الملف**: `src/app/page.tsx`
+
+### 2. سجل التدقيق (Admin Audit Trail)
+- مكون جديد: `src/components/app/audit-trail.tsx`
+- خط زمني بصري يعرض آخر 8 إجراءات إدارية
+- كل إجراء يعرض: نوع (إنشاء/تعديل/حذف)، الهدف، اسم المدير، التimestamp
+- أيقونات ملونة: Plus (أخضر)، Pencil (أزرق)، Trash2 (أحمر)
+- حالة فارغة مع أيقونة Clock
+- دعم الوضع الداكن
+- مدمج في تبويب النظرة العامة بعد تحليلات الإيرادات
+
+### 3. حلقة هدف الإيرادات اليومية (Daily Revenue Target Ring)
+- مكون جديد: `src/components/app/daily-target-ring.tsx`
+- حلقة SVG دائرية متحركة تعرض نسبة إنجاز هدف الإيرادات
+- ألوان حسب النسبة: أحمر <30%، كهرماني 30-60%، أخضر 60-100%، ذهبي 100%+
+- عدّاد متحرك للنسبة المئوية
+- مؤشر الاتجاه: "↑ 12% vs أمس" أو "↓ 5% vs أمس"
+- شارة "تم تحقيق الهدف!" عند الوصول
+- مدمج في تبويب النظرة العامة بجانب QuickStatsOverview
+
+### 4. بحث سريع عن الزبون (Quick Customer Search)
+- في لوحة تحكم التاجر (تبويب العملاء)
+- حقل بحث مع debounce (300ms)
+- نتائج منسدلة: اسم + هاتف + عدد الطلبات
+- النقر يُحدد/يُبرز الزبون
+- زر مسح لإعادة التعيين
+- **الملف**: `src/components/app/merchant-dashboard.tsx`
+
+### 5. إحصائيات سريعة للمتجر (Shop Quick Stats Popover)
+- عند التمرير فوق بطاقة المتجر في النظرة العامة
+- popover يعرض: طلبات اليوم + إيرادات + بانتظار + آخر طلب
+- تصميم KPI badges ملونة
+- **الملف**: `src/components/app/admin-overview-tab.tsx`
+
+## CSS Round 29 (+970 سطر)
+
+### تأثيرات تفاعلية جديدة
+- `.btn-depth` — ضغط ثلاثي الأبعاد
+- `.card-rotate-3d` — ميل ثلاثي الأبعاد عند التمرير (CSS فقط)
+- `.text-reveal` — نص يظهر من الأسفل عند التمرير
+- `.icon-spin-hover` — أيقونة تدور عند التمرير
+- `.underline-grow` — خط سفلي ينمو من المركز
+- `.shimmer-text` — تأثير لمعان على النص
+- `.pulse-border` — حدود نابضة
+- `.ripple-btn` — تموج عند النقر
+
+### تحسينات التخطيط
+- `.masonry-auto` — تخطيط masonry بالأعمدة
+- `.grid-auto-fill` — شبكة تلقائية
+- `.stack-gap-2` إلى `.stack-gap-6` — تراص عمودي
+- `.cluster` — تجميع أفقي
+- `.sidebar-collapse-smooth` — انتقال طي الشريط الجانبي
+- `.aspect-golden` — نسبة ذهبية (1.618)
+- `.container-sidebar` — محتوى مع إزاحة الشريط الجانبي
+
+### لوحة البيانات والعرض
+- `.metric-card` — بطاقة إحصائيات بحد جانبي متدرج
+- `.chart-bar-animate` — رسم أعمدة متحرك
+- `.progress-step` — مؤشر خطوة بخط رابط
+- `.data-row` — صف جدول مع تمييز
+- `.kpi-badge` — شارة KPI ملونة
+- `.sparkline-wrap` — حاوية رسم بياني مصغّر
+- `.comparison-bar` — شريط مقارنة
+- `.mini-chart-dot` — نقطة رسم بياني صغيرة
+
+### Neumorphism و Glass
+- `.neu-raised` — تأثير neumorphic بارز (فاتح + داكن)
+- `.neu-pressed` — تأثير neumorphic غائر
+- `.glass-strong` / `.glass-subtle` / `.glass-border` — زجاج بدرجات
+- `.frost` — زجاج صقيل
+
+### حالة وتغذية راجعة
+- `.status-dot-animated` — نقطة حالة متحركة
+- `.loading-bar-top` — شريط تحميل علوي
+- `.skeleton-pulse-custom` — هيكل عظمي مخصص
+- `.empty-state-card` — حالة فارغة
+- `.toast-container` — حاوية إشعارات (4 مواضع)
+- `.badge-new` — شارة عنصر جديد
+
+### استجابة ومحمول
+- `.safe-bottom` — حاشية آمنة للمحمول
+- `.touch-target` — حجم لمس أدنى (44x44)
+- `.hide-scrollbar` — إخفاء شريط التمرير
+- `.snap-x-container` — تمرير أفقي snap
+- `.mobile-stack` — تراص على المحمول
+- `.responsive-text` — نص يتكيف مع الشاشة
+
+### طباعة وإمكانية الوصول
+- `.focus-outline` — حدود تركيز مخصصة
+- `.skip-link` — رابط تخطي التنقل
+- `.sr-only-focusable` — مرئي عند التركيز فقط
+- `.reduced-motion` — تعطيل الحركات
+- `.print-break` — فواصل صفحات للطباعة
+
+### ألوان وتدرجات
+- `.gradient-primary/warm/cool/success/danger` — 5 تدرجات
+- `.text-shadow-sm/md/lg` — ظلال نص (فاتح + داكن)
+
+### تطبيق CSS الجديد على المكونات
+- `admin-overview-tab.tsx`: metric-card، card-rotate-3d، gradient-primary، text-shadow-sm
+- `merchant-dashboard.tsx`: neu-raised، cluster
+- `app-shell.tsx`: hide-scrollbar، mobile-stack، responsive-text
+- `shop-page.tsx`: safe-bottom
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 29 +970 سطر |
+| `src/app/page.tsx` | شريط تقدم التمرير + إحصائيات Shop Quick Stats |
+| `src/app/s/[slug]/page.tsx` | إصلاح lint: JSON-LD خارج try/catch |
+| `src/components/app/audit-trail.tsx` | جديد: سجل التدقيق الإداري |
+| `src/components/app/daily-target-ring.tsx` | جديد: حلقة هدف الإيرادات اليومية |
+| `src/components/app/admin-overview-tab.tsx` | دمج AuditTrail + DailyTargetRing + ShopQuickStatsPopover + CSS R29 |
+| `src/components/app/merchant-dashboard.tsx` | بحث سريع عن الزبون + CSS R29 (neu-raised, cluster) |
+| `src/components/app/app-shell.tsx` | CSS R29 (hide-scrollbar, mobile-stack, responsive-text) |
+| `src/components/app/shop-page.tsx` | CSS R29 (safe-bottom) |
+| `src/components/app/system-health-widget.tsx` | إصلاح lint: useCallback + TDZ |
+
+## Commit
+- e0a621d: feat(r29): CSS Round 29, scroll progress, audit trail, daily target ring, customer search, shop quick stats, lint fixes
+
+## حالة المشروع / التقييم
+- المنصة مستقرة وذات ميزات غنية
+- 29 جولة من التحسينات البصرية (أكثر من 5000+ سطر CSS)
+- أكثر من 50 ميزة تم إضافتها عبر الجولات
+- أولاويات: إضافة UPLOADTHING_TOKEN، مراقبة Turso DB، SEO JSON-LD
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع (~8s). يُنصح بالنظر في بديل (PlanetScale, Neon, Supabase)
+3. تحسين merchant-dashboard.tsx على الموبايل (التصميم الحالي مزدحم)
+4. SEO JSON-LD structured data لجميع الصفحات (تم إصلاح lint، يحتاج توسيع)
+5. إضافة ميزة سلة مشتريات متعددة الخدمات
+6. ملاحظات DB-based للطلبات (بدلاً من localStorage فقط)
+7. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+8. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
+9. اختبار UploadThing CDN على الموقع الحي
