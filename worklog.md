@@ -2936,3 +2936,104 @@ Task: تحسينات بصرية + ميزات جديدة (Round 17)
 6. تحسين التجربة التجريبية (فترة التجربة + ترقية)
 7. إضافة ميزة سلة مشتريات متعددة الخدمات
 
+---
+Task ID: r19
+Agent: Main Agent
+Task: تحسينات بصرية شاملة + ميزات جديدة (Round 19)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح مع البيانات الحية (38 طلب، 5 متاجر)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata
+- ✅ صفحة التتبع تعمل مع بحث تلقائي عبر ?ref= parameter
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ Lint: 0 أخطاء
+- ✅ الوضع الداكن يعمل بشكل صحيح مع المكونات الجديدة
+- ✅ تم النشر على Vercel بنجاح
+
+## نتائج QA (تم التحقق على الموقع الحي)
+- ✅ لوحة الإدارة — دخول ناجح، بدون أخطاء
+- ✅ بطاقات الإحصائيات — stagger-grid + gradient-border-animated + card-tilt-3d
+- ✅ أداء المتاجر — Performance Score Widget ظاهر مع درجات SVG rings
+- ✅ أفضل الزبائن — أوسمة 🥇🥈🥉 مع status-pill
+- ✅ صفحة المتجر — كل الأزرار تعمل
+- ✅ صفحة التتبع — تعرض واجهة البحث
+- ✅ الوضع الداكن — neon glow + glassmorphism يعملان بشكل صحيح
+- ✅ لا أخطاء JavaScript في أي صفحة
+- ✅ البناء ناجح بدون أخطاء
+
+## الميزات الجديدة
+
+### 1. مكون هدف الإيرادات (Revenue Goal Widget)
+- ملف جديد: `src/components/app/revenue-goal-widget.tsx`
+- تحديد هدف إيرادات يومي مع حفظ في localStorage
+- شريط تقدم متحرك مع gradient shimmer
+- رسائل تحفيزية حسب النسبة (🎯 → 🌱 → 💪 → 🔥 → 🎉)
+- تأثير confetti عند تحقيق الهدف
+- مؤشرات milestones (25%, 50%, 75%, 100%)
+- حالة فارغة مع زر "حدد هدف اليوم"
+- متكامل في لوحة تحكم التاجر (تبويب الرئيسية) بجانب طابور الطباعة
+
+### 2. مكون درجة أداء المتاجر (Performance Score Widget)
+- ملف جديد: `src/components/app/performance-score-widget.tsx`
+- حساب درجة 0-100 لكل متجر بناءً على 4 عوامل:
+  - سرعة الإنجاز (0-25 نقطة)
+  - مستوى الإيرادات (0-30 نقطة)
+  - حجم الطلبات (0-25 نقطة)
+  - حداثة النشاط (0-20 نقطة)
+- درجات: A+ (90+), A (75+), B (55+), C (35+), D (<35)
+- SVG Progress Rings مع glow effect
+- متوسط درجات جميع المتاجر في الرأس
+- متكامل في لوحة الإدارة بعد QuickStatsOverview
+
+## التحسينات البصرية (Round 19)
+
+### CSS جديدة (~280 سطر)
+- `.gradient-border-animated` — حدود متدرجة دوّارة (conic-gradient + @property)
+- `.glass-card-2` — glassmorphism 2.0 محسّن
+- `.neon-glow` / `.neon-glow-gold` / `.neon-glow-emerald` — توهج نيون للوضع الداكن
+- `.rank-1` / `.rank-2` / `.rank-3` — أوسمة ترتيب بـ gradient + shadow
+- `.shimmer-skeleton` — هيكل تحميل متلألئ
+- `.card-tilt-3d` — تأثير ميل ثلاثي الأبعاد
+- `.stagger-grid` — دخول متتابع لعناصر الشبكة (8 عناصر)
+- `.progress-ring-glow` — توهج لحلقات التقدم
+- `.goal-progress-bar` — شريط هدف الإيرادات مع shimmer + celebrate
+- `.stale-warning` — نبض تحذير للطلبات القديمة
+- `.score-ring` — حلقة درجة الأداء
+- `.fab-enhanced` — زر عائم محسّن
+- `.table-row-hover` — تأثير hover للصفوف
+- `.status-pill` — شارات حالة محسّنة
+- `.kbd-enhanced` — مفتاح اختصار لوحة المفاتيح
+- `.fade-slide-up` — حركة دخول
+- `.notif-dropdown` — قائمة إشعارات محسّنة
+- `.quick-action-btn` — زر إجراء سريع
+- `@property --gradient-angle` — CSS Houdini للحدود المتدرجة
+
+### تحسينات المكونات
+- لوحة الإدارة: بطاقات الإحصائيات مع stagger-grid + card-tilt-3d + gradient-border-animated
+- أفضل الزبائن: أوسمة 🥇🥈🥉، status-pill، table-row-hover، card-tilt-3d
+- آخر الطلبات: table-row-hover micro-interaction
+- لوحة التاجر: stagger-grid على البطاقات والإجراءات، card-tilt-3d
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|---------|
+| `src/app/globals.css` | +280 سطر: CSS Round 19 |
+| `src/components/app/revenue-goal-widget.tsx` | جديد: مكون هدف الإيرادات |
+| `src/components/app/performance-score-widget.tsx` | جديد: مكون درجة الأداء |
+| `src/components/app/admin-overview-tab.tsx` | PerformanceScoreWidget + stagger-grid + gradient-border-animated + card-tilt-3d + أفضل الزبائن مع أوسمة + table-row-hover |
+| `src/components/app/merchant-dashboard.tsx` | RevenueGoalWidget متكامل + stagger-grid + card-tilt-3d |
+
+## Commits
+- 166ccb0: feat(r19): revenue goal widget, shop performance scores, enhanced CSS animations & styling
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (مهم)
+2. إضافة stale orders detection — تنبيه للطلبات المعلقة > 24 ساعة
+3. إضافة تصدير Excel للطلبات
+4. إضافة structured data (JSON-LD) لـ SEO
+5. إضافة لوحة Kanban محسّنة (تصفية حسب العلامات)
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية)
+7. إضافة ميزة سلة مشتريات متعددة الخدمات
+8. إضافة لوحة معلومات بيئية (System Health Dashboard)
+
