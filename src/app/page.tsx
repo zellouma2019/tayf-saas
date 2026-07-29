@@ -6,6 +6,7 @@ import {
   Search, ExternalLink, Trash2, Download, TrendingUp,
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
+  CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,8 @@ export default function SuperAdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "shops" | "orders">("overview");
   const [shopSearch, setShopSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<GlobalOrder | null>(null);
+  // Data health tracking
+  const [dataHealth, setDataHealth] = useState<{ status: 'healthy' | 'warning' | 'error'; message: string }>({ status: 'healthy', message: '' });
   // Platform settings
   const [platformLogo, setPlatformLogo] = useState("");
   const [platformLogoDark, setPlatformLogoDark] = useState("");
@@ -129,16 +132,28 @@ export default function SuperAdminPage() {
       if (statsData.shopStats && Array.isArray(statsData.shopStats) && statsData.shopStats.length > 0) {
         setGlobalStats(statsData);
         setAllOrders(Array.isArray(statsData.recentOrders) ? statsData.recentOrders : []);
+        // Check data quality
+        const hasShopOrders = statsData.shopStats.some((s: ShopStat) => s.orders > 0);
+        const hasRecentOrders = Array.isArray(statsData.recentOrders) && statsData.recentOrders.length > 0;
+        if (hasShopOrders && hasRecentOrders) {
+          setDataHealth({ status: 'healthy', message: '' });
+        } else if (statsData.totalOrders > 0) {
+          setDataHealth({ status: 'warning', message: 'تم تحميل البيانات via fallback' });
+        } else {
+          setDataHealth({ status: 'healthy', message: '' });
+        }
       } else if (statsData.shopCount > 0) {
         // Fallback: shopStats exists but might be empty, still use stats structure
         setGlobalStats(statsData);
         setAllOrders(Array.isArray(statsData.recentOrders) ? statsData.recentOrders : []);
+        setDataHealth({ status: 'warning', message: 'بيانات جزئية — تم استخدام fallback' });
       } else {
         // Last resort: load shops + orders from separate APIs
         const shopsRes = await fetch("/api/shops");
         const shops = await shopsRes.json();
         setFallbackShops(Array.isArray(shops) ? shops : []);
         setAllOrders(Array.isArray(ordersData.orders) ? ordersData.orders : (Array.isArray(ordersData) ? ordersData : []));
+        setDataHealth({ status: 'error', message: 'لم يتم تحميل global-stats — تم استخدام APIs منفصلة' });
       }
       setLastUpdated(new Date().toLocaleTimeString("ar-SA"));
     } catch (err) {
@@ -161,6 +176,22 @@ export default function SuperAdminPage() {
       setFaviconBadge(pending);
     }
   }, [allOrders]);
+
+  // Change order status inline
+  const changeOrderStatus = useCallback(async (orderId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('فشل في تحديث الحالة');
+      toast.success(`تم تحديث حالة الطلب إلى: ${STATUS_META[newStatus as keyof typeof STATUS_META]?.label || newStatus}`);
+      loadAll(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'فشل في تحديث الحالة');
+    }
+  }, [loadAll]);
 
   // Handle logout
   function handleLogout() {
@@ -209,10 +240,15 @@ export default function SuperAdminPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col" dir="rtl">
-      {/* Refresh progress bar */}
+      {/* Refresh progress bar + data freshness indicator */}
       {isRefreshing && (
         <div className="h-0.5 w-full bg-muted overflow-hidden">
           <div className="h-full w-1/2 bg-primary animate-admin-progress rounded-full" />
+        </div>
+      )}
+      {!isRefreshing && lastUpdated && (
+        <div className="overflow-hidden">
+          <div className="freshness-bar" key={lastUpdated} />
         </div>
       )}
 
@@ -237,12 +273,20 @@ export default function SuperAdminPage() {
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {/* Notification bell with pending count */}
             {safeOrders.filter(o => o.status === "pending").length > 0 && (
-              <button className="relative p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors bell-swing">
+              <button className="relative p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors bell-urgent">
                 <Bell className="h-4 w-4" />
                 <span className="absolute -top-0.5 left-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
                   {safeOrders.filter(o => o.status === "pending").length}
                 </span>
               </button>
+            )}
+            {/* Data health indicator */}
+            {dataHealth.status !== 'healthy' && (
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground admin-tooltip" data-tip={dataHealth.message}>
+                <span className={cn("health-dot", dataHealth.status)} />
+                {dataHealth.status === 'warning' && <AlertTriangle className="h-3 w-3 text-amber-500" />}
+                {dataHealth.status === 'error' && <Info className="h-3 w-3 text-red-500" />}
+              </div>
             )}
             <ThemeToggle />
             <button
@@ -307,16 +351,16 @@ export default function SuperAdminPage() {
         {/* ====== Skeleton state for initial load ====== */}
         {isInitialLoading && activeTab === "overview" && (
           <div className="space-y-4">
-            {/* 4 skeleton KPI cards */}
+            {/* 4 skeleton KPI cards with improved shimmer */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3 overflow-hidden">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2 flex-1">
-                      <div className="h-7 w-16 bg-muted animate-pulse rounded-lg" />
-                      <div className="h-3 w-24 bg-muted animate-pulse rounded-lg" />
+                      <div className="h-7 w-16 skeleton-improved rounded-lg" />
+                      <div className="h-3 w-24 skeleton-improved rounded-lg" />
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                    <div className="w-10 h-10 rounded-lg skeleton-improved" />
                   </div>
                 </div>
               ))}
@@ -324,18 +368,18 @@ export default function SuperAdminPage() {
             {/* Skeleton for recent orders */}
             <div className="rounded-xl border border-border bg-card">
               <div className="p-4 border-b border-border flex items-center justify-between">
-                <div className="h-4 w-24 bg-muted animate-pulse rounded-lg" />
-                <div className="h-3 w-16 bg-muted animate-pulse rounded-lg" />
+                <div className="h-4 w-24 skeleton-improved rounded-lg" />
+                <div className="h-3 w-16 skeleton-improved rounded-lg" />
               </div>
               <div className="divide-y divide-border">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="p-3 flex items-center gap-3">
-                    <div className="h-5 w-16 bg-muted animate-pulse rounded-lg" />
+                    <div className="h-5 w-16 skeleton-improved rounded-lg" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-3/4 bg-muted animate-pulse rounded-lg" />
-                      <div className="h-3 w-1/2 bg-muted animate-pulse rounded-lg" />
+                      <div className="h-4 w-3/4 skeleton-improved rounded-lg" />
+                      <div className="h-3 w-1/2 skeleton-improved rounded-lg" />
                     </div>
-                    <div className="h-3 w-14 bg-muted animate-pulse rounded-lg" />
+                    <div className="h-3 w-14 skeleton-improved rounded-lg" />
                   </div>
                 ))}
               </div>
@@ -343,17 +387,17 @@ export default function SuperAdminPage() {
             {/* Skeleton for shops list */}
             <div className="rounded-xl border border-border bg-card">
               <div className="p-4 border-b border-border flex items-center justify-between">
-                <div className="h-4 w-20 bg-muted animate-pulse rounded-lg" />
-                <div className="h-3 w-16 bg-muted animate-pulse rounded-lg" />
+                <div className="h-4 w-20 skeleton-improved rounded-lg" />
+                <div className="h-3 w-16 skeleton-improved rounded-lg" />
               </div>
               <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="rounded-xl border border-border p-4 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                      <div className="w-10 h-10 rounded-lg skeleton-improved" />
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 w-28 bg-muted animate-pulse rounded-lg" />
-                        <div className="h-3 w-20 bg-muted animate-pulse rounded-lg" />
+                        <div className="h-4 w-28 skeleton-improved rounded-lg" />
+                        <div className="h-3 w-20 skeleton-improved rounded-lg" />
                       </div>
                     </div>
                   </div>
@@ -419,8 +463,8 @@ export default function SuperAdminPage() {
         {/* ====== Loaded content (only show when NOT in initial load) ====== */}
         {!isInitialLoading && activeTab === "overview" && (
           <div className="space-y-4">
-            {/* Welcome banner with quick stats */}
-            <div className="rounded-xl bg-gradient-to-l from-primary/10 via-primary/5 to-transparent border border-primary/20 p-4 flex items-center justify-between gap-4">
+            {/* Welcome banner with quick stats - glass effect */}
+            <div className="rounded-xl glass-card border border-primary/20 p-4 flex items-center justify-between gap-4 summary-shimmer">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="h-5 w-5 text-primary" />
@@ -444,15 +488,15 @@ export default function SuperAdminPage() {
               </button>
             </div>
 
-            {/* Stats cards - enhanced with gradient indicators */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-stagger">
+            {/* Stats cards - glass effect with gradient indicators */}
+            <div className="admin-grid-responsive animate-stagger">
               {[
                 { label: "إجمالي الطلبات", value: globalStats?.totalOrders ?? safeOrders.length, icon: Package, color: "text-blue-600 dark:text-blue-400", gradient: "from-blue-500/10 to-blue-600/5", border: "border-blue-200 dark:border-blue-800/50" },
                 { label: "المتاجر", value: safeShops.length, icon: Store, color: "text-emerald-600 dark:text-emerald-400", gradient: "from-emerald-500/10 to-emerald-600/5", border: "border-emerald-200 dark:border-emerald-800/50" },
                 { label: "قيد الانتظار", value: safeOrders.filter(o => o.status === "pending").length, icon: Clock, color: "text-amber-600 dark:text-amber-400", gradient: "from-amber-500/10 to-amber-600/5", border: "border-amber-200 dark:border-amber-800/50" },
                 { label: "الإيرادات", value: `${(globalStats?.totalRevenue ?? 0).toLocaleString("ar-DZ")} د.ج`, icon: DollarSign, color: "text-violet-600 dark:text-violet-400", gradient: "from-violet-500/10 to-violet-600/5", border: "border-violet-200 dark:border-violet-800/50" },
               ].map((card, i) => (
-                <div key={i} className={cn("rounded-xl border bg-card p-4 card-hover-lift relative overflow-hidden", card.border)}>
+                <div key={i} className={cn("rounded-xl glass-card p-4 card-hover-lift relative overflow-hidden", card.border)}>
                   <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-br opacity-50 pointer-events-none", card.gradient)} />
                   <div className="relative flex items-center justify-between">
                     <div>
@@ -854,15 +898,29 @@ export default function SuperAdminPage() {
                       <TableRow
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
-                        className="cursor-pointer hover:bg-muted/50 table-row-highlight"
+                        className={cn(
+                          "cursor-pointer hover:bg-muted/50 table-row-highlight order-row-accent",
+                          `status-${order.status}`
+                        )}
                       >
                         <TableCell className="font-medium">{order.customer?.name || "—"}</TableCell>
                         <TableCell>{order.serviceName || order.serviceType || "—"}</TableCell>
                         <TableCell>{order.shopName || order.shopSlug || "—"}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn("text-[10px]", STATUS_META[order.status as keyof typeof STATUS_META]?.color)}>
-                            {STATUS_META[order.status as keyof typeof STATUS_META]?.label || order.status}
-                          </Badge>
+                          <div className="status-dropdown-cell" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={order.status}
+                              onChange={(e) => changeOrderStatus(order.id, e.target.value)}
+                              className={cn(
+                                "order-status-transition",
+                                STATUS_META[order.status as keyof typeof STATUS_META]?.color || ""
+                              )}
+                            >
+                              {Object.entries(STATUS_META).map(([key, meta]) => (
+                                <option key={key} value={key}>{meta.label}</option>
+                              ))}
+                            </select>
+                          </div>
                         </TableCell>
                         <TableCell className="font-medium tabular-nums text-sm">{order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{formatDA(order.createdAt)}</TableCell>
@@ -916,7 +974,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50">
-                v4.2
+                v4.3
               </span>
             )}
           </div>
@@ -924,6 +982,10 @@ export default function SuperAdminPage() {
             <span className="text-[9px] text-muted-foreground/40 tabular-nums">
               {safeShops.length} متجر • {safeOrders.length} طلب
             </span>
+            <div className="hidden lg:flex items-center gap-1.5">
+              <span className="kbd-hint" title="تحديث">R</span>
+              <span className="text-[8px] text-muted-foreground/30">تحديث</span>
+            </div>
             <button
               onClick={handleLogout}
               className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 hover:bg-destructive/5 px-2 py-1 rounded-md"

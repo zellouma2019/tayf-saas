@@ -31215,3 +31215,270 @@ tr:hover .table-cell-actions {
   border-radius: 8px !important;
   backdrop-filter: blur(8px) !important;
 }
+
+/* ===== Admin Dashboard v4.3 Additions ===== */
+
+/* Glassmorphism card for premium feel */
+.glass-card {
+  background: color-mix(in oklch, var(--card) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+}
+
+/* Animated gradient border for featured cards */
+@keyframes gradient-border-flow {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.gradient-border-flow {
+  --angle: 0deg;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+.gradient-border-flow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--angle), var(--primary), #d4a853, var(--primary));
+  z-index: -1;
+  animation: gradient-border-flow 4s linear infinite;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 2px;
+}
+
+/* Status change dropdown in table */
+.status-dropdown-cell {
+  position: relative;
+}
+.status-dropdown-cell select {
+  appearance: none;
+  cursor: pointer;
+  padding: 2px 20px 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%236b7280'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 6px center;
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+}
+.status-dropdown-cell select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/* Health indicator dot */
+.health-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 4px;
+}
+.health-dot.healthy {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+.health-dot.warning {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+.health-dot.error {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+  animation: pulse-warning 1s ease-in-out infinite;
+}
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Data freshness bar */
+@keyframes freshness-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+.freshness-bar {
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), #10b981);
+  border-radius: 1px;
+  animation: freshness-shrink 120s linear forwards;
+}
+
+/* Quick action floating buttons */
+.quick-action-float {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.quick-action-float:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.15);
+}
+
+/* Inline order status badge with transition */
+.order-status-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Summary card shimmer background */
+.summary-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.summary-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    color-mix(in oklch, var(--primary) 5%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 200% 200%;
+  animation: summary-shimmer-bg 6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes summary-shimmer-bg {
+  0% { background-position: 100% 100%; }
+  50% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* Responsive grid container for admin */
+.admin-grid-responsive {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 768px) {
+  .admin-grid-responsive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .admin-grid-responsive {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Keyboard shortcut hint badges */
+.kbd-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: color-mix(in oklch, var(--muted) 40%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  color: var(--muted-foreground);
+}
+
+/* Skeleton loading with improved shimmer */
+.skeleton-improved {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--muted) 40%, transparent) 25%,
+    color-mix(in oklch, var(--muted) 15%, transparent) 37%,
+    color-mix(in oklch, var(--muted) 40%, transparent) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-improved-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes skeleton-improved-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Notification bell shake for urgent */
+@keyframes bell-shake-urgent {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-12deg); }
+  30% { transform: rotate(10deg); }
+  40% { transform: rotate(-8deg); }
+  50% { transform: rotate(6deg); }
+  60% { transform: rotate(-4deg); }
+  70% { transform: rotate(2deg); }
+}
+.bell-urgent:hover {
+  animation: bell-shake-urgent 1s ease-in-out;
+}
+
+/* Copy-to-clipboard flash effect */
+@keyframes copy-flash {
+  0% { background-color: color-mix(in oklch, var(--primary) 20%, transparent); }
+  100% { background-color: transparent; }
+}
+.copy-flash {
+  animation: copy-flash 0.6s ease-out;
+}
+
+/* Tooltip arrow for admin dashboard */
+.admin-tooltip {
+  position: relative;
+}
+.admin-tooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  background: var(--foreground);
+  color: var(--background);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 100;
+}
+.admin-tooltip:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* Enhanced order row with status color accent */
+.order-row-accent {
+  border-right: 3px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.order-row-accent.status-pending {
+  border-right-color: #f59e0b;
+}
+.order-row-accent.status-confirmed {
+  border-right-color: #3b82f6;
+}
+.order-row-accent.status-printing {
+  border-right-color: #8b5cf6;
+}
+.order-row-accent.status-ready {
+  border-right-color: #10b981;
+}
+.order-row-accent.status-delivered {
+  border-right-color: #06b6d4;
+}
+.order-row-accent.status-cancelled {
+  border-right-color: #6b7280;
+}

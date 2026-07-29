@@ -29,7 +29,12 @@ export async function GET() {
     ]);
 
     // الدفعة 2: آخر الطلبات + بيانات المتاجر (متوازيان)
-    const [recentOrdersRaw, shopsRaw] = await Promise.all([
+    // NOTE: LEFT JOIN query intermittently returns empty on Turso HTTP mode.
+    // Strategy: try JOIN first, fallback to simple query + manual shop lookup.
+    let recentOrdersRaw: Record<string, unknown>[] = [];
+    let shopsRaw: Record<string, unknown>[] = [];
+
+    const [joinResult, shopsResult] = await Promise.all([
       tursoQuery(`
         SELECT 
           o.id, o.reference, o."serviceType", o."serviceName",
@@ -48,6 +53,34 @@ export async function GET() {
         ORDER BY s."createdAt" DESC
       `),
     ]);
+
+    recentOrdersRaw = joinResult;
+    shopsRaw = shopsResult;
+
+    // Fallback: if JOIN query returned empty but we know orders exist, try simple query
+    if (recentOrdersRaw.length === 0 && totalOrders > 0) {
+      console.log(`[global-stats] JOIN query returned 0 rows, falling back to simple query (totalOrders=${totalOrders})`);
+      const fallbackOrders = await tursoQuery(`
+        SELECT id, reference, "serviceType", "serviceName",
+          status, total, customer, "createdAt", "shopId"
+        FROM "PrintOrder"
+        ORDER BY "createdAt" DESC LIMIT 20
+      `);
+      if (fallbackOrders.length > 0) {
+        recentOrdersRaw = fallbackOrders as Record<string, unknown>[];
+        // Build shop lookup from shopsRaw
+        const shopLookup = new Map<string, { name: string; slug: string }>();
+        for (const s of shopsRaw) {
+          shopLookup.set(String(s.id), { name: String(s.name), slug: String(s.slug) });
+        }
+        // Attach shop name/slug to each order
+        for (const o of recentOrdersRaw) {
+          const shop = shopLookup.get(String(o.shopId || ""));
+          (o as Record<string, unknown>).shopName = shop?.name || "—";
+          (o as Record<string, unknown>).shopSlug = shop?.slug || "";
+        }
+      }
+    }
 
     const elapsed = Date.now() - startTime;
     console.log(`[global-stats] loaded in ${elapsed}ms — statusRows:${statusRows.length}, orders:${recentOrdersRaw.length}, shops:${shopsRaw.length}`);
@@ -76,7 +109,15 @@ export async function GET() {
       if (fromOrders > 0) totalRevenue = Math.round(fromOrders);
     }
 
-    // Fallback 2b: لو كلاهما صفر → revenue يبقى 0 (لا بيانات كافية)
+    // Fallback 2b: إذا لا يزال 0 رغم وجود طلبات → استعلم مباشرة عن total
+    if (totalRevenue === 0 && totalOrders > 0) {
+      console.log(`[global-stats] revenue still 0 with ${totalOrders} orders, querying SUM directly`);
+      const sumResult = await tursoQuery(`SELECT COALESCE(SUM(CAST(total AS INTEGER)), 0) as sumTotal FROM "PrintOrder"`);
+      if (sumResult.length > 0) {
+        const directSum = toNum(sumResult[0].sumTotal);
+        if (directSum > 0) totalRevenue = directSum;
+      }
+    }
 
     // Fallback 3: إذا كان todayOrders أرجع 0 (مشكلة منطقة زمنية)
     if (todayOrders === 0 && recentOrdersRaw.length > 0) {
