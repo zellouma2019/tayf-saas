@@ -4120,3 +4120,180 @@ Task: QA + CSS Round 29 + ميزات جديدة + إصلاحات Lint (Round 29)
 7. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
 8. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
 9. اختبار UploadThing CDN على الموقع الحي
+
+---
+Task ID: qa-fix-round30
+Agent: Main Agent
+Task: QA + CSS Round 30 + ميزات جديدة (Round 30)
+
+## حالة المشروع الحالية
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ لوحة الإدارة تعمل بشكل صحيح (38 طلب، 5 متاجر، 17,808 د.ج)
+- ✅ صفحة المتجر للزبون تعمل مع SEO metadata + خدمات مقارنة
+- ✅ تتبع الطلبات يعمل مع بحث تلقائي
+- ✅ لا أخطاء في البناء (build ناجح)
+- ✅ لا أخطاء في Lint (0 أخطاء، 0 تحذيرات)
+- ✅ الوضع الداكن يعمل بشكل صحيح
+- ✅ تم النشر على Vercel (commit cfc8edf)
+- ⚠️ Turso DB لا يزال يعاني من بطء متقطع
+- ⚠️ تبويب الطلبات يعرض فراغاً أحياناً (retry mechanism يعمل)
+
+## نتائج QA (agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| لوحة الإدارة — دخول ناجح + كل المكونات | ✅ |
+| سجل الإجراءات + النشاطات الأخيرة | ✅ |
+| تبويب المتاجر — 5 متاجر | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الأزرار تعمل | ✅ |
+| صفحة التتبع (/track) — واجهة البحث تعمل | ✅ |
+| لوحة تحكم التاجر — شاشة PIN تعمل | ✅ |
+| البناء — ناجح بدون أخطاء | ✅ |
+| Lint — 0 أخطاء | ✅ |
+
+## الإصلاحات
+| المشكلة | الحل |
+|---------|------|
+| CSS agent فتح `<div className="data-grid">` بدون إغلاق | إزالة الـ wrapper من admin-overview-tab.tsx |
+
+## الميزات الجديدة
+
+### 1. خط حالة الطلب البصري (Order Status Timeline)
+- في نافذة تفاصيل الطلب
+- 5 خطوات: انتظار → تأكيد → طباعة → جاهز → تم التسليم
+- خط أفقي (حاسوب) / عمودي (موبايل)
+- خطوات مكتملة: أخضر مع ✓ | الحالية: نابضة ملونة | المستقبلية: رمادية
+- حالة ملغاة: X أحمر
+- ملف: `order-detail-modal.tsx`
+
+### 2. جدول مقارنة الخدمات (Services Comparison Table)
+- مكون جديد: `services-comparison.tsx`
+- 6 خدمات: مستند، صور، لافتة، بطاقة، تجليد، ملصق
+- أعمدة: اسم، سعر/صفحة، حد أدنى، وقت التسليم، تقييم (نجوم)
+- خدمة شائعة مع أيقونة ذهبية + صف مميز
+- زر "عرض المقارنة" لتبديل الظهور
+- تصميم متجاوب: جدول (حاسوب) / بطاقات (موبايل)
+- مدمج في app-shell.tsx
+
+### 3. خريطة حرارية الطلبات (Orders Heatmap)
+- مكون جديد: `orders-heatmap.tsx`
+- شبكة 7×6: أيام الأسبوع × فترات الوقت
+- بيانات واقعية (أكثر طلبات في ساعات العمل)
+- كثافة ألوان: أخضر (فاتح) → أخضر داكن / بنفسجي (داكن)
+- عنوان hover يعرض العدد الدقيق
+- وسط إيضاحي في الأسفل
+- مدمج في admin-overview-tab.tsx
+
+### 4. تراكب اختصارات لوحة المفاتيح (Keyboard Shortcuts Overlay)
+- مكون جديد: `keyboard-shortcuts-overlay.tsx`
+- يُفتح بزر "?" من أي صفحة إدارة
+- 3 مجموعات: التنقل (Alt+1-5)، الإجراءات (Alt+N/R, Ctrl+K)، عام (؟, Escape)
+- عناصر kbd مصممة
+- إغلاق بـ Escape أو النقر خارج النافذة
+- مدمج في page.tsx
+
+### 5. تصنيف المصروفات (Expense Categories Breakdown)
+- مكون جديد: `expense-categories-breakdown.tsx`
+- 5 فئات: مواد طباعة، صيانة، إيجار، كهرباء، أخرى
+- أعمدة تقدم أفقية ملونة بنسب مئوية
+- مدمج في merchant-expenses.tsx
+
+### 6. بطاقة ملخص نتائج التتبع (Track Results Summary)
+- في صفحة التتبع عند وجود نتائج
+- بطاقات مصغرة: إجمالي، بانتظار، جاهز، مكتمل
+- كل بطاقة بأيقونة + شارة ملونة
+- ظهور متتابع مع animate-in
+- ملف: `track-page-client.tsx`
+
+## CSS Round 30 (+915 سطر)
+
+### بطاقات متقدمة
+- `.card-glass-morphism` — زجاجي متعدد الطبقات
+- `.card-holographic` — تأثير قوس قزح عند التمرير
+- `.card-gradient-border` — حد متدرج متحرك (@property)
+- `.card-stack` — بطاقات مكدسة مع إزاحة
+- `.card-spotlight` — إضاءة تتبع الماوس
+
+### نصوص محسّنة
+- `.text-gradient-animated` — نص متدرج متحرك
+- `.text-glow` — نص متوهج
+- `.text-stroke` — نص مع حدود
+- `.text-blur-in` — نص يظهر من ضبابية
+- `.text-count-up` — حاوية عدّاد
+
+### تنقل
+- `.nav-pill` — زر تنقل دوّار
+- `.nav-badge` — شارة تنقل مع ارتداد
+- `.nav-drawer` — قائمة جانبية منزلقة
+- `.nav-breadcrumb-separator` — فاصل مسار التنقل
+- `.mobile-bottom-nav` — تنقل سفلي ثابت للموبايل
+
+### نماذج وحقول إدخال
+- `.input-animated-border` — حد متحرك عند التركيز
+- `.input-floating-label` — تسمية عائمة
+- `.input-group` — حقول مجمّعة
+- `.input-icon-animated` — أيقونة متحركة
+- `.form-card` — بطاقة نموذج
+
+### جداول
+- `.table-modern` — جدول عصري
+- `.table-sortable` — رأس قابل للترتيب
+- `.table-expandable-row` — صف قابل للتوسيع
+- `.table-sticky-header` — رأس ثابت
+- `.table-cell-truncate` — خلية مع اقتطاع
+
+### رسوم بيانية وبيانات
+- `.chart-container` — حاوية رسم بياني
+- `.chart-legend` — وسط إيضاحي مخصص
+- `.chart-tooltip` — تلميح الرسم
+- `.data-grid` — شبكة بيانات
+- `.data-card-mini` — بطاقة بيانات مصغّرة
+
+### تحميل وتقدم
+- `.loader-ring` — دوّار CSS فقط
+- `.loader-dots` — نقاط متحركة
+- `.loader-bar-indeterminate` — شريط تقدم غير محدد
+- `.skeleton-card` — هيكل عظمي بطاقة
+- `.skeleton-text` — هيكل عظمي نصي
+
+### حركات
+- `.animate-in` / `.animate-in-scale` / `.animate-in-slide-right` — حركات دخول
+- `.animate-out` — حركة خروج
+- `.hover-scale-sm/md/lg` — تكبير عند التمرير
+- `.press-sm/md` — ضغط عند النقر
+
+### تطبيق CSS على المكونات
+- `admin-overview-tab.tsx`: card-spotlight، text-gradient-animated، chart-container
+- `merchant-dashboard.tsx`: form-card، card-stack، input-animated-border
+- `app-shell.tsx`: text-glow، nav-pill
+- `track-page-client.tsx`: form-card، input-animated-border، animate-in
+- `new-order-wizard.tsx`: card-holographic
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|---------|
+| `src/app/globals.css` | CSS Round 30 +915 سطر |
+| `src/app/page.tsx` | دمج KeyboardShortcutsOverlay |
+| `src/components/app/admin-overview-tab.tsx` | إصلاح data-grid + OrdersHeatmap + CSS R30 |
+| `src/components/app/app-shell.tsx` | دمج ServicesComparison + CSS R30 |
+| `src/components/app/order-detail-modal.tsx` | خط حالة الطلب البصري |
+| `src/components/app/track-page-client.tsx` | بطاقة ملخص النتائج + CSS R30 |
+| `src/components/app/merchant-dashboard.tsx` | CSS R30 |
+| `src/components/app/merchant-expenses.tsx` | دمج ExpenseCategoriesBreakdown |
+| `src/components/app/new-order-wizard.tsx` | CSS R30 (card-holographic) |
+| `src/components/app/services-comparison.tsx` | جديد: جدول مقارنة الخدمات |
+| `src/components/app/orders-heatmap.tsx` | جديد: خريطة حرارية الطلبات |
+| `src/components/app/keyboard-shortcuts-overlay.tsx` | جديد: تراكب اختصارات لوحة المفاتيح |
+| `src/components/app/expense-categories-breakdown.tsx` | جديد: تصنيف المصروفات |
+
+## Commits
+- cfc8edf: feat(r30): CSS Round 30, heatmap, services comparison, keyboard shortcuts, status timeline, expense breakdown
+
+## التوصيات للمرحلة القادمة
+1. ⚠️ إضافة UPLOADTHING_TOKEN كمتغير بيئة في Vercel (لم يُنفذ بعد!)
+2. ⚠️ مراقبة Turso DB — بطء متقطع (~8s). يُنصح بالنظر في بديل (PlanetScale, Neon, Supabase)
+3. تحسين merchant-dashboard.tsx على الموبايل (التصميم الحالي مزدحم)
+4. SEO JSON-LD structured data لجميع الصفحات
+5. ملاحظات DB-based للطلبات (بدلاً من localStorage فقط)
+6. تحسين التجربة التجريبية (فترة التجربة + ترقية Pro)
+7. إضافة flip-card لعرض معلومات المتجر في صفحة الزبون
+8. اختبار UploadThing CDN على الموقع الحي
