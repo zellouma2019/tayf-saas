@@ -9429,3 +9429,94 @@ Task: CSS v6.0, column sorting, kanban view, enhanced styling
 3. إضافة عرض تقويمي للطلبات
 4. تحسينات على عرض الكانبان (عدد الطلبات في كل بطاقة)
 5. إضافة لوحة تحكم للزبون (صفحة /customer)
+
+---
+Task ID: R67
+Agent: Main Agent
+Task: CSS v6.1, enhanced kanban, stat mesh cards, status badges, styling polish
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة)
+- ✅ تم النشر على Vercel (deploy job Dueq3SQb20epgBKVruV0)
+- ✅ إصدار v6.1
+
+## نتائج QA
+- ✅ تسجيل الدخول يعمل
+- ✅ تبويب الطلبات: جدول + كانبان يعملان بدون أخطاء
+- ✅ ترتيب الأعمدة يعمل (تم اختبار ترتيب المبلغ — تظهر القيم بترتيب تصاعدي)
+- ✅ لا أخطاء JavaScript
+
+## الميزات والتحسينات
+
+### 1. تحسين بطاقات كانبان
+- بطاقات كانبان مع تأثير glass-card-animated (حدود دوّارة متحركة عند التمرير)
+- شارة "عاجل" تلقائية للطلبات ≥ 3,000 د.ج (tag-urgent)
+- شارة الحالة على كل بطاقة (status-badge-icon)
+- تأثير hover-underline-animated على رقم المرجع
+
+### 2. تحسين بطاقات الإحصائيات في النظرة العامة
+- stat-mesh-card: توهج شعاعي عند التمرير (emerald/amber/violet/sky/rose)
+- رفع +3px مع ظل محسّن
+
+### 3. تحسين قسم الملاحظات الإدارية
+- غلاف glass-card-animated مع تأثير حدود متحركة
+- عداد أحرف
+- مؤشر "ملاحظة محفوظة محلياً" عند الكتابة
+- notes-textarea: حدود متدرجة عند التركيز
+
+### 4. تحسين شارات الحالة
+- status-badge-icon: 6 متغيرات (pending/confirmed/printing/ready/delivered/cancelled)
+- تأثير scale عند التمرير
+
+### 5. تحسين النشاط المباشر
+- section-title-underline على العنوان
+- status-dot-ring على نقطة البث المباشر
+- badge-glow-emerald على عداد النشاطات
+- press-scale على عناصر القائمة
+
+### 6. تحسين شريط أداء اليوم
+- badge-glow-emerald/amber على شارة معدل الإنجاز
+
+## CSS v6.1 — 20 صنف جديد
+1. `.glass-card-animated` — بطاقة زجاجية مع حدود دوّارة conic-gradient
+2. `.stat-mesh-card` — بطاقة إحصائية مع توهج شعاعي (5 ألوان)
+3. `.notes-textarea` — حقل ملاحظات مع حدود متدرجة
+4. `.fab` — زر عائم مع نبض
+5. `.status-badge-icon` — شارة حالة بأيقونة (6 متغيرات)
+6. `.inline-edit-highlight` — خط متدرج أسفل الحقول
+7. `.chip-group` / `.chip` — مجموعة رقائق تصفية
+8. `.sparkline-container` — حاوية رسم بياني مصغر
+9. `.progress-ring` — حلقة تقدم CSS
+10. `.data-grid-hover` — جدول بشرط متدرج
+11. `.section-divider-icon` — فاصل قسم مع أيقونة
+12. `.card-spotlight` — تأثير ضوء على البطاقة
+13. `.chip-dismiss` — رقاقة مع زر إزالة
+14. `.number-tick` — عداد رقمي
+15. `.command-palette-v2` — لوحة أوامر محسّنة
+16. `.skeleton-card` — هيكل بطاقة متحرك
+17. `.scroll-shadow-top` — ظل تمرير علوي
+18. `.accordion-smooth` — أكورديون بسلاسة
+19. `.hover-underline-animated` — خط سفلي متحرك
+20. `.tag-*` — وسوم ملونة (urgent/vip/repeat/new)
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | تحسين كانبان + رفع الإصدار |
+| `src/app/globals.css` | إضافة ~250 سطر CSS v6.1 مع 20 صنف جديد |
+| `src/components/app/order-detail-modal.tsx` | ملاحظات محسّنة + status-badge-icon |
+| `src/components/app/admin-overview-tab.tsx` | stat-mesh-card على البطاقات |
+| `src/components/app/live-activity-feed.tsx` | badge-glow + status-dot-ring + press-scale |
+| `src/components/app/daily-performance-bar.tsx` | badge-glow على معدل الإنجاز |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار |
+
+## Commits
+- d2e76f6: feat: CSS v6.1, enhanced kanban cards, stat mesh, status badges, styling polish (R67)
+
+## التوصيات للمرحلة القادمة
+1. إضافة سحب وإفلات في كانبان (dnd-kit)
+2. إضافة تصفية بالأولوية في جدول الطلبات
+3. إضافة عرض تقويمي للطلبات
+4. تحسينات على لوحة الأوامر (بحث الطلبات)
+5. إضافة FAB زر عائم لطلب جديد
