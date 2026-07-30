@@ -60,7 +60,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.7-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.8-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -389,6 +389,10 @@ export default function SuperAdminPage() {
       });
       if (!res.ok) throw new Error('فشل في تحديث الحالة');
       toast.success(`تم تحديث حالة الطلب إلى: ${STATUS_META[newStatus as keyof typeof STATUS_META]?.label || newStatus}`);
+
+    // R71: Sound notification on status change
+    if (newStatus === "delivered") playDeliveredChime();
+    else if (newStatus === "ready") playNewOrderChime();
       loadAll(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'فشل في تحديث الحالة');
