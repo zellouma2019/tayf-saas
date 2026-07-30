@@ -8171,3 +8171,103 @@ Task: QA + fix admin data loading + new features + CSS v4.9 + deployment
 - PIN متجر الريان: 1234
 - Git repo: https://github.com/zellouma2019/tayf-saas
 - Live: https://tayf-saas.vercel.app
+---
+Task ID: Round 55
+Agent: Main Agent (Cron Loop)
+Task: QA + new features + CSS v5.0 + merchant expenses + loyalty system
+
+## حالة المشروع الحالية
+
+### ✅ يعمل بشكل جيد:
+- **لوحة تحكم الزبون**: جميع المتاجر تعمل، طلب جديد، تتبع، سجل الطلبات، تبديل اللغة (عربي/فرنسي)
+- **لوحة تحكم التاجر**: 9+ تبويبات، PIN login يعمل، إحصائيات، طلبات، أدوات، مصاريف
+- **تتبع الطلبات**: صفحة /track تعمل
+- **API endpoints**: جميع تعمل (/api/health ok, /api/admin/global-stats يعيد 39 طلب)
+- **Build**: ناجح بدون أخطاء
+- **GitHub**: latest commit 66b2368
+
+### ❌ مشكلة مستمرة:
+- **لوحة تحكم الإدمن**: تعمل محلياً لكن Vercel ينشر كود قديم
+  - الحل: ربط Vercel بـ GitHub يدوياً في لوحة تحكم Vercel
+  - Deploy hook يُشغّل بناء لكن من كود قديم (لا يسحب من GitHub)
+
+## نتائج QA (agent-browser)
+- ✅ Customer shop pages: تعمل بشكل كامل
+- ✅ Merchant dashboard: يعمل بعد PIN login
+- ✅ Track page: يعمل مع اختيار المتجر
+- ✅ API: يعيد بيانات صحيحة (39 طلب، 6 متاجر)
+- ⚠️ Admin dashboard: يعرض تبويبات بدون بيانات (كود قديم على Vercel)
+
+## الميزات الجديدة
+
+### 1. نظام تتبع المصاريف (Merchant Expenses)
+- نموذج إضافة مصروف: المبلغ، التصنيف (耗材/إيجار/صيانة/رواتب/أخرى)، الوصف، التاريخ
+- قائمة المصاريف مع تعديل وحذف
+- حساب صافي الربح (الإيرادات - المصاريف)
+- بطاقة مقارنة: إيرادات / مصاريف / صافي ربح
+- التخزين في localStorage لكل متجر
+
+### 2. شارة ولاء الزبون (Customer Loyalty)
+- 4 مستويات: زبون جديد (1-2)، منتظم (3-5)، مميز (6-9)، ذهبي (10+)
+- ألوان متدرجة: برونزي، فضي، ذهبي، ذهبي مميز
+- تعرض في أعلى سجل الطلبات
+
+### 3. زر إعادة الطلب السريع
+- يظهر للطلبات المكتملة (delivered)
+- ينقل لصفحة طلب جديد مع الخدمة محددة مسبقاً
+
+### 4. شريط الإحصائيات السريعة (Quick Stats Banner)
+- 4 بطاقات في أعلو لوحة التاجر: طلبات اليوم، الإيرادات، المعلقة، المكتملة
+- كل بطاقة قابلة للنقر (تنقل للتبويب المناسب)
+- تصميم glass-card-premium
+
+### 5. حالة فارغة محسّنة
+- رسالة تحفيزية: "ابدأ رحلتك معنا!"
+- زر "اطلب أول طلب" ينتقل لصفحة الطلب
+- حركة bounce للأيقونة
+
+### 6. تحسينات لوحة الإدارة
+- تبديل الوضع الداكن في صفحة تسجيل الدخول
+- مؤشر تحديث البيانات (أيقونة دوّارة + وقت آخر تحديث)
+- تحسين توزيع الحالات (إضافة confirmed + ألوان محسّنة)
+
+## تحسينات CSS (v5.0 — 188 سطر)
+- `glass-card-premium` — Glassmorphism متقدم
+- `gradient-flow-bg` — خلفية متدرجة متحركة
+- `count-pulse`, `badge-pulse-red`, `success-slide-in` — حركات
+- `skeleton-gradient` — shimmer بنفسجي
+- `card-spotlight` — تأثير إضاءة عند hover
+- `floating-label` — حقول إدخال بتسمية عائمة
+- `page-transition`, `icon-btn-scale`, `divider-gradient`
+- تم تطبيق v5.0 على لوحة التاجر + صفحة تسجيل الدخول
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|--------|
+| src/app/globals.css | +188 سطر CSS (v5.0) |
+| src/app/page.tsx | +refresh indicator + version v4.9→v5.0 |
+| src/components/app/admin-login-gate.tsx | +ThemeToggle + v5.0 CSS |
+| src/components/app/admin-overview-tab.tsx | +confirmed status + colors |
+| src/components/app/merchant-dashboard.tsx | +quick stats + v5.0 CSS classes |
+| src/components/app/merchant-expenses.tsx | +full expense tracking rewrite |
+| src/components/app/order-history.tsx | +loyalty badges + reorder + empty state |
+| src/components/app/app-shell.tsx | (language toggle already existed) |
+
+## الإصدارات
+- النسخة: v5.0
+- Commit: 66b2368
+- Vercel Job: fRFpQvQaJousUBDgbett
+
+## أولويات الجولة القادمة
+1. 🔴 **حرج**: ربط Vercel بـ GitHub يدوياً
+2. 🟡 اختبار ميزات v5.0 الجديدة على الموقع الحي
+3. 🟡 إضافة نظام إشعارات في الوقت الحقيقي (WebSocket/SSE)
+4. 🟢 تحسين أداء التحميل — lazy loading + code splitting
+5. 🟢 إضافة تقارير PDF للإحصائيات
+6. 🟢 تكامل مع WhatsApp Business API
+
+## الملاحظات
+- كلمة مرور الإدمن: Admin@2025
+- PIN متجر الريان: 1234
+- Git repo: https://github.com/zellouma2019/tayf-saas
+- Live: https://tayf-saas.vercel.app
