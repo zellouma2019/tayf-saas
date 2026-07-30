@@ -10,7 +10,7 @@ import {
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
   Printer, Phone, Share2, ArrowRight, Play,
-  StickyNote, UserCircle, BarChart2, Hash, Clock4,
+  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.8-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.9-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -99,6 +99,100 @@ function DataHealthBanner({ message, status, onRetry }: { message: string; statu
 }
 
 // ===== Static Time Ago (non-reactive, for modals) =====
+
+
+// ===== Weekly Order Heatmap =====
+function WeeklyOrderHeatmap({ orders, onDayClick }: { orders: GlobalOrder[]; onDayClick?: (day: string) => void }) {
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const today = new Date();
+  const weekDays: { label: string; date: string; count: number; total: number }[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayOrders = orders.filter(o => o.createdAt && o.createdAt.startsWith(dateStr));
+    weekDays.push({
+      label: days[d.getDay()],
+      date: dateStr,
+      count: dayOrders.length,
+      total: dayOrders.reduce((s, o) => s + (o.total || 0), 0),
+    });
+  }
+
+  const maxCount = Math.max(...weekDays.map(d => d.count), 1);
+
+  return (
+    <div className="weekly-heatmap-container">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">خريطة الأسبوع</span>
+        <span className="text-[9px] text-muted-foreground/50">آخر 7 أيام</span>
+      </div>
+      <div className="grid grid-cols-7 gap-1.5">
+        {weekDays.map((day) => {
+          const intensity = day.count / maxCount;
+          return (
+            <button
+              key={day.date}
+              onClick={() => onDayClick?.(day.date)}
+              className="heatmap-cell group relative"
+              title={`${day.label}: ${day.count} طلب`}
+              style={{
+                backgroundColor: day.count === 0
+                  ? 'var(--muted, #f0f0f0)'
+                  : `rgba(245, 158, 11, ${0.15 + intensity * 0.85})`,
+                animationDelay: `${weekDays.indexOf(day) * 60}ms`,
+              }}
+            >
+              <span className="heatmap-cell-label">{day.label.slice(0, 2)}</span>
+              {day.count > 0 && (
+                <span className="heatmap-cell-count">{day.count}</span>
+              )}
+              <div className="heatmap-tooltip">
+                <p className="font-medium text-[10px]">{day.label} — {day.date}</p>
+                <p className="text-[9px] text-muted-foreground">{day.count} طلب</p>
+                {day.total > 0 && (
+                  <p className="text-[9px] font-mono text-amber-500">{day.total.toLocaleString("ar-DZ")} د.ج</p>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center gap-1">
+          <span className="text-[8px] text-muted-foreground/40">أقل</span>
+          {[0.15, 0.4, 0.65, 0.9].map((o, i) => (
+            <span key={i} className="w-3 h-3 rounded-sm" style={{ backgroundColor: `rgba(245, 158, 11, ${o})` }} />
+          ))}
+          <span className="text-[8px] text-muted-foreground/40">أكثر</span>
+        </div>
+        <span className="text-[9px] text-muted-foreground/50">المجموع: {weekDays.reduce((s,d)=>s+d.count,0)} طلب</span>
+      </div>
+    </div>
+  );
+}
+
+// ===== Duplicate Order Warning =====
+function DuplicateWarning({ order, allOrders }: { order: GlobalOrder; allOrders: GlobalOrder[] }) {
+  const duplicates = allOrders.filter(o =>
+    o.id !== order.id &&
+    (o.customer?.name || "") === (order.customer?.name || "") &&
+    (o.customer?.phone || "") === (order.customer?.phone || "") &&
+    (o.serviceType || o.serviceName) === (order.serviceType || order.serviceName) &&
+    Math.abs(new Date(o.createdAt).getTime() - new Date(order.createdAt).getTime()) < 86400000
+  );
+
+  if (duplicates.length === 0) return null;
+
+  return (
+    <div className="duplicate-warning-bar">
+      <AlertTriangle className="h-3 w-3 flex-shrink-0 duplicate-warning-icon" />
+      <span className="text-[10px]">{duplicates.length} طلب مكرر مشابه اليوم</span>
+    </div>
+  );
+}
+
 function getTimeAgoStatic(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -152,6 +246,11 @@ export default function SuperAdminPage() {
   // View mode: table, kanban, or cards
   const [ordersView, setOrdersView] = useState<"table" | "kanban" | "cards">("table");
   // Priority filter
+  // Order comments
+  const [orderComments, setOrderComments] = useState<Record<string, string>>({});
+  const [qvComment, setQvComment] = useState("");
+  // Weekly heatmap data
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "medium" | "normal">("all");
   // Enhanced FAB
   const [fabOpen, setFabOpen] = useState(false);
@@ -169,6 +268,30 @@ export default function SuperAdminPage() {
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   // Active filters summary
+
+  // Save comment for an order
+  const saveComment = useCallback(async (orderId: string, comment: string) => {
+    setOrderComments(prev => ({ ...prev, [orderId]: comment }));
+    try {
+      await fetch(`/api/orders/${orderId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: comment }),
+      });
+    } catch {}
+  }, []);
+
+  // Get time spent in current status
+  const getTimeInStatus = useCallback((order: GlobalOrder) => {
+    const created = new Date(order.createdAt).getTime();
+    const now = Date.now();
+    const hours = Math.floor((now - created) / 3600000);
+    if (hours < 1) return 'أقل من ساعة';
+    if (hours < 24) return `${hours} ساعة`;
+    const days = Math.floor(hours / 24);
+    return `${days} يوم`;
+  }, []);
+
   const activeFilterCount = [statusFilter !== 'all', shopFilter !== 'all', dateFilter !== 'all', priorityFilter !== 'all', search.length > 0].filter(Boolean).length;
 
   // Whether initial data load has completed at least once
@@ -1612,6 +1735,29 @@ export default function SuperAdminPage() {
               </div>
             )}
 
+
+            {/* Weekly Order Heatmap */}
+            <div className="rounded-xl border border-border/60 bg-card/80 p-3 svc-dist-container">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-amber-500" />
+                  خريطة الطلبات الأسبوعية
+                </h3>
+                <button
+                  onClick={() => setShowHeatmap(!showHeatmap)}
+                  className="text-[9px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showHeatmap ? 'إخفاء ▲' : 'عرض ▼'}
+                </button>
+              </div>
+              {showHeatmap && (
+                <WeeklyOrderHeatmap
+                  orders={safeOrders}
+                  onDayClick={(day) => { setDateFilter("custom"); setDateFrom(day); setDateTo(day); setShowHeatmap(false); }}
+                />
+              )}
+            </div>
+
             {/* Activity Panel + Filters Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
             <div className="space-y-4">
@@ -2714,6 +2860,57 @@ export default function SuperAdminPage() {
                   المزيد
                 </button>
               </div>
+
+              {/* Order comment in quick view */}
+              <div className="mt-3 pt-3 border-t border-border/60">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <StickyNote className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] font-bold text-muted-foreground">ملاحظة</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <input
+                    value={qvComment}
+                    onChange={(e) => setQvComment(e.target.value)}
+                    placeholder="أضف ملاحظة سريعة..."
+                    className="flex-1 h-7 px-2 rounded-lg border border-border/60 bg-muted/30 text-[11px] placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 comment-input-mini"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && qvComment.trim() && quickViewOrder) {
+                        saveComment(quickViewOrder.id, qvComment.trim());
+                        setQvComment("");
+                        toast.success("تم حفظ الملاحظة");
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (qvComment.trim() && quickViewOrder) {
+                        saveComment(quickViewOrder.id, qvComment.trim());
+                        setQvComment("");
+                        toast.success("تم حفظ الملاحظة");
+                      }
+                    }}
+                    disabled={!qvComment.trim()}
+                    className="h-7 w-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed micro-bounce"
+                  >
+                    <Send className="h-3 w-3" />
+                  </button>
+                </div>
+                {orderComments[quickViewOrder?.id || ""] && (
+                  <p className="mt-1.5 text-[10px] text-muted-foreground bg-muted/30 rounded-lg px-2 py-1.5 comment-saved-text">
+                    {orderComments[quickViewOrder?.id || ""]}
+                  </p>
+                )}
+              </div>
+              {/* Time in status */}
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[9px] text-muted-foreground/50">المدة</span>
+                <span className="text-[10px] font-medium text-muted-foreground time-in-status-badge">
+                  {quickViewOrder && getTimeInStatus(quickViewOrder)}
+                </span>
+              </div>
+              {/* Duplicate warning */}
+              {quickViewOrder && <DuplicateWarning order={quickViewOrder} allOrders={safeOrders} />}
+
             </div>
           )}
         </DialogContent>
@@ -2808,7 +3005,7 @@ export default function SuperAdminPage() {
         </button>
       </div>
 
-      {/* Keyboard shortcuts overlay */
+      {/* Keyboard shortcuts overlay */}
       {showShortcuts && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
           <div className="bg-card border border-border rounded-2xl shadow-2xl p-5 max-w-md w-full mx-4 shortcuts-panel-enhanced" onClick={e => e.stopPropagation()}>

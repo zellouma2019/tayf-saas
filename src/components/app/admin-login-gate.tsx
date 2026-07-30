@@ -23,11 +23,11 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   const [attempts, setAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number>(0);
   const lockoutRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const [mmounted, setMmounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useState<"ar" | "en">("ar");
 
   // Prevent hydration mismatch
-  useEffect(() => { setMmounted(true); }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   // التحقق من صلاحية الجلسة مع الخادم (ليس localStorage فقط)
   useEffect(() => {
@@ -80,7 +80,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     wrongTitle: "كلمة المرور غير صحيحة",
     connectionError: "خطأ في الاتصال",
     protected: "هذا القسم محمي ومخصص للإدارة فقط",
-    version: "الإصدار 6.8 — منصة طيف للطباعة الذكية",
+    version: "الإصدار 6.9 — منصة طيف للطباعة الذكية",
     defaultPwTitle: "⚠️ كلمة المرور الافتراضية لا تزال مستخدمة",
     defaultPwDesc: "يُرجى تغييرها فوراً من الإعدادات ← الأمان",
   } : {
@@ -96,7 +96,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     wrongTitle: "Incorrect password",
     connectionError: "Connection error",
     protected: "This section is protected for admin only",
-    version: "v6.2 — Tayf Smart Printing Platform",
+    version: "v6.9 — Tayf Smart Printing Platform",
     defaultPwTitle: "⚠️ Default password is still in use",
     defaultPwDesc: "Please change it from Settings ← Security",
   };
@@ -220,7 +220,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
         <CardContent className="pt-8 pb-6 px-6 relative z-10">
           <div className="text-center mb-6">
             {/* Language toggle */}
-            {mmounted && (
+            {mounted && (
               <div className="flex justify-end items-center gap-1 mb-2">
                 <ThemeToggle className="h-8 w-8" />
                 <button
