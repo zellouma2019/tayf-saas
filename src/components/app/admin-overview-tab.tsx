@@ -41,6 +41,7 @@ import { TopServicesWidget } from "@/components/app/top-services-widget";
 import { CustomerStatsWidget } from "@/components/app/customer-stats-widget";
 import { RevenueTrendMini } from "@/components/app/revenue-trend-mini";
 import { QuickInsightsWidget } from "@/components/app/quick-insights-widget";
+import { DailyPerformanceBar } from "@/components/app/daily-performance-bar";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -93,9 +94,9 @@ function WeeklyRevenueChart({ stats }: { stats: GlobalStats | null }) {
   const totalWeek = dailyRevenue.reduce((s, v) => s + v, 0);
   if (totalWeek === 0) return null;
   return (
-    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow card-glow-hover">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0 section-title-underline">
           <CalendarDays className="h-4 w-4 text-gold-500" />
           إيرادات الأسبوع
           <span className="text-xs text-muted-foreground font-normal mr-auto tabular-nums">{formatDA(totalWeek)}</span>
@@ -151,9 +152,9 @@ function PeakHoursChart({ stats }: { stats: GlobalStats | null }) {
   const hourLabels = ['12ص', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12م', '1م', '2م', '3م', '4م', '5م', '6م', '7م', '8م', '9م', '10م', '11م'];
 
   return (
-    <Card className="bg-card rounded-xl border border-border shadow-sm card-elevated">
+    <Card className="bg-card rounded-xl border border-border shadow-sm card-elevated card-glow-hover">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0 section-title-underline">
           <Clock className="h-4 w-4 text-violet-500" />
           ذروة الطلب
           <span className="text-xs text-muted-foreground font-normal mr-auto">
@@ -212,7 +213,7 @@ function RevenueMetricCard({ icon: Icon, label, value, change, bgColor, textColo
   const isPositive = change > 0;
   const isNeutral = change === 0;
   return (
-    <div className="metric-card bg-card rounded-xl border border-border shadow-sm p-4 sm:p-5 card-hover-lift card-glow group">
+    <div className="metric-card bg-card rounded-xl border border-border shadow-sm p-4 sm:p-5 card-hover-lift card-glow card-glow-hover group focus-glow-card">
       <div className="flex items-start justify-between mb-3">
         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", bgColor)}>
           <Icon className={cn("h-5 w-5", textColor)} />
@@ -227,7 +228,7 @@ function RevenueMetricCard({ icon: Icon, label, value, change, bgColor, textColo
           {isNeutral ? "\u2014" : `${Math.abs(change)}%`}
         </span>
       </div>
-      <div className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mb-1">{value}</div>
+      <div className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mb-1 neon-text-violet">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
@@ -461,6 +462,9 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <span>آخر تحديث: {lastUpdated}</span>
         </div>
       )}
+
+      {/* شريط أداء اليوم */}
+      <DailyPerformanceBar orders={safeStats.recentOrders || []} />
 
       {/* إجراءات سريعة دائمة */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children fade-in-up">

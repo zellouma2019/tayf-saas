@@ -258,7 +258,7 @@ function TodayAchievementGauge({ achievement }: { achievement: { total: number; 
       color === "emerald" && "border-emerald-200 dark:border-emerald-800/40",
       color === "amber" && "border-amber-200 dark:border-amber-800/40",
       color === "rose" && "border-rose-200 dark:border-rose-800/40",
-      "card-glow",
+      "card-glow card-glow-hover",
     )}>
       {/* دائرة التقدم */}
       <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
@@ -1629,7 +1629,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* شرائح التصفية السريعة - التاريخ */}
-              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1 cluster">
+              <div className="flex items-center gap-2 overflow-x-auto smooth-scrollbar pb-1 -mx-1 px-1 cluster">
                 {[
                   { value: "all" as const, label: "الكل", icon: null },
                   { value: "today" as const, label: "اليوم", icon: <CalendarIcon className="h-3.5 w-3.5" /> },
