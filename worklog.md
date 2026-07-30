@@ -9981,3 +9981,130 @@ Stage Summary:
 3. Consider adding auto-refresh polling interval for live data
 4. Add order calendar view component
 5. Add customer-facing dashboard page (/customer)
+---
+Task ID: R72
+Agent: Main Agent (Cron Round 72)
+Task: Fix critical build errors, add heatmap/comments/duplicate-warning features, CSS v6.8, v6.9
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 74dd23e)
+- ✅ إصدار v6.9
+- ⚠️ الموقع الحي (tayf-dash.vercel.app) يُرجع 404 — مشكلة Vercel مستمرة منذ R70
+- ⚠️ agent-browser لا يمكنه الاتصال بـ localhost (Chromium في حاوية منفصلة)
+- ✅ التحقق من البناء: curl يُرجع 200 عند تشغيل dev server
+
+## الإصلاحات الحرجة
+
+### 1. خطأ بناء: تعليق JSX مفتوح (خط 2811)
+- **المشكلة**: `{/* Keyboard shortcuts overlay */` بدون `}` إغلاق → Turbopack فشل في التحليل
+- **الحل**: إضافة `}` لإغلاق تعليق JSX
+- **الملف**: `src/app/page.tsx` سطر 2811
+
+### 2. خطأ: متغير `mounted` مشوه في admin-login-gate.tsx
+- **المشكلة**: `const [mmounted, setMounted]` و `setMmounted(true)` و `{mmounted &&`
+- **الحل**: تصحيح جميع التشوهات إلى `mounted` و `setMounted`
+- **الملف**: `src/components/app/admin-login-gate.tsx`
+
+### 3. إصدارات غير متسقة
+- admin-login-gate: النسخة الإنجليزية عالقة على v6.2
+- error-boundary: عالقة على v6.7
+- **الحل**: تحديث جميعها إلى v6.9
+
+## الميزات الجديدة
+
+### 1. خريطة الطلبات الأسبوعية (Weekly Order Heatmap)
+- 7 خلايا تمثل آخر 7 أيام
+- كل خلية تعرض: اسم اليوم المختصر + عدد الطلبات
+- كثافة اللون تعكس عدد الطلبات (أصفر شفاف → أصفر كثيف)
+- تلميح عند التمرير يعرض: التاريخ، عدد الطلبات، الإيرادات
+- النقر على يوم يضبط فلتر التاريخ تلقائياً
+- وسيلة إيضاح متدرجة (أقل → أكثر)
+- حركة دخول متتابعة لكل خلية (stagger 60ms)
+
+### 2. نظام التعليقات السريعة (Quick Order Comments)
+- حقل إدخال في نافذة العرض السريع (Quick View)
+- إرسال بضغطة Enter أو زر الإرسال (أيقونة Send)
+- حفظ التعليق عبر API `/api/orders/{id}/notes`
+- عرض التعليق المحفوظ أسفل حقل الإدخال مع حركة انزلاق
+- زر ملاحظة (StickyNote) في كل صف طلب للوصول السريع
+
+### 3. تحذير الطلبات المكررة (Duplicate Order Warning)
+- كشف تلقائي عند فتح Quick View
+- يبحث عن طلبات بنفس الزبون + الخدمة + خلال 24 ساعة
+- شريط تحذير أحمر مع أيقونة نابضة
+- عرض عدد الطلبات المكررة المشابهة
+
+### 4. شارة المدة في الحالة (Time In Status)
+- عرض في Quick View: المدة منذ إنشاء الطلب
+- تنسيق ذكي: "أقل من ساعة" / "X ساعة" / "X يوم"
+- شارة متدرجة بنفسجي-أزرق
+
+## تحسينات التصميم (CSS v6.8)
+**الملف:** `src/app/globals.css` — ~370 سطر جديد (إجمالي ~40,114 سطر)
+
+### 30+ مجموعة أصناف CSS جديدة:
+1. `.weekly-heatmap-container` + `.heatmap-cell` + `.heatmap-tooltip` — خريطة حرارية تفاعلية
+2. `.duplicate-warning-bar` + `@keyframes dupWarningSlide` — تحذير مكررات
+3. `.comment-input-mini` + `.comment-saved-text` — تعليقات سريعة
+4. `.comment-row-btn` — زر تعليق في الصف
+5. `.time-in-status-badge` — شارة المدة
+6. `.card-hover-glow::before` — توهج انزلاقي عند التمرير (مُحسّن)
+7. `.stagger-children` + `@keyframes staggerItemIn` — دخول متتابع v2
+8. `.neon-glow-rose` + `.neon-glow-cyan` — توهج نيون وردي/سماوي
+9. `.gradient-border-spinner` + `@keyframes borderSpin` — حدود دوّارة متدرجة
+10. `.liquid-progress` + `@keyframes liquidWobble` — شريط تقدم سائل
+11. `.tilt-card` — بطاقة بإمالة 3D
+12. `.typing-dots` + `@keyframes typingBounce` — مؤشر كتابة
+13. `.morph-blob` + `@keyframes morphBlob` — كتلة خلفية متحركة
+14. `.glass-panel-v3` — زجاجية محسّنة مع saturate(180%)
+15. `.shimmer-text` + `@keyframes shimmerText` — نص لامع متحرك
+16. `.scale-in` + `@keyframes scaleIn` — حركة تكبير
+17. `.slide-down-reveal` + `@keyframes slideDownReveal` — كشف انزلاقي
+18. `.pulse-dot` + `@keyframes pulseDotExpand` — نقطة نبضية
+19. `.hover-underline-animated` — خط سفلي متحرك
+20. `.skeleton-pulse-v3` — هيكل تحميل v3
+21. `.glass-card-v4` — بطاقة زجاجية v4
+22. `.hover-glow-ring` — توهج حدود عند التمرير
+23. `.animated-divider` + `@keyframes dividerSlide` — فاصل متحرك
+24. `.quick-view-dialog` + `@keyframes quickViewIn` — نافذة عرض سريع
+25. `.status-flow-mini` + `.flow-dot` — مسار حالة مصغر
+26. `.text-glow-amber/emerald/violet` — توهج نصي
+27. `.breathing-shadow` — ظل يتنفس
+28. `.hover-scale-bounce` + `@keyframes scaleBounce` — ارتداد عند التمرير
+29. `.scrollbar-thin-v2` — شريط تمرير رفيع متدرج
+30. `.order-row-hover-strip::before` — شريط جانبي عند التمرير
+31. `.notif-badge-v2` + `@keyframes badgeBounceIn` — شارة إشعارات
+32. `.fab-glow` + `@keyframes fabGlowPulse` — توهج زر الإجراءات
+33. `.anim-cinematic-in-v2` — دخول سينمائي v2
+34. `.hover-color-shift` — تغيير لون عند التمرير
+35. `.number-transition` — انتقال أرقام سلس
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | إصلاح تعليق JSX + خريطة حرارية + تعليقات + تحذير مكررات + مدة الحالة + v6.9 |
+| `src/app/globals.css` | +370 سطر CSS v6.8 |
+| `src/components/app/admin-login-gate.tsx` | إصلاح mounted + تحديث الإصدار إلى v6.9 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى v6.9 |
+
+## الإحصائيات
+- صفحة رئيسية: 3,061 سطر (+197 من R71)
+- CSS: 40,114 سطر (+367 من R71)
+- CSS versions: v6.1 → v6.8 (8 إصدارات CSS)
+- الميزات المضافة هذا الجول: 4
+- CSS classes جديدة هذا الجول: 35+
+- إجمالي المكونات: 150+
+
+## Unresolved Issues / Risks
+1. **Vercel 404 حرج** — الموقع لا يعرض أي شيء. يحتاج فحص اتصال GitHub→Vercel
+2. **agent-browser لا يمكنه الوصول لـ localhost** — يبدو أن Chromium يعمل في شبكة منفصلة
+3. لا اختبار بصري حقيقي هذا الجول (يعتمد على نجاح البناء فقط)
+
+## Priority Recommendations for R73
+1. **إصلاح Vercel 404** (أعلى أولوية) — فحص إعدادات Vercel: GitHub integration, production branch, project settings
+2. إضافة سحب وإفلات في كانبان (dnd-kit)
+3. إضافة عرض تقويمي كامل للطلبات
+4. لوحة تحكم الزبون (صفحة /customer)
+5. تصدير PDF للتقرير المالي
+6. إشعار صوتي تكاملي (ربط مع WebSocket)
