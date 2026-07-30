@@ -637,7 +637,7 @@ export function AppShell() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 rounded-2xl overflow-hidden glass-refined p-3 sm:p-4 border border-violet-200/40 dark:border-violet-700/30"
+                    className="mb-4 rounded-2xl overflow-hidden glass-card-v2 p-3 sm:p-4 border border-violet-200/40 dark:border-violet-700/30 sparkle-sweep"
                   >
                     <div className="relative overflow-hidden rounded-xl">
                       <div className="absolute inset-0 hero-animated-gradient" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(212,168,83,0.08), rgba(16,185,129,0.08))' }} />

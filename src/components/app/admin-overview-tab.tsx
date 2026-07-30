@@ -687,10 +687,12 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
         );
       })()}
 
-      {/* ملخص المتاجر */}
+      {/* ملخص المتاجر — sorted by revenue for ranking */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {safeStats.shopStats.map((shop) => (
-          <ShopQuickStatsPopover key={shop.id} shop={shop} />
+        {[...safeStats.shopStats]
+          .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+          .map((shop, idx) => (
+          <ShopQuickStatsPopover key={shop.id} shop={shop} rank={idx + 1} totalShops={safeStats.shopStats.length} />
         ))}
       </div>
 
@@ -1173,7 +1175,7 @@ function ShopRankingWidget({ shops }: { shops: GlobalStats["shopStats"] }) {
 }
 
 // ===== Shop Quick Stats Popover =====
-function ShopQuickStatsPopover({ shop }: { shop: ShopStat }) {
+function ShopQuickStatsPopover({ shop, rank, totalShops }: { shop: ShopStat; rank?: number; totalShops?: number }) {
   const pendingCount = (shop.recentOrders || []).filter(o => o.status === "pending").length;
   const lastOrder = (shop.recentOrders || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
@@ -1181,7 +1183,7 @@ function ShopQuickStatsPopover({ shop }: { shop: ShopStat }) {
     <Popover>
       <PopoverTrigger asChild>
         <div className="cursor-pointer hover:-translate-y-[2px] hover:shadow-lg transition-all duration-200 rounded-xl">
-          <ShopOverviewCard shop={shop} onRefresh={() => {}} />
+          <ShopOverviewCard shop={shop} rank={rank} totalShops={totalShops} onRefresh={() => {}} />
         </div>
       </PopoverTrigger>
       <PopoverContent

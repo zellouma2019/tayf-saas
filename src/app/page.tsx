@@ -56,7 +56,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.5-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v5.6-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -444,6 +444,30 @@ export default function SuperAdminPage() {
     });
     return dupes;
   }, [safeOrders]);
+
+  // Customer loyalty scoring — ranks customers by order count and total spend
+  const customerLoyalty = useMemo(() => {
+    const map = new Map<string, { name: string; phone: string; orderCount: number; totalSpend: number; lastOrder: string }>();
+    safeOrders.forEach((o) => {
+      const key = o.customer?.phone || o.customer?.name || o.id;
+      const entry = map.get(key) || { name: o.customer?.name || '—', phone: o.customer?.phone || '', orderCount: 0, totalSpend: 0, lastOrder: '' };
+      entry.orderCount++;
+      entry.totalSpend += o.total || 0;
+      if (!entry.lastOrder || new Date(o.createdAt) > new Date(entry.lastOrder)) entry.lastOrder = o.createdAt;
+      map.set(key, entry);
+    });
+    return map;
+  }, [safeOrders]);
+
+  // Get loyalty tier for a customer
+  function getLoyaltyTier(phoneOrName: string): { tier: string; color: string; icon: string } {
+    const c = customerLoyalty.get(phoneOrName);
+    if (!c) return { tier: '', color: '', icon: '' };
+    if (c.orderCount >= 5 || c.totalSpend >= 5000) return { tier: 'ذهبي', color: 'text-amber-500', icon: '★' };
+    if (c.orderCount >= 3 || c.totalSpend >= 2000) return { tier: 'فضي', color: 'text-slate-400', icon: '☆' };
+    if (c.orderCount >= 2) return { tier: 'برونزي', color: 'text-orange-600', icon: '●' };
+    return { tier: '', color: '', icon: '' };
+  }
 
   // Notification state
   const [notifEvents, setNotifEvents] = useState<Array<{
@@ -1180,6 +1204,50 @@ export default function SuperAdminPage() {
         {/* Orders Tab */}
         {!isInitialLoading && activeTab === "orders" && (
           <div className="space-y-4 widget-fade-in">
+            {/* Mini Stats Overview Widget */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 stagger-grid-16">
+              <div className="glass-card-v2 p-3 hover-lift-1 stat-card-glow-emerald">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Package className="h-3.5 w-3.5 text-emerald-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">إجمالي الطلبات</span>
+                </div>
+                <p className="text-lg font-bold tabular-data">{safeOrders.length}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">{filteredOrders.length} معروض</p>
+              </div>
+              <div className="glass-card-v2 p-3 hover-lift-1 stat-card-glow-amber">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <DollarSign className="h-3.5 w-3.5 text-amber-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">إجمالي الإيرادات</span>
+                </div>
+                <p className="text-lg font-bold tabular-data">{formatNumber(safeOrders.reduce((s, o) => s + (o.total || 0), 0))}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">د.ج</p>
+              </div>
+              <div className="glass-card-v2 p-3 hover-lift-1 stat-card-glow-violet">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <Users className="h-3.5 w-3.5 text-violet-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">العملاء الفريدين</span>
+                </div>
+                <p className="text-lg font-bold tabular-data">{new Set(safeOrders.map(o => o.customer?.phone || o.customer?.name || o.id)).size}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">{safeOrders.length > 0 ? `متوسط ${(safeOrders.length / new Set(safeOrders.map(o => o.customer?.phone || o.customer?.name || o.id)).size).toFixed(1)} طلب/زبون` : '—'}</p>
+              </div>
+              <div className="glass-card-v2 p-3 hover-lift-1 stat-card-glow-rose">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                    <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">طلبات مكررة</span>
+                </div>
+                <p className="text-lg font-bold tabular-data">{duplicateOrderIds.size}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">{safeOrders.length > 0 ? `${((duplicateOrderIds.size / safeOrders.length) * 100).toFixed(1)}% من الإجمالي` : '—'}</p>
+              </div>
+            </div>
+
             {/* Filters + count + export */}
             <Card className="card-hover-glow">
               <CardContent className="p-3">
@@ -1428,6 +1496,14 @@ export default function SuperAdminPage() {
                         </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
+                            {(() => {
+                              const loyalty = getLoyaltyTier(order.customer?.phone || order.customer?.name || '');
+                              return loyalty.tier ? (
+                                <span className={cn("text-xs tooltip-top", loyalty.color)} data-tooltip={`عميل ${loyalty.tier}`}>
+                                  {loyalty.icon}
+                                </span>
+                              ) : null;
+                            })()}
                             {order.customer?.name || "—"}
                             {duplicateOrderIds.has(order.id) && (
                               <span className="badge-chip bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" title="طلب مكرر محتمل">
@@ -1559,7 +1635,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50 tabular-data">
-                v5.5
+                v5.6
               </span>
             )}
             {refreshing ? (
@@ -1680,6 +1756,36 @@ export default function SuperAdminPage() {
                 </div>
               </div>
               <div className="space-y-3 text-sm">
+                {/* Customer loyalty indicator */}
+                {(() => {
+                  const loyalty = getLoyaltyTier(selectedOrder.customer?.phone || selectedOrder.customer?.name || '');
+                  if (!loyalty.tier) return null;
+                  const c = customerLoyalty.get(selectedOrder.customer?.phone || selectedOrder.customer?.name || '');
+                  return (
+                    <div className={cn(
+                      "rounded-xl p-3 border",
+                      loyalty.tier === 'ذهبي' && "bg-amber-500/5 border-amber-500/20",
+                      loyalty.tier === 'فضي' && "bg-slate-500/5 border-slate-500/20",
+                      loyalty.tier === 'برونزي' && "bg-orange-500/5 border-orange-500/20"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("text-lg", loyalty.color)}>{loyalty.icon}</span>
+                          <div>
+                            <p className={cn("text-xs font-semibold", loyalty.color)}>عميل {loyalty.tier}</p>
+                            <p className="text-[10px] text-muted-foreground">{c?.orderCount || 0} طلب • {(c?.totalSpend || 0).toLocaleString("ar-DZ")} د.ج إجمالي</p>
+                          </div>
+                        </div>
+                        {c && (
+                          <div className="text-left">
+                            <p className="text-[10px] text-muted-foreground">آخر طلب</p>
+                            <p className="text-[10px] font-medium">{getTimeAgoStatic(c.lastOrder)}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الزبون</p>

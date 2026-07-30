@@ -72,12 +72,44 @@ export function CopyButton({ text, label, className }: { text: string; label: st
 }
 
 // ===== بطاقة متجر في نظرة عامة =====
-export function ShopOverviewCard({ shop, onRefresh }: {
+export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
   shop: ShopStat;
+  rank?: number;
+  totalShops?: number;
   onRefresh: () => void;
 }) {
+  const performanceScore = useMemo(() => {
+    const orderScore = Math.min((shop.orders || 0) / 10, 1) * 40;
+    const revenueScore = Math.min((shop.revenue || 0) / 10000, 1) * 40;
+    const todayScore = Math.min((shop.todayOrders || 0) / 5, 1) * 20;
+    return Math.round(orderScore + revenueScore + todayScore);
+  }, [shop]);
+
   return (
-    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden card-glow group card-hover-lift", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden card-glow group card-hover-lift relative", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+      {/* Performance rank badge */}
+      {rank !== undefined && totalShops && totalShops > 1 && (
+        <div className={cn(
+          "absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm",
+          rank === 1 && "bg-amber-400 text-amber-900 badge-bounce",
+          rank === 2 && "bg-slate-300 text-slate-700",
+          rank === 3 && "bg-orange-300 text-orange-800",
+          rank > 3 && "bg-muted text-muted-foreground"
+        )}>
+          {rank}
+        </div>
+      )}
+      {/* Performance score indicator */}
+      <div className="absolute top-2 left-12 z-10">
+        <div className={cn(
+          "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+          performanceScore >= 70 ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
+          performanceScore >= 40 ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" :
+          "bg-muted text-muted-foreground border border-border"
+        )}>
+          {performanceScore}%
+        </div>
+      </div>
       <div className="h-1 bg-gradient-to-l from-gold-400 via-gold-500 to-primary" />
       <CardHeader className="pb-2 px-5 pt-4">
         <div className="flex items-center justify-between">
