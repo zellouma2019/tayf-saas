@@ -80,7 +80,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     wrongTitle: "كلمة المرور غير صحيحة",
     connectionError: "خطأ في الاتصال",
     protected: "هذا القسم محمي ومخصص للإدارة فقط",
-    version: "الإصدار 7.0 — منصة طيف للطباعة الذكية",
+    version: "الإصدار 7.1 — منصة طيف للطباعة الذكية",
     defaultPwTitle: "⚠️ كلمة المرور الافتراضية لا تزال مستخدمة",
     defaultPwDesc: "يُرجى تغييرها فوراً من الإعدادات ← الأمان",
   } : {
@@ -96,7 +96,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     wrongTitle: "Incorrect password",
     connectionError: "Connection error",
     protected: "This section is protected for admin only",
-    version: "v7.0 — Tayf Smart Printing Platform",
+    version: "v7.1 — Tayf Smart Printing Platform",
     defaultPwTitle: "⚠️ Default password is still in use",
     defaultPwDesc: "Please change it from Settings ← Security",
   };

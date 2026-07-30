@@ -60,7 +60,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v7.0-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v7.1-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -347,6 +347,56 @@ function CustomerQuickProfile({ order, allOrders, onClose }: {
             <span className="text-[9px] text-muted-foreground">{formatDA(o.createdAt)}</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+// ===== Order Aging Indicator =====
+function OrderAgingIndicator({ createdAt, status }: { createdAt: string; status: string }) {
+  const hours = (Date.now() - new Date(createdAt).getTime()) / 3600000;
+  if (status === 'delivered' || status === 'cancelled') return null;
+  
+  let label = '', color = '';
+  if (hours < 2) { label = 'جديد'; color = '#10b981'; }
+  else if (hours < 6) { label = 'طبيعي'; color = '#3b82f6'; }
+  else if (hours < 24) { label = Math.floor(hours) + "س"; color = '#f59e0b'; }
+  else { label = Math.floor(hours/24) + "ي"; color = '#ef4444'; }
+  
+  return (
+    <span className="aging-badge" style={{ color, borderColor: color + '40', backgroundColor: color + '10' }}>
+      {label}
+    </span>
+  );
+}
+
+// ===== Stats Comparison Mini Bar =====
+function StatsComparisonBar({ label, current, previous, unit }: {
+  label: string; current: number; previous: number; unit: string;
+}) {
+  const change = previous > 0 ? ((current - previous) / previous * 100) : 0;
+  const isUp = change > 0;
+  return (
+    <div className="stat-comp-bar">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] text-muted-foreground">{label}</span>
+        <span className={cn("text-[10px] font-bold tabular-nums", isUp ? "text-emerald-500" : "text-rose-500")}>
+          {isUp ? '+' : ''}{change.toFixed(0)}%
+        </span>
+      </div>
+      <div className="stat-comp-track">
+        <div
+          className="stat-comp-fill"
+          style={{
+            width: `${Math.min(Math.max(current, 0) / Math.max(previous, 1) * 50 + 25, 100)}%`,
+            backgroundColor: isUp ? '#10b981' : '#ef4444',
+          }}
+        />
+      </div>
+      <div className="flex justify-between mt-0.5">
+        <span className="text-[9px] font-mono tabular-nums text-foreground">{formatNumber(current)} {unit}</span>
+        <span className="text-[9px] text-muted-foreground/50">{formatNumber(previous)} {unit}</span>
       </div>
     </div>
   );
@@ -1924,6 +1974,36 @@ export default function SuperAdminPage() {
                   onDayClick={(day) => { setDateFilter("custom"); setDateFrom(day); setDateTo(day); setShowHeatmap(false); }}
                 />
               )}
+            </div>
+
+            {/* Stats Comparison Bars */}
+            <div className="rounded-xl border border-border/60 bg-card/80 p-3 shop-perf-container">
+              <h3 className="text-[11px] font-bold text-foreground flex items-center gap-1.5 mb-2.5">
+                <BarChart2 className="h-3.5 w-3.5 text-violet-500" />
+                مقارنة الأداء
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(() => {
+                  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+                  const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+                  const todayOrders = safeOrders.filter(o => new Date(o.createdAt) >= todayStart);
+                  const weekOrders = safeOrders.filter(o => new Date(o.createdAt) >= weekStart);
+                  const todayRev = todayOrders.reduce((s,o) => s + (o.total||0), 0);
+                  const weekRev = weekOrders.reduce((s,o) => s + (o.total||0), 0);
+                  const todayDelivered = todayOrders.filter(o => o.status === 'delivered').length;
+                  const weekDelivered = weekOrders.filter(o => o.status === 'delivered').length;
+                  const avgToday = todayOrders.length > 0 ? todayRev / todayOrders.length : 0;
+                  const avgWeek = weekOrders.length > 0 ? weekRev / weekOrders.length : 0;
+                  return (
+                    <>
+                      <StatsComparisonBar label="الإيرادات اليومية" current={todayRev} previous={weekRev / 7} unit="د.ج" />
+                      <StatsComparisonBar label="الطلبات اليومية" current={todayOrders.length} previous={weekOrders.length / 7} unit="طلب" />
+                      <StatsComparisonBar label="التسليمات اليوم" current={todayDelivered} previous={weekDelivered / 7} unit="تسليم" />
+                      <StatsComparisonBar label="متوسط قيمة الطلب" current={Math.round(avgToday)} previous={Math.round(avgWeek)} unit="د.ج" />
+                    </>
+                  );
+                })()}
+              </div>
             </div>
 
             {/* Activity Panel + Filters Layout */}

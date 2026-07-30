@@ -40355,3 +40355,206 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* End CSS v6.9 */
+
+/* ═══════════════════════════════════════════════════════════   CSS v7.0 — R74: Aging, Comparison Bars, Print Receipt, Enhanced Interactions   ═══════════════════════════════════════════════════════════ */
+
+/* ──── Aging Badge ──── */
+.aging-badge {
+  display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 6px;
+  font-size: 9px; font-weight: 700; border: 1px solid; line-height: 1.3;
+  animation: agingIn 0.2s ease-out; font-variant-numeric: tabular-nums;
+}
+@keyframes agingIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.aging-cell {
+  min-width: 50px;
+}
+
+/* ──── Stats Comparison ──── */
+.stat-comp-bar {
+  padding: 6px; border-radius: 10px; background: var(--muted, #f5f5f5); border: 1px solid var(--border, #e5e7eb);
+  animation: statCompIn 0.3s ease-out both;
+}
+.stat-comp-bar:nth-child(1) { animation-delay: 0ms; }
+.stat-comp-bar:nth-child(2) { animation-delay: 50ms; }
+.stat-comp-bar:nth-child(3) { animation-delay: 100ms; }
+.stat-comp-bar:nth-child(4) { animation-delay: 150ms; }
+@keyframes statCompIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.stat-comp-track {
+  height: 4px; border-radius: 4px; background: var(--border, #e5e7eb); overflow: hidden; position: relative;
+}
+.stat-comp-fill {
+  height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+}
+.stat-comp-fill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: compBarShimmer 2s ease-in-out infinite;
+}
+@keyframes compBarShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* ──── Print Receipt Button ──── */
+.print-receipt-btn {
+  position: relative; overflow: hidden;
+}
+.print-receipt-btn::before {
+  content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity 0.15s;
+}
+.print-receipt-btn:hover::before { opacity: 0.06; }
+
+/* ──── Duplicate Warning Row ──── */
+.duplicate-warning-row {
+  position: relative;
+}
+.duplicate-warning-row::after {
+  content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, #f59e0b, #ef4444); border-radius: 0 3px 3px 0;
+  animation: dupRowSlide 0.3s ease-out;
+}
+@keyframes dupRowSlide {
+  0% { opacity: 0; transform: scaleY(0); }
+  100% { opacity: 1; transform: scaleY(1); }
+}
+
+/* ──── Enhanced Table Row Hover ──── */
+.table-row-hover-enhanced {
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.table-row-hover-enhanced:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03), rgba(59, 130, 246, 0.03));
+  box-shadow: inset 3px 0 0 rgba(139, 92, 246, 0.15);
+}
+
+/* ──── Hover Highlight Column ──── */
+.highlight-col-hover {
+  position: relative;
+}
+.highlight-col-hover:hover {
+  background: rgba(139, 92, 246, 0.04);
+}
+
+/* ──── Floating Label Input v2 ──── */
+.floating-label-input {
+  position: relative;
+}
+.floating-label-input label {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 12px; color: var(--muted-foreground); pointer-events: none;
+  transition: all 0.2s ease;
+}
+.floating-label-input:focus-within label,
+.floating-label-input input:not(:placeholder-shown) + label {
+  top: 6px; font-size: 9px; color: var(--primary, #8b5cf6);
+}
+
+/* ──── Animated Counter Ring ──── */
+.counter-ring {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+}
+.counter-ring svg {
+  position: absolute; inset: 0; transform: rotate(-90deg);
+}
+.counter-ring circle {
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ──── Gradient Shadow ──── */
+.gradient-shadow {
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+.gradient-shadow-amber {
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ──── Smooth Corner Radius Transition ──── */
+.radius-transition {
+  transition: border-radius 0.3s ease;
+}
+.radius-transition:hover {
+  border-radius: 16px;
+}
+
+/* ──── Text Clip Ellipsis Multiline ──── */
+.line-clamp-2 {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ──── Fade Edges (scrollable) ──── */
+.fade-edges {
+  mask-image: linear-gradient(to left, transparent, black 12px, black calc(100% - 12px), transparent);
+  -webkit-mask-image: linear-gradient(to left, transparent, black 12px, black calc(100% - 12px), transparent);
+}
+
+/* ──── Active Tab Indicator ──── */
+.tab-indicator {
+  position: relative;
+}
+.tab-indicator.active::after {
+  content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6); border-radius: 1px;
+  animation: tabIndicatorIn 0.25s ease-out;
+}
+@keyframes tabIndicatorIn {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+/* ──── Subtle Border Animation ──── */
+.border-animate {
+  position: relative; border: 1px solid var(--border, #e5e7eb);
+}
+.border-animate::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(139, 92, 246, 0.2) 50%, transparent 60%);
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: borderGradientShift 4s ease infinite;
+}
+@keyframes borderGradientShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* ──── Skeleton Gradient v4 ──── */
+.skeleton-v4 {
+  background: linear-gradient(90deg, var(--muted) 0%, rgba(139, 92, 246, 0.06) 50%, var(--muted) 100%);
+  background-size: 200% 100%;
+  animation: skeletonV4 1.5s ease-in-out infinite; border-radius: 8px;
+}
+@keyframes skeletonV4 {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ──── Glassmorphism v5 ──── */
+.glass-v5 {
+  background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+}
+@media (prefers-color-scheme: dark) {
+  .glass-v5 { background: rgba(10, 10, 10, 0.55); border-color: rgba(255,255,255,0.06); }
+}
+
+/* ──── Responsive Optimizations v2 ──── */
+@media (max-width: 640px) {
+  .aging-cell { display: none; }
+  .status-flow-dot-cell { display: none; }
+}
+
+/* End CSS v7.0 */
