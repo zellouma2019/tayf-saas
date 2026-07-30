@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,  // v4.8.2-hotfix
   },
   reactStrictMode: false,
+  async redirects() {
+    return [{
+      source: "/shop/:slug",
+      destination: "/s/:slug",
+      permanent: true,
+    }];
+  },
   allowedDevOrigins: [
     "preview-chat-25b4c095-e627-480e-ab7b-6e25473ffb45.space-z.ai",
   ],

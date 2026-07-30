@@ -18,6 +18,7 @@ import { shopApi } from "@/lib/shop-api";
 import { useShop } from "@/lib/shop-context";
 import { formatDA, formatDateTimeAr } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { OrderProgressBar } from "@/components/app/order-progress-bar";
 
 /* ─────────────────────── ألوان الحالات ─────────────────────── */
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -411,7 +412,7 @@ function HistoryCard({ order, onReorder, shopSlug }: { order: PrintOrderLite; on
   const emoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
 
   return (
-    <Card className="overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 border-border">
+    <Card className="overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 border-border card-border-glow">
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           {/* الجانب الأيمن: الرمز + المعلومات */}
@@ -439,7 +440,7 @@ function HistoryCard({ order, onReorder, shopSlug }: { order: PrintOrderLite; on
           <div className="flex flex-col items-end gap-2 shrink-0">
             <Badge
               variant="outline"
-              className={`${style.bg} ${style.text} ${style.border} text-[11px] font-semibold px-2.5 py-0.5`}
+              className={`${style.bg} ${style.text} ${style.border} text-[11px] font-semibold px-2.5 py-0.5 tag-chip`}
             >
               {style.icon} {style.label}
             </Badge>
@@ -447,6 +448,11 @@ function HistoryCard({ order, onReorder, shopSlug }: { order: PrintOrderLite; on
               {formatDA(order.total)}
             </span>
           </div>
+        </div>
+
+        {/* شريط تقدم الطلب */}
+        <div className="mt-3 mb-1">
+          <OrderProgressBar status={order.status as any} />
         </div>
 
         {/* تفاصيل إضافية + زر إعادة الطلب */}
