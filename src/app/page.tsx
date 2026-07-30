@@ -10,6 +10,7 @@ import {
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
   Printer, Phone, Share2, ArrowRight, Play,
+  StickyNote, UserCircle, BarChart2, Hash, Clock4,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.6-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.7-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -162,6 +163,13 @@ export default function SuperAdminPage() {
   const [platformName, setPlatformName] = useState("طيف");
   // Fallback shops
   const [fallbackShops, setFallbackShops] = useState<ShopStat[]>([]);
+  // Customer profile panel
+  const [customerProfile, setCustomerProfile] = useState<string | null>(null); // phone or name
+  // Order inline note editing
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
+  // Active filters summary
+  const activeFilterCount = [statusFilter !== 'all', shopFilter !== 'all', dateFilter !== 'all', priorityFilter !== 'all', search.length > 0].filter(Boolean).length;
 
   // Whether initial data load has completed at least once
   const dataLoaded = globalStats !== null || fallbackShops.length > 0 || allOrders.length > 0;
@@ -387,6 +395,24 @@ export default function SuperAdminPage() {
     }
   }, [loadAll]);
 
+  // Add/update order note
+  const saveOrderNote = useCallback(async (orderId: string, note: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statusNotes: note }),
+      });
+      if (!res.ok) throw new Error('فشل في حفظ الملاحظة');
+      toast.success('تم حفظ الملاحظة');
+      setEditingNote(null);
+      setNoteText("");
+      loadAll(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'فشل في حفظ الملاحظة');
+    }
+  }, [loadAll]);
+
   // Handle logout
   function handleLogout() {
     clearSession();
@@ -481,6 +507,59 @@ export default function SuperAdminPage() {
     if (c.orderCount >= 2) return { tier: 'برونزي', color: 'text-orange-600', icon: '●' };
     return { tier: '', color: '', icon: '' };
   }
+
+  // Customer profile data for panel
+  const customerProfileData = useMemo(() => {
+    if (!customerProfile) return null;
+    const custOrders = safeOrders.filter(o => 
+      (o.customer?.phone || o.customer?.name || '') === customerProfile
+    );
+    if (custOrders.length === 0) return null;
+    const totalSpend = custOrders.reduce((s,o) => s + (o.total||0), 0);
+    const statusDist: Record<string, number> = {};
+    custOrders.forEach(o => { statusDist[o.status] = (statusDist[o.status] || 0) + 1; });
+    const serviceTypes = new Set(custOrders.map(o => o.serviceType || o.serviceName));
+    const shops = new Set(custOrders.map(o => o.shopName || o.shopSlug));
+    const avgOrder = totalSpend / custOrders.length;
+    const firstOrder = custOrders.reduce((a,b) => new Date(a.createdAt) < new Date(b.createdAt) ? a : b);
+    const lastOrder = custOrders.reduce((a,b) => new Date(a.createdAt) > new Date(b.createdAt) ? a : b);
+    return {
+      name: custOrders[0].customer?.name || '—',
+      phone: custOrders[0].customer?.phone || '',
+      orderCount: custOrders.length,
+      totalSpend,
+      avgOrder,
+      statusDist,
+      serviceTypes: Array.from(serviceTypes),
+      shops: Array.from(shops),
+      firstOrderDate: firstOrder.createdAt,
+      lastOrderDate: lastOrder.createdAt,
+      orders: custOrders.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      loyalty: getLoyaltyTier(customerProfile),
+    };
+  }, [customerProfile, safeOrders]);
+
+  // Service type distribution data
+  const serviceDistribution = useMemo(() => {
+    const dist = new Map<string, { count: number; revenue: number; service: string }>();
+    safeOrders.forEach(o => {
+      const key = o.serviceType || o.serviceName || 'أخرى';
+      const entry = dist.get(key) || { count: 0, revenue: 0, service: key };
+      entry.count++;
+      entry.revenue += o.total || 0;
+      dist.set(key, entry);
+    });
+    return Array.from(dist.values()).sort((a,b) => b.revenue - a.revenue);
+  }, [safeOrders]);
+
+  // Clear all filters helper
+  const clearAllFilters = useCallback(() => {
+    setStatusFilter('all');
+    setShopFilter('all');
+    setDateFilter('all');
+    setPriorityFilter('all');
+    setSearch('');
+  }, []);
 
   // Notification state
   const [notifEvents, setNotifEvents] = useState<Array<{
@@ -1491,6 +1570,44 @@ export default function SuperAdminPage() {
               </div>
             )}
 
+            {/* Service Type Distribution Widget */}
+            {serviceDistribution.length > 0 && (
+              <div className="rounded-xl border border-border/60 bg-card/80 p-3 svc-dist-container">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <BarChart2 className="h-3.5 w-3.5" />
+                    توزيع الخدمات
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50">{serviceDistribution.length} نوع خدمة</span>
+                </div>
+                <div className="space-y-1.5">
+                  {serviceDistribution.slice(0, 6).map((svc, i) => {
+                    const maxRev = serviceDistribution[0]?.revenue || 1;
+                    const pct = safeOrders.length > 0 ? (svc.count / safeOrders.length * 100) : 0;
+                    return (
+                      <div key={svc.service} className="flex items-center gap-2.5 svc-dist-row" style={{animationDelay: `${i * 40}ms`}}>
+                        <span className="svc-dist-emoji">{SERVICE_EMOJI[svc.service as keyof typeof SERVICE_EMOJI] || '📄'}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-[11px] font-medium truncate max-w-[140px]">{svc.service}</span>
+                            <span className="text-[10px] tabular-nums text-muted-foreground">{pct.toFixed(0)}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden svc-dist-bar-bg">
+                            <div className="h-full rounded-full svc-dist-bar-fill transition-all duration-700" style={{ width: `${(svc.revenue / maxRev) * 100}%` }} />
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[9px] text-muted-foreground/50">{svc.count} طلب</span>
+                            <span className="text-[9px] text-muted-foreground/50">•</span>
+                            <span className="text-[9px] text-muted-foreground/50 revenue-gold">{formatNumber(svc.revenue)} د.ج</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Activity Panel + Filters Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
             <div className="space-y-4">
@@ -1753,7 +1870,7 @@ export default function SuperAdminPage() {
                     </span>
                   )}
                 </div>
-                <button onClick={() => { setSearch(""); setStatusFilter("all"); setOrderStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); setPriorityFilter("all"); }} className="text-primary hover:underline btn-ripple rounded-md px-2 py-0.5">مسح الكل</button>
+                <button onClick={() => clearAllFilters()} className="text-primary hover:underline btn-ripple rounded-md px-2 py-0.5">مسح الكل</button>
               </div>
             )}
 
@@ -1870,6 +1987,17 @@ export default function SuperAdminPage() {
                               ) : null;
                             })()}
                             {order.customer?.name || "—"}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const key = order.customer?.phone || order.customer?.name || '';
+                                setCustomerProfile(customerProfile === key ? null : key);
+                              }}
+                              className="p-0.5 rounded hover:bg-violet-500/10 text-muted-foreground hover:text-violet-500 transition-colors"
+                              title="ملف الزبون"
+                            >
+                              <UserCircle className="h-3 w-3 inline-block mr-0.5 opacity-40 hover:opacity-100" />
+                            </button>
                             {duplicateOrderIds.has(order.id) && (
                               <span className="badge-chip bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" title="طلب مكرر محتمل">
                                 ⚠️ مكرر
@@ -1997,6 +2125,39 @@ export default function SuperAdminPage() {
                             >
                               <ArrowUpRight className="h-3.5 w-3.5" />
                             </a>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const key = order.customer?.phone || order.customer?.name || '';
+                                setCustomerProfile(customerProfile === key ? null : key);
+                              }}
+                              className={cn(
+                                "p-1.5 rounded-md hover:bg-violet-500/10 text-muted-foreground hover:text-violet-500 transition-colors tooltip-top",
+                                customerProfile === (order.customer?.phone || order.customer?.name) && "bg-violet-500/10 text-violet-500"
+                              )}
+                              data-tooltip="ملف الزبون"
+                            >
+                              <UserCircle className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (editingNote === order.id) {
+                                  setEditingNote(null);
+                                } else {
+                                  setEditingNote(order.id);
+                                  setNoteText((order as any).statusNotes || '');
+                                }
+                              }}
+                              className={cn(
+                                "p-1.5 rounded-md hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500 transition-colors tooltip-top",
+                                (order as any).statusNotes && "text-amber-500",
+                                editingNote === order.id && "bg-amber-500/10"
+                              )}
+                              data-tooltip="ملاحظة"
+                            >
+                              <StickyNote className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -2642,32 +2803,204 @@ export default function SuperAdminPage() {
           )}
         </button>
       </div>
-      {/* Keyboard shortcuts overlay */}
-      {showShortcuts && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
-          <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 tooltip-fade" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <Keyboard className="h-4 w-4 text-primary" />
-                اختصارات لوحة المفاتيح
+      {/* Customer Profile Slide Panel */
+      {customerProfile && customerProfileData && (
+        <div className="fixed inset-0 z-[90] flex justify-end" onClick={() => setCustomerProfile(null)}>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm customer-panel-backdrop" />
+          <div className="relative w-full max-w-sm bg-card border-l border-border shadow-2xl customer-panel-slide overflow-y-auto scrollbar-thin" onClick={e => e.stopPropagation()}>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <UserCircle className="h-4 w-4 text-violet-500" />
+                  ملف الزبون
+                </h3>
+                <button onClick={() => setCustomerProfile(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {/* Customer header */
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-3 mb-4 customer-panel-header">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center text-lg font-bold text-violet-500 customer-avatar">
+                    {(customerProfileData.name || '?')[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{customerProfileData.name}</p>
+                    {customerProfileData.phone && (
+                      <a href={`tel:${customerProfileData.phone}`} className="text-xs text-muted-foreground hover:text-primary transition-colors font-mono" dir="ltr" onClick={e => e.stopPropagation()}>{customerProfileData.phone}</a>
+                    )}
+                  </div>
+                  {customerProfileData.loyalty.tier && (
+                    <span className={cn("text-[10px] px-2 py-1 rounded-full font-medium", customerProfileData.loyalty.color, "bg-current/10")}>
+                      {customerProfileData.loyalty.icon} {customerProfileData.loyalty.tier}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Stats grid */
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
+                  <span className="text-[9px] text-muted-foreground block mb-0.5">إجمالي الطلبات</span>
+                  <span className="text-base font-bold tabular-nums">{customerProfileData.orderCount}</span>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
+                  <span className="text-[9px] text-muted-foreground block mb-0.5">إجمالي الإنفاق</span>
+                  <span className="text-base font-bold tabular-nums revenue-gold">{formatNumber(customerProfileData.totalSpend)}</span>
+                  <span className="text-[9px] text-muted-foreground">د.ج</span>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
+                  <span className="text-[9px] text-muted-foreground block mb-0.5">متوسط الطلب</span>
+                  <span className="text-base font-bold tabular-nums">{formatNumber(Math.round(customerProfileData.avgOrder))}</span>
+                  <span className="text-[9px] text-muted-foreground">د.ج</span>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
+                  <span className="text-[9px] text-muted-foreground block mb-0.5">أول طلب</span>
+                  <span className="text-xs font-medium">{formatDA(customerProfileData.firstOrderDate)}</span>
+                </div>
+              </div>
+              {/* Services used */
+              {customerProfileData.serviceTypes.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[10px] text-muted-foreground font-medium mb-1.5">الخدمات المطلوبة</p>
+                  <div className="flex flex-wrap gap-1">
+                    {customerProfileData.serviceTypes.map(s => (
+                      <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-muted border border-border/50 customer-service-chip">
+                        {SERVICE_EMOJI[s as keyof typeof SERVICE_EMOJI] || '📄'} {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Status distribution */
+              <div className="mb-4">
+                <p className="text-[10px] text-muted-foreground font-medium mb-1.5">توزيع الحالات</p>
+                <div className="space-y-1">
+                  {Object.entries(customerProfileData.statusDist).map(([status, count]) => (
+                    <div key={status} className="flex items-center gap-2 text-xs">
+                      <span className={cn("w-2 h-2 rounded-full flex-shrink-0", STATUS_META[status as keyof typeof STATUS_META]?.color)} />
+                      <span className="flex-1">{STATUS_META[status as keyof typeof STATUS_META]?.label || status}</span>
+                      <span className="tabular-nums font-medium">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Recent orders list */}
+              <div>
+                <p className="text-[10px] text-muted-foreground font-medium mb-1.5">آخر الطلبات ({customerProfileData.orders.length})</p>
+                <div className="space-y-1">
+                  {customerProfileData.orders.slice(0, 10).map(o => (
+                    <div key={o.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer customer-order-row" onClick={() => { setCustomerProfile(null); setSelectedOrder(o); }}>
+                      <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('amber') ? '#f59e0b' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('sky') ? '#0ea5e9' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('blue') ? '#3b82f6' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('emerald') ? '#10b981' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('rose') ? '#f43f5e' : '#999' }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium truncate">{o.serviceName || o.serviceType}</span>
+                          <span className="text-[11px] font-bold tabular-nums revenue-gold">{(o.total || 0).toLocaleString("ar-DZ")}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                          <span>{STATUS_META[o.status as keyof typeof STATUS_META]?.emoji} {STATUS_META[o.status as keyof typeof STATUS_META]?.label}</span>
+                          <span>•</span>
+                          <span>{formatDA(o.createdAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* WhatsApp quick action */}
+              {customerProfileData.phone && (
+                <a
+                  href={`https://wa.me/${customerProfileData.phone.replace(/[^0-9]/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-2 text-sm font-medium transition-colors customer-wa-btn micro-bounce press-feedback"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  مراسلة عبر واتساب
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Note Editing Popover */
+      {editingNote && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={() => setEditingNote(null)}>
+          <div className="bg-card border border-border rounded-xl shadow-xl p-4 w-full max-w-sm mx-4 note-edit-popover" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <StickyNote className="h-4 w-4 text-amber-500" />
+                ملاحظة على الطلب
               </h3>
-              <button onClick={() => setShowShortcuts(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+              <button onClick={() => setEditingNote(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-2">
-              {[
-                { keys: "Alt + 1–6", desc: "التبديل بين التبويبات" },
-                { keys: "Alt + R", desc: "تحديث البيانات" },
-                { keys: "Ctrl + K", desc: "بحث شامل" },
-                { keys: "Escape", desc: "إغلاق النوافذ" },
-                { keys: "?", desc: "عرض هذا الدليل" },
-              ].map((s) => (
-                <div key={s.keys} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <span className="text-sm text-muted-foreground">{s.desc}</span>
-                  <kbd className="inline-flex items-center gap-1 text-[11px] font-mono bg-muted border border-border rounded-md px-2 py-1 text-foreground shadow-sm">{s.keys}</kbd>
-                </div>
-              ))}
+            <textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="أضف ملاحظة..."
+              className="w-full h-24 p-2.5 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+              autoFocus
+            />
+            <div className="flex items-center gap-2 mt-2 justify-end">
+              <button onClick={() => setEditingNote(null)} className="h-8 px-3 rounded-lg border border-border hover:bg-muted/50 text-sm transition-colors">
+                إلغاء
+              </button>
+              <button onClick={() => saveOrderNote(editingNote, noteText)} className="h-8 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors micro-bounce press-feedback">
+                حفظ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard shortcuts overlay */}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
+          <div className="bg-card border border-border rounded-2xl shadow-2xl p-5 max-w-md w-full mx-4 tooltip-fade shortcuts-panel-enhanced" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Keyboard className="h-4 w-4 text-primary" />
+                اختصارات لوحة المفاتيح
+              </h3>
+              <button onClick={() => setShowShortcuts(false)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">التبويبات</p>
+                {[
+                  { keys: 'Alt + 1', desc: 'نظرة عامة' },
+                  { keys: 'Alt + 2', desc: 'الطلبات' },
+                  { keys: 'Alt + 3', desc: 'المتاجر' },
+                  { keys: 'Alt + 4', desc: 'الإعدادات' },
+                  { keys: 'Alt + 5', desc: 'الأمان' },
+                  { keys: 'Alt + 6', desc: 'إعدادات المنصة' },
+                ].map((s) => (
+                  <div key={s.keys} className="flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-muted/50 transition-colors shortcut-row">
+                    <span className="text-xs text-muted-foreground">{s.desc}</span>
+                    <kbd className="inline-flex items-center text-[10px] font-mono bg-muted/80 border border-border rounded-md px-1.5 py-0.5 text-foreground shadow-sm">{s.keys}</kbd>
+                  </div>
+                ))}
+              </div>
+              <div className="h-px bg-border" />
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">الإجراءات</p>
+                {[
+                  { keys: 'Ctrl + K', desc: 'بحث شامل' },
+                  { keys: 'Alt + R', desc: 'تحديث البيانات' },
+                  { keys: 'Escape', desc: 'إغلاق النوافذ واللوحات' },
+                  { keys: '?', desc: 'عرض هذا الدليل' },
+                ].map((s) => (
+                  <div key={s.keys} className="flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-muted/50 transition-colors shortcut-row">
+                    <span className="text-xs text-muted-foreground">{s.desc}</span>
+                    <kbd className="inline-flex items-center text-[10px] font-mono bg-muted/80 border border-border rounded-md px-1.5 py-0.5 text-foreground shadow-sm">{s.keys}</kbd>
+                  </div>
+                ))}
+              </div>
             </div>
             <p className="text-[10px] text-muted-foreground/50 text-center mt-4">اضغط Escape أو ? للإغلاق</p>
           </div>

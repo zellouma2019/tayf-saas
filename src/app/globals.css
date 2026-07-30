@@ -39301,3 +39301,452 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* End CSS v6.6 */
+
+/* ===== CSS v6.7 — R72 Styling Enhancements ===== */
+
+/* 1. Customer Profile Slide Panel */
+.customer-panel-backdrop {
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.customer-panel-slide {
+  animation: panelSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes panelSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.customer-panel-header {
+  background: linear-gradient(135deg, oklch(0.97 0.005 280 / 0.8), oklch(0.95 0.01 280 / 0.4));
+  border: 1px solid oklch(0.85 0.03 280 / 0.3);
+}
+.customer-avatar {
+  box-shadow: 0 0 0 3px oklch(0.92 0.02 280 / 0.5), 0 4px 12px oklch(0.5 0.15 280 / 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.customer-avatar:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px oklch(0.88 0.04 280 / 0.6), 0 6px 16px oklch(0.5 0.15 280 / 0.15);
+}
+.customer-stat-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: statCardIn 0.3s ease both;
+}
+.customer-stat-card:nth-child(1) { animation-delay: 0.05s; }
+.customer-stat-card:nth-child(2) { animation-delay: 0.1s; }
+.customer-stat-card:nth-child(3) { animation-delay: 0.15s; }
+.customer-stat-card:nth-child(4) { animation-delay: 0.2s; }
+@keyframes statCardIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.customer-stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px oklch(0.5 0 0 / 0.06);
+}
+.customer-service-chip {
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.customer-service-chip:hover {
+  background: oklch(0.93 0.01 280 / 0.6);
+  transform: scale(1.03);
+}
+.customer-order-row {
+  transition: background 0.15s ease, padding-right 0.15s ease;
+}
+.customer-order-row:hover {
+  padding-right: 12px;
+}
+.customer-wa-btn {
+  box-shadow: 0 2px 8px oklch(0.6 0.15 155 / 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.customer-wa-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px oklch(0.6 0.15 155 / 0.3);
+}
+
+/* 2. Note Edit Popover */
+.note-edit-popover {
+  animation: notePopoverIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes notePopoverIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.note-edit-popover textarea {
+  border-color: oklch(0.85 0.06 75 / 0.4);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.note-edit-popover textarea:focus {
+  border-color: oklch(0.75 0.12 75);
+  box-shadow: 0 0 0 3px oklch(0.75 0.12 75 / 0.15);
+}
+
+/* 3. Service Distribution Widget */
+.svc-dist-container {
+  animation: widgetFade 0.4s ease both;
+}
+.svc-dist-row {
+  animation: svcRowSlide 0.3s ease both;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.svc-dist-row:hover {
+  background: oklch(0.96 0 0 / 0.5);
+}
+@keyframes svcRowSlide {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.svc-dist-emoji {
+  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(0.96 0.005 0 / 0.8);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.svc-dist-bar-bg {
+  background: oklch(0.93 0 0 / 0.5);
+}
+.svc-dist-bar-fill {
+  background: linear-gradient(90deg, oklch(0.6 0.15 260), oklch(0.65 0.12 290));
+  position: relative;
+}
+.svc-dist-bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.3), transparent);
+  animation: barShimmer 2s ease-in-out infinite;
+}
+
+/* 4. Enhanced Shortcuts Panel */
+.shortcuts-panel-enhanced {
+  animation: shortcutsIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes shortcutsIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.shortcut-row {
+  transition: background 0.12s ease, padding-right 0.12s ease;
+}
+.shortcut-row:hover {
+  padding-right: 12px;
+}
+.shortcut-row kbd {
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+.shortcut-row:hover kbd {
+  background: oklch(0.88 0.01 0 / 0.9);
+  transform: scale(1.05);
+}
+
+/* 5. Active Filter Counter Badge */
+.filter-count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: oklch(0.6 0.15 260 / 0.1);
+  color: oklch(0.5 0.15 260);
+  border: 1px solid oklch(0.6 0.15 260 / 0.2);
+  animation: filterPillIn 0.2s ease;
+}
+@keyframes filterPillIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 6. Enhanced Action Button States */
+.action-btn-violet {
+  color: oklch(0.55 0.2 290);
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+}
+.action-btn-violet:hover {
+  background: oklch(0.92 0.03 290 / 0.4);
+}
+.action-btn-violet:active {
+  transform: scale(0.92);
+}
+.action-btn-amber {
+  color: oklch(0.7 0.15 75);
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+}
+.action-btn-amber:hover {
+  background: oklch(0.95 0.04 75 / 0.5);
+}
+.action-btn-amber:active {
+  transform: scale(0.92);
+}
+
+/* 7. Glass Card Premium v2 */
+.glass-card-premium {
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* 8. Animated Gradient Border */
+.animated-gradient-border {
+  position: relative;
+}
+.animated-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(var(--border-angle, 0deg), oklch(0.6 0.15 260 / 0.3), oklch(0.7 0.15 75 / 0.3), oklch(0.6 0.2 330 / 0.3), oklch(0.6 0.15 260 / 0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: gradientBorderSpin 4s linear infinite;
+}
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes gradientBorderSpin {
+  to { --border-angle: 360deg; }
+}
+
+/* 9. Text Shadow Subtle */
+.text-shadow-subtle {
+  text-shadow: 0 1px 2px oklch(0 0 0 / 0.05);
+}
+
+/* 10. Online Pulse */
+@keyframes onlinePulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.5); opacity: 0; }
+}
+
+/* 11. Spring Press Effect */
+.spring-press {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.spring-press:active {
+  transform: scale(0.96);
+}
+
+/* 12. Icon Button Scale */
+.icon-btn-scale {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.icon-btn-scale:hover {
+  transform: scale(1.02);
+}
+.icon-btn-scale:active {
+  transform: scale(0.98);
+}
+
+/* 13. Btn Ripple Effect */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), oklch(1 0 0 / 0.12) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.btn-ripple:active::after {
+  opacity: 1;
+}
+
+/* 14. Enhanced Tooltip CSS with Arrow */
+.tooltip-css[data-tip] {
+  position: relative;
+}
+.tooltip-css[data-tip]::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: oklch(0.2 0 0);
+  color: oklch(0.95 0 0);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+.tooltip-css[data-tip]::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: oklch(0.2 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 50;
+}
+.tooltip-css[data-tip]:hover::before,
+.tooltip-css[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* 15. Top Tooltip */
+.tooltip-top[data-tooltip] {
+  position: relative;
+}
+.tooltip-top[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: oklch(0.15 0 0);
+  color: oklch(0.95 0 0);
+  font-size: 9px;
+  font-weight: 500;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 50;
+}
+.tooltip-top[data-tooltip]:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* 16. Focus Ring Accessible */
+.focus-ring-accessible:focus-visible {
+  outline: 2px solid oklch(0.6 0.2 260);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 17. Scrollbar Thin Custom */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.8 0 0 / 0.3) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: oklch(0.8 0 0 / 0.3);
+  border-radius: 9999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.7 0 0 / 0.5);
+}
+
+/* 18. Filter Chip Animation */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: oklch(0.95 0.01 260 / 0.3);
+  border: 1px solid oklch(0.85 0.02 260 / 0.4);
+  color: oklch(0.35 0.02 260);
+  animation: filterChipIn 0.2s ease;
+}
+@keyframes filterChipIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 19. Status Dot Ping */
+.status-dot-ping {
+  animation: statusDotPing 1.5s ease-in-out infinite;
+}
+@keyframes statusDotPing {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+  50% { opacity: 0.7; box-shadow: 0 0 0 3px transparent; }
+}
+
+/* 20. Cinematic Entrance Animation */
+.anim-cinematic-in {
+  animation: cinematicIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes cinematicIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 21. Health Banner Exit Animation */
+.health-banner-exit {
+  animation: bannerExit 0.3s ease forwards;
+}
+@keyframes bannerExit {
+  to { opacity: 0; transform: translateY(-100%); height: 0; padding: 0; margin: 0; overflow: hidden; }
+}
+
+/* 22. Skeleton Wave Loading */
+.skeleton-wave {
+  background: linear-gradient(90deg, oklch(0.93 0 0 / 0.5) 25%, oklch(0.96 0 0 / 0.8) 50%, oklch(0.93 0 0 / 0.5) 75%);
+  background-size: 200% 100%;
+  animation: skeletonWave 1.5s ease-in-out infinite;
+}
+@keyframes skeletonWave {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* 23. Tooltip Fade */
+.tooltip-fade {
+  animation: tooltipFade 0.2s ease;
+}
+@keyframes tooltipFade {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 24. Date Filter Popup */
+.date-filter-popup {
+  animation: datePopupIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes datePopupIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 25. Status Distribution Segment Hover */
+.status-dist-segment {
+  transition: filter 0.15s ease, height 0.15s ease;
+  cursor: pointer;
+  min-height: 24px;
+}
+.status-dist-segment:hover {
+  filter: brightness(1.2);
+  height: 28px;
+}
+
+/* End CSS v6.7 */
