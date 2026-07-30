@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
 import {
-  Plus, Store, RefreshCw, Shield, Package, Clock,
+  Plus, Store, RefreshCw, Shield, Package, Clock, LayoutDashboard, Globe2,
   Search, ExternalLink, Trash2, Download, TrendingUp,
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
@@ -607,6 +608,9 @@ export default function SuperAdminPage() {
   const [fabOpen, setFabOpen] = useState(false);
   // Data health tracking
   const [dataHealth, setDataHealth] = useState<{ status: 'healthy' | 'warning' | 'error'; message: string }>({ status: 'healthy', message: '' });
+  // Sidebar state
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Platform settings
   const [platformLogo, setPlatformLogo] = useState("");
   const [platformLogoDark, setPlatformLogoDark] = useState("");
@@ -1332,9 +1336,51 @@ export default function SuperAdminPage() {
     platform: "إعدادات المنصة",
   };
 
+  const sidebarSections: SidebarSection[] = useMemo(() => [
+    {
+      title: "القائمة الرئيسية",
+      items: [
+        { key: "overview", label: tabLabels.overview, icon: LayoutDashboard },
+        { key: "shops", label: tabLabels.shops, icon: Store, badge: safeShops.length },
+        { key: "orders", label: tabLabels.orders, icon: Package, badge: safeOrders.length },
+      ],
+    },
+    {
+      title: "الإدارة",
+      items: [
+        { key: "settings", label: tabLabels.settings, icon: Settings },
+        { key: "security", label: tabLabels.security, icon: Shield },
+        { key: "platform", label: tabLabels.platform, icon: Globe2 },
+      ],
+    },
+  ], [safeShops.length, safeOrders.length]);
+
   return (
     <AdminErrorBoundary>
-    <div className="min-h-screen bg-background flex flex-col admin-pattern-bg" dir="rtl">
+    <div className="flex h-screen overflow-hidden admin-pattern-bg" dir="rtl">
+      {/* Sidebar */}
+      <DashboardSidebar
+        sections={sidebarSections}
+        activeKey={activeTab}
+        onNavigate={(key) => setActiveTab(key)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileOpen}
+        onMobileToggle={() => setMobileOpen(!mobileOpen)}
+        logo={
+          <div className="flex items-center gap-3">
+            {platformLogo ? (
+              <img src={platformLogo} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover dark:hidden" />
+            ) : (
+              <img src="/tayf-logo-sm.png" alt={platformName} className="w-9 h-9 rounded-xl shrink-0 dark:hidden" />
+            )}
+            <span className="font-bold text-sm text-gold-300 truncate">{platformName}</span>
+          </div>
+        }
+      />
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col bg-background overflow-auto">
       {/* Refresh progress bar + data freshness indicator */}
       {isRefreshing && (
         <div className="h-0.5 w-full bg-muted overflow-hidden">
@@ -1350,12 +1396,16 @@ export default function SuperAdminPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 admin-header-glass">
         <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
+          {/* Mobile hamburger menu */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
+            aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {platformLogo ? (
-              <img src={platformLogo} alt={platformName} className="w-8 h-8 rounded-lg shrink-0 object-cover dark:hidden" />
-            ) : (
-              <img src="/tayf-logo-sm.png" alt={platformName} className="w-8 h-8 rounded-lg shrink-0 dark:hidden" />
-            )}
             <div className="min-w-0">
               <h1 className="text-sm font-semibold text-foreground truncate">
                 {tabLabels[activeTab] || "لوحة التحكم"}
@@ -1541,54 +1591,6 @@ export default function SuperAdminPage() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="border-b border-border bg-card/30 px-4 py-2">
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
-          <div className="pill-tabs">
-          {["overview", "shops", "orders", "settings", "security", "platform"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "pill-tab hover-underline-grow relative",
-                activeTab === tab && "active",
-                tab === "orders" && safeOrders.length > 0 && "flex items-center gap-1.5"
-              )}
-            >
-              {tabLabels[tab]}
-              {tab === "orders" && safeOrders.length > 0 && (
-                <span className={cn(
-                  "min-w-[20px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1",
-                  activeTab === tab
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {filteredOrders.length}/{safeOrders.length}
-                </span>
-              )}
-              {tab === "overview" && pendingCount > 0 && (
-                <span className="tab-pending-dot pulse-dot" title={`${pendingCount} طلب معلق`} />
-              )}
-            </button>
-          ))}
-          </div>
-          <div className="flex-1" />
-          {lastUpdated && (
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-              آخر تحديث: {lastUpdated}
-            </span>
-          )}
-          <button
-            onClick={() => setShowShortcuts(true)}
-            className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground px-1.5 rounded-md transition-colors hover:bg-muted/50"
-            title="اختصارات لوحة المفاتيح (?)"
-          >
-            <Keyboard className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
-
-      <div className="gradient-line-animated" />
       {/* Data health banner — auto-dismiss after 8 seconds */}
       {!isInitialLoading && dataHealth.status !== 'healthy' && (
         <DataHealthBanner message={dataHealth.message} status={dataHealth.status} onRetry={() => loadAll(false)} />
@@ -3598,6 +3600,7 @@ export default function SuperAdminPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
     </AdminErrorBoundary>
   );
