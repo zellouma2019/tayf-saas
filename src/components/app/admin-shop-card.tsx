@@ -107,10 +107,10 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
       {/* Performance score indicator */}
       <div className="absolute top-2 left-12 z-10">
         <div className={cn(
-          "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
-          performanceScore >= 70 ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 number-highlight-emerald" :
-          performanceScore >= 40 ? "bg-amber-500/10 text-amber-600 border border-amber-500/20 number-highlight-amber" :
-          "bg-muted text-muted-foreground border border-border"
+          "text-[9px] font-bold px-2 py-0.5 rounded-full transition-all",
+          performanceScore >= 70 ? "badge-glow-emerald bg-emerald-500/10 text-emerald-600" :
+          performanceScore >= 40 ? "badge-glow-amber bg-amber-500/10 text-amber-600" :
+          "bg-muted text-muted-foreground"
         )}>
           {performanceScore}%
         </div>
@@ -158,16 +158,16 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
         </div>
       </CardHeader>
       <CardContent className="px-5 pb-5 space-y-4">
-        <div className="grid grid-cols-3 gap-2.5 text-center stagger-grid-3">
-          <div className="stat-card-violet rounded-xl p-3 transition-colors">
+        <div className="grid grid-cols-3 gap-2.5 text-center stagger-grid-8">
+          <div className="stat-card-violet glow-card-violet rounded-xl p-3 transition-colors">
             <div className="text-lg font-bold text-foreground count-animate number-highlight-violet">{shop.orders}</div>
             <div className="text-xs text-muted-foreground/70">طلبات</div>
           </div>
-          <div className="stat-card-emerald rounded-xl p-3 transition-colors">
+          <div className="stat-card-emerald glow-card-emerald rounded-xl p-3 transition-colors">
             <div className="text-lg font-bold text-emerald-600 count-animate number-highlight-emerald">{formatDA(shop.revenue)}</div>
             <div className="text-xs text-muted-foreground/70">إيرادات</div>
           </div>
-          <div className="stat-card-amber rounded-xl p-3 transition-colors">
+          <div className="stat-card-amber glow-card-amber rounded-xl p-3 transition-colors">
             <div className="text-lg font-bold text-amber-600 count-animate number-highlight-amber">{shop.todayOrders}</div>
             <div className="text-xs text-muted-foreground/70">اليوم</div>
           </div>
@@ -187,7 +187,7 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
                 (!o.status || !['delivered','printing','ready','pending','cancelled'].includes(o.status)) && 'bg-muted/60'
               )} style={{ animationDelay: `${i * 80}ms` }}>
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-mono font-bold text-foreground/80">{o.reference}</span>
+                  <span className="font-mono font-bold text-foreground/80 inline-code">{o.reference}</span>
                   <span className="text-muted-foreground/70 truncate">{o.customer.name}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

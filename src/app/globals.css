@@ -37036,3 +37036,173 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   color: var(--tag-text);
   border: 1px solid var(--tag-border);
 }
+
+/* ================================================================
+   Tayf CSS v6.2 — R68 Enhancements
+   ================================================================ */
+
+/* 1. Glow card on hover with colored shadow */
+.glow-card-emerald { transition: box-shadow 0.3s ease, transform 0.25s ease; }
+.glow-card-emerald:hover { box-shadow: 0 4px 24px -4px rgba(16,185,129,0.2), 0 0 0 1px rgba(16,185,129,0.1); transform: translateY(-1px); }
+.glow-card-amber { transition: box-shadow 0.3s ease, transform 0.25s ease; }
+.glow-card-amber:hover { box-shadow: 0 4px 24px -4px rgba(245,158,11,0.2), 0 0 0 1px rgba(245,158,11,0.1); transform: translateY(-1px); }
+.glow-card-violet { transition: box-shadow 0.3s ease, transform 0.25s ease; }
+.glow-card-violet:hover { box-shadow: 0 4px 24px -4px rgba(139,92,246,0.2), 0 0 0 1px rgba(139,92,246,0.1); transform: translateY(-1px); }
+.glow-card-rose { transition: box-shadow 0.3s ease, transform 0.25s ease; }
+.glow-card-rose:hover { box-shadow: 0 4px 24px -4px rgba(244,63,94,0.2), 0 0 0 1px rgba(244,63,94,0.1); transform: translateY(-1px); }
+.glow-card-sky { transition: box-shadow 0.3s ease, transform 0.25s ease; }
+.glow-card-sky:hover { box-shadow: 0 4px 24px -4px rgba(14,165,233,0.2), 0 0 0 1px rgba(14,165,233,0.1); transform: translateY(-1px); }
+
+/* 2. Text gradient variants */
+.text-gradient-emerald { background: linear-gradient(135deg, #059669, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.text-gradient-amber { background: linear-gradient(135deg, #d97706, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.text-gradient-violet { background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.text-gradient-rose { background: linear-gradient(135deg, #e11d48, #f43f5e, #fb7185); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* 3. Animated border bottom for active elements */
+.border-b-animated {
+  position: relative;
+}
+.border-b-animated::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(270 70% 55%), transparent);
+  background-size: 200% 100%;
+  animation: borderSlide 3s ease infinite;
+}
+@keyframes borderSlide {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 4. Hover lift with shadow */
+.hover-lift-sm { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.hover-lift-sm:hover { transform: translateY(-1px); box-shadow: 0 2px 8px -2px rgba(0,0,0,0.1); }
+
+/* 5. Stagger grid with 8 items */
+.stagger-grid-8 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-grid-8 > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-grid-8 > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-grid-8 > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-grid-8 > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-grid-8 > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-grid-8 > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-grid-8 > *:nth-child(8) { animation-delay: 280ms; }
+
+/* 6. Score ring with color variants */
+.score-ring { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+.score-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid hsl(var(--muted)); }
+.score-ring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--ring-color, hsl(var(--primary))); transform: rotate(var(--ring-deg, 0deg)); }
+.score-ring.emerald { --ring-color: #10b981; }
+.score-ring.amber { --ring-color: #f59e0b; }
+.score-ring.violet { --ring-color: #8b5cf6; }
+.score-ring.rose { --ring-color: #f43f5e; }
+
+/* 7. Notification dot bounce */
+.notif-bounce { animation: notifBounce 2s ease-in-out infinite; }
+@keyframes notifBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* 8. Shimmer text effect */
+.shimmer-text { background: linear-gradient(90deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 50%, hsl(var(--foreground)) 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shimmerText 3s ease infinite; }
+@keyframes shimmerText {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* 9. Grid pattern overlay */
+.grid-pattern {
+  background-image: linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+                     linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* 10. Dot pattern background */
+.dot-pattern {
+  background-image: radial-gradient(hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* 11. Pill tabs */
+.pill-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: hsl(var(--muted) / 0.3); }
+.pill-tab { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; color: hsl(var(--muted-foreground)); background: transparent; border: none; cursor: pointer; transition: all 0.2s ease; }
+.pill-tab:hover { color: hsl(var(--foreground)); background: hsl(var(--muted) / 0.4); }
+.pill-tab.active { color: hsl(var(--primary-foreground)); background: hsl(var(--primary)); box-shadow: 0 2px 8px -2px hsl(var(--primary) / 0.4); }
+
+/* 12. Content fade mask at edges */
+.fade-mask-bottom { mask-image: linear-gradient(to bottom, black 80%, transparent); -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent); }
+.fade-mask-top { mask-image: linear-gradient(to top, black 80%, transparent); -webkit-mask-image: linear-gradient(to top, black 80%, transparent); }
+
+/* 13. Inline code / mono text */
+.inline-code { padding: 1px 6px; border-radius: 5px; font-size: 0.85em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: hsl(var(--muted) / 0.4); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border) / 0.5); }
+
+/* 14. Toast notification enhancement */
+.toast-enhanced { border-radius: 12px; border: 1px solid hsl(var(--border) / 0.5); backdrop-filter: blur(12px); box-shadow: 0 8px 32px -8px rgba(0,0,0,0.2); }
+
+/* 15. Hover zoom on images */
+.hover-zoom { overflow: hidden; border-radius: inherit; }
+.hover-zoom img, .hover-zoom svg { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.hover-zoom:hover img, .hover-zoom:hover svg { transform: scale(1.05); }
+
+/* 16. Text ellipsis with fade */
+.ellipsis-fade {
+  position: relative; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.ellipsis-fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  background: linear-gradient(to left, transparent, hsl(var(--card)));
+  pointer-events: none;
+}
+
+/* 17. Morphing blob background */
+.blob-bg { position: relative; overflow: hidden; }
+.blob-bg::before {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  background: hsl(var(--primary) / 0.05);
+  animation: blobMorph 8s ease-in-out infinite;
+  pointer-events: none;
+  top: -50px;
+  left: -50px;
+}
+@keyframes blobMorph {
+  0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: rotate(0deg) scale(1); }
+  33% { border-radius: 70% 30% 50% 50% / 30% 60% 70% 40%; transform: rotate(120deg) scale(1.1); }
+  66% { border-radius: 50% 50% 30% 70% / 60% 40% 40% 60%; transform: rotate(240deg) scale(0.9); }
+}
+
+/* 18. Stacked cards effect */
+.card-stacked { position: relative; }
+.card-stacked::before, .card-stacked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid hsl(var(--border) / 0.3);
+  z-index: -1;
+}
+.card-stacked::before { transform: translateY(4px); opacity: 0.4; }
+.card-stacked::after { transform: translateY(8px); opacity: 0.2; }
+
+/* 19. Gradient border top */
+.gradient-border-top {
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, hsl(var(--primary)), hsl(270 70% 55%), hsl(200 70% 55%)) 1;
+}
+
+/* 20. Number roll animation */
+.number-roll { display: inline-block; overflow: hidden; height: 1.2em; line-height: 1.2em; vertical-align: bottom; }
+.number-roll span { display: inline-block; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
