@@ -8975,3 +8975,134 @@ Task: Assess, QA test, add features (customer loyalty, mini stats, shop ranking,
 5. Implement merchant PDF stats report with charts
 6. Add AI-powered order priority scoring based on value + urgency
 7. Implement batch print queue management for merchants
+
+---
+Task ID: R61
+Agent: Main Agent (Cron Round 61)
+Task: Assess, QA test, add features (activity panel, pill tabs, CSS v5.7), deploy v5.7
+
+## Current Status Assessment
+- Build: ✅ Clean — 42 static pages, 63 API routes, 0 errors (32.5s compile)
+- Live site (Vercel):
+  - ✅ Admin dashboard loads correctly (20 orders, 6 shops)
+  - ✅ v5.6 features verified: loyalty tiers (☆ عميل فضي visible), performance scores on shops
+  - ✅ Shops sorted by revenue (مكتبة الساحل #1 at 19,133 د.ج)
+  - ✅ Customer shop page works perfectly with all services
+  - ✅ Mini stats widget visible in orders tab
+  - ⚠️ Vercel deployment pending for v5.7 (new activity panel + pill tabs)
+- QA result: No bugs. v5.6 features confirmed live and working.
+
+## New Features
+
+### 1. Real-Time Activity Panel (admin-activity-panel.tsx)
+- NEW component: `src/components/app/admin-activity-panel.tsx`
+- Displays categorized order events in timeline format:
+  - 🟢 Completed/delivered orders
+  - 🔵 Currently printing orders
+  - 🟢 Ready for pickup orders
+  - 🟣 Confirmed orders
+  - 🟡 New/pending orders
+  - 🔴 Cancelled orders
+  - ⚠️ System queue alert for pending orders
+- Live indicator with start/stop toggle button
+- Timeline-style feed with colored dot connectors
+- Each event shows: icon, title, description, time ago, shop name
+- Auto-scroll to top on new events
+- Badge ring animation on new order dots
+- Staggered entrance animation (8-item delay)
+- Empty state with floating animation placeholder
+- Sticky positioning on scroll (desktop)
+- Hidden on mobile (lg:block) for responsive layout
+- Max height with scroll and shadow indicators
+
+### 2. Pill-Style Tab Navigation
+- Replaced flat underline tabs with pill-tabs component
+- Rounded pill container with muted background
+- Active tab elevated with shadow effect
+- Order count badge integrated inside pill (not absolute positioned)
+- Smooth cubic-bezier transitions on hover/active
+- Better visual hierarchy and modern look
+
+### 3. Orders Tab Responsive Grid
+- Orders tab content wrapped in `grid-cols-1 lg:grid-cols-[1fr_300px]`
+- Activity panel as sticky side column on desktop (lg+)
+- Filters + table in main column
+- Responsive — single column on mobile, side-by-side on desktop
+
+## Styling Improvements (CSS v5.7)
+
+**File:** `src/app/globals.css` — ~511 lines added
+
+### New Animations (9):
+- `smoothIn` — Fade-up with subtle scale
+- `scaleIn` — Scale from 90%
+- `slideInRight` / `slideInLeft` — Horizontal slides
+- `fadeInOnly` — Pure opacity fade
+- `scaleRotateIn` — Scale + slight rotation
+- `dropIn` — Drop with bounce overshoot
+- `popIn` — Quick scale with spring bounce
+
+### New Utility Classes (50+):
+- Entrance animation classes: `.anim-smooth-in`, `.anim-scale-in`, `.anim-slide-right`, `.anim-slide-left`, `.anim-fade-in`, `.anim-scale-rotate`, `.anim-drop-in`, `.anim-pop-in`
+- Stagger delays: `.delay-1` through `.delay-8`
+- `.card-shine-effect` — Light sweep on hover
+- `.glass-card-v3` — Glass card with top gradient border
+- `.sparkline-area` / `.sparkline-line` — SVG chart styles
+- `.progress-bar-gradient` — Gradient-filled progress
+- `.stat-trend-up/down/flat` — Trend color indicators
+- `.table-row-enter` — Animated row entrance
+- `.table-alternate-rows` — Alternating row backgrounds
+- `.table-row-accent` — Left border on hover
+- `.activity-dot-live` — Pulsing dot for live indicator
+- `.activity-feed-item` — Timeline item with connector
+- `.activity-feed-dot` — Timeline dot with border
+- `.toast-enter-bottom` — Bottom slide-in for toasts
+- `.scroll-indicator-top/bottom` — Fade gradients for scroll
+- `.custom-check` / `.custom-check.checked` — Custom checkbox
+- `.pill-tabs` / `.pill-tab` / `.pill-tab.active` — Pill navigation
+- `.status-chip-live` — Pulse animation for status chips
+- `.badge-ring` — Expanding ring animation on badges
+- `.text-marquee` — Auto-scrolling marquee text
+- `.skeleton-avatar/text/text-sm/button` — Skeleton variants
+- `.border-gradient-primary/warm/cool` — Gradient borders
+- `.p-responsive` / `.p-responsive-lg` / `.gap-responsive` — Responsive spacing
+- `.focus-ring` / `.focus-ring:focus-visible` — Accessible focus
+- `.truncate-2` / `.truncate-3` — Multi-line truncation
+- `.hover-overlay` — Gradient overlay on hover
+- `.timeline-connector-animated` — Line draw animation
+- `.drag-handle` — Grab cursor styles
+- `.empty-state-float` — Floating animation for empty states
+- `.blur-sm/md/lg/xl` — 4 backdrop blur levels
+- `.divider-label` — Center label divider
+- `.chip-input-wrapper` / `.chip` — Tag input styling
+- `.text-responsive-xs/sm/base/lg/xl` — 5 responsive text sizes
+
+## Files Modified
+| File | Change |
+|--------|---------|
+| `src/components/app/admin-activity-panel.tsx` | NEW: Real-time activity feed panel |
+| `src/app/page.tsx` | Activity panel integration, pill tabs, responsive grid, v5.7 |
+| `src/components/app/error-boundary.tsx` | Version bump to v5.7 |
+| `src/app/globals.css` | +511 lines: CSS v5.7 |
+
+## Verification
+- ✅ `npx next build` — 42 static pages, 63 API routes, 0 errors, 32.5s compile
+- ✅ Pushed to GitHub: commit `3726d96`
+- ✅ Vercel deploy triggered: job `SmZt1uNBaXrjC3j6ZRrT` (PENDING)
+
+## Unresolved Issues
+1. 🔴 Vercel→GitHub connection broken — deploy hook triggers build from stale source. Needs manual Vercel dashboard fix.
+2. 🟡 UPLOADTHING_TOKEN missing — file upload not functional
+3. 🟢 No real-time order tracking page for customers (QR + status updates)
+4. 🟢 No WhatsApp Business API integration for merchant notifications
+5. 🟢 No order scheduling system (set delivery date/time)
+6. 🟢 No multi-language support for merchant dashboard
+
+## Priority Recommendations for Next Phase
+1. **CRITICAL:** Reconnect Vercel→GitHub in Vercel dashboard (manual only)
+2. Add real-time order tracking page for customers with QR codes
+3. Implement WhatsApp Business API webhook for merchant notifications
+4. Add order scheduling system (set delivery date/time)
+5. Implement merchant PDF stats report with charts
+6. Add AI-powered order priority scoring based on value + urgency
+7. Implement batch print queue management for merchants
