@@ -38117,3 +38117,404 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* End CSS v6.3 */
+
+/* ================================================================
+   CSS v6.4 — Order Cards View, Enhanced Animations, Detail Polish
+   ================================================================ */
+
+/* Order Card View */
+.order-card-view {
+  border-radius: 14px;
+  border: 1px solid oklch(0.85 0.01 260 / 0.4);
+  background: oklch(0.99 0.003 260);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cardEnter 0.4s ease both;
+  position: relative;
+}
+.dark .order-card-view {
+  background: oklch(0.17 0.01 260);
+  border-color: oklch(0.35 0.02 260 / 0.5);
+}
+.order-card-view:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px oklch(0.5 0.06 260 / 0.12), 0 0 0 1px oklch(0.6 0.1 260 / 0.15);
+  border-color: oklch(0.6 0.12 260 / 0.3);
+}
+
+/* Card variants */
+.order-card-urgent {
+  border-right: 3px solid oklch(0.6 0.22 20);
+  background-image: linear-gradient(135deg, oklch(0.6 0.22 20 / 0.03) 0%, transparent 50%);
+}
+.dark .order-card-urgent {
+  background-image: linear-gradient(135deg, oklch(0.6 0.22 20 / 0.06) 0%, transparent 50%);
+}
+.order-card-medium {
+  border-right: 3px solid oklch(0.72 0.16 75);
+  background-image: linear-gradient(135deg, oklch(0.72 0.16 75 / 0.02) 0%, transparent 40%);
+}
+.order-card-selected {
+  box-shadow: 0 0 0 2px oklch(0.6 0.18 260 / 0.4), inset 0 0 20px oklch(0.6 0.12 260 / 0.05);
+  border-color: oklch(0.6 0.18 260 / 0.5);
+}
+
+/* Card header */
+.order-card-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid oklch(0.88 0.005 260 / 0.3);
+}
+
+/* Card footer */
+.order-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-top: 1px solid oklch(0.88 0.005 260 / 0.3);
+  background: oklch(0.96 0.005 260 / 0.5);
+}
+.dark .order-card-footer {
+  background: oklch(0.15 0.01 260 / 0.5);
+}
+
+/* Card action buttons */
+.order-card-action {
+  padding: 4px;
+  border-radius: 6px;
+  color: oklch(0.5 0.03 260);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.order-card-action:hover {
+  background: oklch(0.92 0.01 260 / 0.5);
+  color: oklch(0.4 0.1 260);
+}
+.dark .order-card-action:hover {
+  background: oklch(0.3 0.02 260 / 0.5);
+  color: oklch(0.75 0.1 260);
+}
+.order-card-action-green:hover {
+  background: oklch(0.7 0.15 160 / 0.1);
+  color: oklch(0.55 0.18 160);
+}
+
+/* Card entrance animation */
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Stagger cols enter — cards grid */
+.stagger-cols-enter > * {
+  animation: cardEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.stagger-cols-enter > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-cols-enter > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-cols-enter > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-cols-enter > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-cols-enter > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-cols-enter > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-cols-enter > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-cols-enter > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-cols-enter > *:nth-child(9) { animation-delay: 320ms; }
+.stagger-cols-enter > *:nth-child(10) { animation-delay: 360ms; }
+.stagger-cols-enter > *:nth-child(n+11) { animation-delay: 400ms; }
+
+/* Enhanced hover underline animated */
+.hover-underline-animated {
+  position: relative;
+  display: inline-block;
+}
+.hover-underline-animated::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right: 0;
+  width: 0;
+  height: 1px;
+  background: oklch(0.6 0.18 260);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-underline-animated:hover::after {
+  width: 100%;
+}
+
+/* Hover border gradient */
+.hover-border-gradient {
+  transition: all 0.3s ease;
+}
+.hover-border-gradient:hover {
+  border-color: oklch(0.6 0.1 260 / 0.3);
+}
+
+/* Tab content enter */
+.tab-content-enter {
+  animation: tabContentIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes tabContentIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tooltip CSS (pure) */
+.tooltip-css {
+  position: relative;
+  cursor: help;
+}
+.tooltip-css[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+  background: oklch(0.15 0.02 260);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.15s ease;
+  z-index: 50;
+}
+.tooltip-css[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Glass card animated — conic gradient border spin */
+.glass-card-animated {
+  position: relative;
+  overflow: hidden;
+}
+.glass-card-animated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--border-angle, 0deg), transparent 40%, oklch(0.6 0.18 260 / 0.5) 50%, transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+  animation: borderSpin 4s linear infinite;
+}
+.glass-card-animated:hover::before {
+  opacity: 1;
+}
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes borderSpin {
+  to { --border-angle: 360deg; }
+}
+
+/* Press scale for interactive elements */
+.press-scale {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* Scrollbar thin */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.6 0.08 260 / 0.25) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: oklch(0.6 0.08 260 / 0.25);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0.12 260 / 0.4);
+}
+
+/* View toggle group enhanced */
+.view-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  background: oklch(0.93 0.005 260 / 0.6);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.dark .view-toggle-group {
+  background: oklch(0.22 0.01 260 / 0.6);
+}
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: oklch(0.5 0.03 260);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.view-toggle-btn:hover {
+  color: oklch(0.35 0.08 260);
+  background: oklch(0.97 0.005 260 / 0.5);
+}
+.dark .view-toggle-btn:hover {
+  background: oklch(0.28 0.02 260 / 0.5);
+}
+.view-toggle-btn.active {
+  background: oklch(1 0 0 / 0.9);
+  color: oklch(0.3 0.1 260);
+  box-shadow: 0 1px 4px oklch(0.5 0.05 260 / 0.1);
+  font-weight: 600;
+}
+.dark .view-toggle-btn.active {
+  background: oklch(0.25 0.02 260);
+  color: oklch(0.8 0.08 260);
+}
+
+/* New v6.4: Enhanced status colors for order rows */
+.status-pending { --status-color: oklch(0.72 0.16 75); }
+.status-confirmed { --status-color: oklch(0.6 0.2 300); }
+.status-printing { --status-color: oklch(0.6 0.15 250); }
+.status-ready { --status-color: oklch(0.65 0.18 160); }
+.status-delivered { --status-color: oklch(0.6 0.2 145); }
+.status-cancelled { --status-color: oklch(0.6 0.2 15); }
+
+/* New v6.4: Quick action buttons row */
+.quick-actions-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid oklch(0.85 0.01 260 / 0.4);
+  background: oklch(0.98 0.003 260);
+  color: oklch(0.4 0.05 260);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.dark .quick-action-btn {
+  background: oklch(0.2 0.01 260);
+  border-color: oklch(0.35 0.02 260 / 0.4);
+  color: oklch(0.7 0.06 260);
+}
+.quick-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px oklch(0.5 0.06 260 / 0.1);
+  border-color: oklch(0.6 0.12 260 / 0.3);
+}
+
+/* New v6.4: Filter active indicator */
+.filter-active-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.6 0.2 300);
+  margin-right: 4px;
+  animation: filterPulse 2s ease-in-out infinite;
+}
+@keyframes filterPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* New v6.4: Enhanced data row hover for mobile cards */
+@media (max-width: 640px) {
+  .order-card-view {
+    border-radius: 12px;
+  }
+  .order-card-header {
+    padding: 6px 10px;
+  }
+  .order-card-footer {
+    padding: 5px 10px;
+  }
+}
+
+/* New v6.4: Animated number counter */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.count-up {
+  animation: countUp 0.3s ease-out;
+}
+
+/* New v6.4: Subtle background pattern */
+.subtle-grid-bg {
+  background-image:
+    linear-gradient(oklch(0.85 0.005 260 / 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.85 0.005 260 / 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.dark .subtle-grid-bg {
+  background-image:
+    linear-gradient(oklch(0.35 0.01 260 / 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.35 0.01 260 / 0.1) 1px, transparent 1px);
+}
+
+/* New v6.4: Shimmer loading effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* New v6.4: Enhanced badge for filter chips */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid oklch(0.85 0.01 260 / 0.3);
+  background: oklch(0.97 0.003 260);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.filter-chip:hover {
+  border-color: oklch(0.6 0.1 260 / 0.3);
+  background: oklch(0.94 0.005 260);
+}
+.filter-chip-active {
+  background: oklch(0.6 0.15 260 / 0.1);
+  border-color: oklch(0.6 0.15 260 / 0.3);
+  color: oklch(0.35 0.1 260);
+  font-weight: 600;
+}
+
+/* End CSS v6.4 */

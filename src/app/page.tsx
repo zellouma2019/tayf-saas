@@ -59,7 +59,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.3-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.4-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -1631,7 +1631,7 @@ export default function SuperAdminPage() {
               </div>
             )}
 
-            {/* Orders table / kanban view */}
+            {/* Orders table / kanban / cards view */}
             {ordersView === "table" ? (
             <div className="rounded-xl border border-border bg-card overflow-hidden hover-border-gradient">
               <div className="overflow-x-auto scrollbar-thin">
@@ -1840,7 +1840,7 @@ export default function SuperAdminPage() {
                 </Table>
               </div>
             </div>
-            ) : (
+            ) : ordersView === "kanban" ? (
             /* Kanban View */
             <div className="space-y-3 stagger-cols-enter">
               {Object.entries(STATUS_META).filter(([k]) => k !== "cancelled").map(([statusKey, meta]) => {
@@ -1891,6 +1891,125 @@ export default function SuperAdminPage() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            ) : (
+            /* Cards View */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 stagger-cols-enter">
+              {sortedOrders.length === 0 ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <Package className="h-10 w-10 text-muted-foreground/20 mb-3" />
+                  <span className="text-sm">لا توجد طلبات</span>
+                </div>
+              ) : sortedOrders.map((order, idx) => {
+                const statusMeta = STATUS_META[order.status as keyof typeof STATUS_META];
+                const statusColor = statusMeta?.color || "#888";
+                const isUrgent = (order.total || 0) >= 5000;
+                const isMedium = (order.total || 0) >= 2000 && (order.total || 0) < 5000;
+                const statusIdx = ["pending", "confirmed", "printing", "ready", "delivered"].indexOf(order.status);
+                return (
+                  <div
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                    className={cn(
+                      "order-card-view cursor-pointer",
+                      isUrgent && "order-card-urgent",
+                      isMedium && "order-card-medium",
+                      selectedIds.has(order.id) && "order-card-selected"
+                    )}
+                    style={{ animationDelay: `${idx * 30}ms` }}
+                  >
+                    {/* Card header — status bar */}
+                    <div className="order-card-header" style={{background: `linear-gradient(135deg, ${statusColor}15, ${statusColor}05)`}}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm" dangerouslySetInnerHTML={{__html: statusMeta?.emoji || "📋"}} />
+                          <span className="text-xs font-semibold" style={{color: statusColor}}>{statusMeta?.label || order.status}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {isUrgent && <span className="priority-badge-urgent text-[8px] px-1.5 py-0.5 rounded font-bold">عاجل</span>}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(order.reference || order.id.substring(0, 8)); toast.success("تم نسخ الرقم المرجعي"); }}
+                            className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                            title="نسخ الرقم المرجعي"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card body */}
+                    <div className="p-3 space-y-2.5">
+                      {/* Reference */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-muted-foreground hover-underline-animated">#{order.reference || order.id.substring(0, 8)}</span>
+                        <span className="text-[10px] text-muted-foreground/40" dir="ltr">{formatDA(order.createdAt)}</span>
+                      </div>
+
+                      {/* Customer */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+                          {(order.customer?.name || "?").charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{order.customer?.name || "—"}</p>
+                          {order.customer?.phone && (
+                            <a
+                              href={`tel:${order.customer.phone}`}
+                              className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                              dir="ltr"
+                              onClick={(e) => e.stopPropagation()}
+                            >{order.customer.phone}</a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Service + Shop */}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="truncate max-w-[120px]">{order.serviceName || order.serviceType || "—"}</span>
+                        <span className="text-muted-foreground/30">·</span>
+                        <span className="truncate max-w-[80px]">{order.shopName || "—"}</span>
+                      </div>
+
+                      {/* Amount + Status dots */}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-border/50">
+                        <span className={cn("text-sm font-bold tabular-data", order.total > 0 && "revenue-gold")}>
+                          {order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}
+                        </span>
+                        <div className="order-status-mini-progress">
+                          {["pending", "confirmed", "printing", "ready", "delivered"].map((s, i) => (
+                            <div
+                              key={s}
+                              className={cn("status-mini-dot", statusIdx >= i && "status-mini-dot-active")}
+                              style={{ backgroundColor: statusIdx >= i ? (STATUS_META[s as keyof typeof STATUS_META]?.color || "#999") : undefined }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card footer — quick actions */}
+                    <div className="order-card-footer">
+                      <div className="flex items-center gap-0.5">
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="order-card-action" title="التفاصيل">
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        {order.customer?.phone && (
+                          <a href={`https://wa.me/${(order.customer.phone || "").replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="order-card-action order-card-action-green" onClick={(e) => e.stopPropagation()} title="واتساب">
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                        <button onClick={(e) => { e.stopPropagation(); const flow: Record<string,string> = {pending:"confirmed",confirmed:"printing",printing:"ready",ready:"delivered"}; const next = flow[order.status]; if(next) changeOrderStatus(order.id, next); }} className="order-card-action" title="تقدم ←">
+                          <Play className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      {order.statusNotes && (
+                        <span className="text-[9px] text-violet-500 truncate max-w-[100px]" title={order.statusNotes}>📝 {order.statusNotes}</span>
+                      )}
                     </div>
                   </div>
                 );
