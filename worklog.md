@@ -8578,3 +8578,147 @@ Task: Assess, QA test, add features (SSE, lazy loading, keyboard shortcuts), imp
 3. Implement merchant PDF stats report generation
 4. Add real-time order tracking page for customers
 5. Implement order duplicate detection algorithm
+
+---
+Task ID: R58
+Agent: Main Agent (Cron Round 58)
+Task: Assess, QA test, add features (duplicate detection, revenue fix, enhanced styling), deploy v5.4
+
+## Current Status Assessment
+- Build: ✅ Clean — 42 pages, 62 API routes, 0 errors (29.6s compile)
+- Live site (Vercel):
+  - ✅ Customer pages working correctly (al-riyan shop)
+  - ✅ Merchant dashboard loads correctly (PIN login works)
+  - ✅ API endpoints healthy (health: ok, global-stats: 39 orders/6 shops)
+  - ⚠️ Admin dashboard: shows v4.9 (stale Vercel deployment — known manual fix needed)
+  - ⚠️ Revenue shows 0 د.ج on initial load (Turso aggregate SUM issue — fixed with new fallback)
+  - ⚠️ Data health shows "loaded via fallback" — normal for intermittent Turso LEFT JOIN issues
+- QA result: No new bugs. Known Vercel stale deployment is the main live-site issue.
+
+## Bug Fixes
+
+### 1. Revenue Fallback 2b (global-stats API)
+**File:** `src/app/api/admin/global-stats/route.ts`
+- Added 4th level fallback: when SUM(total) returns 0, queries all orders individually
+- `SELECT total FROM "PrintOrder" WHERE total > 0` → aggregates client-side
+- Prevents zero-revenue display when Turso aggregate functions fail
+- Wrapped in try/catch with console logging for debugging
+
+### 2. Data Health Banner with Auto-Dismiss
+**File:** `src/app/page.tsx`
+- New `DataHealthBanner` component replaces inline pill indicator
+- Auto-dismisses after 8 seconds with smooth exit animation
+- Manual close button (X) and retry button
+- Uses `health-banner` and `health-banner-exit` CSS animations
+- Slide-in entrance from top
+
+## New Features
+
+### 1. Order Duplicate Detection
+**File:** `src/app/page.tsx`
+- `useMemo` hook detects orders with same phone+service+shop within 1 hour window
+- Flags detected duplicates with amber "⚠️ مكرر" badge chip
+- Affected rows get `duplicate-warning-row` CSS class (pulsing amber border-left)
+- Detection runs automatically on every data load
+- Duplicate status included in enhanced CSV export
+
+### 2. Enhanced CSV Export (10 columns)
+**File:** `src/app/page.tsx`
+- Previous: 6 columns (name, service, shop, status, total, date)
+- New: 10 columns (reference, name, phone, service, shop, status, total, date, time, is_duplicate)
+- All text fields properly quoted for CSV escaping
+- File renamed to `tayf-orders-YYYY-MM-DD.csv`
+- Toast shows count of exported orders
+
+## Styling Improvements (CSS v5.4)
+
+**File:** `src/app/globals.css` — 20+ new animations and utility classes (~550 lines added)
+
+### New Animations:
+- `meshGradient` — Animated 4-point gradient background (15s infinite)
+- `shimmerCard` — Subtle light sweep across cards
+- `fabFloat` — Floating action button bobbing
+- `glowPulse` — Pulsing glow shadow effect
+- `gradientText` — Animated gradient text (4s)
+- `emptyFloat` — Gentle floating with rotation for empty states
+- `spin` — Spinning animation for counter badge ring
+- `healthSlideIn` — Slide-down entrance for banners
+- `ribbonShimmer` — Horizontal shimmer gradient for ribbon
+- `tabIndicatorSlide` — Scale-x underline animation
+- `statusPing` — Expanding ping for status dots
+- `gridStaggerIn` — Staggered entrance with scale+translate
+- `skeletonWave` — Wave shimmer loading placeholder
+- `toastSlideRight` — Slide-in from right for toasts
+- `pressScale` — Quick press-down feedback
+- `animatedBorderRotate` — Rotating conic-gradient border (uses @property)
+- `duplicateFlash` — Amber pulsing background for duplicate warnings
+- `exportPulse` — Green ring pulse for export button
+- `subtlePulse` — Low-opacity pulse
+
+### New Utility Classes:
+- `.animated-mesh-bg` — Full animated gradient background
+- `.shimmer-card` — Shimmer sweep on hover
+- `.fab-float` / `.fab-shadow` — FAB float + purple glow shadow
+- `.glow-pulse` — Pulsing box-shadow
+- `.magnetic-hover` — Lift on hover with spring timing
+- `.gradient-text-animated` — Animated gradient clip text
+- `.depth-1/2/3/4` — 4 shadow levels (light + dark mode)
+- `.scroll-shadow-y` — Top/bottom fade gradients for scroll containers
+- `.empty-state-illustration` — Floating animation for empty states
+- `.counter-badge-ring` — Spinning border ring on badges
+- `.health-banner` / `.health-banner-exit` — Banner slide animations
+- `.ribbon-gradient` — Shimmer gradient for stats ribbon
+- `.tab-indicator` — Animated underline for active tabs
+- `.status-dot-ping` — Ping echo for status dots
+- `.card-spotlight` — Mouse-following radial gradient highlight
+- `.stagger-grid > *` — 12-child staggered entrance
+- `.tabular-data` — Tabular-nums font feature
+- `.tooltip-pop` — Scale+slide entrance for tooltips
+- `.skeleton-wave` — Wave shimmer for loading placeholders
+- `.toast-slide-in` — Slide-in from right
+- `.press-feedback` — Active press-down scale
+- `.skeleton-card` — Complete skeleton card layout
+- `.status-badge-progress` — In-progress spinner badge
+- `.scrollbar-thin` — 4px custom scrollbar
+- `.focus-glow-animated` — Pulsing focus ring
+- `.progress-steps-connector` — Animated gradient line connector
+- `.animated-border-card` — Rotating conic-gradient border
+- `.dashboard-grid` — Responsive auto-fill grid
+- `.duplicate-warning-row` — Amber pulsing border for duplicates
+- `.data-row-hover` — Left-border accent on hover
+- `.badge-chip` — Inline badge with hover lift
+
+### Enhanced Stats Ribbon:
+- Animated gradient shimmer background (`ribbon-gradient`)
+- Ping-dot status indicators (`status-dot-ping`)
+- Press-feedback on each stat item
+- Gradient dividers between stats
+- Tabular data font for number alignment
+- Thin scrollbar styling
+
+### Enhanced Skeleton Loading:
+- Wave shimmer animation (staggered delays per element)
+- `shimmer-card` overlay on skeleton containers
+- `stagger-grid` entrance animation
+- `depth-1` shadow on skeleton cards
+
+## Verification
+- ✅ `npx next build` — 42 static pages, 62 API routes, 0 errors, 29.6s compile
+- ✅ Pushed to GitHub: commit `58aa463`
+- ✅ Vercel deploy triggered: job `B1Vk7xEbbmRuJNYzIE0j` (PENDING)
+
+## Unresolved Issues
+1. 🔴 Vercel→GitHub connection broken — deploy hook triggers build from stale source. Needs manual Vercel dashboard fix.
+2. 🟡 UPLOADTHING_TOKEN missing — file upload not functional
+3. 🟡 Revenue still shows 0 on live due to stale v4.9 deployment
+4. 🟢 SSE polling interval (15s) — could be reduced with Turso triggers
+5. 🟢 No PDF report generation for merchant statistics
+
+## Priority Recommendations for Next Phase
+1. **CRITICAL:** Reconnect Vercel→GitHub in Vercel dashboard (manual only)
+2. Add WhatsApp Business API webhook for real-time merchant notifications
+3. Implement merchant PDF stats report generation
+4. Add real-time order tracking page for customers
+5. Implement advanced analytics with time-series charts
+6. Add order scheduling system (set delivery date/time)
+7. Implement multi-language support for merchant dashboard
