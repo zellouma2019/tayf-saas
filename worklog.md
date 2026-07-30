@@ -8470,3 +8470,111 @@ Task: Assess, QA test, fix bugs, add features, improve styling, deploy v5.2
 3. Implement WebSocket/SSE for real-time order notifications
 4. Add merchant PDF report generation
 5. Add file upload with proper storage backend
+
+---
+Task ID: R57
+Agent: Main Agent (Cron Round 57)
+Task: Assess, QA test, add features (SSE, lazy loading, keyboard shortcuts), improve styling, deploy v5.3
+
+## Current Status Assessment
+- Build: ✅ Clean — 42 pages, 62 API routes (new SSE endpoint), 0 errors
+- Live site (Vercel): 
+  - ✅ Customer pages working with i18n fixes from R56 verified
+  - ✅ Merchant dashboard loads correctly (PIN login works)
+  - ✅ API endpoints healthy (health: ok, global-stats: 39 orders/6 shops)
+  - ⚠️ Admin dashboard: stale Vercel deployment (known issue, manual fix needed)
+- QA result: No new bugs found. R56 fixes confirmed working on live site.
+
+## New Features
+
+### 1. SSE Real-Time Notifications (NEW ENDPOINT)
+**File:** `src/app/api/notifications/stream/route.ts` (NEW)
+- Server-Sent Events endpoint for real-time order push notifications
+- Polls DB every 15s for pending count changes
+- Sends `orders` event on new/resolved orders with diff count
+- Sends `heartbeat` event with current count
+- Sends keepalive comments every 5s to prevent connection timeout
+- In-memory count tracking per shopId
+- Proper cleanup on disconnect
+
+### 2. Merchant SSE Integration with Fallback
+**File:** `src/components/app/merchant-dashboard.tsx`
+- Replaces 30s polling with SSE EventSource connection
+- Plays 660Hz notification tone on new orders
+- Shows toast notification with message ("طلب جديد" / "N طلبات جديدة")
+- Auto-fallback to 30s polling if SSE connection fails
+- Proper cleanup on unmount
+
+### 3. Admin Keyboard Shortcuts Overlay
+**File:** `src/app/page.tsx`
+- Press `?` to toggle shortcuts overlay
+- `Alt+1` through `Alt+6` — switch tabs (overview/shops/orders/settings/security/platform)
+- `Ctrl+K` — focus global search
+- `Alt+R` — refresh data
+- `Escape` — close overlay
+- Glassmorphism overlay with backdrop blur
+- Keyboard icon hint in tab bar
+- `<kbd>` styled shortcut keys
+
+### 4. Admin Lazy Loading (Performance)
+**File:** `src/app/page.tsx`
+- 6 components lazy-loaded with `next/dynamic`:
+  - `OverviewTab` — with skeleton grid placeholder
+  - `SettingsTab` — with skeleton placeholder
+  - `SecurityTab` — with skeleton placeholder
+  - `PlatformSettingsTab` — with skeleton placeholder
+  - `ShopManageCard` — with card skeleton placeholder
+  - `CreateShopDialog` — no placeholder (modal)
+- Reduces initial JS bundle significantly (defers 20+ widget sub-imports from overview-tab)
+
+## Styling Improvements (CSS v5.3)
+
+**File:** `src/app/globals.css` — 20+ new CSS classes added
+
+### New Animations:
+- `orbFloat` — Ambient background gradient orbs (20s infinite loop)
+- `progressFill` — Smooth progress bar fill animation
+- `skeletonGrid` — Grid pattern background animation
+- `activeTabUnderline` — Scale-x animated underline for active tabs
+- `fadeInUp` — Slide-up entrance animation
+- `dotBounce` — Three-dot loading indicator with stagger
+
+### New Utility Classes:
+- `.frosted-panel` — Deep blur glass panel
+- `.soft-inset` — Subtle inner shadow for depth
+- `.dot-loading` — Bouncing dots container
+- `.number-transition` — Smooth number counter transitions
+- `.card-dark-glow` — Dark mode purple glow on hover
+- `.ambient-orb` — Background decoration orbs
+- `.progress-fill` — Animated progress bar
+- `.skeleton-grid` — Grid pattern skeleton
+- `.tooltip-arrow` — Tooltip with CSS arrow
+- `.tag-hover` — Tag lift effect on hover
+- `.active-tab-underline` — Animated tab indicator
+- `.fade-in-up` — Entrance animation
+- `.stagger-fade` — Staggered children animation
+- `.text-glow` — Subtle heading text glow
+- `.btn-press` — Button press scale effect
+- `.glass-gradient-border` — Glass card with gradient border
+- `.line-clamp-1/2/3` — Text clamping utilities
+
+## Verification
+- ✅ `npx next build` — 42 static pages, 62 API routes, 0 errors, 2 CSS warnings (normal)
+- ✅ Pushed to GitHub: commit `f698430`
+- ✅ Vercel deploy triggered: job `q5o6duZsTyUS4caAAAFf` (PENDING)
+- ✅ Live QA via agent-browser: i18n fixes verified, merchant dashboard functional
+
+## Unresolved Issues
+1. 🔴 Vercel→GitHub connection broken — deploy hook triggers build from stale source. Needs manual Vercel dashboard fix.
+2. 🟡 UPLOADTHING_TOKEN missing — file upload not functional
+3. 🟡 Admin shows "0 shops" on live due to stale Vercel deployment
+4. 🟢 SSE polling interval (15s) — could be reduced with Turso triggers when available
+5. 🟢 No PDF report generation for merchant statistics
+6. 🟢 No WhatsApp Business API integration for order notifications
+
+## Priority Recommendations for Next Phase
+1. **CRITICAL:** Reconnect Vercel→GitHub in Vercel dashboard (manual only)
+2. Add WhatsApp Business API webhook for real-time merchant notifications
+3. Implement merchant PDF stats report generation
+4. Add real-time order tracking page for customers
+5. Implement order duplicate detection algorithm
