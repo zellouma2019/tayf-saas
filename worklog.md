@@ -9627,3 +9627,83 @@ Task: Fix imports, add quick actions, status mini progress, CSS v6.3, deploy
 5. تحسين تجربة الموبايل لجدول الطلبات (horizontal scroll أو card view)
 6. إضافة ميزة طباعة فاتورة مباشرة من جدول الطلبات
 7. إضافة dashboard stats widget للزبون (صفحة /customer)
+
+---
+Task ID: R69
+Agent: Main Agent (Cron Round 69)
+Task: Order cards view, CSS v6.4, enhanced styling, deploy
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة)
+- ✅ تم النشر على Vercel (deploy job Oa3ibCi8YenmYZDdg4Cj)
+- ✅ إصدار v6.4
+- ✅ لا أخطاء بناء
+
+## الميزات الجديدة
+
+### 1. عرض البطاقات (Cards View)
+- وضع عرض ثالث في تبويب الطلبات (جدول / كانبان / بطاقات)
+- شبكة متجاوبة: 1 عمود موبايل، 2 سمول، 3 لارج، 4 إكس لارج
+- بطاقة لكل طلب تحتوي:
+  - شريط حالة ملون في الأعلى مع إيموجي + اسم الحالة
+  - شارة "عاجل" للطلبات ≥ 5,000 د.ج
+  - زر نسخ الرقم المرجعي (Copy)
+  - رقم مرجعي + تاريخ
+  - صورة رمزية للزبون (حرف أول) + اسم + هاتف قابل للنقر
+  - الخدمة + المتجر
+  - المبلغ بالنص الذهبي المتدرج + نقاط تقدم الحالة المصغرة
+  - شريط إجراءات سريع: تفاصيل + واتساب + تقدم
+  - ملاحظات الحالة إن وجدت
+- تأثير دخول متتابع (stagger animation)
+- تمييز الأولوية: حدود أحمر للعاجل، كهرماني للمتوسط
+- تأثير hover: رفع + ظل + حدود متوهجة
+- حالة فارغة أيقونية
+
+### 2. زر نسخ الرقم المرجعي
+- في عرض البطاقات: أيقونة Copy بجانب الشارة
+- عند النقر: نسخ للclipboard + toast "تم نسخ الرقم المرجعي"
+
+## تحسينات التصميم (CSS v6.4)
+**الملف:** `src/app/globals.css` — ~400 سطر جديد (إجمالي ~38,520 سطر)
+
+### 20+ صنف CSS جديد:
+1. `.order-card-view` — بطاقة طلب رئيسية مع hover lift + glow
+2. `.order-card-urgent/medium/selected` — 3 متغيرات أولوية
+3. `.order-card-header/footer` — رأس وتذييل البطاقة
+4. `.order-card-action` + `.order-card-action-green` — أزرار إجراءات
+5. `@keyframes cardEnter` — حركة دخول البطاقة
+6. `.stagger-cols-enter` — شبكة دخول متتابع (10 عناصر)
+7. `.hover-underline-animated` — خط سفلي ينمو عند التمرير
+8. `.hover-border-gradient` — حدود متدرجة عند التمرير
+9. `.tab-content-enter` — حركة دخول تبويب
+10. `.tooltip-css[data-tip]` — تلميح CSS نقي مع سهم
+11. `.glass-card-animated` — حدود دوّارة conic-gradient
+12. `@property --border-angle` + `@keyframes borderSpin` — دوران الحدود
+13. `.press-scale` — تأثير ضغط
+14. `.scrollbar-thin` — شريط تمرير رفيع مخصص
+15. `.view-toggle-group/btn` + `.active` — زر تبديل العرض محسّن
+16. `.status-*` — 6 متغيرات لون حالة CSS
+17. `.quick-actions-row/btn` — صف أزرار إجراءات سريعة
+18. `.filter-active-indicator` — مؤشر فلتر نشط نبضي
+19. `.count-up` — حركة عداد
+20. `.subtle-grid-bg` — خلفية شبكية دقيقة
+21. `.filter-chip` + `.filter-chip-active` — رقائق فلتر
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | عرض البطاقات + زر نسخ + تبديل 3 أوضاع + v6.4 |
+| `src/app/globals.css` | +400 سطر CSS v6.4 |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى v6.4 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى v6.4 |
+
+## Commits
+- 36b9c76: feat: v6.4 - order cards view, copy ref, CSS v6.4 with 20+ classes (R69)
+
+## التوصيات للمرحلة القادمة
+1. إضافة سحب وإفلات في كانبان (dnd-kit)
+2. إضافة عرض تقويمي للطلبات
+3. تحسين تجربة الموبايل (تحميل أسرع)
+4. إضافة إشعار صوتي عند وصول طلب جديد
+5. إضافة ميزة طباعة فاتورة من عرض البطاقات
+6. لوحة تحكم الزبون (صفحة /customer)
