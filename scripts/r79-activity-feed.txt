@@ -1,0 +1,69 @@
+function ActivityFeedTimeline({ orders }: { orders: GlobalOrder[] }) {
+  const activities = useMemo(() => {
+    return orders
+      .filter(o => o.statusHistory && o.statusHistory.length > 0)
+      .flatMap(o =>
+        (o.statusHistory || []).map((h: { status: string; timestamp: string; note?: string }) => ({
+          id: `${o.id}-${h.timestamp}`,
+          orderId: o.id,
+          ref: o.ref || '',
+          customerName: o.customer?.name || '',
+          shopName: o.shopName || '',
+          status: h.status,
+          timestamp: h.timestamp,
+          note: h.note || '',
+        }))
+      )
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 12);
+  }, [orders]);
+
+  if (activities.length === 0) return null;
+
+  const statusIcons: Record<string, string> = {
+    pending: '\u23f3', confirmed: '\u2705', printing: '\u{1f5a8}',
+    ready: '\u{1f4e6}', delivered: '\u2705', cancelled: '\u274c',
+  };
+  const statusColors: Record<string, string> = {
+    pending: '#f59e0b', confirmed: '#3b82f6', printing: '#8b5cf6',
+    ready: '#22c55e', delivered: '#10b981', cancelled: '#ef4444',
+  };
+
+  return (
+    <div className="activity-feed-widget">
+      <div className="flex items-center gap-2 mb-3">
+        <Activity className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-bold text-foreground">آخر النشاطات</h3>
+        <span className="activity-feed-count">{activities.length}</span>
+      </div>
+      <div className="activity-feed-list">
+        {activities.map((a, i) => (
+          <div
+            key={a.id}
+            className="activity-feed-item"
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
+            <div
+              className="activity-feed-dot"
+              style={{ backgroundColor: statusColors[a.status] || '#94a3b8' }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="activity-feed-emoji">{statusIcons[a.status] || '\u{1f4cb}'}</span>
+                <span className="activity-feed-text">
+                  <span className="font-medium text-foreground">{a.customerName || 'زبون'}</span>
+                  <span className="text-muted-foreground"> - {STATUS_META[a.status as keyof typeof STATUS_META]?.label || a.status}</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="activity-feed-meta">{a.shopName}</span>
+                {a.note && <span className="activity-feed-note">{a.note}</span>}
+              </div>
+            </div>
+            <span className="activity-feed-time">{formatDateTimeAr(a.timestamp)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

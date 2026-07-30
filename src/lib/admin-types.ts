@@ -26,6 +26,7 @@ export interface GlobalOrder {
   status: string; total: number;
   customer: { name: string; phone: string };
   createdAt: string; shopName: string; shopSlug: string; shopId?: string;
+  notes?: string; statusNotes?: string;
 }
 
 export interface GlobalStats {

@@ -1,0 +1,48 @@
+          {/* Shop Performance Rings (R79) */}
+          {safeShops.length > 0 && (
+            <div className="shop-rings-widget">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">أداء المتاجر</h3>
+                <span className="text-[10px] text-muted-foreground">معدل التسليم</span>
+              </div>
+              <div className="shop-rings-grid">
+                {safeShops.slice(0, 8).map((shop, i) => {
+                  const shopOrders = safeOrders.filter(o => o.shopId === shop.id || o.shopSlug === shop.slug);
+                  const total = shopOrders.length;
+                  const delivered = shopOrders.filter(o => o.status === 'delivered').length;
+                  const rate = total > 0 ? (delivered / total) * 100 : 0;
+                  const circumference = 2 * Math.PI * 18;
+                  const offset = circumference - (rate / 100) * circumference;
+                  const ringColor = rate >= 80 ? '#22c55e' : rate >= 50 ? '#f59e0b' : '#ef4444';
+                  const rev = shopOrders.reduce((s, o) => s + (o.total || 0), 0);
+                  return (
+                    <div key={shop.id || shop.slug} className="shop-ring-item" style={{ animationDelay: `${i * 60}ms` }}>
+                      <div className="shop-ring-svg-wrap">
+                        <svg width="48" height="48" viewBox="0 0 48 48" className="shop-ring-svg">
+                          <circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" className="text-muted/20" strokeWidth="3" />
+                          <circle
+                            cx="24" cy="24" r="18" fill="none"
+                            stroke={ringColor}
+                            strokeWidth="3"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={offset}
+                            strokeLinecap="round"
+                            className="shop-ring-progress"
+                            transform="rotate(-90 24 24)"
+                          />
+                          <text x="24" y="26" textAnchor="middle" className="shop-ring-text" fill="currentColor" fontSize="10" fontWeight="700">
+                            {Math.round(rate)}%
+                          </text>
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold text-foreground truncate">{shop.name}</p>
+                        <p className="text-[9px] text-muted-foreground">{total} طلب - {formatNumber(rev)} د.ج</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}

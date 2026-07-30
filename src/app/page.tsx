@@ -11,7 +11,7 @@ import {
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
   Printer, Phone, Share2, ArrowRight, Play,
-  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart, MoreHorizontal, Crown, CircleDot,
+  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart, MoreHorizontal, Crown, CircleDot, Target, Repeat, PieChart as PieChartIcon,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v7.5-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v7.6-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -252,6 +252,7 @@ function QuickActionsMenu({ order, onStatusChange, onView, onComment }: { order:
     { label: 'إضافة ملاحظة', icon: StickyNote, onClick: () => { onComment(order); setOpen(false); }, color: 'text-violet-500' },
     ...(order.customer?.phone ? [{ label: 'واتساب', icon: MessageCircle, onClick: () => { window.open(`https://wa.me/213${order.customer.phone.replace(/^0/, "")}`, '_blank'); setOpen(false); }, color: 'text-green-500' }] : []),
     { label: 'نسخ الرقم المرجعي', icon: Copy, onClick: () => { navigator.clipboard.writeText(order.reference || order.id); toast.success('تم نسخ الرقم المرجعي'); setOpen(false); }, color: 'text-slate-500' },
+    { label: 'تكرار الطلب', icon: Repeat, onClick: () => { navigator.clipboard.writeText(JSON.stringify({ customerName: order.customer?.name, customerPhone: order.customer?.phone, serviceType: order.serviceType || order.serviceName, shopSlug: order.shopSlug, total: order.total }, null, 2)); toast.success('تم نسخ بيانات الطلب'); setOpen(false); }, color: 'text-violet-500' },
   ].filter(Boolean);
   return (
     <div className="relative" ref={ref}>
@@ -819,6 +820,76 @@ function getTimeAgoStatic(dateStr: string): string {
   if (diffDay < 7) return `منذ ${diffDay} يوم`;
   const diffWeek = Math.floor(diffDay / 7);
   return `منذ ${diffWeek} أسبوع`;
+}
+
+// ===== Activity Feed Timeline (R79) =====
+function ActivityFeedTimeline({ orders }: { orders: GlobalOrder[] }) {
+  const activities = useMemo(() => {
+    return orders
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 15)
+      .map(o => ({
+        id: o.id,
+        ref: o.reference || '',
+        customerName: o.customer?.name || '',
+        shopName: o.shopName || '',
+        status: o.status,
+        timestamp: o.createdAt,
+        total: o.total || 0,
+        serviceName: o.serviceType || o.serviceName || '',
+      }));
+  }, [orders]);
+
+  if (activities.length === 0) return null;
+
+  const statusIcons: Record<string, string> = {
+    pending: '⏳', confirmed: '✅', printing: '⬜',
+    ready: '✆', delivered: '✅', cancelled: '❌',
+  };
+  const statusColors: Record<string, string> = {
+    pending: '#f59e0b', confirmed: '#3b82f6', printing: '#8b5cf6',
+    ready: '#22c55e', delivered: '#10b981', cancelled: '#ef4444',
+  };
+
+  return (
+    <div className="activity-feed-widget">
+      <div className="flex items-center gap-2 mb-3">
+        <Activity className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-bold text-foreground">آخر الطلبات</h3>
+        <span className="activity-feed-count">{activities.length}</span>
+      </div>
+      <div className="activity-feed-list">
+        {activities.map((a, i) => (
+          <div
+            key={a.id}
+            className="activity-feed-item"
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
+            <div
+              className="activity-feed-dot"
+              style={{ backgroundColor: statusColors[a.status] || '#94a3b8' }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="activity-feed-emoji">{statusIcons[a.status] || '⬜'}</span>
+                <span className="activity-feed-text">
+                  <span className="font-medium text-foreground">{a.customerName || 'زبون'}</span>
+                  <span className="text-muted-foreground"> - {STATUS_META[a.status as keyof typeof STATUS_META]?.label || a.status}</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="activity-feed-meta">{a.shopName}</span>
+                <span className="activity-feed-meta">{a.serviceName}</span>
+                <span className="activity-feed-revenue">{formatNumber(a.total)} د.ج</span>
+              </div>
+            </div>
+            <span className="activity-feed-time">{formatDateTimeAr(a.timestamp)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function SuperAdminPage() {
@@ -2243,7 +2314,7 @@ export default function SuperAdminPage() {
             )}
 
             {/* Status Distribution Bar */}
-            <div className="rounded-xl border border-border/60 bg-card/80 p-3 status-dist-bar-container">
+            <div className="rounded-xl border border-border/60 bg-card/80 p-3 status-dist-bar-container hover-lift-4 card-shine-v2">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <BarChart3 className="h-3.5 w-3.5" />
@@ -2400,6 +2471,57 @@ export default function SuperAdminPage() {
               </div>
             )}
 
+            {/* Shop Performance Rings (R79) */}
+            {safeShops.length > 0 && (
+              <div className="shop-rings-widget">
+                <div className="flex items-center gap-2 mb-3">
+                  <Target className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold text-foreground">أداء المتاجر</h3>
+                  <span className="text-[10px] text-muted-foreground">معدل التسليم</span>
+                </div>
+                <div className="shop-rings-grid">
+                  {safeShops.slice(0, 8).map((shop, i) => {
+                    const shopOrders = safeOrders.filter(o => o.shopId === shop.id || o.shopSlug === shop.slug);
+                    const total = shopOrders.length;
+                    const delivered = shopOrders.filter(o => o.status === 'delivered').length;
+                    const rate = total > 0 ? (delivered / total) * 100 : 0;
+                    const circumference = 2 * Math.PI * 18;
+                    const offset = circumference - (rate / 100) * circumference;
+                    const ringColor = rate >= 80 ? '#22c55e' : rate >= 50 ? '#f59e0b' : '#ef4444';
+                    const rev = shopOrders.reduce((s, o) => s + (o.total || 0), 0);
+                    return (
+                      <div key={shop.id || shop.slug} className="shop-ring-item" style={{ animationDelay: `${i * 60}ms` }}>
+                        <div className="shop-ring-svg-wrap">
+                          <svg width="48" height="48" viewBox="0 0 48 48" className="shop-ring-svg">
+                            <circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" className="text-muted/20" strokeWidth="3" />
+                            <circle
+                              cx="24" cy="24" r="18" fill="none"
+                              stroke={ringColor}
+                              strokeWidth="3"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={offset}
+                              strokeLinecap="round"
+                              className="shop-ring-progress"
+                              transform="rotate(-90 24 24)"
+                            />
+                            <text x="24" y="26" textAnchor="middle" className="shop-ring-text" fill="currentColor" fontSize="10" fontWeight="700">
+                              {Math.round(rate)}%
+                            </text>
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-foreground truncate">{shop.name}</p>
+                          <p className="text-[9px] text-muted-foreground">{total} طلب - {formatNumber(rev)} د.ج</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Activity Feed Timeline (R79) */}
+            <ActivityFeedTimeline orders={safeOrders} />
 
             {/* Customer Insights Widget */}
             <CustomerInsightsWidget orders={safeOrders} />
@@ -3826,6 +3948,22 @@ export default function SuperAdminPage() {
             >
               <RefreshCw className="h-4 w-4" />
               <span>تحديث البيانات</span>
+            </button>
+            <button
+              onClick={() => { exportAdminReport(); setFabOpen(false); }}
+              className="fab-action-item-v2"
+              style={{ background: 'linear-gradient(135deg, #06b6d4, #0284c7)' }}
+            >
+              <PieChartIcon className="h-4 w-4" />
+              <span>تقرير المتاجر</span>
+            </button>
+            <button
+              onClick={() => { setShowShortcuts(true); setFabOpen(false); }}
+              className="fab-action-item-v2"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+            >
+              <Keyboard className="h-4 w-4" />
+              <span>اختصارات لوحة المفاتيح</span>
             </button>
           </div>
         )}
