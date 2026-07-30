@@ -1,0 +1,87 @@
+
+// ===== Revenue Donut Chart (R78) =====
+function RevenueDonutChart({ orders }: { orders: GlobalOrder[] }) {
+  const data = useMemo(() => {
+    const map = new Map<string, number>();
+    orders.filter(o => o.status !== 'cancelled').forEach(o => {
+      const name = o.shopName || 'غير محدد';
+      map.set(name, (map.get(name) || 0) + (o.total || 0));
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, value]) => ({ name, value }));
+  }, [orders]);
+
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  let cumulative = 0;
+  const paths = data.map((d, i) => {
+    const pct = total > 0 ? d.value / total : 0;
+    const startAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    cumulative += pct;
+    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    const r = 52;
+    const ir = 34;
+    const x1 = 70 + r * Math.cos(startAngle);
+    const y1 = 70 + r * Math.sin(startAngle);
+    const x2 = 70 + r * Math.cos(endAngle);
+    const y2 = 70 + r * Math.sin(endAngle);
+    const x3 = 70 + ir * Math.cos(endAngle);
+    const y3 = 70 + ir * Math.sin(endAngle);
+    const x4 = 70 + ir * Math.cos(startAngle);
+    const y4 = 70 + ir * Math.sin(startAngle);
+    const largeArc = pct > 0.5 ? 1 : 0;
+    const pathD = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${ir} ${ir} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+    return { ...d, pathD, color: colors[i % colors.length], pct, idx: i };
+  });
+
+  if (data.length === 0) return null;
+
+  return (
+    <div className="donut-chart-container">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+          <PieChart className="h-3.5 w-3.5 text-violet-500" />
+          توزيع الإيرادات
+        </h3>
+        <span className="text-[10px] text-muted-foreground/50">حسب المتجر</span>
+      </div>
+      <div className="donut-chart-body">
+        <svg viewBox="0 0 140 140" className="donut-chart-svg">
+          {paths.map((p) => (
+            <path
+              key={p.idx}
+              d={p.pathD}
+              fill={p.color}
+              className="donut-chart-segment"
+              style={{ opacity: hoveredIdx === null || hoveredIdx === p.idx ? 1 : 0.3, transform: hoveredIdx === p.idx ? 'scale(1.04)' : 'scale(1)', transformOrigin: '70px 70px' }}
+              onMouseEnter={() => setHoveredIdx(p.idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            />
+          ))}
+          <text x="70" y="65" textAnchor="middle" className="donut-chart-center-value" fontSize="14" fontWeight="bold" fill="currentColor">{formatNumber(total)}</text>
+          <text x="70" y="80" textAnchor="middle" className="donut-chart-center-label" fontSize="8" fill="currentColor" opacity="0.5">د.ج</text>
+        </svg>
+        <div className="donut-chart-legend">
+          {paths.map(p => (
+            <div
+              key={p.idx}
+              className={cn("donut-legend-item", hoveredIdx === p.idx && "donut-legend-item-active")}
+              onMouseEnter={() => setHoveredIdx(p.idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              <span className="donut-legend-dot" style={{ backgroundColor: p.color }} />
+              <span className="donut-legend-name">{p.name}</span>
+              <span className="donut-legend-pct tabular-data">{p.pct.toFixed(1)}%</span>
+              <span className="donut-legend-value tabular-data">{formatNumber(p.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

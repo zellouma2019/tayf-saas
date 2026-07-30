@@ -1,0 +1,115 @@
+
+// ===== Advanced Search Dialog (R78) =====
+function AdvancedSearchDialog({ orders, onSelect, onClose, onSelectTab }: {
+  orders: GlobalOrder[];
+  onSelect: (order: GlobalOrder) => void;
+  onClose: () => void;
+  onSelectTab: (tab: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all"|"pending"|"printing"|"ready"|"delivered">("all");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const results = useMemo(() => {
+    if (query.length < 1 && filter === "all") return orders.slice(0, 20);
+    let filtered = orders;
+    if (filter !== "all") filtered = filtered.filter(o => o.status === filter);
+    if (query.length >= 1) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(o =>
+        (o.customer?.name || "").toLowerCase().includes(q) ||
+        (o.customer?.phone || "").includes(q) ||
+        (o.reference || "").toLowerCase().includes(q) ||
+        (o.serviceName || o.serviceType || "").toLowerCase().includes(q) ||
+        (o.shopName || "").toLowerCase().includes(q) ||
+        String(o.total || "").includes(q)
+      );
+    }
+    return filtered.slice(0, 15);
+  }, [query, filter, orders]);
+
+  useEffect(() => { setSelectedIndex(0); }, [query, filter]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelectedIndex(i => Math.min(i + 1, results.length - 1)); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setSelectedIndex(i => Math.max(i - 1, 0)); }
+    if (e.key === "Enter" && results[selectedIndex]) {
+      e.preventDefault();
+      onSelect(results[selectedIndex]);
+      onSelectTab("orders");
+      onClose();
+    }
+    if (e.key === "Escape") { onClose(); }
+  };
+
+  return (
+    <div className="search-dialog-overlay" onClick={onClose}>
+      <div className="search-dialog-container" onClick={e => e.stopPropagation()}>
+        <div className="search-dialog-input-wrap">
+          <Search className="search-dialog-icon" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="بحث بالزبون أو الهاتف أو الخدمة أو الرقم المرجعي..."
+            className="search-dialog-input"
+            dir="rtl"
+          />
+          <kbd className="search-dialog-kbd">ESC</kbd>
+        </div>
+        <div className="search-dialog-filters">
+          {[("all", "الكل", "#6b7280"), ("pending", "معلق", "#f59e0b"), ("printing", "طباعة", "#3b82f6"), ("ready", "جاهز", "#10b981"), ("delivered", "مُسلّم", "#8b5cf6")].map(([key, label, color]) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key as typeof filter)}
+              className={cn("search-dialog-filter-btn", filter === key && "search-dialog-filter-active")}
+              style={filter === key ? { "--filter-color": color, borderColor: color } as React.CSSProperties : undefined}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="search-dialog-results">
+          {results.length === 0 && (
+            <div className="search-dialog-empty">
+              <Search className="h-8 w-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">لا توجد نتائج</p>
+            </div>
+          )}
+          {results.map((order, i) => {
+            const meta = STATUS_META[order.status as keyof typeof STATUS_META];
+            return (
+              <button
+                key={order.id}
+                className={cn("search-dialog-result-item", i === selectedIndex && "search-dialog-result-selected")}
+                onClick={() => { onSelect(order); onSelectTab("orders"); onClose(); }}
+                onMouseEnter={() => setSelectedIndex(i)}
+              >
+                <div className="search-dialog-result-left">
+                  <span className="search-dialog-result-name">{order.customer?.name || "—"}</span>
+                  <span className="search-dialog-result-sub">متجر: {order.shopName || "—"}</span>
+                </div>
+                <div className="search-dialog-result-right">
+                  <span className="search-dialog-result-service svc-type-tag">لطف {order.serviceName || order.serviceType || "—"}</span>
+                  <span className="search-dialog-result-amount revenue-gold tabular-data">{formatNumber(order.total || 0)} د.ج</span>
+                  <span className="search-dialog-result-status" style={{ backgroundColor: meta?.color || "#6b7280" }}>{meta?.label || order.status}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="search-dialog-footer">
+          <span className="search-dialog-footer-hint">↑↓ التنقل • Enter اختيار • Esc إغلاق</span>
+          <span className="search-dialog-footer-count">{results.length} نتيجة</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -11,7 +11,7 @@ import {
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
   Printer, Phone, Share2, ArrowRight, Play,
-  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart, MoreHorizontal, Crown,
+  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart, MoreHorizontal, Crown, CircleDot,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v7.4-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v7.5-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -306,6 +306,276 @@ function OrdersNotesPanel({ orders, onSelect }: { orders: GlobalOrder[]; onSelec
     </div>
   );
 }
+
+
+// ===== Advanced Search Dialog (R78) =====
+function AdvancedSearchDialog({ orders, onSelect, onClose, onSelectTab }: {
+  orders: GlobalOrder[];
+  onSelect: (order: GlobalOrder) => void;
+  onClose: () => void;
+  onSelectTab: (tab: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all"|"pending"|"printing"|"ready"|"delivered">("all");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const results = useMemo(() => {
+    if (query.length < 1 && filter === "all") return orders.slice(0, 20);
+    let filtered = orders;
+    if (filter !== "all") filtered = filtered.filter(o => o.status === filter);
+    if (query.length >= 1) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(o =>
+        (o.customer?.name || "").toLowerCase().includes(q) ||
+        (o.customer?.phone || "").includes(q) ||
+        (o.reference || "").toLowerCase().includes(q) ||
+        (o.serviceName || o.serviceType || "").toLowerCase().includes(q) ||
+        (o.shopName || "").toLowerCase().includes(q) ||
+        String(o.total || "").includes(q)
+      );
+    }
+    return filtered.slice(0, 15);
+  }, [query, filter, orders]);
+
+  useEffect(() => { setSelectedIndex(0); }, [query, filter]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelectedIndex(i => Math.min(i + 1, results.length - 1)); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setSelectedIndex(i => Math.max(i - 1, 0)); }
+    if (e.key === "Enter" && results[selectedIndex]) {
+      e.preventDefault();
+      onSelect(results[selectedIndex]);
+      onSelectTab("orders");
+      onClose();
+    }
+    if (e.key === "Escape") { onClose(); }
+  };
+
+  return (
+    <div className="search-dialog-overlay" onClick={onClose}>
+      <div className="search-dialog-container" onClick={e => e.stopPropagation()}>
+        <div className="search-dialog-input-wrap">
+          <Search className="search-dialog-icon" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="بحث بالزبون أو الهاتف أو الخدمة أو الرقم المرجعي..."
+            className="search-dialog-input"
+            dir="rtl"
+          />
+          <kbd className="search-dialog-kbd">ESC</kbd>
+        </div>
+        <div className="search-dialog-filters">
+          {[("all", "الكل", "#6b7280"), ("pending", "معلق", "#f59e0b"), ("printing", "طباعة", "#3b82f6"), ("ready", "جاهز", "#10b981"), ("delivered", "مُسلّم", "#8b5cf6")].map(([key, label, color]) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key as typeof filter)}
+              className={cn("search-dialog-filter-btn", filter === key && "search-dialog-filter-active")}
+              style={filter === key ? { "--filter-color": color, borderColor: color } as React.CSSProperties : undefined}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="search-dialog-results">
+          {results.length === 0 && (
+            <div className="search-dialog-empty">
+              <Search className="h-8 w-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">لا توجد نتائج</p>
+            </div>
+          )}
+          {results.map((order, i) => {
+            const meta = STATUS_META[order.status as keyof typeof STATUS_META];
+            return (
+              <button
+                key={order.id}
+                className={cn("search-dialog-result-item", i === selectedIndex && "search-dialog-result-selected")}
+                onClick={() => { onSelect(order); onSelectTab("orders"); onClose(); }}
+                onMouseEnter={() => setSelectedIndex(i)}
+              >
+                <div className="search-dialog-result-left">
+                  <span className="search-dialog-result-name">{order.customer?.name || "—"}</span>
+                  <span className="search-dialog-result-sub">متجر: {order.shopName || "—"}</span>
+                </div>
+                <div className="search-dialog-result-right">
+                  <span className="search-dialog-result-service svc-type-tag">{order.serviceName || order.serviceType || "—"}</span>
+                  <span className="search-dialog-result-amount revenue-gold tabular-data">{formatNumber(order.total || 0)} د.ج</span>
+                  <span className="search-dialog-result-status" style={{ backgroundColor: meta?.color || "#6b7280" }}>{meta?.label || order.status}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="search-dialog-footer">
+          <span className="search-dialog-footer-hint">↑↓ التنقل • Enter اختيار • Esc إغلاق</span>
+          <span className="search-dialog-footer-count">{results.length} نتيجة</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// ===== Revenue Donut Chart (R78) =====
+function RevenueDonutChart({ orders }: { orders: GlobalOrder[] }) {
+  const data = useMemo(() => {
+    const map = new Map<string, number>();
+    orders.filter(o => o.status !== 'cancelled').forEach(o => {
+      const name = o.shopName || 'غير محدد';
+      map.set(name, (map.get(name) || 0) + (o.total || 0));
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, value]) => ({ name, value }));
+  }, [orders]);
+
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  let cumulative = 0;
+  const paths = data.map((d, i) => {
+    const pct = total > 0 ? d.value / total : 0;
+    const startAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    cumulative += pct;
+    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    const r = 52;
+    const ir = 34;
+    const x1 = 70 + r * Math.cos(startAngle);
+    const y1 = 70 + r * Math.sin(startAngle);
+    const x2 = 70 + r * Math.cos(endAngle);
+    const y2 = 70 + r * Math.sin(endAngle);
+    const x3 = 70 + ir * Math.cos(endAngle);
+    const y3 = 70 + ir * Math.sin(endAngle);
+    const x4 = 70 + ir * Math.cos(startAngle);
+    const y4 = 70 + ir * Math.sin(startAngle);
+    const largeArc = pct > 0.5 ? 1 : 0;
+    const pathD = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${ir} ${ir} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+    return { ...d, pathD, color: colors[i % colors.length], pct, idx: i };
+  });
+
+  if (data.length === 0) return null;
+
+  return (
+    <div className="donut-chart-container">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+          <CircleDot className="h-3.5 w-3.5 text-violet-500" />
+          توزيع الإيرادات
+        </h3>
+        <span className="text-[10px] text-muted-foreground/50">حسب المتجر</span>
+      </div>
+      <div className="donut-chart-body">
+        <svg viewBox="0 0 140 140" className="donut-chart-svg">
+          {paths.map((p) => (
+            <path
+              key={p.idx}
+              d={p.pathD}
+              fill={p.color}
+              className="donut-chart-segment"
+              style={{ opacity: hoveredIdx === null || hoveredIdx === p.idx ? 1 : 0.3, transform: hoveredIdx === p.idx ? 'scale(1.04)' : 'scale(1)', transformOrigin: '70px 70px' }}
+              onMouseEnter={() => setHoveredIdx(p.idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            />
+          ))}
+          <text x="70" y="65" textAnchor="middle" className="donut-chart-center-value" fontSize="14" fontWeight="bold" fill="currentColor">{formatNumber(total)}</text>
+          <text x="70" y="80" textAnchor="middle" className="donut-chart-center-label" fontSize="8" fill="currentColor" opacity="0.5">د.ج</text>
+        </svg>
+        <div className="donut-chart-legend">
+          {paths.map(p => (
+            <div
+              key={p.idx}
+              className={cn("donut-legend-item", hoveredIdx === p.idx && "donut-legend-item-active")}
+              onMouseEnter={() => setHoveredIdx(p.idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              <span className="donut-legend-dot" style={{ backgroundColor: p.color }} />
+              <span className="donut-legend-name">{p.name}</span>
+              <span className="donut-legend-pct tabular-data">{p.pct.toFixed(1)}%</span>
+              <span className="donut-legend-value tabular-data">{formatNumber(p.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// ===== Performance Metrics Cards (R78) =====
+function PerformanceMetricsCards({ orders }: { orders: GlobalOrder[] }) {
+  const metrics = useMemo(() => {
+    const now = Date.now();
+    const hourMs = 3600000;
+    const dayMs = 86400000;
+    const active = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
+    const pending = orders.filter(o => o.status === 'pending');
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const todayOrders = orders.filter(o => new Date(o.createdAt).getTime() >= todayStart.getTime());
+    const todayDelivered = todayOrders.filter(o => o.status === 'delivered');
+
+    // Average turnaround time (created to delivered)
+    const delivered = orders.filter(o => o.status === 'delivered' && o.createdAt);
+    let avgTurnaround = 0;
+    if (delivered.length > 0) {
+      const totalMs = delivered.reduce((s, o) => s + (new Date(o.updatedAt || o.createdAt).getTime() - new Date(o.createdAt).getTime()), 0);
+      avgTurnaround = totalMs / delivered.length / hourMs;
+    }
+
+    // Urgent orders ratio
+    const urgentCount = orders.filter(o => (o.total || 0) >= 5000).length;
+    const urgentPct = orders.length > 0 ? (urgentCount / orders.length * 100) : 0;
+
+    // Today's throughput (orders/hour for working hours)
+    const currentHour = new Date().getHours();
+    const workingHours = Math.max(currentHour - 8, 1);
+    const throughput = todayDelivered.length > 0 ? (todayDelivered.length / workingHours).toFixed(1) : '0';
+
+    return [
+      { label: 'وقت المعالجة', value: avgTurnaround < 1 ? `${Math.round(avgTurnaround * 60)} دقيقة` : `${avgTurnaround.toFixed(1)} ساعة`, sub: 'متوسط من الإنشاء للتسليم', icon: Timer, color: '#8b5cf6', bg: 'bg-violet-500/10' },
+      { label: 'الطلبات النشطة', value: `${active.length}`, sub: `${pending.length} معلق يحتاج اهتمام`, icon: Activity, color: '#f59e0b', bg: 'bg-amber-500/10' },
+      { label: 'نسبة العاجل', value: `${urgentPct.toFixed(0)}%`, sub: `${urgentCount} طلب عاجل (>= 5000 د.ج)`, icon: AlertTriangle, color: '#ef4444', bg: 'bg-rose-500/10' },
+      { label: 'إنتاجية اليوم', value: `${throughput}`, sub: 'طلب/ساعة عمل', icon: Zap, color: '#10b981', bg: 'bg-emerald-500/10' },
+    ];
+  }, [orders]);
+
+  return (
+    <div className="perf-metrics-grid">
+      {metrics.map((m, i) => {
+        const IconComp = m.icon;
+        return (
+          <div key={i} className="perf-metric-card" style={{ '--metric-color': m.color, animationDelay: `${i * 80}ms` } as React.CSSProperties}>
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", m.bg)}>
+              <IconComp className="h-4 w-4" style={{ color: m.color }} />
+            </div>
+            <div className="perf-metric-content">
+              <span className="text-[10px] text-muted-foreground font-medium">{m.label}</span>
+              <p className="text-base font-bold tabular-data perf-metric-value">{m.value}</p>
+              <p className="text-[9px] text-muted-foreground/50">{m.sub}</p>
+            </div>
+            <div className="perf-metric-bar-track">
+              <div className="perf-metric-bar-fill" style={{ backgroundColor: m.color }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
 
 // ===== Duplicate Order Warning =====
 function DuplicateWarning({ order, allOrders }: { order: GlobalOrder; allOrders: GlobalOrder[] }) {
@@ -602,6 +872,8 @@ export default function SuperAdminPage() {
     if (typeof window !== 'undefined') return localStorage.getItem('sound-notifications') !== 'false';
     return true;
   });
+  // Advanced Search Dialog (R78)
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
   const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "medium" | "normal">("all");
   // Enhanced FAB
@@ -785,8 +1057,7 @@ export default function SuperAdminPage() {
       if (e.altKey && e.key === "6") setActiveTab("platform");
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        searchInputRef.current?.focus();
-        setSearchOpen(true);
+        setSearchDialogOpen(true);
       }
       if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const tag = (e.target as HTMLElement)?.tagName;
@@ -1744,6 +2015,10 @@ export default function SuperAdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-8"><input type="checkbox" checked={filteredOrders.length > 0 && selectedIds.size === filteredOrders.length} onChange={e => {
+                      if (e.target.checked) { setSelectedIds(new Set(filteredOrders.map(o => o.id))); }
+                      else { setSelectedIds(new Set()); }
+                    }} className="bulk-row-checkbox" /></TableHead>
                     <TableHead className="text-right">الزبون</TableHead>
                     <TableHead className="text-right">الخدمة</TableHead>
                     <TableHead className="text-right">المتجر</TableHead>
@@ -1929,6 +2204,40 @@ export default function SuperAdminPage() {
                   <span className="text-sm font-bold tabular-data revenue-gold">{formatNumber(safeOrders.filter(o => o.status === 'pending').reduce((s,o) => s + (o.total||0), 0))} د.ج</span>
                   <span className="text-[10px] text-muted-foreground">{safeOrders.filter(o => o.status === 'pending').length} طلب</span>
                   <button onClick={() => { setStatusFilter('pending'); setActiveTab('orders'); }} className="text-[10px] text-primary hover:underline font-medium">عرض ←</button>
+                </div>
+              </div>
+            )}
+
+            {/* Bulk Selection Toolbar (R78) */}
+            {selectedIds.size > 0 && (
+              <div className="bulk-select-toolbar">
+                <div className="bulk-select-info">
+                  <CheckSquare className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold">{selectedIds.size} طلب محدد</span>
+                </div>
+                <div className="bulk-select-actions">
+                  <button onClick={() => {
+                    const newSet = new Set(filteredOrders.map(o => o.id));
+                    setSelectedIds(prev => prev.size === newSet.size ? new Set() : newSet);
+                  }} className="bulk-select-btn bulk-select-btn-secondary">
+                    {selectedIds.size === filteredOrders.length ? 'إلغاء الكل' : 'تحديد الكل'}
+                  </button>
+                  <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                    <SelectTrigger className="bulk-select-status-trigger"><SelectValue placeholder="تغيير الحالة" /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(STATUS_META).filter(([k]) => k !== 'cancelled').map(([key, meta]) => (
+                        <SelectItem key={key} value={key}>{meta.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {bulkStatus && (
+                    <button onClick={() => { handleBulkStatusChange(); setSelectedIds(new Set()); }} className="bulk-select-btn bulk-select-btn-primary">
+                      <Check className="h-3.5 w-3.5" /> تطبيق
+                    </button>
+                  )}
+                  <button onClick={() => setSelectedIds(new Set())} className="bulk-select-btn bulk-select-btn-danger">
+                    <X className="h-3.5 w-3.5" /> إلغاء التحديد
+                  </button>
                 </div>
               </div>
             )}
@@ -2147,6 +2456,12 @@ export default function SuperAdminPage() {
                 })()}
               </div>
             </div>
+
+            {/* Revenue Donut Chart (R78) */}
+            <RevenueDonutChart orders={safeOrders} />
+
+            {/* Performance Metrics Cards (R78) */}
+            <PerformanceMetricsCards orders={safeOrders} />
 
             {/* Print Queue Manager */}
             <PrintQueueManager orders={safeOrders} onOrderClick={(o) => { setSelectedOrder(o); setQuickViewOrder(o); }} />

@@ -1,0 +1,62 @@
+
+// ===== Performance Metrics Cards (R78) =====
+function PerformanceMetricsCards({ orders }: { orders: GlobalOrder[] }) {
+  const metrics = useMemo(() => {
+    const now = Date.now();
+    const hourMs = 3600000;
+    const dayMs = 86400000;
+    const active = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
+    const pending = orders.filter(o => o.status === 'pending');
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const todayOrders = orders.filter(o => new Date(o.createdAt).getTime() >= todayStart.getTime());
+    const todayDelivered = todayOrders.filter(o => o.status === 'delivered');
+
+    // Average turnaround time (created to delivered)
+    const delivered = orders.filter(o => o.status === 'delivered' && o.createdAt);
+    let avgTurnaround = 0;
+    if (delivered.length > 0) {
+      const totalMs = delivered.reduce((s, o) => s + (new Date(o.updatedAt || o.createdAt).getTime() - new Date(o.createdAt).getTime()), 0);
+      avgTurnaround = totalMs / delivered.length / hourMs;
+    }
+
+    // Urgent orders ratio
+    const urgentCount = orders.filter(o => (o.total || 0) >= 5000).length;
+    const urgentPct = orders.length > 0 ? (urgentCount / orders.length * 100) : 0;
+
+    // Today's throughput (orders/hour for working hours)
+    const currentHour = new Date().getHours();
+    const workingHours = Math.max(currentHour - 8, 1);
+    const throughput = todayDelivered.length > 0 ? (todayDelivered.length / workingHours).toFixed(1) : '0';
+
+    return [
+      { label: 'وقت المعالجة', value: avgTurnaround < 1 ? `${Math.round(avgTurnaround * 60)} دقيقة` : `${avgTurnaround.toFixed(1)} ساعة`, sub: 'متوسط من الإنشاء للتسليم', icon: Timer, color: '#8b5cf6', bg: 'bg-violet-500/10' },
+      { label: 'الطلبات النشطة', value: `${active.length}`, sub: `${pending.length} معلق يحتاج اهتمام`, icon: Activity, color: '#f59e0b', bg: 'bg-amber-500/10' },
+      { label: 'نسبة العاجل', value: `${urgentPct.toFixed(0)}%`, sub: `${urgentCount} طلب عاجل (>= 5000 د.ج)`, icon: AlertTriangle, color: '#ef4444', bg: 'bg-rose-500/10' },
+      { label: 'إنتاجية اليوم', value: `${throughput}`, sub: 'طلب/ساعة عمل', icon: Zap, color: '#10b981', bg: 'bg-emerald-500/10' },
+    ];
+  }, [orders]);
+
+  return (
+    <div className="perf-metrics-grid">
+      {metrics.map((m, i) => {
+        const IconComp = m.icon;
+        return (
+          <div key={i} className="perf-metric-card" style={{ '--metric-color': m.color, animationDelay: `${i * 80}ms` } as React.CSSProperties}>
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", m.bg)}>
+              <IconComp className="h-4 w-4" style={{ color: m.color }} />
+            </div>
+            <div className="perf-metric-content">
+              <span className="text-[10px] text-muted-foreground font-medium">{m.label}</span>
+              <p className="text-base font-bold tabular-data perf-metric-value">{m.value}</p>
+              <p className="text-[9px] text-muted-foreground/50">{m.sub}</p>
+            </div>
+            <div className="perf-metric-bar-track">
+              <div className="perf-metric-bar-fill" style={{ backgroundColor: m.color }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
