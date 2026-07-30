@@ -10207,3 +10207,74 @@ Task: Calendar view, status flow dots, customer quick profile, sound toggle, CSS
 3. لوحة تحكم الزبون الكاملة (صفحة /customer)
 4. تصدير PDF للتقرير المالي
 5. إشعارات فورية (WebSocket/SSE)
+---
+Task ID: R74
+Agent: Main Agent (Cron Round 74)
+Task: Order aging indicator, stats comparison bars, CSS v7.0, v7.1
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 294e382)
+- ✅ إصدار v7.1
+- ⚠️ Vercel 404 مستمر — لا يوجد VERCEL_TOKEN
+
+## الميزات الجديدة
+
+### 1. مؤشر عمر الطلب (Order Aging Indicator)
+- عمود جديد في جدول الطلبات بجانب نقاط المسار
+- 4 مستويات لونية: أخضر (جديد <2س) / أزرق (طبيعي <6س) / ذهبي (ساعات) / أحمر (أيام)
+- يختفي تلقائياً للحالات المنتهية (delivered/cancelled)
+- شارة صغيرة مع حدود ملونة وخلفية شفافة
+- إخفاء عمود العمر والمسار على الشاشات الصغيرة (<640px)
+
+### 2. أشرطة مقارنة الأداء (Stats Comparison Bars)
+- 4 مقارنات في تبويب الطلبات:
+  - الإيرادات اليومية vs متوسط الأسبوع
+  - الطلبات اليومية vs متوسط الأسبوع
+  - التسليمات اليوم vs متوسط الأسبوع
+  - متوسط قيمة الطلب (اليوم vs الأسبوع)
+- شريط تقدم مع لمعان متحرك
+- نسبة التغير باللون (أخضر للزيادة، أحمر للنقصان)
+- حركة دخول متتابعة (stagger 50ms)
+
+## تحسينات التصميم (CSS v7.0)
+**الملف:** `src/app/globals.css` — ~200 سطر جديد
+
+### 15+ مجموعة أصناف جديدة:
+1. `.aging-badge` + `@keyframes agingIn` — شارة عمر الطلب
+2. `.stat-comp-bar/.track/.fill` + `@keyframes compBarShimmer` — أشرطة المقارنة
+3. `.duplicate-warning-row::after` — شريط جانبي للطلبات المكررة
+4. `.table-row-hover-enhanced` — تأثير تمرير محسّن للصفوف
+5. `.highlight-col-hover` — تمييز العمود
+6. `.floating-label-input` — حقول بتسمية عائمة
+7. `.counter-ring` — حلقة عداد دائرية
+8. `.gradient-shadow/.gradient-shadow-amber` — ظل متدرج
+9. `.radius-transition` — انتقال نصف القطر
+10. `.line-clamp-2/.line-clamp-3` — قص النص متعدد الأسطر
+11. `.fade-edges` — حواف متلاشية للعناصر القابلة للتمرير
+12. `.tab-indicator.active::after` — مؤشر التبويب النشط
+13. `.border-animate` — حدود متحركة بتدرج
+14. `.skeleton-v4` — هيكل تحميل v4
+15. `.glass-v5` — زجاجية v5 مع blur(20px)
+16. Responsive: إخفاء عمود العمر والمسار على الموبايل
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | مؤشر العمر + مقارنة الأداء + v7.1 |
+| `src/app/globals.css` | +200 سطر CSS v7.0 |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.1 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.1 |
+
+## الإحصائيات
+- CSS versions: v6.1 → v7.0 (10 إصدارات CSS)
+- أوضاع عرض الطلبات: 4 + عمود جديد (العمر)
+
+## Unresolved Issues
+1. **Vercel 404** — يحتاج VERCEL_TOKEN في env vars
+
+## Priority Recommendations for R75
+1. إصلاح Vercel (VERCEL_TOKEN)
+2. سحب وإفلات في كانبان (dnd-kit)
+3. لوحة تحكم الزبون الكاملة
+4. تصدير PDF
