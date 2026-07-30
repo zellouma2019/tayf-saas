@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoExecute } from "@/lib/turso-lite";
 
-const VALID_STATUSES = new Set(["pending", "printing", "ready", "delivered", "cancelled"]);
+const VALID_STATUSES = new Set(["pending", "confirmed", "printing", "ready", "delivered", "cancelled"]);
 const MAX_BULK_IDS = 100;
 
 export async function POST(request: NextRequest) {

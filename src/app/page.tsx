@@ -547,7 +547,7 @@ export default function SuperAdminPage() {
     }
     if (search) {
       const s = search.toLowerCase();
-      const searchable = `${o.id} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.shopName} ${o.serviceType}`.toLowerCase();
+      const searchable = `${o.id} ${o.reference || ''} ${o.customer?.name || ''} ${o.customer?.phone || ''} ${o.shopName} ${o.serviceType || ''} ${o.serviceName || ''}`.toLowerCase();
       if (!searchable.includes(s)) return false;
     }
     // Date range filter
@@ -1326,6 +1326,51 @@ export default function SuperAdminPage() {
               </div>
             </div>
 
+            {/* Revenue Timeline Widget */}
+            <div className="grid grid-cols-3 gap-2 revenue-timeline-row">
+              {(() => {
+                const now = Date.now();
+                const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+                const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1));
+                const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
+                const todayOrders = safeOrders.filter(o => new Date(o.createdAt).getTime() >= todayStart.getTime());
+                const weekOrders = safeOrders.filter(o => new Date(o.createdAt).getTime() >= weekStart.getTime());
+                const monthOrders = safeOrders.filter(o => new Date(o.createdAt).getTime() >= monthStart.getTime());
+                const todayRev = todayOrders.reduce((s,o) => s + (o.total||0), 0);
+                const weekRev = weekOrders.reduce((s,o) => s + (o.total||0), 0);
+                const monthRev = monthOrders.reduce((s,o) => s + (o.total||0), 0);
+                const todayDelivered = todayOrders.filter(o => o.status === 'delivered').length;
+                const pendingAmount = safeOrders.filter(o => o.status === 'pending').reduce((s,o) => s + (o.total||0), 0);
+                return [
+                  { label: 'إيرادات اليوم', value: formatNumber(todayRev), sub: `${todayOrders.length} طلب • ${todayDelivered} تم التسليم`, icon: '☀', cls: 'revenue-timeline-today', accent: '#f59e0b' },
+                  { label: 'إيرادات الأسبوع', value: formatNumber(weekRev), sub: `${weekOrders.length} طلب`, icon: '📅', cls: 'revenue-timeline-week', accent: '#3b82f6' },
+                  { label: 'إيرادات الشهر', value: formatNumber(monthRev), sub: `${monthOrders.length} طلب`, icon: '🗓', cls: 'revenue-timeline-month', accent: '#8b5cf6' },
+                ].map((item, i) => (
+                  <div key={i} className={cn('rounded-xl border border-border/60 bg-card/80 p-3 hover-lift-1 transition-all revenue-timeline-card', item.cls)} style={{'--timeline-accent': item.accent} as React.CSSProperties}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-muted-foreground font-medium">{item.icon} {item.label}</span>
+                    </div>
+                    <p className="text-base font-bold tabular-data revenue-gold">{item.value} <span className="text-[10px] font-normal text-muted-foreground/70">د.ج</span></p>
+                    <p className="text-[9px] text-muted-foreground/50 mt-0.5">{item.sub}</p>
+                  </div>
+                ));
+              })()}
+            </div>
+            {/* Pending revenue alert */}
+            {safeOrders.filter(o => o.status === 'pending').length > 0 && (
+              <div className="revenue-pending-alert">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                  <span className="text-xs font-medium">طلبات معلقة تحتاج تأكيد</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold tabular-data revenue-gold">{formatNumber(safeOrders.filter(o => o.status === 'pending').reduce((s,o) => s + (o.total||0), 0))} د.ج</span>
+                  <span className="text-[10px] text-muted-foreground">{safeOrders.filter(o => o.status === 'pending').length} طلب</span>
+                  <button onClick={() => { setStatusFilter('pending'); setActiveTab('orders'); }} className="text-[10px] text-primary hover:underline font-medium">عرض ←</button>
+                </div>
+              </div>
+            )}
+
             {/* Activity Panel + Filters Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
             <div className="space-y-4">
@@ -1338,9 +1383,17 @@ export default function SuperAdminPage() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="بحث بالاسم أو الهاتف..."
-                  className="pr-10"
+                  placeholder="بحث بالاسم، الهاتف، الرقم المرجعي أو الخدمة..."
+                  className="pr-10 search-input-enhanced"
                 />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted/80 text-muted-foreground transition-colors search-clear-btn">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {search && (
+                  <span className="absolute left-10 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60 tabular-nums search-result-count">{filteredOrders.length}</span>
+                )}
               </div>
               <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
                 <SelectTrigger className="w-36">
