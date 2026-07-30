@@ -60,7 +60,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v7.3-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v7.4-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -271,6 +271,40 @@ function QuickActionsMenu({ order, onStatusChange, onView, onComment }: { order:
   );
 }
 
+
+
+// ===== Orders with Notes Panel =====
+function OrdersNotesPanel({ orders, onSelect }: { orders: GlobalOrder[]; onSelect: (o: GlobalOrder) => void }) {
+  const withNotes = orders.filter(o => o.notes || o.statusNotes).slice(0, 8);
+  if (withNotes.length === 0) return null;
+  return (
+    <div className="notes-panel-widget">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+          <ClipboardList className="h-3.5 w-3.5 text-violet-500" />
+          طلبات بها ملاحظات
+          <span className="text-[9px] font-normal text-muted-foreground">({withNotes.length})</span>
+        </h3>
+      </div>
+      <div className="space-y-1.5">
+        {withNotes.map((order, i) => (
+          <button
+            key={order.id}
+            onClick={() => onSelect(order)}
+            className="notes-panel-item"
+            style={{animationDelay: `${i * 40}ms`}}
+          >
+            <div className="notes-panel-item-header">
+              <span className="notes-panel-ref" dir="ltr">{order.reference || order.id.slice(0,8)}</span>
+              <span className="text-[9px] text-muted-foreground">{order.customer?.name || '—'}</span>
+            </div>
+            <p className="notes-panel-text">{order.statusNotes || order.notes}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ===== Duplicate Order Warning =====
 function DuplicateWarning({ order, allOrders }: { order: GlobalOrder; allOrders: GlobalOrder[] }) {
@@ -1532,6 +1566,9 @@ export default function SuperAdminPage() {
                   {filteredOrders.length}/{safeOrders.length}
                 </span>
               )}
+              {tab === "overview" && pendingCount > 0 && (
+                <span className="tab-pending-dot pulse-dot" title={`${pendingCount} طلب معلق`} />
+              )}
             </button>
           ))}
           </div>
@@ -2055,6 +2092,7 @@ export default function SuperAdminPage() {
 
             {/* Customer Insights Widget */}
             <CustomerInsightsWidget orders={safeOrders} />
+            <OrdersNotesPanel orders={safeOrders} onSelect={(o) => { setSelectedOrder(o); setQuickViewOrder(o); }} />
 
             {/* Weekly Order Heatmap */}
             <div className="rounded-xl border border-border/60 bg-card/80 p-3 svc-dist-container">
@@ -2334,6 +2372,18 @@ export default function SuperAdminPage() {
                   </div>
                 )}
               </div>
+              {/* Quick Stats Bar */}
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <div className="quick-stats-bar">
+                  <span className="quick-stats-item"><span className="quick-stats-dot bg-amber-500" />{safeOrders.filter(o => o.status === 'pending').length} معلق</span>
+                  <span className="quick-stats-item"><span className="quick-stats-dot bg-blue-500" />{safeOrders.filter(o => o.status === 'printing').length} طباعة</span>
+                  <span className="quick-stats-item"><span className="quick-stats-dot bg-emerald-500" />{safeOrders.filter(o => o.status === 'ready').length} جاهز</span>
+                  <span className="quick-stats-item"><span className="quick-stats-dot bg-violet-500" />{safeOrders.filter(o => o.status === 'delivered').length} مُسلّم</span>
+                </div>
+                <div className="flex-1" />
+                <span className="text-[9px] text-muted-foreground/40 tabular-data">{filteredOrders.length} من {safeOrders.length} طلب</span>
+              </div>
+
               {/* View Toggle: Table / Kanban */}
               <div className="view-toggle-group">
                 <button
