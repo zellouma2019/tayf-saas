@@ -37640,3 +37640,480 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* ================================================================
+   CSS v6.3 — Status Mini Progress, Enhanced Tooltips, Table Polish
+   ================================================================ */
+
+/* Order Status Mini Progress Dots */
+.order-status-mini-progress {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+.status-mini-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: oklch(0.7 0.01 260 / 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+.status-mini-dot-active {
+  box-shadow: 0 0 6px currentColor;
+  transform: scale(1.2);
+}
+
+/* Enhanced Tooltip CSS */
+.tooltip-top {
+  position: relative;
+}
+.tooltip-top::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: oklch(0.15 0.02 260);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+ z-index: 50;
+}
+.tooltip-top::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: oklch(0.15 0.02 260);
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 50;
+}
+.tooltip-top:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.tooltip-top:hover::before {
+  opacity: 1;
+}
+
+/* Table Row Priority Highlight */
+.table-row-priority {
+  transition: all 0.2s ease;
+}
+.priority-urgent {
+  background-image: linear-gradient(90deg, oklch(0.6 0.25 25 / 0.04) 0%, transparent 60%) !important;
+  border-right: 2px solid oklch(0.6 0.25 25 / 0.5);
+}
+.priority-medium {
+  background-image: linear-gradient(90deg, oklch(0.7 0.18 85 / 0.03) 0%, transparent 40%) !important;
+}
+.duplicate-warning-row {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    oklch(0.7 0.15 85 / 0.04) 4px,
+    oklch(0.7 0.15 85 / 0.04) 8px
+  ) !important;
+}
+
+/* Row selected state */
+.row-selected {
+  background-color: oklch(0.95 0.02 260 / 0.3) !important;
+  box-shadow: inset 0 0 0 1px oklch(0.6 0.15 260 / 0.2);
+}
+.dark .row-selected {
+  background-color: oklch(0.25 0.03 260 / 0.3) !important;
+}
+
+/* Enhanced table row hover */
+.table-row-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.table-row-hover:hover {
+  box-shadow: 0 1px 8px oklch(0.5 0.05 260 / 0.06);
+  transform: translateX(-1px);
+}
+
+/* Data row subtle hover */
+.data-row-hover:hover {
+  background-color: oklch(0.97 0.005 260);
+}
+.dark .data-row-hover:hover {
+  background-color: oklch(0.22 0.01 260);
+}
+
+/* Order status transition select */
+.order-status-transition {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 4px 24px 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid oklch(0.8 0.01 260 / 0.3);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 8px center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 150px;
+}
+.order-status-transition:hover {
+  border-color: oklch(0.6 0.15 260);
+  box-shadow: 0 0 0 2px oklch(0.6 0.15 260 / 0.1);
+}
+.order-status-transition:focus {
+  outline: none;
+  border-color: oklch(0.55 0.2 260);
+  box-shadow: 0 0 0 3px oklch(0.55 0.2 260 / 0.15);
+}
+
+/* Status dropdown cell */
+.status-dropdown-cell {
+  min-width: 120px;
+}
+
+/* Enhanced Kanban column header */
+.kanban-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-right: 3px solid;
+  font-weight: 600;
+}
+.kanban-col-count {
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: oklch(0.92 0.01 260 / 0.5);
+  font-size: 12px;
+  font-weight: 700;
+  color: oklch(0.4 0.05 260);
+}
+.dark .kanban-col-count {
+  background: oklch(0.25 0.02 260 / 0.5);
+  color: oklch(0.75 0.05 260);
+}
+
+/* Status mini bar */
+.status-mini-bar {
+  height: 3px;
+  border-radius: 3px;
+  background: oklch(0.9 0.01 260 / 0.3);
+  overflow: hidden;
+}
+.status-mini-bar > div {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Quick action float animation */
+@keyframes quickActionFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.quick-action-float {
+  animation: quickActionFloat 3s ease-in-out infinite;
+}
+.quick-action-float:hover {
+  animation-play-state: paused;
+}
+
+/* Press feedback */
+.press-feedback {
+  transition: transform 0.1s ease;
+}
+.press-feedback:active {
+  transform: scale(0.95);
+}
+
+/* Enhanced FAB glow */
+.fab-glow-amber {
+  box-shadow: 0 4px 20px oklch(0.75 0.15 75 / 0.4), 0 0 40px oklch(0.75 0.15 75 / 0.1);
+}
+.fab-glow-rose {
+  box-shadow: 0 4px 20px oklch(0.6 0.2 15 / 0.4), 0 0 40px oklch(0.6 0.2 15 / 0.1);
+}
+
+/* Badge chip enhanced */
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.badge-chip:hover {
+  transform: scale(1.05);
+}
+
+/* Revenue gold text */
+.revenue-gold {
+  background: linear-gradient(135deg, oklch(0.7 0.15 85), oklch(0.65 0.18 60));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+/* Tabular data styling */
+.tabular-data {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Stagger grid entrance */
+.stagger-grid-16 > * {
+  animation: smoothIn 0.4s ease both;
+}
+.stagger-grid-16 > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-grid-16 > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-grid-16 > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-grid-16 > *:nth-child(4) { animation-delay: 180ms; }
+
+/* Glass card v2 enhanced */
+.glass-card-v2 {
+  background: oklch(0.98 0.005 260 / 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(0.85 0.01 260 / 0.4);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dark .glass-card-v2 {
+  background: oklch(0.18 0.015 260 / 0.6);
+  border-color: oklch(0.35 0.02 260 / 0.4);
+}
+
+/* Stat card glow effects */
+.stat-card-glow-emerald:hover {
+  box-shadow: 0 4px 20px oklch(0.7 0.15 160 / 0.15), 0 0 0 1px oklch(0.7 0.15 160 / 0.2);
+}
+.stat-card-glow-amber:hover {
+  box-shadow: 0 4px 20px oklch(0.75 0.15 75 / 0.15), 0 0 0 1px oklch(0.75 0.15 75 / 0.2);
+}
+.stat-card-glow-violet:hover {
+  box-shadow: 0 4px 20px oklch(0.6 0.2 300 / 0.15), 0 0 0 1px oklch(0.6 0.2 300 / 0.2);
+}
+.stat-card-glow-rose:hover {
+  box-shadow: 0 4px 20px oklch(0.6 0.2 15 / 0.15), 0 0 0 1px oklch(0.6 0.2 15 / 0.2);
+}
+
+/* Hover lift levels */
+.hover-lift-1 {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-lift-1:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px oklch(0.5 0.05 260 / 0.08);
+}
+.hover-lift-glow {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-lift-glow:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px oklch(0.5 0.08 260 / 0.12);
+  border-color: oklch(0.6 0.1 260 / 0.3);
+}
+
+/* Overflow marquee */
+.overflow-marquee {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Smooth scroll indicator */
+.smooth-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.6 0.1 260 / 0.3) transparent;
+}
+.smooth-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.smooth-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.smooth-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.6 0.1 260 / 0.3);
+  border-radius: 3px;
+}
+.smooth-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0.15 260 / 0.5);
+}
+
+/* Tooltip fade animation */
+@keyframes tooltipFade {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.tooltip-fade {
+  animation: tooltipFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* New v6.3: Enhanced status badge with glow */
+.status-badge-glow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+.status-badge-glow:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* New v6.3: Animated counter flash */
+@keyframes counterFlash {
+  0% { color: oklch(0.6 0.2 300); transform: scale(1.2); }
+  100% { color: inherit; transform: scale(1); }
+}
+.counter-flash {
+  animation: counterFlash 0.4s ease-out;
+}
+
+/* New v6.3: Notification dot ping */
+@keyframes notifDotPing {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.notif-dot-ping::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: notifDotPing 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* New v6.3: Skeleton loading pulse */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.skeleton-pulse-new {
+  background: linear-gradient(90deg, oklch(0.92 0.01 260), oklch(0.95 0.005 260), oklch(0.92 0.01 260));
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s ease-in-out infinite, shimmer 2s linear infinite;
+  border-radius: 8px;
+}
+
+/* New v6.3: Tag urgent animation */
+.tag-urgent {
+  animation: tagPulse 2s ease-in-out infinite;
+}
+@keyframes tagPulse {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.6 0.2 15 / 0.3); }
+  50% { box-shadow: 0 0 0 4px oklch(0.6 0.2 15 / 0); }
+}
+
+/* New v6.3: Mobile responsive table wrapper */
+@media (max-width: 768px) {
+  .status-dropdown-cell {
+    min-width: 100px;
+  }
+  .order-status-transition {
+    max-width: 120px;
+    font-size: 11px;
+  }
+  .kanban-col-header {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* New v6.3: Focus visible ring for accessibility */
+.focus-ring-accessible:focus-visible {
+  outline: 2px solid oklch(0.6 0.2 260);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* New v6.3: Gradient text for section titles */
+.section-gradient-title {
+  background: linear-gradient(135deg, oklch(0.5 0.15 260), oklch(0.6 0.2 300));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* New v6.3: Card hover border shimmer */
+@keyframes borderShimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.card-shimmer-border {
+  position: relative;
+}
+.card-shimmer-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.6 0.15 260 / 0.4), transparent);
+  background-size: 200% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+ -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.card-shimmer-border:hover::before {
+  opacity: 1;
+  animation: borderShimmer 2s linear infinite;
+}
+
+/* New v6.3: Animated dot connector for timelines */
+.timeline-dot-connector {
+  position: relative;
+}
+.timeline-dot-connector::after {
+  content: "";
+  position: absolute;
+  right: 50%;
+  top: 100%;
+  width: 2px;
+  height: 16px;
+  background: linear-gradient(to bottom, oklch(0.6 0.1 260 / 0.3), transparent);
+}
+
+/* New v6.3: Print-friendly styles */
+@media print {
+  .fab,
+  .fab-actions-container,
+  .quick-action-float {
+    display: none !important;
+  }
+  .table-row-hover:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* End CSS v6.3 */

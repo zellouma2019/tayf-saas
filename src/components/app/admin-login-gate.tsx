@@ -80,7 +80,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     wrongTitle: "كلمة المرور غير صحيحة",
     connectionError: "خطأ في الاتصال",
     protected: "هذا القسم محمي ومخصص للإدارة فقط",
-    version: "الإصدار 5.8 — منصة طيف للطباعة الذكية",
+    version: "الإصدار 6.3 — منصة طيف للطباعة الذكية",
     defaultPwTitle: "⚠️ كلمة المرور الافتراضية لا تزال مستخدمة",
     defaultPwDesc: "يُرجى تغييرها فوراً من الإعدادات ← الأمان",
   } : {

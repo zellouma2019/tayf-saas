@@ -9,6 +9,7 @@ import {
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
+  Printer, Phone, Share2, ArrowRight, Play,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -58,7 +59,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.2-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.3-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -1692,7 +1693,13 @@ export default function SuperAdminPage() {
                               </span>
                             )}
                             {order.customer?.phone && (
-                              <span className="text-[10px] text-muted-foreground" dir="ltr">{order.customer.phone}</span>
+                              <a
+                                href={`tel:${order.customer.phone}`}
+                                className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                                dir="ltr"
+                                onClick={(e) => e.stopPropagation()}
+                                title="اتصال هاتفي"
+                              >{order.customer.phone}</a>
                             )}
                           </div>
                         </TableCell>
@@ -1726,6 +1733,18 @@ export default function SuperAdminPage() {
                               📝 {order.statusNotes}
                             </span>
                           )}
+                          <div className="order-status-mini-progress mt-1">
+                            {["pending", "confirmed", "printing", "ready", "delivered"].map((s, i) => (
+                              <div
+                                key={s}
+                                className={cn(
+                                  "status-mini-dot",
+                                  ["pending", "confirmed", "printing", "ready", "delivered"].indexOf(order.status) >= i && "status-mini-dot-active"
+                                )}
+                                style={{ backgroundColor: ["pending", "confirmed", "printing", "ready", "delivered"].indexOf(order.status) >= i ? (STATUS_META[s as keyof typeof STATUS_META]?.color || "#999") : undefined }}
+                              />
+                            ))}
+                          </div>
                         </TableCell>
                         <TableCell className="font-medium tabular-nums text-sm">
                           <div className="flex items-center gap-1.5">
@@ -1746,27 +1765,51 @@ export default function SuperAdminPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => setSelectedOrder(order)}
-                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                              title="عرض التفاصيل"
+                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors tooltip-top group/btn"
+                              data-tooltip="عرض التفاصيل"
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => setQuickViewOrder(order)}
-                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                              title="عرض سريع"
+                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors tooltip-top"
+                              data-tooltip="عرض سريع"
                             >
                               <Zap className="h-3.5 w-3.5" />
+                            </button>
+                            {order.customer?.phone && (
+                              <a
+                                href={`https://wa.me/${(order.customer.phone || "").replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-md hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tooltip-top"
+                                data-tooltip="واتساب"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              </a>
+                            )}
+                            <button
+                              onClick={() => {
+                                const statusFlow: Record<string, string> = { pending: "confirmed", confirmed: "printing", printing: "ready", ready: "delivered" };
+                                const next = statusFlow[order.status];
+                                if (next) changeOrderStatus(order.id, next);
+                              }}
+                              className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors tooltip-top"
+                              data-tooltip="تقدم ←"
+                              title="نقل للحالة التالية"
+                            >
+                              <Play className="h-3.5 w-3.5" />
                             </button>
                             <a
                               href={`/s/${order.shopSlug || "default"}?admin=1`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                              title="فتح في لوحة المتجر"
+                              className="p-1.5 rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors tooltip-top"
+                              data-tooltip="لوحة المتجر"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <ArrowUpRight className="h-3.5 w-3.5" />
