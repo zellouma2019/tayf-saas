@@ -47,6 +47,7 @@ import dynamic from "next/dynamic";
 import { LoginGate } from "@/components/app/admin-login-gate";
 import { AdminErrorBoundary } from "@/components/app/error-boundary";
 import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
+import { AdminActivityPanel } from "@/components/app/admin-activity-panel";
 
 // Lazy-loaded tab components — only one tab is visible at a time
 const ShopManageCard = dynamic(() => import("@/components/app/admin-shop-card").then(m => ({ default: m.ShopManageCard })), { ssr: false, loading: () => <div className="h-48 rounded-xl border border-border bg-card animate-pulse" /> });
@@ -56,7 +57,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.6-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v5.7-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -914,36 +915,42 @@ export default function SuperAdminPage() {
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-border bg-card/50">
-        <div className="px-4 flex items-center gap-1 overflow-x-auto">
+      <div className="border-b border-border bg-card/30 px-4 py-2">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
+          <div className="pill-tabs">
           {["overview", "shops", "orders", "settings", "security", "platform"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
-                activeTab === tab
-                  ? "bg-background text-foreground border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                "pill-tab relative",
+                activeTab === tab && "active",
+                tab === "orders" && safeOrders.length > 0 && "flex items-center gap-1.5"
               )}
             >
               {tabLabels[tab]}
               {tab === "orders" && safeOrders.length > 0 && (
-                <span className="absolute -top-0.5 left-1 min-w-[24px] h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
+                <span className={cn(
+                  "min-w-[20px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1",
+                  activeTab === tab
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                )}>
                   {filteredOrders.length}/{safeOrders.length}
                 </span>
               )}
             </button>
           ))}
+          </div>
           <div className="flex-1" />
           {lastUpdated && (
-            <span className="text-[10px] text-muted-foreground py-2.5 whitespace-nowrap">
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
               آخر تحديث: {lastUpdated}
             </span>
           )}
           <button
             onClick={() => setShowShortcuts(true)}
-            className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground py-2.5 px-1.5 rounded transition-colors"
+            className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground px-1.5 rounded-md transition-colors hover:bg-muted/50"
             title="اختصارات لوحة المفاتيح (?)"
           >
             <Keyboard className="h-3 w-3" />
@@ -1248,6 +1255,9 @@ export default function SuperAdminPage() {
               </div>
             </div>
 
+            {/* Activity Panel + Filters Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+            <div className="space-y-4">
             {/* Filters + count + export */}
             <Card className="card-hover-glow">
               <CardContent className="p-3">
@@ -1598,6 +1608,12 @@ export default function SuperAdminPage() {
                 </Table>
               </div>
             </div>
+            </div>
+            {/* Activity Panel — side column on large screens */}
+            <div className="hidden lg:block">
+              <AdminActivityPanel orders={safeOrders} className="sticky top-[80px]" />
+            </div>
+            </div>
           </div>
         )}
 
@@ -1635,7 +1651,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50 tabular-data">
-                v5.6
+                v5.7
               </span>
             )}
             {refreshing ? (
