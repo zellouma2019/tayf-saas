@@ -10407,3 +10407,88 @@ Task: Print Queue, Sparklines, Trend Cards, Status History, Quick Stats, CSS v7.
 4. تصدير PDF للتقرير المالي
 5. إشعارات فورية (WebSocket/SSE)
 6. تحسين تجربة الموبايل (تحميل أسرع)
+---
+Task ID: R76
+Agent: Main Agent (Cron Round 76)
+Task: Customer Insights, Quick Actions Menu, Service Tags, CSS v7.2, v7.3
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 5ca5a64)
+- ✅ إصدار v7.3
+- ⚠️ Vercel 404 مستمر
+
+## الميزات الجديدة
+
+### 1. ويدجت أفضل الزبائن (Customer Insights Widget)
+- يعرض أعلى 5 زبائن حسب الإنفاق الإجمالي
+- ميداليات ذهبية/فضية/برونزية للمراكز الثلاثة الأولى
+- شريط تقدم متدرج (ذهبي→أحمر) لكل زبون
+- عرض: الاسم + المبلغ + عدد الطلبات
+- حركة دخول انزلاقية متتابعة
+
+### 2. قائمة إجراءات سريعة (Quick Actions Menu)
+- زر MoreHorizontal (⋯) في كل صف طلب بالجدول
+- قائمة منسدلة مع حركات دخول متتابعة:
+  - عرض التفاصيل (زر أزرق)
+  - تقدم للحالة التالية (أخضر، يظهر اسم الحالة)
+  - إضافة ملاحظة (بنفسجي)
+  - واتساب (أخضر، يظهر فقط إذا كان هناك رقم)
+  - نسخ الرقم المرجعي (رمادي)
+- إغلاق تلقائي عند النقر خارج القائمة
+
+### 3. وسوم نوع الخدمة (Service Type Tags)
+- اسم الخدمة في الجدول أصبح وسماً ملوناً أزرق
+- يتضمن إيموجي الخدمة + اسمها
+- تأثير hover مع توهج وظل
+- قص النص الزائد مع marquee
+
+## تحسينات التصميم (CSS v7.2)
+**الملف:** `src/app/globals.css` — ~279 سطر جديد (إجمالي ~41,395 سطر)
+
+### 20+ مجموعة أصناف CSS جديدة:
+1. `.customer-insights-widget` — حاوية ويدجت الزبائن
+2. `.ci-customer-row` — صف زبون مع hover
+3. `.ci-rank` — ميدالية الترتيب
+4. `.ci-progress-bg/.fill` — شريط تقدم متدرج ذهبي→أحمر
+5. `.quick-actions-trigger` — زر القائمة
+6. `.quick-actions-dropdown` — قائمة منسدلة مع dropIn animation
+7. `.quick-actions-item` — عنصر القائمة
+8. `.svc-type-tag` — وسوم الخدمات
+9. `.row-hover-glow-v2` — توهج صف محسّن
+10. `.glass-panel-v4` — زجاجية v4
+11. `.border-gradient-shift` — حدود متدرجة متحركة
+12. `.shimmer-v4` — لمعان v4
+13. `.hover-scale-subtle` — تكبير دقيق عند التمرير
+14. `.card-shine` — توهج ضوئي عند التمرير
+15. `.glow-dot` — نقطة متوهجة
+16. `.animated-underline` — خط سفلي متحرك
+17. `.pulse-soft` — نبض ناعم
+18. `.breathe-border` — حدود تتنفس
+19. `.tag-chip-*.hover` — توهج وسوم عند التمرير
+20. Responsive + reduced-motion
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | أفضل الزبائن + قائمة إجراءات + وسوم + v7.3 (3,554 سطر) |
+| `src/app/globals.css` | +279 سطر CSS v7.2 (41,395 سطر) |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.3 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.3 |
+
+## الإحصائيات
+- صفحة رئيسية: 3,554 سطر (+106 من R75)
+- CSS: 41,395 سطر (+279 من R75)
+- CSS versions: v6.1 → v7.2 (12 إصدارات CSS)
+- الميزات المضافة هذا الجول: 3
+- CSS classes جديدة هذا الجول: 20+
+
+## Unresolved Issues
+1. **Vercel 404** — يحتاج VERCEL_TOKEN
+
+## Priority Recommendations for R77
+1. إصلاح Vercel (VERCEL_TOKEN)
+2. سحب وإفلات كانبان (dnd-kit)
+3. لوحة تحكم الزبون (/customer)
+4. تصدير PDF
+5. إشعارات فورية (WebSocket)
