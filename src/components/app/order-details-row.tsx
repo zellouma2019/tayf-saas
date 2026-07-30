@@ -69,9 +69,26 @@ interface OrderDetailsRowProps {
   onSaveNote?: (note: string) => void;
 }
 
+/// حساب الوقت المنقضي منذ تاريخ معين
+function getTimeAgo(dateStr: string): { text: string; urgency: 'normal' | 'warning' | 'critical' } {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHrs / 24);
+
+  if (diffMins < 1) return { text: 'الآن', urgency: 'normal' };
+  if (diffMins < 60) return { text: `${diffMins}د`, urgency: diffMins > 30 ? 'warning' : 'normal' };
+  if (diffHrs < 24) return { text: `${diffHrs}س`, urgency: diffHrs > 6 ? 'warning' : 'normal' };
+  if (diffDays < 7) return { text: `${diffDays}ي`, urgency: diffDays > 3 ? 'critical' : 'warning' };
+  return { text: `${Math.floor(diffDays / 7)}أسبوع`, urgency: 'critical' };
+}
+
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[order.status];
+  const timeAgo = getTimeAgo(order.createdAt);
 
   const serviceEmoji: Record<string, string> = {
     document: "🖨️",
@@ -545,6 +562,15 @@ function TableRowInner({
       <TableCell className="font-mono text-xs whitespace-nowrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           {order.reference}
+          <span className={cn(
+            "text-[10px] px-1.5 py-0.5 rounded-md font-sans tabular-nums",
+            timeAgo.urgency === 'normal' && "text-muted-foreground bg-secondary/50",
+            timeAgo.urgency === 'warning' && "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30",
+            timeAgo.urgency === 'critical' && "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30",
+            order.status === 'pending' && timeAgo.urgency !== 'normal' && "health-pulse"
+          )} title={formatDateTimeAr(order.createdAt)}>
+            {timeAgo.text}
+          </span>
           {order._possibleDuplicate && (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/30" title="طلب محتمل مكرر">
               ⚠️

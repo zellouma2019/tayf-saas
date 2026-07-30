@@ -158,7 +158,7 @@ export async function GET() {
     const elapsed = Date.now() - startTime;
     console.error(`[global-stats] error after ${elapsed}ms:`, e);
     return NextResponse.json(
-      { totalOrders: 0, totalRevenue: 0, todayOrders: 0, shopCount: 0, activeShopCount: 0, statusCounts: {}, shopStats: [], recentOrders: [] },
+      { error: true, message: "DB query failed", totalOrders: 0, totalRevenue: 0, todayOrders: 0, shopCount: 0, activeShopCount: 0, statusCounts: {}, shopStats: [], recentOrders: [] },
       { status: 500 }
     );
   }

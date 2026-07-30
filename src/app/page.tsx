@@ -129,8 +129,8 @@ export default function SuperAdminPage() {
     }
   }, []);
 
-  // Load all data after authentication
-  const loadAll = useCallback(async (showLoading = true) => {
+  // Load all data after authentication (with auto-retry)
+  const loadAll = useCallback(async (showLoading = true, retryCount = 0) => {
     if (showLoading) setLoading(true);
     else setRefreshing(true);
     setLoadError("");
@@ -140,17 +140,21 @@ export default function SuperAdminPage() {
         fetch(`/api/admin/global-stats${cacheBust}`),
         fetch(`/api/orders${cacheBust}`),
       ]);
-      // Safe JSON parsing - handle non-JSON responses gracefully
-      async function safeJson(res: Response) {
+      // Safe JSON parsing - handle non-JSON responses and HTTP errors gracefully
+      async function safeJson(res: Response, label: string) {
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`${label} API error (${res.status}): ${text.slice(0, 200) || 'Unknown error'}`);
+        }
         const text = await res.text();
         try {
           return JSON.parse(text);
         } catch {
-          throw new Error(`API returned non-JSON response (${res.status})`);
+          throw new Error(`${label} returned non-JSON response (${res.status})`);
         }
       }
-      const statsData = await safeJson(statsRes);
-      const ordersData = await safeJson(ordersRes);
+      const statsData = await safeJson(statsRes, 'global-stats');
+      const ordersData = await safeJson(ordersRes, 'orders');
 
       // Primary: use shopStats + recentOrders from global-stats API
       if (statsData.shopStats && Array.isArray(statsData.shopStats) && statsData.shopStats.length > 0) {
@@ -181,10 +185,20 @@ export default function SuperAdminPage() {
       }
       setLastUpdated(new Date().toLocaleTimeString("ar-SA"));
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "فشل في تحميل البيانات");
+      const errMsg = err instanceof Error ? err.message : "فشل في تحميل البيانات";
+      // Auto-retry up to 3 times with exponential backoff
+      if (retryCount < 3) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        console.log(`[loadAll] Retry ${retryCount + 1}/3 in ${delay}ms — ${errMsg}`);
+        setTimeout(() => loadAll(showLoading, retryCount + 1), delay);
+      } else {
+        setLoadError(errMsg);
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (retryCount === 0 || retryCount >= 3) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, []);
 
@@ -251,6 +265,29 @@ export default function SuperAdminPage() {
     }, 30_000);
     return () => clearInterval(interval);
   }, [authenticated, loadAll]);
+
+  // Play notification sound when new pending orders arrive
+  const prevPendingRef = useRef(0);
+  useEffect(() => {
+    const currentPending = allOrders.filter(o => o.status === 'pending').length;
+    if (prevPendingRef.current > 0 && currentPending > prevPendingRef.current) {
+      // New pending order detected — play sound
+      try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.5);
+      } catch {}
+    }
+    prevPendingRef.current = currentPending;
+  }, [allOrders.length]);
 
   // Change order status inline
   const changeOrderStatus = useCallback(async (orderId: string, newStatus: string) => {
@@ -690,12 +727,22 @@ export default function SuperAdminPage() {
                 </span>
               </button>
             )}
-            {/* Data health indicator */}
+            {/* Data health indicator — enhanced visibility */}
             {dataHealth.status !== 'healthy' && (
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground admin-tooltip" data-tip={dataHealth.message}>
-                <span className={cn("health-dot", dataHealth.status)} />
-                {dataHealth.status === 'warning' && <AlertTriangle className="h-3 w-3 text-amber-500" />}
-                {dataHealth.status === 'error' && <Info className="h-3 w-3 text-red-500" />}
+              <div className={cn(
+                "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all",
+                dataHealth.status === 'warning' && "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+                dataHealth.status === 'error' && "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 health-pulse"
+              )}>
+                <span className={cn("w-2 h-2 rounded-full", dataHealth.status === 'warning' && "bg-amber-500", dataHealth.status === 'error' && "bg-red-500")} />
+                <span className="max-w-[200px] truncate">{dataHealth.message}</span>
+                <button
+                  onClick={() => loadAll(false)}
+                  className="mr-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                  title="إعادة المحاولة"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </button>
               </div>
             )}
             <ThemeToggle />
@@ -767,6 +814,55 @@ export default function SuperAdminPage() {
           )}
         </div>
       </div>
+
+      {/* Quick stats ribbon — visible on all tabs */}
+      {!isInitialLoading && globalStats && (
+        <div className="px-4 py-2 border-b border-border/50 bg-gradient-to-l from-primary/[0.02] to-transparent overflow-x-auto">
+          <div className="flex items-center gap-4 text-xs min-w-max">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 breathe-glow" />
+              <span className="text-muted-foreground">{globalStats.totalOrders}</span>
+              <span className="text-muted-foreground/60">طلب</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <DollarSign className="h-3 w-3 text-amber-500" />
+              <span className="text-muted-foreground font-medium">{formatNumber(globalStats.totalRevenue)}</span>
+              <span className="text-muted-foreground/60">د.ج</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <Store className="h-3 w-3 text-violet-500" />
+              <span className="text-muted-foreground">{globalStats.shopCount}</span>
+              <span className="text-muted-foreground/60">متجر</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-amber-600 dark:text-amber-400 font-medium">{globalStats.statusCounts?.pending || 0}</span>
+              <span className="text-muted-foreground/60">معلّق</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-blue-600 dark:text-blue-400 font-medium">{globalStats.statusCounts?.printing || 0}</span>
+              <span className="text-muted-foreground/60">طباعة</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-teal-500" />
+              <span className="text-teal-600 dark:text-teal-400 font-medium">{globalStats.statusCounts?.ready || 0}</span>
+              <span className="text-muted-foreground/60">جاهز</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-green-600 dark:text-green-400 font-medium">{globalStats.statusCounts?.delivered || 0}</span>
+              <span className="text-muted-foreground/60">تم التسليم</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="flex-1 p-4 space-y-4 tab-content-enter" key={activeTab}>

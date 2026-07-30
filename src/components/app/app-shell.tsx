@@ -113,15 +113,15 @@ export function AppShell() {
       email: 'بريد إلكتروني',
       copyLink: 'نسخ رابط المتجر',
       linkCopied: 'تم نسخ رابط المتجر!',
-      workHours: '{t.workHours}',
-      closedFri: '{t.closedFri}',
-      footerRights: '{t.footerRights}',
-      poweredBy: '{t.poweredBy}',
-      contactViaWhatsapp: '{t.contactViaWhatsapp}',
+      workHours: 'السبت - الخميس: 8:00 ص — 8:00 م',
+      closedFri: 'الجمعة: مغلق',
+      footerRights: 'جميع الحقوق محفوظة',
+      poweredBy: 'بدعم من طيف',
+      contactViaWhatsapp: 'تواصل عبر واتساب',
       backToTop: 'العودة للأعلى',
       showDetails: 'عرض معلومات المطبعة',
       hideDetails: 'إخفاء التفاصيل',
-      platformDesc: '{t.platformDesc}',
+      platformDesc: 'منصة احترافية لإنشاء وتتبع طلبات الطباعة بسهولة وسرعة.',
       printEasily: 'اطبع بسهولة',
       priceCalc: 'حاسبة الأسعار',
     },
@@ -859,11 +859,11 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {[{e:"🖨️",n:"طباعة مستند"},{e:"📄",n:"نسخ مستندات"},{e:"🖼️",n:"طباعة صور"},{e:"📚",n:"تجليد"},{e:"🪪",n:"بطاقات"},{e:"📜",n:"ملصقات"}].map((s) => (
-                          <div key={s.n} className="flex items-center gap-1.5 text-xs text-neutral-400 px-2 py-1.5 rounded-lg hover:bg-neutral-800/60 hover:text-primary hover-lift press-scale">
-                            <span className="shrink-0">{s.e}</span>
-                            <span className="truncate">{s.n}</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[{e:"🖨️",n:"طباعة مستند",c:"from-violet-500/10 to-violet-500/5 hover:from-violet-500/20"},{e:"📄",n:"نسخ مستندات",c:"from-blue-500/10 to-blue-500/5 hover:from-blue-500/20"},{e:"🖼️",n:"طباعة صور",c:"from-pink-500/10 to-pink-500/5 hover:from-pink-500/20"},{e:"📚",n:"تجليد",c:"from-amber-500/10 to-amber-500/5 hover:from-amber-500/20"},{e:"🪪",n:"بطاقات",c:"from-emerald-500/10 to-emerald-500/5 hover:from-emerald-500/20"},{e:"📜",n:"ملصقات",c:"from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20"}].map((s,i) => (
+                          <div key={s.n} className={`flex items-center gap-2 text-xs text-neutral-300 px-2.5 py-2 rounded-lg bg-gradient-to-br ${s.c} border border-white/5 hover:border-white/10 hover-lift press-scale transition-all duration-200`} style={{animationDelay: `${i * 50}ms`}}>
+                            <span className="text-sm shrink-0">{s.e}</span>
+                            <span className="truncate font-medium">{s.n}</span>
                           </div>
                         ))}
                       </div>
@@ -954,11 +954,11 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-neutral-800 dark:border-neutral-700/50 text-center text-xs text-neutral-500">
-                  <p className="text-neutral-400">© {new Date().getFullYear()} {displayBusinessName} — {t.footerRights}</p>
+                  <p className="text-neutral-400 font-medium">© {new Date().getFullYear()} {displayBusinessName} — {t.footerRights}</p>
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <a
                       href="/"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-l from-gold-500/10 to-primary/10 border border-gold-500/20 dark:border-gold-500/10 text-gold-400 hover:text-gold-300 hover:border-gold-500/30 transition-all hover:shadow-sm hover:shadow-gold-500/10 dark:hover:shadow-gold-500/5 font-medium"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-l from-gold-500/10 to-primary/10 border border-gold-500/20 dark:border-gold-500/10 text-gold-400 hover:text-gold-300 hover:border-gold-500/30 transition-all hover:shadow-sm hover:shadow-gold-500/10 dark:hover:shadow-gold-500/5 font-medium hover-lift press-scale"
                     >
                       {platformLogoUrl ? (<img src={platformLogoUrl} alt="طيف" className="w-4 h-4 inline dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" />)}{platformLogoDarkUrl || platformLogoUrl ? (<img src={platformLogoDarkUrl || platformLogoUrl} alt="طيف" className="w-4 h-4 inline hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" />)}
                       <span>{t.poweredBy}</span>
@@ -1007,7 +1007,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
           target="_blank"
           rel="noopener noreferrer"
           className="wa-float-pulse fixed bottom-40 right-4 z-30 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:shadow-xl flex items-center justify-center group"
-          title="{t.contactViaWhatsapp}"
+          title={t.contactViaWhatsapp}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 1.5, type: "spring", stiffness: 260, damping: 20 }}
