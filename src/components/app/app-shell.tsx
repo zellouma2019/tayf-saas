@@ -368,7 +368,7 @@ export function AppShell() {
 
   const t = tx[lang];
 
-  const navItems: { key: View; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }>; desktopOnly?: boolean }[] = [
+  const navItems: { key: View; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; desktopOnly?: boolean }[] = [
     { key: "new", label: t.newOrder, shortLabel: t.newOrderShort, icon: Plus },
     { key: "repeat", label: t.reorder, shortLabel: t.reorderShort, icon: RotateCcw },
     ...(isOrderTrackingEnabled ? [{ key: "track" as View, label: t.track, shortLabel: t.trackShort, icon: Search }] : []),
@@ -462,9 +462,7 @@ export function AppShell() {
                   alt={displayBusinessName}
                   className={`w-11 h-11 md:w-12 md:h-12 ${theme.logoStyle} object-cover ring-2 ring-offset-2 transition-all duration-300 group-hover:scale-105`}
                   style={{
-                    // @ts-expect-error -- ring color via CSS var
                     "--tw-ring-color": theme.accent + "40",
-                    // @ts-expect-error -- offset color
                     "--tw-ring-offset-color": theme.header.bg,
                   }}
                 />
@@ -473,9 +471,7 @@ export function AppShell() {
                   className={`w-11 h-11 md:w-12 md:h-12 ${theme.logoStyle} flex items-center justify-center ring-2 ring-offset-2 transition-all duration-300 group-hover:scale-105`}
                   style={{
                     backgroundColor: theme.accent + "15",
-                    // @ts-expect-error -- ring color via CSS var
                     "--tw-ring-color": theme.accent + "40",
-                    // @ts-expect-error -- offset color
                     "--tw-ring-offset-color": theme.header.bg,
                   }}
                 >
@@ -490,7 +486,6 @@ export function AppShell() {
                 className="absolute -bottom-0.5 -left-0.5 w-2.5 h-2.5 rounded-full ring-2"
                 style={{
                   backgroundColor: theme.accent,
-                  // @ts-expect-error -- ring color
                   "--tw-ring-color": theme.header.bg,
                 }}
               />

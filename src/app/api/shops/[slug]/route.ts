@@ -125,7 +125,7 @@ export async function PUT(
     if (!shop) {
       return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
     }
-    if (!body.adminPin || shop.adminPin !== String(body.adminPin)) {
+    if (!body.adminPin || String(shop.adminPin) !== String(body.adminPin)) {
       return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 403 });
     }
 
@@ -200,7 +200,7 @@ export async function DELETE(
       [slug]
     );
     const shop = rows[0];
-    if (!shop || shop.adminPin !== String(adminPin)) {
+    if (!shop || String(shop.adminPin) !== String(adminPin)) {
       return NextResponse.json({ error: "كلمة المرور غير صحيحة" }, { status: 403 });
     }
 

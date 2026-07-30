@@ -46,7 +46,7 @@ export async function PUT(
     }
 
     // التحقق من كلمة المرور الحالية
-    if (!currentPin || shop.adminPin !== String(currentPin)) {
+    if (!currentPin || String(shop.adminPin) !== String(currentPin)) {
       return NextResponse.json({ error: "كلمة المرور الحالية غير صحيحة" }, { status: 401 });
     }
 

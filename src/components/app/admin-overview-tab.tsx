@@ -75,6 +75,7 @@ function SparklineMini({ values, color, height = 24 }: { values: number[]; color
 
 // ===== Weekly Revenue Mini Bar Chart =====
 function WeeklyRevenueChart({ stats }: { stats: GlobalStats | null }) {
+  if (!stats) return null;
   const recentOrders = stats.recentOrders || [];
   const today = new Date();
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -133,6 +134,7 @@ function WeeklyRevenueChart({ stats }: { stats: GlobalStats | null }) {
 
 // ===== Peak Hours Chart =====
 function PeakHoursChart({ stats }: { stats: GlobalStats | null }) {
+  if (!stats) return null;
   const recentOrders = stats.recentOrders || [];
   const hourlyBuckets = Array.from({ length: 24 }, (_, h) => ({
     hour: h,
@@ -236,6 +238,7 @@ function RevenueMetricCard({ icon: Icon, label, value, change, bgColor, textColo
 
 // ===== بطاقة إحصائيات الإيرادات مع مخطط شريطي صغير =====
 function RevenueAnalyticsWidget({ stats }: { stats: GlobalStats | null }) {
+  if (!stats) return null;
   const recentOrders = stats.recentOrders || [];
   const today = new Date();
 
@@ -861,7 +864,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </CardHeader>
           <CardContent className="p-0">
             <div className="px-4 py-2">
-              <ActivityFeed orders={safeStats.recentOrders || []} />
+              <ActivityFeed orders={(safeStats.recentOrders || []) as any[]} />
             </div>
           </CardContent>
         </Card>
@@ -919,7 +922,8 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
 // ===== مخطط دائري =====
 function PieChartCard({ stats }: { stats: GlobalStats | null }) {
-  const total = (stats?.totalOrders) ?? 0;
+  if (!stats) return null;
+  const total = stats.totalOrders ?? 0;
   if (total === 0) {
     return (
       <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
@@ -980,6 +984,7 @@ function PieChartCard({ stats }: { stats: GlobalStats | null }) {
 
 // ===== مخطط أعمدة =====
 function RevenueBarChart({ stats }: { stats: GlobalStats | null }) {
+  if (!stats) return null;
   const shops = stats.shopStats ?? [];
   if (shops.length === 0) {
     return (
@@ -1028,6 +1033,7 @@ function RevenueBarChart({ stats }: { stats: GlobalStats | null }) {
 
 // ===== أشهر الخدمات المطلوبة =====
 function ServicePopularityWidget({ stats }: { stats: GlobalStats | null }) {
+  if (!stats) return null;
   const recentOrders = stats.recentOrders || [];
   const serviceMap = new Map<string, { name: string; count: number; revenue: number }>();
 

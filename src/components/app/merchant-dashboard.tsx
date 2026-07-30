@@ -332,7 +332,7 @@ function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const q = query.toLowerCase().trim();
-      const customerMap = new Map<string, { name: string; phone: string; count: number }>();
+      const customerMap = new Map<string, { name: string; phone: string; orderCount: number }>();
       orders.forEach((o) => {
         const phone = o.customer?.phone || "";
         const name = o.customer?.name || "";
@@ -340,9 +340,9 @@ function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
           const key = phone || name;
           const existing = customerMap.get(key);
           if (existing) {
-            existing.count += 1;
+            existing.orderCount += 1;
           } else {
-            customerMap.set(key, { name, phone, count: 1 });
+            customerMap.set(key, { name, phone, orderCount: 1 });
           }
         }
       });
@@ -1531,7 +1531,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
               {/* التحليلات */}
               <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden chart-fade-in">
-                <AdminAnalytics stats={stats} orders={orders} />
+                <AdminAnalytics stats={stats} />
               </div>
             </motion.div>
           )}
@@ -2173,14 +2173,14 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             {(() => {
               const customerCounts = new Map<string, { name: string; orders: number; total: number; firstDate: string }>();
               rawOrders.forEach(o => {
-                const key = o.customerPhone || o.customerName || "unknown";
+                const key = o.customer?.phone || o.customer?.name || "unknown";
                 const existing = customerCounts.get(key);
                 if (existing) {
                   existing.orders += 1;
                   existing.total += o.total || 0;
                 } else {
                   customerCounts.set(key, {
-                    name: o.customerName || "زبون",
+                    name: o.customer?.name || "زبون",
                     orders: 1,
                     total: o.total || 0,
                     firstDate: o.createdAt || new Date().toISOString(),
@@ -2354,7 +2354,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       mode="single"
                       selected={reportFrom}
                       onSelect={(d) => d && setReportFrom(d)}
-                      initialFocus
                     />
                   </PopoverContent>
                 </Popover>
@@ -2373,7 +2372,6 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       mode="single"
                       selected={reportTo}
                       onSelect={(d) => d && setReportTo(d)}
-                      initialFocus
                     />
                   </PopoverContent>
                 </Popover>

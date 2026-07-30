@@ -34,7 +34,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  STATUS_META, STATUS_FLOW, formatDA, formatDateTimeAr,
+  STATUS_META, STATUS_FLOW, formatDateAr, formatDateTimeAr,
 } from "@/lib/print-config";
 import { cn } from "@/lib/utils";
 import type { GlobalStats, GlobalOrder, ShopStat } from "@/lib/admin-types";
@@ -477,7 +477,7 @@ function CustomerQuickProfile({ order, allOrders, onClose }: {
             )} />
             <span className="text-[10px] truncate flex-1">{o.serviceName || o.serviceType}</span>
             <span className="text-[10px] font-mono tabular-nums revenue-gold">{formatNumber(o.total)}</span>
-            <span className="text-[9px] text-muted-foreground">{formatDA(o.createdAt)}</span>
+            <span className="text-[9px] text-muted-foreground">{formatDateAr(o.createdAt)}</span>
           </div>
         ))}
       </div>
@@ -1775,7 +1775,7 @@ export default function SuperAdminPage() {
             onRefresh={() => loadAll(false)}
             onExport={() => {
               const csv = filteredOrders.map(o =>
-                `${o.customer?.name || ""},${o.serviceName || o.serviceType || ""},${o.shopName || ""},${STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status},${o.total || 0},${formatDA(o.createdAt)}`
+                `${o.customer?.name || ""},${o.serviceName || o.serviceType || ""},${o.shopName || ""},${STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status},${o.total || 0},${formatDateAr(o.createdAt)}`
               ).join("\n");
               const header = "الزبون,الخدمة,المتجر,الحالة,المبلغ,التاريخ";
               const blob = new Blob(["\ufeff" + header + "\n" + csv], { type: "text/csv;charset=utf-8" });
@@ -2437,7 +2437,7 @@ export default function SuperAdminPage() {
                     const shop = o.shopName || o.shopSlug || "";
                     const status = STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status;
                     const total = o.total || 0;
-                    const date = formatDA(o.createdAt);
+                    const date = formatDateAr(o.createdAt);
                     const time = new Date(o.createdAt).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" });
                     const isDupe = duplicateOrderIds.has(o.id) ? "نعم" : "لا";
                     return `"${ref}","${name}","${phone}","${service}","${shop}","${status}",${total},"${date}","${time}","${isDupe}"`;
@@ -2691,7 +2691,7 @@ export default function SuperAdminPage() {
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           <div className="flex flex-col gap-0.5">
-                            <span>{formatDA(order.createdAt)}</span>
+                            <span>{formatDateAr(order.createdAt)}</span>
                             <span className="text-[9px] text-muted-foreground/50" dir="ltr">
                               {new Date(order.createdAt).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" })}
                             </span>
@@ -2906,7 +2906,7 @@ export default function SuperAdminPage() {
                       {/* Reference */}
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-mono text-muted-foreground hover-underline-animated">#{order.reference || order.id.substring(0, 8)}</span>
-                        <span className="text-[10px] text-muted-foreground/40" dir="ltr">{formatDA(order.createdAt)}</span>
+                        <span className="text-[10px] text-muted-foreground/40" dir="ltr">{formatDateAr(order.createdAt)}</span>
                       </div>
 
                       {/* Customer */}
@@ -3172,11 +3172,11 @@ export default function SuperAdminPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الزبون</p>
-                    <p className="font-medium mt-0.5">{selectedOrder.customer?.name || selectedOrder.customerName || "—"}</p>
+                    <p className="font-medium mt-0.5">{selectedOrder.customer?.name || "—"}</p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الهاتف</p>
-                    <p className="font-medium mt-0.5" dir="ltr">{selectedOrder.customer?.phone || selectedOrder.customerPhone || "—"}</p>
+                    <p className="font-medium mt-0.5" dir="ltr">{selectedOrder.customer?.phone || "—"}</p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">الخدمة</p>
@@ -3188,7 +3188,7 @@ export default function SuperAdminPage() {
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">تاريخ الإنشاء</p>
-                    <p className="font-medium mt-0.5">{formatDA(selectedOrder.createdAt)}</p>
+                    <p className="font-medium mt-0.5">{formatDateAr(selectedOrder.createdAt)}</p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3 info-cell">
                     <p className="text-muted-foreground text-xs">معرف الطلب</p>
@@ -3196,10 +3196,10 @@ export default function SuperAdminPage() {
                   </div>
                 </div>
               </div>
-              {selectedOrder.notes && (
+              {(selectedOrder as any).notes && (
                 <div className="mt-3 p-3 rounded-lg bg-muted">
                   <p className="text-muted-foreground text-xs mb-1">ملاحظات</p>
-                  <p className="text-sm">{selectedOrder.notes}</p>
+                  <p className="text-sm">{(selectedOrder as any).notes}</p>
                 </div>
               )}
               <div className="mt-4 flex gap-2">
@@ -3298,7 +3298,7 @@ export default function SuperAdminPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">التاريخ</span>
-                  <span className="text-xs">{formatDA(quickViewOrder.createdAt)}</span>
+                  <span className="text-xs">{formatDateAr(quickViewOrder.createdAt)}</span>
                 </div>
               </div>
               <div className="mt-3 flex gap-2">

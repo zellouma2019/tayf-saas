@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { PrintOrderLite } from "@/lib/order-types";
 import type { CreatedOrder } from "@/components/app/app-shell";
 
-type View = "new" | "repeat" | "track" | "admin";
+type View = "new" | "repeat" | "track" | "history" | "admin";
 
 interface AppState {
   // التنقل

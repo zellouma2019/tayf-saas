@@ -121,7 +121,7 @@ export function PriceEstimator({
 
   // السعر المعروض مع تأثير العداد
   const [displayPrice, setDisplayPrice] = useState(0);
-  const animRef = useRef<ReturnType<typeof requestAnimationFrame>>();
+  const animRef = useRef<ReturnType<typeof requestAnimationFrame>>(undefined);
 
   // حساب السعر
   const calculatePrice = useCallback(() => {
@@ -178,7 +178,7 @@ export function PriceEstimator({
   return (
     <Card className="w-full overflow-hidden border-border shadow-xl">
       {/* Gradient header */}
-      <div className="relative bg-gradient-to-l from-violet-600 via-indigo-600 to-purple-700 px-5 py-4">
+      <div className="relative bg-primary px-5 py-4">
         <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-xl" />
         <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/10 rounded-full blur-lg" />
         <div className="relative flex items-center justify-between">
@@ -359,7 +359,7 @@ export function PriceEstimator({
         </div>
 
         {/* عرض السعر */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-purple-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 border border-primary/10 p-4">
+        <div className="relative overflow-hidden rounded-xl bg-primary/5 border border-primary/10 p-4">
           <div className="absolute -top-4 -left-4 w-16 h-16 bg-primary/5 rounded-full blur-xl" />
           <div className="relative text-center">
             <p className="text-[11px] text-muted-foreground mb-1">السعر التقديري</p>
