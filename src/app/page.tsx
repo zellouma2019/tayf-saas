@@ -8,7 +8,7 @@ import {
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
   FileText, Check, Square, X, CheckSquare, MessageCircle,
-  LayoutGrid, ArrowUpDown,
+  LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.1-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.2-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -136,6 +136,7 @@ export default function SuperAdminPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [showPriorityFilter, setShowPriorityFilter] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -148,6 +149,10 @@ export default function SuperAdminPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   // View mode: table or kanban
   const [ordersView, setOrdersView] = useState<"table" | "kanban">("table");
+  // Priority filter
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "medium" | "normal">("all");
+  // Enhanced FAB
+  const [fabOpen, setFabOpen] = useState(false);
   // Data health tracking
   const [dataHealth, setDataHealth] = useState<{ status: 'healthy' | 'warning' | 'error'; message: string }>({ status: 'healthy', message: '' });
   // Platform settings
@@ -546,6 +551,13 @@ export default function SuperAdminPage() {
     }
     // Date range filter
     if (!isInDateRange(o.createdAt)) return false;
+    // Priority filter
+    if (priorityFilter !== "all") {
+      const total = o.total || 0;
+      if (priorityFilter === "urgent" && total < 5000) return false;
+      if (priorityFilter === "medium" && (total < 2000 || total >= 5000)) return false;
+      if (priorityFilter === "normal" && total >= 2000) return false;
+    }
     return true;
   });
 
@@ -1368,7 +1380,7 @@ export default function SuperAdminPage() {
               {/* Date range filter */}
               <div className="relative">
                 <button
-                  onClick={() => setShowDateFilter(!showDateFilter)}
+                  onClick={() => { setShowDateFilter(!showDateFilter); setShowPriorityFilter(false); }}
                   className={cn(
                     "h-10 px-3 rounded-lg border text-sm flex items-center gap-1.5 transition-colors",
                     dateFilter !== "all"
@@ -1419,6 +1431,54 @@ export default function SuperAdminPage() {
                         </button>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+              {/* Priority filter */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowPriorityFilter(!showPriorityFilter); setShowDateFilter(false); }}
+                  className={cn(
+                    "h-10 px-3 rounded-lg border text-sm flex items-center gap-1.5 transition-colors",
+                    priorityFilter !== "all"
+                      ? "border-primary/50 bg-primary/5 text-primary"
+                      : "border-border bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Filter className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {priorityFilter === "all" ? "الأولوية" : priorityFilter === "urgent" ? "عاجل" : priorityFilter === "medium" ? "متوسط" : "عادي"}
+                  </span>
+                </button>
+                {showPriorityFilter && (
+                  <div className="absolute top-full mt-1 right-0 z-50 rounded-xl border border-border bg-card shadow-lg p-3 min-w-[200px] date-filter-popup">
+                    <div className="space-y-1.5">
+                      {[
+                        { key: "all" as const, label: "جميع الأولويات", icon: "📋", desc: "عرض كل الطلبات", count: safeOrders.length },
+                        { key: "urgent" as const, label: "عاجل", icon: "🔴", desc: "5,000+ د.ج", count: safeOrders.filter(o => (o.total||0) >= 5000).length },
+                        { key: "medium" as const, label: "متوسط", icon: "🟡", desc: "2,000 — 4,999 د.ج", count: safeOrders.filter(o => { const t = o.total||0; return t >= 2000 && t < 5000; }).length },
+                        { key: "normal" as const, label: "عادي", icon: "🟢", desc: "أقل من 2,000 د.ج", count: safeOrders.filter(o => (o.total||0) < 2000).length },
+                      ].map(opt => (
+                        <button
+                          key={opt.key}
+                          onClick={() => { setPriorityFilter(opt.key); setShowPriorityFilter(false); }}
+                          className={cn(
+                            "w-full text-right px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors",
+                            priorityFilter === opt.key ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          <span>{opt.icon}</span>
+                          <div className="flex-1 text-right">
+                            <div>{opt.label}</div>
+                            <div className="text-[10px] text-muted-foreground">{opt.desc}</div>
+                          </div>
+                          <span className={cn(
+                            "min-w-[20px] h-5 rounded-full text-[10px] font-bold flex items-center justify-center px-1",
+                            priorityFilter === opt.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                          )}>{opt.count}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1485,10 +1545,10 @@ export default function SuperAdminPage() {
             </Card>
 
             {/* Orders count bar */}
-            {(statusFilter !== "all" || orderStatusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all") && (
+            {(statusFilter !== "all" || orderStatusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all" || priorityFilter !== "all") && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span><span className="order-count-badge">{filteredOrders.length}</span> من <span className="order-count-badge">{safeOrders.length}</span> طلب</span>
-                <button onClick={() => { setSearch(""); setStatusFilter("all"); setOrderStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); }} className="text-primary hover:underline">مسح الفلاتر</button>
+                <button onClick={() => { setSearch(""); setStatusFilter("all"); setOrderStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); setPriorityFilter("all"); }} className="text-primary hover:underline">مسح الفلاتر</button>
               </div>
             )}
 
@@ -2140,19 +2200,73 @@ export default function SuperAdminPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Floating action button — Pending orders shortcut */}
-      {safeOrders.filter(o => o.status === "pending").length > 0 && (
+      {/* Enhanced Floating Action Button */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col-reverse items-end gap-3">
+        {/* Action items - shown when FAB is open */}
+        {fabOpen && (
+          <div className="flex flex-col items-end gap-2 fab-actions-container">
+            {safeOrders.filter(o => o.status === "pending").length > 0 && (
+              <button
+                onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); setFabOpen(false); }}
+                className="fab-action-item fab-action-amber"
+              >
+                <Clock className="h-4 w-4" />
+                <span>{safeOrders.filter(o => o.status === "pending").length} طلب معلق</span>
+              </button>
+            )}
+            {safeOrders.filter(o => o.status === "printing").length > 0 && (
+              <button
+                onClick={() => { setActiveTab("orders"); setStatusFilter("printing"); setFabOpen(false); }}
+                className="fab-action-item fab-action-blue"
+              >
+                <Printer className="h-4 w-4" />
+                <span>{safeOrders.filter(o => o.status === "printing").length} جارٍ الطباعة</span>
+              </button>
+            )}
+            {safeOrders.filter(o => o.status === "ready").length > 0 && (
+              <button
+                onClick={() => { setActiveTab("orders"); setStatusFilter("ready"); setFabOpen(false); }}
+                className="fab-action-item fab-action-emerald"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>{safeOrders.filter(o => o.status === "ready").length} جاهز للاستلام</span>
+              </button>
+            )}
+            <button
+              onClick={() => { setActiveTab("orders"); setPriorityFilter("urgent"); setFabOpen(false); }}
+              className="fab-action-item fab-action-rose"
+            >
+              <Zap className="h-4 w-4" />
+              <span>{safeOrders.filter(o => (o.total||0) >= 5000).length} طلب عاجل</span>
+            </button>
+            <button
+              onClick={() => { loadAll(false); setFabOpen(false); }}
+              className="fab-action-item fab-action-violet"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>تحديث البيانات</span>
+            </button>
+          </div>
+        )}
+        {/* Main FAB button */}
         <button
-          onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); }}
-          className="fixed bottom-6 left-6 z-40 bg-amber-500 hover:bg-amber-600 text-white rounded-full w-14 h-14 shadow-lg shadow-amber-500/30 flex items-center justify-center transition-all duration-300 hover:scale-110 quick-action-float group"
-          title={`${safeOrders.filter(o => o.status === "pending").length} طلب معلق`}
+          onClick={() => setFabOpen(!fabOpen)}
+          className={cn(
+            "rounded-full w-14 h-14 shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 quick-action-float group relative",
+            fabOpen
+              ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/30 rotate-45"
+              : "bg-amber-500 hover:bg-amber-600 shadow-amber-500/30"
+          )}
+          title="إجراءات سريعة"
         >
-          <Clock className="h-6 w-6 group-hover:animate-pulse" />
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 badge-pulse notif-badge-pulse">
-            {safeOrders.filter(o => o.status === "pending").length}
-          </span>
+          <PlusCircle className={cn("h-7 w-7 text-white transition-transform", fabOpen && "rotate-0")} />
+          {!fabOpen && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 notif-badge-pulse">
+              {safeOrders.filter(o => o.status === "pending" || o.status === "ready").length || ''}
+            </span>
+          )}
         </button>
-      )}
+      </div>
       {/* Keyboard shortcuts overlay */}
       {showShortcuts && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
