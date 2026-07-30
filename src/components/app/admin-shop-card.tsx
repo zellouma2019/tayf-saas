@@ -86,7 +86,12 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
   }, [shop]);
 
   return (
-    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden card-glow group card-hover-lift relative", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+    <Card className={cn(
+      "border shadow-sm transition-all duration-300 overflow-hidden group relative card-hover-interactive",
+      shop.isActive 
+        ? "stat-card-emerald border-r-4 border-r-emerald-400"
+        : "stat-card-rose border-r-4 border-r-rose-400"
+    )}>
       {/* Performance rank badge */}
       {rank !== undefined && totalShops && totalShops > 1 && (
         <div className={cn(
@@ -153,33 +158,49 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
         </div>
       </CardHeader>
       <CardContent className="px-5 pb-5 space-y-4">
-        <div className="grid grid-cols-3 gap-2.5 text-center">
-          <div className="bg-muted/50 rounded-xl p-3 transition-colors group-hover:bg-primary/5">
-            <div className="text-lg font-bold text-foreground">{shop.orders}</div>
+        <div className="grid grid-cols-3 gap-2.5 text-center stagger-grid-3">
+          <div className="stat-card-violet rounded-xl p-3 transition-colors">
+            <div className="text-lg font-bold text-foreground count-animate">{shop.orders}</div>
             <div className="text-xs text-muted-foreground/70">طلبات</div>
           </div>
-          <div className="bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl p-3 transition-colors group-hover:bg-emerald-500/5">
-            <div className="text-lg font-bold text-emerald-600">{formatDA(shop.revenue)}</div>
+          <div className="stat-card-emerald rounded-xl p-3 transition-colors">
+            <div className="text-lg font-bold text-emerald-600 count-animate">{formatDA(shop.revenue)}</div>
             <div className="text-xs text-muted-foreground/70">إيرادات</div>
           </div>
-          <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-xl p-3 transition-colors group-hover:bg-amber-500/5">
-            <div className="text-lg font-bold text-amber-600">{shop.todayOrders}</div>
+          <div className="stat-card-amber rounded-xl p-3 transition-colors">
+            <div className="text-lg font-bold text-amber-600 count-animate">{shop.todayOrders}</div>
             <div className="text-xs text-muted-foreground/70">اليوم</div>
           </div>
         </div>
 
         {(shop.recentOrders?.length ?? 0) > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="text-xs font-semibold text-muted-foreground">آخر الطلبات:</div>
-            {(shop.recentOrders ?? []).slice(0, 3).map((o) => (
-              <div key={o.id} className="flex items-center justify-between text-xs bg-muted/60 rounded-lg px-3 py-2.5">
+            {(shop.recentOrders ?? []).slice(0, 3).map((o, i) => (
+              <div key={o.id} className={cn(
+                "flex items-center justify-between text-xs rounded-lg px-3 py-2.5 anim-smooth-in",
+                o.status === 'delivered' && 'stat-card-emerald',
+                o.status === 'printing' && 'stat-card-sky',
+                o.status === 'ready' && 'stat-card-violet',
+                o.status === 'pending' && 'stat-card-amber',
+                o.status === 'cancelled' && 'stat-card-rose',
+                (!o.status || !['delivered','printing','ready','pending','cancelled'].includes(o.status)) && 'bg-muted/60'
+              )} style={{ animationDelay: `${i * 80}ms` }}>
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-mono font-bold text-foreground/80">{o.reference}</span>
                   <span className="text-muted-foreground/70 truncate">{o.customer.name}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-bold text-foreground">{formatDA(o.total)}</span>
-                  <span className={`px-2 py-0.5 rounded-lg text-xs ${STATUS_COLORS[o.status] || ""}`}>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-lg text-xs",
+                    o.status === 'delivered' && 'label-gradient-emerald',
+                    o.status === 'printing' && 'label-gradient-sky',
+                    o.status === 'ready' && 'label-gradient-violet',
+                    o.status === 'pending' && 'label-gradient-amber',
+                    o.status === 'cancelled' && 'label-gradient-rose',
+                    (!o.status || !['delivered','printing','ready','pending','cancelled'].includes(o.status)) && STATUS_COLORS[o.status] || ''
+                  )}>
                     {STATUS_META[o.status]?.label || o.status}
                   </span>
                 </div>
@@ -191,10 +212,10 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
         <div className="flex flex-wrap gap-2 pt-1">
           <CopyButton text={`${window.location.origin}/s/${shop.slug}`} label="رابط الزبون" />
           <CopyButton text={`${window.location.origin}/s/${shop.slug}?admin=1`} label="رابط الإدارة" />
-          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
+          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
             <ExternalLink className="h-3.5 w-3.5" /> فتح الإدارة
           </button>
-          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}?preview=1`)}>
+          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn" onClick={() => openInNewTab(`/s/${shop.slug}?preview=1`)}>
             <Eye className="h-3.5 w-3.5" /> معاينة زبون
           </button>
         </div>

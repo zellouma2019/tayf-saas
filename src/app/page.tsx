@@ -1550,6 +1550,11 @@ export default function SuperAdminPage() {
                               ))}
                             </select>
                           </div>
+                          {order.statusNotes && (
+                            <span className="text-[9px] text-violet-600 dark:text-violet-400 truncate max-w-[60px] block mt-0.5" title={order.statusNotes}>
+                              📝 {order.statusNotes}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="font-medium tabular-nums text-sm">
                           <div className="flex items-center gap-1.5">

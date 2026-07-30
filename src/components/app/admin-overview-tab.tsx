@@ -39,6 +39,8 @@ import { OrderStatusTimeline } from "@/components/app/order-status-timeline";
 import { StaffActivityWidget } from "@/components/app/staff-activity-widget";
 import { TopServicesWidget } from "@/components/app/top-services-widget";
 import { CustomerStatsWidget } from "@/components/app/customer-stats-widget";
+import { RevenueTrendMini } from "@/components/app/revenue-trend-mini";
+import { QuickInsightsWidget } from "@/components/app/quick-insights-widget";
 import type { ShopStat } from "@/lib/admin-types";
 
 // ===== Sparkline Mini Chart =====
@@ -792,6 +794,12 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* هدف اليوم */}
       <DailyGoalTracker target={10} current={safeStats.todayOrders} streak={5} />
+
+      {/* اتجاه الإيرادات + رؤى سريعة */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <RevenueTrendMini orders={safeStats.recentOrders || []} days={14} />
+        <QuickInsightsWidget orders={safeStats.recentOrders || []} shops={safeStats.shopStats || []} />
+      </div>
 
       {/* النشاط المباشر */}
       <LiveActivityFeed
