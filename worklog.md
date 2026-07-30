@@ -10774,3 +10774,105 @@ Task: Activity Feed Timeline, Shop Performance Rings, Quick Duplicate, FAB Enhan
 4. تصدير PDF للتقرير المالي
 5. إشعارات فورية (WebSocket/SSE)
 6. تحسين تجربة الموبايل
+---
+Task ID: R80
+Agent: Main Agent (Cron Round 80)
+Task: Revenue Forecast, Priority Stars, Enhanced Kanban, Inline Status Bar, CSS v7.6, v7.7
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit cee3ee1)
+- ✅ إصدار v7.7
+- ⚠️ Vercel 404 مستمر — لا يوجد VERCEL_TOKEN
+
+## نتائج QA
+- ✅ البناء نظيف: 0 أخطاء، 33.4 ثانية ترجمة
+- ✅ 42 صفحة ثابتة مُولّدة
+
+## الميزات الجديدة
+
+### 1. ويدجت توقع الإيرادات (Revenue Forecast)
+- يحسب توقع إيرادات اليوم بناءً على المعدل الساعي
+- شريط تقدم متدرج أخضر مع لمعان متحرك
+- معلومات: الساعات المضية / المتبقية / المعدل بالساعة / النسبة من التوقع
+- حركة دخول تصاعدية
+
+### 2. نجوم الأولوية (Priority Stars)
+- 3 نجوم (⭐⭐⭐) للطلبات ≥5000 د.ج مع توهج ذهبي
+- 2 نجوم (⭐⭐) للطلبات ≥2000 مع شفافية مخفّضة
+- تظهر في جدول الطلبات + بطاقات الكانبان
+- حركة دخول مرتدة (starsPop)
+
+### 3. كانبان محسّن
+- إجمالي إيرادات كل عمود باللون الخاص بالحالة
+- شارة "عاجل" مع توهج نيون برتقالي (neon-glow-orange)
+- زر اتصال هاتفي لكل بطاقة في الكانبان
+- نجوم الأولوية في بطاقات الكانبان
+
+### 4. شريط حالة مضمن في الجدول
+- شريط رفيع (3px) تحت نقاط الحالة في عمود الحالة
+- لون ديناميكي حسب الحالة الحالية
+- عرض يتناسب مع مراحل التقدم (20% لكل مرحلة)
+
+### 5. شارة الأولوية المتوسطة
+- شارة "متوسط" ذهبية للطلبات 2000-4999 د.ج في جدول الطلبات
+
+## تحسينات التصميم (CSS v7.6)
+**الملف:** `src/app/globals.css` — ~455 سطر جديد (إجمالي ~43,074 سطر)
+
+### 40+ مجموعة أصناف CSS جديدة:
+1. `.revenue-forecast-widget` + `@keyframes forecastFadeIn` — ويدجت التوقع
+2. `.forecast-bar-track/.fill` + `@keyframes forecastBarShimmer` — شريط التوقع
+3. `.priority-stars/.priority-medium-stars` + `@keyframes starsPop` — نجوم الأولوية
+4. `.glass-card-v10` — زجاجية v10 مع hover lift
+5. `.neon-glow-rose/.emerald` — توهج نيون وردي/زمكري
+6. `.gradient-text-orange/.rose` — نص متدرج برتقالي/وردي
+7. `.hover-glow-rose/.emerald` — توهج عند التمرير
+8. `.shimmer-v7` — لمعان v7
+9. `.skeleton-v9` — هيكل تحميل v9
+10. `.hover-underline-4` — خط سفلي متحرك v4
+11. `.tag-chip-rose/.orange` — رقائق وسوم وردية/برتقالية
+12. `.pulse-soft-v4` — نبض ناعم v4
+13. `.scrollbar-v6` — شريط تمرير v6 (وردي→بنفسجي)
+14. `.focus-ring-v5` — حلقة تركيز v5 (وردية)
+15. `.hover-scale-bounce-v3` — تكبير مرتد v3
+16. `.breathe-border-v3` — حدود تتنفس v3 (3 مراحل)
+17. `.card-shine-v3` — توهج ضوئي v3
+18. `.hover-lift-5` — رفع مستوى خامس
+19. `.gradient-border-animated-v3` + `@keyframes gradientBorderRotateV3` — حدود متدرجة 4 ألوان
+20. `.gradient-text-rose` — نص متدرج وردي
+21. `.stagger-grid-25` — شبكة 25ms stagger
+22. `.badge-bounce-in-v3` + `@keyframes badgeBounceV3` — شارة مرتدة مع دوران
+23. `.row-hover-glow-v4` — توهج صف v4 (وردي)
+24. `.separator-gradient-v3` — فاصل v3
+25. `.text-glow-rose` — توهج نصي وردي
+26. `.priority-row-indicator` — مؤشر صف الأولوية (شريط جانبي)
+27. `.inline-status-bar/.fill` — شريط حالة مضمن
+28. Responsive + reduced-motion دعم كامل
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | توقع + نجوم + كانبان + شريط حالة + v7.7 (4,122 سطر) |
+| `src/app/globals.css` | +455 سطر CSS v7.6 (43,074 سطر) |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.7 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.7 |
+
+## الإحصائيات
+- صفحة رئيسية: 4,122 سطر (+62 من R79)
+- CSS: 43,074 سطر (+455 من R79)
+- CSS versions: v6.1 → v7.6 (16 إصدارات CSS)
+- الميزات المضافة هذا الجول: 5
+- CSS classes جديدة هذا الجول: 40+
+- إجمالي مكونات الوظائف: 180+
+
+## Unresolved Issues
+1. **Vercel 404** — مستمر (يحتاج VERCEL_TOKEN)
+2. **agent-browser** — لا يصل لـ localhost
+
+## Priority Recommendations for R81
+1. إصلاح Vercel (VERCEL_TOKEN)
+2. سحب وإفلات كانبان (dnd-kit)
+3. لوحة تحكم الزبون (/customer)
+4. تصدير PDF للتقرير المالي
+5. إشعارات فورية (WebSocket/SSE)
