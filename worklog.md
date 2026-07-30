@@ -8842,3 +8842,136 @@ Task: Assess, QA test, enhance order detail, add PDF report + WhatsApp integrati
 5. Implement multi-language support for merchant dashboard
 6. Add AI-powered order categorization and priority scoring
 7. Add expense tracking with budget alerts
+
+---
+Task ID: R60
+Agent: Main Agent (Cron Round 60)
+Task: Assess, QA test, add features (customer loyalty, mini stats, shop ranking, CSS v5.6), deploy v5.6
+
+## Current Status Assessment
+- Build: ✅ Clean — 42 static pages, 63 API routes, 0 errors (30.4s compile)
+- Live site (Vercel):
+  - ✅ Admin dashboard loads correctly with 20 orders, 6 shops
+  - ✅ All tabs functional (overview, shops, orders, settings, security, platform)
+  - ✅ Order table displays with status dropdowns, duplicate badges, action buttons
+  - ✅ Search functionality works across orders, shops, and customers
+  - ✅ Notification bell with pending count
+  - ✅ Global stats ribbon showing 20 orders across status categories
+  - ⚠️ Vercel deployment triggered but may serve stale v5.5 code (known issue)
+- QA result: No bugs found. All existing features verified working.
+
+## New Features
+
+### 1. Customer Loyalty Scoring System
+**File:** `src/app/page.tsx`
+- `customerLoyalty` useMemo hook computes per-customer stats: order count, total spend, last order date
+- Three loyalty tiers:
+  - ★ ذهبي (Gold): 5+ orders OR 5000+ د.ج total spend
+  - ☆ فضي (Silver): 3+ orders OR 2000+ د.ج total spend
+  - ● برونزي (Bronze): 2+ orders
+- Loyalty indicator icons in order table customer name column (tooltip on hover)
+- Loyalty card in order detail dialog showing tier badge, order count, total spend, last order time ago
+
+### 2. Mini Stats Widget (Orders Tab)
+**File:** `src/app/page.tsx`
+- Four glass-card-v2 stat cards at top of orders tab:
+  - Total orders count (with filtered count subtitle)
+  - Total revenue (computed from filtered orders)
+  - Unique customers count (with average orders/customer)
+  - Duplicate orders count (with percentage of total)
+- Uses stagger-grid-16 animation for entrance
+- Color-coded glow shadows (emerald, amber, violet, rose)
+- Hover-lift-1 interaction effect
+
+### 3. Shop Performance Ranking
+**Files:** `src/components/app/admin-shop-card.tsx`, `src/components/app/admin-overview-tab.tsx`
+- Shops sorted by revenue in overview tab
+- Rank badge (1st gold, 2nd silver, 3rd bronze) on shop cards
+- Performance score % indicator (orders + revenue + today orders weighted)
+- Score color coding: green (70%+), amber (40-70%), muted (<40%)
+- Badge-bounce animation for 1st place
+
+## Styling Improvements (CSS v5.6)
+
+**File:** `src/app/globals.css` — ~575 lines added
+
+### New Animations:
+- `borderGlow` — Conic gradient rotating border with @property
+- `liquidFill` — Liquid wave progress fill effect
+- `sparkleSweep` — Light sweep across cards on hover
+- `shimmerText` — Gradient text clip shimmer
+- `scrollFadeIn` — Fade-up entrance
+- `magneticPull` — Button scale bounce on hover
+- `meshFloat` — Background orb floating animation
+- `badgeBounce` — Spring bounce for badges
+- `focusGlowPulse` — Pulsing focus ring
+- `typingDots` — Three-dot typing indicator
+- `statusMultiPing` — Multi-ring ping on status dots
+
+### New Utility Classes:
+- `.animated-gradient-border-card` — Rotating conic-gradient border
+- `.liquid-progress` — Liquid fill progress bar
+- `.sparkle-sweep` — Shine sweep hover effect
+- `.glass-card-v2` — Enhanced glassmorphism with blur+saturate
+- `.noise-overlay` — SVG noise texture overlay
+- `.status-dot-multi-ping` — Double-ring ping animation
+- `.stagger-grid-16` — 16-child staggered entrance delays
+- `.shimmer-text` — Gradient clip text shimmer
+- `.magnetic-btn` — Magnetic hover button
+- `.tilt-card` — 3D perspective tilt on hover
+- `.mesh-bg-orb` — Floating background orbs
+- `.premium-divider-v2` — Gradient line divider
+- `.badge-bounce` — Bounce animation
+- `.focus-glow-pulse` — Pulsing focus-within glow
+- `.accordion-expand` — Grid-based accordion transition
+- `.slide-in-bottom` — Bottom entrance animation
+- `.typing-dots` — Typing indicator
+- `.hover-lift-1/2/3` — Three-level hover lift
+- `.gradient-text-primary/warm/cool` — Gradient text variants
+- `.pattern-dots/grid/diagonal` — Background pattern utilities
+- `.animated-underline` — Link underline grow effect
+- `.badge-gradient-emerald/violet/amber/rose/sky` — 5 gradient badge styles
+- `.skeleton-shine` — Enhanced skeleton animation
+- `.stat-card-glow-emerald/violet/amber/rose/sky` — 5 card glow shadows
+- `.tooltip-top` — Tooltip with arrow (CSS-only)
+- `.hover-scale-sm/md` — Scale on hover
+- `.breathing-glow` — Breathing opacity animation
+- `.scrollbar-rounded` — Rounded scrollbar styling
+- Print utilities (`.no-print`, `.print-only`, `.print-break`)
+- `.color-transition` — Smooth color transition helper
+- `.radius-sm/md/lg/xl/full` — Border radius utilities
+
+### Enhanced Existing Components:
+- Trust bar now uses `glass-card-v2` + `sparkle-sweep` for premium feel
+
+## Files Modified
+| File | Change |
+|--------|---------|
+| `src/app/page.tsx` | Customer loyalty scoring, mini stats widget, loyalty in order detail, v5.6 |
+| `src/components/app/admin-shop-card.tsx` | Performance rank badges + score % on shop cards |
+| `src/components/app/admin-overview-tab.tsx` | Shops sorted by revenue with rank props |
+| `src/components/app/app-shell.tsx` | Enhanced trust bar with glass-card-v2 + sparkle-sweep |
+| `src/components/app/error-boundary.tsx` | Version bump to v5.6 |
+| `src/app/globals.css` | +575 lines: CSS v5.6 |
+
+## Verification
+- ✅ `npx next build` — 42 static pages, 63 API routes, 0 errors, 30.4s compile
+- ✅ Pushed to GitHub: commit `66e52cc`
+- ✅ Vercel deploy triggered: job `dZB5nu978aGzmlgzdBv2` (PENDING)
+
+## Unresolved Issues
+1. 🔴 Vercel→GitHub connection broken — deploy hook triggers build from stale source. Needs manual Vercel dashboard fix.
+2. 🟡 UPLOADTHING_TOKEN missing — file upload not functional
+3. 🟢 No real-time order tracking page for customers (QR + status updates)
+4. 🟢 No WhatsApp Business API integration for merchant notifications
+5. 🟢 No order scheduling system (set delivery date/time)
+6. 🟢 No multi-language support for merchant dashboard
+
+## Priority Recommendations for Next Phase
+1. **CRITICAL:** Reconnect Vercel→GitHub in Vercel dashboard (manual only)
+2. Add real-time order tracking page for customers with QR codes
+3. Implement WhatsApp Business API webhook for merchant notifications
+4. Add order scheduling system (set delivery date/time)
+5. Implement merchant PDF stats report with charts
+6. Add AI-powered order priority scoring based on value + urgency
+7. Implement batch print queue management for merchants
