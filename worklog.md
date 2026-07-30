@@ -10108,3 +10108,102 @@ Task: Fix critical build errors, add heatmap/comments/duplicate-warning features
 4. لوحة تحكم الزبون (صفحة /customer)
 5. تصدير PDF للتقرير المالي
 6. إشعار صوتي تكاملي (ربط مع WebSocket)
+---
+Task ID: R73
+Agent: Main Agent (Cron Round 73)
+Task: Calendar view, status flow dots, customer quick profile, sound toggle, CSS v6.9, v7.0
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 6c6c299)
+- ✅ إصدار v7.0
+- ⚠️ الموقع الحي (tayf-dash.vercel.app) يُرجع 404 — سبب مؤكد: لا يوجد `.vercel/project.json` ولا Vercel token
+- ✅ لا يحتاج Vercel CLI login لأنه لا يوجد token في البيئة
+
+## تشخيص مشكلة Vercel 404
+- `vercel list` يفشل: "No existing credentials found"
+- لا يوجد `.vercel/` directory أو `project.json`
+- لا يوجد `VERCEL_TOKEN` في env vars
+- الحل المطلوب: إعداد `VERCEL_TOKEN` في بيئة النشر + إنشاء `.vercel/project.json` يدوياً
+- أو: ربط المشروع يدوياً من Vercel Dashboard → Settings → Git → Connect Repository
+
+## الميزات الجديدة
+
+### 1. عرض التقويم (Order Calendar View)
+- رابع وضع عرض: جدول / كانبان / بطاقات / **تقويم**
+- تقويم شهري كامل مع: أسماء الأيام العربية، أرقام الأيام
+- خلايا ملونة بحسب كثافة الطلبات (بنفسجي شفاف → كثيف)
+- اليوم الحالي بإطار محدد
+- التنقل بين الأشهر (زرين ← →)
+- النقر على يوم مضبوط: ينتقل لعرض الجدول مع فلتر التاريخ
+- ملخص أسفل: إجمالي الطلبات والإيرادات الشهرية
+- حركة دخول متتابعة لكل خلية (8ms stagger)
+
+### 2. نقاط مسار الحالة (Status Flow Dots)
+- 5 نقاط صغيرة في عمود جديد بالجدول (pending→confirmed→printing→ready→delivered)
+- النقاط المكتملة: خضراء متوهجة
+- النقطة الحالية: ذهبية نابضة
+- النقاط القادمة: رمادية
+- تلميح عند التمرير يعرض اسم الحالة
+
+### 3. ملف الزبون السريع (Customer Quick Profile)
+- النقر على اسم الزبون في الجدول يفتح نافذة ملفه
+- عرض: الاسم + الهاتف + صورة رمزية
+- 3 بطاقات إحصائية: عدد الطلبات / الإنفاق الإجمالي / المُنجز
+- قائمة آخر 8 طلبات للزبون مع: لون الحالة + الخدمة + المبلغ + التاريخ
+- شريط تمرير مخصص (scrollbar-thin-v2)
+
+### 4. زر كتم/تشغيل الصوت في FAB
+- زر سماوي جديد في قائمة الإجراءات السريعة
+- يعرض Volume2/VolumeX حسب الحالة
+- يحفظ التفضيل في localStorage
+- إشعار toast عند التبديل
+
+## تحسينات التصميم (CSS v6.9)
+**الملف:** `src/app/globals.css` — ~245 سطر جديد (إجمالي ~40,357 سطر)
+
+### 15+ مجموعة أصناف CSS جديدة:
+1. `.calendar-view-container` + `@keyframes calendarFadeIn` — حاوية التقويم
+2. `.calendar-month-title` — عنوان الشهر متدرج بنفسجي-أزرق
+3. `.calendar-nav-btn` — أزرار التنقل بين الأشهر
+4. `.calendar-day-header` — رؤوس الأيام
+5. `.calendar-day-cell` + `.today/.has-orders/.busy` — خلايا التقويم مع 4 حالات
+6. `.calendar-day-number/.calendar-day-count` — محتوى الخلية
+7. `.cq-*` — ملف الزبون السريع (avatar, stat-card, order-row, trigger)
+8. `.fab-action-cyan` — زر FAB سماوي
+9. `.view-toggle-btn::after` — تأثير ripple محسّن
+10. `.gradient-text-violet/.gradient-text-gold-v2` — نص متدرج v2
+11. `.card-stack-3d` — بطاقة بعمق مكدّس
+12. `.glow-border-focus` — حدود متوهجة عند التركيز
+13. `.count-up-v2` + `@keyframes countUp` — عداد محسّن
+14. `.stagger-cols-enter` — دخول متتابع للأعمدة
+15. `.pattern-dots` — خلفية نقطية
+16. `.hover-lift-glow` — رفع مع توهج
+17. Responsive calendar optimizations
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | تقويم + نقاط الحالة + ملف الزبون + زر الصوت + v7.0 (3,266 سطر) |
+| `src/app/globals.css` | +245 سطر CSS v6.9 (40,357 سطر) |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.0 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.0 |
+
+## الإحصائيات
+- صفحة رئيسية: 3,266 سطر (+205 من R72)
+- CSS: 40,357 سطر (+243 من R72)
+- CSS versions: v6.1 → v6.9 (9 إصدارات CSS)
+- أوضاع عرض الطلبات: 4 (جدول، كانبان، بطاقات، تقويم)
+- الميزات المضافة هذا الجول: 4
+- CSS classes جديدة هذا الجول: 20+
+
+## Unresolved Issues / Risks
+1. **Vercel 404 مؤكد** — السبب: لا يوجد Vercel token ولا `.vercel/project.json`. الحل: إعداد `VERCEL_TOKEN` في env أو ربط يدوي من Dashboard
+2. لا اختبار بصري (agent-browser لا يصل لـ localhost)
+
+## Priority Recommendations for R74
+1. **إصلاح Vercel** — إضافة `VERCEL_TOKEN` و `.vercel/project.json` (أعلى أولوية)
+2. إضافة سحب وإفلات في كانبان (dnd-kit)
+3. لوحة تحكم الزبون الكاملة (صفحة /customer)
+4. تصدير PDF للتقرير المالي
+5. إشعارات فورية (WebSocket/SSE)
