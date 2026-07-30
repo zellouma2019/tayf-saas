@@ -2803,163 +2803,11 @@ export default function SuperAdminPage() {
           )}
         </button>
       </div>
-      {/* Customer Profile Slide Panel */
-      {customerProfile && customerProfileData && (
-        <div className="fixed inset-0 z-[90] flex justify-end" onClick={() => setCustomerProfile(null)}>
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm customer-panel-backdrop" />
-          <div className="relative w-full max-w-sm bg-card border-l border-border shadow-2xl customer-panel-slide overflow-y-auto scrollbar-thin" onClick={e => e.stopPropagation()}>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <UserCircle className="h-4 w-4 text-violet-500" />
-                  ملف الزبون
-                </h3>
-                <button onClick={() => setCustomerProfile(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              {/* Customer header */
-              <div className="rounded-xl border border-border/60 bg-muted/30 p-3 mb-4 customer-panel-header">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center text-lg font-bold text-violet-500 customer-avatar">
-                    {(customerProfileData.name || '?')[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm truncate">{customerProfileData.name}</p>
-                    {customerProfileData.phone && (
-                      <a href={`tel:${customerProfileData.phone}`} className="text-xs text-muted-foreground hover:text-primary transition-colors font-mono" dir="ltr" onClick={e => e.stopPropagation()}>{customerProfileData.phone}</a>
-                    )}
-                  </div>
-                  {customerProfileData.loyalty.tier && (
-                    <span className={cn("text-[10px] px-2 py-1 rounded-full font-medium", customerProfileData.loyalty.color, "bg-current/10")}>
-                      {customerProfileData.loyalty.icon} {customerProfileData.loyalty.tier}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {/* Stats grid */
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
-                  <span className="text-[9px] text-muted-foreground block mb-0.5">إجمالي الطلبات</span>
-                  <span className="text-base font-bold tabular-nums">{customerProfileData.orderCount}</span>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
-                  <span className="text-[9px] text-muted-foreground block mb-0.5">إجمالي الإنفاق</span>
-                  <span className="text-base font-bold tabular-nums revenue-gold">{formatNumber(customerProfileData.totalSpend)}</span>
-                  <span className="text-[9px] text-muted-foreground">د.ج</span>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
-                  <span className="text-[9px] text-muted-foreground block mb-0.5">متوسط الطلب</span>
-                  <span className="text-base font-bold tabular-nums">{formatNumber(Math.round(customerProfileData.avgOrder))}</span>
-                  <span className="text-[9px] text-muted-foreground">د.ج</span>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card/60 p-2.5 customer-stat-card">
-                  <span className="text-[9px] text-muted-foreground block mb-0.5">أول طلب</span>
-                  <span className="text-xs font-medium">{formatDA(customerProfileData.firstOrderDate)}</span>
-                </div>
-              </div>
-              {/* Services used */
-              {customerProfileData.serviceTypes.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-[10px] text-muted-foreground font-medium mb-1.5">الخدمات المطلوبة</p>
-                  <div className="flex flex-wrap gap-1">
-                    {customerProfileData.serviceTypes.map(s => (
-                      <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-muted border border-border/50 customer-service-chip">
-                        {SERVICE_EMOJI[s as keyof typeof SERVICE_EMOJI] || '📄'} {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Status distribution */
-              <div className="mb-4">
-                <p className="text-[10px] text-muted-foreground font-medium mb-1.5">توزيع الحالات</p>
-                <div className="space-y-1">
-                  {Object.entries(customerProfileData.statusDist).map(([status, count]) => (
-                    <div key={status} className="flex items-center gap-2 text-xs">
-                      <span className={cn("w-2 h-2 rounded-full flex-shrink-0", STATUS_META[status as keyof typeof STATUS_META]?.color)} />
-                      <span className="flex-1">{STATUS_META[status as keyof typeof STATUS_META]?.label || status}</span>
-                      <span className="tabular-nums font-medium">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Recent orders list */}
-              <div>
-                <p className="text-[10px] text-muted-foreground font-medium mb-1.5">آخر الطلبات ({customerProfileData.orders.length})</p>
-                <div className="space-y-1">
-                  {customerProfileData.orders.slice(0, 10).map(o => (
-                    <div key={o.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer customer-order-row" onClick={() => { setCustomerProfile(null); setSelectedOrder(o); }}>
-                      <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('amber') ? '#f59e0b' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('sky') ? '#0ea5e9' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('blue') ? '#3b82f6' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('emerald') ? '#10b981' : STATUS_META[o.status as keyof typeof STATUS_META]?.bg?.includes('rose') ? '#f43f5e' : '#999' }} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-medium truncate">{o.serviceName || o.serviceType}</span>
-                          <span className="text-[11px] font-bold tabular-nums revenue-gold">{(o.total || 0).toLocaleString("ar-DZ")}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
-                          <span>{STATUS_META[o.status as keyof typeof STATUS_META]?.emoji} {STATUS_META[o.status as keyof typeof STATUS_META]?.label}</span>
-                          <span>•</span>
-                          <span>{formatDA(o.createdAt)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* WhatsApp quick action */}
-              {customerProfileData.phone && (
-                <a
-                  href={`https://wa.me/${customerProfileData.phone.replace(/[^0-9]/g, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-2 text-sm font-medium transition-colors customer-wa-btn micro-bounce press-feedback"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  مراسلة عبر واتساب
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Inline Note Editing Popover */
-      {editingNote && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={() => setEditingNote(null)}>
-          <div className="bg-card border border-border rounded-xl shadow-xl p-4 w-full max-w-sm mx-4 note-edit-popover" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold flex items-center gap-2">
-                <StickyNote className="h-4 w-4 text-amber-500" />
-                ملاحظة على الطلب
-              </h3>
-              <button onClick={() => setEditingNote(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <textarea
-              value={noteText}
-              onChange={e => setNoteText(e.target.value)}
-              placeholder="أضف ملاحظة..."
-              className="w-full h-24 p-2.5 rounded-lg border border-border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-              autoFocus
-            />
-            <div className="flex items-center gap-2 mt-2 justify-end">
-              <button onClick={() => setEditingNote(null)} className="h-8 px-3 rounded-lg border border-border hover:bg-muted/50 text-sm transition-colors">
-                إلغاء
-              </button>
-              <button onClick={() => saveOrderNote(editingNote, noteText)} className="h-8 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors micro-bounce press-feedback">
-                حفظ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Keyboard shortcuts overlay */}
+      {/* Keyboard shortcuts overlay */
       {showShortcuts && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
-          <div className="bg-card border border-border rounded-2xl shadow-2xl p-5 max-w-md w-full mx-4 tooltip-fade shortcuts-panel-enhanced" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-2xl shadow-2xl p-5 max-w-md w-full mx-4 shortcuts-panel-enhanced" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Keyboard className="h-4 w-4 text-primary" />
@@ -3002,7 +2850,7 @@ export default function SuperAdminPage() {
                 ))}
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground/50 text-center mt-4">اضغط Escape أو ? للإغلاق</p>
+            <p className="text-[9px] text-muted-foreground/40 text-center mt-4">اضغط Escape أو ? للإغلاق</p>
           </div>
         </div>
       )}

@@ -39515,11 +39515,6 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   mask-composite: exclude;
   animation: gradientBorderSpin 4s linear infinite;
 }
-@property --border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
 @keyframes gradientBorderSpin {
   to { --border-angle: 360deg; }
 }
