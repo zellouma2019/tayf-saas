@@ -148,8 +148,8 @@ export default function SuperAdminPage() {
   // Sorting
   const [sortKey, setSortKey] = useState<"date" | "amount" | "customer" | "status">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  // View mode: table or kanban
-  const [ordersView, setOrdersView] = useState<"table" | "kanban">("table");
+  // View mode: table, kanban, or cards
+  const [ordersView, setOrdersView] = useState<"table" | "kanban" | "cards">("table");
   // Priority filter
   const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "medium" | "normal">("all");
   // Enhanced FAB
@@ -1500,6 +1500,14 @@ export default function SuperAdminPage() {
                 >
                   <LayoutGrid className="h-3.5 w-3.5" />
                   كانبان
+                </button>
+                <button
+                  className={cn("view-toggle-btn", ordersView === "cards" && "active")}
+                  onClick={() => setOrdersView("cards")}
+                  title="عرض بطاقات"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                  بطاقات
                 </button>
               </div>
               {/* Sort indicator */}
