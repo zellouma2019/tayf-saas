@@ -10492,3 +10492,74 @@ Task: Customer Insights, Quick Actions Menu, Service Tags, CSS v7.2, v7.3
 3. لوحة تحكم الزبون (/customer)
 4. تصدير PDF
 5. إشعارات فورية (WebSocket)
+---
+Task ID: R77
+Agent: Main Agent (Cron Round 77)
+Task: Notes Panel, Quick Stats Bar, Tab Badges, CSS v7.3, v7.4
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit d5cc2fb)
+- ✅ إصدار v7.4
+
+## الميزات الجديدة
+
+### 1. لوحة الملاحظات (Orders Notes Panel)
+- ويدجت في نظرة عامة يعرض آخر 8 طلبات بها ملاحظات
+- عرض: الرقم المرجعي + اسم الزبون + نص الملاحظة
+- النقر يفتح Quick View مباشرة
+- حركة دخول انزلاقية متتابعة
+- يختفي تلقائياً إذا لم توجد ملاحظات
+
+### 2. شريط الإحصائيات السريع (Quick Stats Bar)
+- شريط أفقي في تبويب الطلبات فوق أوضاع العرض
+- 4 مؤشرات ملونة: معلق (ذهبي) / طباعة (أزرق) / جاهز (أخضر) / مُسلّم (بنفسجي)
+- عداد الفلاتر النشطة على اليسار
+
+### 3. نقطة التنبيه في تبويب نظرة عامة
+- نقطة ذهبية نابضة على تبويب "نظرة عامة" عند وجود طلبات معلقة
+- إشعار بصري فوري بدون فتح التبويب
+
+## تحسينات التصميم (CSS v7.3)
+**الملف:** `src/app/globals.css` — ~272 سطر جديد (إجمالي ~41,667 سطر)
+
+### 25+ مجموعة أصناف CSS جديدة:
+1. `.tab-pending-dot` + `@keyframes pulseDot` — نقطة تنبيه نابضة
+2. `.notes-panel-*` — لوحة الملاحظات (widget, item, header, ref, text)
+3. `.hover-lift-3` — رفع مستوى ثالث
+4. `.gradient-border-animated` — حدود متدرجة متحركة
+5. `.glass-card-v7` — زجاجية v7 مع dark mode
+6. `.neon-glow-pink/.lime` — توهج نيون وردي/ليموني
+7. `.gradient-text-pink/.sky` — نص متدرج وردي/سماوي
+8. `.hover-glow-pink` — توهج وردي عند التمرير
+9. `.skeleton-v6` — هيكل تحميل v6
+10. `.micro-bounce-2` — ارتداد دقيق v2
+11. `.fade-up-stagger` — دخول تصاعدي متتابع (5 عناصر)
+12. `.scrollbar-v3` — شريط تمرير محسّن v3
+13. `.tag-chip-pink/.sky` — رقائق وسم وردية/سماوية
+14. `.hover-scale-bounce` — تكبير مرتد عند التمرير
+15. `.line-clamp-1` — قص سطر واحد
+16. `.focus-ring-amber` — حلقة تركيز ذهبية
+17. `.badge-bounce-in` — دخول شارة مرتد
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | لوحة ملاحظات + شريط إحصائيات + نقطة تبويب + v7.4 (3,610 سطر) |
+| `src/app/globals.css` | +272 سطر CSS v7.3 (41,667 سطر) |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.4 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.4 |
+
+## الإحصائيات
+- صفحة رئيسية: 3,610 سطر (+56 من R76)
+- CSS: 41,667 سطر (+272 من R76)
+- CSS versions: v6.1 → v7.3 (13 إصدارات CSS)
+
+## Unresolved Issues
+1. **Vercel 404** — مستمر
+
+## Priority Recommendations for R78
+1. إصلاح Vercel (VERCEL_TOKEN)
+2. سحب وإفلات كانبان (dnd-kit)
+3. لوحة تحكم الزبون (/customer)
+4. تصدير PDF
