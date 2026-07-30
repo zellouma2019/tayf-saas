@@ -36,6 +36,7 @@ import {
 } from "@/lib/option-translations";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { OrderStatusNotesTimeline } from "@/components/app/order-status-notes-timeline";
 
 const SERVICE_EMOJI: Record<string, string> = {
   document: "🖨️",
@@ -503,7 +504,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 ripple-btn micro-bounce"
+                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 ripple-btn micro-bounce neon-border-emerald"
                     onClick={() => {
                       const phone = order.customer.phone.replace(/[^0-9]/g, '');
                       const msg = encodeURIComponent(`مرحباً ${order.customer.name || ''}! طلبك ${order.reference} الآن: ${STATUS_META[order.status].label}. ${order.status === 'ready' ? 'يمكنك الاستلام من المطبعة.' : ''}`);
@@ -516,7 +517,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce"
+                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce neon-border-violet"
                     onClick={() => {
                       window.open(`tel:${order.customer.phone}`, '_self');
                     }}
@@ -527,7 +528,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800/40 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                    className="h-7 text-xs gap-1 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800/40 hover:bg-violet-50 dark:hover:bg-violet-950/30 ripple-btn micro-bounce"
                     onClick={() => {
                       navigator.clipboard.writeText(order.customer.phone);
                       toast.success("تم نسخ رقم الهاتف");
@@ -580,13 +581,13 @@ export function OrderDetailModal({
                 />
               </div>
               <div className="flex items-center gap-2 justify-end">
-                <Button size="sm" variant="ghost" className="text-xs" onClick={cancelStatusChange}>
+                <Button size="sm" variant="ghost" className="text-xs micro-bounce" onClick={cancelStatusChange}>
                   <X className="h-3 w-3 ml-1" />
                   إلغاء
                 </Button>
                 <Button
                   size="sm"
-                  className="text-xs bg-violet-600 hover:bg-violet-700 gap-1"
+                  className="text-xs bg-violet-600 hover:bg-violet-700 gap-1 ripple-btn micro-bounce"
                   onClick={confirmStatusChange}
                   disabled={saving}
                 >
@@ -614,7 +615,7 @@ export function OrderDetailModal({
 
           {/* معلومات العميل — قابل للتعديل */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2">معلومات العميل</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">معلومات العميل</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">الاسم</Label>
@@ -667,9 +668,9 @@ export function OrderDetailModal({
 
           {/* سجل طلبات الزبون السابقة */}
           {order.customer?.phone && (
-            <section className="rounded-lg border bg-muted/30 p-3">
+            <section className="rounded-lg border bg-muted/30 p-3 glass-card-v4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
                   <History className="h-3.5 w-3.5 text-muted-foreground" />
                   طلبات سابقة
                 </h3>
@@ -688,7 +689,7 @@ export function OrderDetailModal({
                   لا توجد طلبات سابقة لهذا الرقم
                 </p>
               ) : (
-                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                <div className="space-y-1.5 max-h-32 overflow-y-auto smooth-scrollbar">
                   {customerHistory.slice(0, 5).map((prev) => (
                     <div
                       key={prev.id}
@@ -717,7 +718,7 @@ export function OrderDetailModal({
 
           {/* مواصفات الطباعة — للقراءة فقط */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2">مواصفات الطباعة</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">مواصفات الطباعة</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {Object.entries(order.options)
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
@@ -735,7 +736,7 @@ export function OrderDetailModal({
 
           {/* الكميات والأسعار — قابل للتعديل */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2">الكميات والأسعار</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الكميات والأسعار</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">الصفحات</Label>
@@ -770,7 +771,7 @@ export function OrderDetailModal({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">المجموع</Label>
-                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700 dark:text-amber-400">
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700 dark:text-amber-400 number-highlight-amber">
                   {formatDA(order.total)}
                 </div>
               </div>
@@ -800,7 +801,7 @@ export function OrderDetailModal({
 
           {/* ملاحظات إدارية */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2">ملاحظات إدارية</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">ملاحظات إدارية</h3>
             <Textarea
               value={editAdminNotes}
               onChange={(e) => setEditAdminNotes(e.target.value)}
@@ -811,7 +812,7 @@ export function OrderDetailModal({
 
           {/* الوسوم */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2">الوسوم</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الوسوم</h3>
             <div className="flex flex-wrap gap-2">
               {["عاجل", "VIP", "مرتجع", "خاص"].map((tag) => (
                 <Badge
@@ -833,8 +834,8 @@ export function OrderDetailModal({
           {/* معلومات الملف */}
           {order.fileName && (
             <section>
-              <h3 className="text-sm font-bold text-foreground mb-2">الملف المرفق</h3>
-              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+              <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الملف المرفق</h3>
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3 inset-shadow-card">
                 <FileText className="h-8 w-8 text-amber-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{order.fileName}</div>
@@ -852,13 +853,13 @@ export function OrderDetailModal({
 
           {/* التسليم + الأولوية */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2">التسليم</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">التسليم</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-              <div className="rounded-lg bg-muted/50 border px-3 py-2">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-sky">
                 <div className="text-xs text-muted-foreground">الطريقة</div>
                 <div className="font-medium">{order.delivery.mode === "pickup" ? "استلام من المحل" : "توصيل"}</div>
               </div>
-              <div className="rounded-lg bg-muted/50 border px-3 py-2">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-violet">
                 <div className="text-xs text-muted-foreground">الموعد</div>
                 <div className="font-medium">{order.delivery.date || "—"} (≈{order.estimatedHours} س)</div>
               </div>
@@ -909,7 +910,7 @@ export function OrderDetailModal({
               )}
             </button>
             {showAudit && (
-              <div className="mt-2">
+              <div className="mt-2 scroll-shadow-container smooth-scrollbar">
                 {auditLoading ? (
                   <div className="text-xs text-muted-foreground py-2 text-center">
                     <RefreshCw className="h-3 w-3 animate-spin inline-block ml-1" />
@@ -920,7 +921,7 @@ export function OrderDetailModal({
                     لا يوجد سجل تغييرات
                   </p>
                 ) : (
-                  <div className="max-h-48 overflow-y-auto custom-scroll space-y-1">
+                  <div className="max-h-48 overflow-y-auto smooth-scrollbar space-y-1">
                     {auditLogs.map((log) => {
                       const icon = log.action === "status_change" ? "🔄" : log.action === "edit" ? "✏️" : log.action === "create" ? "➕" : log.action === "delete" ? "🗑️" : "📝";
                       const actionLabel = log.action === "status_change"
@@ -970,11 +971,11 @@ export function OrderDetailModal({
 
           {/* أزرار الحفظ */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs micro-bounce">
               <X className="h-3.5 w-3.5 ml-1" />
               إغلاق
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving} className="text-xs bg-amber-600 hover:bg-amber-700">
+            <Button size="sm" onClick={handleSave} disabled={saving} className="text-xs bg-amber-600 hover:bg-amber-700 ripple-btn micro-bounce">
               <Save className="h-3.5 w-3.5 ml-1" />
               {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
             </Button>

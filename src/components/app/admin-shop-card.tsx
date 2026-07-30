@@ -87,7 +87,7 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
 
   return (
     <Card className={cn(
-      "border shadow-sm transition-all duration-300 overflow-hidden group relative card-hover-interactive",
+      "border shadow-sm transition-all duration-300 overflow-hidden group relative card-hover-interactive card-glow-hover",
       shop.isActive 
         ? "stat-card-emerald border-r-4 border-r-emerald-400"
         : "stat-card-rose border-r-4 border-r-rose-400"
@@ -96,7 +96,7 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
       {rank !== undefined && totalShops && totalShops > 1 && (
         <div className={cn(
           "absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm",
-          rank === 1 && "bg-amber-400 text-amber-900 badge-bounce",
+          rank === 1 && "bg-amber-400 text-amber-900 badge-bounce subtle-float pulse-ring-badge",
           rank === 2 && "bg-slate-300 text-slate-700",
           rank === 3 && "bg-orange-300 text-orange-800",
           rank > 3 && "bg-muted text-muted-foreground"
@@ -108,8 +108,8 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
       <div className="absolute top-2 left-12 z-10">
         <div className={cn(
           "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
-          performanceScore >= 70 ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
-          performanceScore >= 40 ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" :
+          performanceScore >= 70 ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 number-highlight-emerald" :
+          performanceScore >= 40 ? "bg-amber-500/10 text-amber-600 border border-amber-500/20 number-highlight-amber" :
           "bg-muted text-muted-foreground border border-border"
         )}>
           {performanceScore}%
@@ -160,15 +160,15 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
       <CardContent className="px-5 pb-5 space-y-4">
         <div className="grid grid-cols-3 gap-2.5 text-center stagger-grid-3">
           <div className="stat-card-violet rounded-xl p-3 transition-colors">
-            <div className="text-lg font-bold text-foreground count-animate">{shop.orders}</div>
+            <div className="text-lg font-bold text-foreground count-animate number-highlight-violet">{shop.orders}</div>
             <div className="text-xs text-muted-foreground/70">طلبات</div>
           </div>
           <div className="stat-card-emerald rounded-xl p-3 transition-colors">
-            <div className="text-lg font-bold text-emerald-600 count-animate">{formatDA(shop.revenue)}</div>
+            <div className="text-lg font-bold text-emerald-600 count-animate number-highlight-emerald">{formatDA(shop.revenue)}</div>
             <div className="text-xs text-muted-foreground/70">إيرادات</div>
           </div>
           <div className="stat-card-amber rounded-xl p-3 transition-colors">
-            <div className="text-lg font-bold text-amber-600 count-animate">{shop.todayOrders}</div>
+            <div className="text-lg font-bold text-amber-600 count-animate number-highlight-amber">{shop.todayOrders}</div>
             <div className="text-xs text-muted-foreground/70">اليوم</div>
           </div>
         </div>
@@ -212,10 +212,10 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
         <div className="flex flex-wrap gap-2 pt-1">
           <CopyButton text={`${window.location.origin}/s/${shop.slug}`} label="رابط الزبون" />
           <CopyButton text={`${window.location.origin}/s/${shop.slug}?admin=1`} label="رابط الإدارة" />
-          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
+          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce gradient-border-hover" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
             <ExternalLink className="h-3.5 w-3.5" /> فتح الإدارة
           </button>
-          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn" onClick={() => openInNewTab(`/s/${shop.slug}?preview=1`)}>
+          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce gradient-border-hover" onClick={() => openInNewTab(`/s/${shop.slug}?preview=1`)}>
             <Eye className="h-3.5 w-3.5" /> معاينة زبون
           </button>
         </div>
@@ -421,10 +421,10 @@ export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }:
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
+              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
                 <ExternalLink className="h-3.5 w-3.5" /> فتح الإدارة
               </button>
-              <button className="border border-primary/20 text-primary hover:bg-primary/10 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => openInNewTab(`/s/${shop.slug}`)}>
+              <button className="border border-primary/20 text-primary hover:bg-primary/10 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce neon-border-violet" onClick={() => openInNewTab(`/s/${shop.slug}`)}>
                 <Eye className="h-3.5 w-3.5" /> معاينة
               </button>
               <AlertDialog>
