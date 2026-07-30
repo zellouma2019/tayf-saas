@@ -43,17 +43,20 @@ import {
   formatNumber, STATUS_COLORS, STATUS_BORDER_COLORS, STATUS_DOT_COLORS,
   SERVICE_EMOJI, clearSession, setFaviconBadge,
 } from "@/lib/admin-utils";
+import dynamic from "next/dynamic";
 import { LoginGate } from "@/components/app/admin-login-gate";
-import { ShopManageCard } from "@/components/app/admin-shop-card";
-import { CreateShopDialog } from "@/components/app/admin-create-shop";
-import { OverviewTab } from "@/components/app/admin-overview-tab";
-import { SettingsTab } from "@/components/app/admin-settings-tab";
-import { SecurityTab } from "@/components/app/admin-security-tab";
-import { PlatformSettingsTab } from "@/components/app/admin-platform-settings";
 import { AdminErrorBoundary } from "@/components/app/error-boundary";
 import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
 
-const BUILD_HASH = "v5.2-" + process.env.NEXT_PUBLIC_BUILD_HASH || "v5.2";
+// Lazy-loaded tab components — only one tab is visible at a time
+const ShopManageCard = dynamic(() => import("@/components/app/admin-shop-card").then(m => ({ default: m.ShopManageCard })), { ssr: false, loading: () => <div className="h-48 rounded-xl border border-border bg-card animate-pulse" /> });
+const CreateShopDialog = dynamic(() => import("@/components/app/admin-create-shop").then(m => ({ default: m.CreateShopDialog })), { ssr: false });
+const OverviewTab = dynamic(() => import("@/components/app/admin-overview-tab").then(m => ({ default: m.OverviewTab })), { ssr: false, loading: () => <div className="space-y-4"><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{Array.from({length:4}).map((_,i)=><div key={i} className="h-28 rounded-xl border border-border bg-card animate-pulse" />)}</div><div className="h-64 rounded-xl border border-border bg-card animate-pulse" /></div> });
+const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").then(m => ({ default: m.SettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
+const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
+const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
+
+const BUILD_HASH = "v5.3-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -79,6 +82,7 @@ export default function SuperAdminPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState("");
@@ -215,7 +219,7 @@ export default function SuperAdminPage() {
     }
   }, [allOrders]);
 
-  // Keyboard shortcuts: Alt+R = refresh, Alt+1/2/3 = tabs, Ctrl+K = search
+  // Keyboard shortcuts: Alt+R = refresh, Alt+1/2/3 = tabs, Ctrl+K = search, ? = help
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.altKey && e.key === "r") {
@@ -225,15 +229,28 @@ export default function SuperAdminPage() {
       if (e.altKey && e.key === "1") setActiveTab("overview");
       if (e.altKey && e.key === "2") setActiveTab("shops");
       if (e.altKey && e.key === "3") setActiveTab("orders");
+      if (e.altKey && e.key === "4") setActiveTab("settings");
+      if (e.altKey && e.key === "5") setActiveTab("security");
+      if (e.altKey && e.key === "6") setActiveTab("platform");
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
         searchInputRef.current?.focus();
         setSearchOpen(true);
       }
+      if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag !== "INPUT" && tag !== "TEXTAREA") {
+          e.preventDefault();
+          setShowShortcuts(prev => !prev);
+        }
+      }
+      if (e.key === "Escape" && showShortcuts) {
+        setShowShortcuts(false);
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [loadAll]);
+  }, [loadAll, showShortcuts]);
 
   // Close global search dropdown on outside click or Escape
   useEffect(() => {
@@ -812,6 +829,13 @@ export default function SuperAdminPage() {
               آخر تحديث: {lastUpdated}
             </span>
           )}
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground py-2.5 px-1.5 rounded transition-colors"
+            title="اختصارات لوحة المفاتيح (?)"
+          >
+            <Keyboard className="h-3 w-3" />
+          </button>
         </div>
       </div>
 
@@ -1690,6 +1714,37 @@ export default function SuperAdminPage() {
             {safeOrders.filter(o => o.status === "pending").length}
           </span>
         </button>
+      )}
+      {/* Keyboard shortcuts overlay */}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)}>
+          <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 tooltip-fade" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Keyboard className="h-4 w-4 text-primary" />
+                اختصارات لوحة المفاتيح
+              </h3>
+              <button onClick={() => setShowShortcuts(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {[
+                { keys: "Alt + 1–6", desc: "التبديل بين التبويبات" },
+                { keys: "Alt + R", desc: "تحديث البيانات" },
+                { keys: "Ctrl + K", desc: "بحث شامل" },
+                { keys: "Escape", desc: "إغلاق النوافذ" },
+                { keys: "?", desc: "عرض هذا الدليل" },
+              ].map((s) => (
+                <div key={s.keys} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                  <span className="text-sm text-muted-foreground">{s.desc}</span>
+                  <kbd className="inline-flex items-center gap-1 text-[11px] font-mono bg-muted border border-border rounded-md px-2 py-1 text-foreground shadow-sm">{s.keys}</kbd>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground/50 text-center mt-4">اضغط Escape أو ? للإغلاق</p>
+          </div>
+        </div>
       )}
     </div>
     </AdminErrorBoundary>

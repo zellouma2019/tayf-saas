@@ -32485,3 +32485,206 @@ tr:hover .table-cell-actions {
   background: #1a1a2e;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+
+/* ===== v5.3 — Ambient Effects & Interaction Polish ===== */
+
+/* Frosted glass panel */
+.frosted-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.dark .frosted-panel {
+  background: rgba(15, 15, 30, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Soft inner shadow for depth */
+.soft-inset {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+.dark .soft-inset {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+/* Animated dots loading */
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.dot-loading > span:nth-child(1) { animation: dotBounce 1.4s ease-in-out infinite; }
+.dot-loading > span:nth-child(2) { animation: dotBounce 1.4s ease-in-out 0.2s infinite; }
+.dot-loading > span:nth-child(3) { animation: dotBounce 1.4s ease-in-out 0.4s infinite; }
+.dot-loading > span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Smooth number counter transition */
+.number-transition {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Card hover glow on dark mode */
+.dark .card-dark-glow:hover {
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.1), 0 8px 32px rgba(139, 92, 246, 0.08);
+}
+
+/* Ambient background gradient orbs */
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.1); }
+  50% { transform: translate(-10px, 20px) scale(0.95); }
+  75% { transform: translate(-30px, -10px) scale(1.05); }
+}
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.15;
+  animation: orbFloat 20s ease-in-out infinite;
+  pointer-events: none;
+}
+.dark .ambient-orb {
+  opacity: 0.08;
+}
+
+/* Progress bar smooth fill */
+@keyframes progressFill {
+  from { width: 0%; }
+}
+.progress-fill {
+  animation: progressFill 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Skeleton grid pattern */
+@keyframes skeletonGrid {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 20px; }
+}
+.skeleton-grid {
+  background-image: 
+    linear-gradient(rgba(139,92,246,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139,92,246,0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: skeletonGrid 3s linear infinite;
+}
+
+/* Tooltip with arrow */
+.tooltip-arrow::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+.dark .tooltip-arrow::after {
+  border-top-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Tag hover lift effect */
+.tag-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tag-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Animated border bottom for active tabs */
+@keyframes activeTabUnderline {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.active-tab-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  transform-origin: center;
+  animation: activeTabUnderline 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Fade-in-up animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered fade in */
+.stagger-fade > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-fade > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-fade > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-fade > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-fade > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-fade > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-fade > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-fade > *:nth-child(8) { animation-delay: 420ms; }
+
+/* Subtle text glow for headings */
+.text-glow {
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+}
+.dark .text-glow {
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.25);
+}
+
+/* Micro interaction: button press */
+.btn-press {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Glass card with gradient border */
+.glass-gradient-border {
+  position: relative;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.glass-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(236,72,153,0.3), rgba(245,158,11,0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.dark .glass-gradient-border {
+  background: rgba(15, 15, 30, 0.5);
+}
+.dark .glass-gradient-border::before {
+  background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2), rgba(245,158,11,0.2));
+}
+
+/* Responsive text clamp */
+.line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* KBD styling for keyboard shortcut hints */
+kbd {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+}

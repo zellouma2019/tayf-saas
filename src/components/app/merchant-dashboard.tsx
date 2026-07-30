@@ -424,6 +424,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [selectedOrder, setSelectedOrder] = useState<PrintOrderLite | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   // ===== المفضلة والملاحظات =====
   const [favoriteOrders, setFavoriteOrders] = useState<Set<string>>(() => {
@@ -474,7 +475,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [reportTo, setReportTo] = useState<Date>(new Date());
   const [reportLoading, setReportLoading] = useState(false);
 
-  // جلب عدد الطلبات المعلقة
+  // جلب عدد الطلبات المعلقة — SSE with polling fallback
   const fetchPendingCount = useCallback(() => {
     fetch(`/api/orders/pending-count?shopId=${shopId}`)
       .then((r) => r.json())
@@ -484,11 +485,69 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   useEffect(() => {
     fetchPendingCount();
-    pendingIntervalRef.current = setInterval(fetchPendingCount, 30000);
+
+    // Try SSE connection for real-time updates
+    try {
+      const es = new EventSource(`/api/notifications/stream?shopId=${shopId}`);
+      eventSourceRef.current = es;
+
+      es.addEventListener("connected", () => {
+        console.log("[SSE] Connected to notification stream");
+      });
+
+      es.addEventListener("orders", (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === "new_orders" && typeof data.count === "number") {
+            setPendingCount(data.count);
+            // Play notification sound for new orders
+            try {
+              const ctx = new AudioContext();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.frequency.value = 660;
+              osc.type = "sine";
+              gain.gain.setValueAtTime(0.12, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.4);
+            } catch {}
+            toast.success(data.message || "طلب جديد", { duration: 4000 });
+          } else if (data.type === "status_update" && typeof data.count === "number") {
+            setPendingCount(data.count);
+          }
+        } catch {}
+      });
+
+      es.addEventListener("heartbeat", (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (typeof data.count === "number") setPendingCount(data.count);
+        } catch {}
+      });
+
+      es.onerror = () => {
+        console.log("[SSE] Connection failed, falling back to polling");
+        es.close();
+        eventSourceRef.current = null;
+        // Fallback to polling
+        pendingIntervalRef.current = setInterval(fetchPendingCount, 30000);
+      };
+    } catch {
+      // SSE not supported — use polling
+      pendingIntervalRef.current = setInterval(fetchPendingCount, 30000);
+    }
+
     return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
       if (pendingIntervalRef.current) clearInterval(pendingIntervalRef.current);
     };
-  }, [fetchPendingCount]);
+  }, [fetchPendingCount, shopId]);
 
   // فلترة + ترتيب الطلبات بالذاكرة
   const orders = useMemo(() => {
