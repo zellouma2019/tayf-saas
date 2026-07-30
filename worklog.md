@@ -10664,3 +10664,113 @@ Task: Advanced Search Dialog, Revenue Donut Chart, Performance Metrics, Bulk Sel
 3. لوحة تحكم الزبون (/customer)
 4. تصدير PDF للتقرير المالي
 5. إشعارات فورية (WebSocket/SSE)
+---
+Task ID: R79
+Agent: Main Agent (Cron Round 79)
+Task: Activity Feed Timeline, Shop Performance Rings, Quick Duplicate, FAB Enhancements, CSS v7.5, v7.6
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 11a5e3b)
+- ✅ إصدار v7.6
+- ⚠️ Vercel 404 مستمر — لا يوجد VERCEL_TOKEN
+
+## نتائج QA
+- ✅ البناء نظيف: 0 أخطاء، 29.8 ثانية ترجمة
+- ✅ 42 صفحة ثابتة مُولّدة
+- ⚠️ لا يمكن اختبار بصري عبر agent-browser (عزل الشبكة)
+
+## الميزات الجديدة
+
+### 1. خلاصة آخر الطلبات (Activity Feed Timeline)
+- يعرض آخر 15 طلب مرتبة زمنياً (الأحدث أولاً)
+- لكل طلب: نقطة ملونة حسب الحالة + أيقونة الحالة + اسم الزبون
+- معلومات ثانوية: اسم المتجر + نوع الخدمة + المبلغ (د.ج)
+- التوقيت بتنسيق عربي
+- حركة دخول انزلاقية متتابعة (40ms stagger)
+- قابل للتمرير (حد أقصى 320px)
+
+### 2. حلقات أداء المتاجر (Shop Performance Rings)
+- حتى 8 متاجر مع حلقة SVG دائرية لكل متجر
+- تعرض معدل التسليم (delivered / total)
+- ألوان ديناميكية: أخضر ≥80% / ذهبي ≥50% / أحمر <50%
+- معلومات: اسم المتجر + عدد الطلبات + الإيرادات
+- حركة دخول تصاعدية مع تأثير hover
+
+### 3. تكرار الطلب السريع (Quick Duplicate)
+- إجراء جديد في قائمة الإجراءات السريعة (⋯)
+- ينسخ بيانات الطلب (اسم الزبون، الهاتف، الخدمة، المتجر، المبلغ) كـ JSON للحافظة
+- أيقونة Repeat بنفسجي
+
+### 4. أزرار FAB جديدة
+- زر "تقرير المتاجر" (سماوي → أزرق) مع أيقونة PieChart
+- زر "اختصارات لوحة المفاتيح" (نيلي → بنفسجي) مع أيقونة Keyboard
+- استخدام نمط fab-action-item-v2 الجديد مع تدرج وتأثيرات محسّنة
+
+### 5. تحسين شريط توزيع الحالات
+- إضافة hover-lift-4 + card-shine-v2 للبطاقة
+
+## تحسينات التصميم (CSS v7.5)
+**الملف:** `src/app/globals.css` — ~508 سطر جديد (إجمالي ~42,619 سطر)
+
+### 35+ مجموعة أصناف CSS جديدة:
+1. `.activity-feed-*` — خلاصة النشاطات (widget, count, list, item, dot, emoji, text, meta, revenue, time, note)
+2. `@keyframes feedItemSlide` — حركة دخول عناصر الخلاصة
+3. `@keyframes feedDotPulse` — نبض نقطة الحالة
+4. `.shop-rings-*` — حلقات الأداء (widget, grid, item, svg, progress, text)
+5. `@keyframes ringItemFade` — حركة دخول حلقة المتجر
+6. `.glass-card-v9` — زجاجية v9 مع dark mode
+7. `.neon-glow-cyan/.orange` — توهج نيون سماوي/برتقالي
+8. `.gradient-text-amber/.emerald` — نص متدرج ذهبي/زمكري
+9. `.hover-glow-cyan` — توهج سماوي عند التمرير
+10. `.shimmer-v6` — لمعان v6
+11. `.skeleton-v8` — هيكل تحميل v8
+12. `.hover-underline-3` — خط سفلي متحرك v3
+13. `.tag-chip-cyan` — رقاقة وسم سماوية
+14. `.pulse-soft-v3` — نبض ناعم v3
+15. `.scrollbar-v5` — شريط تمرير محسّن v5
+16. `.focus-ring-v4` — حلقة تركيز v4
+17. `.hover-scale-bounce-v2` — تكبير مرتد v2
+18. `.breathe-border-v2` — حدود تتنفس v2
+19. `.card-shine-v2` — توهج ضوئي v2
+20. `.hover-lift-4` — رفع مستوى رابع
+21. `.gradient-border-animated-v2` — حدود متدرجة متحركة v2
+22. `.stat-mini-card` — بطاقة إحصائية مصغرة محسّنة
+23. `.stagger-grid-20` — شبكة دخول متتابع 20ms
+24. `.line-clamp-4` — قص 4 أسطر
+25. `.badge-bounce-in-v2` — دخول شارة مرتد v2
+26. `.bg-dot-grid-v2` — خلفية نقطية متحركة
+27. `.row-hover-glow-v3` — توهج صف v3
+28. `.separator-gradient-v2` — فاصل متدرج v2
+29. `.fab-action-item-v2` — زر FAB محسّن
+30. `.quick-duplicate-flash` — وميض التكرار
+31. Responsive + reduced-motion دعم كامل
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | خلاصة الطلبات + حلقات الأداء + تكرار + FAB + v7.6 (4,060 سطر) |
+| `src/app/globals.css` | +508 سطر CSS v7.5 (42,619 سطر) |
+| `src/lib/admin-types.ts` | إضافة notes/statusNotes اختيارية لـ GlobalOrder |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.6 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.6 |
+
+## الإحصائيات
+- صفحة رئيسية: 4,060 سطر (+141 من R78)
+- CSS: 42,619 سطر (+508 من R78)
+- CSS versions: v6.1 → v7.5 (15 إصدارات CSS)
+- الميزات المضافة هذا الجول: 5
+- CSS classes جديدة هذا الجول: 35+
+- إجمالي مكونات الوظائف: 175+
+
+## Unresolved Issues
+1. **Vercel 404** — مستمر (يحتاج VERCEL_TOKEN)
+2. **agent-browser** — لا يصل لـ localhost (عزل الشبكة)
+
+## Priority Recommendations for R80
+1. إصلاح Vercel (VERCEL_TOKEN) — أعلى أولوية
+2. سحب وإفلات كانبان (dnd-kit)
+3. لوحة تحكم الزبون (/customer)
+4. تصدير PDF للتقرير المالي
+5. إشعارات فورية (WebSocket/SSE)
+6. تحسين تجربة الموبايل
