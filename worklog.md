@@ -10563,3 +10563,104 @@ Task: Notes Panel, Quick Stats Bar, Tab Badges, CSS v7.3, v7.4
 2. سحب وإفلات كانبان (dnd-kit)
 3. لوحة تحكم الزبون (/customer)
 4. تصدير PDF
+---
+Task ID: R78
+Agent: Main Agent (Cron Round 78)
+Task: Advanced Search Dialog, Revenue Donut Chart, Performance Metrics, Bulk Selection, CSS v7.4, v7.5
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 00012e2)
+- ✅ إصدار v7.5
+- ⚠️ Vercel 404 مستمر
+
+## الميزات الجديدة
+
+### 1. حوار البحث المتقدم (Advanced Search Dialog)
+- يفتح بـ Ctrl+K (محسّن من شريط البحث البسيط)
+- واجهة منبثقة كاملة مع: إدخال بحث + فلاتر الحالة + نتائج تفاعلية
+- بحث شامل: بالزبون، الهاتف، الخدمة، الرقم المرجعي، المتجر، المبلغ
+- فلاتر سريعة: الكل / معلق / طباعة / جاهز / مُسلّم
+- تنقل بلوحة المفاتيح: ↑↓ للتنقل، Enter للاختيار، Esc للإغلاق
+- عرض: اسم الزبون + المتجر + وسم الخدمة + المبلغ + شارة الحالة
+- حركات دخول سلسة + خلفية ضبابية
+
+### 2. مخطط دائري للإيرادات (Revenue Donut Chart)
+- رسم SVG مخصص (بدون مكتبة خارجية) في نظرة عامة
+- يعرض توزيع الإيرادات حسب المتجر (أعلى 6 متاجر)
+- أقسام ملونة تفاعلية مع تأثير hover (تكبير + شفافية)
+- وسيلة إيضاح على الجانب: اسم المتجر + النسبة + المبلغ
+- المركز: إجمالي الإيرادات + "د.ج"
+- حركة دخول متتابعة للأقسام
+
+### 3. بطاقات مؤشرات الأداء (Performance Metrics Cards)
+- 4 بطاقات في نظرة عامة: وقت المعالجة / الطلبات النشطة / نسبة العاجل / إنتاجية اليوم
+- وقت المعالجة: متوسط الوقت من الإنشاء للتسليم (دقائق/ساعات)
+- الطلبات النشطة: عدد + عدد المعلق
+- نسبة العاجل: طلبات >= 5000 د.ج كنسبة مئوية
+- إنتاجية: طلبات/ساعة عمل لليوم
+- شريط تقدم ملون في الأسفل لكل بطاقة
+- حركات: دخول متتابع + نبض الرقم + hover lift
+
+### 4. شريط أدوات التحديد المتعدد (Bulk Selection Toolbar)
+- خانات اختيار في رأس وجسم جدول الطلبات
+- عند تحديد طلب واحد أو أكثر: يظهر شريط أدوات
+- إجراءات: تحديد الكل / تغيير الحالة (قائمة منسدلة) / تطبيق / إلغاء التحديد
+- تغيير الحالة الجماعي عبر API موجود `/api/orders/bulk-status`
+- تمييز الصفوف المحددة بلون خفيف
+- إحصائيات: عدد الطلبات المحددة
+
+## تحسينات التصميم (CSS v7.4)
+**الملف:** `src/app/globals.css` — ~444 سطر جديد (إجمالي ~42,111 سطر)
+
+### 40+ مجموعة أصناف CSS جديدة:
+1. `.search-dialog-*` — حوار البحث (overlay, container, input, filters, results, footer)
+2. `@keyframes searchOverlayIn/searchContainerIn/searchResultIn` — حركات البحث
+3. `.donut-chart-*` — المخطط الدائري (container, svg, segment, legend, dot, name, pct, value)
+4. `@keyframes donutSegmentIn` — حركة دخول الأقسام
+5. `.perf-metrics-grid/.perf-metric-card` — بطاقات الأداء
+6. `.perf-metric-content/.value/.bar-*` — محتوى البطاقة + شريط التقدم
+7. `@keyframes perfCardIn/perfBarFill/metricNumberPop` — حركات البطاقات
+8. `.bulk-select-*` — شريط التحديد المتعدد (toolbar, info, actions, btn variants)
+9. `.bulk-row-checkbox` — خانات الجدول
+10. `.row-selected::before` — تمييز الصف المحدد
+11. `.glass-card-v8` — زجاجية v8 مع dark mode
+12. `.neon-glow-amber` — توهج نيون ذهبي
+13. `.gradient-text-cyan` — نص متدرج سماوي
+14. `.hover-glow-amber` — توهج ذهبي عند التمرير
+15. `.shimmer-v5` — لمعان v5
+16. `.skeleton-v7` — هيكل تحميل v7
+17. `.hover-underline-2` — خط سفلي متحرك v2
+18. `.pulse-soft-v2` — نبض ناعم v2
+19. `.tag-chip-cyan` — رقاقة وسم سماوية
+20. `.scrollbar-v4` — شريط تمرير محسّن v4
+21. `.focus-ring-v3` — حلقة تركيز v3
+22. `@keyframes searchPulseGlow` — نبض توهج البحث
+23. Responsive + reduced-motion دعم كامل
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | بحث متقدم + مخطط دائري + مؤشرات أداء + تحديد متعدد + v7.5 (3,919 سطر) |
+| `src/app/globals.css` | +444 سطر CSS v7.4 (42,111 سطر) |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.5 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.5 |
+
+## الإحصائيات
+- صفحة رئيسية: 3,919 سطر (+309 من R77)
+- CSS: 42,111 سطر (+444 من R77)
+- CSS versions: v6.1 → v7.4 (14 إصدارات CSS)
+- الميزات المضافة هذا الجول: 4
+- CSS classes جديدة هذا الجول: 40+
+- إجمالي مكونات الوظائف: 170+
+
+## Unresolved Issues
+1. **Vercel 404** — مستمر (يحتاج VERCEL_TOKEN)
+2. **agent-browser** — لا يصل لـ localhost (عزل الشبكة)
+
+## Priority Recommendations for R79
+1. إصلاح Vercel (VERCEL_TOKEN) — أعلى أولوية
+2. سحب وإفلات كانبان (dnd-kit)
+3. لوحة تحكم الزبون (/customer)
+4. تصدير PDF للتقرير المالي
+5. إشعارات فورية (WebSocket/SSE)
