@@ -8722,3 +8722,123 @@ Task: Assess, QA test, add features (duplicate detection, revenue fix, enhanced 
 5. Implement advanced analytics with time-series charts
 6. Add order scheduling system (set delivery date/time)
 7. Implement multi-language support for merchant dashboard
+
+---
+Task ID: R59
+Agent: Main Agent (Cron Round 59)
+Task: Assess, QA test, enhance order detail, add PDF report + WhatsApp integration, deploy v5.5
+
+## Current Status Assessment
+- Build: ✅ Clean — 42 pages, 63 API routes (new pdf-report), 0 errors
+- Live site (Vercel):
+  - ✅ v5.4 confirmed live with all R58 features working
+  - ✅ Revenue shows 29,819 د.ج (Fallback 2b working)
+  - ✅ Duplicate detection: 5 orders flagged with ⚠️ مكرر badges
+  - ✅ Stats ribbon with 39 orders, 6 shops, status counts
+  - ✅ Customer pages working (al-riyan shop)
+  - ✅ Admin login, all tabs functional
+- QA result: No bugs found. All R58 features verified working on live.
+
+## New Features
+
+### 1. Enhanced Order Detail Modal
+**File:** `src/app/page.tsx`
+- Added status change dropdown directly in the modal (no need to close and change in table)
+- Added print invoice button (links to `/api/orders/{id}/invoice`)
+- Added WhatsApp quick-contact button (generates `wa.me/213{phone}` link)
+- Added duplicate warning badge in modal header
+- Added time-ago indicator (`getTimeAgoStatic` helper) next to order reference
+- Added external link and copy buttons with `press-feedback` styling
+
+### 2. Enhanced Quick View Dialog
+**File:** `src/app/page.tsx`
+- Added status change dropdown in quick view (previously required opening full detail)
+- Added WhatsApp button for quick customer contact
+- "تفاصيل كاملة" button renamed to "المزيد" with press feedback
+
+### 3. PDF Stats Report API
+**File:** `src/app/api/admin/pdf-report/route.ts` (NEW)
+- GET `/api/admin/pdf-report?days=7` — generates printable HTML report
+- Includes: summary stats, status distribution, shop performance, latest 50 orders
+- Professional print-ready HTML with CSS styles
+- Auto-triggers browser print dialog on load
+- Supports configurable date range via `days` parameter
+- Admin-auth protected
+
+### 4. getTimeAgoStatic Helper
+**File:** `src/app/page.tsx`
+- Non-reactive time ago function for use in modals (avoids re-render overhead)
+- Returns Arabic localized strings: "الآن", "منذ 5 دقيقة", "منذ 3 ساعة", "منذ 2 يوم"
+
+## Styling Improvements (CSS v5.5)
+
+**File:** `src/app/globals.css` — 20+ new animations and utility classes (~340 lines added)
+
+### New Animations:
+- `morphBlob` — Advanced organic shape morphing with 4 keyframe stages
+- `bounceDown` — Bouncing arrow indicator for scroll prompts
+- `typewriter` + `blink-caret` — Typewriter text effect with blinking cursor
+- `countUpFade` — Fade-up animation for number displays
+- `textShimmerAdvanced` — Gradient text shimmer using currentColor
+- `cardEnter` — Scale+translate entrance for cards
+- `rotatingGradient` — Conic gradient background rotation
+- `pulseRingOuter` — Expanding ring pulse effect
+- `labelFloat` — Floating label entrance
+- `badgeCount` — Spring-bounce counter animation
+- `dialogFadeIn` — Scale-up fade entrance for dialogs
+
+### New Utility Classes:
+- `.morph-blob-advanced` — 12s organic blob animation
+- `.glass-card-inner-glow` — Glass card with rotating conic glow overlay
+- `.bounce-indicator` — Bouncing scroll indicator
+- `.typewriter-text` — Typewriter text with blinking caret
+- `.gradient-border-hover` — Gradient border on hover
+- `.count-up-fade` — Fade-up number animation
+- `.text-shimmer-advanced` — Gradient text shimmer (currentColor)
+- `.card-enter-anim` — Card entrance with scale+translate
+- `.rotating-gradient-bg` — Rotating gradient background
+- `.tooltip-arrow-bottom` — Tooltip with CSS triangle arrow
+- `.pulse-ring-outer` — Expanding ring pulse
+- `.neon-text-glow` — Subtle purple text glow (light + dark)
+- `.card-hover-spotlight` — Lift + shadow on hover
+- `.accordion-content` — Smooth max-height accordion transition
+- `.status-indicator-glow` — Active/inactive/warning glow dots
+- `.label-float-in` — Floating label entrance
+- `.status-transition-smooth` — 0.5s color transitions
+- `.table-enhanced` — Alternating row backgrounds
+- `.safe-container` — Responsive container with safe-area padding
+- `.focus-within-group` — Focus ring on focus-within
+- `.badge-counter-animated` — Spring bounce counter
+- `.skeleton-table-row` — Grid skeleton for table rows
+- `.nav-underline-active` — Gradient underline for active nav
+- `.hover-tooltip` — CSS-only hover tooltip
+- `.dialog-fade-in` — Dialog entrance animation
+
+## Files Modified
+| File | Change |
+|--------|--------|
+| `src/app/page.tsx` | Enhanced order detail, quick view, added getTimeAgoStatic, v5.5 |
+| `src/app/api/admin/pdf-report/route.ts` | NEW: PDF stats report endpoint |
+| `src/app/globals.css` | +340 lines: CSS v5.5 |
+| `src/components/app/error-boundary.tsx` | Version bump to v5.5 |
+
+## Verification
+- ✅ `npx next build` — 42 static pages, 63 API routes, 0 errors
+- ✅ Pushed to GitHub: commit `10b600b`
+- ✅ Vercel deploy triggered: job `LWCCxa9FUrAWmI1kkYdl` (PENDING)
+
+## Unresolved Issues
+1. 🔴 Vercel→GitHub connection broken — deploy hook triggers build from stale source. Needs manual Vercel dashboard fix.
+2. 🟡 UPLOADTHING_TOKEN missing — file upload not functional
+3. 🟢 SSE polling interval (15s) — could be reduced with Turso triggers
+4. 🟢 No real-time order tracking page for customers
+5. 🟢 No order scheduling system (set delivery date/time)
+
+## Priority Recommendations for Next Phase
+1. **CRITICAL:** Reconnect Vercel→GitHub in Vercel dashboard (manual only)
+2. Add real-time order tracking page for customers (QR code + status updates)
+3. Implement WhatsApp Business API webhook for merchant notifications
+4. Add order scheduling system (set delivery date/time)
+5. Implement multi-language support for merchant dashboard
+6. Add AI-powered order categorization and priority scoring
+7. Add expense tracking with budget alerts
