@@ -58,7 +58,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.0-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.1-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -1732,18 +1732,21 @@ export default function SuperAdminPage() {
                           key={order.id}
                           onClick={() => setSelectedOrder(order)}
                           className={cn(
-                            "rounded-lg border border-border/50 bg-background/50 p-2.5 cursor-pointer transition-all hover:border-primary/30 hover:bg-primary/[0.02] press-scale",
+                            "rounded-lg border border-border/50 bg-background/50 p-2.5 cursor-pointer transition-all hover:border-primary/30 hover:bg-primary/[0.02] press-scale glass-card-animated",
                             selectedIds.has(order.id) && "ring-1 ring-primary/50 bg-primary/[0.04]"
                           )}
                         >
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-mono text-muted-foreground">{order.reference || order.id.substring(0, 8)}</span>
-                            {order.total ? <span className="text-xs font-bold revenue-gold">{order.total.toLocaleString("ar-DZ")} د.ج</span> : null}
+                            <span className="text-xs font-mono text-muted-foreground hover-underline-animated">{order.reference || order.id.substring(0, 8)}</span>
+                            <div className="flex items-center gap-1.5">
+                              {order.total >= 3000 && <span className="tag-urgent">عاجل</span>}
+                              {order.total ? <span className="text-xs font-bold revenue-gold">{order.total.toLocaleString("ar-DZ")} د.ج</span> : null}
+                            </div>
                           </div>
                           <div className="text-sm font-medium truncate">{order.customer?.name || "—"}</div>
                           <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
                             <span className="truncate max-w-[100px]">{order.serviceName || order.serviceType || ""}</span>
-                            <span dir="ltr">{new Date(order.createdAt).toLocaleDateString("ar-DZ", {day: "numeric", month: "short"})}</span>
+                            <span className={cn("status-badge-icon", order.status)} dir="ltr">{STATUS_META[order.status as keyof typeof STATUS_META]?.label}</span>
                           </div>
                         </div>
                       ))}

@@ -37,10 +37,10 @@ export function LiveActivityFeed({ items }: { items: LiveActivityItem[] }) {
       {/* Header with live dot */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <h3 className="text-sm font-bold text-foreground">مباشر</h3>
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse status-dot-ring emerald" />
+          <h3 className="text-sm font-bold text-foreground section-title-underline">مباشر</h3>
         </div>
-        <span className="text-[10px] text-muted-foreground">{items.length} نشاط</span>
+        <span className="text-[10px] text-muted-foreground badge-glow-emerald px-2 py-0.5 rounded-full">{items.length} نشاط</span>
       </div>
 
       {/* Activity items */}
@@ -54,8 +54,8 @@ export function LiveActivityFeed({ items }: { items: LiveActivityItem[] }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05, type: "spring", stiffness: 300 }}
               className={cn(
-                "flex items-center gap-3 p-2.5 rounded-lg border transition-colors",
-                idx === 0 ? "border-primary/20 bg-primary/[0.03] dark:border-primary/10" : "border-border bg-card hover:bg-muted/50"
+                "flex items-center gap-3 p-2.5 rounded-lg border transition-all press-scale",
+                idx === 0 ? "border-primary/20 bg-primary/[0.03] dark:border-primary/10 shadow-sm" : "border-border bg-card hover:bg-muted/50"
               )}
             >
               <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", config.bg, config.color)}>
@@ -64,12 +64,12 @@ export function LiveActivityFeed({ items }: { items: LiveActivityItem[] }) {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">{item.message}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {item.shopName && <span className="text-[10px] text-muted-foreground">{item.shopName}</span>}
+                  {item.shopName && <span className="text-[10px] text-muted-foreground hover-underline-animated cursor-default">{item.shopName}</span>}
                   <span className="text-[10px] text-muted-foreground/60">{item.time}</span>
                 </div>
               </div>
               {idx === 0 && (
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               )}
             </motion.div>
           );

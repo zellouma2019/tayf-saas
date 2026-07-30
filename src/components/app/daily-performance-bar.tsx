@@ -115,10 +115,10 @@ export function DailyPerformanceBar({ orders }: DailyPerformanceBarProps) {
           <span className={cn(
             "text-[10px] font-bold px-2 py-0.5 rounded-full",
             stats.completionRate >= 50
-              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+              ? "badge-glow-emerald bg-emerald-500/10 text-emerald-600"
               : stats.completionRate >= 25
-                ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                : "bg-muted text-muted-foreground border border-border"
+                ? "badge-glow-amber bg-amber-500/10 text-amber-600"
+                : "bg-muted text-muted-foreground"
           )}>
             {stats.completionRate}% إنجاز
           </span>

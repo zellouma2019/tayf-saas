@@ -500,7 +500,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
 
       {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
-        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-primary hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile stat-mesh-card card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-primary hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
@@ -511,7 +511,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           <SparklineMini values={[20, 23, 25, 28, 31, 35, 38]} color="#d4a853" />
           {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
         </div>
-        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile stat-mesh-card emerald card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
@@ -521,7 +521,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           <SparklineMini values={[17200, 17800, 17400, 17900, 17100, 17600, 18000]} color="#10b981" />
         </div>
-        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-amber-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile stat-mesh-card amber card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-amber-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
@@ -531,7 +531,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
           </div>
           <SparklineMini values={[0, 1, 0, 0, 3, 0, 2]} color="#f59e0b" />
         </div>
-        <div className="stat-tile card-glow card-hover-glow metric-glow group card-rotate-3d card-spotlight border-l-[3px] border-l-violet-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <div className="stat-tile stat-mesh-card violet card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-violet-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number">

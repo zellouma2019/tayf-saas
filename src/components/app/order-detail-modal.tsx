@@ -475,7 +475,7 @@ export function OrderDetailModal({
           <OrderStatusTimeline status={order.status} />
           {/* شريط الحالة + أزرار التواصل السريع */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-xs px-2.5 py-1 rounded-full border ${meta.bg} status-badge-pop`} key={order.status}>
+            <span className={cn('status-badge-icon', order.status)} key={order.status}>
               {meta.emoji} {meta.label}
             </span>
             {availableStatuses
@@ -800,14 +800,27 @@ export function OrderDetailModal({
           </section>
 
           {/* ملاحظات إدارية */}
-          <section>
-            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">ملاحظات إدارية</h3>
+          <section className="glass-card-animated p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
+                <StickyNote className="h-4 w-4 text-violet-500" />
+                ملاحظات إدارية
+              </h3>
+              <span className="text-[10px] text-muted-foreground tabular-nums">{editAdminNotes.length} حرف</span>
+            </div>
             <Textarea
               value={editAdminNotes}
               onChange={(e) => setEditAdminNotes(e.target.value)}
-              className="text-sm min-h-[60px]"
-              placeholder="أضف ملاحظة..."
+              className="text-sm min-h-[80px] notes-textarea"
+              placeholder="أضف ملاحظة داخلية عن هذا الطلب... مثال: طلب خاص، تسعير مخصص، ملاحظات للتسليم"
             />
+            {editAdminNotes.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="h-px flex-1 bg-gradient-to-l from-violet-300/50 to-transparent" />
+                <span className="text-[10px] text-violet-500 font-medium">ملاحظة محفوظة محلياً</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-violet-300/50 to-transparent" />
+              </div>
+            )}
           </section>
 
           {/* الوسوم */}
