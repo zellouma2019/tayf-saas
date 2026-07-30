@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { Lightbulb, Clock, Users, Zap, TrendingUp, AlertTriangle, Award, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDA, getTimeAgo } from "@/lib/admin-utils";
+import { formatDA } from "@/lib/print-config";
+import { getTimeAgo } from "@/lib/admin-utils";
 import type { GlobalOrder, ShopStat } from "@/lib/admin-types";
 
 interface QuickInsightsWidgetProps {

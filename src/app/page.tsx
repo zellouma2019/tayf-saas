@@ -57,7 +57,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.8-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v5.9-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -78,13 +78,13 @@ function DataHealthBanner({ message, status, onRetry }: { message: string; statu
   return (
     <div className={cn(
       "px-4 py-2 border-b text-xs flex items-center justify-center gap-2",
-      exiting ? "health-banner-exit" : "health-banner anim-cinematic-in",
+      exiting ? "health-banner-exit" : "health-banner anim-cinematic-in breathing-border",
       status === 'warning' && "bg-amber-500/5 border-amber-500/20 text-amber-600 dark:text-amber-400",
       status === 'error' && "bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400"
     )}>
       <span className={cn("w-1.5 h-1.5 rounded-full", status === 'warning' && "bg-amber-500 status-dot-ping", status === 'error' && "bg-red-500 status-dot-ping")} />
       <span>{message}</span>
-      <button onClick={onRetry} className="hover:bg-white/10 rounded-md px-2 py-0.5 transition-colors flex items-center gap-1 press-feedback">
+      <button onClick={onRetry} className="hover:bg-white/10 rounded-md px-2 py-0.5 transition-colors flex items-center gap-1 micro-bounce press-feedback">
         <RefreshCw className="h-3 w-3" />
         إعادة المحاولة
       </button>
@@ -739,7 +739,7 @@ export default function SuperAdminPage() {
             </div>
           </div>
           {/* Global Search */}
-          <div className="relative max-w-xs flex-1 min-w-[180px]">
+          <div className="focus-glow-card relative max-w-xs flex-1 min-w-[180px]">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               ref={searchInputRef}
@@ -852,7 +852,7 @@ export default function SuperAdminPage() {
             {pendingCount > 0 && (
               <button className="relative p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors bell-urgent">
                 <Bell className="h-4 w-4" />
-                <span className="absolute -top-0.5 left-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
+                <span className="absolute -top-0.5 left-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse notif-badge-pulse">
                   {pendingCount}
                 </span>
               </button>
@@ -923,7 +923,7 @@ export default function SuperAdminPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "pill-tab relative",
+                "pill-tab hover-underline-grow relative",
                 activeTab === tab && "active",
                 tab === "orders" && safeOrders.length > 0 && "flex items-center gap-1.5"
               )}
@@ -958,6 +958,7 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
+      <div className="gradient-line-animated" />
       {/* Data health banner — auto-dismiss after 8 seconds */}
       {!isInitialLoading && dataHealth.status !== 'healthy' && (
         <DataHealthBanner message={dataHealth.message} status={dataHealth.status} onRetry={() => loadAll(false)} />
@@ -969,43 +970,43 @@ export default function SuperAdminPage() {
           <div className="flex items-center gap-4 text-xs min-w-max">
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <div className="w-2 h-2 rounded-full bg-emerald-500 status-dot-ping" />
-              <span className="text-foreground/80 font-semibold tabular-data">{globalStats.totalOrders}</span>
+              <span className="text-foreground/80 font-semibold tabular-data number-highlight-violet">{globalStats.totalOrders}</span>
               <span className="text-muted-foreground/60">طلب</span>
             </div>
             <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <DollarSign className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-foreground/80 font-semibold tabular-data">{formatNumber(globalStats.totalRevenue)}</span>
+              <span className="text-foreground/80 font-semibold tabular-data number-highlight-emerald">{formatNumber(globalStats.totalRevenue)}</span>
               <span className="text-muted-foreground/60">د.ج</span>
             </div>
             <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <Store className="h-3.5 w-3.5 text-violet-500" />
-              <span className="text-foreground/80 font-semibold tabular-data">{globalStats.shopCount}</span>
+              <span className="text-foreground/80 font-semibold tabular-data number-highlight-violet">{globalStats.shopCount}</span>
               <span className="text-muted-foreground/60">متجر</span>
             </div>
             <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-amber-500 status-dot-ping" />
-              <span className="text-amber-600 dark:text-amber-400 font-semibold tabular-data">{globalStats.statusCounts?.pending || 0}</span>
+              <span className="text-amber-600 dark:text-amber-400 font-semibold tabular-data number-highlight-amber">{globalStats.statusCounts?.pending || 0}</span>
               <span className="text-muted-foreground/60">معلّق</span>
             </div>
             <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-blue-600 dark:text-blue-400 font-semibold tabular-data">{globalStats.statusCounts?.printing || 0}</span>
+              <span className="text-blue-600 dark:text-blue-400 font-semibold tabular-data number-highlight-blue">{globalStats.statusCounts?.printing || 0}</span>
               <span className="text-muted-foreground/60">طباعة</span>
             </div>
             <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-teal-500" />
-              <span className="text-teal-600 dark:text-teal-400 font-semibold tabular-data">{globalStats.statusCounts?.ready || 0}</span>
+              <span className="text-teal-600 dark:text-teal-400 font-semibold tabular-data number-highlight-teal">{globalStats.statusCounts?.ready || 0}</span>
               <span className="text-muted-foreground/60">جاهز</span>
             </div>
             <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
             <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-green-600 dark:text-green-400 font-semibold tabular-data">{globalStats.statusCounts?.delivered || 0}</span>
+              <span className="text-green-600 dark:text-green-400 font-semibold tabular-data number-highlight-green">{globalStats.statusCounts?.delivered || 0}</span>
               <span className="text-muted-foreground/60">تم التسليم</span>
             </div>
           </div>
@@ -1013,7 +1014,7 @@ export default function SuperAdminPage() {
       )}
 
       {/* Main content */}
-      <main className="flex-1 p-4 space-y-4 tab-content-enter" key={activeTab}>
+      <main className="container-responsive flex-1 p-4 space-y-4 tab-content-enter" key={activeTab}>
         {loadError && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm text-destructive flex items-center gap-2">
             <Shield className="h-4 w-4 shrink-0" />
@@ -1390,7 +1391,7 @@ export default function SuperAdminPage() {
                   URL.revokeObjectURL(url);
                   toast.success(`تم تصدير ${filteredOrders.length} طلب بنجاح`);
                 }}
-                className="h-10 px-3 rounded-lg border border-border bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm flex items-center gap-1.5 transition-colors press-feedback"
+                className="h-10 px-3 rounded-lg border border-border bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm flex items-center gap-1.5 transition-colors micro-bounce press-feedback"
                 title="تصدير CSV مفصّل"
               >
                 <Download className="h-4 w-4" />
@@ -1863,7 +1864,7 @@ export default function SuperAdminPage() {
                   href={`/api/orders/${selectedOrder.id}/invoice`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 micro-bounce press-feedback"
                   title="طباعة الفاتورة"
                 >
                   <Download className="h-4 w-4" />
@@ -1872,7 +1873,7 @@ export default function SuperAdminPage() {
                   href={selectedOrder.customer?.phone ? `https://wa.me/213${selectedOrder.customer.phone.replace(/^0/, "")}` : "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-10 px-3 rounded-lg border border-border hover:bg-green-50 dark:hover:bg-green-950/20 text-green-600 dark:text-green-400 text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-green-50 dark:hover:bg-green-950/20 text-green-600 dark:text-green-400 text-sm transition-colors flex items-center gap-1.5 micro-bounce press-feedback"
                   title="تواصل عبر واتساب"
                 >
                   <MessageCircle className="h-4 w-4" />
@@ -1881,14 +1882,14 @@ export default function SuperAdminPage() {
                   href={`/s/${selectedOrder.shopSlug || "default"}?admin=1`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 micro-bounce press-feedback"
                   title="فتح في لوحة المتجر"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </a>
                 <button
                   onClick={() => { navigator.clipboard.writeText(selectedOrder.reference || selectedOrder.id); toast.success("تم نسخ معرف الطلب"); }}
-                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 micro-bounce press-feedback"
                   title="نسخ المعرف"
                 >
                   <Copy className="h-4 w-4" />
@@ -1970,7 +1971,7 @@ export default function SuperAdminPage() {
                 </a>
                 <button
                   onClick={() => { setQuickViewOrder(null); setSelectedOrder(quickViewOrder); }}
-                  className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1 press-feedback"
+                  className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1 micro-bounce press-feedback"
                 >
                   <Eye className="h-3 w-3" />
                   المزيد
@@ -2010,7 +2011,7 @@ export default function SuperAdminPage() {
           title={`${safeOrders.filter(o => o.status === "pending").length} طلب معلق`}
         >
           <Clock className="h-6 w-6 group-hover:animate-pulse" />
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 badge-pulse">
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 badge-pulse notif-badge-pulse">
             {safeOrders.filter(o => o.status === "pending").length}
           </span>
         </button>

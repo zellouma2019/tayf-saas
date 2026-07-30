@@ -67,7 +67,7 @@ function OrderStatusTimeline({ status }: { status: string }) {
   const currentIndex = TIMELINE_STATUSES.findIndex((s) => s.key === status);
 
   return (
-    <div className="rounded-xl bg-muted/30 dark:bg-muted/20 border border-border/50 p-4">
+    <div className="rounded-xl bg-muted/30 dark:bg-muted/20 border border-border/50 p-4 glass-card-v4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
         <Clock className="h-3.5 w-3.5" />
         <span className="font-medium">مسار الطلب</span>
@@ -503,7 +503,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 ripple-btn micro-bounce"
                     onClick={() => {
                       const phone = order.customer.phone.replace(/[^0-9]/g, '');
                       const msg = encodeURIComponent(`مرحباً ${order.customer.name || ''}! طلبك ${order.reference} الآن: ${STATUS_META[order.status].label}. ${order.status === 'ready' ? 'يمكنك الاستلام من المطبعة.' : ''}`);
@@ -516,7 +516,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30"
+                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce"
                     onClick={() => {
                       window.open(`tel:${order.customer.phone}`, '_self');
                     }}

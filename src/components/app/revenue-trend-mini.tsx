@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDA } from "@/lib/admin-utils";
+import { formatDA } from "@/lib/print-config";
 import type { GlobalOrder } from "@/lib/admin-types";
 
 interface RevenueTrendMiniProps {
