@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy, Check, Printer, Clock, PackageCheck, Truck, XCircle } from "lucide-react";
+import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy, Check, Printer, Clock, PackageCheck, Truck, XCircle, CalendarClock, StickyNote, AlertCircle, Timer, Zap } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -289,6 +289,15 @@ export function OrderDetailModal({
   const [editAdminNotes, setEditAdminNotes] = useState("");
   const [editTags, setEditTags] = useState<string[]>([]);
 
+  // ملاحظات الحالة (تظهر عند تغيير الحالة)
+  const [statusNote, setStatusNote] = useState("");
+  const [showStatusNoteInput, setShowStatusNoteInput] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+
+  // موعد التسليم المجدول
+  const [scheduledDelivery, setScheduledDelivery] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
+
   // تعبئة الحقول عند فتح النافذة أو تغيير الطلب
   useEffect(() => {
     if (!open || !order) return;
@@ -310,6 +319,7 @@ export function OrderDetailModal({
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) {
+      cancelStatusChange();
       onClose();
     }
   }
@@ -367,7 +377,52 @@ export function OrderDetailModal({
 
   function handleStatusChange(status: string) {
     if (!order) return;
-    onStatusChange(order, status);
+    // Always ask for a note before changing status
+    setPendingStatus(status);
+    setShowStatusNoteInput(true);
+    setStatusNote("");
+  }
+
+  async function confirmStatusChange() {
+    if (!order || !pendingStatus) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = { status: pendingStatus };
+      if (statusNote.trim()) {
+        payload.statusNotes = statusNote.trim();
+      }
+      // Include scheduled delivery if set
+      if (scheduledDelivery) {
+        const existingDelivery = order.delivery || {};
+        const updatedDelivery = { ...existingDelivery, scheduledDate: scheduledDelivery, scheduledTime: scheduledTime || null };
+        payload.delivery = updatedDelivery;
+      }
+
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "فشل تحديث الحالة");
+      }
+      toast.success(`تم تغيير الحالة إلى: ${STATUS_META[pendingStatus]?.label || pendingStatus}`);
+      setShowStatusNoteInput(false);
+      setPendingStatus(null);
+      setStatusNote("");
+      onStatusChange(order, pendingStatus);
+    } catch (e) {
+      toast.error("خطأ في تحديث الحالة", { description: (e as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function cancelStatusChange() {
+    setShowStatusNoteInput(false);
+    setPendingStatus(null);
+    setStatusNote("");
   }
 
   if (!order) return null;
@@ -435,7 +490,13 @@ export function OrderDetailModal({
                   {STATUS_META[s].label}
                 </Button>
               ))}
-            {/* أزرار التواصل السريع */}
+            {/* موعد التسليم المجدول */}
+            {scheduledDelivery && (
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border border-sky-200 dark:border-sky-800/40 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-300">
+                <CalendarClock className="h-3 w-3" />
+                {scheduledDelivery}{scheduledTime ? ` ${scheduledTime}` : ''}
+              </span>
+            )}
             <div className="mr-auto flex items-center gap-1.5">
               {order.customer?.phone && (
                 <>
@@ -478,6 +539,78 @@ export function OrderDetailModal({
               )}
             </div>
           </div>
+
+          {/* ===== ملاحظة تغيير الحالة (تظهر عند اختيار حالة جديدة) ===== */}
+          {showStatusNoteInput && pendingStatus && (
+            <div className="rounded-xl border-2 border-violet-300 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-950/20 p-4 space-y-3 anim-pop-in">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-violet-100 dark:bg-violet-900/50">
+                  <StickyNote className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">تغيير الحالة إلى: {STATUS_META[pendingStatus]?.label}</h4>
+                  <p className="text-xs text-muted-foreground">أضف ملاحظة اختيارية قبل التأكيد</p>
+                </div>
+              </div>
+              <Textarea
+                value={statusNote}
+                onChange={(e) => setStatusNote(e.target.value)}
+                className="text-sm min-h-[50px] border-violet-200 dark:border-violet-800/50 focus-visible:ring-violet-400/30"
+                placeholder="مثال: تم الاتفاق مع الزبون على تسعير خاص..."
+                autoFocus
+              />
+              {/* موعد التسليم المجدول */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  <span>موعد التسليم:</span>
+                </div>
+                <Input
+                  type="date"
+                  value={scheduledDelivery}
+                  onChange={(e) => setScheduledDelivery(e.target.value)}
+                  className="h-8 text-xs w-auto"
+                />
+                <Input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="h-8 text-xs w-auto"
+                  placeholder="--:--"
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <Button size="sm" variant="ghost" className="text-xs" onClick={cancelStatusChange}>
+                  <X className="h-3 w-3 ml-1" />
+                  إلغاء
+                </Button>
+                <Button
+                  size="sm"
+                  className="text-xs bg-violet-600 hover:bg-violet-700 gap-1"
+                  onClick={confirmStatusChange}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  تأكيد التغيير
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* عرض ملاحظة الحالة الحالية */}
+          {order.statusNotes && !showStatusNoteInput && (
+            <div className="flex items-start gap-2 rounded-lg border border-violet-100 dark:border-violet-900/50 bg-violet-50/30 dark:bg-violet-950/10 p-2.5 anim-fade-in">
+              <StickyNote className="h-4 w-4 text-violet-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-violet-700 dark:text-violet-300 font-medium">ملاحظة الحالة</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{order.statusNotes}</p>
+              </div>
+            </div>
+          )}
 
           {/* معلومات العميل — قابل للتعديل */}
           <section>
@@ -717,10 +850,10 @@ export function OrderDetailModal({
             </section>
           )}
 
-          {/* التسليم */}
+          {/* التسليم + الأولوية */}
           <section>
             <h3 className="text-sm font-bold text-foreground mb-2">التسليم</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
               <div className="rounded-lg bg-muted/50 border px-3 py-2">
                 <div className="text-xs text-muted-foreground">الطريقة</div>
                 <div className="font-medium">{order.delivery.mode === "pickup" ? "استلام من المحل" : "توصيل"}</div>
@@ -729,7 +862,31 @@ export function OrderDetailModal({
                 <div className="text-xs text-muted-foreground">الموعد</div>
                 <div className="font-medium">{order.delivery.date || "—"} (≈{order.estimatedHours} س)</div>
               </div>
+              <div className="rounded-lg bg-muted/50 border px-3 py-2">
+                <div className="text-xs text-muted-foreground">الأولوية</div>
+                <div className="font-medium flex items-center gap-1">
+                  {order.total >= 5000 ? (
+                    <><Zap className="h-3.5 w-3.5 text-rose-500" /><span className="text-rose-600 dark:text-rose-400">عاجل</span></>
+                  ) : order.total >= 2000 ? (
+                    <><Timer className="h-3.5 w-3.5 text-amber-500" /><span className="text-amber-600 dark:text-amber-400">متوسط</span></>
+                  ) : (
+                    <><Clock className="h-3.5 w-3.5 text-emerald-500" /><span className="text-emerald-600 dark:text-emerald-400">عادي</span></>
+                  )}
+                </div>
+              </div>
             </div>
+            {/* موعد التسليم المجدول */}
+            {order.delivery?.scheduledDate && (
+              <div className="mt-2 rounded-lg border border-sky-200 dark:border-sky-800/40 bg-sky-50/50 dark:bg-sky-950/20 px-3 py-2 flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
+                <div>
+                  <div className="text-xs text-muted-foreground">موعد التسليم المجدول</div>
+                  <div className="text-sm font-semibold text-sky-700 dark:text-sky-300">
+                    {order.delivery.scheduledDate}{order.delivery.scheduledTime ? ` — ${order.delivery.scheduledTime}` : ''}
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* سجل التغييرات */}

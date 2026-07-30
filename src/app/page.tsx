@@ -57,7 +57,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.7-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v5.8-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -78,7 +78,7 @@ function DataHealthBanner({ message, status, onRetry }: { message: string; statu
   return (
     <div className={cn(
       "px-4 py-2 border-b text-xs flex items-center justify-center gap-2",
-      exiting ? "health-banner-exit" : "health-banner",
+      exiting ? "health-banner-exit" : "health-banner anim-cinematic-in",
       status === 'warning' && "bg-amber-500/5 border-amber-500/20 text-amber-600 dark:text-amber-400",
       status === 'error' && "bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400"
     )}>
@@ -1552,9 +1552,14 @@ export default function SuperAdminPage() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium tabular-nums text-sm">
-                          <span className={cn(order.total > 0 && "revenue-gold")}>
-                            {order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn(order.total > 0 && "revenue-gold")}>
+                              {order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}
+                            </span>
+                            {order.total >= 5000 && (
+                              <span className="priority-badge-urgent text-[9px] px-1.5 py-0.5 rounded-md font-bold" title="أولوية عاجلة">عاجل</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           <div className="flex flex-col gap-0.5">
