@@ -38518,3 +38518,492 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* End CSS v6.4 */
+
+/* ===== CSS v6.5 — R70 Styling Enhancements ===== */
+
+/* 1. Revenue Timeline Cards */
+.revenue-timeline-row {
+  display: grid;
+  gap: 0.5rem;
+}
+.revenue-timeline-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.revenue-timeline-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--timeline-accent, #f59e0b);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.2s ease;
+}
+.revenue-timeline-card:hover::before {
+  width: 5px;
+}
+.revenue-timeline-today {
+  --timeline-accent: #f59e0b;
+}
+.revenue-timeline-today:hover {
+  border-color: oklch(0.75 0.15 75 / 0.4);
+  box-shadow: 0 0 20px oklch(0.75 0.15 75 / 0.1);
+}
+.revenue-timeline-week {
+  --timeline-accent: #3b82f6;
+}
+.revenue-timeline-week:hover {
+  border-color: oklch(0.6 0.15 260 / 0.4);
+  box-shadow: 0 0 20px oklch(0.6 0.15 260 / 0.1);
+}
+.revenue-timeline-month {
+  --timeline-accent: #8b5cf6;
+}
+.revenue-timeline-month:hover {
+  border-color: oklch(0.55 0.2 290 / 0.4);
+  box-shadow: 0 0 20px oklch(0.55 0.2 290 / 0.1);
+}
+
+/* 2. Pending Revenue Alert */
+.revenue-pending-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid oklch(0.75 0.15 75 / 0.25);
+  background: linear-gradient(135deg, oklch(0.95 0.02 75 / 0.5), oklch(0.97 0.01 75 / 0.3));
+  animation: alertPulse 3s ease-in-out infinite;
+}
+@keyframes alertPulse {
+  0%, 100% { border-color: oklch(0.75 0.15 75 / 0.25); }
+  50% { border-color: oklch(0.75 0.15 75 / 0.5); }
+}
+
+/* 3. Status Distribution Bar */
+.status-dist-bar-container {
+  transition: all 0.3s ease;
+}
+.status-dist-bar-container:hover {
+  border-color: oklch(0.6 0.1 260 / 0.25);
+}
+.status-dist-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: oklch(0.95 0.005 260);
+  border: 1px solid oklch(0.9 0.01 260 / 0.5);
+}
+.status-dist-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 4px;
+  position: relative;
+  border: none;
+  padding: 0;
+  color: white;
+  font-size: 0;
+}
+.status-dist-segment:first-child {
+  border-radius: 7px 0 0 7px;
+}
+.status-dist-segment:last-child {
+  border-radius: 0 7px 7px 0;
+}
+.status-dist-segment:hover {
+  filter: brightness(1.15);
+  transform: scaleY(1.15);
+  z-index: 1;
+}
+.status-dist-label {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  letter-spacing: 0.02em;
+}
+.status-dist-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: oklch(0.5 0 0 / 0.7);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+.status-dist-legend:hover {
+  background: oklch(0.95 0.005 260);
+  color: oklch(0.3 0 0);
+}
+.status-dist-legend-active {
+  background: oklch(0.93 0.02 260);
+  color: oklch(0.3 0.1 260);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px oklch(0.6 0.1 260 / 0.2);
+}
+
+/* 4. Loyalty Badge Inline */
+.loyalty-badge-inline {
+  background: oklch(0.95 0.01 80 / 0.6);
+  border: 1px solid oklch(0.8 0.05 80 / 0.3);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.loyalty-badge-inline:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px oklch(0.8 0.05 80 / 0.2);
+}
+.loyalty-badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: oklch(0.7 0.08 80 / 0.15);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 5. Search Input Enhanced */
+.search-input-enhanced {
+  padding-left: 4.5rem !important;
+  transition: all 0.25s ease;
+}
+.search-input-enhanced:focus {
+  box-shadow: 0 0 0 2px oklch(0.6 0.15 260 / 0.2), 0 0 20px oklch(0.6 0.15 260 / 0.08);
+  border-color: oklch(0.6 0.15 260 / 0.4);
+}
+.search-clear-btn {
+  animation: fadeScaleIn 0.15s ease;
+}
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.search-result-count {
+  transition: opacity 0.2s ease;
+}
+
+/* 6. Bulk Action Bar Enhanced */
+.bulk-action-bar {
+  animation: slideDownBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(10px);
+}
+@keyframes slideDownBounce {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 7. Order Row Enhancements */
+.order-row-accent {
+  position: relative;
+}
+.order-row-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, oklch(0.6 0.15 260), transparent);
+  transition: width 0.3s ease;
+}
+.order-row-accent:hover::after {
+  width: 100%;
+}
+
+/* 8. Data Row Hover Micro-interaction */
+.data-row-hover {
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.data-row-hover:hover {
+  transform: translateX(-1px);
+}
+
+/* 9. Table Row Enter Animation */
+.table-row-enter {
+  animation: rowSlideIn 0.3s ease both;
+}
+@keyframes rowSlideIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 10. Status Colors for Table Rows */
+.status-pending { --status-row-color: oklch(0.7 0.15 60); }
+.status-confirmed { --status-row-color: oklch(0.65 0.15 250); }
+.status-printing { --status-row-color: oklch(0.6 0.18 260); }
+.status-ready { --status-row-color: oklch(0.6 0.15 155); }
+.status-delivered { --status-row-color: oklch(0.55 0.2 150); }
+.status-cancelled { --status-row-color: oklch(0.6 0.1 25); }
+
+/* 11. Card Hover Glow V2 */
+.card-hover-glow {
+  transition: all 0.3s ease;
+  position: relative;
+}
+.card-hover-glow:hover {
+  border-color: oklch(0.6 0.1 260 / 0.25);
+  box-shadow: 0 4px 24px oklch(0.6 0.1 260 / 0.06), 0 1px 3px oklch(0 0 0 / 0.04);
+}
+
+/* 12. Widget Fade In */
+.widget-fade-in {
+  animation: widgetFade 0.4s ease both;
+}
+@keyframes widgetFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 13. Micro Bounce for Buttons */
+.micro-bounce {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.micro-bounce:active {
+  transform: scale(0.94);
+}
+
+/* 14. Press Scale */
+.press-scale {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* 15. Number Highlight */
+.number-highlight-emerald {
+  color: oklch(0.55 0.15 160);
+  text-shadow: 0 0 20px oklch(0.55 0.15 160 / 0.15);
+}
+
+/* 16. Order Status Pill Animated */
+.status-pill-animated {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.status-pill-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.15), transparent);
+  transition: right 0.5s ease;
+}
+.status-pill-animated:hover::before {
+  right: 100%;
+}
+
+/* 17. Status Badge Icon */
+.status-badge-icon {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.status-badge-icon.pending { background: oklch(0.92 0.04 60 / 0.5); color: oklch(0.55 0.15 60); }
+.status-badge-icon.confirmed { background: oklch(0.92 0.03 250 / 0.5); color: oklch(0.55 0.12 250); }
+.status-badge-icon.printing { background: oklch(0.92 0.04 260 / 0.5); color: oklch(0.5 0.15 260); }
+.status-badge-icon.ready { background: oklch(0.92 0.03 155 / 0.5); color: oklch(0.5 0.15 155); }
+.status-badge-icon.delivered { background: oklch(0.92 0.04 150 / 0.5); color: oklch(0.45 0.15 150); }
+.status-badge-icon.cancelled { background: oklch(0.92 0.03 25 / 0.5); color: oklch(0.55 0.12 25); }
+
+/* 18. Order Timeline Styles */
+.order-timeline {
+  direction: ltr;
+}
+.order-timeline-dot {
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+.order-timeline-current {
+  animation: timelinePulse 2s ease-in-out infinite;
+}
+@keyframes timelinePulse {
+  0%, 100% { box-shadow: 0 0 0 4px oklch(0.6 0.15 260 / 0.15); }
+  50% { box-shadow: 0 0 0 8px oklch(0.6 0.15 260 / 0.05); }
+}
+.order-timeline-line {
+  transition: background-color 0.5s ease;
+}
+
+/* 19. Info Cell Hover */
+.info-cell {
+  transition: background-color 0.2s ease;
+}
+.info-cell:hover {
+  background-color: oklch(0.95 0.01 260 / 0.8) !important;
+}
+
+/* 20. Dialog Slide In */
+.dialog-slide-in {
+  animation: dialogSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes dialogSlide {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 21. Quick View Dialog */
+.quick-view-dialog {
+  max-width: 320px;
+}
+
+/* 22. Chip Dismiss Button */
+.chip-dismiss-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+}
+.chip-dismiss-btn:hover {
+  background: oklch(0.7 0.1 0 / 0.1);
+}
+
+/* 23. Order Count Badge */
+.order-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  background: oklch(0.6 0.15 260 / 0.1);
+  color: oklch(0.4 0.1 260);
+}
+
+/* 24. Overflow Marquee */
+.overflow-marquee {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 25. Sortable Table Header */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.sortable-th:hover {
+  color: oklch(0.3 0 0);
+  background: oklch(0.95 0.01 260 / 0.5);
+}
+.sortable-th .sort-icon {
+  font-size: 8px;
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
+.sortable-th.active .sort-icon {
+  opacity: 1;
+  color: oklch(0.5 0.15 260);
+}
+.sortable-th.active.desc .sort-icon {
+  color: oklch(0.6 0.15 260);
+}
+
+/* 26. Notif Badge Pulse */
+.notif-badge-pulse {
+  animation: notifPulse 2s ease-in-out infinite;
+}
+@keyframes notifPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* 27. Skeleton Wave */
+.skeleton-wave {
+  background: linear-gradient(90deg, oklch(0.93 0 0) 25%, oklch(0.96 0 0) 50%, oklch(0.93 0 0) 75%);
+  background-size: 200% 100%;
+  animation: skeletonWave 1.5s ease-in-out infinite;
+}
+@keyframes skeletonWave {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 28. Shimmer Card */
+.shimmer-card {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.05), transparent);
+  animation: shimmerSlide 2s ease-in-out infinite;
+}
+@keyframes shimmerSlide {
+  0% { right: -100%; }
+  100% { right: 100%; }
+}
+
+/* 29. Health Banner */
+.health-banner {
+  transition: all 0.3s ease;
+}
+.health-banner-exit {
+  animation: bannerExit 0.3s ease forwards;
+}
+@keyframes bannerExit {
+  to { opacity: 0; transform: translateY(-100%); max-height: 0; padding: 0; margin: 0; border: none; overflow: hidden; }
+}
+.breathing-border {
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+ 0%, 100% { border-color: oklch(0.7 0.1 80 / 0.3); }
+  50% { border-color: oklch(0.7 0.1 80 / 0.6); }
+}
+
+/* 30. Perf Indicator */
+.perf-indicator {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+.perf-good {
+  color: oklch(0.55 0.15 155);
+}
+.perf-warn {
+  color: oklch(0.65 0.12 60);
+}
+
+/* End CSS v6.5 */

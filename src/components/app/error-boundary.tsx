@@ -101,7 +101,7 @@ export class AdminErrorBoundary extends React.Component<Props, State> {
 
             {/* Version info */}
             <p className="text-center text-[10px] text-muted-foreground/40">
-              طيف v6.4 — منصة إدارة المطابع الذكية
+              طيف v6.5 — منصة إدارة المطابع الذكية
             </p>
           </div>
         </div>

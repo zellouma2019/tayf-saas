@@ -59,7 +59,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.4-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.5-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -1371,6 +1371,50 @@ export default function SuperAdminPage() {
               </div>
             )}
 
+            {/* Status Distribution Bar */}
+            <div className="rounded-xl border border-border/60 bg-card/80 p-3 status-dist-bar-container">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  توزيع الحالات
+                </span>
+                <span className="text-[10px] text-muted-foreground/60">{safeOrders.length} طلب إجمالي</span>
+              </div>
+              <div className="status-dist-bar">
+                {Object.entries(STATUS_META).filter(([k]) => k !== 'cancelled').map(([key, meta]) => {
+                  const count = safeOrders.filter(o => o.status === key).length;
+                  const pct = safeOrders.length > 0 ? (count / safeOrders.length * 100) : 0;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setStatusFilter(key)}
+                      className="status-dist-segment"
+                      style={{ width: `${pct}%`, backgroundColor: meta.color }}
+                      title={`${meta.label}: ${count} (${pct.toFixed(1)}%)`}
+                    >
+                      {pct > 8 && <span className="status-dist-label">{meta.emoji} {count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                {Object.entries(STATUS_META).filter(([k]) => k !== 'cancelled').map(([key, meta]) => {
+                  const count = safeOrders.filter(o => o.status === key).length;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setStatusFilter(statusFilter === key ? 'all' : key)}
+                      className={cn("flex items-center gap-1 text-[10px] transition-colors status-dist-legend", statusFilter === key && "status-dist-legend-active")}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
+                      {meta.label}
+                      <span className="tabular-nums font-medium">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Activity Panel + Filters Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
             <div className="space-y-4">
@@ -1738,12 +1782,14 @@ export default function SuperAdminPage() {
                           </button>
                         </TableCell>
                         <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             {(() => {
                               const loyalty = getLoyaltyTier(order.customer?.phone || order.customer?.name || '');
+                              const custData = customerLoyalty.get(order.customer?.phone || order.customer?.name || '');
                               return loyalty.tier ? (
-                                <span className={cn("text-xs tooltip-top", loyalty.color)} data-tooltip={`عميل ${loyalty.tier}`}>
-                                  {loyalty.icon}
+                                <span className={cn("inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium loyalty-badge-inline", loyalty.color)} title={`عميل ${loyalty.tier} • ${custData?.orderCount || 0} طلب • ${(custData?.totalSpend || 0).toLocaleString("ar-DZ")} د.ج`}>
+                                  {loyalty.icon} {loyalty.tier}
+                                  <span className="loyalty-badge-count">{custData?.orderCount || 0}</span>
                                 </span>
                               ) : null;
                             })()}
@@ -2112,7 +2158,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50 tabular-data">
-                v5.7
+                {BUILD_HASH}
               </span>
             )}
             {refreshing ? (

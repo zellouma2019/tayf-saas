@@ -9707,3 +9707,115 @@ Task: Order cards view, CSS v6.4, enhanced styling, deploy
 4. إضافة إشعار صوتي عند وصول طلب جديد
 5. إضافة ميزة طباعة فاتورة من عرض البطاقات
 6. لوحة تحكم الزبون (صفحة /customer)
+
+---
+Task ID: R70
+Agent: Main Agent (Cron Round 70)
+Task: Revenue timeline, status distribution bar, enhanced loyalty, search improvements, CSS v6.5, deploy
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم النشر على Vercel (deploy job LFvHSpn6DotGrS4B3dTg)
+- ✅ إصدار v6.5
+- ✅ لا أخطاء بناء
+- ⚠️ الموقع الحي قد يُظهر إصدار قديم بسبب مشكلة Vercel stale build
+
+## الإصلاحات
+
+### 1. أيقونة الطباعة (confirmed) مفقودة من bulk-status API
+- **المشكلة**: VALID_STATUSES لا يحتوي "confirmed" مما يمنع تغيير الحالة الجماعي لمؤكد
+- **الحل**: إضافة "confirmed" لـ VALID_STATUSES
+- **الملف**: `src/app/api/orders/bulk-status/route.ts`
+
+### 2. رقم الإصدار في الفوتر عالق على v5.7
+- **المشكلة**: الفوتر يعرض "v5.7" بدلاً من الإصدار الحالي
+- **الحل**: استبدال النص الثابت بـ `{BUILD_HASH}` المتغير الديناميكي
+- **الملف**: `src/app/page.tsx` (سطر ~2117)
+
+## الميزات الجديدة
+
+### 1. ويدجت خط زمني للإيرادات (Revenue Timeline Widget)
+- 3 بطاقات: إيرادات اليوم / الأسبوع / الشهر
+- كل بطاقة تعرض: المبلغ بالدج، عدد الطلبات، عدد التسليمات (لليوم)
+- شريط ملون على اليمين لكل بطاقة (أصفر/أزرق/بنفسجي)
+- تأثير hover: توسيع الشريط + توهج لوني
+
+### 2. تنبيه الإيرادات المعلقة (Pending Revenue Alert)
+- شريط تنبيه يظهر عند وجود طلبات معلقة
+- يعرض المبلغ الإجمالي المعلق + عدد الطلبات
+- زر "عرض ←" للانتقال السريع لفلتر المعلق
+- حدود نابض متحركة (alertPulse animation)
+
+### 3. شريط توزيع الحالات (Status Distribution Bar)
+- شريط أفقي ملون يُمثل توزيع الطلبات على الحالات
+- كل شريحة قابلة للنقر لتصفية الحالة
+- تلميح يعرض: اسم الحالة، العدد، النسبة المئوية
+- وسائل إيضاح أسفله: نقطة ملونة + اسم + عدد
+- النقر على وسيلة إيضاح يبدّل الفلتر (toggle)
+- تأثير hover: سطوع + تكبير عمودي
+
+### 4. شارة الولاء المحسّنة (Enhanced Loyalty Badge)
+- بدلاً من أيقونة فقط: الآن شارة مستديرة تحتوي (أيقونة + اسم المستوى + عدد الطلبات)
+- تلميح عند التمرير يعرض: المستوى، عدد الطلبات، الإنفاق الإجمالي
+- تأثير hover: تكبير + ظل
+
+### 5. بحث مُحسّن (Enhanced Search)
+- حقل البحث يبحث الآن: الاسم، الهاتف، الرقم المرجعي، اسم الخدمة
+- زر مسح (X) يظهر عند وجود نص بحث
+- عداد النتائج يظهر على يسار حقل البحث
+- تأثير focus: ظل مزدوج + حدود ملونة
+- placeholder مُحدّث: "بحث بالاسم، الهاتف، الرقم المرجعي أو الخدمة..."
+
+## تحسينات التصميم (CSS v6.5)
+**الملف:** `src/app/globals.css` — ~490 سطر جديد (إجمالي ~39,010 سطر)
+
+### 30 مجموعة أصناف CSS جديدة:
+1. `.revenue-timeline-*` — بطاقات خط زمني مع شريط ملون جانبي
+2. `.revenue-pending-alert` + `@keyframes alertPulse` — تنبيه نابض
+3. `.status-dist-bar` + `.segment` + `.label` + `.legend` — شريط توزيع تفاعلي
+4. `.loyalty-badge-inline` + `.loyalty-badge-count` — شارة ولاء مع عداد
+5. `.search-input-enhanced` + `.search-clear-btn` + `.search-result-count` — بحث محسّن
+6. `.bulk-action-bar` + `@keyframes slideDownBounce` — شريط إجراءات جماعي
+7. `.order-row-accent` + `::after` — تدرج سفلي عند التمرير
+8. `.data-row-hover` — انزياح أفقي دقيق عند التمرير
+9. `.table-row-enter` + `@keyframes rowSlideIn` — حركة دخول الصفوف
+10. `.status-*` — 6 متغيرات لون حالة CSS
+11. `.card-hover-glow` — توهج حدود عند التمرير
+12. `.widget-fade-in` + `@keyframes widgetFade` — دخول تدريجي
+13. `.micro-bounce` — ارتداد دقيق عند الضغط
+14. `.press-scale` — تصغير عند الضغط
+15. `.number-highlight-emerald` — توهج أخضر للأرقام
+16. `.status-pill-animated` + `::before` — لمعان متحرك
+17. `.status-badge-icon` + 6 ألوان — شارات حالات ملونة
+18. `.order-timeline-*` + `@keyframes timelinePulse` — مسار زمني نابض
+19. `.info-cell` — خلايا معلومات تفاعلية
+20. `.dialog-slide-in` + `@keyframes dialogSlide` — حركة نوافذ
+21. `.quick-view-dialog` — عرض سريع مضغوط
+22. `.chip-dismiss-btn` — زر إزالة رقاقة
+23. `.order-count-badge` — شارة عداد الطلبات
+24. `.overflow-marquee` — نص متجاوز مع حذف
+25. `.sortable-th` + `.sort-icon` — رأس جدول قابل للترتيب
+26. `.notif-badge-pulse` + `@keyframes notifPulse` — شارة إشعار نابضة
+27. `.skeleton-wave` + `@keyframes skeletonWave` — هيكل تحميل متحرك
+28. `.shimmer-card` + `@keyframes shimmerSlide` — لمعان البطاقة
+29. `.health-banner` + `.breathing-border` + `@keyframes bannerExit` — بانر صحي
+30. `.perf-indicator` + `.perf-good/.perf-warn` — مؤشر الأداء
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | ويدجت الإيرادات + توزيع الحالات + بحث محسّن + شارة ولاء + إصلاح الفوتر + v6.5 |
+| `src/app/globals.css` | +490 سطر CSS v6.5 |
+| `src/app/api/orders/bulk-status/route.ts` | إضافة confirmed للقائمة |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى v6.5 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى v6.5 |
+
+## التوصيات للمرحلة القادمة
+1. إضافة سحب وإفلات في كانبان (dnd-kit)
+2. إضافة عرض تقويمي للطلبات
+3. تحسين تجربة الموبايل (تحميل أسرع)
+4. إضافة إشعار صوتي عند وصول طلب جديد
+5. لوحة تحكم الزبون (صفحة /customer)
+6. إصلاح مشكلة Vercel stale deploy (الموقع الحي لا يُحدّث)
+7. إضافة تصدير PDF للتقرير المالي
+8. إضافة Dashboard widget للمتجر (أداء كل متجر على حدة)
