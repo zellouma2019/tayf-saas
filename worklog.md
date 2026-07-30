@@ -9819,3 +9819,88 @@ Task: Revenue timeline, status distribution bar, enhanced loyalty, search improv
 6. إصلاح مشكلة Vercel stale deploy (الموقع الحي لا يُحدّث)
 7. إضافة تصدير PDF للتقرير المالي
 8. إضافة Dashboard widget للمتجر (أداء كل متجر على حدة)
+
+---
+Task ID: R71
+Agent: Main Agent (Cron Round 71)
+Task: Order stats summary, shop performance widget, CSS v6.6, deploy
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم النشر على Vercel (deploy job AaYUgFflr6bP6e1QylHW)
+- ✅ إصدار v6.6
+- ✅ لا أخطاء بناء
+- ✅ QA على الموقع الحي: لا أخطاء JavaScript، جميع الصفحات تعرض
+- ⚠️ الموقع الحي أظهر إصدار قديم (R70 لم يُنشر بعد) — مشكلة Vercel stale build متكررة
+
+## نتائج QA (تم التحقق عبر agent-browser)
+| الاختبار | النتيجة |
+|---------|----------|
+| تحميل الصفحة الرئيسية | ✅ يعمل (40 طلب، 20,311 د.ج، 6 متاجر) |
+| تبويب الطلبات | ✅ 20 طلب معروض |
+| لا أخطاء JavaScript | ✅ |
+| الفوتر يعرض الإصدار | ✅ |
+
+## الميزات الجديدة
+
+### 1. ملخص إحصائيات الطلبات (Order Statistics Summary)
+- 4 بطاقات مصغرة في تبويب الطلبات:
+  - **متوسط قيمة الطلب** — المبلغ المتوسط لكل طلب بالدج
+  - **معدل الإنجاز** — نسبة الطلبات المسلمة من الإجمالي
+  - **طلبات اليوم** — عدد الطلبات الجديدة اليوم
+  - **أعلى طلب** — قيمة أعلى طلب واحد
+- كل بطاقة بأيقونة ملونة + حركة دخول متتابعة (stagger)
+- تأثير hover: حدود + ظل
+
+### 2. جدول أداء المتاجر (Shop Performance Mini-Table)
+- يعرض كل متجر مع:
+  - ترتيب حسب الإيرادات (الذهبي/الفضي/البنفسجي للمراكز الثلاثة)
+  - اسم المتجر + الإيرادات بالدج
+  - شريط تقدم ملون (نسبة من أعلى إيراد)
+  - عدد الطلبات + نسبة الإنجاز
+  - شارة "معلق" للمتاجر ذات طلبات معلقة
+- شريط التقدم مع تأثير لمعان متحرك (barShimmer)
+- حركة دخول انزلاقية لكل صف
+
+## تحسينات التصميم (CSS v6.6)
+**الملف:** `src/app/globals.css` — ~295 سطر جديد (إجمالي ~39,305 سطر)
+
+### 20 مجموعة أصناف CSS جديدة:
+1. `.stat-mini-card` + `@keyframes statMiniEnter` — بطاقات إحصائية متحركة
+2. `.shop-perf-container` — حاوية أداء المتاجر
+3. `.shop-perf-row` + `@keyframes shopRowSlide` — صفوف أداء انزلاقية
+4. `.shop-perf-rank` — ترتيب ملوّن (ذهبي/فضي/بنفسجي)
+5. `.shop-perf-bar-bg/.fill` + `@keyframes barShimmer` — شريط تقدم مع لمعان
+6. `.hover-lift-2` — رفع مستوى ثاني
+7. `.glass-card-v3` — بطاقة زجاجية محسّنة
+8. `.gradient-text-primary/gold` — نص متدرج
+9. `.animated-border` + `@property --border-angle` — حدود دوّارة
+10. `.pulse-ring` + `@keyframes pulseRing` — حلقة نبضية
+11. `.fade-in-stagger` + `@keyframes fadeStagger` — دخول متتابع
+12. `.hover-scale-glow` — تكبير مع توهج
+13. `.text-gradient-underline` — خط سفلي متدرج عند التمرير
+14. `.tabular-data` — أرقام جدولية
+15. `.dot-grid-bg` — خلفية شبكة نقطية
+16. `.neon-glow-blue/emerald/amber` — 3 توهجات نيون
+17. `.card-depth-stack` — تأثير عمق مكدّس
+18. `.typing-cursor` + `@keyframes cursorBlink` — مؤشر كتابة
+19. `.ripple-effect` — تأثير موجة عند النقر
+20. `.floating-label-group` — حقول إدخال بتسمية عائمة
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | إحصائيات الطلبات + أداء المتاجر + v6.6 |
+| `src/app/globals.css` | +295 سطر CSS v6.6 |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى v6.6 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى v6.6 |
+
+## التوصيات للمرحلة القادمة
+1. إضافة سحب وإفلات في كانبان (dnd-kit)
+2. إضافة عرض تقويمي للطلبات
+3. إصلاح مشكلة Vercel stale deploy بشكل جذري
+4. إضافة تصدير PDF للتقرير المالي
+5. لوحة تحكم الزبون (صفحة /customer)
+6. إضافة إشعار صوتي عند وصول طلب جديد
+7. تحسين تجربة الموبايل (تحميل أسرع)
+8. إضافة ميزة التعليقات على الطلبات

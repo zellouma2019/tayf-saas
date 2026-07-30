@@ -59,7 +59,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v6.5-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.6-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -1414,6 +1414,82 @@ export default function SuperAdminPage() {
                 })}
               </div>
             </div>
+
+            {/* Order Statistics Summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {(() => {
+                const totalRev = safeOrders.reduce((s,o) => s + (o.total||0), 0);
+                const avgOrder = safeOrders.length > 0 ? totalRev / safeOrders.length : 0;
+                const completed = safeOrders.filter(o => o.status === 'delivered').length;
+                const completionRate = safeOrders.length > 0 ? (completed / safeOrders.length * 100) : 0;
+                const todayStart2 = new Date(); todayStart2.setHours(0,0,0,0);
+                const todayCount = safeOrders.filter(o => new Date(o.createdAt).getTime() >= todayStart2.getTime()).length;
+                return [
+                  { label: 'متوسط قيمة الطلب', value: `${formatNumber(Math.round(avgOrder))}`, sub: 'د.ج', icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                  { label: 'معدل الإنجاز', value: `${completionRate.toFixed(0)}%`, sub: `${completed}/${safeOrders.length}`, icon: CheckCircle2, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                  { label: 'طلبات اليوم', value: `${todayCount}`, sub: 'طلب جديد', icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                  { label: 'أعلى طلب', value: formatNumber(Math.max(...safeOrders.map(o => o.total||0), 0)), sub: 'د.ج', icon: Zap, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+                ].map((item, i) => (
+                  <div key={i} className="rounded-xl border border-border/50 bg-card/60 p-2.5 hover-lift-1 transition-all stat-mini-card" style={{animationDelay: `${i * 50}ms`}}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className={cn("w-5 h-5 rounded-md flex items-center justify-center", item.bg)}>
+                        <item.icon className={cn("h-3 w-3", item.color)} />
+                      </div>
+                      <span className="text-[9px] text-muted-foreground truncate">{item.label}</span>
+                    </div>
+                    <p className="text-sm font-bold tabular-data">{item.value} <span className="text-[9px] font-normal text-muted-foreground/60">{item.sub}</span></p>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* Shop Performance Mini-Table */}
+            {safeShops.length > 0 && (
+              <div className="rounded-xl border border-border/60 bg-card/80 overflow-hidden shop-perf-container">
+                <div className="flex items-center justify-between px-3 pt-3 pb-2">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Store className="h-3.5 w-3.5" />
+                    أداء المتاجر
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50">{safeShops.length} متجر</span>
+                </div>
+                <div className="px-3 pb-3 space-y-1.5">
+                  {(() => {
+                    const shopPerf = safeShops.map(shop => {
+                      const shopOrders = safeOrders.filter(o => (o.shopName || o.shopSlug || '') === (shop.name || shop.slug));
+                      const rev = shopOrders.reduce((s,o) => s + (o.total||0), 0);
+                      const completed2 = shopOrders.filter(o => o.status === 'delivered').length;
+                      const pending2 = shopOrders.filter(o => o.status === 'pending').length;
+                      const rate = shopOrders.length > 0 ? (completed2 / shopOrders.length * 100) : 0;
+                      return { ...shop, orderCount: shopOrders.length, revenue: rev, completed: completed2, pending: pending2, rate };
+                    }).sort((a,b) => b.revenue - a.revenue);
+                    const maxRev = Math.max(...shopPerf.map(s => s.revenue), 1);
+                    return shopPerf.map((shop, i) => (
+                      <div key={shop.slug} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors shop-perf-row" style={{animationDelay: `${i * 40}ms`}}>
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0 shop-perf-rank">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium truncate max-w-[120px]">{shop.name}</span>
+                            <span className="text-xs font-bold tabular-data revenue-gold">{formatNumber(shop.revenue)} د.ج</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden shop-perf-bar-bg">
+                              <div className="h-full rounded-full shop-perf-bar-fill transition-all duration-500" style={{ width: `${(shop.revenue / maxRev) * 100}%`, backgroundColor: i === 0 ? '#f59e0b' : i === 1 ? '#3b82f6' : '#8b5cf6' }} />
+                            </div>
+                            <span className="text-[9px] text-muted-foreground/60 tabular-nums whitespace-nowrap">{shop.orderCount} طلب • {shop.rate.toFixed(0)}%</span>
+                          </div>
+                        </div>
+                        {shop.pending > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">{shop.pending} معلق</span>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* Activity Panel + Filters Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
