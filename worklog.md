@@ -10278,3 +10278,132 @@ Task: Order aging indicator, stats comparison bars, CSS v7.0, v7.1
 2. سحب وإفلات في كانبان (dnd-kit)
 3. لوحة تحكم الزبون الكاملة
 4. تصدير PDF
+---
+Task ID: R75
+Agent: Main Agent (Cron Round 75)
+Task: Print Queue, Sparklines, Trend Cards, Status History, Quick Stats, CSS v7.1, v7.2
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم الدفع إلى GitHub (commit 19570fe)
+- ✅ إصدار v7.2
+- ⚠️ Vercel 404 مستمر — لا يوجد VERCEL_TOKEN
+
+## نتائج QA
+- ✅ البناء نظيف: 0 أخطاء، 33.8 ثانية ترجمة
+- ✅ 42 صفحة ثابتة مُولّدة
+- ⚠️ لا يمكن اختبار بصري عبر agent-browser (عزل الشبكة)
+
+## الميزات الجديدة
+
+### 1. مدير طابور الطباعة (Print Queue Manager)
+- يعرض جميع الطلبات في حالة "طباعة" مرتبة زمنياً
+- شريط تقدم متحرك لكل طلب (تدرج أزرق→بنفسجي)
+- عرض: اسم الخدمة + اسم الزبون + المبلغ + الرقم المرجعي
+- النقر على طلب يفتح Quick View مباشرة
+- عداد إجمالي المبلغ المعروض في الرأس
+- حركة دخول انزلاقية لكل عنصر
+
+### 2. رسوم بيانية مصغرة (Mini Sparklines)
+- مكون SVG خفيف يرسم خط بياني مع منطقة مظللة
+- نقطة نابضة عند آخر قيمة
+- تدرج لوني مخصص لكل رسم
+- يُستخدم في بطاقات الاتجاه (revenue/orders/average)
+
+### 3. شارة الاتجاه (Trend Badge)
+- يعرض نسبة التغير بين اليوم والأمس
+- أخضر مع سهم لأعلى (↑ زيادة) / أحمر مع سهم لأسفل (↓ نقصان)
+- رمادي محايد عندما لا توجد بيانات
+
+### 4. بطاقات اتجاه الإيرادات (Revenue Trend Cards)
+- 3 بطاقات: إيرادات اليوم / طلبات اليوم / المتوسط اليومي
+- كل بطاقة بها: شارة اتجاه + قيمة + رسم بياني مصغر 7 أيام
+- الرسم الأول: إيرادات يومية (ذهبي)
+- الرسم الثاني: عدد الطلبات (أزرق)
+- الرسم الثالث: المتوسط المتحرك (بنفسجي)
+
+### 5. سجل حالات الطلب في Quick View (Status History Timeline)
+- يظهر تلقائياً إذا كان للطلب سجل حالات
+- خط زمني عمودي مع نقاط ملونة لكل حالة
+- عرض: اسم الحالة + التوقيت + ملاحظة إن وجدت
+- قابل للتمرير (حد أقصى 160px)
+- موصل خطي بين النقاط
+
+### 6. شريط إحصائيات سريع (Quick Stats Bar)
+- شريط أفقي في تبويب الطلبات فوق أوضاع العرض
+- 4 مؤشرات ملونة: معلق (ذهبي) / طباعة (أزرق) / جاهز (أخضر) / مُسلّم (بنفسجي)
+- عداد الفلاتر النشطة على اليسار
+- تصميم كبسولي أنيق (pill shape)
+
+### 7. أزرار FAB جديدة
+- زر "طباعة ملصقات" (بنفسجي) مع أيقونة Tag
+- زر "تصدير تقرير" (أخضر) مع أيقونة FileBarChart — يستدعي exportAdminReport
+
+## تحسينات التصميم (CSS v7.1)
+**الملف:** `src/app/globals.css` — ~556 سطر جديد (إجمالي ~41,116 سطر)
+
+### 35+ مجموعة أصناف CSS جديدة:
+1. `.print-queue-*` — مدير طابور الطباعة (widget, count, item, progress)
+2. `.mini-sparkline` + `.mini-sparkline-dot` — رسوم بيانية مصغرة SVG
+3. `.trend-badge` + `.trend-up/.trend-down/.trend-neutral` — شارة الاتجاه
+4. `.trend-cards-container` + `.trend-card` — بطاقات الاتجاه
+5. `.quick-stats-bar` + `.quick-stats-item` + `.quick-stats-dot` — شريط إحصائيات سريع
+6. `.qv-status-timeline` + `.qv-timeline-item` + `.qv-timeline-dot` — خط زمني للحالات
+7. `.glass-card-v6` — بطاقة زجاجية v6 مع dark mode
+8. `.neon-glow-violet/.teal` — توهج نيون بنفسجي/سماوي
+9. `.gradient-text-teal/.rose/.lime` — نص متدرج 3 ألوان جديدة
+10. `.hover-glow-violet/.teal` — توهج عند التمرير
+11. `.border-gradient-animate` + `@property --border-angle` — حدود دوّارة متدرجة
+12. `.skeleton-v5` — هيكل تحميل v5
+13. `.float-gentle/.float-slow` — حركة عائمة مستوية
+14. `.pulse-ring-v2` — حلقة نبضية v2
+15. `.card-depth-v2` — عمق بطاقة v2 مع hover lift
+16. `.scrollbar-gradient` — شريط تمرير متدرج (بنفسجي→أزرق)
+17. `.badge-glow-v2` — شارة مع توهج خلفي
+18. `.btn-press-effect` — تأثير ضغط الأزرار
+19. `.text-glow-blue/.violet/.emerald` — توهج نصي
+20. `.hover-border-shift` — تغيير لون الحدود عند التمرير
+21. `.bg-grid-pattern` — خلفية شبكية
+22. `.bg-dot-grid` — خلفية نقطية متحركة
+23. `.bg-stripe` — خلفية خطوط مائلة
+24. `.focus-ring-v2` — حلقة تركيز v2
+25. `.number-smooth` — انتقال أرقام سلس
+26. `.separator-gradient` — فاصل متدرج
+27. `.row-hover-glow` — توهج صف عند التمرير
+28. `.corner-decor` — زوايا زخرفية
+29. `.tag-chip` + 5 ألوان — رقائق وسوم
+30. `.card-border-glow` + `@property --glow-angle` — حدود متوهجة دوّارة
+31. `@keyframes printProgress` — حركة شريط الطباعة
+32. `@keyframes sparkDotPulse` — نبض نقطة الرسم البياني
+33. `@keyframes slideInRight` — دخول من اليمين
+34. `@keyframes widgetFade` — دخول تدريجي للويدجت
+35. Responsive + prefers-reduced-motion دعم
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | طابور الطباعة + رسوم مصغرة + اتجاهات + سجل الحالات + شريط إحصائيات + FAB + v7.2 (3,448 سطر) |
+| `src/app/globals.css` | +556 سطر CSS v7.1 (41,116 سطر) |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى 7.2 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى 7.2 |
+
+## الإحصائيات
+- صفحة رئيسية: 3,448 سطر (+102 من R74)
+- CSS: 41,116 سطر (+556 من R74)
+- CSS versions: v6.1 → v7.1 (11 إصدارات CSS)
+- الميزات المضافة هذا الجول: 7
+- CSS classes جديدة هذا الجول: 35+
+- إجمالي مكونات الوظائف: 160+
+
+## Unresolved Issues
+1. **Vercel 404** — يحتاج VERCEL_TOKEN في env vars (مستمر منذ R70)
+2. **agent-browser لا يصل لـ localhost** — Chromium في شبكة منفصلة
+3. لا اختبار بصري حقيقي (يعتمد على نجاح البناء فقط)
+
+## Priority Recommendations for R76
+1. **إصلاح Vercel** (أعلى أولوية) — إضافة VERCEL_TOKEN + .vercel/project.json
+2. إضافة سحب وإفلات في كانبان (dnd-kit)
+3. لوحة تحكم الزبون الكاملة (صفحة /customer)
+4. تصدير PDF للتقرير المالي
+5. إشعارات فورية (WebSocket/SSE)
+6. تحسين تجربة الموبايل (تحميل أسرع)
