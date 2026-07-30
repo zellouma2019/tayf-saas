@@ -7,7 +7,7 @@ import {
   Lock, Menu, Settings, DollarSign, BarChart3, Users, Activity,
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
-  FileText, Check, Square, X, CheckSquare,
+  FileText, Check, Square, X, CheckSquare, MessageCircle,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.4-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v5.5-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -92,6 +92,22 @@ function DataHealthBanner({ message, status, onRetry }: { message: string; statu
       </button>
     </div>
   );
+}
+
+// ===== Static Time Ago (non-reactive, for modals) =====
+function getTimeAgoStatic(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  if (diffMs < 60000) return 'الآن';
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 60) return `منذ ${diffMin} دقيقة`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `منذ ${diffHr} ساعة`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `منذ ${diffDay} يوم`;
+  const diffWeek = Math.floor(diffDay / 7);
+  return `منذ ${diffWeek} أسبوع`;
 }
 
 export default function SuperAdminPage() {
@@ -839,7 +855,7 @@ export default function SuperAdminPage() {
             <button
               onClick={exportAdminReport}
               className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors admin-tooltip"
-              data-tip="تصدير التقرير"
+              data-tip="تصدير التقرير (ملف HTML للطباعة)"
               title="تصدير التقرير"
             >
               <FileText className="h-4 w-4" />
@@ -851,7 +867,7 @@ export default function SuperAdminPage() {
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg p-2.5 text-sm transition-colors admin-tooltip"
               data-tip="تقرير PDF للإحصائيات"
-              title="تقرير إحصائيات"
+              title="تقرير إحصائيات (JSON)"
             >
               <BarChart3 className="h-4 w-4" />
             </a>
@@ -1543,7 +1559,7 @@ export default function SuperAdminPage() {
             )}
             {lastUpdated && (
               <span className="text-[9px] text-muted-foreground/50 tabular-data">
-                v5.4
+                v5.5
               </span>
             )}
             {refreshing ? (
@@ -1592,7 +1608,7 @@ export default function SuperAdminPage() {
         onCreated={() => { setCreateOpen(false); loadAll(false); }}
       />
 
-      {/* Order Detail Dialog — Enhanced with status timeline */}
+      {/* Order Detail Dialog — Enhanced with status timeline, print, duplicate warning */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden dialog-slide-in" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
           <DialogTitle className="sr-only">تفاصيل الطلب</DialogTitle>
@@ -1601,12 +1617,24 @@ export default function SuperAdminPage() {
               {/* Header with gradient */}
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
                 <div>
-                  <h3 className="text-lg font-bold">تفاصيل الطلب</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 font-mono">{selectedOrder.reference || selectedOrder.id}</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold">تفاصيل الطلب</h3>
+                    {duplicateOrderIds.has(selectedOrder.id) && (
+                      <span className="badge-chip bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px]">
+                        ⚠️ طلب مكرر محتمل
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground font-mono">{selectedOrder.reference || selectedOrder.id}</p>
+                    <span className="text-[10px] text-muted-foreground/60" dir="ltr">{getTimeAgoStatic(selectedOrder.createdAt)}</span>
+                  </div>
                 </div>
-                <Badge variant="outline" className={cn("status-pill-animated", STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.color)}>
-                  {STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.label || selectedOrder.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={cn("status-pill-animated", STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.color)}>
+                    {STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.label || selectedOrder.status}
+                  </Badge>
+                </div>
               </div>
               {/* Price highlight */}
               {selectedOrder.total > 0 && (
@@ -1686,18 +1714,50 @@ export default function SuperAdminPage() {
                 </div>
               )}
               <div className="mt-4 flex gap-2">
+                {/* Status Change Dropdown */}
+                <select
+                  value={selectedOrder.status}
+                  onChange={(e) => { changeOrderStatus(selectedOrder.id, e.target.value); setSelectedOrder({...selectedOrder, status: e.target.value}); }}
+                  className={cn(
+                    "h-10 px-3 rounded-lg border text-sm flex-1",
+                    STATUS_META[selectedOrder.status as keyof typeof STATUS_META]?.color || ""
+                  )}
+                >
+                  {Object.entries(STATUS_META).map(([key, meta]) => (
+                    <option key={key} value={key}>{meta.label}</option>
+                  ))}
+                </select>
+                <a
+                  href={`/api/orders/${selectedOrder.id}/invoice`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  title="طباعة الفاتورة"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+                <a
+                  href={selectedOrder.customer?.phone ? `https://wa.me/213${selectedOrder.customer.phone.replace(/^0/, "")}` : "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-green-50 dark:hover:bg-green-950/20 text-green-600 dark:text-green-400 text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  title="تواصل عبر واتساب"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </a>
                 <a
                   href={`/s/${selectedOrder.shopSlug || "default"}?admin=1`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium text-center transition-colors flex items-center justify-center gap-1.5"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  title="فتح في لوحة المتجر"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  فتح في لوحة المتجر
                 </a>
                 <button
                   onClick={() => { navigator.clipboard.writeText(selectedOrder.reference || selectedOrder.id); toast.success("تم نسخ معرف الطلب"); }}
-                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5"
+                  className="h-10 px-3 rounded-lg border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm transition-colors flex items-center gap-1.5 press-feedback"
+                  title="نسخ المعرف"
                 >
                   <Copy className="h-4 w-4" />
                 </button>
@@ -1753,21 +1813,36 @@ export default function SuperAdminPage() {
                 </div>
               </div>
               <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => { setQuickViewOrder(null); setSelectedOrder(quickViewOrder); }}
-                  className="flex-1 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1"
+                {/* Status change in quick view */}
+                <select
+                  value={quickViewOrder.status}
+                  onChange={(e) => { changeOrderStatus(quickViewOrder.id, e.target.value); setQuickViewOrder({...quickViewOrder, status: e.target.value}); }}
+                  className={cn(
+                    "h-8 px-2 rounded-lg border text-xs flex-1",
+                    STATUS_META[quickViewOrder.status as keyof typeof STATUS_META]?.color || ""
+                  )}
                 >
-                  <Eye className="h-3 w-3" />
-                  تفاصيل كاملة
-                </button>
+                  {Object.entries(STATUS_META).map(([key, meta]) => (
+                    <option key={key} value={key}>{meta.label}</option>
+                  ))}
+                </select>
                 <a
-                  href={`/s/${quickViewOrder.shopSlug || "default"}?admin=1`}
+                  href={quickViewOrder.customer?.phone ? `https://wa.me/213${quickViewOrder.customer.phone.replace(/^0/, "")}` : "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-8 px-3 rounded-lg border border-border text-xs flex items-center justify-center gap-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="h-8 w-8 rounded-lg border border-border text-green-600 dark:text-green-400 flex items-center justify-center hover:bg-green-50 dark:hover:bg-green-950/20 transition-colors"
+                  title="واتساب"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <MessageCircle className="h-3 w-3" />
                 </a>
+                <button
+                  onClick={() => { setQuickViewOrder(null); setSelectedOrder(quickViewOrder); }}
+                  className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1 press-feedback"
+                >
+                  <Eye className="h-3 w-3" />
+                  المزيد
+                </button>
               </div>
             </div>
           )}
