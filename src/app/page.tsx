@@ -11,7 +11,7 @@ import {
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
   Printer, Phone, Share2, ArrowRight, Play,
-  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart, MoreHorizontal, Crown, CircleDot, Target, Repeat, PieChart as PieChartIcon,
+  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart, MoreHorizontal, Crown, CircleDot, Target, Repeat, PieChart as PieChartIcon, Star,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v7.6-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v7.7-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -820,6 +820,13 @@ function getTimeAgoStatic(dateStr: string): string {
   if (diffDay < 7) return `منذ ${diffDay} يوم`;
   const diffWeek = Math.floor(diffDay / 7);
   return `منذ ${diffWeek} أسبوع`;
+}
+
+// ===== Priority Stars (R80) =====
+function PriorityStars({ amount }: { amount: number }) {
+  if (amount >= 5000) return <span className="priority-stars" title="عاجل">⭐⭐⭐</span>;
+  if (amount >= 2000) return <span className="priority-stars priority-medium-stars" title="متوسط">⭐⭐</span>;
+  return null;
 }
 
 // ===== Activity Feed Timeline (R79) =====
@@ -2471,6 +2478,41 @@ export default function SuperAdminPage() {
               </div>
             )}
 
+            {/* Revenue Forecast Widget (R80) */}
+            {(() => {
+              const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+              const todayOrders = safeOrders.filter(o => new Date(o.createdAt).getTime() >= todayStart.getTime());
+              const todayRev = todayOrders.reduce((s,o) => s + (o.total||0), 0);
+              const now = new Date();
+              const hoursElapsed = Math.max(now.getHours(), 1);
+              const hoursLeft = Math.max(24 - hoursElapsed, 1);
+              const ratePerHour = todayRev / hoursElapsed;
+              const forecast = Math.round(ratePerHour * 24);
+              const forecastPct = safeOrders.length > 10 ? Math.min(Math.round((todayRev / Math.max(forecast, 1)) * 100), 100) : 50;
+              return (
+                <div className="revenue-forecast-widget glass-card-v9">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                      <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                      توقع إيرادات اليوم
+                    </h4>
+                    <span className="text-[9px] text-muted-foreground">{hoursElapsed}س مضت / {hoursLeft}س متبقية</span>
+                  </div>
+                  <div className="flex items-end gap-2 mb-2">
+                    <span className="text-xl font-bold tabular-data gradient-text-emerald">{formatNumber(todayRev)}</span>
+                    <span className="text-xs text-muted-foreground mb-0.5">/ {formatNumber(forecast)} د.ج</span>
+                  </div>
+                  <div className="forecast-bar-track">
+                    <div className="forecast-bar-fill" style={{ width: `${forecastPct}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-[9px] text-muted-foreground">{todayOrders.length} طلب • {formatNumber(Math.round(ratePerHour))} د.ج/ساعة</span>
+                    <span className="text-[9px] font-bold text-emerald-500">{forecastPct}% من التوقع</span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Shop Performance Rings (R79) */}
             {safeShops.length > 0 && (
               <div className="shop-rings-widget">
@@ -3117,14 +3159,21 @@ export default function SuperAdminPage() {
                               />
                             ))}
                           </div>
+                          <div className="inline-status-bar">
+                            <div className="inline-status-bar-fill" style={{ width: `${(["pending", "confirmed", "printing", "ready", "delivered"].indexOf(order.status) + 1) * 20}%`, backgroundColor: STATUS_META[order.status as keyof typeof STATUS_META]?.color || "#888" }} />
+                          </div>
                         </TableCell>
                         <TableCell className="font-medium tabular-nums text-sm">
                           <div className="flex items-center gap-1.5">
+                            <PriorityStars amount={order.total || 0} />
                             <span className={cn(order.total > 0 && "revenue-gold")}>
                               {order.total ? `${order.total.toLocaleString("ar-DZ")} د.ج` : "—"}
                             </span>
                             {order.total >= 5000 && (
-                              <span className="priority-badge-urgent text-[9px] px-1.5 py-0.5 rounded-md font-bold" title="أولوية عاجلة">عاجل</span>
+                              <span className="priority-badge-urgent text-[9px] px-1.5 py-0.5 rounded-md font-bold neon-glow-orange" title="أولوية عاجلة">عاجل</span>
+                            )}
+                            {order.total >= 2000 && order.total < 5000 && (
+                              <span className="text-[8px] px-1 py-0.5 rounded font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">متوسط</span>
                             )}
                           </div>
                         </TableCell>
@@ -3251,12 +3300,15 @@ export default function SuperAdminPage() {
                         <span className="text-base">{meta.emoji}</span>
                         <span className="text-sm font-semibold">{meta.label}</span>
                         {colUrgent > 0 && (
-                          <span className="tag-urgent text-[9px] py-0 px-1.5 rounded text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 font-bold">
+                          <span className="tag-urgent text-[9px] py-0 px-1.5 rounded text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 font-bold neon-glow-orange">
                             ⚡{colUrgent} عاجل
                           </span>
                         )}
                       </div>
-                      <span className="kanban-col-count">{colOrders.length}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold tabular-data" style={{color: meta.color}}>{formatNumber(colOrders.reduce((s,o) => s + (o.total||0), 0))} د.ج</span>
+                        <span className="kanban-col-count">{colOrders.length}</span>
+                      </div>
                     </div>
                     <div className="px-1.5 pt-1">
                       <div className="status-mini-bar mb-1">
@@ -3284,8 +3336,18 @@ export default function SuperAdminPage() {
                           </div>
                           <div className="text-sm font-medium truncate">{order.customer?.name || "—"}</div>
                           <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
-                            <span className="truncate max-w-[100px]">{order.serviceName || order.serviceType || ""}</span>
-                            <span className={cn("status-badge-icon", order.status)} dir="ltr">{STATUS_META[order.status as keyof typeof STATUS_META]?.label}</span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <PriorityStars amount={order.total || 0} />
+                              <span className="truncate max-w-[80px]">{order.serviceName || order.serviceType || ""}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {order.customer?.phone && (
+                                <a href={`tel:${order.customer.phone}`} onClick={(e) => e.stopPropagation()} className="p-0.5 rounded hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-500 transition-colors" title="اتصال">
+                                  <Phone className="h-3 w-3" />
+                                </a>
+                              )}
+                              <span className={cn("status-badge-icon", order.status)} dir="ltr">{STATUS_META[order.status as keyof typeof STATUS_META]?.label}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
