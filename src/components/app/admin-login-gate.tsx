@@ -96,7 +96,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     wrongTitle: "Incorrect password",
     connectionError: "Connection error",
     protected: "This section is protected for admin only",
-    version: "v6.1 — Tayf Smart Printing Platform",
+    version: "v6.2 — Tayf Smart Printing Platform",
     defaultPwTitle: "⚠️ Default password is still in use",
     defaultPwDesc: "Please change it from Settings ← Security",
   };

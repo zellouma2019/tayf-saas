@@ -1544,11 +1544,34 @@ export default function SuperAdminPage() {
               </CardContent>
             </Card>
 
-            {/* Orders count bar */}
+            {/* Orders count bar with filter chips */}
             {(statusFilter !== "all" || orderStatusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all" || priorityFilter !== "all") && (
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span><span className="order-count-badge">{filteredOrders.length}</span> من <span className="order-count-badge">{safeOrders.length}</span> طلب</span>
-                <button onClick={() => { setSearch(""); setStatusFilter("all"); setOrderStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); setPriorityFilter("all"); }} className="text-primary hover:underline">مسح الفلاتر</button>
+              <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="order-count-badge">{filteredOrders.length}</span>
+                  <span>من</span>
+                  <span className="order-count-badge">{safeOrders.length}</span>
+                  <span>طلب</span>
+                  {search && (
+                    <span className="filter-chip">
+                      🔍 "{search}"
+                      <button className="chip-dismiss-btn" onClick={() => setSearch("")}><X className="h-2.5 w-2.5" /></button>
+                    </span>
+                  )}
+                  {priorityFilter !== "all" && (
+                    <span className="filter-chip">
+                      {priorityFilter === "urgent" ? "🔴 عاجل" : priorityFilter === "medium" ? "🟡 متوسط" : "🟢 عادي"}
+                      <button className="chip-dismiss-btn" onClick={() => setPriorityFilter("all")}><X className="h-2.5 w-2.5" /></button>
+                    </span>
+                  )}
+                  {dateFilter !== "all" && (
+                    <span className="filter-chip">
+                      📅 {dateFilter === "today" ? "اليوم" : dateFilter === "week" ? "الأسبوع" : dateFilter === "month" ? "الشهر" : "مخصص"}
+                      <button className="chip-dismiss-btn" onClick={() => { setDateFilter("all"); setDateFrom(""); setDateTo(""); }}><X className="h-2.5 w-2.5" /></button>
+                    </span>
+                  )}
+                </div>
+                <button onClick={() => { setSearch(""); setStatusFilter("all"); setOrderStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); setPriorityFilter("all"); }} className="text-primary hover:underline btn-ripple rounded-md px-2 py-0.5">مسح الكل</button>
               </div>
             )}
 
@@ -1629,10 +1652,12 @@ export default function SuperAdminPage() {
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent data-row-hover table-row-enter",
+                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent data-row-hover table-row-enter table-row-priority",
                           `status-${order.status}`,
                           selectedIds.has(order.id) && "row-selected",
-                          duplicateOrderIds.has(order.id) && "duplicate-warning-row"
+                          duplicateOrderIds.has(order.id) && "duplicate-warning-row",
+                          (order.total || 0) >= 5000 && "priority-urgent",
+                          (order.total || 0) >= 2000 && (order.total || 0) < 5000 && "priority-medium"
                         )}
                         style={{ animationDelay: `${idx * 20}ms` }}
                       >
@@ -1769,19 +1794,24 @@ export default function SuperAdminPage() {
             <div className="space-y-3 stagger-cols-enter">
               {Object.entries(STATUS_META).filter(([k]) => k !== "cancelled").map(([statusKey, meta]) => {
                 const colOrders = sortedOrders.filter(o => o.status === statusKey);
+                const colUrgent = colOrders.filter(o => (o.total||0) >= 5000).length;
                 return (
-                  <div key={statusKey} className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50" style={{borderRightColor: meta.color}}>
-                      <div className={cn("status-dot-label status-dot-ring", {
-                        emerald: ["delivered"].includes(statusKey),
-                        amber: ["pending", "confirmed"].includes(statusKey),
-                        sky: ["printing"].includes(statusKey),
-                        violet: ["ready"].includes(statusKey),
-                      })} />
-                      <span className="text-sm font-medium">{meta.label}</span>
-                      <span className="text-xs text-muted-foreground mr-auto">{colOrders.length}</span>
-                      <div className="h-1 flex-1 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{width: `${sortedOrders.length > 0 ? (colOrders.length / sortedOrders.length * 100) : 0}%`, backgroundColor: meta.color}} />
+                  <div key={statusKey} className="rounded-xl border border-border bg-card overflow-hidden hover-lift-glow">
+                    <div className="kanban-col-header" style={{background: `linear-gradient(135deg, ${meta.color}18, ${meta.color}08)`, borderRightColor: meta.color}}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{meta.emoji}</span>
+                        <span className="text-sm font-semibold">{meta.label}</span>
+                        {colUrgent > 0 && (
+                          <span className="tag-urgent text-[9px] py-0 px-1.5 rounded text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 font-bold">
+                            ⚡{colUrgent} عاجل
+                          </span>
+                        )}
+                      </div>
+                      <span className="kanban-col-count">{colOrders.length}</span>
+                    </div>
+                    <div className="px-1.5 pt-1">
+                      <div className="status-mini-bar mb-1">
+                        <div style={{width: `${sortedOrders.length > 0 ? (colOrders.length / sortedOrders.length * 100) : 0}%`, backgroundColor: meta.color}} />
                       </div>
                     </div>
                     <div className="p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 min-h-[60px]">

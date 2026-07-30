@@ -37206,3 +37206,437 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 /* 20. Number roll animation */
 .number-roll { display: inline-block; overflow: hidden; height: 1.2em; line-height: 1.2em; vertical-align: bottom; }
 .number-roll span { display: inline-block; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* =====================================================
+   CSS v6.2 — Enhanced FAB, Priority Filters, More Polish
+   ===================================================== */
+
+/* 1. FAB Actions Container */
+.fab-actions-container {
+  animation: fabActionsIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+@keyframes fabActionsIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 2. FAB Action Items */
+.fab-action-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: white;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.fab-action-item:hover {
+  transform: translateX(-4px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+.fab-action-item:active {
+  transform: translateX(-2px) scale(0.98);
+}
+
+/* FAB color variants */
+.fab-action-amber {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.92), rgba(217, 119, 6, 0.92));
+}
+.fab-action-amber:hover { box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35); }
+.fab-action-blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.92), rgba(37, 99, 235, 0.92));
+}
+.fab-action-blue:hover { box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35); }
+.fab-action-emerald {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.92), rgba(5, 150, 105, 0.92));
+}
+.fab-action-emerald:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+.fab-action-rose {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.92), rgba(225, 29, 72, 0.92));
+}
+.fab-action-rose:hover { box-shadow: 0 6px 20px rgba(244, 63, 94, 0.35); }
+.fab-action-violet {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.92), rgba(124, 58, 237, 0.92));
+}
+.fab-action-violet:hover { box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35); }
+
+/* 3. Order count badge in filters */
+.order-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 0.5rem;
+  padding: 0 0.375rem;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+}
+
+/* 4. Filter chip with dismiss */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: hsl(var(--primary) / 0.08);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.2);
+  transition: all 0.2s;
+  animation: filterChipIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes filterChipIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+.filter-chip:hover {
+  background: hsl(var(--primary) / 0.14);
+}
+.filter-chip .chip-dismiss-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: hsl(var(--primary) / 0.2);
+  transition: background 0.15s;
+}
+.filter-chip .chip-dismiss-btn:hover {
+  background: hsl(var(--primary) / 0.4);
+}
+
+/* 5. Enhanced kanban column header */
+.kanban-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  transition: all 0.2s;
+}
+.kanban-col-header:hover {
+  filter: brightness(1.05);
+}
+.kanban-col-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.2);
+  padding: 0 0.375rem;
+}
+.dark .kanban-col-count {
+  background: rgba(0,0,0,0.2);
+}
+
+/* 6. Priority indicator bar on table rows */
+.priority-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  transition: opacity 0.2s;
+}
+.priority-bar-urgent {
+  background: linear-gradient(180deg, #ef4444, #f97316);
+}
+.priority-bar-medium {
+  background: linear-gradient(180deg, #f59e0b, #eab308);
+}
+.priority-bar-normal {
+  background: linear-gradient(180deg, #22c55e, #10b981);
+  opacity: 0.4;
+}
+
+/* 7. Mini stat card with icon */
+.mini-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.875rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mini-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.dark .mini-stat-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.mini-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+/* 8. Animated gradient text for section headers */
+.heading-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(270 70% 55%), hsl(200 70% 55%), hsl(var(--primary)));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease infinite;
+}
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 9. Subtle card press effect */
+.card-press {
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+.card-press:active {
+  transform: scale(0.98);
+  box-shadow: none !important;
+}
+
+/* 10. Scroll reveal animation */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 11. Glowing dot for live status */
+.dot-live {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px transparent; }
+}
+
+/* 12. Text balance for better typography */
+.text-balance { text-wrap: balance; }
+
+/* 13. Status distribution mini bar */
+.status-mini-bar {
+  display: flex;
+  height: 0.375rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: hsl(var(--muted));
+}
+.status-mini-bar > div {
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 14. Hover lift with glow */
+.hover-lift-glow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+}
+.hover-lift-glow:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.1), 0 0 0 1px hsl(var(--primary) / 0.1);
+}
+.dark .hover-lift-glow:hover {
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px hsl(var(--primary) / 0.1);
+}
+
+/* 15. Animated border for focused cards */
+.focus-border-animated {
+  position: relative;
+}
+.focus-border-animated:focus-within {
+  outline: none;
+}
+.focus-border-animated:focus-within::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--angle, 0deg), hsl(var(--primary)), hsl(270 70% 55%), hsl(200 70% 55%), hsl(var(--primary)));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotateBorder 3s linear infinite;
+}
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes rotateBorder {
+  to { --angle: 360deg; }
+}
+
+/* 16. Skeleton loading with shimmer v2 */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted));
+  border-radius: 0.5rem;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, hsl(var(--muted-foreground) / 0.04), transparent);
+  animation: shimmerSlide 2s ease-in-out infinite;
+}
+@keyframes shimmerSlide {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* 17. Responsive text clamp */
+.text-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.text-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.text-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+/* 18. Gradient mesh background v2 */
+.gradient-mesh-v2 {
+  background:
+    radial-gradient(at 20% 20%, hsl(var(--primary) / 0.06) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, hsl(270 70% 55% / 0.06) 0%, transparent 50%),
+    radial-gradient(at 50% 80%, hsl(200 70% 55% / 0.06) 0%, transparent 50%);
+}
+
+/* 19. Table row priority indicator */
+.table-row-priority {
+  position: relative;
+}
+.table-row-priority::before {
+  content: '';
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  right: 0;
+  width: 2.5px;
+  border-radius: 2px;
+}
+.table-row-priority.priority-urgent::before { background: linear-gradient(180deg, #ef4444, #f97316); }
+.table-row-priority.priority-medium::before { background: linear-gradient(180deg, #f59e0b, #eab308); }
+
+/* 20. Floating label input */
+.input-floating-label {
+  position: relative;
+}
+.input-floating-label label {
+  position: absolute;
+  top: 50%;
+  right: 2.5rem;
+  transform: translateY(-50%);
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  padding: 0 0.25rem;
+  background: hsl(var(--background));
+}
+.input-floating-label:focus-within label,
+.input-floating-label label.active {
+  top: 0;
+  font-size: 0.625rem;
+  color: hsl(var(--primary));
+}
+
+/* 21. Toast slide-in from bottom */
+.toast-slide-up {
+  animation: toastSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 22. Ripple effect on buttons */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.3s;
+}
+.btn-ripple:active::after {
+  transform: scale(2.5);
+  opacity: 1;
+  transition: 0s;
+}
+
+/* 23. Command palette overlay backdrop */
+.cmd-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlayFadeIn 0.2s ease;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 24. Compact badge styles */
+.badge-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.0625rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  line-height: 1.4;
+}
+
+/* 25. Status dot with label */
+.status-dot-label-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+.status-dot-label-compact .dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
