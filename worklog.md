@@ -9520,3 +9520,110 @@ Task: CSS v6.1, enhanced kanban, stat mesh cards, status badges, styling polish
 3. إضافة عرض تقويمي للطلبات
 4. تحسينات على لوحة الأوامر (بحث الطلبات)
 5. إضافة FAB زر عائم لطلب جديد
+
+---
+Task ID: R68
+Agent: Main Agent (Cron Round 68)
+Task: Fix imports, add quick actions, status mini progress, CSS v6.3, deploy
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة، 63 API route)
+- ✅ تم النشر على Vercel (deploy job DklFub4rD7dnTBuNqZLm)
+- ✅ إصدار v6.3
+- ✅ لا أخطاء JavaScript على أي صفحة
+- ✅ جميع الصفحات تعمل: لوحة الإدارة، الطلبات، كانبان، تتبع، المتجر
+
+## نتائج QA (تم التحقق عبر agent-browser على الموقع الحي)
+| الاختبار | النتيجة |
+|---------|----------|
+| تسجيل الدخول | ✅ يعمل بكلمة Admin@2025 |
+| لوحة التحكم — 40 طلب، 30,307 د.ج، 6 متاجر | ✅ |
+| تبويب الطلبات — جدول + كانبان + ترتيب | ✅ |
+| فلتر الأولوية — عاجل(1)، متوسط(3)، عادي(16) | ✅ |
+| صفحة التتبع — اختيار المتجر + بحث | ✅ |
+| صفحة المتجر (/s/al-riyan) — كل الخدمات | ✅ |
+| أخطاء JavaScript | ✅ لا أخطاء |
+
+## الإصلاحات
+
+### 1. أيقونة Printer مفقودة من الاستيراد
+- **المشكلة**: `Printer` مُستخدم في FAB لكن غير موجود في قائمة الاستيراد من lucide-react
+- **الحل**: إضافة `Printer, Phone, Share2, ArrowRight, Play` للاستيراد
+- **الملف**: `src/app/page.tsx`
+
+## الميزات الجديدة
+
+### 1. زر واتساب سريع في جدول الطلبات
+- أيقونة MessageCircle بجانب كل طلب له رقم هاتف
+- يفتح `wa.me` مع رقم الزبون تلقائياً
+- لون أخضر عند التمرير
+
+### 2. زر تقدم الحالة (Play →)
+- أيقونة Play في عمود الإجراءات
+- ينقل الطلب للحالة التالية بضغطة واحدة:
+  - pending → confirmed → printing → ready → delivered
+- تلميح CSS عند التمرير: "تقدم ←"
+
+### 3. شريط تقدم مصغر للحالة (Mini Progress Dots)
+- 5 نقاط ملونة أسفل قائمة الحالة في كل صف
+- تمثل المراحل: معلق → مؤكد → طباعة → جاهز → تم
+- النقاط المكتملة تضيء بلون الحالة مع تأثير توهج
+
+### 4. رابط هاتف قابل للنقر (Click-to-Call)
+- رقم الهاتف في عمود الزبون أصبح رابط `tel:`
+- لون متغير عند التمرير
+
+## تحسينات التصميم (CSS v6.3)
+**الملف:** `src/app/globals.css` — ~477 سطر جديد (إجمالي ~38,120 سطر)
+
+### 25+ صنف CSS جديد:
+1. `.order-status-mini-progress` + `.status-mini-dot` — شريط تقدم مصغر للطلبات
+2. `.tooltip-top` — تلميح CSS نقي مع سهم (استبدال title attributes)
+3. `.table-row-priority` — تمييز صفوف الأولوية
+4. `.priority-urgent` — خلفية متدرجة حمراء + حدود يمين
+5. `.priority-medium` — خلفية متدرجة كهرمانية
+6. `.duplicate-warning-row` — نمط خطوط مائلة للطلبات المكررة
+7. `.row-selected` — تمييز الصف المحدد مع ظل داخلي
+8. `.table-row-hover` — رفع + ظل عند التمرير
+9. `.order-status-transition` — قائمة منسدلة الحالة محسّنة (سهم مخصص، حدود متدرجة عند التركيز)
+10. `.kanban-col-header` + `.kanban-col-count` — رأس عمود كانبان محسّن
+11. `.status-mini-bar` — شريط حالة رفيع متحرك
+12. `.quick-action-float` — حركة عائمة للزر العائم
+13. `.press-feedback` — تأثير ضغط تفاعلي
+14. `.fab-glow-amber/rose` — توهج محسّن لزر FAB
+15. `.badge-chip` — شارة محسّنة مع hover scale
+16. `.revenue-gold` — نص إيرادات ذهبي متدرج
+17. `.tabular-data` — أرقام جدولية
+18. `.stagger-grid-16` — شبكة دخول متتابع
+19. `.glass-card-v2` — بطاقة زجاجية محسّنة
+20. `.stat-card-glow-*` — 4 توهجات للبطاقات الإحصائية
+21. `.hover-lift-1/glow` — مستويين رفع عند التمرير
+22. `.card-shimmer-border` — حدود لامعة متحركة عند التمرير
+23. `.status-badge-glow` — شارة حالة مع توهج
+24. `.counter-flash` — حركة عداد
+25. `.notif-dot-ping` — نقطة إشعار نبضية
+26. `.section-gradient-title` — عنوان قسم متدرج
+27. `.timeline-dot-connector` — موصل خط زمني
+28. `.focus-ring-accessible` — حلقة تركيز للوصولية
+29. `.print-friendly` — إخفاء FAB عند الطباعة
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | زر واتساب + زر تقدم + شريط تقدم مصغر + رابط هاتف + استيراد أيقونات + v6.3 |
+| `src/app/globals.css` | +477 سطر CSS v6.3 |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى v6.3 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى v6.3 |
+
+## Commits
+- 67edd0a: feat: CSS v6.2, priority filter, enhanced FAB multi-action (R67b)
+- f532659: feat: v6.3 - WhatsApp quick action, next-status button, status mini progress, CSS v6.3 (R68)
+
+## التوصيات للمرحلة القادمة
+1. إضافة سحب وإفلات في كانبان (dnd-kit)
+2. إضافة عرض تقويمي للطلبات
+3. تحسينات على لوحة الأوامر (بحث الطلبات)
+4. إضافة إشعار صوتي عند وصول طلب جديد
+5. تحسين تجربة الموبايل لجدول الطلبات (horizontal scroll أو card view)
+6. إضافة ميزة طباعة فاتورة مباشرة من جدول الطلبات
+7. إضافة dashboard stats widget للزبون (صفحة /customer)
