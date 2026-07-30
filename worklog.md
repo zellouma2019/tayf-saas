@@ -8271,3 +8271,65 @@ Task: QA + new features + CSS v5.0 + merchant expenses + loyalty system
 - PIN متجر الريان: 1234
 - Git repo: https://github.com/zellouma2019/tayf-saas
 - Live: https://tayf-saas.vercel.app
+---
+Task ID: Round 56
+Agent: Main Agent (Cron Loop)
+Task: QA + merchant analytics, admin order filters, service comparison, estimated delivery, CSS v5.1
+
+## حالة المشروع
+- ✅ Customer pages: تعمل (متجر، طلب جديد، تتبع، سجل الطلبات، مقارنة خدمات)
+- ✅ Merchant dashboard: يعمل (9 تبويبات، تحليلات محسّنة، مصاريف)
+- ✅ API: صحية (39 طلب، 6 متاجر)
+- ✅ Build: ناجح
+- ⚠️ Admin على Vercel: كود قديم (0 بيانات) — يحتاج ربط يدوي
+
+## الميزات الجديدة
+
+### 1. تحليلات التاجر المحسّنة (Analytics Tab)
+- 📈 اتجاه الإيرادات: مخطط مساحي لآخر 14 يوم
+- 📊 أفضل الخدمات أداءً: مخطط أفقي لأعلى 5 خدمات
+- 🕐 ساعات الذروة: خريطة حرارية 4×6 (فجر/صباح/ظهر/مساء)
+- 👥 نسبة الزبائن العائدين: مقياس كبير مع تدرج بنفسجي
+- ⏱️ متوسط وقت الإنجاز: حساب من الطلب للتسليم
+
+### 2. فلتر لوحة إدارة الطلبات
+- قائمة منسدلة لفلترة الحالة (7 حالات)
+- شارة عدد الطلبات: "X/Y طلب"
+- حالة فارغة محسّنة
+- تطبيق CSS: widget-fade-in, card-hover-glow
+
+### 3. حوار مقارنة الخدمات
+- جدول مقارنة: اسم، سعر، وقت، أفضل استخدام
+- شارة "موصى به" للخدمة الأكثر شعبية
+- تصميم متجاوب (جدول للحاسوب، بطاقات للجوال)
+
+### 4. الوقت المقدر للإنجاز
+- حساب ديناميكي: صفحات + نسخ + لون + تجليد
+- مؤشر لوني: أخضر (<30د) / أصفر (30-60د) / أحمر (>60د)
+- شريط تقدم متحرك
+
+### 5. CSS v5.1 (14 أداة)
+- ripple-effect, breathe-glow, slide-up-reveal, scale-pop
+- heading-gradient, neon-border, link-underline, stagger-grid
+- text-reveal, btn-glow, card-tilt, number-tick
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|------|--------|
+| src/app/globals.css | +CSS v5.1 |
+| src/app/page.tsx | +order status filter, count badge |
+| src/components/app/merchant-dashboard.tsx | +5 analytics widgets |
+| src/components/app/new-order-wizard.tsx | +estimated time card |
+| src/components/app/services-comparison.tsx | +dialog comparison table |
+
+## الإصدارات
+- النسخة: v5.1
+- Commit: 6a07bcc
+- Vercel Job: VVi6wDTL6dSeWLSXxpGG
+
+## أولويات الجولة القادمة
+1. 🔴 ربط Vercel بـ GitHub يدوياً
+2. 🟡 اختبار ميزات v5.1 الجديدة
+3. 🟡 WhatsApp Business API integration
+4. 🟢 Lazy loading + code splitting
+5. 🟢 PDF reports for statistics
