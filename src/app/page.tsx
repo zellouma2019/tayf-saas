@@ -68,6 +68,7 @@ export default function SuperAdminPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
   const [shopFilter, setShopFilter] = useState("all");
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [shopSearch, setShopSearch] = useState("");
@@ -359,6 +360,7 @@ export default function SuperAdminPage() {
   // Filter orders
   const filteredOrders = safeOrders.filter((o) => {
     if (statusFilter !== "all" && o.status !== statusFilter) return false;
+    if (orderStatusFilter !== "all" && o.status !== orderStatusFilter) return false;
     if (shopFilter !== "all") {
       const shopName = o.shopName || o.shopSlug || "";
       if (!shopName.includes(shopFilter)) return false;
@@ -749,9 +751,9 @@ export default function SuperAdminPage() {
               )}
             >
               {tabLabels[tab]}
-              {tab === "orders" && safeOrders.filter(o => o.status === "pending").length > 0 && (
-                <span className="absolute -top-0.5 left-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1 badge-pulse">
-                  {safeOrders.filter(o => o.status === "pending").length}
+              {tab === "orders" && safeOrders.length > 0 && (
+                <span className="absolute -top-0.5 left-1 min-w-[24px] h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
+                  {filteredOrders.length}/{safeOrders.length}
                 </span>
               )}
             </button>
@@ -963,8 +965,10 @@ export default function SuperAdminPage() {
 
         {/* Orders Tab */}
         {!isInitialLoading && activeTab === "orders" && (
-          <div className="space-y-4">
+          <div className="space-y-4 widget-fade-in">
             {/* Filters + count + export */}
+            <Card className="card-hover-glow">
+              <CardContent className="p-3">
             <div className="flex items-center gap-3 flex-wrap">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -975,6 +979,20 @@ export default function SuperAdminPage() {
                   className="pr-10"
                 />
               </div>
+              <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="الحالة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  <SelectItem value="pending">معلق</SelectItem>
+                  <SelectItem value="confirmed">مؤكد</SelectItem>
+                  <SelectItem value="printing">طباعة</SelectItem>
+                  <SelectItem value="ready">جاهز</SelectItem>
+                  <SelectItem value="delivered">تم التسليم</SelectItem>
+                  <SelectItem value="cancelled">ملغى</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-36">
                   <SelectValue placeholder="الحالة" />
@@ -1077,12 +1095,14 @@ export default function SuperAdminPage() {
                 <span className="hidden sm:inline">تصدير CSV</span>
               </button>
             </div>
+              </CardContent>
+            </Card>
 
             {/* Orders count bar */}
-            {(statusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all") && (
+            {(statusFilter !== "all" || orderStatusFilter !== "all" || shopFilter !== "all" || search || dateFilter !== "all") && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span><span className="order-count-badge">{filteredOrders.length}</span> من <span className="order-count-badge">{safeOrders.length}</span> طلب</span>
-                <button onClick={() => { setSearch(""); setStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); }} className="text-primary hover:underline">مسح الفلاتر</button>
+                <button onClick={() => { setSearch(""); setStatusFilter("all"); setOrderStatusFilter("all"); setShopFilter("all"); setDateFilter("all"); setDateFrom(""); setDateTo(""); }} className="text-primary hover:underline">مسح الفلاتر</button>
               </div>
             )}
 

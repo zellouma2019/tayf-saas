@@ -58,6 +58,10 @@ import {
   Calendar as CalendarIcon,
   Star,
   Share2,
+  Repeat,
+  Timer,
+  Flame,
+  Activity,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { OrderInvoiceCard } from "@/components/app/order-invoice-card";
@@ -116,6 +120,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import {
   STATUS_META,
   STATUS_FLOW,
@@ -1848,12 +1862,241 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-5"
             >
             <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden chart-fade-in">
               <div className="p-4 sm:p-6">
                 <MerchantAnalytics stats={stats} orders={rawOrders} />
               </div>
             </div>
+
+            {/* ===== تحليلات متقدمة إضافية ===== */}
+            {(() => {
+              /* --- بيانات الإيرادات اليومية (آخر 14 يوم) --- */
+              const dailyRevenueMap = new Map<string, number>();
+              const now = Date.now();
+              for (let i = 13; i >= 0; i--) {
+                const d = new Date(now - i * 86400000);
+                const key = d.toISOString().slice(0, 10);
+                dailyRevenueMap.set(key, 0);
+              }
+              rawOrders.forEach(o => {
+                const day = (o.createdAt || "").slice(0, 10);
+                if (dailyRevenueMap.has(day)) {
+                  dailyRevenueMap.set(day, (dailyRevenueMap.get(day) || 0) + (o.total || 0));
+                }
+              });
+              const dailyRevenueData = Array.from(dailyRevenueMap.entries()).map(([date, revenue]) => ({
+                date: date.slice(5), // MM-DD
+                revenue: Math.round(revenue),
+              }));
+
+              /* --- أفضل 5 خدمات حسب الإيرادات --- */
+              const serviceRevenueMap = new Map<string, number>();
+              rawOrders.forEach(o => {
+                const key = o.serviceType || "أخرى";
+                serviceRevenueMap.set(key, (serviceRevenueMap.get(key) || 0) + (o.total || 0));
+              });
+              const topServicesData = Array.from(serviceRevenueMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([service, revenue]) => ({
+                  name: SERVICE_MAP[service]?.name || service,
+                  revenue: Math.round(revenue),
+                }));
+
+              /* --- ساعات الذروة (خريطة حرارية) --- */
+              const hourCounts = new Array(24).fill(0);
+              rawOrders.forEach(o => {
+                try {
+                  const h = new Date(o.createdAt).getHours();
+                  hourCounts[h] = (hourCounts[h] || 0) + 1;
+                } catch { /* skip */ }
+              });
+              const maxHour = Math.max(...hourCounts, 1);
+              const peakPeriods = [
+                { label: "فجر", hours: [0, 1, 2, 3, 4, 5] },
+                { label: "صباح", hours: [6, 7, 8, 9, 10, 11] },
+                { label: "ظهر", hours: [12, 13, 14, 15, 16, 17] },
+                { label: "مساء", hours: [18, 19, 20, 21, 22, 23] },
+              ];
+
+              /* --- نسبة الزبائن العائدين --- */
+              const customerOrderCount = new Map<string, number>();
+              rawOrders.forEach(o => {
+                const key = o.customer?.phone || o.customer?.name || "unknown";
+                customerOrderCount.set(key, (customerOrderCount.get(key) || 0) + 1);
+              });
+              const totalCustomers = customerOrderCount.size;
+              const repeatCustomers = Array.from(customerOrderCount.values()).filter(c => c > 1).length;
+              const retentionPct = totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
+
+              /* --- متوسط وقت الإنجاز (بالساعات) --- */
+              const completionTimes: number[] = [];
+              rawOrders.forEach(o => {
+                if (o.deliveredAt && o.createdAt) {
+                  try {
+                    const diff = new Date(o.deliveredAt).getTime() - new Date(o.createdAt).getTime();
+                    if (diff > 0) completionTimes.push(diff / 3600000);
+                  } catch { /* skip */ }
+                }
+              });
+              const avgCompletionHours = completionTimes.length > 0
+                ? (completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length)
+                : 0;
+
+              return (
+                <>
+            {/* 1. مخطط اتجاه الإيرادات اليومية */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">اتجاه الإيرادات</h3>
+                  <p className="text-xs text-muted-foreground">آخر 14 يوم</p>
+                </div>
+              </div>
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dailyRevenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, direction: "rtl" }}
+                      formatter={(value: number) => [`${value.toLocaleString("ar-DZ")} د.ج`, "الإيرادات"]}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#revenueGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 2. أفضل الخدمات حسب الإيرادات */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-violet-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">أفضل الخدمات أداءً</h3>
+                  <p className="text-xs text-muted-foreground">حسب الإيرادات</p>
+                </div>
+              </div>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topServicesData} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} width={55} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, direction: "rtl" }}
+                      formatter={(value: number) => [`${value.toLocaleString("ar-DZ")} د.ج`, "الإيرادات"]}
+                    />
+                    <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 6, 6, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 3. خريطة ساعات الذروة */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Flame className="h-4 w-4 text-violet-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">ساعات الذروة</h3>
+                  <p className="text-xs text-muted-foreground">توزيع الطلبات حسب الساعة</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {peakPeriods.map(period => (
+                  <div key={period.label} className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground w-10 shrink-0 text-right">{period.label}</span>
+                    <div className="flex gap-1 flex-1">
+                      {period.hours.map(h => {
+                        const count = hourCounts[h];
+                        const intensity = maxHour > 0 ? count / maxHour : 0;
+                        const bgOpacity = Math.max(0.05, intensity);
+                        return (
+                          <div
+                            key={h}
+                            className="flex-1 h-8 rounded flex items-center justify-center text-[10px] font-medium transition-all"
+                            style={{
+                              backgroundColor: `rgba(139, 92, 246, ${bgOpacity})`,
+                              color: intensity > 0.4 ? "#fff" : "hsl(var(--muted-foreground))",
+                            }}
+                            title={`${h}:00 — ${count} طلب`}
+                          >
+                            {count}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* مفتاح الألوان */}
+              <div className="flex items-center justify-end gap-3 mt-3">
+                <span className="text-[10px] text-muted-foreground">أقل</span>
+                <div className="flex gap-0.5">
+                  {[0.05, 0.2, 0.4, 0.6, 0.8, 1].map(v => (
+                    <div key={v} className="w-4 h-3 rounded-sm" style={{ backgroundColor: `rgba(139, 92, 246, ${v})` }} />
+                  ))}
+                </div>
+                <span className="text-[10px] text-muted-foreground">أكثر</span>
+              </div>
+            </div>
+
+            {/* 4. نسبة الزبائن العائدين */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Repeat className="h-4 w-4 text-violet-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">نسبة الزبائن العائدين</h3>
+                  <p className="text-xs text-muted-foreground">زبائن لديهم أكثر من طلب</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-4">
+                <span className="text-value-gradient-purple text-5xl font-black tracking-tight">
+                  {retentionPct}%
+                </span>
+                <span className="text-sm text-muted-foreground mt-2">
+                  {repeatCustomers} من {totalCustomers} زبون عائد
+                </span>
+              </div>
+            </div>
+
+            {/* 5. متوسط وقت الإنجاز */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Timer className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">متوسط وقت الإنجاز</h3>
+                  <p className="text-xs text-muted-foreground">من الإنشاء إلى التسليم</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-4">
+                <span className="count-pulse text-5xl font-black text-emerald-600 tracking-tight">
+                  {avgCompletionHours > 0 ? avgCompletionHours.toFixed(1) : "—"}
+                </span>
+                <span className="text-sm text-muted-foreground mt-2">ساعة</span>
+              </div>
+            </div>
+                </>
+              );
+            })()}
             </motion.div>
           )}
 

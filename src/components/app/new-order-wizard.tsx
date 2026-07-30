@@ -161,6 +161,99 @@ interface NewOrderWizardProps {
 const STEP_LABELS = ["رفع الملف والتحليل", "إعدادات الطباعة", "وقت التسليم", "معلومات التواصل", "مراجعة الطلب"];
 const STEP_DURATIONS = ["أقل من 15 ثانية", "حوالي 30 ثانية", "5 ثوانٍ", "15 ثانية", "10 ثوانٍ"];
 
+/* ═══════════════════════════════════════════════════════
+   بطاقة الوقت المقدر للإنجاز
+   ═══════════════════════════════════════════════════════ */
+function EstimatedTimeCard({ pages, copies, isColor, hasBinding }: {
+  pages: number;
+  copies: number;
+  isColor: boolean;
+  hasBinding: boolean;
+}) {
+  const estimatedMinutes = useMemo(() => {
+    // الأساس: 10 دقائق
+    let mins = 10;
+    // + 2 دقيقة لكل 10 صفحات
+    mins += Math.ceil((pages / 10)) * 2;
+    // + 5 دقائق لكل نسخة فوق النسخة الأولى
+    if (copies > 1) mins += (copies - 1) * 5;
+    // + 10 دقائق إذا ملون
+    if (isColor) mins += 10;
+    // + 15 دقيقة إذا التجليد مختار
+    if (hasBinding) mins += 15;
+    return mins;
+  }, [pages, copies, isColor, hasBinding]);
+
+  // تنسيق الوقت
+  const formatTime = (mins: number) => {
+    if (mins < 60) return `${mins} دقيقة`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h} ساعة و ${m} دقيقة` : `${h} ساعة`;
+  };
+
+  // اللون حسب الوقت
+  const colorClass =
+    estimatedMinutes < 30
+      ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40"
+      : estimatedMinutes <= 60
+        ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40"
+        : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/40";
+
+  const badgeClass =
+    estimatedMinutes < 30
+      ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
+      : estimatedMinutes <= 60
+        ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
+        : "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400";
+
+  const progressColor =
+    estimatedMinutes < 30
+      ? "bg-emerald-500"
+      : estimatedMinutes <= 60
+        ? "bg-amber-500"
+        : "bg-rose-500";
+
+  const iconClass =
+    estimatedMinutes < 30
+      ? "text-emerald-600 dark:text-emerald-400"
+      : estimatedMinutes <= 60
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-rose-600 dark:text-rose-400";
+
+  // نسبة شريط التقدم (الحد الأقصى 120 دقيقة = 100%)
+  const progressPercent = Math.min(100, Math.round((estimatedMinutes / 120) * 100));
+
+  return (
+    <div className={`rounded-xl border p-4 ${colorClass}`}>
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 p-2 rounded-lg bg-background/60">
+          <Timer className={`h-4 w-4 ${iconClass}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-bold text-foreground">⏱️ الوقت المقدر للإنجاز</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${badgeClass}`}>
+              {formatTime(estimatedMinutes)}
+            </span>
+          </div>
+          {/* شريط التقدم */}
+          <div className="relative h-2 rounded-full bg-background/40 overflow-hidden mt-2">
+            <div
+              className={`absolute inset-y-0 right-0 ${progressColor} rounded-full transition-all duration-500`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
+            <span>0 دقيقة</span>
+            <span>2 ساعة</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: NewOrderWizardProps) {
   const { shop } = useShop();
   const shopCountry = getCountry(shop?.country);
@@ -1434,6 +1527,14 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 rows={3}
               />
             </Section>
+
+            {/* ===== الوقت المقدر للإنجاز ===== */}
+            <EstimatedTimeCard
+              pages={pages}
+              copies={copies}
+              isColor={specOptions["color"] === "color"}
+              hasBinding={specOptions["binding"] !== undefined && specOptions["binding"] !== "none"}
+            />
           </div>
         )}
 
