@@ -137,7 +137,7 @@ export function QuickInsightsWidget({ orders, shops }: QuickInsightsWidgetProps)
   
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
         <Lightbulb className="h-4 w-4 text-amber-500" />
         رؤى سريعة
       </h3>
@@ -148,12 +148,19 @@ export function QuickInsightsWidget({ orders, shops }: QuickInsightsWidgetProps)
             <div
               key={i}
               className={cn(
-                "rounded-xl px-3.5 py-2.5 flex items-start gap-2.5 anim-smooth-in",
+                "rounded-xl px-3.5 py-2.5 flex items-start gap-2.5 anim-smooth-in hover-lift-1 transition-all",
                 insight.bgClass
               )}
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <Icon className={cn("h-4 w-4 shrink-0 mt-0.5", insight.color)} />
+              <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
+                insight.type === 'warning' && 'bg-amber-500/10',
+                insight.type === 'success' && 'bg-emerald-500/10',
+                insight.type === 'action' && 'bg-rose-500/10',
+                insight.type === 'info' && 'bg-sky-500/10'
+              )}>
+                <Icon className={cn("h-3.5 w-3.5", insight.color)} />
+              </div>
               <p className="text-xs leading-relaxed text-foreground/90">{insight.text}</p>
             </div>
           );

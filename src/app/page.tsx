@@ -8,6 +8,7 @@ import {
   ArrowUpRight, Eye, ChevronLeft, Bell, Zap, Calendar,
   CheckCircle2, AlertTriangle, Info, Copy, Keyboard,
   FileText, Check, Square, X, CheckSquare, MessageCircle,
+  LayoutGrid, ArrowUpDown,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.9-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v6.0-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -142,6 +143,11 @@ export default function SuperAdminPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   // Quick view
   const [quickViewOrder, setQuickViewOrder] = useState<GlobalOrder | null>(null);
+  // Sorting
+  const [sortKey, setSortKey] = useState<"date" | "amount" | "customer" | "status">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  // View mode: table or kanban
+  const [ordersView, setOrdersView] = useState<"table" | "kanban">("table");
   // Data health tracking
   const [dataHealth, setDataHealth] = useState<{ status: 'healthy' | 'warning' | 'error'; message: string }>({ status: 'healthy', message: '' });
   // Platform settings
@@ -542,6 +548,57 @@ export default function SuperAdminPage() {
     if (!isInDateRange(o.createdAt)) return false;
     return true;
   });
+
+  // Sorting
+  const sortedOrders = useMemo(() => {
+    const arr = [...filteredOrders];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "date":
+          cmp = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          break;
+        case "amount":
+          cmp = (b.total || 0) - (a.total || 0);
+          break;
+        case "customer":
+          cmp = (a.customer?.name || "").localeCompare(b.customer?.name || "", "ar");
+          break;
+        case "status":
+          const order = ["cancelled", "pending", "confirmed", "printing", "ready", "delivered"];
+          cmp = (order.indexOf(a.status) ?? 99) - (order.indexOf(b.status) ?? 99);
+          break;
+      }
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+    return arr;
+  }, [filteredOrders, sortKey, sortDir]);
+
+  const toggleSort = useCallback((key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  }, [sortKey]);
+
+  // Sortable header helper
+  const SortTh = useCallback(({ label, sortField, children }: { label: string; sortField: typeof sortKey; children?: React.ReactNode }) => {
+    const isActive = sortKey === sortField;
+    return (
+      <TableHead
+        className={cn("text-right sortable-th", isActive && sortDir === "desc" ? "active desc" : isActive && "active")}
+        onClick={() => toggleSort(sortField)}
+      >
+        <span className="flex items-center gap-0.5">
+          {label}
+          <span className="sort-icon">▲▼</span>
+        </span>
+        {children}
+      </TableHead>
+    );
+  }, [sortKey, sortDir, toggleSort]);
 
   // Bulk actions
   const toggleSelect = useCallback((id: string) => {
@@ -1365,6 +1422,32 @@ export default function SuperAdminPage() {
                   </div>
                 )}
               </div>
+              {/* View Toggle: Table / Kanban */}
+              <div className="view-toggle-group">
+                <button
+                  className={cn("view-toggle-btn", ordersView === "table" && "active")}
+                  onClick={() => setOrdersView("table")}
+                  title="عرض جدول"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+                  جدول
+                </button>
+                <button
+                  className={cn("view-toggle-btn", ordersView === "kanban" && "active")}
+                  onClick={() => setOrdersView("kanban")}
+                  title="عرض كانبان"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  كانبان
+                </button>
+              </div>
+              {/* Sort indicator */}
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span>ترتيب:</span>
+                <span className="font-medium text-foreground">{{date: "التاريخ", amount: "المبلغ", customer: "الزبون", status: "الحالة"}[sortKey]}</span>
+                <button onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")} className="text-primary hover:underline font-medium">{sortDir === "desc" ? "↓" : "↑"}</button>
+              </div>
               {/* Enhanced export button — full CSV with all columns */}
               <button
                 onClick={() => {
@@ -1456,40 +1539,42 @@ export default function SuperAdminPage() {
               </div>
             )}
 
-            {/* Orders table */}
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="overflow-x-auto">
+            {/* Orders table / kanban view */}
+            {ordersView === "table" ? (
+            <div className="rounded-xl border border-border bg-card overflow-hidden hover-border-gradient">
+              <div className="overflow-x-auto scrollbar-thin">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-10 text-center">
-                        <button onClick={toggleSelectAll} className="p-1 rounded hover:bg-muted/80 transition-colors" title="تحديد الكل">
-                          {selectedIds.size === filteredOrders.length && filteredOrders.length > 0
+                        <button onClick={toggleSelectAll} className="p-1 rounded hover:bg-muted/80 transition-colors tooltip-css" data-tip="تحديد الكل">
+                          {selectedIds.size === sortedOrders.length && sortedOrders.length > 0
                             ? <Check className="h-4 w-4 text-primary" />
                             : <Square className="h-4 w-4 text-muted-foreground" />
                           }
                         </button>
                       </TableHead>
-                      <TableHead className="text-right">الزبون</TableHead>
+                      <SortTh label="الزبون" sortField="customer" />
                       <TableHead className="text-right">الخدمة</TableHead>
                       <TableHead className="text-right">المتجر</TableHead>
-                      <TableHead className="text-right">الحالة</TableHead>
-                      <TableHead className="text-right">المبلغ</TableHead>
-                      <TableHead className="text-right">التاريخ</TableHead>
+                      <SortTh label="الحالة" sortField="status" />
+                      <SortTh label="المبلغ" sortField="amount" />
+                      <SortTh label="التاريخ" sortField="date" />
                       <TableHead className="text-right">إجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredOrders.map((order) => (
+                    {sortedOrders.map((order, idx) => (
                       <TableRow
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent data-row-hover",
+                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent data-row-hover table-row-enter",
                           `status-${order.status}`,
                           selectedIds.has(order.id) && "row-selected",
                           duplicateOrderIds.has(order.id) && "duplicate-warning-row"
                         )}
+                        style={{ animationDelay: `${idx * 20}ms` }}
                       >
                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                           <button
@@ -1605,7 +1690,7 @@ export default function SuperAdminPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {filteredOrders.length === 0 && (
+                    {sortedOrders.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           <div className="flex flex-col items-center gap-2">
@@ -1619,6 +1704,55 @@ export default function SuperAdminPage() {
                 </Table>
               </div>
             </div>
+            ) : (
+            /* Kanban View */
+            <div className="space-y-3 stagger-cols-enter">
+              {Object.entries(STATUS_META).filter(([k]) => k !== "cancelled").map(([statusKey, meta]) => {
+                const colOrders = sortedOrders.filter(o => o.status === statusKey);
+                return (
+                  <div key={statusKey} className="rounded-xl border border-border bg-card overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50" style={{borderRightColor: meta.color}}>
+                      <div className={cn("status-dot-label status-dot-ring", {
+                        emerald: ["delivered"].includes(statusKey),
+                        amber: ["pending", "confirmed"].includes(statusKey),
+                        sky: ["printing"].includes(statusKey),
+                        violet: ["ready"].includes(statusKey),
+                      })} />
+                      <span className="text-sm font-medium">{meta.label}</span>
+                      <span className="text-xs text-muted-foreground mr-auto">{colOrders.length}</span>
+                      <div className="h-1 flex-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{width: `${sortedOrders.length > 0 ? (colOrders.length / sortedOrders.length * 100) : 0}%`, backgroundColor: meta.color}} />
+                      </div>
+                    </div>
+                    <div className="p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 min-h-[60px]">
+                      {colOrders.length === 0 ? (
+                        <div className="col-span-full text-center py-4 text-xs text-muted-foreground/50">لا توجد طلبات</div>
+                      ) : colOrders.map(order => (
+                        <div
+                          key={order.id}
+                          onClick={() => setSelectedOrder(order)}
+                          className={cn(
+                            "rounded-lg border border-border/50 bg-background/50 p-2.5 cursor-pointer transition-all hover:border-primary/30 hover:bg-primary/[0.02] press-scale",
+                            selectedIds.has(order.id) && "ring-1 ring-primary/50 bg-primary/[0.04]"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-mono text-muted-foreground">{order.reference || order.id.substring(0, 8)}</span>
+                            {order.total ? <span className="text-xs font-bold revenue-gold">{order.total.toLocaleString("ar-DZ")} د.ج</span> : null}
+                          </div>
+                          <div className="text-sm font-medium truncate">{order.customer?.name || "—"}</div>
+                          <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
+                            <span className="truncate max-w-[100px]">{order.serviceName || order.serviceType || ""}</span>
+                            <span dir="ltr">{new Date(order.createdAt).toLocaleDateString("ar-DZ", {day: "numeric", month: "short"})}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            )}
             </div>
             {/* Activity Panel — side column on large screens */}
             <div className="hidden lg:block">

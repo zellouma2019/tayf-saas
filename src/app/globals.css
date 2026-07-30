@@ -36184,3 +36184,450 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 .ripple-btn:active::after {
   opacity: 1;
 }
+
+/* ================================================================
+   Tayf CSS v6.0 — R66 Enhancements
+   ================================================================ */
+
+/* 1. Sortable Table Headers */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  padding-inline-end: 1.5rem;
+}
+.sortable-th:hover {
+  background-color: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
+}
+.sortable-th .sort-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: 6px;
+  font-size: 10px;
+  opacity: 0.3;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.sortable-th.active .sort-icon {
+  opacity: 1;
+  color: hsl(var(--primary));
+}
+.sortable-th.active.desc .sort-icon {
+  transform: rotate(180deg);
+}
+
+/* 2. View Toggle (Table / Kanban) */
+.view-toggle-group {
+  display: inline-flex;
+  border-radius: 10px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+.view-toggle-btn:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background: hsl(var(--border));
+}
+.view-toggle-btn.active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
+}
+.view-toggle-btn:not(.active):hover {
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--foreground));
+}
+
+/* 3. Quick View Popover */
+.quick-view-popover {
+  position: fixed;
+  z-index: 100;
+  min-width: 280px;
+  max-width: 360px;
+  border-radius: 14px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: 0 20px 50px -12px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05);
+  overflow: hidden;
+  animation: popoverIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.quick-view-popover .popover-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.quick-view-popover .popover-body {
+  padding: 12px 14px;
+}
+.quick-view-popover .popover-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+}
+.quick-view-popover .popover-row + .popover-row {
+  border-top: 1px solid hsl(var(--border) / 0.5);
+}
+.quick-view-popover .popover-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+}
+.quick-view-popover .popover-value {
+  font-weight: 600;
+  text-align: start;
+}
+.quick-view-popover .popover-actions {
+  padding: 8px 14px 12px;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+}
+
+/* 4. Enhanced Status Dot with pulse ring */
+.status-dot-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-dot-ring::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: dotRing 2s ease-out infinite;
+}
+.status-dot-ring.emerald::before { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+.status-dot-ring.amber::before { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+.status-dot-ring.rose::before { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+.status-dot-ring.sky::before { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); }
+.status-dot-ring.violet::before { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+@keyframes dotRing {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* 5. Staggered grid with columns animation */
+.stagger-cols-enter > * {
+  animation: colSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-cols-enter > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-cols-enter > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-cols-enter > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-cols-enter > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-cols-enter > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-cols-enter > *:nth-child(6) { animation-delay: 300ms; }
+@keyframes colSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 6. Tab indicator animation */
+.tab-indicator {
+  position: relative;
+}
+.tab-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(270 80% 60%));
+  border-radius: 1px;
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tab-indicator[aria-selected="true"]::after,
+.tab-indicator.active::after {
+  transform: scaleX(1);
+}
+
+/* 7. Gradient border on focus for inputs */
+.input-focus-gradient {
+  position: relative;
+}
+.input-focus-gradient:focus-within {
+  outline: none;
+}
+.input-focus-gradient:focus-within::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(270 70% 55%), hsl(200 80% 55%));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: borderGlow 2s ease infinite;
+}
+@keyframes borderGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* 8. Floating label for stat cards */
+.stat-card-float-label {
+  position: relative;
+}
+.stat-card-float-label .float-label {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: hsl(var(--card));
+  padding: 0 6px;
+  font-size: 10px;
+  color: hsl(var(--muted-foreground));
+  border-radius: 4px;
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+/* 9. Hover reveal text effect */
+.hover-reveal {
+  position: relative;
+  overflow: hidden;
+}
+.hover-reveal .reveal-content {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  overflow: hidden;
+}
+.hover-reveal:hover .reveal-content,
+.hover-reveal:focus-within .reveal-content {
+  max-height: 200px;
+  opacity: 1;
+}
+
+/* 10. Enhanced scrollbar for the whole app */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.35);
+}
+
+/* 11. Animated gradient background for special sections */
+.gradient-mesh {
+  background:
+    radial-gradient(at 20% 20%, hsl(var(--primary) / 0.06) 0, transparent 50%),
+    radial-gradient(at 80% 80%, hsl(270 70% 50% / 0.05) 0, transparent 50%),
+    radial-gradient(at 50% 50%, hsl(200 70% 50% / 0.04) 0, transparent 50%);
+  background-size: 200% 200%;
+  animation: meshMove 15s ease infinite;
+}
+@keyframes meshMove {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 12. Table row entrance animation */
+.table-row-enter {
+  animation: rowEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes rowEnter {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* 13. Badge glow variants */
+.badge-glow-emerald {
+  box-shadow: 0 0 8px 1px rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.badge-glow-amber {
+  box-shadow: 0 0 8px 1px rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.badge-glow-rose {
+  box-shadow: 0 0 8px 1px rgba(244, 63, 94, 0.25);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+.badge-glow-violet {
+  box-shadow: 0 0 8px 1px rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.badge-glow-sky {
+  box-shadow: 0 0 8px 1px rgba(14, 165, 233, 0.25);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+/* 14. Tooltip with arrow (pure CSS) */
+.tooltip-css {
+  position: relative;
+}
+.tooltip-css::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 50;
+}
+.tooltip-css::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: hsl(var(--foreground));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 50;
+}
+.tooltip-css:hover::before,
+.tooltip-css:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 15. Skeleton shimmer variant */
+.skeleton-shine {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shine 1.5s ease infinite;
+}
+@keyframes shine {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* 16. Press feedback on interactive elements */
+.press-scale {
+  transition: transform 0.15s ease;
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* 17. Status timeline connector animation */
+.timeline-connector-animated {
+  position: relative;
+}
+.timeline-connector-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg,
+    hsl(var(--primary)),
+    hsl(270 70% 55%),
+    hsl(200 70% 55%)
+  );
+  background-size: 100% 200%;
+  animation: timelineFlow 3s ease infinite;
+}
+@keyframes timelineFlow {
+  0%, 100% { background-position: 0 0; }
+  50% { background-position: 0 100%; }
+}
+
+/* 18. Gradient text with clip */
+.text-gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(270 70% 60%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 19. Hover border gradient */
+.hover-border-gradient {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+.hover-border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    hsl(var(--primary) / 0),
+    hsl(270 70% 55% / 0),
+    hsl(200 70% 55% / 0)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: background 0.3s ease;
+  pointer-events: none;
+}
+.hover-border-gradient:hover::before {
+  background: linear-gradient(135deg,
+    hsl(var(--primary) / 0.5),
+    hsl(270 70% 55% / 0.4),
+    hsl(200 70% 55% / 0.3)
+  );
+}
+
+/* 20. Number counter animation */
+.counter-animate {
+  display: inline-block;
+  animation: counterPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes counterPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
