@@ -10,7 +10,7 @@ import {
   FileText, Check, Square, X, CheckSquare, MessageCircle,
   LayoutGrid, ArrowUpDown, Filter, PlusCircle, ChevronUp, ChevronDown,
   Printer, Phone, Share2, ArrowRight, Play,
-  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX,
+  StickyNote, UserCircle, BarChart2, Hash, Clock4, Send, Volume2, VolumeX, Tag, Timer, ClipboardList, FileBarChart,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v7.1-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v7.2-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
 
 // ===== Data Health Banner with Auto-Dismiss =====
 function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
@@ -2006,6 +2006,67 @@ export default function SuperAdminPage() {
               </div>
             </div>
 
+            {/* Print Queue Manager */}
+            <PrintQueueManager orders={safeOrders} onOrderClick={(o) => { setSelectedOrder(o); setQuickViewOrder(o); }} />
+
+            {/* Revenue Trend with Sparklines */}
+            <div className="rounded-xl border border-border/60 bg-card/80 p-3 trend-cards-container">
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                  اتجاه الإيرادات
+                </h3>
+                <span className="text-[10px] text-muted-foreground/50">آخر 7 أيام</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {(() => {
+                  const days = [];
+                  for (let i = 6; i >= 0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    const dayOrders = safeOrders.filter(o => o.createdAt && o.createdAt.startsWith(dateStr));
+                    days.push({
+                      revenue: dayOrders.reduce((s,o) => s + (o.total||0), 0),
+                      count: dayOrders.length,
+                    });
+                  }
+                  const revData = days.map(d => d.revenue);
+                  const countData = days.map(d => d.count);
+                  const today = days[days.length - 1];
+                  const yesterday = days.length > 1 ? days[days.length - 2] : { revenue: 0, count: 0 };
+                  const avgData = revData.map((v,i) => Math.round(revData.slice(0,i+1).reduce((a,b)=>a+b,0)/(i+1)));
+                  return (
+                    <>
+                      <div className="trend-card">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] text-muted-foreground">إيرادات اليوم</span>
+                          <TrendBadge current={today.revenue} previous={yesterday.revenue} />
+                        </div>
+                        <p className="text-sm font-bold tabular-data revenue-gold">{formatNumber(today.revenue)} <span className="text-[9px] font-normal text-muted-foreground/50">د.ج</span></p>
+                        <MiniSparkline data={revData} color="#f59e0b" height={28} />
+                      </div>
+                      <div className="trend-card">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] text-muted-foreground">طلبات اليوم</span>
+                          <TrendBadge current={today.count} previous={yesterday.count} />
+                        </div>
+                        <p className="text-sm font-bold tabular-data">{today.count} <span className="text-[9px] font-normal text-muted-foreground/50">طلب</span></p>
+                        <MiniSparkline data={countData} color="#3b82f6" height={28} />
+                      </div>
+                      <div className="trend-card">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] text-muted-foreground">متوسط يومي</span>
+                          <span className="text-[9px] text-muted-foreground/40">هذا الأسبوع</span>
+                        </div>
+                        <p className="text-sm font-bold tabular-data">{formatNumber(Math.round(days.slice(-7).reduce((s,d) => s + d.revenue, 0) / 7))} <span className="text-[9px] font-normal text-muted-foreground/50">د.ج</span></p>
+                        <MiniSparkline data={avgData} color="#8b5cf6" height={28} />
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
             {/* Activity Panel + Filters Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
             <div className="space-y-4">
@@ -3117,6 +3178,33 @@ export default function SuperAdminPage() {
                 </button>
               </div>
 
+              {/* Status History Timeline */}
+              {quickViewOrder.statusHistory && quickViewOrder.statusHistory.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border/60">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Timer className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] font-bold text-muted-foreground">سجل الحالات</span>
+                  </div>
+                  <div className="space-y-1.5 qv-status-timeline">
+                    {quickViewOrder.statusHistory.map((entry: {status: string; timestamp: string; note?: string}, i: number) => {
+                      const meta = STATUS_META[entry.status as keyof typeof STATUS_META];
+                      return (
+                        <div key={i} className="qv-timeline-item" style={{animationDelay: `${i * 30}ms`}}>
+                          <div className="qv-timeline-dot" style={{backgroundColor: meta?.color || '#888'}} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-medium">{meta?.label || entry.status}</span>
+                              <span className="text-[8px] text-muted-foreground/50" dir="ltr">{formatDateTimeAr(entry.timestamp)}</span>
+                            </div>
+                            {entry.note && <p className="text-[8px] text-muted-foreground/60 mt-0.5 truncate">{entry.note}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Order comment in quick view */}
               <div className="mt-3 pt-3 border-t border-border/60">
                 <div className="flex items-center gap-1.5 mb-2">
@@ -3225,6 +3313,20 @@ export default function SuperAdminPage() {
                 <span>{safeOrders.filter(o => o.status === "ready").length} جاهز للاستلام</span>
               </button>
             )}
+            <button
+              onClick={() => { toast.info("\u0637\u0628\u0627\u0639\u0629 \u0645\u0644\u0635\u0642\u0627\u062a \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0642\u064a\u062f \u0627\u0644\u062a\u0637\u0648\u064a\u0631"); setFabOpen(false); }}
+              className="fab-action-item fab-action-violet"
+            >
+              <Tag className="h-4 w-4" />
+              <span>طباعة ملصقات</span>
+            </button>
+            <button
+              onClick={() => { exportAdminReport(); setFabOpen(false); }}
+              className="fab-action-item fab-action-emerald"
+            >
+              <FileBarChart className="h-4 w-4" />
+              <span>تصدير تقرير</span>
+            </button>
             <button
               onClick={() => {
                 const next = !soundEnabled;
