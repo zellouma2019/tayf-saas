@@ -32688,3 +32688,557 @@ kbd {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 11px;
 }
+
+/* =========================================================
+   CSS v5.4 — Enhanced Visual Effects & Micro-Interactions
+   ========================================================= */
+
+/* === Animated Mesh Gradient Background === */
+@keyframes meshGradient {
+  0%, 100% { background-position: 0% 50%; }
+  25% { background-position: 100% 0%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 0% 100%; }
+}
+.animated-mesh-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%);
+  background-size: 400% 400%;
+  animation: meshGradient 15s ease infinite;
+}
+.dark .animated-mesh-bg {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #1a1a2e 75%, #1a1a2e 100%);
+  background-size: 400% 400%;
+  animation: meshGradient 15s ease infinite;
+}
+
+/* === Shimmer Card Effect === */
+@keyframes shimmerCard {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer-card {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerCard 3s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.dark .shimmer-card::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* === Floating Action Button (FAB) === */
+@keyframes fabFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.fab-float {
+  animation: fabFloat 3s ease-in-out infinite;
+}
+.fab-shadow {
+  box-shadow:
+    0 8px 32px rgba(139, 92, 246, 0.35),
+    0 2px 8px rgba(139, 92, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.dark .fab-shadow {
+  box-shadow:
+    0 8px 32px rgba(139, 92, 246, 0.25),
+    0 2px 8px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* === Glow Pulse Effect for Important Items === */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.2), 0 0 10px rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4), 0 0 30px rgba(139, 92, 246, 0.2);
+  }
+}
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* === Magnetic Hover Effect (cards pulled toward cursor) === */
+.magnetic-hover {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.magnetic-hover:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* === Gradient Text — Animated === */
+@keyframes gradientText {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.gradient-text-animated {
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #4facfe);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientText 4s ease infinite;
+}
+
+/* === Depth Shadow Levels === */
+.depth-1 { box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); }
+.depth-2 { box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06); }
+.depth-3 { box-shadow: 0 10px 30px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06); }
+.depth-4 { box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08); }
+.dark .depth-1 { box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2); }
+.dark .depth-2 { box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2); }
+.dark .depth-3 { box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.2); }
+.dark .depth-4 { box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 8px 16px rgba(0,0,0,0.3); }
+
+/* === Scroll Shadow — Top/Bottom indicators for scrollable areas === */
+.scroll-shadow-y {
+  background:
+    linear-gradient(to bottom, transparent 95%, rgba(0,0,0,0.05)),
+    linear-gradient(to top, transparent 95%, rgba(0,0,0,0.05));
+  background-attachment: local;
+}
+.dark .scroll-shadow-y {
+  background:
+    linear-gradient(to bottom, transparent 95%, rgba(0,0,0,0.2)),
+    linear-gradient(to top, transparent 95%, rgba(0,0,0,0.2));
+  background-attachment: local;
+}
+
+/* === No Data State Illustration === */
+@keyframes emptyFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(2deg); }
+  75% { transform: translateY(4px) rotate(-1deg); }
+}
+.empty-state-illustration {
+  animation: emptyFloat 4s ease-in-out infinite;
+}
+
+/* === Counter Badge with Ring === */
+.counter-badge-ring {
+  position: relative;
+}
+.counter-badge-ring::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  border-top-color: rgba(139, 92, 246, 0.6);
+  animation: spin 1.5s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === Data Health Banner — Persistent Info Banner === */
+@keyframes healthSlideIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.health-banner {
+  animation: healthSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.health-banner-exit {
+  animation: healthSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards;
+}
+
+/* === Quick Stats Ribbon Gradient === */
+@keyframes ribbonShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.ribbon-gradient {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.06) 25%,
+    rgba(236, 72, 153, 0.06) 50%,
+    rgba(245, 158, 11, 0.06) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: ribbonShimmer 8s linear infinite;
+}
+.dark .ribbon-gradient {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.1) 25%,
+    rgba(236, 72, 153, 0.08) 50%,
+    rgba(245, 158, 11, 0.08) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: ribbonShimmer 8s linear infinite;
+}
+
+/* === Tab Underline Animation (Enhanced) === */
+@keyframes tabIndicatorSlide {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.tab-indicator {
+  position: relative;
+}
+.tab-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  border-radius: 1px;
+  animation: tabIndicatorSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* === Status Dot with Ping === */
+@keyframes statusPing {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.status-dot-ping {
+  position: relative;
+}
+.status-dot-ping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: inherit;
+  animation: statusPing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* === Card Spotlight Effect (follows mouse) === */
+.card-spotlight {
+  position: relative;
+  overflow: hidden;
+}
+.card-spotlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(139, 92, 246, 0.06),
+    transparent 40%
+  );
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.card-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* === Staggered Grid Entrance === */
+@keyframes gridStaggerIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.stagger-grid > * {
+  animation: gridStaggerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-grid > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-grid > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-grid > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-grid > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-grid > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-grid > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-grid > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-grid > *:nth-child(8) { animation-delay: 350ms; }
+.stagger-grid > *:nth-child(9) { animation-delay: 400ms; }
+.stagger-grid > *:nth-child(10) { animation-delay: 450ms; }
+.stagger-grid > *:nth-child(11) { animation-delay: 500ms; }
+.stagger-grid > *:nth-child(12) { animation-delay: 550ms; }
+
+/* === Smooth Number Font (tabular nums for data displays) === */
+.tabular-data {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* === Tooltip Arrow Enhancement === */
+@keyframes tooltipPop {
+  from { opacity: 0; transform: scale(0.9) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.tooltip-pop {
+  animation: tooltipPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* === Skeleton Wave (Enhanced Loading Placeholder) === */
+@keyframes skeletonWave {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-wave {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonWave 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* === Notification Toast Slide === */
+@keyframes toastSlideRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.toast-slide-in {
+  animation: toastSlideRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* === Press Feedback for Interactive Elements === */
+@keyframes pressScale {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.press-feedback {
+  transition: transform 0.15s ease;
+}
+.press-feedback:active {
+  animation: pressScale 0.15s ease;
+}
+
+/* === Skeleton Card with Content Lines === */
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+}
+.skeleton-card .skeleton-title {
+  height: 16px;
+  width: 60%;
+  border-radius: 4px;
+}
+.skeleton-card .skeleton-text {
+  height: 12px;
+  width: 100%;
+  border-radius: 4px;
+}
+.skeleton-card .skeleton-text:last-child {
+  width: 75%;
+}
+.skeleton-card .skeleton-avatar {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+}
+.skeleton-card .skeleton-value {
+  height: 24px;
+  width: 40%;
+  border-radius: 4px;
+}
+
+/* === Order Status Badge with Progress === */
+.status-badge-progress {
+  position: relative;
+  padding-right: 24px;
+}
+.status-badge-progress::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  opacity: 0.6;
+}
+
+/* === Enhanced Scrollbar (Thin & Elegant) === */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* === Focus Ring Glow (for input focus) === */
+@keyframes focusRingGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25);
+  }
+}
+.focus-glow-animated:focus-visible {
+  animation: focusRingGlow 1.5s ease-in-out infinite;
+  outline: none;
+}
+
+/* === Progress Steps Connector === */
+.progress-steps-connector {
+  position: relative;
+}
+.progress-steps-connector::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #4facfe);
+  background-size: 300% 100%;
+  animation: gradientText 6s ease infinite;
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+/* === Animated Border Card === */
+@property --border-angle-anim {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes animatedBorderRotate {
+  to { --border-angle-anim: 360deg; }
+}
+.animated-border-card {
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.animated-border-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--border-angle-anim),
+    #667eea, #764ba2, #f093fb, #4facfe, #667eea
+  );
+  z-index: -1;
+  animation: animatedBorderRotate 4s linear infinite;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 2px;
+  border-radius: inherit;
+}
+
+/* === Responsive Dashboard Grid === */
+.dashboard-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+@media (min-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+}
+
+/* === Duplicate Order Warning === */
+@keyframes duplicateFlash {
+  0%, 100% { background-color: rgba(245, 158, 11, 0.05); }
+  50% { background-color: rgba(245, 158, 11, 0.15); }
+}
+.duplicate-warning-row {
+  animation: duplicateFlash 2s ease-in-out infinite;
+  border-left: 3px solid rgba(245, 158, 11, 0.7);
+}
+
+/* === Export Button Animation === */
+@keyframes exportPulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.export-pulse {
+  animation: exportPulse 1.5s ease infinite;
+}
+
+/* === Improved Data Table Row Hover === */
+.data-row-hover {
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+.data-row-hover:hover {
+  background: hsl(var(--accent) / 0.04);
+  border-left-color: hsl(var(--primary) / 0.3);
+  padding-left: calc(var(--table-cell-padding, 12px) + 3px);
+}
+
+/* === Badge Chip Styles === */
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  transition: all 0.2s;
+}
+.badge-chip:hover {
+  transform: translateY(-1px);
+}
+
+/* === Skeleton Pulse (subtle) === */
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.skeleton-pulse {
+  animation: subtlePulse 1.8s ease-in-out infinite;
+}

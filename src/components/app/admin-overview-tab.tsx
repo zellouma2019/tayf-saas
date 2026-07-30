@@ -421,7 +421,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
     recentOrders: s.recentOrders ?? [],
   };
   return (
-    <div className="space-y-6 stagger-children widget-fade-in">
+    <div className="space-y-6 stagger-grid widget-fade-in">
       {/* شريط الترحيب */}
       <div className="aurora-bg rounded-2xl overflow-hidden fade-in-up" style={{ background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(212, 168, 83, 0.4))', backdropFilter: 'blur(16px)' }}>
         <div className="dot-pattern-gold absolute inset-0 opacity-10 pointer-events-none" />

@@ -76,7 +76,18 @@ export async function GET() {
       if (fromOrders > 0) totalRevenue = Math.round(fromOrders);
     }
 
-    // Fallback 2b: لو كلاهما صفر → revenue يبقى 0 (لا بيانات كافية)
+    // Fallback 2b: لو كلاهما صفر → حاول اجتياز جميع الطلبات عبر استعلام ثانوي
+    if (totalRevenue === 0) {
+      try {
+        const allTotals = await tursoQuery(`SELECT total FROM "PrintOrder" WHERE total > 0`);
+        if (allTotals.length > 0) {
+          totalRevenue = Math.round(allTotals.reduce((sum, o) => sum + toNum(o.total), 0));
+          console.log(`[global-stats] Fallback 2b: recovered revenue from ${allTotals.length} orders = ${totalRevenue}`);
+        }
+      } catch (e2) {
+        console.warn(`[global-stats] Fallback 2b query failed:`, e2);
+      }
+    }
 
     // Fallback 3: إذا كان todayOrders أرجع 0 (مشكلة منطقة زمنية)
     if (todayOrders === 0 && recentOrdersRaw.length > 0) {

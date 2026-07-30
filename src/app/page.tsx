@@ -56,7 +56,43 @@ const SettingsTab = dynamic(() => import("@/components/app/admin-settings-tab").
 const SecurityTab = dynamic(() => import("@/components/app/admin-security-tab").then(m => ({ default: m.SecurityTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 const PlatformSettingsTab = dynamic(() => import("@/components/app/admin-platform-settings").then(m => ({ default: m.PlatformSettingsTab })), { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-card animate-pulse" /> });
 
-const BUILD_HASH = "v5.3-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+const BUILD_HASH = "v5.4-" + (process.env.NEXT_PUBLIC_BUILD_HASH || "dev");
+
+// ===== Data Health Banner with Auto-Dismiss =====
+function DataHealthBanner({ message, status, onRetry }: { message: string; status: 'warning' | 'error'; onRetry: () => void }) {
+  const [visible, setVisible] = useState(true);
+  const [exiting, setExiting] = useState(false);
+
+  // Auto-dismiss after 8 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setExiting(true);
+      setTimeout(() => setVisible(false), 300);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div className={cn(
+      "px-4 py-2 border-b text-xs flex items-center justify-center gap-2",
+      exiting ? "health-banner-exit" : "health-banner",
+      status === 'warning' && "bg-amber-500/5 border-amber-500/20 text-amber-600 dark:text-amber-400",
+      status === 'error' && "bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400"
+    )}>
+      <span className={cn("w-1.5 h-1.5 rounded-full", status === 'warning' && "bg-amber-500 status-dot-ping", status === 'error' && "bg-red-500 status-dot-ping")} />
+      <span>{message}</span>
+      <button onClick={onRetry} className="hover:bg-white/10 rounded-md px-2 py-0.5 transition-colors flex items-center gap-1 press-feedback">
+        <RefreshCw className="h-3 w-3" />
+        إعادة المحاولة
+      </button>
+      <button onClick={() => { setExiting(true); setTimeout(() => setVisible(false), 300); }} className="hover:bg-white/10 rounded-md px-1 py-0.5 transition-colors ml-1">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
 
 export default function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -356,6 +392,42 @@ export default function SuperAdminPage() {
   // Safe data refs
   const safeOrders = Array.isArray(allOrders) ? allOrders : [];
   const pendingCount = safeOrders.filter(o => o.status === "pending").length;
+
+  // Duplicate order detection — flags orders with same phone+serviceType+shopId within 1 hour
+  const duplicateOrderIds = useMemo(() => {
+    const dupes = new Set<string>();
+    const seen = new Map<string, string[]>(); // key → order IDs
+    safeOrders.forEach((o) => {
+      const phone = o.customer?.phone || "";
+      const service = o.serviceType || o.serviceName || "";
+      const shop = o.shopId || o.shopSlug || "";
+      if (!phone || !service) return;
+      const key = `${phone}:${service}:${shop}`;
+      const list = seen.get(key) || [];
+      list.push(o.id);
+      seen.set(key, list);
+    });
+    seen.forEach((ids) => {
+      if (ids.length > 1) {
+        // Check if any pair is within 1 hour
+        const ordersById = new Map(safeOrders.map(o => [o.id, o]));
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = ordersById.get(ids[i]);
+            const b = ordersById.get(ids[j]);
+            if (a && b) {
+              const diff = Math.abs(new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+              if (diff < 60 * 60 * 1000) { // within 1 hour
+                dupes.add(ids[i]);
+                dupes.add(ids[j]);
+              }
+            }
+          }
+        }
+      }
+    });
+    return dupes;
+  }, [safeOrders]);
 
   // Notification state
   const [notifEvents, setNotifEvents] = useState<Array<{
@@ -839,49 +911,54 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
+      {/* Data health banner — auto-dismiss after 8 seconds */}
+      {!isInitialLoading && dataHealth.status !== 'healthy' && (
+        <DataHealthBanner message={dataHealth.message} status={dataHealth.status} onRetry={() => loadAll(false)} />
+      )}
+
       {/* Quick stats ribbon — visible on all tabs */}
       {!isInitialLoading && globalStats && (
-        <div className="px-4 py-2 border-b border-border/50 bg-gradient-to-l from-primary/[0.02] to-transparent overflow-x-auto">
+        <div className="px-4 py-2 border-b border-border/50 ribbon-gradient overflow-x-auto scrollbar-thin">
           <div className="flex items-center gap-4 text-xs min-w-max">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 breathe-glow" />
-              <span className="text-muted-foreground">{globalStats.totalOrders}</span>
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 status-dot-ping" />
+              <span className="text-foreground/80 font-semibold tabular-data">{globalStats.totalOrders}</span>
               <span className="text-muted-foreground/60">طلب</span>
             </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5">
-              <DollarSign className="h-3 w-3 text-amber-500" />
-              <span className="text-muted-foreground font-medium">{formatNumber(globalStats.totalRevenue)}</span>
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
+              <DollarSign className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-foreground/80 font-semibold tabular-data">{formatNumber(globalStats.totalRevenue)}</span>
               <span className="text-muted-foreground/60">د.ج</span>
             </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5">
-              <Store className="h-3 w-3 text-violet-500" />
-              <span className="text-muted-foreground">{globalStats.shopCount}</span>
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
+              <Store className="h-3.5 w-3.5 text-violet-500" />
+              <span className="text-foreground/80 font-semibold tabular-data">{globalStats.shopCount}</span>
               <span className="text-muted-foreground/60">متجر</span>
             </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="text-amber-600 dark:text-amber-400 font-medium">{globalStats.statusCounts?.pending || 0}</span>
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
+              <span className="w-2 h-2 rounded-full bg-amber-500 status-dot-ping" />
+              <span className="text-amber-600 dark:text-amber-400 font-semibold tabular-data">{globalStats.statusCounts?.pending || 0}</span>
               <span className="text-muted-foreground/60">معلّق</span>
             </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5">
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-blue-600 dark:text-blue-400 font-medium">{globalStats.statusCounts?.printing || 0}</span>
+              <span className="text-blue-600 dark:text-blue-400 font-semibold tabular-data">{globalStats.statusCounts?.printing || 0}</span>
               <span className="text-muted-foreground/60">طباعة</span>
             </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5">
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-teal-500" />
-              <span className="text-teal-600 dark:text-teal-400 font-medium">{globalStats.statusCounts?.ready || 0}</span>
+              <span className="text-teal-600 dark:text-teal-400 font-semibold tabular-data">{globalStats.statusCounts?.ready || 0}</span>
               <span className="text-muted-foreground/60">جاهز</span>
             </div>
-            <div className="w-px h-3 bg-border" />
-            <div className="flex items-center gap-1.5">
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-border to-transparent" />
+            <div className="flex items-center gap-1.5 press-feedback rounded-md px-1.5 py-0.5 cursor-default">
               <span className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-green-600 dark:text-green-400 font-medium">{globalStats.statusCounts?.delivered || 0}</span>
+              <span className="text-green-600 dark:text-green-400 font-semibold tabular-data">{globalStats.statusCounts?.delivered || 0}</span>
               <span className="text-muted-foreground/60">تم التسليم</span>
             </div>
           </div>
@@ -900,17 +977,17 @@ export default function SuperAdminPage() {
 
         {/* ====== Skeleton state for initial load ====== */}
         {isInitialLoading && activeTab === "overview" && (
-          <div className="space-y-4">
-            {/* 4 skeleton KPI cards with improved shimmer */}
+          <div className="space-y-4 stagger-grid">
+            {/* 4 skeleton KPI cards with wave shimmer */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3 overflow-hidden">
+                <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3 overflow-hidden shimmer-card depth-1">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2 flex-1">
-                      <div className="h-7 w-16 skeleton-improved rounded-lg" />
-                      <div className="h-3 w-24 skeleton-improved rounded-lg" />
+                      <div className="h-7 w-16 skeleton-wave rounded-lg" />
+                      <div className="h-3 w-24 skeleton-wave rounded-lg" style={{ animationDelay: `${i * 200}ms` }} />
                     </div>
-                    <div className="w-10 h-10 rounded-lg skeleton-improved" />
+                    <div className="w-10 h-10 rounded-xl skeleton-wave" style={{ animationDelay: `${i * 200 + 100}ms` }} />
                   </div>
                 </div>
               ))}
@@ -1193,24 +1270,34 @@ export default function SuperAdminPage() {
                   </div>
                 )}
               </div>
-              {/* Export button */}
+              {/* Enhanced export button — full CSV with all columns */}
               <button
                 onClick={() => {
-                  const csv = filteredOrders.map(o => 
-                    `${o.customer?.name || ""},${o.serviceName || o.serviceType || ""},${o.shopName || ""},${STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status},${o.total || 0},${formatDA(o.createdAt)}`
-                  ).join("\n");
-                  const header = "الزبون,الخدمة,المتجر,الحالة,المبلغ,التاريخ";
+                  const csv = filteredOrders.map(o => {
+                    const ref = o.reference || o.id;
+                    const name = o.customer?.name || "";
+                    const phone = o.customer?.phone || "";
+                    const service = o.serviceName || o.serviceType || "";
+                    const shop = o.shopName || o.shopSlug || "";
+                    const status = STATUS_META[o.status as keyof typeof STATUS_META]?.label || o.status;
+                    const total = o.total || 0;
+                    const date = formatDA(o.createdAt);
+                    const time = new Date(o.createdAt).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" });
+                    const isDupe = duplicateOrderIds.has(o.id) ? "نعم" : "لا";
+                    return `"${ref}","${name}","${phone}","${service}","${shop}","${status}",${total},"${date}","${time}","${isDupe}"`;
+                  }).join("\n");
+                  const header = "الرقم,الزبون,الهاتف,الخدمة,المتجر,الحالة,المبلغ,التاريخ,الوقت,مكرر";
                   const blob = new Blob(["\ufeff" + header + "\n" + csv], { type: "text/csv;charset=utf-8" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
-                  a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+                  a.download = `tayf-orders-${new Date().toISOString().slice(0, 10)}.csv`;
                   a.click();
                   URL.revokeObjectURL(url);
-                  toast.success("تم تصدير الطلبات");
+                  toast.success(`تم تصدير ${filteredOrders.length} طلب بنجاح`);
                 }}
-                className="h-10 px-3 rounded-lg border border-border bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm flex items-center gap-1.5 transition-colors"
-                title="تصدير CSV"
+                className="h-10 px-3 rounded-lg border border-border bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground text-sm flex items-center gap-1.5 transition-colors press-feedback"
+                title="تصدير CSV مفصّل"
               >
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">تصدير CSV</span>
@@ -1303,9 +1390,10 @@ export default function SuperAdminPage() {
                         key={order.id}
                         onClick={() => setSelectedOrder(order)}
                         className={cn(
-                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent",
+                          "cursor-pointer hover:bg-muted/50 table-row-hover table-row-highlight order-row-accent data-row-hover",
                           `status-${order.status}`,
-                          selectedIds.has(order.id) && "row-selected"
+                          selectedIds.has(order.id) && "row-selected",
+                          duplicateOrderIds.has(order.id) && "duplicate-warning-row"
                         )}
                       >
                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
@@ -1325,6 +1413,11 @@ export default function SuperAdminPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {order.customer?.name || "—"}
+                            {duplicateOrderIds.has(order.id) && (
+                              <span className="badge-chip bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" title="طلب مكرر محتمل">
+                                ⚠️ مكرر
+                              </span>
+                            )}
                             {order.customer?.phone && (
                               <span className="text-[10px] text-muted-foreground" dir="ltr">{order.customer.phone}</span>
                             )}
@@ -1449,8 +1542,8 @@ export default function SuperAdminPage() {
               <span className="text-[9px] text-muted-foreground/50">•</span>
             )}
             {lastUpdated && (
-              <span className="text-[9px] text-muted-foreground/50">
-                v4.9
+              <span className="text-[9px] text-muted-foreground/50 tabular-data">
+                v5.4
               </span>
             )}
             {refreshing ? (
