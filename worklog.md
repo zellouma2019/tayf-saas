@@ -9346,3 +9346,86 @@ Task: Fix import bugs, CSS v5.9, order status timeline, daily performance bar, b
 6. Add confetti celebration on order delivery
 7. Implement batch print queue management
 8. Add AI-powered order priority suggestions
+
+---
+Task ID: R66
+Agent: Main Agent
+Task: CSS v6.0, column sorting, kanban view, enhanced styling
+
+## حالة المشروع الحالية
+- ✅ البناء ينجح بدون أخطاء (42 صفحة ثابتة)
+- ✅ جميع الصفحات تعمل بدون أخطاء JavaScript
+- ✅ تم النشر على Vercel (deploy job 8m3xM3j1mUfKEFWaCY4Y)
+- ✅ إصدار v6.0
+
+## نتائج QA
+- ✅ تسجيل الدخول يعمل بكلمة المرور Admin@2025
+- ✅ لوحة التحكم تعرض جميع الأقسام بدون أخطاء
+- ✅ تبويب الطلبات يعرض 20 طلب مع الفلاتر
+- ✅ نافذة تفاصيل الطلب مع مسار الحالة الجديد
+- ✅ صفحة تتبّع الطلب تعمل
+- ✅ لا أخطاء JavaScript على أي صفحة
+
+## الميزات الجديدة
+
+### 1. ترتيب الأعمدة في جدول الطلبات
+- ترتيب بالنقر على رؤوس الأعمدة (الزبون، الحالة، المبلغ، التاريخ)
+- مؤشر ترتيب مرئي (▲▼) مع تمييز العمود النشط
+- زر تبديل اتجاه الترتيب في شريط الأدوات
+- استخدام `useMemo` للأداء
+
+### 2. عرض كانبان للطلبات
+- زر تبديل العرض (جدول / كانبان) بتصميم view-toggle-group
+- أعمدة الحالات مع شريط تقدم نسبي
+- بطاقات الطلبات مع تأثير press-scale
+- لا تعرض العمود الملغي (فقط: معلق، مؤكد، طباعة، جاهز، تم)
+- ترتيب موحد بين عرض الجدول والكانبان
+
+## CSS v6.0 — 20 صنف جديد
+1. `.sortable-th` — رأس عمود قابل للترتيب مع hover و active
+2. `.view-toggle-group` / `.view-toggle-btn` — زر تبديل العرض
+3. `.quick-view-popover` — نافذة منبثقة سريعة للعرض
+4. `.status-dot-ring` — نقطة حالة مع حلقة نبض متحركة
+5. `.stagger-cols-enter` — شبكة أعمدة مع دخول متتابع
+6. `.tab-indicator` — مؤشر تبويب متحرك
+7. `.input-focus-gradient` — حدود متدرجة عند التركيز
+8. `.stat-card-float-label` — تسمية عائمة للبطاقات الإحصائية
+9. `.hover-reveal` — كشف محتوى عند التمرير
+10. `.scrollbar-thin` — شريط تمرير رفيع مخصص
+11. `.gradient-mesh` — خلفية شبكية متدرجة متحركة
+12. `.table-row-enter` — حركة دخول صفوف الجدول
+13. `.badge-glow-*` — 5 متغيرات توهج للشارات
+14. `.tooltip-css` — تلميح CSS نقي مع سهم
+15. `.skeleton-shine` — هيكل لامع متحرك
+16. `.press-scale` — تأثير ضغط تفاعلي
+17. `.timeline-connector-animated` — موصل خط زمني متحرك
+18. `.text-gradient-primary` — نص متدرج
+19. `.hover-border-gradient` — حدود متدرجة عند التمرير
+20. `.counter-animate` — حركة عداد
+
+## تحسينات التصميم
+- صفوف الجدول: حركة دخول مع تأخير متتابع (table-row-enter)
+- حاوية الجدول: hover-border-gradient + scrollbar-thin
+- زر تحديد الكل: tooltip-css
+- رؤى سريعة: section-title-underline + أيقونات مع خلفية ملونة + hover-lift-1
+- آخر النشاطات: تمييز العنصر الأخير بحلقة + hover transition
+
+## الملفات المُعدلة
+| الملف | التغيير |
+|--------|--------|
+| `src/app/page.tsx` | ترتيب الأعمدة + عرض كانبان + view toggle + SortTh component |
+| `src/app/globals.css` | إضافة ~280 سطر CSS v6.0 مع 20 صنف جديد |
+| `src/components/app/quick-insights-widget.tsx` | تحسين بصري مع section-title-underline + أيقونات |
+| `src/components/app/activity-feed.tsx` | تمييز آخر نشاط + hover transition |
+| `src/components/app/admin-login-gate.tsx` | تحديث الإصدار إلى v6.0 |
+| `src/components/app/error-boundary.tsx` | تحديث الإصدار إلى v6.0 |
+
+## Commits
+- bae3823: feat: CSS v6.0, column sorting, kanban view, enhanced styling (R66)
+
+## التوصيات للمرحلة القادمة
+1. إضافة سحب وإفلات في عرض كانبان (dnd-kit)
+2. إضافة تصفية بالأولوية في جدول الطلبات
+3. إضافة عرض تقويمي للطلبات
+4. تحسينات على عرض الكانبان (عدد الطلبات في كل بطاقة)
+5. إضافة لوحة تحكم للزبون (صفحة /customer)
