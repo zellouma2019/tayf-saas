@@ -31,6 +31,7 @@ import {
   Calculator,
   CheckCircle2,
   ArrowUp,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,102 @@ export function AppShell() {
   const [showEstimator, setShowEstimator] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showBackTop, setShowBackTop] = useState(false);
+  const [lang, setLang] = useState<'ar' | 'fr'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('tayf_lang') as 'ar' | 'fr') || 'ar';
+    }
+    return 'ar';
+  });
+  const toggleLang = useCallback(() => {
+    setLang((prev) => {
+      const next = prev === 'ar' ? 'fr' : 'ar';
+      localStorage.setItem('tayf_lang', next);
+      return next;
+    });
+  }, []);
+  const tx = {
+    ar: {
+      newOrder: 'طلب جديد', newOrderShort: 'جديد',
+      reorder: 'تكرار طلب', reorderShort: 'تكرار',
+      track: 'تتبّع', trackShort: 'تتبّظ',
+      history: 'سجل الطلبات', historyShort: 'سجل',
+      admin: 'الإدارة', adminShort: 'إدارة',
+      quickOrder: 'طلب سريع',
+      professional: 'خدمة طباعة احترافية وسريعة',
+      uploadMsg: 'رفع ملفك واحصل على تسعيرة فورية ✓',
+      readyIn: 'جاهز خلال ساعة',
+      trusted: 'موثوق',
+      orderInMinute: 'اطلب خلال دقيقة',
+      notifyReady: 'إشعار عند الجاهزية',
+      callUs: 'اتصل بنا',
+      quickSearch: 'بحث سريع',
+      digitalPrinting: 'مطبعة رقمية · طباعة أونلاين',
+      quickLinks: 'روابط سريعة',
+      newPrintOrder: 'طلب طباعة جديد',
+      trackOrder: 'تتبّع طلب',
+      adminPanel: 'لوحة الإدارة',
+      reorderPrev: 'إعادة طلب سابق',
+      ourServices: 'خدماتنا',
+      contactUs: 'تواصل معنا',
+      whatsapp: 'واتساب',
+      call: 'اتصل',
+      email: 'بريد إلكتروني',
+      copyLink: 'نسخ رابط المتجر',
+      linkCopied: 'تم نسخ رابط المتجر!',
+      workHours: '{t.workHours}',
+      closedFri: '{t.closedFri}',
+      footerRights: '{t.footerRights}',
+      poweredBy: '{t.poweredBy}',
+      contactViaWhatsapp: '{t.contactViaWhatsapp}',
+      backToTop: 'العودة للأعلى',
+      showDetails: 'عرض معلومات المطبعة',
+      hideDetails: 'إخفاء التفاصيل',
+      platformDesc: '{t.platformDesc}',
+      printEasily: 'اطبع بسهولة',
+      priceCalc: 'حاسبة الأسعار',
+    },
+    fr: {
+      newOrder: 'Nouvelle commande', newOrderShort: 'Nouveau',
+      reorder: 'Répéter', reorderShort: 'Répéter',
+      track: 'Suivi', trackShort: 'Suivi',
+      history: 'Historique', historyShort: 'Historique',
+      admin: 'Admin', adminShort: 'Admin',
+      quickOrder: 'Commande rapide',
+      professional: 'Service professionnel et rapide',
+      uploadMsg: 'Téléchargez et obtenez un devis ✓',
+      readyIn: 'Prêt en 1 heure',
+      trusted: 'Fiable',
+      orderInMinute: 'Commandez en 1 minute',
+      notifyReady: 'Notification de disponibilité',
+      callUs: 'Appelez-nous',
+      quickSearch: 'Recherche rapide',
+      digitalPrinting: 'Imprimerie numérique · Impression en ligne',
+      quickLinks: 'Liens rapides',
+      newPrintOrder: 'Nouvelle commande',
+      trackOrder: 'Suivre une commande',
+      adminPanel: 'Panneau admin',
+      reorderPrev: 'Répéter une commande',
+      ourServices: 'Nos services',
+      contactUs: 'Contactez-nous',
+      whatsapp: 'WhatsApp',
+      call: 'Appeler',
+      email: 'E-mail',
+      copyLink: 'Copier le lien',
+      linkCopied: 'Lien copié !',
+      workHours: 'Sam - Jeu : 8h00 — 20h00',
+      closedFri: 'Vendredi : Fermé',
+      footerRights: 'Tous droits réservés',
+      poweredBy: 'Propulsé par Tayf',
+      contactViaWhatsapp: 'Contactez via WhatsApp',
+      backToTop: 'Retour en haut',
+      showDetails: 'Voir les informations',
+      hideDetails: 'Masquer les détails',
+      platformDesc: 'Plateforme professionnelle pour créer et suivre vos commandes facilement.',
+      printEasily: 'Imprimez facilement',
+      priceCalc: 'Calculateur de prix',
+    },
+  };
+
   const { shop, hasFeature } = useShop();
   // شعار المنصة
   const [platformLogoUrl, setPlatformLogoUrl] = useState("");
@@ -269,12 +366,14 @@ export function AppShell() {
     incrementRefresh();
   }, [setCreatedOrder, incrementRefresh]);
 
+  const t = tx[lang];
+
   const navItems: { key: View; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }>; desktopOnly?: boolean }[] = [
-    { key: "new", label: "طلب جديد", shortLabel: "جديد", icon: Plus },
-    { key: "repeat", label: "تكرار طلب", shortLabel: "تكرار", icon: RotateCcw },
-    ...(isOrderTrackingEnabled ? [{ key: "track" as View, label: "تتبّع", shortLabel: "تتبّع", icon: Search }] : []),
-    { key: "history", label: "سجل الطلبات", shortLabel: "سجل", icon: History, desktopOnly: true },
-    ...(showAdminLink ? [{ key: "admin" as View, label: "الإدارة", shortLabel: "إدارة", icon: LayoutGrid }] : []),
+    { key: "new", label: t.newOrder, shortLabel: t.newOrderShort, icon: Plus },
+    { key: "repeat", label: t.reorder, shortLabel: t.reorderShort, icon: RotateCcw },
+    ...(isOrderTrackingEnabled ? [{ key: "track" as View, label: t.track, shortLabel: t.trackShort, icon: Search }] : []),
+    { key: "history", label: t.history, shortLabel: t.historyShort, icon: History, desktopOnly: true },
+    ...(showAdminLink ? [{ key: "admin" as View, label: t.admin, shortLabel: t.adminShort, icon: LayoutGrid }] : []),
   ];
 
   return (
@@ -282,7 +381,7 @@ export function AppShell() {
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
     <CommandPalette />
     <LayoutGroup>
-      <div className="min-h-screen flex flex-col bg-background" dir="rtl" style={themeStyle}>
+      <div className="min-h-screen flex flex-col bg-background" dir={lang === 'fr' ? 'ltr' : 'rtl'} lang={lang} style={themeStyle}>
       {/* ===== الشريط العلوي المُلوَّن حسب ثيم المتجر ===== */}
       {view !== "new" && (
       <div
@@ -297,21 +396,21 @@ export function AppShell() {
           {/* الجوال: معلومة واحدة واضحة */}
           <div className="flex sm:hidden items-center gap-1.5 text-xs min-w-0">
             <span className="shrink-0" style={{ color: theme.topBar.accent }}>⚡</span>
-            <span className="truncate">اطلب خلال دقيقة</span>
+            <span className="truncate">{t.orderInMinute}</span>
           </div>
           {/* الحاسوب: كل المميزات */}
           <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs hide-scrollbar">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
               <span style={{ color: theme.topBar.accent }}>⚡</span>
-              اطلب خلال دقيقة
+              {t.orderInMinute}
             </span>
             <span className="hidden md:flex items-center gap-1.5 whitespace-nowrap">
               <span style={{ color: theme.topBar.accent }}>🕐</span>
-              جاهز خلال ساعة
+              {t.readyIn}
             </span>
             <span className="hidden lg:flex items-center gap-1.5 whitespace-nowrap">
               <span style={{ color: theme.topBar.accent }}>🔔</span>
-              إشعار عند الجاهزية
+              {t.notifyReady}
             </span>
           </div>
           {shopPhone && (
@@ -322,7 +421,7 @@ export function AppShell() {
           >
             <Phone className="h-3 w-3 shrink-0" />
             <span className="hidden sm:inline">{formattedPhone}</span>
-            <span className="sm:hidden">اتصل بنا</span>
+            <span className="sm:hidden">{t.callUs}</span>
           </a>
           )}
         </div>
@@ -420,7 +519,7 @@ export function AppShell() {
                   className="text-[10px] md:text-[11px] font-medium tracking-wide truncate mt-0.5"
                   style={{ color: theme.accent, opacity: 0.85 }}
                 >
-                  مطبعة رقمية · طباعة أونلاين
+                  {t.digitalPrinting}
                 </span>
               )}
             </div>
@@ -466,9 +565,21 @@ export function AppShell() {
             })}
           </nav>
 
-          {/* الأزرار الجانبية: تبديل الثيم + زر الطلب السريع */}
+          {/* الأزرار الجانبية: تبديل الثيم + اللغة + زر الطلب السريع */}
           <div className="flex items-center gap-1.5 shrink-0">
             <ThemeToggle />
+            <button
+              onClick={toggleLang}
+              className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 active:scale-95 border"
+              style={{
+                color: theme.header.text,
+                borderColor: theme.header.border,
+              }}
+              title={lang === 'ar' ? 'Français' : 'العربية'}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{lang === 'ar' ? 'Français' : 'عربي'}</span>
+            </button>
             <button
               onClick={() => handleNavClick("new")}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 hover:scale-105 active:scale-95"
@@ -478,7 +589,7 @@ export function AppShell() {
               }}
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>طلب سريع</span>
+              <span>{t.quickOrder}</span>
             </button>
             {/* Ctrl+K hint */}
             <button
@@ -487,7 +598,7 @@ export function AppShell() {
                 window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
               }}
               className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 border border-border/50 transition-colors"
-              title="بحث سريع"
+              title={t.quickSearch}
             >
               <Search className="h-3 w-3" />
               <kbd className="kbd-key text-[9px]">Ctrl+K</kbd>
@@ -538,18 +649,18 @@ export function AppShell() {
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">📸</div>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs sm:text-sm font-semibold truncate text-gradient bg-clip-text text-transparent text-gradient-gold-to-violet">خدمة طباعة احترافية وسريعة</p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">رفع ملفك واحصل على تسعيرة فورية ✓</p>
+                            <p className="text-xs sm:text-sm font-semibold truncate text-gradient bg-clip-text text-transparent text-gradient-gold-to-violet">{t.professional}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t.uploadMsg}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            <span>جاهز خلال ساعة</span>
+                            <span>{t.readyIn}</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">
                             <CheckCircle2 className="h-3 w-3" />
-                            <span>موثوق</span>
+                            <span>{t.trusted}</span>
                           </div>
                         </div>
                       </div>
@@ -618,13 +729,13 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
         <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 -mx-4">
           <div className="flex items-center gap-2 justify-center text-[11px] text-muted-foreground flex-wrap">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/40 dark:border-violet-800/30 hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-colors cursor-default">
-              <span>⚡</span> اطلب خلال دقيقة
+              <span>⚡</span> {t.orderInMinute}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-default">
-              <span>🕐</span> جاهز خلال ساعة
+              <span>🕐</span> {t.readyIn}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/40 dark:border-amber-800/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-default">
-              <span>🔔</span> إشعار عند الجاهزية
+              <span>🔔</span> {t.notifyReady}
             </span>
           </div>
         </div>
@@ -657,10 +768,10 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
               borderColor: theme.footer.border,
             }}
             aria-expanded={footerOpen}
-            aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}
+            aria-label={footerOpen ? t.hideDetails : t.showDetails}
           >
             <Info className="h-3.5 w-3.5" />
-            <span className="font-medium">{footerOpen ? "إخفاء التفاصيل" : "عرض معلومات المطبعة"}</span>
+            <span className="font-medium">{footerOpen ? t.hideDetails : t.showDetails}</span>
             <motion.div
               animate={{ rotate: footerOpen ? 180 : 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -687,11 +798,11 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                       </div>
                       <div>
                         <div className="font-bold text-white responsive-text">{displayBusinessName}</div>
-                        <div className="text-xs text-neutral-400">{displayTagline || "اطبع بسهولة"}</div>
+                        <div className="text-xs text-neutral-400">{displayTagline || t.printEasily}</div>
                       </div>
                     </div>
                     <p className="text-xs text-neutral-400 leading-relaxed">
-                      منصة طباعة احترافية لإنشاء الطلبات ومتابعتها بسهولة وسرعة.
+                      {t.platformDesc}
                     </p>
                   </div>
 
@@ -792,8 +903,8 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                       <li className="flex items-start gap-2 pt-2 border-t border-neutral-700">
                         <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                         <div>
-                          <div>السبت - الخميس: 8:00 ص — 8:00 م</div>
-                          <div className="text-neutral-500">الجمعة: مغلق</div>
+                          <div>{t.workHours}</div>
+                          <div className="text-neutral-500">{t.closedFri}</div>
                         </div>
                       </li>
                       {/* أيقونات التواصل الاجتماعي */}
@@ -806,7 +917,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                               target="_blank"
                               rel="noopener noreferrer"
                               className="w-8 h-8 rounded-lg hover-lift press-scale bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center transition-colors"
-                              title="واتساب"
+                              title={t.whatsapp}
                             >
                               <MessageCircle className="h-4 w-4 text-emerald-400" />
                             </a>
@@ -815,7 +926,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                             <a
                               href={`tel:${shopPhone}`}
                               className="w-8 h-8 rounded-lg hover-lift press-scale bg-sky-500/10 hover:bg-sky-500/20 flex items-center justify-center transition-colors"
-                              title="اتصل"
+                              title={t.call}
                             >
                               <Phone className="h-4 w-4 text-sky-400" />
                             </a>
@@ -824,15 +935,15 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                             <a
                               href={`mailto:${shopEmail}`}
                               className="w-8 h-8 rounded-lg hover-lift press-scale bg-violet-500/10 hover:bg-violet-500/20 flex items-center justify-center transition-colors"
-                              title="بريد إلكتروني"
+                              title={t.email}
                             >
                               <Mail className="h-4 w-4 text-violet-400" />
                             </a>
                           )}
                           <button
-                            onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ رابط المتجر!"); }}
+                            onClick={() => { navigator.clipboard.writeText(customerLink); toast.success(t.linkCopied); }}
                             className="w-8 h-8 rounded-lg hover-lift press-scale bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
-                            title="نسخ رابط المتجر"
+                            title={t.copyLink}
                           >
                             <Copy className="h-4 w-4 text-amber-400" />
                           </button>
@@ -843,14 +954,14 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-neutral-800 dark:border-neutral-700/50 text-center text-xs text-neutral-500">
-                  <p className="text-neutral-400">© {new Date().getFullYear()} {displayBusinessName} — جميع الحقوق محفوظة</p>
+                  <p className="text-neutral-400">© {new Date().getFullYear()} {displayBusinessName} — {t.footerRights}</p>
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <a
                       href="/"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-l from-gold-500/10 to-primary/10 border border-gold-500/20 dark:border-gold-500/10 text-gold-400 hover:text-gold-300 hover:border-gold-500/30 transition-all hover:shadow-sm hover:shadow-gold-500/10 dark:hover:shadow-gold-500/5 font-medium"
                     >
                       {platformLogoUrl ? (<img src={platformLogoUrl} alt="طيف" className="w-4 h-4 inline dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt="طيف" className="w-4 h-4 inline dark:hidden" />)}{platformLogoDarkUrl || platformLogoUrl ? (<img src={platformLogoDarkUrl || platformLogoUrl} alt="طيف" className="w-4 h-4 inline hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt="طيف" className="w-4 h-4 inline hidden dark:block" />)}
-                      <span>يعمل بفضل طيف</span>
+                      <span>{t.poweredBy}</span>
                     </a>
                   </div>
                 </div>
@@ -879,7 +990,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
       <button
         onClick={() => setShowEstimator(!showEstimator)}
         className="fixed bottom-24 left-4 z-30 w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
-        title="حاسبة الأسعار"
+        title={t.priceCalc}
       >
         <Calculator className="h-5 w-5" />
       </button>
@@ -896,7 +1007,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
           target="_blank"
           rel="noopener noreferrer"
           className="wa-float-pulse fixed bottom-40 right-4 z-30 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:shadow-xl flex items-center justify-center group"
-          title="تواصل عبر واتساب"
+          title="{t.contactViaWhatsapp}"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 1.5, type: "spring", stiffness: 260, damping: 20 }}
@@ -904,7 +1015,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
           <MessageCircle className="h-7 w-7 group-hover:scale-110 transition-transform" />
           {/* Tooltip */}
           <span className="absolute right-full mr-3 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none">
-            تواصل عبر واتساب
+            {t.contactViaWhatsapp}
           </span>
         </motion.a>
       )}
@@ -921,11 +1032,11 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="fixed bottom-24 left-4 z-30 w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors fab-ripple group"
-            title="العودة للأعلى"
+            title={t.backToTop}
           >
             <ArrowUp className="h-5 w-5" />
             <span className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none">
-              العودة للأعلى
+              {t.backToTop}
             </span>
           </motion.button>
         )}

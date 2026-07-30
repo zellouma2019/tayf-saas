@@ -1312,6 +1312,17 @@ export default function SuperAdminPage() {
                 v4.9
               </span>
             )}
+            {refreshing ? (
+              <span className="flex items-center gap-1 text-[10px] text-primary">
+                <RefreshCw className="h-3 w-3 animate-spin" />
+                جاري التحديث...
+              </span>
+            ) : lastUpdated ? (
+              <span className="flex items-center gap-1 text-[9px] text-muted-foreground/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                آخر تحديث: {lastUpdated}
+              </span>
+            ) : null}
             <span className={cn(
               "perf-indicator",
               safeOrders.length > 0 && (Date.now() - new Date(safeOrders[0]?.createdAt || 0).getTime()) < 300000 ? "perf-good" : "perf-warn"

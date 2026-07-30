@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { shopApi } from "@/lib/shop-api";
-import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useShop } from "@/lib/shop-context";
 import {
   Card,
   CardContent,
@@ -29,29 +28,45 @@ import {
   Receipt,
   Plus,
   Trash2,
-  Loader2,
+  Package,
+  Home,
+  Wrench,
+  Users,
+  MoreHorizontal,
+  TrendingUp,
   TrendingDown,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
+  Loader2,
   Pencil,
   Check,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDA, formatDateAr } from "@/lib/print-config";
-import { ExpenseCategoriesBreakdown } from "@/components/app/expense-categories-breakdown";
 
-const CATEGORIES = [
-  { value: "paper", label: "ورق", emoji: "📄" },
-  { value: "ink", label: "حبر", emoji: "🖤" },
-  { value: "maintenance", label: "صيانة", emoji: "🔧" },
-  { value: "rent", label: "إيجار", emoji: "🏠" },
-  { value: "other", label: "أخرى", emoji: "📦" },
+// ===== الفئات =====
+const CATEGORIES: { value: string; label: string; icon: LucideIcon; color: string; bgColor: string }[] = [
+  { value: "耗材", label: "耗材", icon: Package, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+  { value: "إيجار", label: "إيجار", icon: Home, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  { value: "صيانة", label: "صيانة", icon: Wrench, color: "text-orange-500", bgColor: "bg-orange-500/10" },
+  { value: "رواتب", label: "رواتب", icon: Users, color: "text-violet-500", bgColor: "bg-violet-500/10" },
+  { value: "أخرى", label: "أخرى", icon: MoreHorizontal, color: "text-gray-500", bgColor: "bg-gray-500/10" },
 ];
 
 const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.value, c]));
 
+// ===== أنواع =====
 interface Expense {
   id: string;
   category: string;
@@ -59,31 +74,31 @@ interface Expense {
   description: string | null;
   date: string;
   createdAt: string;
-  updatedAt: string;
-}
-
-interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
 }
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function monthStartStr() {
-  const d = new Date();
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+function genId() {
+  return `exp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function MerchantExpensesInner() {
+// ===== المكون الرئيسي =====
+interface MerchantExpensesProps {
+  revenue?: number;
+}
+
+export function MerchantExpenses({ revenue = 0 }: MerchantExpensesProps) {
+  const { shop } = useShop();
+  const shopId = shop?.id ?? "";
+
+  // ===== الحالة =====
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategory, setEditCategory] = useState("");
@@ -91,6 +106,7 @@ function MerchantExpensesInner() {
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // نموذج الإضافة
   const [formCategory, setFormCategory] = useState("");
@@ -98,49 +114,57 @@ function MerchantExpensesInner() {
   const [formDescription, setFormDescription] = useState("");
   const [formDate, setFormDate] = useState(todayStr());
 
-  const queryClient = useQueryClient();
+  // ===== تحميل من localStorage =====
+  useEffect(() => {
+    if (!shopId) return;
+    try {
+      const raw = localStorage.getItem(`tayf_expenses_${shopId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Expense[];
+        setExpenses(parsed);
+      }
+    } catch {
+      // ignore
+    }
+    setMounted(true);
+  }, [shopId]);
 
-  const limit = 50;
+  // ===== حفظ في localStorage =====
+  const saveExpenses = useCallback(
+    (next: Expense[]) => {
+      setExpenses(next);
+      if (shopId) {
+        localStorage.setItem(`tayf_expenses_${shopId}`, JSON.stringify(next));
+      }
+    },
+    [shopId],
+  );
 
-  const fetchExpenses = useCallback(async (): Promise<{
-    expenses: Expense[];
-    totalAmount: number;
-    pagination: PaginationInfo;
-  }> => {
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-    });
-    if (categoryFilter) params.set("category", categoryFilter);
-    const res = await shopApi(`/api/expenses?${params.toString()}`);
-    if (!res.ok) throw new Error("فشل تحميل المصاريف");
-    return res.json();
-  }, [page, categoryFilter]);
+  // ===== التصفية =====
+  const filteredExpenses = useMemo(() => {
+    if (!categoryFilter) return expenses;
+    return expenses.filter((e) => e.category === categoryFilter);
+  }, [expenses, categoryFilter]);
 
-  const fetchMonthTotal = useCallback(async (): Promise<number> => {
-    const from = monthStartStr();
-    const res = await shopApi(`/api/expenses?from=${encodeURIComponent(from)}&limit=1`);
-    if (!res.ok) return 0;
-    const data = await res.json();
-    return data.totalAmount || 0;
-  }, []);
+  const sortedExpenses = useMemo(
+    () => [...filteredExpenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [filteredExpenses],
+  );
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["merchant-expenses", page, categoryFilter],
-    queryFn: fetchExpenses,
-    staleTime: 15_000,
-  });
+  // ===== الإحصائيات =====
+  const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses]);
 
-  const { data: monthTotal } = useQuery({
-    queryKey: ["merchant-expenses-month-total"],
-    queryFn: fetchMonthTotal,
-    staleTime: 30_000,
-  });
+  const monthExpenses = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return expenses
+      .filter((e) => new Date(e.date) >= startOfMonth)
+      .reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses]);
 
-  const expenses = data?.expenses ?? [];
-  const pagination = data?.pagination ?? { page: 1, limit, total: 0, totalPages: 0 };
-  const allTimeTotal = data?.totalAmount ?? 0;
+  const netProfit = revenue - totalExpenses;
 
+  // ===== إعادة تعيين النموذج =====
   const resetForm = () => {
     setFormCategory("");
     setFormAmount("");
@@ -148,40 +172,34 @@ function MerchantExpensesInner() {
     setFormDate(todayStr());
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ===== إضافة مصروف =====
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formCategory || !formAmount) {
       toast.error("الفئة والمبلغ مطلوبان");
       return;
     }
-    setSubmitting(true);
-    try {
-      const res = await shopApi("/api/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category: formCategory,
-          amount: Number(formAmount),
-          description: formDescription || undefined,
-          date: formDate || undefined,
-        }),
-      });
-      if (res.ok) {
-        toast.success("تمت إضافة المصروف بنجاح");
-        resetForm();
-        queryClient.invalidateQueries({ queryKey: ["merchant-expenses"] });
-        queryClient.invalidateQueries({ queryKey: ["merchant-expenses-month-total"] });
-      } else {
-        const r = await res.json();
-        toast.error(r.error || "فشل الإضافة");
-      }
-    } catch {
-      toast.error("خطأ في إضافة المصروف");
-    } finally {
-      setSubmitting(false);
+    const amount = Number(formAmount);
+    if (amount <= 0) {
+      toast.error("المبلغ يجب أن يكون أكبر من صفر");
+      return;
     }
+
+    const newExpense: Expense = {
+      id: genId(),
+      category: formCategory,
+      amount,
+      description: formDescription || null,
+      date: formDate || todayStr(),
+      createdAt: new Date().toISOString(),
+    };
+
+    saveExpenses([newExpense, ...expenses]);
+    toast.success("تمت إضافة المصروف بنجاح");
+    resetForm();
   };
 
+  // ===== تعديل مصروف =====
   const startEdit = (exp: Expense) => {
     setEditingId(exp.id);
     setEditCategory(exp.category);
@@ -194,63 +212,52 @@ function MerchantExpensesInner() {
     setEditingId(null);
   };
 
-  const handleSaveEdit = async (id: string) => {
+  const handleSaveEdit = (id: string) => {
     if (!editCategory || !editAmount) {
       toast.error("الفئة والمبلغ مطلوبان");
       return;
     }
-    setSavingId(id);
-    try {
-      const res = await shopApi(`/api/expenses/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category: editCategory,
-          amount: Number(editAmount),
-          description: editDescription || undefined,
-          date: editDate || undefined,
-        }),
-      });
-      if (res.ok) {
-        toast.success("تم تحديث المصروف بنجاح");
-        setEditingId(null);
-        queryClient.invalidateQueries({ queryKey: ["merchant-expenses"] });
-        queryClient.invalidateQueries({ queryKey: ["merchant-expenses-month-total"] });
-      } else {
-        const r = await res.json();
-        toast.error(r.error || "فشل التحديث");
-      }
-    } catch {
-      toast.error("خطأ في تحديث المصروف");
-    } finally {
-      setSavingId(null);
+    const amount = Number(editAmount);
+    if (amount <= 0) {
+      toast.error("المبلغ يجب أن يكون أكبر من صفر");
+      return;
     }
+    setSavingId(id);
+    const updated = expenses.map((exp) =>
+      exp.id === id
+        ? { ...exp, category: editCategory, amount, description: editDescription || null, date: editDate || exp.date }
+        : exp,
+    );
+    saveExpenses(updated);
+    toast.success("تم تحديث المصروف بنجاح");
+    setEditingId(null);
+    setSavingId(null);
   };
 
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-    try {
-      const res = await shopApi(`/api/expenses/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        toast.success("تم حذف المصروف");
-        queryClient.invalidateQueries({ queryKey: ["merchant-expenses"] });
-        queryClient.invalidateQueries({ queryKey: ["merchant-expenses-month-total"] });
-      } else {
-        const r = await res.json();
-        toast.error(r.error || "فشل الحذف");
-      }
-    } catch {
-      toast.error("خطأ في حذف المصروف");
-    } finally {
-      setDeletingId(null);
-    }
+  // ===== حذف مصروف مع تأكيد =====
+  const requestDelete = (exp: Expense) => {
+    setExpenseToDelete(exp);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!expenseToDelete) return;
+    setDeletingId(expenseToDelete.id);
+    const updated = expenses.filter((e) => e.id !== expenseToDelete.id);
+    saveExpenses(updated);
+    toast.success("تم حذف المصروف");
+    setDeletingId(null);
+    setExpenseToDelete(null);
+    setDeleteConfirmOpen(false);
+  };
+
+  // ===== تصنيف فئة =====
+  const getCategoryInfo = (catValue: string) => {
+    return CATEGORY_MAP[catValue] ?? { value: "أخرى", label: "أخرى", icon: MoreHorizontal, color: "text-gray-500", bgColor: "bg-gray-500/10" };
   };
 
   const handleFilterChange = (value: string) => {
     setCategoryFilter(value === "__all__" ? null : value);
-    setPage(1);
   };
 
   return (
@@ -263,8 +270,64 @@ function MerchantExpensesInner() {
         </h2>
       </div>
 
+      {/* ===== بطاقة صافي الربح ===== */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover-lift">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <span className="text-xs text-muted-foreground">الإيرادات</span>
+          </div>
+          <p className="text-xl font-bold text-emerald-600">{formatDA(revenue)}</p>
+        </div>
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover-lift">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingDown className="h-4 w-4 text-rose-500" />
+            <span className="text-xs text-muted-foreground">إجمالي المصاريف</span>
+          </div>
+          <p className="text-xl font-bold text-rose-600">{formatDA(totalExpenses)}</p>
+        </div>
+        <div
+          className={`bg-card border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover-lift ${
+            netProfit >= 0 ? "border-emerald-500/20" : "border-rose-500/20"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            {netProfit >= 0 ? (
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-rose-500" />
+            )}
+            <span className="text-xs text-muted-foreground">صافي الربح</span>
+          </div>
+          <p
+            className={`text-xl font-bold ${
+              netProfit >= 0
+                ? "text-gradient bg-gradient-to-l from-emerald-600 to-emerald-400 bg-clip-text text-transparent"
+                : "text-gradient bg-gradient-to-l from-rose-600 to-rose-400 bg-clip-text text-transparent"
+            }`}
+          >
+            {formatDA(netProfit)}
+          </p>
+          {/* شريط بصري */}
+          <div className="mt-2 h-1.5 w-full rounded-full bg-muted/50 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                netProfit >= 0
+                  ? "bg-gradient-to-l from-emerald-500 to-emerald-400"
+                  : "bg-gradient-to-l from-rose-500 to-rose-400"
+              }`}
+              style={{
+                width: revenue > 0
+                  ? `${Math.min(100, Math.max(0, ((revenue - totalExpenses) / revenue) * 100))}%`
+                  : "0%",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* ===== نموذج الإضافة ===== */}
-      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5">
+      <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-5 hover-lift">
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm font-semibold flex items-center gap-1.5 mb-1">
             <Plus className="h-4 w-4 text-gold-500" />
@@ -278,11 +341,17 @@ function MerchantExpensesInner() {
                   <SelectValue placeholder="اختر الفئة..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.emoji} {cat.label}
-                    </SelectItem>
-                  ))}
+                  {CATEGORIES.map((cat) => {
+                    const Icon = cat.icon;
+                    return (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-3.5 w-3.5" />
+                          {cat.label}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -291,6 +360,8 @@ function MerchantExpensesInner() {
               <Input
                 type="number"
                 min="0"
+                step="0.01"
+                required
                 placeholder="0"
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
@@ -329,26 +400,26 @@ function MerchantExpensesInner() {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            إضافة
+            إضافة مصروف
           </Button>
         </form>
       </div>
 
       {/* ===== ملخص المصاريف ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover-lift">
           <div className="flex items-center gap-2 mb-1">
             <CalendarDays className="h-4 w-4 text-gold-500" />
             <span className="text-xs text-muted-foreground">مصاريف الشهر</span>
           </div>
-          <p className="text-xl font-bold">{formatDA(monthTotal ?? 0)}</p>
+          <p className="text-xl font-bold">{formatDA(monthExpenses)}</p>
         </div>
-        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 hover-lift">
           <div className="flex items-center gap-2 mb-1">
             <TrendingDown className="h-4 w-4 text-rose-600" />
             <span className="text-xs text-muted-foreground">إجمالي المصاريف</span>
           </div>
-          <p className="text-xl font-bold">{formatDA(allTimeTotal)}</p>
+          <p className="text-xl font-bold text-value-gradient">{formatDA(totalExpenses)}</p>
         </div>
       </div>
 
@@ -362,38 +433,30 @@ function MerchantExpensesInner() {
         >
           الكل
         </Button>
-        {CATEGORIES.map((cat) => (
-          <Button
-            key={cat.value}
-            variant={categoryFilter === cat.value ? "default" : "outline"}
-            size="sm"
-            className={`h-8 text-xs gap-1 ${
-              categoryFilter === cat.value
-                ? "bg-gold-500 text-white hover:bg-gold-600"
-                : ""
-            }`}
-            onClick={() => handleFilterChange(cat.value)}
-          >
-            <span>{cat.emoji}</span>
-            <span>{cat.label}</span>
-          </Button>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const Icon = cat.icon;
+          return (
+            <Button
+              key={cat.value}
+              variant={categoryFilter === cat.value ? "default" : "outline"}
+              size="sm"
+              className={`h-8 text-xs gap-1 ${
+                categoryFilter === cat.value
+                  ? "bg-gold-500 text-white hover:bg-gold-600"
+                  : ""
+              }`}
+              onClick={() => handleFilterChange(cat.value)}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span>{cat.label}</span>
+            </Button>
+          );
+        })}
       </div>
 
-      {{/* ===== توزيع المصاريف حسب الفئة ===== */}}
-      <ExpenseCategoriesBreakdown expenses={{expenses}} />
-
-      {{/* ===== التحميل ===== */}}
-      {isLoading && (
-        <div className="py-16 text-center text-muted-foreground text-sm">
-          <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-          جارٍ تحميل المصاريف...
-        </div>
-      )}
-
       {/* ===== قائمة فارغة ===== */}
-      {!isLoading && expenses.length === 0 && (
-        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center">
+      {mounted && sortedExpenses.length === 0 && (
+        <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-8 text-center card-entrance">
           <Receipt className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
           <p className="text-muted-foreground text-sm">
             {categoryFilter
@@ -404,7 +467,7 @@ function MerchantExpensesInner() {
       )}
 
       {/* ===== المحتوى الرئيسي ===== */}
-      {!isLoading && expenses.length > 0 && (
+      {sortedExpenses.length > 0 && (
         <>
           {/* ===== جدول سطح المكتب ===== */}
           <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block overflow-hidden">
@@ -419,11 +482,12 @@ function MerchantExpensesInner() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {expenses.map((exp) => {
-                  const cat = CATEGORY_MAP[exp.category];
+                {sortedExpenses.map((exp) => {
+                  const catInfo = getCategoryInfo(exp.category);
+                  const Icon = catInfo.icon;
                   const isEditing = editingId === exp.id;
                   return (
-                    <TableRow key={exp.id} className="group">
+                    <TableRow key={exp.id} className="group card-entrance">
                       <TableCell>
                         {isEditing ? (
                           <Select value={editCategory} onValueChange={setEditCategory}>
@@ -433,15 +497,20 @@ function MerchantExpensesInner() {
                             <SelectContent>
                               {CATEGORIES.map((c) => (
                                 <SelectItem key={c.value} value={c.value}>
-                                  {c.emoji} {c.label}
+                                  <span className="flex items-center gap-1.5">
+                                    <c.icon className="h-3.5 w-3.5" />
+                                    {c.label}
+                                  </span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         ) : (
-                          <span className="flex items-center gap-1.5 text-sm font-medium">
-                            <span>{cat?.emoji || "📦"}</span>
-                            <span>{cat?.label || exp.category}</span>
+                          <span className={`flex items-center gap-1.5 text-sm font-medium ${catInfo.color}`}>
+                            <span className={`inline-flex items-center justify-center h-7 w-7 rounded-lg ${catInfo.bgColor}`}>
+                              <Icon className="h-3.5 w-3.5" />
+                            </span>
+                            <span>{catInfo.label}</span>
                           </span>
                         )}
                       </TableCell>
@@ -531,7 +600,7 @@ function MerchantExpensesInner() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                                onClick={() => handleDelete(exp.id)}
+                                onClick={() => requestDelete(exp)}
                                 disabled={deletingId === exp.id}
                               >
                                 {deletingId === exp.id ? (
@@ -553,13 +622,14 @@ function MerchantExpensesInner() {
 
           {/* ===== بطاقات الجوال ===== */}
           <div className="md:hidden space-y-3">
-            {expenses.map((exp) => {
-              const cat = CATEGORY_MAP[exp.category];
+            {sortedExpenses.map((exp) => {
+              const catInfo = getCategoryInfo(exp.category);
+              const Icon = catInfo.icon;
               const isEditing = editingId === exp.id;
               return (
                 <div
                   key={exp.id}
-                  className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4"
+                  className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 card-entrance"
                 >
                   {isEditing ? (
                     <div className="space-y-3">
@@ -572,7 +642,10 @@ function MerchantExpensesInner() {
                           <SelectContent>
                             {CATEGORIES.map((c) => (
                               <SelectItem key={c.value} value={c.value}>
-                                {c.emoji} {c.label}
+                                <span className="flex items-center gap-1.5">
+                                  <c.icon className="h-3.5 w-3.5" />
+                                  {c.label}
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -637,9 +710,11 @@ function MerchantExpensesInner() {
                   ) : (
                     <>
                       <div className="flex items-start justify-between mb-2">
-                        <span className="flex items-center gap-1.5 font-bold text-sm">
-                          <span>{cat?.emoji || "📦"}</span>
-                          <span>{cat?.label || exp.category}</span>
+                        <span className={`flex items-center gap-1.5 font-bold text-sm ${catInfo.color}`}>
+                          <span className={`inline-flex items-center justify-center h-7 w-7 rounded-lg ${catInfo.bgColor}`}>
+                            <Icon className="h-3.5 w-3.5" />
+                          </span>
+                          <span>{catInfo.label}</span>
                         </span>
                         <div className="flex gap-1 shrink-0 mr-2">
                           <Button
@@ -654,7 +729,7 @@ function MerchantExpensesInner() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-rose-500"
-                            onClick={() => handleDelete(exp.id)}
+                            onClick={() => requestDelete(exp)}
                             disabled={deletingId === exp.id}
                           >
                             {deletingId === exp.id ? (
@@ -683,44 +758,49 @@ function MerchantExpensesInner() {
             })}
           </div>
 
-          {/* ===== الترقيم ===== */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground px-2">
-                {page} / {pagination.totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                disabled={page >= pagination.totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          {/* ===== إجمالي المصاريف في الأسفل ===== */}
+          <div className="bg-card border border-gold-500/8 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between card-entrance">
+            <span className="text-sm text-muted-foreground flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-gold-500" />
+              إجمالي المصاريف المعروضة
+            </span>
+            <span className="text-lg font-bold text-value-gradient">
+              {formatDA(filteredExpenses.reduce((s, e) => s + e.amount, 0))}
+            </span>
+          </div>
         </>
       )}
+
+      {/* ===== حوار تأكيد الحذف ===== */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف المصروف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذا المصروف؟ لا يمكن التراجع عن هذا الإجراء.
+              {expenseToDelete && (
+                <span className="block mt-2 font-semibold text-rose-600">
+                  {getCategoryInfo(expenseToDelete.category).label} — {formatDA(expenseToDelete.amount)}
+                  {expenseToDelete.description && ` (${expenseToDelete.description})`}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="gap-1.5">
+              <X className="h-3.5 w-3.5" />
+              إلغاء
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700 gap-1.5"
+              onClick={confirmDelete}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  );
-}
-
-const expenseQueryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 15_000, retry: 1 } } });
-
-export function MerchantExpenses() {
-  return (
-    <QueryClientProvider client={expenseQueryClient}>
-      <MerchantExpensesInner />
-    </QueryClientProvider>
   );
 }

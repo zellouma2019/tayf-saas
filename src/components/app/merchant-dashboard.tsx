@@ -995,7 +995,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       />
 
       {/* ===== المحتوى الرئيسي ===== */}
-      <div className="flex-1 bg-background overflow-auto">
+      <div className="flex-1 bg-background overflow-auto page-transition">
         {/* ===== الشريط العلوي ===== */}
         <header className="bg-card border-b border-border shadow-sm h-16 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3 min-w-0">
@@ -1036,7 +1036,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             >
               <Bell className="h-4.5 w-4.5 text-muted-foreground" />
               {pendingCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse pending-pulse">
+                <span className="absolute -top-1 -left-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center badge-pulse-red">
                   {pendingCount > 99 ? "99+" : pendingCount}
                 </span>
               )}
@@ -1071,6 +1071,64 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
         {/* ===== المحتوى ===== */}
         <main className="p-4 sm:p-6 space-y-6">
+          {/* ===== شريط الإحصائيات السريعة ===== */}
+          <div className="glass-card-premium rounded-xl p-responsive">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab("orders")}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-border/50 hover:border-gold-500/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Package className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-muted-foreground truncate">📋 طلبات اليوم</div>
+                  <div className="text-sm font-bold tabular-nums text-foreground">{todayOrdersList.length}</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("home")}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-border/50 hover:border-gold-500/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-muted-foreground truncate">💰 إيرادات اليوم</div>
+                  <div className="text-sm font-bold tabular-nums text-foreground">{formatDA(todayRevenue)}</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); }}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-amber-500/20 hover:border-amber-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-amber-600 dark:text-amber-400 truncate font-medium">⏳ معلقة</div>
+                  <div className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{pendingCount}</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab("orders"); setStatusFilter("delivered"); }}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-emerald-600 dark:text-emerald-400 truncate font-medium">✅ مكتملة</div>
+                  <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <AnimatePresence mode="wait">
           {/* ===== تبويب الرئيسية ===== */}
           {activeTab === "home" && (
@@ -1114,7 +1172,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* ملخص اليوم */}
-              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card neu-raised card-stack">
+              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card glass-card-premium neu-raised card-stack">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -1124,15 +1182,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <div className="text-[11px] text-muted-foreground">الطلبات</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground counter-number metric-large-number">{todayOrdersList.length}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number metric-large-number count-pulse">{todayOrdersList.length}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">الإيرادات</div>
-                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number revenue-shimmer">{formatDA(todayRevenue)}</div>
+                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number revenue-shimmer count-pulse">{formatDA(todayRevenue)}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
-                        <div className="text-lg font-bold tabular-nums text-foreground counter-number">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number count-pulse">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">مكتملة</div>
@@ -1193,7 +1251,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* هدف الإيرادات + طابور الطباعة */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 accordion-smooth">
                 <RevenueGoalWidget todayRevenue={todayRevenue} todayOrders={todayOrdersList.length} />
                 <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
                   <CardContent className="pt-4">
@@ -1203,7 +1261,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {!(stats?.totalOrders ?? 0) && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8 gradient-flow-bg card-spotlight">
                   <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl animate-pulse" />
                   <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
                   {/* Floating particles */}
@@ -1856,7 +1914,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
             >
-            <MerchantExpenses />
+            <MerchantExpenses revenue={stats?.totalRevenue ?? 0} />
             </motion.div>
           )}
 

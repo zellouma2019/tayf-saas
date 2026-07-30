@@ -574,7 +574,7 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
                 </div>
               );
             }
-            const allStatuses = [...STATUS_FLOW, "cancelled"];
+            const allStatuses = [...STATUS_FLOW, "confirmed", "cancelled"];
             const statusEntries = allStatuses.map((s) => ({
               key: s,
               emoji: s === "cancelled" ? "❌" : STATUS_META[s].emoji,
@@ -596,9 +596,10 @@ export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRef
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
                             entry.key === "pending" ? "bg-amber-400" :
-                            entry.key === "printing" ? "bg-primary/60" :
+                            entry.key === "confirmed" ? "bg-blue-400" :
+                            entry.key === "printing" ? "bg-violet-400" :
                             entry.key === "ready" ? "bg-emerald-400" :
-                            entry.key === "delivered" ? "bg-muted-foreground/70" :
+                            entry.key === "delivered" ? "bg-green-400" :
                             "bg-rose-400"
                           }`}
                           style={{ width: `${pct}%` }}
@@ -923,8 +924,8 @@ function PieChartCard({ stats }: { stats: GlobalStats | null }) {
       </Card>
     );
   }
-  const PIE_COLORS: Record<string, string> = { pending: "#F59E0B", printing: "#0891B2", ready: "#10B981", delivered: "#059669", cancelled: "#EF4444" };
-  const allStatuses = [...STATUS_FLOW, "cancelled"];
+  const PIE_COLORS: Record<string, string> = { pending: "#F59E0B", confirmed: "#3B82F6", printing: "#8B5CF6", ready: "#10B981", delivered: "#22C55E", cancelled: "#EF4444" };
+  const allStatuses = [...STATUS_FLOW, "confirmed", "cancelled"];
   const pieData = allStatuses.map((s) => ({ name: STATUS_META[s]?.label ?? "ملغي", value: stats.statusCounts?.[s] ?? 0, key: s })).filter((d) => d.value > 0);
   return (
     <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">

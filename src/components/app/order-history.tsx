@@ -12,9 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { History, Phone, Search, Loader2, Inbox, Package, Filter, RotateCcw, X } from "lucide-react";
+import { History, Phone, Search, Loader2, Inbox, Package, Filter, RotateCcw, X, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { shopApi } from "@/lib/shop-api";
+import { useShop } from "@/lib/shop-context";
 import { formatDA, formatDateTimeAr } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 
@@ -42,6 +43,36 @@ function getStatusStyle(status: string) {
   return STATUS_STYLES[status] || STATUS_STYLES.pending;
 }
 
+/* ─────────────────────── مؤشر الولاء ─────────────────────── */
+function getLoyaltyBadge(orderCount: number): { label: string; className: string; icon: string } {
+  if (orderCount >= 10) {
+    return {
+      label: "زبون ذهبي",
+      className: "bg-gradient-to-l from-amber-400 to-yellow-300 text-amber-900 border border-amber-300/60 shadow-sm shadow-amber-400/20",
+      icon: "🏆",
+    };
+  }
+  if (orderCount >= 6) {
+    return {
+      label: "زبون مميز",
+      className: "bg-gradient-to-l from-amber-100 to-yellow-50 dark:from-amber-900/50 dark:to-yellow-900/30 text-amber-700 dark:text-amber-300 border border-amber-300/50 dark:border-amber-700/40 shadow-sm shadow-amber-400/10",
+      icon: "⭐",
+    };
+  }
+  if (orderCount >= 3) {
+    return {
+      label: "زبون منتظم",
+      className: "bg-gradient-to-l from-slate-100 to-gray-100 dark:from-slate-700 dark:to-gray-700 text-slate-600 dark:text-slate-300 border border-slate-300/50 dark:border-slate-600/40",
+      icon: "⭐",
+    };
+  }
+  return {
+    label: "زبون جديد",
+    className: "bg-gradient-to-l from-orange-100 to-amber-50 dark:from-orange-900/40 dark:to-amber-900/30 text-orange-700 dark:text-orange-300 border border-orange-200/50 dark:border-orange-700/40",
+    icon: "🌟",
+  };
+}
+
 /* ═══════════════════════ المكون الرئيسي ═══════════════════════ */
 interface OrderHistoryProps {
   onReorder?: (order: PrintOrderLite) => void;
@@ -49,6 +80,7 @@ interface OrderHistoryProps {
 }
 
 export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryProps) {
+  const { shop } = useShop();
   const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState<PrintOrderLite[]>([]);
   const [loading, setLoading] = useState(false);
@@ -186,6 +218,26 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
           </form>
       </div>
 
+      {/* شارة الولاء */}
+      {(searched || isPropsMode) && totalForDisplay > 0 && (() => {
+        const loyalty = getLoyaltyBadge(totalForDisplay);
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="flex items-center justify-center mb-4"
+          >
+            <div className={"tag-hover inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ".concat(loyalty.className)}>
+              <Star className="h-4 w-4" />
+              <span>{loyalty.icon}</span>
+              <span>{loyalty.label}</span>
+              <span className="text-xs font-normal opacity-75">({totalForDisplay} طلب)</span>
+            </div>
+          </motion.div>
+        );
+      })()}
+
       {/* شريط نتائج فلتر الهاتف */}
       {isPropsMode && searched && phone.trim() && (
         <motion.div
@@ -301,12 +353,25 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
           <div className="h-1 bg-gradient-to-l from-violet-500 to-amber-500" />
           <CardContent className="py-16 text-center">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/50 dark:bg-muted/20 flex items-center justify-center mb-4">
-              <Inbox className="h-8 w-8 text-muted-foreground/50" />
+              <Inbox className="h-8 w-8 text-muted-foreground/50 empty-bounce" />
             </div>
             <p className="text-sm font-semibold text-foreground mb-1">لا توجد طلبات سابقة</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mb-1">
               تأكد من صحة رقم الهاتف وحاول مرة أخرى
             </p>
+            <p className="text-sm font-medium text-gold-500 dark:text-gold-400 mt-2 mb-3">
+              ابدأ رحلتك معنا!
+            </p>
+            {shop?.slug && (
+              <Button
+                asChild
+                className="h-10 px-6 bg-gradient-to-l from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-violet-500/20 active:scale-[0.97] transition-all"
+              >
+                <a href={`/s/${shop.slug}`}>
+                  اطلب أول طلب
+                </a>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -330,7 +395,7 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
               >
-                <HistoryCard order={order} onReorder={onReorder} />
+                <HistoryCard order={order} onReorder={onReorder} shopSlug={shop?.slug || ""} />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -341,7 +406,7 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
 }
 
 /* ═══════════════════ بطاقة الطلب ═══════════════════ */
-function HistoryCard({ order, onReorder }: { order: PrintOrderLite; onReorder?: (order: PrintOrderLite) => void }) {
+function HistoryCard({ order, onReorder, shopSlug }: { order: PrintOrderLite; onReorder?: (order: PrintOrderLite) => void; shopSlug?: string }) {
   const style = getStatusStyle(order.status);
   const emoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
 
@@ -397,12 +462,18 @@ function HistoryCard({ order, onReorder }: { order: PrintOrderLite; onReorder?: 
             </span>
           </div>
           {/* زر إعادة الطلب السريع */}
-          {onReorder && (
+          {(onReorder || (order.status === 'delivered' && shopSlug)) && (
             <Button
               variant="outline"
               size="sm"
               className="h-8 px-3 text-[11px] gap-1.5 border-dashed hover:border-solid hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/20 active:scale-[0.97] transition-all"
-              onClick={() => onReorder(order)}
+              onClick={() => {
+                if (onReorder) {
+                  onReorder(order);
+                } else {
+                  window.location.href = `/s/${shopSlug}?service=${order.serviceType}`;
+                }
+              }}
             >
               <RotateCcw className="h-3.5 w-3.5" />
               إعادة الطلب

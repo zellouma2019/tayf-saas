@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { markAuthenticated, verifySession } from "@/lib/admin-utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { ThemeToggle } from "@/components/app/theme-toggle";
 
 // حد أقصى للمحاولات قبل القفل المؤقت
 const MAX_ATTEMPTS = 5;
@@ -205,7 +206,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
-      <Card className="w-full max-w-sm shadow-2xl border-border backdrop-blur-sm bg-card/80 relative z-10 overflow-hidden animated-gradient-border">
+      <Card className="w-full max-w-sm shadow-2xl border-border backdrop-blur-sm bg-card/80 relative z-10 overflow-hidden animated-gradient-border glass-card-premium">
         {/* Animated gradient overlay */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-br from-violet-500/20 via-transparent to-amber-500/20 pointer-events-none"
@@ -220,7 +221,8 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
           <div className="text-center mb-6">
             {/* Language toggle */}
             {mounted && (
-              <div className="flex justify-end mb-2">
+              <div className="flex justify-end items-center gap-1 mb-2">
+                <ThemeToggle className="h-8 w-8" />
                 <button
                   onClick={() => setLang(lang === "ar" ? "en" : "ar")}
                   className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/50"
@@ -247,9 +249,9 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
               whileHover={{ scale: 1.05 }}
             >
-              <Lock className="h-8 w-8 text-primary-foreground" />
+              <Lock className="h-8 w-8 text-primary-foreground animate-[float_3s_ease-in-out_infinite]" />
             </motion.div>
-            <h1 className="text-lg font-bold text-foreground">{t.title}</h1>
+            <h1 className="text-lg font-bold text-foreground text-shadow-subtle">{t.title}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p>
           </div>
 
@@ -314,7 +316,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-gradient-to-l from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.97] transition-all duration-150 focus-visible:ring-2 focus-visible:ring-gold-500/50 spring-press focus-ring"
+                  className="w-full h-11 bg-gradient-to-l from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.97] transition-all duration-150 focus-visible:ring-2 focus-visible:ring-gold-500/50 spring-press focus-ring icon-btn-scale"
                   disabled={verifying || !password.trim()}
                 >
                   {verifying ? (
