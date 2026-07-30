@@ -8333,3 +8333,140 @@ Task: QA + merchant analytics, admin order filters, service comparison, estimate
 3. 🟡 WhatsApp Business API integration
 4. 🟢 Lazy loading + code splitting
 5. 🟢 PDF reports for statistics
+
+---
+Task ID: R56
+Agent: Main Agent (Cron Round 56)
+Task: Assess, QA test, fix bugs, add features, improve styling, deploy v5.2
+
+## Current Status Assessment
+- Build: ✅ Clean — all 42 pages, 60+ API routes compile successfully
+- Live site (Vercel): API endpoints work correctly (39 orders, 6 shops, 29,819 د.ج revenue)
+- Admin dashboard: Known stale deployment issue persists (Vercel→GitHub connection needs manual fix)
+- Customer shop pages: Functional but had i18n placeholder bugs (now fixed)
+- Merchant dashboard: Fully functional
+
+## Bugs Fixed
+
+### 1. Arabic i18n Placeholders (CRITICAL — Customer-Facing)
+**File:** `src/components/app/app-shell.tsx`
+**Issue:** 6 Arabic translation keys contained literal `{t.xxx}` strings instead of actual translations:
+- `{t.workHours}`, `{t.closedFri}`, `{t.footerRights}`, `{t.poweredBy}`, `{t.contactViaWhatsapp}`, `{t.platformDesc}`
+**Fix:** Replaced all with proper Arabic translations matching the French equivalents.
+- `workHours` → `'السبت - الخميس: 8:00 ص — 8:00 م'`
+- `closedFri` → `'الجمعة: مغلق'`
+- `footerRights` → `'جميع الحقوق محفوظة'`
+- `poweredBy` → `'بدعم من طيف'`
+- `contactViaWhatsapp` → `'تواصل عبر واتساب'`
+- `platformDesc` → `'منصة احترافية لإنشاء وتتبع طلبات الطباعة بسهولة وسرعة.'`
+
+### 2. JSX String Attribute Bug
+**File:** `src/components/app/app-shell.tsx` line 1010
+**Issue:** `title="{t.contactViaWhatsapp}"` — literal string attribute instead of JSX expression
+**Fix:** Changed to `title={t.contactViaWhatsapp}`
+
+### 3. Admin safeJson Missing res.ok Check (HIGH)
+**File:** `src/app/page.tsx`
+**Issue:** `safeJson()` parsed response body without checking HTTP status. A 500 error with valid JSON (zeros) was silently accepted as real data.
+**Fix:** Added `if (!res.ok)` check with descriptive error messages before parsing. Added `label` parameter for better error identification.
+
+### 4. API Error Masking (HIGH)
+**File:** `src/app/api/admin/global-stats/route.ts`
+**Issue:** Error catch block returned zeros as valid JSON with status 500, making it indistinguishable from empty data.
+**Fix:** Added `error: true` flag and `message` field to error responses.
+
+### 5. Data Health Indicator Enhanced
+**File:** `src/app/page.tsx`
+**Issue:** Data health warnings were tiny 10px text with tooltip — barely visible.
+**Fix:** Redesigned as colored pill badges (amber/red) with pulsing animation, visible message text, and inline retry button.
+
+## New Features
+
+### 1. Admin Auto-Retry with Exponential Backoff
+**File:** `src/app/page.tsx` — `loadAll()` function
+- Retries up to 3 times on fetch/parse failure
+- Delays: 1s → 2s → 4s (capped at 5s)
+- Only shows error after all retries exhausted
+- Loading state preserved during retries
+
+### 2. Admin Notification Sound for New Orders
+**File:** `src/app/page.tsx`
+- Plays a gentle 880Hz sine tone when new pending orders are detected via 30s polling
+- Uses Web Audio API — no external audio files needed
+- Compares pending count between refreshes to detect new arrivals
+
+### 3. Quick Stats Ribbon (Admin)
+**File:** `src/app/page.tsx`
+- Persistent horizontal stats bar visible across all admin tabs
+- Shows: total orders, revenue, shop count, pending/printing/ready/delivered counts
+- Color-coded status dots with breathing glow animation
+- Scrollable on mobile
+
+### 4. Order Age Indicator (Merchant Dashboard)
+**File:** `src/components/app/order-details-row.tsx`
+- New `getTimeAgo()` function calculates relative time
+- Displays as compact badge next to order reference: `5د`, `3س`, `2ي`
+- Color-coded urgency: normal (gray), warning (amber), critical (red)
+- Pending orders with old age get pulsing animation
+- Tooltip shows full date/time
+
+### 5. Enhanced Service Cards (Footer)
+**File:** `src/components/app/app-shell.tsx`
+- Service items in footer now have gradient backgrounds
+- Each service has unique color theme (violet, blue, pink, amber, emerald, cyan)
+- Hover effects with border highlights
+- Better spacing and typography
+
+## Styling Improvements (CSS v5.2)
+
+**File:** `src/app/globals.css` — 25+ new CSS classes added
+
+### New Animations:
+- `gradientMesh` — Animated gradient mesh background
+- `neonPulse` — Neon glow pulsing effect
+- `borderRotate` — Animated conic-gradient border (uses @property)
+- `floatLabel` — Floating label animation
+- `staggerIn` — Staggered list entrance with configurable delays
+- `pulseRing` — Notification pulse ring
+- `ripple` — Click ripple effect
+- `countUp` — Counter entrance animation
+- `badgePop` — Badge scale entrance
+- `textShimmer` — Gradient text shimmer
+- `scrollDown` — Scroll indicator
+- `checkDraw` — SVG checkmark draw animation
+- `healthPulse` — Health indicator pulse
+- `tabSlideIn` — Tab content slide transition
+- `errorShake` — Error shake animation
+
+### New Utility Classes:
+- `.glass-card` / `.glass-header` — Glassmorphism effects
+- `.shimmer-skeleton` — Improved shimmer loading
+- `.card-tilt` — 3D tilt hover effect
+- `.ripple-click` — Click ripple container
+- `.hover-spring` — Spring-based hover scale
+- `.premium-divider` — Gradient divider
+- `.breathe-glow` — Subtle breathing glow
+- `.focus-glow` — Focus ring glow
+- `.tooltip-fade` — Tooltip fade-in
+- `.skeleton-improved-v2` — Enhanced skeleton
+- `.print-paper` — Print preview paper effect
+
+## Verification
+- ✅ `npx next build` — 42 static pages, 60+ API routes, 0 errors
+- ✅ Pushed to GitHub: commit `0e1ee1a`
+- ✅ Vercel deploy triggered: job `sstPs91otVgqk21xTSAW` (PENDING)
+- ✅ API endpoints verified via agent-browser: `/api/admin/global-stats` returns correct data
+
+## Unresolved Issues
+1. 🔴 Vercel→GitHub connection broken — deploy hook triggers build from stale source. Needs manual Vercel dashboard fix.
+2. 🟡 UPLOADTHING_TOKEN missing — file upload not functional
+3. 🟡 No real-time notifications (WebSocket/SSE) — currently using 30s polling
+4. 🟢 No PDF report generation for merchant statistics
+5. 🟢 Lazy loading not yet implemented for heavy dashboard components
+
+## Priority Recommendations for Next Phase
+1. **CRITICAL:** Reconnect Vercel→GitHub in Vercel dashboard (manual)
+2. Add lazy loading with `next/dynamic` for heavy chart components
+3. Implement WebSocket/SSE for real-time order notifications
+4. Add merchant PDF report generation
+5. Add file upload with proper storage backend
