@@ -10876,3 +10876,63 @@ Task: Revenue Forecast, Priority Stars, Enhanced Kanban, Inline Status Bar, CSS 
 3. لوحة تحكم الزبون (/customer)
 4. تصدير PDF للتقرير المالي
 5. إشعارات فورية (WebSocket/SSE)
+
+---
+Task ID: R124 - Critical Fixes
+Agent: Main Agent
+Task: إصلاح مشكلتين حرجتين: (1) اختفاء إحصائيات لوحة تحكم الأدمن (2) تعامل نسخة الزبون مع جميع الملفات كمستندات
+
+Work Log:
+- حذف جميع مهام cron التلقائية (3 مهام) بناءً على طلب المستخدم
+- تحقيق شامل في سبب اختفاء الإحصائيات (3 أسباب جذرية مكتشفة)
+- تحقيق شامل في مشكلة أنواع الملفات (6 عيوب مكتشفة)
+- تنفيذ إصلاحات شاملة للملفات الستة
+- التحقق بالبناء (next build نجح بدون أخطاء)
+
+## المشكلة 1: اختفاء إحصائيات الأدمن
+
+### الأسباب الجذرية:
+1. **مسار الفولباك لا يستدعي setGlobalStats()** — عندما يفشل API الـ global-stats أو يُرجع بيانات فارغة، الكود ينتقل لمسار الاحتياط لكنه لا يبني كائن GlobalStats أبدًا، مما يبقيه null
+2. **تحليل خاطئ لاستجابة /api/shops** — الكود يفحص Array.isArray(shops) لكن API يُرجع {shops:[...]} (كائن وليس مصفوفة)، فيُعيّن fallbackShops=[]
+3. **حراس العرض تعتمد على globalStats &&** — شريط الإحصائيات السريع وتاب نظرة عامة كلاهما يتحقق من globalStats && مما يمنع العرض عند null
+
+### الإصلاحات:
+- **page.tsx loadAll()**: إعادة كتابة مسار الاحتياط بالكامل لتحليل /api/shops بشكل صحيح وبناء كائن GlobalStats كامل من البيانات البديلة
+- **global-stats/route.ts**: تحويل tursoQuery إلى tursoQuerySafe لتمييز فشل الاستعلام عن النتيجة الفارغة، وإرجاع 503 عند فشل جميع الاستعلامات لتمكين العميل من إعادة المحاولة
+
+## المشكلة 2: أنواع الملفات
+
+### الأسباب الجذرية:
+1. **FILE_TYPE_META يفتقر 9 أنواع**: XLSX, XLS, DOC, GIF, SVG, BMP, TIFF, ZIP, RAR — كلها تُعرض كـ PDF
+2. **الافتراضية هي PDF بدلاً من نوع عام** — أي نوع غير معروف يُعرض بأيقونة ولون PDF
+3. **ACCEPTED_TYPES غير متزامنة** بين upload-step.tsx و new-order-wizard.tsx
+4. **processFile يتجاهل أخطاء التحقق** — الملفات غير الصالحة لا تُرفض
+5. **MIME types ناقصة في مسار المعاينة**
+
+### الإصلاحات:
+- **upload-step.tsx**: إضافة 9 أنواع مع تصنيفات (مستند/جدول/صورة/مجلد) وألوان وأيقونات مميزة لكل نوع
+- **upload-step.tsx**: تغيير الافتراضية من PDF إلى نوع عام "ملف"
+- **upload-step.tsx**: إصلاح processFile لرفض الملفات غير الصالحة مع إظهار رسالة خطأ
+- **new-order-wizard.tsx**: مزامنة ACCEPTED مع قائمة كاملة
+- **preview/route.ts**: إضافة MIME types لـ xlsx, xls, svg, bmp, tiff, zip, rar
+
+## التحقق:
+- ✅ bun run lint — لا أخطاء جديدة (أخطاء سابقة موجودة فقط)
+- ✅ next build — نجح كاملاً
+- ✅ TS compilation — لا أخطاء جديدة في الملفات المعدلة
+
+## الملفات المعدلة:
+1. src/app/page.tsx — إصلاح مسار الفولباك في loadAll()
+2. src/app/api/admin/global-stats/route.ts — تحويل لـ tursoQuerySafe
+3. src/components/app/upload-step.tsx — إضافة أنواع الملفات + إصلاح التحقق
+4. src/components/app/new-order-wizard.tsx — مزامنة ACCEPTED_TYPES
+5. src/app/api/orders/[id]/preview/route.ts — إضافة MIME types
+
+## ⚠️ لم يتم النشر:
+- بيانات Git Credentials غير متاحة (token مُخفّى/منتهي الصلاحية)
+- يجب إعادة إعداد GitHub token أو النشر يدوياً من Vercel Dashboard
+
+Stage Summary:
+- تم تحديد وإصلاح أسباب كلتا المشكلتين من الجذور
+- الكود يبني بنجاح (next build pass)
+- يحتاج نشر يدوي لأن git push فشل
