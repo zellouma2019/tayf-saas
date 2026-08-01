@@ -53,8 +53,15 @@ export async function GET(
       jpeg: "image/jpeg",
       gif: "image/gif",
       webp: "image/webp",
+      svg: "image/svg+xml",
+      bmp: "image/bmp",
+      tiff: "image/tiff",
       docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       doc: "application/msword",
+      xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      xls: "application/vnd.ms-excel",
+      zip: "application/zip",
+      rar: "application/vnd.rar",
     };
     const mimeType = mimeTypes[ext] || "application/octet-stream";
     const safeName = encodeURIComponent(order.fileName || "preview");

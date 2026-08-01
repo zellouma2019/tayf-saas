@@ -661,11 +661,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
   async function processFile(f: File) {
     // التحقق من الصيغة
-    const ACCEPTED = [".pdf", ".docx", ".xlsx", ".jpg", ".jpeg", ".png", ".webp"];
+    const ACCEPTED = [".pdf", ".docx", ".doc", ".xlsx", ".xls", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".bmp", ".tiff", ".zip", ".rar"];
     const ext = (f.name.split(".").pop() || "").toLowerCase();
     if (!ACCEPTED.includes(`.${ext}`)) {
       setAnalysisPhase("error");
-      setUploadError(`صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: PDF, Word, Excel, صور (JPG, PNG, WebP)`);
+      setUploadError(`صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: PDF, Word, Excel, صور (JPG, PNG, WebP, GIF, SVG), أرشيف (ZIP, RAR)`);
       return;
     }
     // التحقق من الحجم — حد أقصى 50 ميغا

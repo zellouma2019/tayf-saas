@@ -34,6 +34,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { RealFileAnalysis } from "@/lib/file-analyzer";
 import type { ServiceType } from "@/lib/print-config";
@@ -67,17 +68,33 @@ export interface UploadStepProps {
    Constants
    ═══════════════════════════════════════════════════════ */
 
-const ACCEPTED_TYPES = [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
+const ACCEPTED_TYPES = [".pdf", ".docx", ".doc", ".xlsx", ".xls", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".bmp", ".tiff", ".zip", ".rar"];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB (الملفات الكبيرة تُرفع عبر أجزاء)
 
-const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg: string; label: string }> = {
-  PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/40", label: "PDF" },
-  DOCX: { icon: FileSpreadsheet, color: "text-gold-400 dark:text-gold-300", bg: "bg-gold-500/10 dark:bg-gold-500/20 border-gold-500/20 dark:border-gold-500/30", label: "DOCX" },
-  JPG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "JPG" },
-  JPEG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "JPEG" },
-  PNG: { icon: ImageIcon, color: "text-gold-400", bg: "bg-gold-50 dark:bg-gold-500/10 border-gold-200 dark:border-gold-500/20", label: "PNG" },
-  WEBP: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40", label: "WEBP" },
+const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg: string; label: string; category: string }> = {
+  // مستندات (Documents)
+  PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/40", label: "PDF", category: "مستند" },
+  DOCX: { icon: FileText, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/40", label: "DOCX", category: "مستند" },
+  DOC: { icon: FileText, color: "text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/40", label: "DOC", category: "مستند" },
+  // جداول (Spreadsheets)
+  XLSX: { icon: FileSpreadsheet, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "XLSX", category: "جدول" },
+  XLS: { icon: FileSpreadsheet, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40", label: "XLS", category: "جدول" },
+  // صور (Images)
+  JPG: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40", label: "JPG", category: "صورة" },
+  JPEG: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40", label: "JPEG", category: "صورة" },
+  PNG: { icon: ImageIcon, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800/40", label: "PNG", category: "صورة" },
+  WEBP: { icon: ImageIcon, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800/40", label: "WEBP", category: "صورة" },
+  GIF: { icon: ImageIcon, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-950/30 border-pink-200 dark:border-pink-800/40", label: "GIF", category: "صورة" },
+  SVG: { icon: ImageIcon, color: "text-fuchsia-500", bg: "bg-fuchsia-50 dark:bg-fuchsia-950/30 border-fuchsia-200 dark:border-fuchsia-800/40", label: "SVG", category: "صورة" },
+  BMP: { icon: ImageIcon, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-800/40", label: "BMP", category: "صورة" },
+  TIFF: { icon: ImageIcon, color: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-950/30 border-cyan-200 dark:border-cyan-800/40", label: "TIFF", category: "صورة" },
+  // أرشيف (Archives)
+  ZIP: { icon: File, color: "text-yellow-600", bg: "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800/40", label: "ZIP", category: "مجلد" },
+  RAR: { icon: File, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800/40", label: "RAR", category: "مجلد" },
 };
+
+/** التصنيف الافتراضي لمن لا يتوفر له نوع معروف */
+const DEFAULT_FILE_META = { icon: File, color: "text-muted-foreground", bg: "bg-muted/50 dark:bg-muted/20 border-border", label: "ملف", category: "آخر" };
 
 const PHASE_CONFIG: Record<
   AnalysisPhase,
@@ -355,8 +372,8 @@ export default function UploadStep({
   function processFile(file: File) {
     const error = validateFile(file);
     if (error) {
-      // We can't set error state here — let the parent handle it via toast
-      // The parent's handleFile will handle validation too
+      toast.error(error);
+      return;
     }
     currentFileRef.current = file;
     onFileSelected(file);
@@ -449,7 +466,7 @@ export default function UploadStep({
   const currentPhaseIndex = ["idle", "uploading", "local-analysis", "ai-analysis", "done"].indexOf(analysisPhase);
   const phases: AnalysisPhase[] = ["uploading", "local-analysis", "ai-analysis"];
 
-  const fileMeta = FILE_TYPE_META[fileType] || FILE_TYPE_META["PDF"];
+  const fileMeta = FILE_TYPE_META[fileType] || DEFAULT_FILE_META;
   const FileIcon = fileMeta.icon;
 
   return (
@@ -1012,10 +1029,10 @@ export default function UploadStep({
                     className="grid grid-cols-2 sm:grid-cols-3 gap-2.5"
                   >
                     <InfoChip
-                      icon={<FileText className="h-4 w-4" />}
+                      icon={<FileIcon className="h-4 w-4" />}
                       label="نوع الملف"
-                      value={analysis.fileType || "غير معروف"}
-                      tooltipText="صيغة الملف المرفوع. PDF الأفضل للطباعة لأنه يحافظ على التنسيق."
+                      value={fileMeta.category ? `${fileMeta.category} (${fileMeta.label})` : (analysis.fileType || "غير معروف")}
+                      tooltipText={fileMeta.category ? `التصنيف: ${fileMeta.category} — صيغة ${fileMeta.label}` : "صيغة الملف المرفوع"}
                     />
                     <InfoChip
                       icon={<Ruler className="h-4 w-4" />}

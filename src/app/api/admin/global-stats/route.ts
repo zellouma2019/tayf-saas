@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
+import { tursoQuery, tursoQuerySafe, toNum, safeJson } from "@/lib/turso-lite";
 
 // Dynamic — no edge caching (Turso DB returns stale/empty results intermittently)
 export const dynamic = 'force-dynamic';
@@ -17,9 +17,9 @@ export async function GET() {
     // === استعلامات مُحسّنة — 3 دفعات متوازية بدلاً من 4 متسلسلة ===
 
     // الدفعة 1: توزيع الحالات + إحصائيات عامة (بسيط — لا LEFT JOIN)
-    const [statusRows, statsResult] = await Promise.all([
-      tursoQuery(`SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status`),
-      tursoQuery(`
+    const [statusResult, statsResult] = await Promise.all([
+      tursoQuerySafe(`SELECT status, COUNT(*) as count FROM "PrintOrder" GROUP BY status`),
+      tursoQuerySafe(`
         SELECT 
           COUNT(*) as totalOrders,
           COALESCE(SUM(total), 0) as totalRevenue,
@@ -29,8 +29,8 @@ export async function GET() {
     ]);
 
     // الدفعة 2: آخر الطلبات + بيانات المتاجر (متوازيان)
-    const [recentOrdersRaw, shopsRaw] = await Promise.all([
-      tursoQuery(`
+    const [recentResult, shopsResult] = await Promise.all([
+      tursoQuerySafe(`
         SELECT 
           o.id, o.reference, o."serviceType", o."serviceName",
           o.status, o.total, o.customer, o."createdAt",
@@ -39,7 +39,7 @@ export async function GET() {
         LEFT JOIN "Shop" s ON o."shopId" = s.id
         ORDER BY o."createdAt" DESC LIMIT 20
       `),
-      tursoQuery(`
+      tursoQuerySafe(`
         SELECT 
           s.id, s.name, s.slug, s."ownerName", s."ownerPhone", s.phone,
           s."isActive", s."trialDays", s."trialStartsAt", s.plan, s."adminPin",
@@ -50,7 +50,22 @@ export async function GET() {
     ]);
 
     const elapsed = Date.now() - startTime;
-    console.log(`[global-stats] loaded in ${elapsed}ms — statusRows:${statusRows.length}, orders:${recentOrdersRaw.length}, shops:${shopsRaw.length}`);
+    const anyError = [statusResult, statsResult, recentResult, shopsResult].some(r => r.error);
+    console.log(`[global-stats] loaded in ${elapsed}ms — status:${statusResult.rows.length}, orders:${recentResult.rows.length}, shops:${shopsResult.rows.length}${anyError ? ' ⚠️ SOME QUERIES FAILED' : ''}`);
+
+    // If ALL queries failed, return 500 so client can retry
+    const allFailed = [statusResult, statsResult, recentResult, shopsResult].every(r => r.error);
+    if (allFailed) {
+      console.error(`[global-stats] ALL queries failed — returning 500 for client retry`);
+      return NextResponse.json(
+        { error: true, message: "All DB queries failed" },
+        { status: 503 }
+      );
+    }
+
+    const statusRows = statusResult.rows;
+    const recentOrdersRaw = recentResult.rows;
+    const shopsRaw = shopsResult.rows;
 
     // تجهيز البيانات — statusCounts first (needed by fallbacks)
     const statusCounts: Record<string, number> = {};
@@ -58,7 +73,7 @@ export async function GET() {
       statusCounts[String(s.status)] = toNum(s.count);
     }
 
-    const statsRow = statsResult[0] || {};
+    const statsRow = statsResult.rows[0] || {};
     let totalOrders = toNum(statsRow.totalOrders);
     let totalRevenue = toNum(statsRow.totalRevenue);
     let todayOrders = toNum(statsRow.todayOrders);

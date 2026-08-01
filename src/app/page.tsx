@@ -1083,9 +1083,47 @@ export default function SuperAdminPage() {
       } else {
         // Last resort: load shops + orders from separate APIs
         const shopsRes = await fetch("/api/shops");
-        const shops = await shopsRes.json();
-        setFallbackShops(Array.isArray(shops) ? shops : []);
+        const shopsData = await shopsRes.json();
+        const shopsList = Array.isArray(shopsData?.shops) ? shopsData.shops : (Array.isArray(shopsData) ? shopsData : []);
+        // Convert to ShopStat[] format for fallbackShops
+        const shopStatsList: ShopStat[] = shopsList.map((s: Record<string, unknown>) => ({
+          id: String(s.id),
+          name: String(s.name),
+          slug: String(s.slug),
+          ownerName: s.ownerName ? String(s.ownerName) : null,
+          ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
+          phone: s.phone ? String(s.phone) : null,
+          isActive: Boolean(s.isActive),
+          whatsapp: null, email: null, address: null,
+          primaryColor: null, adminPin: String(s.adminPin || ""),
+          trialDays: s.trialDays != null ? Number(s.trialDays) : null,
+          trialStartsAt: s.trialStartsAt ? String(s.trialStartsAt) : null,
+          plan: String(s.plan || "free"), features: null,
+          paymentInfo: null, ownerNotes: null,
+          country: String(s.country || "DZ"), language: String(s.language || "ar"),
+          orders: Number(s._count?.orders || 0),
+          revenue: 0, todayOrders: 0, recentOrders: [] as never[],
+        }));
+        setFallbackShops(shopStatsList);
         setAllOrders(Array.isArray(ordersData.orders) ? ordersData.orders : (Array.isArray(ordersData) ? ordersData : []));
+        // Always construct a GlobalStats object so all tabs render
+        const ordersList = Array.isArray(ordersData.orders) ? ordersData.orders : (Array.isArray(ordersData) ? ordersData : []);
+        const statusCounts: Record<string, number> = {};
+        for (const o of ordersList) {
+          const st = String((o as Record<string, unknown>).status || "unknown");
+          statusCounts[st] = (statusCounts[st] || 0) + 1;
+        }
+        const fallbackStats: GlobalStats = {
+          totalOrders: ordersList.length,
+          totalRevenue: ordersList.reduce((sum: number, o: Record<string, unknown>) => sum + Number(o.total || 0), 0),
+          todayOrders: ordersList.filter((o: Record<string, unknown>) => String(o.createdAt || "").slice(0, 10) === new Date().toISOString().slice(0, 10)).length,
+          shopCount: shopStatsList.length,
+          activeShopCount: shopStatsList.filter((s: ShopStat) => s.isActive).length,
+          statusCounts,
+          shopStats: shopStatsList,
+          recentOrders: ordersList as GlobalOrder[],
+        };
+        setGlobalStats(fallbackStats);
         setDataHealth({ status: 'error', message: 'لم يتم تحميل global-stats — تم استخدام APIs منفصلة' });
       }
       setLastUpdated(new Date().toLocaleTimeString("ar-SA"));
