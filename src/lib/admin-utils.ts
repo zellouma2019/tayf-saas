@@ -270,6 +270,21 @@ export const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800",
 };
 
+// ===== تسميات الحالات بالعربية =====
+export const STATUS_LABELS_AR: Record<string, string> = {
+  pending: "قيد الانتظار",
+  confirmed: "مؤكد",
+  printing: "قيد الطباعة",
+  ready: "جاهز",
+  delivered: "تم التسليم",
+  cancelled: "ملغى",
+};
+
+/** تحويل رمز الحالة إلى تسمية عربية */
+export function statusLabelAr(status: string): string {
+  return STATUS_LABELS_AR[status] || status;
+}
+
 export const STATUS_BORDER_COLORS: Record<string, string> = {
   pending: "border-r-amber-400",
   printing: "border-r-blue-400",

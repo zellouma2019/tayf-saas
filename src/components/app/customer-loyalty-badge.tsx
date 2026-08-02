@@ -69,7 +69,7 @@ const TIER_CONFIG: Record<LoyaltyTier, {
     borderColor: "border-cyan-300 dark:border-cyan-700",
     textColor: "text-cyan-600 dark:text-cyan-400",
     minOrders: 30,
-    description: "زبون VIP",
+    description: "زبون مميز",
   },
   diamond: {
     label: "Diamond",
@@ -128,12 +128,7 @@ export function CustomerLoyaltyBadge({
           {config.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-foreground">{config.labelAr}</span>
-            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", config.color, "text-white")}>
-              {config.label}
-            </span>
-          </div>
+          <span className="text-sm font-bold text-foreground">{config.labelAr}</span>
           <p className="text-[11px] text-muted-foreground">{config.description}</p>
         </div>
         <div className="text-left">

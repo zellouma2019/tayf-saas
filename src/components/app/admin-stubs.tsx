@@ -3,6 +3,7 @@
 import { memo } from "react";
 import { BarChart3, Clock, Users, TrendingUp, AlertTriangle, FileText, RefreshCw, Package, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { statusLabelAr } from "@/lib/admin-utils";
 
 // === Stub components for admin dashboard ===
 // These are lightweight placeholders that render meaningful content
@@ -33,7 +34,7 @@ export const OrderTimelineMini = memo(function OrderTimelineMini({ orders }: { o
               String(o.status) === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
               String(o.status) === "printing" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
               "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-            )}>{String(o.status || "pending")}</div>
+            )}>{statusLabelAr(String(o.status || "pending"))}</div>
           </div>
         ))}
       </div>
@@ -102,7 +103,7 @@ export const OrderQuickStats = memo(function OrderQuickStats({ orders }: { order
             status === "ready" ? "bg-blue-500" :
             "bg-gray-400"
           )} />
-          <span className="text-muted-foreground">{status}:</span>
+          <span className="text-muted-foreground">{statusLabelAr(status)}:</span>
           <span className="font-bold">{count}</span>
         </div>
       ))}
@@ -145,13 +146,13 @@ export const StatusPipeline = memo(function StatusPipeline({ orders, onStatusCli
           <div key={status} className={cn("transition-all cursor-pointer hover:opacity-80", colors[status] || "bg-gray-400")}
             style={{ width: `${(count / total) * 100}%` }}
             onClick={() => onStatusClick?.(status)}
-            title={`${status}: ${count}`} />
+            title={`${statusLabelAr(status)}: ${count}`} />
         ))}
       </div>
       <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
         {Object.entries(statusCounts).map(([status, count]) => (
           <span key={status} className="cursor-pointer hover:text-foreground" onClick={() => onStatusClick?.(status)}>
-            {status}: <span className="font-bold text-foreground">{count}</span>
+            {statusLabelAr(status)}: <span className="font-bold text-foreground">{count}</span>
           </span>
         ))}
       </div>
@@ -177,7 +178,7 @@ export const AgingAlerts = memo(function AgingAlerts({ orders, onOrderClick }: {
               <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
               <span className="font-medium">{String(o.reference || "—")}</span>
               <span className="text-muted-foreground">- {age} يوم</span>
-              <span className="text-red-500 text-xs font-medium">{String(o.status)}</span>
+              <span className="text-red-500 text-xs font-medium">{statusLabelAr(String(o.status))}</span>
             </div>
           );
         })}
@@ -238,7 +239,7 @@ export const AdminStatusFlowViz = memo(function AdminStatusFlowViz({ orders }: {
         {flow.map((s, i) => (
           <div key={s} className="flex items-center gap-2">
             <div className="px-3 py-2 rounded-lg border border-border bg-muted/30 text-center">
-              <div className="text-xs text-muted-foreground">{s}</div>
+              <div className="text-xs text-muted-foreground">{statusLabelAr(s)}</div>
               <div className="text-lg font-bold">{counts[s] || 0}</div>
             </div>
             {i < flow.length - 1 && <span className="text-muted-foreground">→</span>}
@@ -384,7 +385,7 @@ export const StatusDonut = memo(function StatusDonut({ orders, onStatusClick }: 
           {Object.entries(counts).map(([status, count]) => (
             <div key={status} className="flex items-center gap-2 cursor-pointer" onClick={() => onStatusClick?.(status)}>
               <div className="w-3 h-3 rounded-full" style={{ background: colors[status] || "#9ca3af" }} />
-              <span className="text-muted-foreground">{status}:</span>
+              <span className="text-muted-foreground">{statusLabelAr(status)}:</span>
               <span className="font-bold">{count}</span>
             </div>
           ))}
@@ -445,7 +446,7 @@ export const AdminCompletionFunnel = memo(function AdminCompletionFunnel({ order
       <div className="space-y-2">
         {steps.map((step, i) => (
           <div key={step} className="cursor-pointer" onClick={() => onStepClick?.(step)}>
-            <div className="flex items-center justify-between text-sm mb-1"><span>{step}</span><span className="font-bold">{counts[step] || 0}</span></div>
+            <div className="flex items-center justify-between text-sm mb-1"><span>{statusLabelAr(step)}</span><span className="font-bold">{counts[step] || 0}</span></div>
             <div className="h-5 bg-muted/30 rounded-full overflow-hidden" style={{ width: `${100 - i * 15}%`, margin: "0 auto" }}>
               <div className="h-full bg-primary/70 rounded-full" style={{ width: `${((counts[step] || 0) / max) * 100}%` }} />
             </div>
@@ -564,7 +565,7 @@ export const AdminRecentQuickTable = memo(function AdminRecentQuickTable({ order
                 <td className="py-2 px-2 font-medium">{Number(o.total || 0).toLocaleString()}</td>
                 <td className="py-2 px-2"><span className={cn("text-xs px-2 py-0.5 rounded-full",
                   String(o.status) === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"
-                )}>{String(o.status || "")}</span></td>
+                )}>{statusLabelAr(String(o.status || ""))}</span></td>
               </tr>
             ))}
           </tbody>
@@ -861,7 +862,7 @@ export function OrderDetailDialog({ order, onClose, onStatusChange, onDelete }: 
           <div className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-3">
               <div><span className="text-muted-foreground">المرجع:</span> <span className="font-medium">{order.reference || "—"}</span></div>
-              <div><span className="text-muted-foreground">الحالة:</span> <span className="font-medium">{order.status || "—"}</span></div>
+              <div><span className="text-muted-foreground">الحالة:</span> <span className="font-medium">{statusLabelAr(order.status || "")}</span></div>
               <div><span className="text-muted-foreground">الخدمة:</span> <span className="font-medium">{order.serviceName || "—"}</span></div>
               <div><span className="text-muted-foreground">المبلغ:</span> <span className="font-bold">{Number(order.total || 0).toLocaleString()} د.ج</span></div>
               <div><span className="text-muted-foreground">الزبون:</span> <span className="font-medium">{order.customer?.name || "—"}</span></div>

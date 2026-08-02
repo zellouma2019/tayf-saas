@@ -546,9 +546,9 @@ export function PlatformSettingsTab() {
             </div>
           </SettingSection>
 
-          <SettingSection title="Favicon" description="أيقونة المتصفح الظاهرة في تبويب الموقع" icon={Monitor} iconBg="bg-violet-500/10">
+          <SettingSection title="أيقونة الموقع" description="أيقونة المتصفح الظاهرة في تبويب الموقع" icon={Monitor} iconBg="bg-violet-500/10">
             <LogoUpload
-              label="Favicon"
+              label="أيقونة الموقع"
               value={settings.platformFavicon}
               onChange={(url) => update({ platformFavicon: url })}
               hint="PNG أو ICO، مقاس 32×32 أو 64×64 بكسل"

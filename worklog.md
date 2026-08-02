@@ -119,3 +119,53 @@ Stage Summary:
 - 3 exported functions in admin-utils.ts: getTimeAgo (full string), getTimeAgoShort (compact string), getTimeAgoWithUrgency (with urgency level)
 - Turbopack tree-shaking risk eliminated for all time-ago utility functions
 ---
+Task ID: 2-b (continued)
+Agent: Sub-agent (general-purpose)
+Task: Remove all remaining English user-visible text from src/components/app/ and src/app/page.tsx
+
+Work Log:
+- **src/lib/admin-utils.ts**: Added `STATUS_LABELS_AR` mapping (pending→قيد الانتظار, confirmed→مؤكد, printing→قيد الطباعة, ready→جاهز, delivered→تم التسليم, cancelled→ملغى) and `statusLabelAr()` helper function.
+- **src/components/app/admin-stubs.tsx** (HIGH PRIORITY — 11 fixes):
+  - Added `import { statusLabelAr } from "@/lib/admin-utils"`
+  - OrderTimelineMini: wrapped `o.status` with `statusLabelAr()` (line 37)
+  - OrderQuickStats: wrapped `status` with `statusLabelAr()` in label (line 106)
+  - StatusPipeline: wrapped `status` with `statusLabelAr()` in tooltip (line 149) and legend (line 155)
+  - AgingAlerts: wrapped `o.status` with `statusLabelAr()` (line 181)
+  - AdminStatusFlowViz: wrapped flow step labels with `statusLabelAr()` (line 242)
+  - StatusDonut: wrapped status legend with `statusLabelAr()` (line 388)
+  - AdminCompletionFunnel: wrapped step labels with `statusLabelAr()` (line 449)
+  - AdminRecentQuickTable: wrapped table status cell with `statusLabelAr()` (line 568)
+  - OrderDetailDialog: wrapped dialog status field with `statusLabelAr()` (line 865)
+- **src/components/app/customer-loyalty-badge.tsx**: Removed English tier badge (Bronze/Silver/Gold/Platinum/Diamond pill) that was shown next to Arabic label. Changed "زبون VIP" description to "زبون مميز".
+- **src/components/app/print-queue-manager.tsx**: Changed VIP priority label from "VIP" to "مميز".
+- **src/components/app/admin-platform-settings.tsx**: Changed Favicon section title and upload label from "Favicon" to "أيقونة الموقع".
+
+Files verified as already Arabic (no changes needed):
+- src/app/page.tsx — all labels, headers, buttons, tooltips, placeholders already Arabic
+- src/components/app/merchant-dashboard.tsx — uses STATUS_META Arabic labels, statusMap Arabic mapping
+- src/components/app/admin-overview-tab.tsx — no English text
+- src/components/app/admin-analytics.tsx — no English text
+- src/components/app/quick-reports-widget.tsx — STATUS_CONFIG already Arabic, format names (PDF/Excel) are brand/technical terms
+- src/components/app/expense-category-breakdown.tsx — displays `nameAr` not `name`
+- src/components/app/keyboard-shortcuts-overlay.tsx — all labels Arabic, key names (Alt/Ctrl/Esc) are technical terms
+
+Items intentionally kept (per rules):
+- Brand names: PDF, Excel, DOCX, XLSX, DOC, XLS
+- Technical terms: A4, A3, A5, Letter, CMYK, RGB, MB, PNG, ICO, SVG, HTML, CSS, API, QR
+- Code identifiers: all variable names, function names, CSS classes, status code keys (pending/printing/ready/delivered/cancelled) used as data values
+- Type annotations: LoyaltyTier type values (bronze/silver/gold/platinum/diamond), ReportFormat, ReportStatus
+- Comments: English code comments are developer-facing, not user-visible
+
+Verification:
+- ✅ `rg '>pending<|>printing<|>ready<|>delivered<|>cancelled<' src/` returns no matches
+- ✅ `rg 'label: "[A-Z][a-z]' src/components/app/` shows only technical terms (A4, A3, A5, CMYK, RGB, PDF, DOCX, etc.)
+- ✅ Pre-existing TypeScript errors (unrelated to changes) confirmed unchanged
+
+Stage Summary:
+- 11 status display fixes in admin-stubs.tsx (added shared statusLabelAr helper)
+- 1 VIP→مميز fix in print-queue-manager.tsx
+- 1 English badge removal in customer-loyalty-badge.tsx
+- 1 Favicon→أيقونة الموقع fix in admin-platform-settings.tsx
+- Total: 14 English→Arabic text replacements across 5 files
+- All user-visible text in src/components/app/ and src/app/page.tsx is now Arabic
+---
