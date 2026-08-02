@@ -1,6 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+
+/** Safe useMemo — catches errors and returns fallback instead of crashing */
+function safeMemo<T>(factory: () => T, deps: unknown[], fallback: T): T {
+  return useMemo(() => { try { return factory(); } catch (e) { console.error('[safeMemo]', e); return fallback; } }, deps);
+}
+
 import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
 import {
   Plus, Store, RefreshCw, Shield, Package, Clock, LayoutDashboard, Globe2,
@@ -1318,7 +1324,7 @@ export default function SuperAdminPage() {
   const pendingCount = safeOrders.filter(o => o.status === "pending").length;
 
   // Duplicate order detection — flags orders with same phone+serviceType+shopId within 1 hour
-  const duplicateOrderIds = useMemo(() => {
+  const duplicateOrderIds = safeMemo(() => {
     const dupes = new Set<string>();
     const seen = new Map<string, string[]>(); // key → order IDs
     safeOrders.forEach((o) => {
@@ -1354,7 +1360,7 @@ export default function SuperAdminPage() {
   }, [safeOrders]);
 
   // Customer loyalty scoring — ranks customers by order count and total spend
-  const customerLoyalty = useMemo(() => {
+  const customerLoyalty = safeMemo(() => {
     const map = new Map<string, { name: string; phone: string; orderCount: number; totalSpend: number; lastOrder: string }>();
     safeOrders.forEach((o) => {
       const key = o.customer?.phone || o.customer?.name || o.id;
@@ -1378,7 +1384,7 @@ export default function SuperAdminPage() {
   }
 
   // Customer profile data for panel
-  const customerProfileData = useMemo(() => {
+  const customerProfileData = safeMemo(() => {
     if (!customerProfile) return null;
     const custOrders = safeOrders.filter(o => 
       (o.customer?.phone || o.customer?.name || '') === customerProfile
@@ -1409,7 +1415,7 @@ export default function SuperAdminPage() {
   }, [customerProfile, safeOrders]);
 
   // Service type distribution data
-  const serviceDistribution = useMemo(() => {
+  const serviceDistribution = safeMemo(() => {
     const dist = new Map<string, { count: number; revenue: number; service: string }>();
     safeOrders.forEach(o => {
       const key = o.serviceType || o.serviceName || 'أخرى';
@@ -1511,7 +1517,7 @@ export default function SuperAdminPage() {
   });
 
   // Sorting
-  const sortedOrders = useMemo(() => {
+  const sortedOrders = safeMemo(() => {
     const arr = [...filteredOrders];
     arr.sort((a, b) => {
       let cmp = 0;
@@ -1621,7 +1627,7 @@ export default function SuperAdminPage() {
   });
 
   // Global search results
-  const globalSearchResults = useMemo(() => {
+  const globalSearchResults = safeMemo(() => {
     if (!search.trim()) return { orders: [], shops: [], customers: [] };
     const q = search.toLowerCase().trim();
     const matchedOrders = safeOrders.filter((o) => {
@@ -1723,7 +1729,7 @@ export default function SuperAdminPage() {
     platform: "إعدادات المنصة",
   };
 
-  const sidebarSections: SidebarSection[] = useMemo(() => [
+  const sidebarSections: SidebarSection[] = safeMemo(() => [
     {
       title: "القائمة الرئيسية",
       items: [
