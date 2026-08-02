@@ -57,12 +57,20 @@ class MerchantErrorBoundary extends Component<
                 <AlertTriangle className="h-8 w-8 text-rose-500" />
               </div>
               <h2 className="text-xl font-bold mb-2 text-foreground">حدث خطأ في لوحة التحكم</h2>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-sm text-muted-foreground mb-2">
                 يرجى المحاولة مرة أخرى أو تحديث الصفحة
               </p>
+              {this.state.error && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3 mb-4 text-right">
+                  <p className="text-xs font-mono text-rose-500 break-all">{this.state.error.message}</p>
+                </div>
+              )}
               <div className="flex items-center justify-center gap-3">
-                <Button onClick={this.handleReset} className="gap-2 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50">
+                <Button onClick={() => { this.setState({ hasError: false, error: null, errorInfo: null }); }} className="gap-2 active:scale-[0.97]">
                   <RotateCcw className="h-4 w-4" />
+                  إعادة المحاولة
+                </Button>
+                <Button variant="outline" onClick={this.handleReset} className="gap-2">
                   تحديث الصفحة
                 </Button>
                 <Button variant="outline" onClick={() => window.location.href = `/s/${this.props.shopSlug}`}>

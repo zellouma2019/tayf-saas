@@ -106,18 +106,13 @@ export function formatDA(n: number | undefined | null, countryCode?: string | nu
 export interface AppLanguage {
   code: string;
   nameAr: string;
-  nameEn: string;
   nameNative: string;
   dir: "rtl" | "ltr";
   flag: string;
 }
 
 export const APP_LANGUAGES: AppLanguage[] = [
-  { code: "ar", nameAr: "العربية", nameEn: "Arabic", nameNative: "العربية", dir: "rtl", flag: "🌍" },
-  { code: "fr", nameAr: "الفرنسية", nameEn: "French", nameNative: "Français", dir: "ltr", flag: "🇫🇷" },
-  { code: "en", nameAr: "الإنجليزية", nameEn: "English", nameNative: "English", dir: "ltr", flag: "🇬🇧" },
-  { code: "tr", nameAr: "التركية", nameEn: "Turkish", nameNative: "Türkçe", dir: "ltr", flag: "🇹🇷" },
-  { code: "es", nameAr: "الإسبانية", nameEn: "Spanish", nameNative: "Español", dir: "ltr", flag: "🇪🇸" },
+  { code: "ar", nameAr: "العربية", nameNative: "العربية", dir: "rtl", flag: "🌍" },
 ];
 
 export function getLanguage(code: string | null | undefined): AppLanguage | undefined {

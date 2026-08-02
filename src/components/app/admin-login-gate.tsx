@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Lock, Eye, EyeOff, RefreshCw, ShieldAlert, Globe } from "lucide-react";
+import { Lock, Eye, EyeOff, RefreshCw, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,6 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   const [lockoutUntil, setLockoutUntil] = useState<number>(0);
   const lockoutRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState<"ar" | "en">("ar");
-
   // Prevent hydration mismatch
   useEffect(() => { setMounted(true); }, []);
 
@@ -67,7 +65,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   const isLockedOut = lockoutUntil > Date.now();
   const lockoutSecondsLeft = isLockedOut ? Math.ceil((lockoutUntil - Date.now()) / 1000) : 0;
 
-  const t = lang === "ar" ? {
+  const t = {
     title: "طيف — لوحة الإدارة",
     subtitle: "أدخل كلمة المرور للوصول",
     placeholder: "كلمة المرور",
@@ -83,22 +81,6 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
     version: "الإصدار 7.1 — منصة طيف للطباعة الذكية",
     defaultPwTitle: "⚠️ كلمة المرور الافتراضية لا تزال مستخدمة",
     defaultPwDesc: "يُرجى تغييرها فوراً من الإعدادات ← الأمان",
-  } : {
-    title: "Tayf — Admin Panel",
-    subtitle: "Enter password to access",
-    placeholder: "Password",
-    loginBtn: "Login",
-    attempts: (a: number) => `⚠️ ${a}/${MAX_ATTEMPTS} attempts — account locks after ${MAX_ATTEMPTS} failed attempts`,
-    lockedTitle: "Access temporarily locked",
-    lockedSubtitle: "seconds remaining",
-    lockedToast: (d: number) => `Exceeded ${MAX_ATTEMPTS} attempts. Wait ${d / 1000}s.`,
-    wrongPassword: (a: number) => `Attempt ${a} of ${MAX_ATTEMPTS}`,
-    wrongTitle: "Incorrect password",
-    connectionError: "Connection error",
-    protected: "This section is protected for admin only",
-    version: "v7.7 — Tayf Smart Printing Platform",
-    defaultPwTitle: "⚠️ Default password is still in use",
-    defaultPwDesc: "Please change it from Settings ← Security",
   };
 
   async function handleSubmit(e?: React.FormEvent) {
@@ -177,7 +159,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
   }
 
   return (
-    <div className={cn("min-h-screen bg-background flex items-center justify-center p-4 relative", lang === "ar" ? "dir-rtl" : "dir-ltr")} dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className={cn("min-h-screen bg-background flex items-center justify-center p-4 relative dir-rtl")} dir="rtl">
       {/* Dot grid background pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
         style={{
@@ -219,25 +201,17 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
 
         <CardContent className="pt-8 pb-6 px-6 relative z-10">
           <div className="text-center mb-6">
-            {/* Language toggle */}
+            {/* تبديل الثيم */}
             {mounted && (
               <div className="flex justify-end items-center gap-1 mb-2">
                 <ThemeToggle className="h-8 w-8" />
-                <button
-                  onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/50"
-                  title={lang === "ar" ? "Switch to English" : "التبديل للعربية"}
-                >
-                  <Globe className="h-3 w-3" />
-                  {lang === "ar" ? "EN" : "عربي"}
-                </button>
               </div>
             )}
 
             <motion.img
-              src={lang === "ar" ? "/tayf-logo-sm.png" : "/brand/tayf-logo.png"}
+              src="/tayf-logo-sm.png"
               alt=""
-              className={cn("w-8 h-8 mx-auto mb-3", lang === "ar" ? "dark:hidden" : "dark:hidden")}
+              className="w-8 h-8 mx-auto mb-3 dark:hidden"
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring" }}
@@ -330,7 +304,7 @@ export function LoginGate({ onUnlock }: { onUnlock: () => void }) {
                 </Button>
                 {!verifying && password.trim() && (
                   <p className="text-center text-[10px] text-muted-foreground/50 mt-1.5">
-                    {lang === "ar" ? "اضغط Enter للدخول" : "Press Enter to login"}
+                    اضغط Enter للدخول
                   </p>
                 )}
               </motion.form>

@@ -31,7 +31,6 @@ import {
   Calculator,
   CheckCircle2,
   ArrowUp,
-  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -71,21 +70,8 @@ export function AppShell() {
   const [showEstimator, setShowEstimator] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showBackTop, setShowBackTop] = useState(false);
-  const [lang, setLang] = useState<'ar' | 'fr'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('tayf_lang') as 'ar' | 'fr') || 'ar';
-    }
-    return 'ar';
-  });
-  const toggleLang = useCallback(() => {
-    setLang((prev) => {
-      const next = prev === 'ar' ? 'fr' : 'ar';
-      localStorage.setItem('tayf_lang', next);
-      return next;
-    });
-  }, []);
-  const tx = {
-    ar: {
+
+  const t = {
       newOrder: 'طلب جديد', newOrderShort: 'جديد',
       reorder: 'تكرار طلب', reorderShort: 'تكرار',
       track: 'تتبّع', trackShort: 'تتبّظ',
@@ -124,48 +110,7 @@ export function AppShell() {
       platformDesc: 'منصة احترافية لإنشاء وتتبع طلبات الطباعة بسهولة وسرعة.',
       printEasily: 'اطبع بسهولة',
       priceCalc: 'حاسبة الأسعار',
-    },
-    fr: {
-      newOrder: 'Nouvelle commande', newOrderShort: 'Nouveau',
-      reorder: 'Répéter', reorderShort: 'Répéter',
-      track: 'Suivi', trackShort: 'Suivi',
-      history: 'Historique', historyShort: 'Historique',
-      admin: 'Admin', adminShort: 'Admin',
-      quickOrder: 'Commande rapide',
-      professional: 'Service professionnel et rapide',
-      uploadMsg: 'Téléchargez et obtenez un devis ✓',
-      readyIn: 'Prêt en 1 heure',
-      trusted: 'Fiable',
-      orderInMinute: 'Commandez en 1 minute',
-      notifyReady: 'Notification de disponibilité',
-      callUs: 'Appelez-nous',
-      quickSearch: 'Recherche rapide',
-      digitalPrinting: 'Imprimerie numérique · Impression en ligne',
-      quickLinks: 'Liens rapides',
-      newPrintOrder: 'Nouvelle commande',
-      trackOrder: 'Suivre une commande',
-      adminPanel: 'Panneau admin',
-      reorderPrev: 'Répéter une commande',
-      ourServices: 'Nos services',
-      contactUs: 'Contactez-nous',
-      whatsapp: 'WhatsApp',
-      call: 'Appeler',
-      email: 'E-mail',
-      copyLink: 'Copier le lien',
-      linkCopied: 'Lien copié !',
-      workHours: 'Sam - Jeu : 8h00 — 20h00',
-      closedFri: 'Vendredi : Fermé',
-      footerRights: 'Tous droits réservés',
-      poweredBy: 'Propulsé par Tayf',
-      contactViaWhatsapp: 'Contactez via WhatsApp',
-      backToTop: 'Retour en haut',
-      showDetails: 'Voir les informations',
-      hideDetails: 'Masquer les détails',
-      platformDesc: 'Plateforme professionnelle pour créer et suivre vos commandes facilement.',
-      printEasily: 'Imprimez facilement',
-      priceCalc: 'Calculateur de prix',
-    },
-  };
+    };
 
   const { shop, hasFeature } = useShop();
   // شعار المنصة
@@ -366,7 +311,7 @@ export function AppShell() {
     incrementRefresh();
   }, [setCreatedOrder, incrementRefresh]);
 
-  const t = tx[lang];
+
 
   const navItems: { key: View; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; desktopOnly?: boolean }[] = [
     { key: "new", label: t.newOrder, shortLabel: t.newOrderShort, icon: Plus },
@@ -381,7 +326,7 @@ export function AppShell() {
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
     <CommandPalette />
     <LayoutGroup>
-      <div className="min-h-screen flex flex-col bg-background" dir={lang === 'fr' ? 'ltr' : 'rtl'} lang={lang} style={themeStyle}>
+      <div className="min-h-screen flex flex-col bg-background" dir="rtl" lang="ar" style={themeStyle}>
       {/* ===== الشريط العلوي المُلوَّن حسب ثيم المتجر ===== */}
       {view !== "new" && (
       <div
@@ -563,18 +508,7 @@ export function AppShell() {
           {/* الأزرار الجانبية: تبديل الثيم + اللغة + زر الطلب السريع */}
           <div className="flex items-center gap-1.5 shrink-0">
             <ThemeToggle />
-            <button
-              onClick={toggleLang}
-              className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 active:scale-95 border"
-              style={{
-                color: theme.header.text,
-                borderColor: theme.header.border,
-              }}
-              title={lang === 'ar' ? 'Français' : 'العربية'}
-            >
-              <Globe className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{lang === 'ar' ? 'Français' : 'عربي'}</span>
-            </button>
+
             <button
               onClick={() => handleNavClick("new")}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all duration-300 hover:scale-105 active:scale-95"

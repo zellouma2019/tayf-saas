@@ -49,3 +49,22 @@ Unresolved/Risks:
 - Admin password is still default (Admin@2026) - warning banner shown on dashboard
 - Customer order upload flow needs end-to-end testing with actual file uploads
 ---
+Task ID: 2-b
+Agent: Sub-agent (general-purpose)
+Task: Remove all English/non-Arabic language from project, keeping only Arabic
+
+Work Log:
+- **src/lib/i18n.ts**: Removed fr, en, tr, es translation dictionaries (~400 lines). Kept only ar dictionary. Updated TRANSLATIONS to only include ar. Simplified t() function to always use ar dictionary. Removed unused AppLanguage import.
+- **src/lib/countries.ts**: Removed fr, en, tr, es from APP_LANGUAGES array. Kept only ar entry. Removed nameEn field from AppLanguage interface (only nameAr and nameNative remain).
+- **src/components/app/app-shell.tsx**: Removed lang state variable and toggleLang callback. Removed entire fr translation block from tx object (~40 lines). Renamed tx.ar to flat t object. Removed Globe icon import. Removed language toggle button from header (the Français/عربي button). Hardcoded dir="rtl" and lang="ar" on root div.
+- **src/components/app/admin-login-gate.tsx**: Removed lang state variable. Removed entire English translation object from t (~15 lines). Removed Globe icon import. Removed language toggle button (EN/عربي button with Globe icon). Hardcoded dir="rtl". Hardcoded Arabic logo path. Hardcoded Arabic "اضغط Enter للدخول" text.
+- Verified: shop-page.tsx, merchant-dashboard.tsx, store.ts, default-settings.ts have no language toggles.
+- Verified: rg for Français, English, toggleLang, "EN" in src/ returns no matches.
+
+Stage Summary:
+- All language switching UI removed from 2 component files
+- All non-Arabic translation dictionaries removed from i18n.ts
+- APP_LANGUAGES reduced to single Arabic entry
+- No functional code changed — only language options/toggles/translations removed
+- All UI now hardcoded to Arabic (rtl direction)
+---
