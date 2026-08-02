@@ -39,6 +39,7 @@ import { QuickActionsPanel } from '@/components/app/admin-quick-actions-panel';
 import { AdminOrderNotesPanel as OrderNotesPanel } from '@/components/app/admin-order-notes-panel';
 import { RevenueGoalWidget } from '@/components/app/revenue-goal-widget';
 import { useRealtimeOrders } from "@/lib/use-realtime-orders";
+import { ActivityFeed } from '@/components/app/activity-feed';
 import { SB } from '@/components/app/admin-section-boundary';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
