@@ -68,7 +68,7 @@ export default function Error({
         </div>
 
         <p className="text-center text-[10px] text-muted-foreground/40">
-          طيف v4.6 — منصة إدارة المطابع الذكية
+          طيف v7.7 — منصة إدارة المطابع الذكية
         </p>
       </div>
     </div>
