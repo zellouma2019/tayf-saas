@@ -37,8 +37,26 @@ import { NotifSettings } from '@/components/app/admin-notif-settings';
 import { AdminNotificationCenter } from "@/components/app/admin-notification-center";
 import { QuickActionsPanel } from '@/components/app/admin-quick-actions-panel';
 import { AdminOrderNotesPanel as OrderNotesPanel } from '@/components/app/admin-order-notes-panel';
+import { RevenueGoalWidget } from '@/components/app/revenue-goal-widget';
 import { useRealtimeOrders } from "@/lib/use-realtime-orders";
 import { SB } from '@/components/app/admin-section-boundary';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { ShopManageCard } from '@/components/app/admin-shop-card';
+import {
+  OrderTimelineMini, PerformanceMeter, CustomerInsight, OrderQuickStats, DuplicateDetector,
+  StatusPipeline, AgingAlerts, AdminDailySummary, AdminStatusFlowViz, AdminRevenueChart,
+  OrderRevenueTrend, ServiceBreakdown, PeakHours, StatsSummaryBar, CustomerHistory,
+  CustomerDetailPanel, CustomerSpendingChart, StatusDonut, RetentionIndicator,
+  OrderValueDistribution, ShopRevenueCompare, AdminCompletionFunnel, AdminServicePopularity,
+  AdminOrderAgeAnalysis, AdminTopCustomersLeaderboard, AdminOrderSizeBreakdown,
+  AdminShopActivityGrid, AdminShopHealthScores, AdminRecentQuickTable, AdminWeeklyComparison,
+  AdminOrderVelocity, QuickStatsBar, PdfExportBtn, EmptyOrdersMessage, AdvancedSearchPanel,
+  BulkStatusChange, AdminBulkActions, DateQuickFilter, ShopMiniCards, ShopKpiCards,
+  QuickNotesInline, AnalyticsTab, KanbanTab, CalendarTab, CustomersTab, ReportsTab,
+  OrderDetailDialog,
+} from '@/components/app/admin-stubs';
 
 export function SuperAdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -1279,7 +1297,7 @@ export function SuperAdminPage() {
           {activeTab === "analytics" && (
             <div className="space-y-5">
               <StatsSummaryBar stats={stats} loading={loading} />
-              <AnalyticsTab orders={allOrders as unknown as PrintOrder[]} />
+              <AnalyticsTab orders={allOrders} />
             </div>
           )}
 
