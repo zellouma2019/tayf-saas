@@ -45,9 +45,9 @@ import {
 } from "@/lib/print-config";
 import { cn } from "@/lib/utils";
 import type { GlobalStats, GlobalOrder, ShopStat } from "@/lib/admin-types";
-import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from "recharts";
+// import {
+//   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+// } from "recharts";
 import {
   isAuthenticated, verifySession, adminFetch,
   formatNumber, STATUS_COLORS, STATUS_BORDER_COLORS, STATUS_DOT_COLORS,
@@ -2666,10 +2666,10 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Revenue Donut Chart (R78) */}
-            <RevenueDonutChart orders={safeOrders} />
+            {/* RevenueDonutChart temporarily disabled */}
 
             {/* Performance Metrics Cards (R78) */}
-            <PerformanceMetricsCards orders={safeOrders} />
+            {/* PerformanceMetricsCards temporarily disabled */}
 
             {/* Print Queue Manager */}
             <PrintQueueManager orders={safeOrders} onOrderClick={(o) => { setSelectedOrder(o); setQuickViewOrder(o); }} />
