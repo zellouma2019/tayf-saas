@@ -211,6 +211,38 @@ export function getTimeAgo(dateStr: string): string {
   return formatDateTimeAr(dateStr);
 }
 
+/** حساب الوقت المنقضي بشكل مختصر */
+export function getTimeAgoShort(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = now - then;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return "الآن";
+  if (minutes < 60) return `منذ ${minutes} د`;
+  if (hours < 24) return `منذ ${hours} س`;
+  if (days < 7) return `منذ ${days} ي`;
+  return new Date(dateStr).toLocaleDateString('ar-DZ', { month: 'short', day: 'numeric' });
+}
+
+/** حساب الوقت المنقضي مع مستوى الاستعجال (لصف الطلبات) */
+export function getTimeAgoWithUrgency(dateStr: string): { text: string; urgency: "normal" | "warning" | "critical" } {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHrs / 24);
+
+  if (diffMins < 1) return { text: "الآن", urgency: "normal" };
+  if (diffMins < 60) return { text: `${diffMins}د`, urgency: diffMins > 30 ? "warning" : "normal" };
+  if (diffHrs < 24) return { text: `${diffHrs}س`, urgency: diffHrs > 6 ? "warning" : "normal" };
+  if (diffDays < 7) return { text: `${diffDays}ي`, urgency: diffDays > 3 ? "critical" : "warning" };
+  return { text: `${Math.floor(diffDays / 7)}أسبوع`, urgency: "critical" };
+}
+
 // ===== أيقونات الخدمات =====
 export const SERVICE_EMOJI: Record<string, string> = {
   document: "🖨️",

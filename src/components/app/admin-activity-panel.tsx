@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { STATUS_META } from "@/lib/print-config";
 import type { GlobalOrder } from "@/lib/admin-types";
+import { getTimeAgo } from "@/lib/admin-utils";
 
 interface ActivityEvent {
   id: string;
@@ -26,17 +27,6 @@ interface ActivityEvent {
 interface AdminActivityPanelProps {
   orders: GlobalOrder[];
   className?: string;
-}
-
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = now - then;
-  if (diff < 60000) return "الآن";
-  if (diff < 3600000) return `منذ ${Math.floor(diff / 60000)} دقيقة`;
-  if (diff < 86400000) return `منذ ${Math.floor(diff / 3600000)} ساعة`;
-  if (diff < 604800000) return `منذ ${Math.floor(diff / 86400000)} يوم`;
-  return new Date(dateStr).toLocaleDateString("ar-SA");
 }
 
 export function AdminActivityPanel({ orders, className }: AdminActivityPanelProps) {
@@ -242,7 +232,7 @@ export function AdminActivityPanel({ orders, className }: AdminActivityPanelProp
                       <div className="flex items-center gap-2 mt-1">
                         <Clock className="h-2.5 w-2.5 text-muted-foreground/40" />
                         <span className="text-[10px] text-muted-foreground/50">
-                          {timeAgo(event.timestamp)}
+                          {getTimeAgo(event.timestamp)}
                         </span>
                         {event.shopName && (
                           <>

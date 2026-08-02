@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { GlobalOrder } from "@/lib/admin-types";
+import { getTimeAgoShort } from "@/lib/admin-utils";
 
 interface ShopActivityFeedProps {
   shopName: string;
@@ -25,21 +26,6 @@ const ACTIVITY_ICONS: Record<string, { icon: React.ReactNode; color: string; lab
   delivered: { icon: <Truck className="h-3 w-3" />, color: "text-green-600 bg-green-50 dark:bg-green-950", label: "تم التسليم" },
   cancelled: { icon: <XCircle className="h-3 w-3" />, color: "text-red-500 bg-red-50 dark:bg-red-950", label: "ملغى" },
 };
-
-function getTimeAgoShort(dateStr: string): string {
-  const now = new Date().getTime();
-  const then = new Date(dateStr).getTime();
-  const diff = now - then;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "الآن";
-  if (minutes < 60) return `منذ ${minutes} د`;
-  if (hours < 24) return `منذ ${hours} س`;
-  if (days < 7) return `منذ ${days} ي`;
-  return new Date(dateStr).toLocaleDateString('ar-DZ', { month: 'short', day: 'numeric' });
-}
 
 export function ShopActivityFeed({
   shopName, orders, limit = 10, className,

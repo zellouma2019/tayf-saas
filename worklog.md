@@ -97,3 +97,25 @@ Stage Summary:
 - Merchant dashboard crash root cause: TBD - needs user to reproduce with new error-visible boundary
 - Possible causes: dynamic import failure, API response format change, component render error
 ---
+Task ID: 2-a
+Agent: Sub-agent (general-purpose)
+Task: Fix remaining timeAgo local functions — move to shared admin-utils.ts to prevent Turbopack tree-shaking
+
+Work Log:
+- **src/components/app/activity-feed.tsx**: Removed local `function timeAgo(date: Date)` (10 lines). Added `import { getTimeAgo } from "@/lib/admin-utils"`. Updated usage from `timeAgo(item.timestamp)` to `getTimeAgo(item.timestamp.toISOString())` (adapting Date→string signature).
+- **src/components/app/admin-activity-panel.tsx**: Removed local `function timeAgo(dateStr: string)` (9 lines). Added `import { getTimeAgo } from "@/lib/admin-utils"`. Usage already passed string, just renamed call.
+- **src/components/app/shop-activity-feed.tsx**: Removed local `function getTimeAgoShort(dateStr: string)` (13 lines) that returned short Arabic format ("منذ 5 د", "منذ 3 س", "منذ 2 ي"). Added `import { getTimeAgoShort } from "@/lib/admin-utils"`. Created matching `getTimeAgoShort` export in admin-utils.ts to preserve short format.
+- **src/components/app/shipping-tracker-widget.tsx**: Removed local `function getTimeAgo(dateStr: string)` (9 lines). Added `import { getTimeAgo } from "@/lib/admin-utils"`. Usage already passed string.
+- **src/lib/admin-utils.ts**: Added new exported function `getTimeAgoShort(dateStr: string): string` (14 lines) — returns compact Arabic time strings ("الآن", "منذ X د", "منذ X س", "منذ X ي", or locale date fallback).
+
+Verification:
+- ✅ `rg` confirms zero local timeAgo/getTimeAgo/getTimeAgoShort function definitions remain in src/components/
+- ✅ All 4 files now import from @/lib/admin-utils
+- ✅ Already-fixed files (order-details-row.tsx, kanban-board.tsx, quick-insights-widget.tsx, admin-overview-tab.tsx) still import correctly
+- ✅ No Arabic text changed — all outputs remain identical
+
+Stage Summary:
+- All 6 component files with timeAgo-like functions now import from shared admin-utils.ts
+- 3 exported functions in admin-utils.ts: getTimeAgo (full string), getTimeAgoShort (compact string), getTimeAgoWithUrgency (with urgency level)
+- Turbopack tree-shaking risk eliminated for all time-ago utility functions
+---

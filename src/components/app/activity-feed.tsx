@@ -17,6 +17,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { getTimeAgo } from "@/lib/admin-utils";
 
 interface ActivityItem {
   id: string;
@@ -41,17 +42,6 @@ const ACTIVITY_ICONS: Record<string, { icon: typeof Package; color: string; bgCo
   payment: { icon: CreditCard, color: "text-gold-600 dark:text-gold-400", bgColor: "bg-gold-100 dark:bg-gold-900/30" },
   review: { icon: Star, color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
 };
-
-function timeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "الآن";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `منذ ${minutes} دقيقة`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `منذ ${hours} ساعة`;
-  const days = Math.floor(hours / 24);
-  return `منذ ${days} يوم`;
-}
 
 export function ActivityFeed({ orders, className = "" }: ActivityFeedProps) {
   const activities = useMemo<ActivityItem[]>(() => {
@@ -151,7 +141,7 @@ export function ActivityFeed({ orders, className = "" }: ActivityFeedProps) {
                       {item.description}
                     </p>
                     <p className="text-[10px] text-muted-foreground/50 mt-1">
-                      {timeAgo(item.timestamp)}
+                      {getTimeAgo(item.timestamp.toISOString())}
                     </p>
                   </div>
                 </div>

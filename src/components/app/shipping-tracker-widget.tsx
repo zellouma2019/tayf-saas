@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Package, Truck, MapPin, CheckCircle2, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getTimeAgo } from "@/lib/admin-utils";
 
 type ShipmentStatus = "in_transit" | "delivered" | "waiting" | "returned";
 
@@ -35,16 +36,6 @@ const MOCK_SHIPMENTS: Shipment[] = [
   { id: "s4", trackingNumber: "TAYF-2025-9104", customerName: "سارة بلقاسم لعرابي", destinationCity: "عنابة", status: "in_transit", step: 2, lastUpdate: "2025-01-13T16:45:00", itemCount: 500 },
   { id: "s5", trackingNumber: "TAYF-2025-9105", customerName: "يوسف مراد حمادي", destinationCity: "باتنة", status: "returned", step: 2, lastUpdate: "2025-01-13T14:20:00", itemCount: 45 },
 ];
-
-function getTimeAgo(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "الآن";
-  if (diffMin < 60) return `منذ ${diffMin} دقيقة`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `منذ ${diffHr} ساعة`;
-  return `منذ ${Math.floor(diffHr / 24)} يوم`;
-}
 
 export function ShippingTrackerWidget() {
   const [selectedId, setSelectedId] = useState<string | null>(null);

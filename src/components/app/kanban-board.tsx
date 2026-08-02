@@ -35,19 +35,7 @@ import { OrderTags } from "./order-tags";
 import { formatDA } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { cn } from "@/lib/utils";
-
-function timeAgo(date: Date | string): string {
-  const now = Date.now();
-  const then = new Date(date).getTime();
-  const diff = now - then;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "الآن";
-  if (mins < 60) return `منذ ${mins} د`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `منذ ${hours} س`;
-  const days = Math.floor(hours / 24);
-  return `منذ ${days} ي`;
-}
+import { getTimeAgo } from "@/lib/admin-utils";
 
 const COLUMNS = [
   { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40", dot: "bg-amber-400" },
@@ -176,7 +164,7 @@ function SortableOrderCard({
           </div>
           <div className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
             <Timer className="h-2.5 w-2.5" />
-            {timeAgo(order.createdAt)}
+            {getTimeAgo(order.createdAt)}
           </div>
         </div>
       </div>
