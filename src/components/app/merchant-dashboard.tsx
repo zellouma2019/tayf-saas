@@ -2890,7 +2890,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Upload className="h-4 w-4 text-gold-500" />
               شعار المتجر
-              <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
+              <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
             </h3>
             <div className="flex items-center gap-4">
               {logoUrl ? (
@@ -2939,7 +2939,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Palette className="h-4 w-4 text-gold-500" />
               أيقونة الشعار
-              <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
+              <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
             </h3>
             <div className="grid grid-cols-4 sm:grid-cols-4 gap-2.5">
               {Object.entries(DYN_ICON_MAP).map(([name, IconComp]) => (
@@ -3295,7 +3295,7 @@ function PriceEditorSection({
           <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
             <DollarSign className="h-4 w-4 text-gold-500" />
             إدارة الأسعار والخدمات
-            <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">PRO</Badge>
+            <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
           </h3>
 
           <div className="space-y-2.5">
