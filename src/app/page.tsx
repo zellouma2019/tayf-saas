@@ -1376,6 +1376,22 @@ class ProductionErrorBoundary extends Component<{children: ReactNode}, {error: E
   }
 }
 
+/* Fallback OverviewTab — shows key stats when the full tab isn't available */
+function OverviewTab({ stats, lastUpdated, adminName, orders }: any) {
+  const s = stats || {};
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-xl border border-border bg-card p-4"><div className="text-xs text-muted-foreground mb-1">إجمالي الطلبات</div><div className="text-2xl font-bold tabular-nums">{s.totalOrders || 0}</div></div>
+        <div className="rounded-xl border border-border bg-card p-4"><div className="text-xs text-muted-foreground mb-1">الإيرادات</div><div className="text-2xl font-bold tabular-nums">{(s.totalRevenue || 0).toLocaleString()}</div><div className="text-xs text-muted-foreground">د.ج</div></div>
+        <div className="rounded-xl border border-border bg-card p-4"><div className="text-xs text-muted-foreground mb-1">المتاجر</div><div className="text-2xl font-bold tabular-nums">{s.shopCount || 0}</div></div>
+        <div className="rounded-xl border border-border bg-card p-4"><div className="text-xs text-muted-foreground mb-1">طلبات اليوم</div><div className="text-2xl font-bold tabular-nums">{s.todayOrders || 0}</div></div>
+      </div>
+      {s.statusCounts && <div className="flex flex-wrap gap-3">{Object.entries(s.statusCounts).map(([k, v]) => (<div key={k} className="rounded-lg border border-border bg-card px-3 py-2 text-sm"><span className="text-muted-foreground">{k}:</span> <span className="font-semibold">{v}</span></div>))}</div>}
+    </div>
+  );
+}
+
 export default function PageWithBoundary() {
   return (
     <ProductionErrorBoundary>
