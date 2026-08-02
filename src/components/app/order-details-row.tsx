@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
@@ -73,7 +73,7 @@ interface OrderDetailsRowProps {
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[order.status];
-  const orderAge = getTimeAgoWithUrgency(order.createdAt);
+  const orderAge = useMemo(() => getTimeAgoWithUrgency(order.createdAt), [order.createdAt]);
 
   const serviceEmoji: Record<string, string> = {
     document: "🖨️",
