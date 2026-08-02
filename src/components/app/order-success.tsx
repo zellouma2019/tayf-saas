@@ -116,7 +116,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
 </style></head><body>
 <div class="center">
   <div style="font-size:18px;font-weight:bold;">طيف للطباعة الذكية</div>
-  <div style="font-size:10px;color:#555;">Tayf Smart Printing</div>
+  <div style="font-size:10px;color:#555;">طيف للطباعة الذكية</div>
 </div>
 <div class="line"></div>
 <div class="row"><span>الرقم:</span><span class="bold">${o.reference}</span></div>
