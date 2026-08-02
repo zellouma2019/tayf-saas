@@ -68,3 +68,32 @@ Stage Summary:
 - No functional code changed — only language options/toggles/translations removed
 - All UI now hardcoded to Arabic (rtl direction)
 ---
+Task ID: R127 - Fix merchant dashboard crash, remove English, deploy
+Agent: Main Agent
+Task: Fix merchant orders section showing error page, remove English language, deploy
+
+Work Log:
+- Analyzed merchant dashboard screenshot via VLM: error shows "حدث خطأ في لوحة التحكم" in MerchantErrorBoundary
+- Identified the error source: MerchantErrorBoundary in shop-page.tsx wraps MerchantDashboard (loaded via dynamic import with ?admin=1)
+- Updated MerchantErrorBoundary to show the ACTUAL error message (previously hidden) for debugging
+- Added "إعادة المحاولة" retry button that resets error state without full page reload
+- Removed all non-Arabic languages from project (delegated to sub-agent):
+  - i18n.ts: removed fr/en/tr/es translations (~400 lines), kept only ar
+  - countries.ts: removed non-ar language options
+  - app-shell.tsx: removed language toggle button (Français/عربي), hardcoded rtl/ar
+  - admin-login-gate.tsx: removed language toggle button (EN/عربي), hardcoded rtl/ar
+- Pushed commit and deployed via Vercel Deploy Hook
+- Tested on live site: admin dashboard no longer shows EN button, customer page all Arabic
+- Merchant dashboard error: root cause not yet determined (need user to reproduce with updated error boundary that shows error message)
+
+Verification Results:
+- ✅ Admin dashboard (/) - no EN button, all Arabic
+- ✅ Customer shop (/s/mrad) - no language toggle, all Arabic
+- ⚠️ Merchant dashboard orders crash - error boundary now shows error message, awaiting user reproduction
+
+Stage Summary:
+- English language completely removed from all UI levels
+- Merchant error boundary improved to show actual error for diagnosis
+- Merchant dashboard crash root cause: TBD - needs user to reproduce with new error-visible boundary
+- Possible causes: dynamic import failure, API response format change, component render error
+---
