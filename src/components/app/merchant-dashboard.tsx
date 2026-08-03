@@ -795,7 +795,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`);
+      const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`, { cache: "no-store" });
       if (res.ok) {
         const o = await res.json();
         setRawOrders(o.orders || []);
