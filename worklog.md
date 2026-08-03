@@ -654,3 +654,29 @@ Stage Summary:
 - Horizontal scrolling completely eliminated on all pages
 - Pattern: Always use useMemo() for computed values in components rendered in dynamic imports
 - 3 commits pushed: useMemo fix, horizontal scroll fixes, template literal syntax fix
+---
+Task ID: 1
+Agent: Main
+Task: Fix stats sync, floating button overlap, orders crash, and responsiveness
+
+Work Log:
+- Analyzed uploaded screenshot using VLM: identified FloatingAssistant covering bottom nav "جديد" tab, scroll-to-top overlapping content, trust bar cramped on small screens
+- Verified no cron jobs exist (user previously demanded all be stopped)
+- Fixed FloatingAssistant: moved from `bottom-5` to `bottom-20 md:bottom-5` on mobile, chat panel from `bottom-22` to `bottom-[6.5rem] md:bottom-22`
+- Hidden WhatsApp/Calculator floating buttons on mobile (hidden md:flex) since FloatingAssistant provides WhatsApp access
+- Moved scroll-to-top from `bottom-40` to `bottom-28 md:bottom-20`
+- Increased main content padding from `pb-20` to `pb-24` on mobile
+- Fixed stats API: changed Cache-Control from `s-maxage=3` to `no-store`
+- Added cache buster `&_t=${Date.now()}` to stats fetch URL
+- Changed changeStatus to call loadStats(false) with 300ms delay instead of loadAll()
+- Fixed orders crash: moved orderAge from useMemo (tree-shaken by Turbopack) to module-level `computeOrderAge()` function with try-catch safety
+- Improved trust bar compactness on small screens (smaller icons, padding, hidden text on xs)
+- Made promotional badges more compact (text-[10px] on mobile, tighter padding)
+- Committed, pushed to GitHub, triggered Vercel deploy
+
+Stage Summary:
+- 5 files modified: app-shell.tsx, floating-assistant.tsx, merchant-dashboard.tsx, order-details-row.tsx, stats/route.ts
+- All pre-existing lint errors remain (admin-activity-panel duplicate prop, file-upload-preview alt text)
+- order-details-row.tsx now uses module-level computeOrderAge function instead of useMemo
+- Stats API now has no-store cache control
+- Floating buttons no longer overlap bottom navigation on mobile
