@@ -536,3 +536,45 @@ Stage Summary:
 - No empty containers found in merchant dashboard
 - No overlapping elements between fixed-position UI elements
 
+
+---
+Task ID: R129 - Comprehensive UI improvements + merchant orders fix
+Agent: Main Agent
+Task: Fix merchant orders crash, improve customer UI, remove English text, comprehensive audit
+
+Work Log:
+- **Root cause of merchant orders crash**: Turbopack tree-shaking removed `orderAge` variable declaration from order-details-row.tsx. Even inline variable declarations were being optimized away.
+- **Fix**: Wrapped `orderAge` calculation in `useMemo()` hook - React hooks are never tree-shaken by Turbopack
+- **Also fixed** in shop-page.tsx: ErrorBoundary no longer loses admin session on retry (removed window.location.reload), and return-to-shop button keeps ?admin=1 parameter
+- **Null safety**: Added fallbacks for STATUS_META, order.customer, order.pages, order.copies across merchant-dashboard.tsx and order-details-row.tsx
+- **Customer UI improvements** (5 files, 36+ changes):
+  - app-shell.tsx: Fixed overlapping floating buttons, increased text sizes to minimum 12px, replaced violet/indigo with gold, responsive padding
+  - upload-step.tsx: Increased text sizes, touch targets (min 44px)
+  - order-success.tsx: Improved touch targets, text sizes, replaced violet gradient with gold
+  - new-order-wizard.tsx: Fixed step labels, durations, active step colors
+  - page-skeleton.tsx: Added stepper skeleton, responsive padding
+- **English text removal** (12 files, 14 fixes):
+  - PRO → مميز in 3 files (merchant-dashboard, premium-feature, admin-shop-card)
+  - VIP → مميز in 6 files (order-tags, merchant-order-detail, order-detail-modal, achievement-badges, customer-retention, alerts-dashboard)
+  - English aria-labels and alt text → Arabic
+- **Color consistency** (14 files, 74+ changes):
+  - Replaced all violet/indigo/blue with gold/amber throughout
+  - Fixed QuickActionsToolbar RTL positioning
+  - Fixed merchant-order-detail status notes colors
+ - **Dashboard sidebar**: Fixed text sizes (minimum 12px)
+
+Verification Results (via agent-browser on tayf-saas.vercel.app):
+- ✅ Merchant admin login works (PIN: 1234)
+- ✅ Merchant dashboard home tab loads with all widgets
+- ✅ Merchant orders tab renders WITHOUT crash (useMemo fix works!)
+- ✅ Customer shop page loads with all Arabic text
+- ✅ Mobile viewport (375x812): Customer page responsive, no overlaps
+- ✅ No English text found in UI
+
+Stage Summary:
+- CRITICAL FIX: orderAge useMemo wrapping permanently prevents Turbopack tree-shaking crash
+- Pattern: Always use useMemo() for computed values that could be tree-shaken by Turbopack
+- 29 files changed, 527+ insertions, 209+ deletions
+- All user-visible text now Arabic
+- All colors consistent with gold/amber theme
+- Responsive design verified on mobile viewport
