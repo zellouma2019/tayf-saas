@@ -32,10 +32,21 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { OrderTags } from "./order-tags";
-import { formatDA } from "@/lib/print-config";
+import { formatDA, formatDateTimeAr } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { cn } from "@/lib/utils";
-import { getTimeAgo } from "@/lib/admin-utils";
+
+// حساب عمر الطلب مباشرة في الملف (لمنع Turbopack من حذفه)
+function _timeAgo(dateStr: string): string {
+  const diffMin = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+  if (diffMin < 1) return "الآن";
+  if (diffMin < 60) return `منذ ${diffMin} دقيقة`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `منذ ${diffHr} ساعة`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `منذ ${diffDay} يوم`;
+  return formatDateTimeAr(dateStr);
+}
 
 const COLUMNS = [
   { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40", dot: "bg-amber-400" },
@@ -164,7 +175,7 @@ function SortableOrderCard({
           </div>
           <div className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
             <Timer className="h-2.5 w-2.5" />
-            {getTimeAgo(order.createdAt)}
+            {_timeAgo(order.createdAt)}
           </div>
         </div>
       </div>

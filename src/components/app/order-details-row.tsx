@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
@@ -14,7 +14,6 @@ import {
   formatDA,
   formatDateTimeAr,
 } from "@/lib/print-config";
-import { getTimeAgoWithUrgency } from "@/lib/admin-utils";
 import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 import {
@@ -73,7 +72,20 @@ interface OrderDetailsRowProps {
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[order.status];
-  const orderAge = useMemo(() => getTimeAgoWithUrgency(order.createdAt), [order.createdAt]);
+  // حساب عمر الطلب مباشرة بدون استيراد (لمنع Turbopack من حذفه)
+  const _aMs = Date.now() - new Date(order.createdAt).getTime();
+  const _aMin = Math.floor(_aMs / 60000);
+  const _aHr = Math.floor(_aMin / 60);
+  const _aDay = Math.floor(_aHr / 24);
+  const orderAge = _aMin < 1
+    ? { text: "الآن", urgency: "normal" as const }
+    : _aMin < 60
+    ? { text: `${_aMin}د`, urgency: (_aMin > 30 ? "warning" : "normal") as const }
+    : _aHr < 24
+    ? { text: `${_aHr}س`, urgency: (_aHr > 6 ? "warning" : "normal") as const }
+    : _aDay < 7
+    ? { text: `${_aDay}ي", urgency: (_aDay > 3 ? "critical" : "warning") as const }
+    : { text: `${Math.floor(_aDay / 7)}أسبوع`, urgency: "critical" as const };
 
   const serviceEmoji: Record<string, string> = {
     document: "🖨️",
