@@ -180,9 +180,10 @@ export async function GET(req: NextRequest) {
           NULL as "shopName", NULL as "shopSlug"
         FROM "PrintOrder" o ${whereClause} ORDER BY o."createdAt" DESC LIMIT ? OFFSET ?`;
 
-    let orderRows = await tursoQuery(
+    let orderRows = await tursoQueryWithTimeout(
       MAIN_SQL,
-      [...args, limit, offset]
+      [...args, limit, offset],
+      25000
     );
     const countRows = await tursoQuery<{ cnt: unknown }>(
       `SELECT COUNT(*) as cnt FROM "PrintOrder" o ${whereClause}`,
@@ -205,9 +206,10 @@ export async function GET(req: NextRequest) {
           NULL as "shopName", NULL as "shopSlug"
         FROM "PrintOrder" o
       `;
-      orderRows = await tursoQuery(
+      orderRows = await tursoQueryWithTimeout(
         `${SIMPLE_ORDERS_SQL} ${whereClause} ORDER BY "createdAt" DESC LIMIT ? OFFSET ?`,
-        [...args, limit, offset]
+        [...args, limit, offset],
+        25000
       );
     }
 
