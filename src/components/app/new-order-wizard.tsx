@@ -1185,9 +1185,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   <div className="flex flex-col items-center gap-1.5 w-16 sm:w-20 md:w-24 lg:w-28">
                     <motion.div
                       animate={isActive ? { scale: [1, 1.12, 1], boxShadow: [
-                        "0 0 0 0 rgba(124,58,237,0.4)",
-                        "0 0 12px 4px rgba(124,58,237,0.15)",
-                        "0 0 0 0 rgba(124,58,237,0.4)",
+                        "0 0 0 0 rgba(212,168,83,0.4)",
+                        "0 0 12px 4px rgba(212,168,83,0.15)",
+                        "0 0 0 0 rgba(212,168,83,0.4)",
                       ]} : {}}
                       transition={isActive ? { repeat: Infinity, duration: 2.5, ease: "easeInOut" } : {}}
                       className={`
@@ -1196,7 +1196,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         ${isCompleted
                           ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40"
                           : isActive
-                            ? "bg-gradient-to-br from-primary to-primary text-white shadow-lg shadow-violet-300 dark:shadow-violet-800/30"
+                            ? "bg-gradient-to-br from-primary to-primary text-white shadow-lg shadow-gold-200 dark:shadow-gold-800/30"
                             : "bg-muted text-muted-foreground"
                         }
                       `}
@@ -1211,12 +1211,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       )}
                     </motion.div>
                     <div className="text-center px-0.5">
-                      <span className={`text-[10px] sm:text-[11px] font-semibold leading-tight block ${
+                      <span className={`text-xs sm:text-sm font-semibold leading-tight block ${
                         isActive ? "text-gold-600" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground/50"
                       }`}>
                         {label}
                       </span>
-                      <span className={`text-[9px] sm:text-[10px] leading-tight block mt-0.5 ${
+                      <span className={`text-[11px] sm:text-xs leading-tight block mt-0.5 ${
                         isActive ? "text-gold-300" : "text-muted-foreground/40"
                       }`}>
                         {STEP_DURATIONS[i]}
@@ -1227,7 +1227,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {i < STEP_LABELS.length - 1 && (
                     <div className="w-4 sm:w-12 md:w-16 lg:w-20 h-[3px] mx-0.5 sm:mx-2 rounded-full bg-muted dark:bg-muted overflow-hidden relative -mt-5 sm:-mt-6">
                       <motion.div
-                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-violet-500 to-indigo-500"
+                        className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-gold-500 to-gold-400"
                         initial={{ width: "0%" }}
                         animate={{ width: isCompleted ? "100%" : isActive ? "50%" : "0%" }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -1241,15 +1241,15 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
           <div className="flex items-center justify-between mb-2 gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[10px] sm:text-xs font-medium text-gold-600 bg-gold-100 px-2 sm:px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
+              <span className="text-xs sm:text-sm font-medium text-gold-600 bg-gold-100 px-2.5 sm:px-3 py-1.5 rounded-full flex items-center gap-1 shrink-0">
                 <Clock className="h-3 w-3" />
                 {STEP_DURATIONS[step]}
               </span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
+              <span className="text-xs sm:text-sm text-muted-foreground truncate">
                 الخطوة {step + 1} من 5
               </span>
             </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+            <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 shrink-0">
               <Sparkles className="h-3 w-3 text-gold-400" />
               <span className="hidden xs:inline sm:inline">المجموع ≈ دقيقة</span>
               <span className="xs:hidden sm:hidden">≈ دقيقة</span>
@@ -1332,7 +1332,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 <button
                   type="button"
                   onClick={() => setServiceType(null)}
-                  className="text-xs text-gold-400 hover:text-foreground font-medium transition-colors"
+                  className="text-xs text-gold-400 hover:text-foreground font-medium transition-colors min-h-[44px] px-3 flex items-center"
                 >
                   تغيير
                 </button>
@@ -2267,7 +2267,7 @@ function Section({
           <Label className="text-base font-semibold">{title}</Label>
           <div className="flex items-center gap-2">
             {badge && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
                 {badge}
               </span>
             )}
@@ -2284,14 +2284,14 @@ function Section({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 dark:hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 min-h-[48px] hover:bg-muted/30 dark:hover:bg-muted/50 transition-colors"
         aria-expanded={open}
         aria-controls={contentId}
       >
         <div className="flex items-center gap-2">
           <Label className="text-sm font-semibold cursor-pointer">{title}</Label>
           {badge && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
               {badge}
             </span>
           )}
@@ -2342,10 +2342,10 @@ function OptionCard({
   return (
     <button
       onClick={onClick}
-      className={`relative p-4 rounded-xl border-2 text-right transition-all ${
+      className={`relative p-4 rounded-xl border-2 text-right transition-all min-h-[72px] ${
         selected
           ? "border-primary bg-primary/5 shadow-sm"
-          : "border-border bg-card hover:border-primary/30"
+          : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
       }`}
     >
       {selected && (

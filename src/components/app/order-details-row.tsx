@@ -71,7 +71,7 @@ interface OrderDetailsRowProps {
 
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
-  const meta = STATUS_META[order.status];
+  const meta = STATUS_META[order.status] || { label: order.status, bg: "bg-secondary text-secondary-foreground", emoji: "", step: 0 } as any;
   // حساب عمر الطلب مباشرة بدون استيراد (لمنع Turbopack من حذفه)
   const _aMs = Date.now() - new Date(order.createdAt).getTime();
   const _aMin = Math.floor(_aMs / 60000);
@@ -575,7 +575,7 @@ function TableRowInner({
           )}
           <OrderTags orderId={order.id} size="sm" />
           {order.statusNotes && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-800/30" title={order.statusNotes}>
+            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-gold-50 dark:bg-gold-950/30 text-gold-600 dark:text-gold-400 border border-gold-200/50 dark:border-gold-800/30" title={order.statusNotes}>
               <StickyNote className="h-2.5 w-2.5" />
             </span>
           )}

@@ -147,7 +147,7 @@ export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
             </span>
             {shop.plan === "pro" || shop.plan === "paid" ? (
               <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-primary/10 text-primary flex items-center gap-1">
-                <Crown className="h-3 w-3" /> PRO
+                <Crown className="h-3 w-3" /> مميز
               </span>
             ) : (
               <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600">

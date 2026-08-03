@@ -14,7 +14,7 @@ const METRICS = [
 ];
 
 const SEGMENTS = [
-  { label: "VIP", count: 12, color: "bg-amber-500 dark:bg-amber-400" },
+  { label: "مميز", count: 12, color: "bg-amber-500 dark:bg-amber-400" },
   { label: "نشط", count: 45, color: "bg-emerald-500 dark:bg-emerald-400" },
   { label: "عادي", count: 89, color: "bg-sky-500 dark:bg-sky-400" },
   { label: "خامل", count: 23, color: "bg-muted-foreground/40 dark:bg-muted-foreground/30" },

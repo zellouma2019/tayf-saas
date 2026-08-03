@@ -12,7 +12,7 @@ import { Lock, Crown, MessageCircle, Phone, X } from "lucide-react";
 import type { FeatureDef } from "@/lib/shop-features";
 
 // ============================================================
-// شارة PRO الصغيرة — توضع بجانب الميزة المقفلة
+// شارة الميزة الصغيرة — توضع بجانب الميزة المقفلة
 // ============================================================
 
 interface PremiumBadgeProps {
@@ -31,7 +31,7 @@ export function PremiumBadge({ className = "", size = "sm" }: PremiumBadgeProps)
       `}
     >
       <Crown className={size === "sm" ? "h-2.5 w-2.5" : "h-3 w-3"} />
-      PRO
+      مميز
     </Badge>
   );
 }

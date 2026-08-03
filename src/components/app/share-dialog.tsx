@@ -84,7 +84,7 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
             <div className="p-3 rounded-xl border bg-card shadow-sm">
               <img
                 src={qrUrl}
-                alt="QR Code"
+                alt="رمز QR"
                 width={160}
                 height={160}
                 className="rounded-lg"

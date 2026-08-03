@@ -341,7 +341,7 @@ export function AppShell() {
           {/* الجوال: معلومة واحدة واضحة */}
           <div className="flex sm:hidden items-center gap-1.5 text-xs min-w-0">
             <span className="shrink-0" style={{ color: theme.topBar.accent }}>⚡</span>
-            <span className="truncate">{t.orderInMinute}</span>
+            <span className="truncate font-medium">{t.orderInMinute}</span>
           </div>
           {/* الحاسوب: كل المميزات */}
           <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs hide-scrollbar">
@@ -539,8 +539,8 @@ export function AppShell() {
 
       {/* ===== المحتوى ===== */}
       <main className="flex-1 flex flex-col pb-20 md:pb-0">
-        <div className="flex-1 py-4 md:py-8">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full">
+        <div className="flex-1 py-4 sm:py-6 md:py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {/* Welcome message */}
             {welcomeMessage && view === "new" && (
               <div className="mb-4 p-3 rounded-xl bg-primary/5 border border-primary/20 text-sm text-primary text-center">
@@ -566,30 +566,30 @@ export function AppShell() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 rounded-2xl overflow-hidden glass-card-v2 p-3 sm:p-4 border border-violet-200/40 dark:border-violet-700/30 sparkle-sweep"
+                    className="mb-4 rounded-2xl overflow-hidden glass-card-v2 p-3 sm:p-4 border border-gold-200/40 dark:border-gold-700/30 sparkle-sweep"
                   >
                     <div className="relative overflow-hidden rounded-xl">
-                      <div className="absolute inset-0 hero-animated-gradient" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(212,168,83,0.08), rgba(16,185,129,0.08))' }} />
+                      <div className="absolute inset-0 hero-animated-gradient" style={{ background: 'linear-gradient(135deg, rgba(212,168,83,0.1), rgba(212,168,83,0.08), rgba(16,185,129,0.08))' }} />
                       <div className="relative flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">🖨️</div>
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">🖨️</div>
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">📄</div>
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-background flex items-center justify-center text-[10px] shadow-sm">📸</div>
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm font-semibold truncate text-gradient bg-clip-text text-transparent text-gradient-gold-to-violet">{t.professional}</p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t.uploadMsg}</p>
+                            <p className="text-xs sm:text-xs text-muted-foreground truncate">{t.uploadMsg}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <Clock className="h-3 w-3" />
+                          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
                             <span>{t.readyIn}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">
-                            <CheckCircle2 className="h-3 w-3" />
-                            <span>{t.trusted}</span>
+                          <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span className="font-medium">{t.trusted}</span>
                           </div>
                         </div>
                       </div>
@@ -649,21 +649,21 @@ export function AppShell() {
             </AnimatePresence>
             </Suspense>
           </div>
-n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062eu062fu0645u0627u062a */}
+        {/* جدول مقارنة الخدمات */}
         {view === "new" && <div className="mb-4"><ServicesComparison /></div>}
         </div>
 
         {/* شريط الإجراءات السريعة */}
         {view !== "admin" && (
-        <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 -mx-4">
-          <div className="flex items-center gap-2 justify-center text-[11px] text-muted-foreground flex-wrap">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border border-violet-200/40 dark:border-violet-800/30 hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-colors cursor-default">
+        <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 sm:px-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-50 dark:bg-gold-950/30 text-gold-700 dark:text-gold-400 border border-gold-200/40 dark:border-gold-800/30">
               <span>⚡</span> {t.orderInMinute}
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-default">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/40 dark:border-emerald-800/30">
               <span>🕐</span> {t.readyIn}
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/40 dark:border-amber-800/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-default">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/40 dark:border-amber-800/30">
               <span>🔔</span> {t.notifyReady}
             </span>
           </div>
@@ -718,8 +718,8 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                 : undefined
             }
           >
-            <div className="max-w-7xl mx-auto px-4 py-10 mobile-stack">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mobile-stack">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
@@ -845,7 +845,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                               href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg hover-lift press-scale bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center transition-colors"
+                              className="w-10 h-10 rounded-xl hover-lift press-scale bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center transition-colors"
                               title={t.whatsapp}
                             >
                               <MessageCircle className="h-4 w-4 text-emerald-400" />
@@ -854,7 +854,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                           {shopPhone && (
                             <a
                               href={`tel:${shopPhone}`}
-                              className="w-8 h-8 rounded-lg hover-lift press-scale bg-sky-500/10 hover:bg-sky-500/20 flex items-center justify-center transition-colors"
+                              className="w-10 h-10 rounded-xl hover-lift press-scale bg-sky-500/10 hover:bg-sky-500/20 flex items-center justify-center transition-colors"
                               title={t.call}
                             >
                               <Phone className="h-4 w-4 text-sky-400" />
@@ -863,15 +863,15 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                           {shopEmail && (
                             <a
                               href={`mailto:${shopEmail}`}
-                              className="w-8 h-8 rounded-lg hover-lift press-scale bg-violet-500/10 hover:bg-violet-500/20 flex items-center justify-center transition-colors"
+                              className="w-10 h-10 rounded-xl hover-lift press-scale bg-gold-500/10 hover:bg-gold-500/20 flex items-center justify-center transition-colors"
                               title={t.email}
                             >
-                              <Mail className="h-4 w-4 text-violet-400" />
+                              <Mail className="h-4 w-4 text-gold-400" />
                             </a>
                           )}
                           <button
                             onClick={() => { navigator.clipboard.writeText(customerLink); toast.success(t.linkCopied); }}
-                            className="w-8 h-8 rounded-lg hover-lift press-scale bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-xl hover-lift press-scale bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors"
                             title={t.copyLink}
                           >
                             <Copy className="h-4 w-4 text-amber-400" />
@@ -918,13 +918,13 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
       {/* حاسبة الأسعار */}
       <button
         onClick={() => setShowEstimator(!showEstimator)}
-        className="fixed bottom-24 left-4 z-30 w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+        className="fixed bottom-24 md:bottom-8 left-4 z-30 w-12 h-12 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
         title={t.priceCalc}
       >
         <Calculator className="h-5 w-5" />
       </button>
       {showEstimator && (
-        <div className="fixed bottom-40 left-4 z-30 w-80 sm:w-96">
+        <div className="fixed bottom-40 md:bottom-24 left-4 z-30 w-[calc(100vw-2rem)] sm:w-96">
           <PriceEstimator onRequestOrder={() => { setShowEstimator(false); setView("new"); }} />
         </div>
       )}
@@ -935,7 +935,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
           href={`https://wa.me/${whatsappBtnNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`مرحباً، أريد الاستفسار عن خدمات الطباعة`)}  `}
           target="_blank"
           rel="noopener noreferrer"
-          className="wa-float-pulse fixed bottom-40 right-4 z-30 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:shadow-xl flex items-center justify-center group"
+          className="wa-float-pulse fixed bottom-24 right-4 md:bottom-8 z-30 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:shadow-xl flex items-center justify-center group"
           title={t.contactViaWhatsapp}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -960,7 +960,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-24 left-4 z-30 w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors fab-ripple group"
+            className="fixed bottom-40 md:bottom-20 left-4 z-30 w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors fab-ripple group"
             title={t.backToTop}
           >
             <ArrowUp className="h-5 w-5" />
@@ -1010,7 +1010,7 @@ n        {/* u062cu062fu0648u0644 u0645u0642u0627u0631u0646u0629 u0627u0644u062e
                   )}
                 </div>
                 <span
-                  className="text-[10px] font-medium leading-none"
+                  className="text-[11px] font-medium leading-none"
                   style={{ opacity: isActive ? 1 : 0.7 }}
                 >
                   {item.shortLabel}

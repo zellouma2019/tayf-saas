@@ -96,7 +96,7 @@ const SERVICE_EMOJI: Record<string, string> = {
   poster: "📜",
 };
 
-const PRESET_TAGS = ["عاجل", "VIP", "مرتجع", "خاص", "مؤسسة", "طالب"];
+const PRESET_TAGS = ["عاجل", "مميز", "مرتجع", "خاص", "مؤسسة", "طالب"];
 
 // ===== المكون الرئيسي =====
 
@@ -741,12 +741,12 @@ export function MerchantOrderDetail({
 
           {/* ===== ملاحظات تغيير الحالة ===== */}
           {order.statusNotes && (
-          <section className="bg-card border border-violet-200/50 dark:border-violet-800/30 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-violet-400 pr-3 mb-3">
+          <section className="bg-card border border-gold-500/20 dark:border-gold-500/30 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-3 sm:p-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-dark-800 border-r-4 border-gold-500 pr-3 mb-3">
               ملاحظة الحالة
             </h3>
-            <div className="rounded-lg bg-violet-50 dark:bg-violet-950/20 border border-violet-200/40 dark:border-violet-800/30 p-3">
-              <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">{order.statusNotes}</p>
+            <div className="rounded-lg bg-gold-50 dark:bg-gold-950/20 border border-gold-200/40 dark:border-gold-800/30 p-3">
+              <p className="text-xs text-gold-700 dark:text-gold-300 leading-relaxed">{order.statusNotes}</p>
             </div>
           </section>
           )}

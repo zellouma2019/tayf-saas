@@ -95,7 +95,7 @@ export function ShopPerformanceCard({
       icon: Receipt,
       label: "متوسط الطلب",
       value: `${formatNumber(avgOrderValue)} د.ج`,
-      color: "bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
+      color: "bg-gold-100 text-gold-600 dark:bg-gold-950 dark:text-gold-400",
     },
     {
       icon: Star,

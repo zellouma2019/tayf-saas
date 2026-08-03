@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const TAG_OPTIONS = [
   { value: "urgent", label: "عاجل", className: "tag-urgent", dot: "bg-rose-500" },
-  { value: "vip", label: "VIP", className: "tag-vip", dot: "bg-amber-500" },
+  { value: "vip", label: "مميز", className: "tag-vip", dot: "bg-amber-500" },
   { value: "wholesale", label: "جملة", className: "tag-wholesale", dot: "bg-sky-500" },
   { value: "express", label: "سريع", className: "tag-express", dot: "bg-violet-500" },
   { value: "new", label: "جديد", className: "tag-new", dot: "bg-emerald-500" },

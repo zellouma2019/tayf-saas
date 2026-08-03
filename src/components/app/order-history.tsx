@@ -169,12 +169,12 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
   return (
     <div className="max-w-3xl mx-auto">
       {/* المنطقة الترويسية */}
-      <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 dark:from-slate-900/50 to-violet-50/40 dark:to-violet-950/30 border border-border p-6 md:p-8 mb-6 text-center overflow-hidden">
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 dark:from-slate-900/50 to-gold-50/40 dark:to-gold-950/30 border border-border p-6 md:p-8 mb-6 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(139,92,246,0.06),transparent_50%)] pointer-events-none" />
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
         <div className="relative">
           <motion.div
-            className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-violet-100 dark:to-violet-900/40 flex items-center justify-center mb-3 shadow-sm"
+            className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-gold-100 dark:to-gold-900/40 flex items-center justify-center mb-3 shadow-sm"
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring" }}
@@ -206,7 +206,7 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
             <Button
               type="submit"
               size="lg"
-              className="h-12 px-6 bg-gradient-to-l from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-violet-500/20 active:scale-[0.97] transition-all"
+              className="h-12 px-6 bg-gradient-to-l from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white shadow-md shadow-gold-500/20 active:scale-[0.97] transition-all"
               disabled={loading || !phone.trim() || (!isPropsMode && phone.trim().length < 8)}
             >
               {loading ? (
@@ -323,7 +323,7 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
       {/* لا توجد طلبات مطابقة لرقم الهاتف */}
       {!loading && isPropsMode && searched && phone.trim() && phoneFilteredOrders.length === 0 && baseOrders.length > 0 && (
         <Card className="overflow-hidden">
-          <div className="h-1 bg-gradient-to-l from-violet-500 to-amber-500" />
+          <div className="h-1 bg-gradient-to-l from-gold-500 to-amber-500" />
           <CardContent className="py-16 text-center">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/50 dark:bg-muted/20 flex items-center justify-center mb-4">
               <Phone className="h-8 w-8 text-muted-foreground/50" />
@@ -351,7 +351,7 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
       {/* حالة عدم وجود نتائج */}
       {!loading && !isPropsMode && searched && orders.length === 0 && (
         <Card className="overflow-hidden">
-          <div className="h-1 bg-gradient-to-l from-violet-500 to-amber-500" />
+          <div className="h-1 bg-gradient-to-l from-gold-500 to-amber-500" />
           <CardContent className="py-16 text-center">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/50 dark:bg-muted/20 flex items-center justify-center mb-4">
               <Inbox className="h-8 w-8 text-muted-foreground/50 empty-bounce" />
@@ -366,7 +366,7 @@ export function OrderHistory({ onReorder, orders: propsOrders }: OrderHistoryPro
             {shop?.slug && (
               <Button
                 asChild
-                className="h-10 px-6 bg-gradient-to-l from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-violet-500/20 active:scale-[0.97] transition-all"
+                className="h-10 px-6 bg-gradient-to-l from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white shadow-md shadow-gold-500/20 active:scale-[0.97] transition-all"
               >
                 <a href={`/s/${shop.slug}`}>
                   اطلب أول طلب
@@ -417,7 +417,7 @@ function HistoryCard({ order, onReorder, shopSlug }: { order: PrintOrderLite; on
         <div className="flex items-start justify-between gap-3">
           {/* الجانب الأيمن: الرمز + المعلومات */}
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-violet-50 dark:to-violet-900/40 flex items-center justify-center shrink-0 text-lg shadow-sm">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-100 dark:from-slate-800 to-gold-50 dark:to-gold-900/40 flex items-center justify-center shrink-0 text-lg shadow-sm">
               {emoji}
             </div>
             <div className="min-w-0 flex-1">
@@ -472,7 +472,7 @@ function HistoryCard({ order, onReorder, shopSlug }: { order: PrintOrderLite; on
             <Button
               variant="outline"
               size="sm"
-              className="h-8 px-3 text-[11px] gap-1.5 border-dashed hover:border-solid hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/20 active:scale-[0.97] transition-all"
+              className="h-8 px-3 text-[11px] gap-1.5 border-dashed hover:border-solid hover:border-gold-400 hover:text-gold-600 dark:hover:text-gold-400 hover:bg-gold-50 dark:hover:bg-gold-950/20 active:scale-[0.97] transition-all"
               onClick={() => {
                 if (onReorder) {
                   onReorder(order);

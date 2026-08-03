@@ -232,7 +232,7 @@ function CircularGauge({
           <AnimatedCounter value={value} />
         </span>
       </div>
-      <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
+      <span className="text-xs text-muted-foreground font-medium">{label}</span>
     </div>
   );
 
@@ -690,7 +690,7 @@ export default function UploadStep({
               </button>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground/60 mt-1.5 text-center">
+          <p className="text-xs text-muted-foreground/60 mt-1.5 text-center">
             {isMobile
               ? "يمكنك لصق رابط مباشرة بالضغط مطولاً"
               : "يمكنك لصق رابط مباشرة باستخدام Ctrl+V"}
@@ -719,7 +719,7 @@ export default function UploadStep({
                 <File className="h-4.5 w-4.5 text-amber-600" />
               )}
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
+            <span className="text-xs font-medium text-muted-foreground leading-tight text-center">
               {isMobile ? "اختر من المعرض" : "اختر ملف"}
             </span>
           </button>
@@ -745,7 +745,7 @@ export default function UploadStep({
               <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
                 <Camera className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
+              <span className="text-xs font-medium text-muted-foreground leading-tight text-center">
                 التقط صورة
               </span>
             </button>
@@ -754,7 +754,7 @@ export default function UploadStep({
               <div className="w-9 h-9 rounded-xl bg-gold-500/10 flex items-center justify-center">
                 <Upload className="h-4.5 w-4.5 text-gold-400" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground/60 leading-tight text-center">
+              <span className="text-xs font-medium text-muted-foreground/60 leading-tight text-center">
                 اسحب ملف هنا
               </span>
             </div>
@@ -775,7 +775,7 @@ export default function UploadStep({
             <div className="w-9 h-9 rounded-xl bg-gold-50 dark:bg-gold-500/10 flex items-center justify-center">
               <Copy className="h-4.5 w-4.5 text-gold-400" />
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
+            <span className="text-xs font-medium text-muted-foreground leading-tight text-center">
               {isMobile ? "الصق من الحافظة" : "الصق (Ctrl+V)"}
             </span>
           </button>
@@ -829,7 +829,7 @@ export default function UploadStep({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800/40 bg-white dark:bg-neutral-800 p-4 space-y-3">
+            <div className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-white dark:bg-neutral-800 p-4 sm:p-5 space-y-4 shadow-sm">
               {/* Phase indicators */}
               <div className="flex items-center gap-3">
                 {phases.map((phase, i) => {
@@ -868,7 +868,7 @@ export default function UploadStep({
                           )}
                         </motion.div>
                         <span
-                          className={`text-[10px] font-medium text-center leading-tight ${
+                          className={`text-xs font-medium text-center leading-tight ${
                             isActive
                               ? "text-amber-700 dark:text-amber-400"
                               : isComplete
@@ -967,7 +967,7 @@ export default function UploadStep({
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 text-xs font-medium text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 underline underline-offset-2"
+              className="shrink-0 min-h-[44px] px-3 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 underline underline-offset-2 transition-colors"
             >
               إعادة المحاولة
             </button>
@@ -993,7 +993,7 @@ export default function UploadStep({
                 <div className="p-4 sm:p-5 space-y-4 order-2 lg:order-1">
                   {/* ─── Gauges Row: DPI + Confidence ─── */}
                   {analysis.estimatedDPI != null && (
-                    <motion.div variants={itemVariants} className="flex items-center justify-center gap-5 sm:gap-8 py-2 sm:py-3">
+                    <motion.div variants={itemVariants} className="flex items-center justify-center gap-5 sm:gap-8 py-3 sm:py-4">
                       <CircularGauge
                         value={analysis.estimatedDPI}
                         max={600}
@@ -1374,7 +1374,7 @@ export default function UploadStep({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="rounded-2xl border-2 border-dashed border-amber-200/60 dark:border-amber-800/40 bg-amber-50/20 dark:bg-amber-950/20 p-6 text-center"
+            className="rounded-2xl border border-dashed border-amber-200/60 dark:border-amber-800/40 bg-amber-50/20 dark:bg-amber-950/20 p-6 sm:p-8 text-center"
           >
             <motion.div
               animate={{ y: [0, -4, 0] }}
@@ -1383,10 +1383,10 @@ export default function UploadStep({
             >
               <Brain className="h-7 w-7 text-amber-500" />
             </motion.div>
-            <div className="font-bold text-sm text-amber-800 dark:text-amber-300 mb-1">
+            <div className="font-bold text-sm sm:text-base text-amber-800 dark:text-amber-300 mb-1">
               التحليل الذكي ينتظر ملفك
             </div>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto">
               ارفع ملفك أعلاه وسيقوم النظام بتحليله تلقائياً واقتراح أفضل خيارات الطباعة
             </p>
           </motion.div>

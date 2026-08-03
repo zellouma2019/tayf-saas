@@ -67,7 +67,7 @@ export function TrackOrder() {
       <div className="relative rounded-2xl bg-gradient-to-br from-violet-50 to-slate-50 dark:from-violet-950/30 dark:to-slate-900/30 border border-dark-200/60 dark:border-dark-700/40 p-6 md:p-8 mb-8 text-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.06),transparent_50%)]" />
         <div className="relative">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-900/40 dark:to-indigo-900/40 flex items-center justify-center mb-3 shadow-sm">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold-100 to-gold-200 dark:from-gold-900/40 dark:to-gold-800/40 flex items-center justify-center mb-3 shadow-sm">
             <Search className="h-7 w-7 text-gold-500" />
           </div>
           <h1 className="text-2xl font-bold mb-1">تتبّع طلبك</h1>
@@ -410,7 +410,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
           <div className="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2">
             {qrUrl && (
               <div className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/60 dark:border-amber-800/30">
-                <img src={qrUrl} alt="QR code" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
+                <img src={qrUrl} alt="رمز QR" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-amber-800 dark:text-amber-400">رمز QR</div>
                   <div className="text-[10px] sm:text-[11px] text-muted-foreground truncate">أظهره عند الاستلام</div>

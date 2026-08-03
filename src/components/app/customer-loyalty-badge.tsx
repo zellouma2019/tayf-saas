@@ -75,10 +75,10 @@ const TIER_CONFIG: Record<LoyaltyTier, {
     label: "Diamond",
     labelAr: "ألماسي",
     icon: <Crown className="h-4 w-4" />,
-    color: "bg-violet-500",
-    bgColor: "bg-violet-50 dark:bg-violet-950/50",
-    borderColor: "border-violet-300 dark:border-violet-700",
-    textColor: "text-violet-600 dark:text-violet-400",
+    color: "bg-gold-500",
+    bgColor: "bg-gold-50 dark:bg-gold-950/50",
+    borderColor: "border-gold-300 dark:border-gold-700",
+    textColor: "text-gold-600 dark:text-gold-400",
     minOrders: 50,
     description: "زبون ملكي",
   },
@@ -153,7 +153,7 @@ export function CustomerLoyaltyBadge({
               className={cn(
                 "h-full rounded-full transition-all duration-700",
                 progressToNext >= 80
-                  ? "bg-gradient-to-r from-primary to-violet-500"
+                  ? "bg-gradient-to-r from-primary to-gold-500"
                   : progressToNext >= 50
                     ? "bg-gradient-to-r from-amber-400 to-amber-500"
                     : "bg-muted-foreground/30"

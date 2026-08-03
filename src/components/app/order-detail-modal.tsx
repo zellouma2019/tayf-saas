@@ -58,7 +58,7 @@ interface OrderDetailModalProps {
 const TIMELINE_STATUSES = [
   { key: "pending",   label: "بانتظار الطباعة", icon: Clock,       color: "amber" },
   { key: "confirmed", label: "مؤكد",            icon: Check,       color: "sky" },
-  { key: "printing",  label: "جارٍ التنفيذ",    icon: Printer,     color: "blue" },
+  { key: "printing",  label: "جارٍ التنفيذ",    icon: Printer,     color: "gold" },
   { key: "ready",     label: "جاهز للاستلام",  icon: PackageCheck, color: "emerald" },
   { key: "delivered", label: "تم التسليم",      icon: Truck,       color: "emerald" },
 ];
@@ -101,13 +101,13 @@ function OrderStatusTimeline({ status }: { status: string }) {
               const currentColorClass = isCurrent
                 ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
                   : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
-                  : step.color === "blue" ? "bg-blue-500 border-blue-500 ring-blue-500/30"
+                  : step.color === "gold" ? "bg-gold-500 border-gold-500 ring-gold-500/30"
                   : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
                 : "";
               const currentTextColorClass = isCurrent
                 ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
                   : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
-                  : step.color === "blue" ? "text-blue-600 dark:text-blue-400"
+                  : step.color === "gold" ? "text-gold-600 dark:text-gold-400"
                   : "text-emerald-600 dark:text-emerald-400")
                 : "";
               return (
@@ -150,13 +150,13 @@ function OrderStatusTimeline({ status }: { status: string }) {
               const currentColorClass = isCurrent
                 ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
                   : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
-                  : step.color === "blue" ? "bg-blue-500 border-blue-500 ring-blue-500/30"
+                  : step.color === "gold" ? "bg-gold-500 border-gold-500 ring-gold-500/30"
                   : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
                 : "";
               const currentTextColorClass = isCurrent
                 ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
                   : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
-                  : step.color === "blue" ? "text-blue-600 dark:text-blue-400"
+                  : step.color === "gold" ? "text-gold-600 dark:text-gold-400"
                   : "text-emerald-600 dark:text-emerald-400")
                 : "";
               return (
@@ -517,7 +517,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce neon-border-violet"
+                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce"
                     onClick={() => {
                       window.open(`tel:${order.customer.phone}`, '_self');
                     }}
@@ -528,7 +528,7 @@ export function OrderDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800/40 hover:bg-violet-50 dark:hover:bg-violet-950/30 ripple-btn micro-bounce"
+                    className="h-7 text-xs gap-1 text-gold-700 dark:text-gold-400 border-gold-200 dark:border-gold-800/40 hover:bg-gold-50 dark:hover:bg-gold-950/30 ripple-btn micro-bounce"
                     onClick={() => {
                       navigator.clipboard.writeText(order.customer.phone);
                       toast.success("تم نسخ رقم الهاتف");
@@ -543,10 +543,10 @@ export function OrderDetailModal({
 
           {/* ===== ملاحظة تغيير الحالة (تظهر عند اختيار حالة جديدة) ===== */}
           {showStatusNoteInput && pendingStatus && (
-            <div className="rounded-xl border-2 border-violet-300 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-950/20 p-4 space-y-3 anim-pop-in">
+            <div className="rounded-xl border-2 border-gold-300 dark:border-gold-700 bg-gold-50/50 dark:bg-gold-950/20 p-4 space-y-3 anim-pop-in">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-violet-100 dark:bg-violet-900/50">
-                  <StickyNote className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gold-100 dark:bg-gold-900/50">
+                  <StickyNote className="h-4 w-4 text-gold-600 dark:text-gold-400" />
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-foreground">تغيير الحالة إلى: {STATUS_META[pendingStatus]?.label}</h4>
@@ -556,7 +556,7 @@ export function OrderDetailModal({
               <Textarea
                 value={statusNote}
                 onChange={(e) => setStatusNote(e.target.value)}
-                className="text-sm min-h-[50px] border-violet-200 dark:border-violet-800/50 focus-visible:ring-violet-400/30"
+                className="text-sm min-h-[50px] border-gold-200 dark:border-gold-800/50 focus-visible:ring-gold-400/30"
                 placeholder="مثال: تم الاتفاق مع الزبون على تسعير خاص..."
                 autoFocus
               />
@@ -587,7 +587,7 @@ export function OrderDetailModal({
                 </Button>
                 <Button
                   size="sm"
-                  className="text-xs bg-violet-600 hover:bg-violet-700 gap-1 ripple-btn micro-bounce"
+                  className="text-xs bg-gold-600 hover:bg-gold-700 gap-1 ripple-btn micro-bounce"
                   onClick={confirmStatusChange}
                   disabled={saving}
                 >
@@ -604,10 +604,10 @@ export function OrderDetailModal({
 
           {/* عرض ملاحظة الحالة الحالية */}
           {order.statusNotes && !showStatusNoteInput && (
-            <div className="flex items-start gap-2 rounded-lg border border-violet-100 dark:border-violet-900/50 bg-violet-50/30 dark:bg-violet-950/10 p-2.5 anim-fade-in">
-              <StickyNote className="h-4 w-4 text-violet-500 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 rounded-lg border border-gold-100 dark:border-gold-900/50 bg-gold-50/30 dark:bg-gold-950/10 p-2.5 anim-fade-in">
+              <StickyNote className="h-4 w-4 text-gold-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs text-violet-700 dark:text-violet-300 font-medium">ملاحظة الحالة</p>
+                <p className="text-xs text-gold-700 dark:text-gold-300 font-medium">ملاحظة الحالة</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{order.statusNotes}</p>
               </div>
             </div>
@@ -803,7 +803,7 @@ export function OrderDetailModal({
           <section className="glass-card-animated p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
-                <StickyNote className="h-4 w-4 text-violet-500" />
+                <StickyNote className="h-4 w-4 text-gold-500" />
                 ملاحظات إدارية
               </h3>
               <span className="text-[10px] text-muted-foreground tabular-nums">{editAdminNotes.length} حرف</span>
@@ -816,9 +816,9 @@ export function OrderDetailModal({
             />
             {editAdminNotes.length > 0 && (
               <div className="flex items-center gap-2 mt-2">
-                <div className="h-px flex-1 bg-gradient-to-l from-violet-300/50 to-transparent" />
-                <span className="text-[10px] text-violet-500 font-medium">ملاحظة محفوظة محلياً</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-violet-300/50 to-transparent" />
+                <div className="h-px flex-1 bg-gradient-to-l from-gold-300/50 to-transparent" />
+                <span className="text-[10px] text-gold-500 font-medium">ملاحظة محفوظة محلياً</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-gold-300/50 to-transparent" />
               </div>
             )}
           </section>
@@ -827,7 +827,7 @@ export function OrderDetailModal({
           <section>
             <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الوسوم</h3>
             <div className="flex flex-wrap gap-2">
-              {["عاجل", "VIP", "مرتجع", "خاص"].map((tag) => (
+              {["عاجل", "مميز", "مرتجع", "خاص"].map((tag) => (
                 <Badge
                   key={tag}
                   variant={editTags.includes(tag) ? "default" : "outline"}
@@ -872,7 +872,7 @@ export function OrderDetailModal({
                 <div className="text-xs text-muted-foreground">الطريقة</div>
                 <div className="font-medium">{order.delivery.mode === "pickup" ? "استلام من المحل" : "توصيل"}</div>
               </div>
-              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-violet">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-gold">
                 <div className="text-xs text-muted-foreground">الموعد</div>
                 <div className="font-medium">{order.delivery.date || "—"} (≈{order.estimatedHours} س)</div>
               </div>

@@ -75,7 +75,7 @@ function ProgressFill({ stepIndex }: { stepIndex: number }) {
   const pct = Math.max(0, (stepIndex / (TIMELINE_STEPS.length - 1)) * 76);
   return (
     <motion.div
-      className="absolute top-1/2 left-[12%] -translate-y-1/2 h-1.5 rounded-full bg-gradient-to-l from-emerald-500 to-violet-500 shadow-sm"
+      className="absolute top-1/2 left-[12%] -translate-y-1/2 h-1.5 rounded-full bg-gradient-to-l from-emerald-500 to-gold-500 shadow-sm"
       initial={{ width: 0 }}
       animate={{ width: pct + "%" }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -132,9 +132,9 @@ function OrderStatusSummaryCard({ orders }: { orders: PrintOrderLite[] }) {
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="bg-card border-border overflow-hidden">
-          <div className="h-1 bg-gradient-to-l from-violet-500 to-violet-400" />
+          <div className="h-1 bg-gradient-to-l from-gold-500 to-gold-400" />
           <CardContent className="p-3.5 text-center">
-            <Package className="h-5 w-5 text-violet-500 mx-auto mb-1.5" />
+            <Package className="h-5 w-5 text-gold-500 mx-auto mb-1.5" />
             <p className="text-lg font-bold tabular-nums text-foreground">{orders.length}</p>
             <p className="text-[11px] text-muted-foreground">إجمالي الطلبات</p>
           </CardContent>
@@ -261,7 +261,7 @@ export function TrackPageClient() {
     >
       <div className="max-w-2xl w-full space-y-6">
         {/* === Enhanced Gradient Header === */}
-        <div className="relative rounded-2xl bg-gradient-to-br from-violet-50 via-indigo-50 to-slate-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-slate-900/30 border border-border p-6 sm:p-8 text-center overflow-hidden">
+        <div className="relative rounded-2xl bg-gradient-to-br from-gold-50 via-gold-100/50 to-slate-50 dark:from-gold-950/30 dark:via-gold-950/20 dark:to-slate-900/30 border border-border p-6 sm:p-8 text-center overflow-hidden">
           {/* Animated radial glow */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_30%,rgba(139,92,246,0.1),transparent_60%)] pointer-events-none animate-pulse" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_70%,rgba(245,158,11,0.06),transparent_50%)] pointer-events-none animate-pulse" style={{ animationDelay: "1s" }} />
@@ -270,7 +270,7 @@ export function TrackPageClient() {
           <div className="relative">
             {/* Animated icon container */}
             <motion.div
-              className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-900/40 dark:to-indigo-900/40 flex items-center justify-center mb-4 shadow-lg"
+              className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-gold-100 to-gold-200 dark:from-gold-900/40 dark:to-gold-800/40 flex items-center justify-center mb-4 shadow-lg"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -280,7 +280,7 @@ export function TrackPageClient() {
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
               >
-                <Package className="h-9 w-9 text-violet-600 dark:text-violet-400" />
+                <Package className="h-9 w-9 text-gold-600 dark:text-gold-400" />
               </motion.div>
             </motion.div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
@@ -291,7 +291,7 @@ export function TrackPageClient() {
             </p>
             {/* Feature badges */}
             <div className="flex items-center justify-center gap-2 mt-4">
-              <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-violet-100/80 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium">
+              <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-gold-100/80 dark:bg-gold-900/30 text-gold-700 dark:text-gold-300 font-medium">
                 <Zap className="h-3 w-3" /> تتبّع فوري
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-amber-100/80 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">
@@ -356,7 +356,7 @@ export function TrackPageClient() {
                   </div>
                   <Button
                     type="submit"
-                    className="h-11 px-6 bg-gradient-to-l from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-violet-500/20 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50 transition-all"
+                    className="h-11 px-6 bg-gradient-to-l from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white shadow-md shadow-gold-500/20 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50 transition-all"
                     disabled={loading || !query.trim() || !selectedShop}
                   >
                     {loading ? (
@@ -388,9 +388,9 @@ export function TrackPageClient() {
               className="flex flex-col items-center py-16 text-muted-foreground"
             >
               <div className="relative">
-                <Loader2 className="h-8 w-8 animate-spin text-violet-500 mb-3" />
+                <Loader2 className="h-8 w-8 animate-spin text-gold-500 mb-3" />
                 <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-violet-500/20"
+                  className="absolute inset-0 rounded-full border-2 border-gold-500/20"
                   animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />
@@ -400,7 +400,7 @@ export function TrackPageClient() {
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
-                    className="w-2 h-2 rounded-full bg-violet-400"
+                    className="w-2 h-2 rounded-full bg-gold-400"
                     animate={{ y: [0, -6, 0] }}
                     transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                   />
@@ -419,7 +419,7 @@ export function TrackPageClient() {
               exit={{ opacity: 0, y: -10 }}
             >
               <Card className="border-border overflow-hidden">
-                <div className="h-1.5 bg-gradient-to-l from-violet-500 via-indigo-500 to-amber-500" />
+                <div className="h-1.5 bg-gradient-to-l from-gold-500 via-gold-400 to-amber-500" />
                 <CardContent className="py-16 text-center">
                   <motion.div
                     initial={{ scale: 0.8 }}
@@ -474,10 +474,10 @@ export function TrackPageClient() {
 
         {/* === Instructions Section === */}
         <Card className="border-border overflow-hidden">
-          <div className="h-1 bg-gradient-to-l from-violet-500 to-amber-500" />
+          <div className="h-1 bg-gradient-to-l from-gold-500 to-amber-500" />
           <CardContent className="p-5 text-sm text-muted-foreground space-y-4">
             <p className="text-foreground font-semibold flex items-center gap-2">
-              <Hourglass className="h-4 w-4 text-violet-500" />
+              <Hourglass className="h-4 w-4 text-gold-500" />
               كيفية التتبّع؟
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -487,7 +487,7 @@ export function TrackPageClient() {
                 { num: "٣", text: "اضغط \"تتبّع\" للنتائج" },
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-2.5 text-start">
-                  <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-gold-100 dark:bg-gold-900/30 text-gold-600 dark:text-gold-400 flex items-center justify-center text-xs font-bold shrink-0">
                     {step.num}
                   </div>
                   <span className="text-xs leading-relaxed">{step.text}</span>

@@ -24,7 +24,7 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: "4", title: "مليون د.ج", description: "اجمع إيرادات 1,000,000 د.ج", icon: <Award className="h-5 w-5" />, progress: 1700000, target: 1000000, unlocked: true, category: "revenue" },
   { id: "5", title: "7 أيام متتالية", description: "طلبات يومية لمدة أسبوع", icon: <Flame className="h-5 w-5" />, progress: 5, target: 7, unlocked: false, category: "streak" },
   { id: "6", title: "30 يوم متتالية", description: "طلبات يومية لمدة شهر", icon: <Flame className="h-5 w-5" />, progress: 5, target: 30, unlocked: false, category: "streak" },
-  { id: "7", title: "عميل VIP", description: "خدم 10 عملاء VIP", icon: <Gift className="h-5 w-5" />, progress: 3, target: 10, unlocked: false, category: "special" },
+  { id: "7", title: "عميل مميز", description: "خدم 10 عملاء مميزين", icon: <Gift className="h-5 w-5" />, progress: 3, target: 10, unlocked: false, category: "special" },
   { id: "8", title: "خمس نجوم", description: "احصل على 5 تقييمات 5 نجوم", icon: <Trophy className="h-5 w-5" />, progress: 3, target: 5, unlocked: false, category: "special" },
 ];
 

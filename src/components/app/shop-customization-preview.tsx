@@ -170,7 +170,7 @@ export default function ShopCustomizationPreview() {
                   onClick={() => setSelectedFont(i)}
                   className={`flex-1 py-3 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
                     selectedFont === i
-                      ? "bg-white dark:bg-neutral-800 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      ? "bg-white dark:bg-neutral-800 border-gold-500 text-gold-600 dark:text-gold-400 shadow-sm"
                       : "bg-neutral-50 dark:bg-neutral-800/50 border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 text-neutral-600 dark:text-neutral-400"
                   }`}
                   style={{ fontFamily: f.family }}
@@ -191,7 +191,7 @@ export default function ShopCustomizationPreview() {
                   onClick={() => setSelectedLayout(i)}
                   className={`flex-1 py-3 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
                     selectedLayout === i
-                      ? "bg-white dark:bg-neutral-800 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      ? "bg-white dark:bg-neutral-800 border-gold-500 text-gold-600 dark:text-gold-400 shadow-sm"
                       : "bg-neutral-50 dark:bg-neutral-800/50 border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 text-neutral-600 dark:text-neutral-400"
                   }`}
                 >

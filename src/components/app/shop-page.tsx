@@ -44,7 +44,7 @@ class MerchantErrorBoundary extends Component<
 
   handleReset = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
-    window.location.reload();
+    // لا نُعيد تحميل الصفحة — نعيد المحاولة فقط
   };
 
   render() {
@@ -73,7 +73,7 @@ class MerchantErrorBoundary extends Component<
                 <Button variant="outline" onClick={this.handleReset} className="gap-2">
                   تحديث الصفحة
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = `/s/${this.props.shopSlug}`}>
+                <Button variant="outline" onClick={() => window.location.href = `/s/${this.props.shopSlug}?admin=1`}>
                   العودة للمتجر
                 </Button>
               </div>

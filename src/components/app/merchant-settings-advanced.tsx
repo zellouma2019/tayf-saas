@@ -201,7 +201,7 @@ const SERVICE_TYPE_LABELS: Record<string, string> = {
 };
 
 // ============================================================
-// Section header component (violet right border)
+// Section header component (gold right border)
 // ============================================================
 
 function SectionHeader({
@@ -1878,7 +1878,7 @@ export function MerchantSettingsAdvanced({
                               isPopular: e.target.checked,
                             })
                           }
-                          className="w-4 h-4 rounded accent-violet-600"
+                          className="w-4 h-4 rounded accent-gold-500"
                         />
                         <span className="text-dark-500">خدمة شائعة</span>
                       </label>

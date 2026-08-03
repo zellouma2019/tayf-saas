@@ -956,16 +956,16 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   // ===== شاشة كلمة المرور =====
   if (!unlocked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-violet-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-gold-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
         {/* Decorative grid pattern */}
         <div className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
         {/* Decorative floating orbs */}
-        <div className="pointer-events-none absolute top-1/4 left-1/4 w-64 h-64 bg-violet-300/10 dark:bg-violet-700/10 rounded-full blur-3xl animate-float-gentle" />
+        <div className="pointer-events-none absolute top-1/4 left-1/4 w-64 h-64 bg-gold-300/10 dark:bg-gold-700/10 rounded-full blur-3xl animate-float-gentle" />
         <div className="pointer-events-none absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-300/10 dark:bg-amber-700/10 rounded-full blur-3xl animate-float-gentle animate-float-gentle-delay-2" />
         <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-border relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 glass-card form-card">
           <CardContent className="p-8">
             <div className="text-center mb-8">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-5 shadow-lg shadow-violet-300/40 dark:shadow-violet-900/40" style={{ animation: "float 3s ease-in-out infinite" }}>
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center mb-5 shadow-lg shadow-gold-300/40 dark:shadow-gold-900/40" style={{ animation: "float 3s ease-in-out infinite" }}>
                 <Lock className="h-12 w-12 text-white" />
               </div>
               <h2 className="text-xl font-bold text-foreground">لوحة تحكم المتجر</h2>
@@ -1024,12 +1024,12 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   // ===== لوحة التحكم الرئيسية =====
 
   const statCards = [
-    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-violet-50 to-violet-100/60 dark:from-violet-950/40 dark:to-violet-900/20", borderColor: "border-t-violet-400" },
+    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20", borderColor: "border-t-gold-400" },
     { title: "إجمالي الإيرادات", value: formatDA(stats?.totalRevenue ?? 0), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20", borderColor: "border-t-emerald-400" },
     { title: "صافي الربح", value: formatDA(totalProfit), icon: TrendingUp, color: totalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: totalProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: totalProfit >= 0 ? "border-t-emerald-400" : "border-t-rose-400" },
     { title: "قيد التنفيذ", value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60 dark:from-amber-950/40 dark:to-amber-900/20", borderColor: "border-t-amber-400" },
     { title: "إيرادات اليوم", value: formatDA(todayRevenue), icon: Inbox, color: "text-sky-600", bg: "bg-gradient-to-br from-sky-50 to-sky-100/60 dark:from-sky-950/40 dark:to-sky-900/20", borderColor: "border-t-sky-400", trend: todayRevenue > 0 ? "up" : todayRevenue < 0 ? "down" : undefined },
-    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-gold-500" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-violet-50 to-violet-100/60 dark:from-violet-950/40 dark:to-violet-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-violet-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
+    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-gold-500" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-gold-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
   ];
 
   const quickFilters = [
@@ -1245,11 +1245,11 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* ملخص اليوم */}
-              <div className="bg-gradient-to-l from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 border border-violet-200/60 dark:border-violet-800/30 rounded-xl p-5 card-glow glass-card glass-card-premium neu-raised card-stack">
+              <div className="bg-gradient-to-l from-gold-50 to-gold-100/50 dark:from-gold-950/20 dark:to-gold-950/20 border border-gold-200/60 dark:border-gold-800/30 rounded-xl p-5 card-glow glass-card glass-card-premium neu-raised card-stack">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-violet-500" />
+                      <BarChart3 className="h-4 w-4 text-gold-500" />
                       ملخص اليوم
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1267,7 +1267,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                       </div>
                       <div>
                         <div className="text-[11px] text-muted-foreground">مكتملة</div>
-                        <div className="text-lg font-bold tabular-nums text-violet-600 dark:text-violet-400 counter-number">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                        <div className="text-lg font-bold tabular-nums text-gold-600 dark:text-gold-400 counter-number">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
                       </div>
                     </div>
                   </div>
@@ -1303,7 +1303,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               {/* إجراءات سريعة */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-grid cluster">
                 {[
-                  { icon: Plus, label: "طلب جديد", color: "from-violet-500 to-violet-600", action: () => window.open(customerLink, '_blank') },
+                  { icon: Plus, label: "طلب جديد", color: "from-gold-500 to-gold-600", action: () => window.open(customerLink, '_blank') },
                   { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => setReportOpen(true) },
                   { icon: Download, label: "تصدير CSV", color: "from-sky-500 to-sky-600", action: () => exportCSV() },
                   { icon: Users, label: "العملاء", color: "from-amber-500 to-amber-600", action: () => setActiveTab("customers") },
@@ -1334,8 +1334,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {!(stats?.totalOrders ?? 0) && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-violet-50 via-indigo-50/50 to-sky-50 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8 gradient-flow-bg card-spotlight">
-                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-violet-200/30 dark:bg-violet-800/20 rounded-full blur-2xl animate-pulse" />
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-gold-50 via-gold-100/50 to-sky-50 dark:from-gold-950/30 dark:via-gold-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8 gradient-flow-bg card-spotlight">
+                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-gold-200/30 dark:bg-gold-800/20 rounded-full blur-2xl animate-pulse" />
                   <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
                   {/* Floating particles */}
                   {[0, 1, 2, 3, 4].map((i) => (
@@ -1382,7 +1382,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                         <Copy className="h-4 w-4" />
                         نسخ الرابط
                       </button>
-                      <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:shadow-violet-500/30">
+                      <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-700 text-white text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gold-500/30">
                         <Share2 className="h-4 w-4" />
                         مشاركة
                       </button>
@@ -1676,7 +1676,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     className={cn(
                       "flex items-center gap-2 text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0 min-h-[44px]",
                       isActive
-                        ? "bg-gold-500 text-white rounded-lg px-4 py-2 shadow-md shadow-violet-200"
+                        ? "bg-gold-500 text-white rounded-lg px-4 py-2 shadow-md shadow-gold-200"
                         : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10 hover:shadow-sm hover:-translate-y-0.5 rounded-lg px-4 py-2",
                     )}
                   >
@@ -1850,7 +1850,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
               {/* شريط الإجراءات الجماعية العائم */}
               {hasFeature("bulkActions") && selectedIds.size > 0 && (
-                <div className="fixed bottom-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto z-50 flex items-center gap-2 sm:gap-3 bg-gold-500 text-white rounded-xl px-3 sm:px-5 py-3 sm:py-3.5 shadow-2xl shadow-violet-600/30 animate-in slide-in-from-bottom-4 duration-300 ease-out overflow-x-auto">
+                <div className="fixed bottom-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto z-50 flex items-center gap-2 sm:gap-3 bg-gold-500 text-white rounded-xl px-3 sm:px-5 py-3 sm:py-3.5 shadow-2xl shadow-gold-600/30 animate-in slide-in-from-bottom-4 duration-300 ease-out overflow-x-auto">
                   <span className="text-sm font-semibold whitespace-nowrap">
                     <CheckSquare className="h-4 w-4 inline-block ml-1.5 -mt-0.5" />
                     {selectedIds.size} محدد
@@ -2041,8 +2041,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             {/* 2. أفضل الخدمات حسب الإيرادات */}
             <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-violet-600" />
+                <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-gold-600" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-foreground">أفضل الخدمات أداءً</h3>
@@ -2067,8 +2067,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             {/* 3. خريطة ساعات الذروة */}
             <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <Flame className="h-4 w-4 text-violet-600" />
+                <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center">
+                  <Flame className="h-4 w-4 text-gold-600" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-foreground">ساعات الذروة</h3>
@@ -2117,8 +2117,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
             {/* 4. نسبة الزبائن العائدين */}
             <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <Repeat className="h-4 w-4 text-violet-600" />
+                <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center">
+                  <Repeat className="h-4 w-4 text-gold-600" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-foreground">نسبة الزبائن العائدين</h3>
@@ -2465,7 +2465,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         <DialogContent className="max-w-sm" dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-violet-600" />
+              <Share2 className="h-5 w-5 text-gold-600" />
               مشاركة رابط المتجر
             </DialogTitle>
             <DialogDescription>
@@ -2571,7 +2571,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
       {!isEnabled && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center rounded-xl z-10">
           <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-4 shadow-lg shadow-violet-200/50">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center mb-4 shadow-lg shadow-gold-200/50">
               <ShieldCheck className="h-8 w-8 text-white" />
             </div>
             <h4 className="font-bold text-sm mb-1 text-foreground">{title}</h4>
@@ -2579,7 +2579,7 @@ function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey
             {!showContact ? (
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-gold-500 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white rounded-lg shadow-sm transition-all duration-200 active:scale-[0.98]"
+                className="bg-gradient-to-r from-gold-500 to-gold-700 hover:from-gold-600 hover:to-gold-800 text-white rounded-lg shadow-sm transition-all duration-200 active:scale-[0.98]"
                 onClick={() => setShowContact(true)}
               >
                 <Crown className="h-4 w-4 ml-1" />
@@ -2890,7 +2890,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Upload className="h-4 w-4 text-gold-500" />
               شعار المتجر
-              <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
+              <Badge className="bg-gradient-to-r from-gold-500 to-gold-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
             </h3>
             <div className="flex items-center gap-4">
               {logoUrl ? (
@@ -2939,7 +2939,7 @@ function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; 
             <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
               <Palette className="h-4 w-4 text-gold-500" />
               أيقونة الشعار
-              <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
+              <Badge className="bg-gradient-to-r from-gold-500 to-gold-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
             </h3>
             <div className="grid grid-cols-4 sm:grid-cols-4 gap-2.5">
               {Object.entries(DYN_ICON_MAP).map(([name, IconComp]) => (
@@ -3295,7 +3295,7 @@ function PriceEditorSection({
           <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
             <DollarSign className="h-4 w-4 text-gold-500" />
             إدارة الأسعار والخدمات
-            <Badge className="bg-gradient-to-r from-gold-500 to-violet-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
+            <Badge className="bg-gradient-to-r from-gold-500 to-gold-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
           </h3>
 
           <div className="space-y-2.5">
@@ -3480,7 +3480,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
         <div class="container">
           <h1>${safeName}</h1>
           <p>امسح الرمز للوصول إلى متجرنا</p>
-          <img src="${qrUrl}" alt="QR Code" />
+          <img src="${qrUrl}" alt="رمز QR" />
           <div class="url">${safeLink}</div>
           <div class="hint">📱 افتح كاميرا هاتفك ووجّهها نحو الرمز</div>
         </div>
@@ -3546,7 +3546,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
             {qrUrl ? (
               <>
                 <div className="rounded-xl p-5 bg-card shadow-sm border border-dashed border-border">
-                  <img src={qrUrl} alt="QR Code" className="w-48 h-48 md:w-56 md:h-56" />
+                  <img src={qrUrl} alt="رمز QR" className="w-48 h-48 md:w-56 md:h-56" />
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
                   📱 امسح الرمز بكاميرا الهاتف للوصول مباشرة إلى متجر <strong className="text-dark-700">{shopName}</strong>
@@ -3565,7 +3565,7 @@ function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; 
             ) : (
               <div className="w-48 h-48 bg-muted rounded-xl flex items-center justify-center border border-border">
                 <div className="text-center">
-                  <div className="animate-spin w-6 h-6 border-2 border-border border-t-violet-500 rounded-full mx-auto mb-2" />
+                  <div className="animate-spin w-6 h-6 border-2 border-border border-t-gold-500 rounded-full mx-auto mb-2" />
                   <span className="text-xs text-muted-foreground">جارٍ توليد الرمز...</span>
                 </div>
               </div>
@@ -3673,7 +3673,7 @@ function MobileOrderCard({
   const [downloading, setDownloading] = useState(false);
   const { hasFeature } = useShop();
   const canDownloadFile = hasFeature("merchantFileDownload");
-  const meta = STATUS_META[order.status];
+  const meta = STATUS_META[order.status] || { label: order.status, bg: "bg-secondary text-secondary-foreground", emoji: "", step: 0 } as any;
   const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
 
   // تنزيل الملف عبر fetch + blob (أكثر موثوقية من window.open الذي قد يحظره مانع النوافذ)
@@ -3731,8 +3731,8 @@ function MobileOrderCard({
             )}
             <span className="text-xl shrink-0">{serviceEmoji}</span>
             <div className="min-w-0">
-              <div className="font-mono text-xs font-bold text-foreground">{order.reference}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{order.serviceName}</div>
+              <div className="font-mono text-xs font-bold text-foreground">{order.reference || "—"}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{order.serviceName || "—"}</div>
             </div>
           </div>
           <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium shrink-0", meta.bg)}>
@@ -3741,12 +3741,12 @@ function MobileOrderCard({
         </div>
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate text-foreground">{order.customer.name}</div>
-            <div className="text-xs text-muted-foreground" dir="ltr">{order.customer.phone}</div>
+            <div className="text-sm font-medium truncate text-foreground">{order.customer?.name || "—"}</div>
+            <div className="text-xs text-muted-foreground" dir="ltr">{order.customer?.phone || "—"}</div>
           </div>
           <div className="text-left shrink-0">
-            <div className="font-bold text-gold-500 text-sm">{formatDA(order.total)}</div>
-            <div className="text-xs text-muted-foreground">{order.pages}ص × {order.copies}ن</div>
+            <div className="font-bold text-gold-500 text-sm">{formatDA(order.total || 0)}</div>
+            <div className="text-xs text-muted-foreground">{order.pages || 0}ص × {order.copies || 0}ن</div>
           </div>
         </div>
         <div className="mt-2.5 pt-2.5 border-t border-dark-100 flex items-center justify-between text-xs text-muted-foreground">
@@ -3793,7 +3793,7 @@ function MobileOrderCard({
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-2 py-0.5 rounded-full shrink-0">
                     <Crown className="h-2.5 w-2.5" />
-                    PRO
+                    مميز
                   </span>
                 )}
               </div>
@@ -3822,9 +3822,9 @@ function MobileOrderCard({
           {/* ملاحظات تغيير الحالة */}
           {order.statusNotes && (
             <div>
-              <div className="flex items-start gap-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200/50 dark:border-violet-800/30 p-2.5">
-                <StickyNote className="h-3.5 w-3.5 text-violet-500 shrink-0 mt-0.5" />
-                <span className="text-xs text-violet-700 dark:text-violet-300">{order.statusNotes}</span>
+              <div className="flex items-start gap-1.5 rounded-xl bg-gold-50 dark:bg-gold-950/20 border border-gold-200/50 dark:border-gold-800/30 p-2.5">
+                <StickyNote className="h-3.5 w-3.5 text-gold-500 shrink-0 mt-0.5" />
+                <span className="text-xs text-gold-700 dark:text-gold-300">{order.statusNotes}</span>
               </div>
             </div>
           )}

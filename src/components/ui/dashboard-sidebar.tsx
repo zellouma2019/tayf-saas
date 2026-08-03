@@ -156,7 +156,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
           <span className="truncate">{item.label}</span>
 
           {item.badge != null && (
-            <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-sidebar-primary">
+            <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 px-1.5 py-0.5 text-xs font-semibold leading-none text-sidebar-primary">
               {item.badge}
             </span>
           )}
@@ -241,7 +241,7 @@ export function DashboardSidebar({
       sections.map((section, sIdx) => (
         <div key={sIdx} className="flex flex-col gap-1">
           {section.title && !effectiveCollapsed && (
-            <h4 className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+            <h4 className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
               {section.title}
             </h4>
           )}

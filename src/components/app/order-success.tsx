@@ -193,18 +193,18 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             {/* ===== رقم المعاملة + السعر ===== */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div className="rounded-xl border bg-card p-3 sm:p-4 min-w-0">
-                <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">رقم المعاملة</div>
+                <div className="text-xs sm:text-sm text-muted-foreground mb-1">رقم المعاملة</div>
                 <div className="flex items-center gap-1 min-w-0">
                   <span className="text-base sm:text-xl font-bold text-neutral-900 dark:text-neutral-100 font-mono tracking-wider truncate">
                     {order.reference}
                   </span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={copyRef}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={copyRef}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
               <div className="rounded-xl border bg-card p-3 sm:p-4">
-                <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">السعر التقديري</div>
+                <div className="text-xs sm:text-sm text-muted-foreground mb-1">السعر التقديري</div>
                 <div className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-400">{formatDA(order.total)}</div>
               </div>
             </div>
@@ -213,14 +213,14 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => setShowQR(!showQR)}
-                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors"
+                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors min-h-[56px]"
               >
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-neutral-900 flex items-center justify-center shrink-0">
                   <QrCode className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
                 </div>
                 <div className="min-w-0 text-center">
-                  <div className="font-bold text-[10px] sm:text-xs">رمز QR</div>
-                  <div className="text-[9px] sm:text-[10px] text-muted-foreground">
+                  <div className="font-bold text-xs sm:text-sm">رمز QR</div>
+                  <div className="text-[11px] sm:text-xs text-muted-foreground">
                     {showQR ? "إخفاء" : "اعرض"}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
               <button
                 onClick={downloadInvoice}
                 disabled={pdfLoading}
-                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors disabled:opacity-60"
+                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors disabled:opacity-60 min-h-[56px]"
               >
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
                   {pdfLoading ? (
@@ -238,20 +238,20 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                   )}
                 </div>
                 <div className="min-w-0 text-center">
-                  <div className="font-bold text-[10px] sm:text-xs truncate">{pdfLoading ? "جارٍ..." : "فاتورة PDF"}</div>
-                  <div className="text-[9px] sm:text-[10px] text-muted-foreground">تنزيل</div>
+                  <div className="font-bold text-xs sm:text-sm truncate">{pdfLoading ? "جارٍ..." : "فاتورة PDF"}</div>
+                  <div className="text-[11px] sm:text-xs text-muted-foreground">تنزيل</div>
                 </div>
               </button>
               <button
                 onClick={() => printThermalReceipt(order)}
-                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
+                className="group flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors min-h-[56px]"
               >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center shrink-0 shadow-sm">
                   <Printer className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
                 <div className="min-w-0 text-center">
-                  <div className="font-bold text-[10px] sm:text-xs">إيصال حراري</div>
-                  <div className="text-[9px] sm:text-[10px] text-muted-foreground">طباعة مباشرة</div>
+                  <div className="font-bold text-xs sm:text-sm">إيصال حراري</div>
+                  <div className="text-[11px] sm:text-xs text-muted-foreground">طباعة مباشرة</div>
                 </div>
               </button>
             </div>
@@ -271,7 +271,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
             )}
 
             {/* ===== الوقت المتوقع للتسليم ===== */}
-            <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-xl bg-gold-500/10 border border-gold-500/20">
+            <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-xl bg-gold-500/10 border border-gold-500/20 shadow-sm">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gold-500 flex items-center justify-center shrink-0">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
@@ -281,7 +281,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                   {order.estimatedHours} {order.estimatedHours === 1 ? "ساعة" : order.estimatedHours === 2 ? "ساعتان" : "ساعات"}
                 </div>
               </div>
-              <div className="text-[10px] sm:text-xs text-gold-500 text-left shrink-0">
+              <div className="text-xs sm:text-sm text-gold-500 text-left shrink-0">
                 سيصلك إشعار<br />عند الجاهزية
               </div>
             </div>
@@ -361,7 +361,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
-                      className="p-1 hover:scale-125 transition-transform"
+                      className="p-2 hover:scale-125 transition-transform"
                       aria-label={`${star} نجوم`}
                     >
                       <Star
@@ -427,7 +427,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
                 </Button>
               </div>
               <div className="flex justify-center">
-                <span className="badge-success text-[10px] px-2.5 py-1 rounded-full">تم استلام الطلب بنجاح ✅</span>
+                <span className="badge-success text-xs px-3 py-1.5 rounded-full font-medium">تم استلام الطلب بنجاح ✅</span>
               </div>
             </div>
 

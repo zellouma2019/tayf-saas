@@ -295,7 +295,7 @@ export default function FileAnalysisPanel({ analysis }: FileAnalysisPanelProps) 
                 {a.insights.slice(0, 4).map((insight, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <span className="mt-0.5 shrink-0">
-                      <span role="img" aria-label="insight">
+                      <span role="img" aria-label="رؤية">
                         💡
                       </span>
                     </span>

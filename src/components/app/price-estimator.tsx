@@ -373,7 +373,7 @@ export function PriceEstimator({
         {onRequestOrder && (
           <Button
             onClick={onRequestOrder}
-            className="w-full bg-gradient-to-l from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-medium shadow-lg hover:shadow-xl transition-all"
+            className="w-full bg-gradient-to-l from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white font-medium shadow-lg hover:shadow-xl transition-all"
           >
             <Printer className="h-4 w-4 ml-2" />
             اطلب الآن

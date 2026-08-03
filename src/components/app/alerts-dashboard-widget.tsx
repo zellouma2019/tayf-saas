@@ -20,7 +20,7 @@ const ALERTS: AlertItem[] = [
   { id: "2", type: "warning", title: "حبر منخفض", description: "مستوى الحبر الأسود أقل من 15% في الطابعة رقم 2", time: "منذ ساعة", action: "إعادة طلب" },
   { id: "3", type: "info", title: "تقرير يومي جاهز", description: "تم إنشاء التقرير اليومي تلقائياً — 38 طلب", time: "منذ ساعتين", action: "عرض" },
   { id: "4", type: "warning", title: "عميل جديد بدون عنوان", description: "آخر 3 عملاء لم يدخلوا عنوان التوصيل", time: "منذ 3 ساعات" },
-  { id: "5", type: "urgent", title: "طلب VIP #1052", description: "طلب عميل VIP يحتاج موافقة فورية — طباعة بانر", time: "منذ 5 دقائق", action: "موافقة" },
+  { id: "5", type: "urgent", title: "طلب مميز #1052", description: "طلب عميل مميز يحتاج موافقة فورية — طباعة بانر", time: "منذ 5 دقائق", action: "موافقة" },
 ];
 
 const TYPE_CONFIG = {
