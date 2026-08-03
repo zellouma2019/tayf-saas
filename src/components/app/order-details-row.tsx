@@ -85,7 +85,7 @@ export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onTo
       : _aHr < 24
       ? { text: `${_aHr}س`, urgency: (_aHr > 6 ? "warning" : "normal") as const }
       : _aDay < 7
-      ? { text: `${_aDay}ي", urgency: (_aDay > 3 ? "critical" : "warning") as const }
+      ? { text: `${_aDay}ي`, urgency: (_aDay > 3 ? "critical" : "warning") as const }
       : { text: `${Math.floor(_aDay / 7)}أسبوع`, urgency: "critical" as const };
   }, [order.createdAt]);
 
