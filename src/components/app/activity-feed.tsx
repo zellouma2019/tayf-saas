@@ -121,7 +121,7 @@ export function ActivityFeed({ orders, className = "" }: ActivityFeedProps) {
               </div>
 
               {/* Content */}
-              <div className={`flex-1 pb-4 min-w-0 notif-hover rounded-lg p-2 -mx-2 transition-all hover:bg-muted/30 ${isLatest ? 'ring-1 ring-primary/10 bg-primary/[0.02]' : ''}`}>
+              <div className={`flex-1 pb-4 min-w-0 notif-hover rounded-lg p-2 transition-all hover:bg-muted/30 ${isLatest ? 'ring-1 ring-primary/10 bg-primary/[0.02]' : ''}`}>
                 <div className="flex items-start gap-2.5">
                   <div className={`w-8 h-8 rounded-lg ${iconConfig.bgColor} flex items-center justify-center shrink-0 mt-0.5`}>
                     <IconComponent className={`h-4 w-4 ${iconConfig.color}`} />

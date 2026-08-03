@@ -231,7 +231,7 @@ function OrderTrackingCard({ order }: { order: PrintOrderLite }) {
               {meta.label}
             </span>
           </div>
-          <div className="flex items-center justify-between gap-2 -mx-1">
+          <div className="flex items-center justify-between gap-2">
             <div className="text-[10px] sm:text-xs text-neutral-400 px-1 truncate" dir="auto">
               {formatDateTimeAr(order.createdAt)}
             </div>

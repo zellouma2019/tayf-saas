@@ -70,12 +70,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <html lang="ar" dir="rtl" suppressHydrationWarning className="overflow-x-hidden">
       <head>
         <meta name="theme-color" content="#d4a853" />
       </head>
       <body
-        className={`${cairo.variable} font-cairo antialiased bg-background text-foreground`}
+        className={`${cairo.variable} font-cairo antialiased bg-background text-foreground overflow-x-hidden`}
       >
         <ThemeProvider
           attribute="class"

@@ -1169,7 +1169,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 overflow-x-hidden">
       <div>
         {/* رأس المعالج */}
         <div className="mb-6">
@@ -2342,7 +2342,7 @@ function OptionCard({
   return (
     <button
       onClick={onClick}
-      className={`relative p-4 rounded-xl border-2 text-right transition-all min-h-[72px] ${
+      className={`relative p-4 rounded-xl border-2 text-right transition-all min-h-[72px] min-w-0 overflow-hidden ${
         selected
           ? "border-primary bg-primary/5 shadow-sm"
           : "border-border bg-card hover:border-primary/30 hover:shadow-sm"

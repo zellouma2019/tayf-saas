@@ -326,7 +326,7 @@ export function AppShell() {
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
     <CommandPalette />
     <LayoutGroup>
-      <div className="min-h-screen flex flex-col bg-background" dir="rtl" lang="ar" style={themeStyle}>
+      <div className="min-h-screen flex flex-col bg-background overflow-x-hidden" dir="rtl" lang="ar" style={themeStyle}>
       {/* ===== الشريط العلوي المُلوَّن حسب ثيم المتجر ===== */}
       {view !== "new" && (
       <div
@@ -655,7 +655,7 @@ export function AppShell() {
 
         {/* شريط الإجراءات السريعة */}
         {view !== "admin" && (
-        <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 sm:px-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="bg-gradient-to-t from-card via-card/95 to-transparent pt-3 pb-1 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-50 dark:bg-gold-950/30 text-gold-700 dark:text-gold-400 border border-gold-200/40 dark:border-gold-800/30">
               <span>⚡</span> {t.orderInMinute}

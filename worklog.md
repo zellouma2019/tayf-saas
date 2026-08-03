@@ -578,3 +578,51 @@ Stage Summary:
 - All user-visible text now Arabic
 - All colors consistent with gold/amber theme
 - Responsive design verified on mobile viewport
+
+---
+Task ID: R130 - Fix ALL horizontal scroll on mobile
+Agent: frontend-styling-expert
+Task: Eliminate every source of horizontal overflow in the project so pages fit screen width without horizontal scrolling
+
+Work Log:
+
+- **globals.css (1 fix)**:
+  - Added `overflow-x-hidden` to the `@layer base` `html, body` rule
+
+- **layout.tsx (2 fixes)**:
+  - Added `overflow-x-hidden` class to `<html>` element
+  - Added `overflow-x-hidden` class to `<body>` element
+  - These are the nuclear-level fix: no child element can cause the viewport to scroll horizontally
+
+- **app-shell.tsx (2 fixes)**:
+  - Added `overflow-x-hidden` to root wrapper div
+  - Removed negative margins `-mx-4 sm:-mx-6 lg:-mx-8` from the quick-action bar gradient wrapper
+
+- **merchant-dashboard.tsx (5 fixes)**:
+  - Added `overflow-x-hidden` to the outer `flex h-screen` wrapper
+  - Added `min-w-0` to the main content flex-1 div
+  - Added `overflow-x-hidden` and `min-w-0` to the `<main>` content area
+  - Removed `-mx-2` from the header shop info pill
+  - Removed `-mx-1 px-1` from both filter chip bars
+
+- **dashboard-sidebar.tsx (0 fixes needed)**: already uses `overflow-hidden` on aside and `overflow-x-hidden` on nav
+
+- **new-order-wizard.tsx (2 fixes)**:
+  - Added `overflow-x-hidden` to the root grid container
+  - Added `min-w-0 overflow-hidden` to the OptionCard button
+
+- **upload-step.tsx (0 fixes needed)**: all grids use responsive breakpoints, no negative margins
+
+- **order-success.tsx (1 fix)**: added `overflow-x-hidden` to DialogContent
+
+- **page.tsx / Super Admin (2 fixes)**:
+  - Added `overflow-x-hidden` to the outer `flex h-screen` wrapper
+  - Added `min-w-0` to the content area flex-1 div
+
+- **shop-page.tsx (1 fix)**: added `overflow-x-hidden` to the ShopApp wrapper div
+
+- **track-order.tsx (1 fix)**: removed `-mx-1` from the order card status row
+
+- **activity-feed.tsx (1 fix)**: removed `-mx-2` from the notification item hover area
+
+**Pre-existing issue noted:** `order-details-row.tsx` has a merge conflict (lines 89-104) that predates this task

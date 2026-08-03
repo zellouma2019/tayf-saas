@@ -145,7 +145,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg w-[calc(100vw-1rem)] p-0 gap-0 overflow-hidden max-h-[94vh] flex flex-col" dir="rtl" onInteractOutside={(e) => e.preventDefault()} aria-describedby={undefined}>
+      <DialogContent className="max-w-lg w-[calc(100vw-1rem)] p-0 gap-0 overflow-hidden overflow-x-hidden max-h-[94vh] flex flex-col" dir="rtl" onInteractOutside={(e) => e.preventDefault()} aria-describedby={undefined}>
         <DialogTitle className="sr-only">تم استلام الطلب</DialogTitle>
         <div className="overflow-y-auto custom-scroll">
           {/* ===== رأس النجاح ===== */}

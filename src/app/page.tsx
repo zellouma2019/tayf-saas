@@ -813,7 +813,7 @@ export function SuperAdminPage() {
   if (!authenticated) return <LoginGate onUnlock={() => setAuthenticated(true)} />;
 
   return (
-    <div className="flex h-screen overflow-hidden" dir="rtl">
+    <div className="flex h-screen overflow-hidden overflow-x-hidden" dir="rtl">
       <DashboardSidebar
         sections={sidebarSections} activeKey={activeTab} onNavigate={setActiveTab}
         collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -821,7 +821,7 @@ export function SuperAdminPage() {
         adminName={adminName}
         logo={<div className="flex items-center gap-3">{platformLogo ? (<img src={platformLogo} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover dark:hidden" />) : (<img src="/tayf-logo-sm.png" alt={platformName} className="w-9 h-9 rounded-xl shrink-0 dark:hidden" />)}{platformLogoDark ? (<img src={platformLogoDark} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover hidden dark:block" />) : (platformLogo ? (<img src={platformLogo} alt={platformName} className="w-9 h-9 rounded-xl shrink-0 object-cover hidden dark:block" />) : (<img src="/tayf-logo-sm-dark.png" alt={platformName} className="w-9 h-9 rounded-xl shrink-0 hidden dark:block" />))}{!sidebarCollapsed && <div className="min-w-0"><div className="font-bold text-sm text-sidebar-primary-foreground truncate">{platformName}</div><div className="text-[10px] text-sidebar-foreground/50 truncate">لوحة التحكم</div></div>}</div>}
       />
-      <div className="flex-1 bg-background overflow-x-hidden overflow-y-auto">
+      <div className="flex-1 min-w-0 bg-background overflow-x-hidden overflow-y-auto">
         <header className={cn("bg-background border-b border-border sticky top-0 z-30 px-4 sm:px-6 transition-all duration-300", compactMode ? "h-12" : "h-16")}>
           <div className={cn("flex items-center justify-between gap-2 sm:gap-3", compactMode ? "h-12" : "h-full")}>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">

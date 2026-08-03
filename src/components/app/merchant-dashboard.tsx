@@ -1041,7 +1041,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden" dir="rtl">
+    <div className="flex h-screen overflow-hidden overflow-x-hidden" dir="rtl">
       {/* ===== الشريط الجانبي ===== */}
       <DashboardSidebar
         sections={sidebarSections}
@@ -1068,7 +1068,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       />
 
       {/* ===== المحتوى الرئيسي ===== */}
-      <div className="flex-1 bg-background overflow-auto page-transition">
+      <div className="flex-1 min-w-0 bg-background overflow-auto overflow-x-hidden page-transition">
         {/* ===== الشريط العلوي ===== */}
         <header className="bg-card border-b border-border shadow-sm h-16 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3 min-w-0">
@@ -1089,7 +1089,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 return <Comp className="h-5 w-5 text-white" />;
               })()}
             </div>
-            <div className="hidden sm:flex items-center gap-2.5 bg-secondary/50 border border-border -mx-2 px-3 py-1.5 rounded-xl">
+            <div className="hidden sm:flex items-center gap-2.5 bg-secondary/50 border border-border px-3 py-1.5 rounded-xl">
               <div className="min-w-0">
                 <div className="font-bold text-sm truncate text-foreground">{shop?.name || "المتجر"}</div>
                 <div className="text-xs text-muted-foreground truncate">لوحة التحكم</div>
@@ -1143,7 +1143,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         </header>
 
         {/* ===== المحتوى ===== */}
-        <main className="p-4 sm:p-6 space-y-6">
+        <main className="p-4 sm:p-6 space-y-6 min-w-0 overflow-x-hidden">
           {/* ===== شريط الإحصائيات السريعة ===== */}
           <div className="glass-card-premium rounded-xl p-responsive">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1629,7 +1629,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* شرائح التصفية السريعة - التاريخ */}
-              <div className="flex items-center gap-2 overflow-x-auto smooth-scrollbar pb-1 -mx-1 px-1 cluster">
+              <div className="flex items-center gap-2 overflow-x-auto smooth-scrollbar pb-1 cluster">
                 {[
                   { value: "all" as const, label: "الكل", icon: null },
                   { value: "today" as const, label: "اليوم", icon: <CalendarIcon className="h-3.5 w-3.5" /> },
@@ -1659,7 +1659,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
               </div>
 
               {/* شرائح التصفية السريعة - الحالة */}
-              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 -mx-1 px-1 cluster tag-group">
+              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 cluster tag-group">
                 {quickFilters.map((f) => {
                   const dotColor: Record<string, string> = {
                     all: "bg-dark-400",
