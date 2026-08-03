@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell } from "@/components/ui/table";
@@ -30,6 +30,24 @@ import {
   translateOptionValue,
   HIDDEN_OPTION_KEYS,
 } from "@/lib/option-translations";
+
+/// دالة حساب عمر الطلب — على مستوى الموديول لضمان عدم حذفها من الباندل
+function computeOrderAge(createdAt: string): { text: string; urgency: "normal" | "warning" | "critical" } {
+  try {
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffMin < 1) return { text: "الآن", urgency: "normal" };
+    if (diffMin < 60) return { text: diffMin + "د", urgency: diffMin > 30 ? "warning" : "normal" };
+    if (diffHr < 24) return { text: diffHr + "س", urgency: diffHr > 6 ? "warning" : "normal" };
+    if (diffDay < 7) return { text: diffDay + "ي", urgency: diffDay > 3 ? "critical" : "warning" };
+    const weeks = Math.floor(diffDay / 7);
+    return { text: weeks + "أسبوع", urgency: "critical" };
+  } catch (_e) {
+    return { text: "—", urgency: "normal" };
+  }
+}
 
 /// هل الملف من نوع صورة؟
 function isImageFile(fileType: string | null): boolean {
@@ -72,22 +90,8 @@ interface OrderDetailsRowProps {
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[order.status] || { label: order.status, bg: "bg-secondary text-secondary-foreground", emoji: "", step: 0 } as any;
-  // حساب عمر الطلب مغلف في useMemo لمنع Turbopack من حذفه
-  const orderAge = useMemo(() => {
-    const _aMs = Date.now() - new Date(order.createdAt).getTime();
-    const _aMin = Math.floor(_aMs / 60000);
-    const _aHr = Math.floor(_aMin / 60);
-    const _aDay = Math.floor(_aHr / 24);
-    return _aMin < 1
-      ? { text: "الآن", urgency: "normal" as const }
-      : _aMin < 60
-      ? { text: `${_aMin}د`, urgency: (_aMin > 30 ? "warning" : "normal") as const }
-      : _aHr < 24
-      ? { text: `${_aHr}س`, urgency: (_aHr > 6 ? "warning" : "normal") as const }
-      : _aDay < 7
-      ? { text: `${_aDay}ي`, urgency: (_aDay > 3 ? "critical" : "warning") as const }
-      : { text: `${Math.floor(_aDay / 7)}أسبوع`, urgency: "critical" as const };
-  }, [order.createdAt]);
+  // حساب عمر الطلب — دالة على مستوى الموديول (مضمونة عدم الحذف)
+  const orderAge = computeOrderAge(order.createdAt);
 
   const serviceEmoji: Record<string, string> = {
     document: "🖨️",

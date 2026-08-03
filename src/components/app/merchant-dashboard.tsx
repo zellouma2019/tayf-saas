@@ -778,7 +778,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     }
     setStatsLoading(true);
     try {
-      const res = await fetch(`/api/admin/stats?shopId=${shopId}`);
+      const res = await fetch(`/api/admin/stats?shopId=${shopId}&_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setStats(data);
@@ -947,7 +947,9 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
         description: `${order.reference} → ${STATUS_META[status].label}`,
       });
       setRawOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status, statusNotes: statusNotes || o.statusNotes } : o)));
-      loadAll();
+      // تأخير بسيط لضمان تحديث قاعدة البيانات قبل إعادة تحميل الإحصائيات
+      setTimeout(() => loadStats(false), 300);
+      loadOrders();
     } catch (e) {
       toast.error("خطأ", { description: (e as Error).message });
     }

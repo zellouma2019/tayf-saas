@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         })),
       }, {
         headers: {
-          "Cache-Control": "public, max-age=0, s-maxage=3",
+          "Cache-Control": "no-store",
         },
       });
     } else {
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
         })),
       }, {
         headers: {
-          "Cache-Control": "public, max-age=0, s-maxage=3",
+          "Cache-Control": "no-store",
         },
       });
     }
