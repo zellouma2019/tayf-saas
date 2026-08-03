@@ -165,8 +165,23 @@ export async function GET(req: NextRequest) {
 
     // استعلامان موازيان: الطلبات + العدد الإجمالي
     // turso-lite يستخدم HTTP mode مباشرة (أسرع 10x من Prisma على Vercel)
+    // عند تحديد shopId: نستخدم استعلام بسيط بدون JOIN (أسرع وأكثر موثوقية)
+    // بدون shopId: نستخدم LEFT JOIN لعرض اسم المتجر
+    const useJoin = !shopId;
+    const MAIN_SQL = useJoin
+      ? `${ORDERS_LIST_SQL} ${whereClause} ORDER BY o."createdAt" DESC LIMIT ? OFFSET ?`
+      : `SELECT id, reference, "serviceType", "serviceName",
+          "fileName", "fileType", "fileSize",
+          options, customer, delivery, pricing,
+          "estimatedHours", status, pages, copies, total,
+          "createdAt", "updatedAt", "readyAt", "deliveredAt",
+          "startedPrintingAt", "completedPrintingAt",
+          cost, tags, "adminNotes", "shopId",
+          NULL as "shopName", NULL as "shopSlug"
+        FROM "PrintOrder" o ${whereClause} ORDER BY o."createdAt" DESC LIMIT ? OFFSET ?`;
+
     let orderRows = await tursoQuery(
-      `${ORDERS_LIST_SQL} ${whereClause} ORDER BY o."createdAt" DESC LIMIT ? OFFSET ?`,
+      MAIN_SQL,
       [...args, limit, offset]
     );
     const countRows = await tursoQuery<{ cnt: unknown }>(
@@ -174,7 +189,7 @@ export async function GET(req: NextRequest) {
       args
     );
 
-    // Turso DB fallback: if LEFT JOIN query returns 0 but COUNT > 0,
+    // Turso DB fallback: if query returns 0 but COUNT > 0,
     // retry with simpler query (no JOIN)
     const total = toNum(countRows[0]?.cnt);
     if ((orderRows as unknown[]).length === 0 && total > 0) {
@@ -188,7 +203,7 @@ export async function GET(req: NextRequest) {
           "startedPrintingAt", "completedPrintingAt",
           cost, tags, "adminNotes", "shopId",
           NULL as "shopName", NULL as "shopSlug"
-        FROM "PrintOrder"
+        FROM "PrintOrder" o
       `;
       orderRows = await tursoQuery(
         `${SIMPLE_ORDERS_SQL} ${whereClause} ORDER BY "createdAt" DESC LIMIT ? OFFSET ?`,
