@@ -829,6 +829,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }, [shopId]);
 
   // تحميل الطلبات — مستقل عن الإحصائيات (لا يحجب الواجهة)
+  const statsRef = useRef(stats);
+  statsRef.current = stats;
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setOrdersError(false);
@@ -836,9 +838,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`, { cache: "no-store" });
       if (res.ok) {
         const o = await res.json();
-        setRawOrders(o.orders || []);
-        if (!(o.orders || []).length && o.pagination?.total > 0) {
-          setOrdersError(true);
+        const loadedOrders = o.orders || [];
+        setRawOrders(loadedOrders);
+        // كشف عدم المزامنة: إذا كانت الإحصائيات تشير لوجود طلبات لكن القائمة فارغة
+        if (!loadedOrders.length) {
+          const hasStatsData = statsRef.current && Object.values(statsRef.current.statusCounts || {}).some((v: number) => v > 0);
+          const hasPendingFromAPI = o.pagination?.total > 0;
+          if (hasStatsData || hasPendingFromAPI) {
+            setOrdersError(true);
+          }
         }
       } else {
         setOrdersError(true);
@@ -865,6 +873,15 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   useEffect(() => {
     if (unlocked) loadOrders();
   }, [statusFilter, unlocked, loadOrders]);
+
+  // فحص المزامنة: إذا تم تحميل الإحصائيات بعد الطلبات ووجد تناقض
+  useEffect(() => {
+    if (!unlocked || !stats || loading) return;
+    const hasStatsData = Object.values(stats.statusCounts || {}).some((v: number) => v > 0);
+    if (hasStatsData && rawOrders.length === 0 && !ordersError) {
+      setOrdersError(true);
+    }
+  }, [stats, rawOrders.length, loading, ordersError, unlocked]);
 
   // ===== إشعار الطلبات الجديدة في الوقت الفعلي =====
   const lastKnownCountRef = useRef(0);
