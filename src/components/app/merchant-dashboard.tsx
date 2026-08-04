@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Component } from "react";
 import { useShop } from "@/lib/shop-context";
 import {
   Package,
@@ -394,6 +394,35 @@ function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
   );
 }
 
+// ===== Error Boundary مخصص لقسم الطلبات =====
+class OrdersErrorBoundary extends Component<
+  { children: React.ReactNode; onRetry: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; onRetry: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="py-20 text-center">
+          <AlertCircle className="h-12 w-12 mx-auto text-amber-400/60 mb-3" />
+          <p className="text-sm text-muted-foreground mb-3">حدث خطأ أثناء عرض الطلبات</p>
+          <Button variant="outline" size="sm" onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            إعادة المحاولة
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const { shop, hasFeature, refreshShop } = useShop();
   const [unlocked, setUnlocked] = useState(false);
@@ -409,6 +438,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   // حالة الطلبات والإحصائيات
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [rawOrders, setRawOrders] = useState<PrintOrderLite[]>([]);
+  const [ordersError, setOrdersError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -615,6 +645,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       .sort((a, b) => b.count - a.count);
   }, [rawOrders]);
 
+  // اشتقاق عداد الحالات من الطلبات المحملة (قبل أي return مبكر)
+  const derivedStatusCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    rawOrders.forEach(o => { map[o.status] = (map[o.status] || 0) + 1; });
+    return map;
+  }, [rawOrders]);
+
   // مساعد الترتيب
   function toggleSort(field: string) {
     if (sortField === field) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
@@ -794,14 +831,20 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   // تحميل الطلبات — مستقل عن الإحصائيات (لا يحجب الواجهة)
   const loadOrders = useCallback(async () => {
     setLoading(true);
+    setOrdersError(false);
     try {
       const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`, { cache: "no-store" });
       if (res.ok) {
         const o = await res.json();
         setRawOrders(o.orders || []);
+        if (!(o.orders || []).length && o.pagination?.total > 0) {
+          setOrdersError(true);
+        }
+      } else {
+        setOrdersError(true);
       }
     } catch {
-      /* silent */
+      setOrdersError(true);
     } finally {
       setLoading(false);
     }
@@ -1025,21 +1068,29 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   // ===== لوحة التحكم الرئيسية =====
 
+  // مزامنة الإحصائيات — نستخدم البيانات المحملة عند توفرها، والاحتياطي من stats API
+  const syncedTotalOrders = rawOrders.length > 0 ? rawOrders.length : (stats?.totalOrders ?? 0);
+  const syncedTotalRevenue = rawOrders.length > 0 ? rawOrders.reduce((s, o) => s + o.total, 0) : (stats?.totalRevenue ?? 0);
+  const syncedPending = derivedStatusCounts.pending ?? stats?.statusCounts?.pending ?? 0;
+  const syncedPrinting = derivedStatusCounts.printing ?? stats?.statusCounts?.printing ?? 0;
+  const syncedReady = derivedStatusCounts.ready ?? stats?.statusCounts?.ready ?? 0;
+  const syncedDelivered = derivedStatusCounts.delivered ?? stats?.statusCounts?.delivered ?? 0;
+
   const statCards = [
-    { title: "إجمالي الطلبات", value: stats?.totalOrders ?? 0, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20", borderColor: "border-t-gold-400" },
-    { title: "إجمالي الإيرادات", value: formatDA(stats?.totalRevenue ?? 0), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20", borderColor: "border-t-emerald-400" },
+    { title: "إجمالي الطلبات", value: syncedTotalOrders, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20", borderColor: "border-t-gold-400" },
+    { title: "إجمالي الإيرادات", value: formatDA(syncedTotalRevenue), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20", borderColor: "border-t-emerald-400" },
     { title: "صافي الربح", value: formatDA(totalProfit), icon: TrendingUp, color: totalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: totalProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: totalProfit >= 0 ? "border-t-emerald-400" : "border-t-rose-400" },
-    { title: "قيد التنفيذ", value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60 dark:from-amber-950/40 dark:to-amber-900/20", borderColor: "border-t-amber-400" },
+    { title: "قيد التنفيذ", value: syncedPending + syncedPrinting, icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60 dark:from-amber-950/40 dark:to-amber-900/20", borderColor: "border-t-amber-400" },
     { title: "إيرادات اليوم", value: formatDA(todayRevenue), icon: Inbox, color: "text-sky-600", bg: "bg-gradient-to-br from-sky-50 to-sky-100/60 dark:from-sky-950/40 dark:to-sky-900/20", borderColor: "border-t-sky-400", trend: todayRevenue > 0 ? "up" : todayRevenue < 0 ? "down" : undefined },
     { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-gold-500" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-gold-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
   ];
 
   const quickFilters = [
-    { value: "all", label: "الكل", count: stats?.totalOrders ?? 0 },
-    { value: "pending", label: STATUS_META.pending.label, count: stats?.statusCounts?.pending ?? 0 },
-    { value: "printing", label: STATUS_META.printing.label, count: stats?.statusCounts?.printing ?? 0 },
-    { value: "ready", label: STATUS_META.ready.label, count: stats?.statusCounts?.ready ?? 0 },
-    { value: "delivered", label: STATUS_META.delivered.label, count: stats?.statusCounts?.delivered ?? 0 },
+    { value: "all" as const, label: "الكل", count: rawOrders.length > 0 ? rawOrders.length : syncedTotalOrders, icon: null },
+    { value: "pending" as const, label: STATUS_META.pending.label, count: syncedPending },
+    { value: "printing" as const, label: STATUS_META.printing.label, count: syncedPrinting },
+    { value: "ready" as const, label: STATUS_META.ready.label, count: syncedReady },
+    { value: "delivered" as const, label: STATUS_META.delivered.label, count: syncedDelivered },
   ];
 
   return (
@@ -1185,7 +1236,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] text-amber-600 dark:text-amber-400 truncate font-medium">⏳ معلقة</div>
-                  <div className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{pendingCount}</div>
+                  <div className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{syncedPending}</div>
                 </div>
               </button>
               <button
@@ -1198,7 +1249,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] text-emerald-600 dark:text-emerald-400 truncate font-medium">✅ مكتملة</div>
-                  <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                  <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{syncedDelivered}</div>
                 </div>
               </button>
             </div>
@@ -1540,6 +1591,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
           {/* ===== تبويب الطلبات ===== */}
           {activeTab === "orders" && (
+            <OrdersErrorBoundary onRetry={loadOrders}>
             <motion.div
               key="tab-orders"
               initial={{ opacity: 0, y: 12 }}
@@ -1710,8 +1762,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-16 text-center">
-                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
-                      <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                      {ordersError || (stats && Object.values(stats.statusCounts || {}).some((v: number) => v > 0)) ? (
+                        <>
+                          <AlertCircle className="h-12 w-12 mx-auto text-amber-400/60 mb-3" />
+                          <p className="text-sm text-muted-foreground mb-3">تعذر تحميل الطلبات</p>
+                          <Button variant="outline" size="sm" onClick={loadOrders}>
+                            <RefreshCw className="h-4 w-4 ml-2" />
+                            إعادة المحاولة
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
+                          <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div className="overflow-x-auto custom-scroll">
@@ -1821,8 +1886,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-10 text-center">
-                      <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2 empty-bounce" />
-                      <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
+                      {ordersError || (stats && Object.values(stats.statusCounts || {}).some((v: number) => v > 0)) ? (
+                        <>
+                          <AlertCircle className="h-10 w-10 mx-auto text-amber-400/60 mb-2" />
+                          <p className="text-xs text-muted-foreground mb-2">تعذر تحميل الطلبات</p>
+                          <Button variant="outline" size="sm" className="text-xs" onClick={loadOrders}>
+                            <RefreshCw className="h-3 w-3 ml-1" />
+                            إعادة المحاولة
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2 empty-bounce" />
+                          <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     orders.map((o) => <MobileOrderCard key={o.id} order={o} onStatusChange={changeStatus} onClick={() => setSelectedOrder(o)} shopId={shopId} shopName={shop?.name || ""} shopPhone={shop?.phone || ""} shopAddress={shop?.address || null} selectionMode={selectionMode} selected={selectionMode ? selectedIds.has(o.id) : undefined} onToggleSelect={selectionMode ? () => toggleSelect(o.id) : undefined} />)
@@ -1841,8 +1919,21 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                     </div>
                   ) : orders.length === 0 ? (
                     <div className="py-16 text-center">
-                      <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
-                      <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                      {ordersError || (stats && Object.values(stats.statusCounts || {}).some((v: number) => v > 0)) ? (
+                        <>
+                          <AlertCircle className="h-12 w-12 mx-auto text-amber-400/60 mb-3" />
+                          <p className="text-sm text-muted-foreground mb-3">تعذر تحميل الطلبات</p>
+                          <Button variant="outline" size="sm" onClick={loadOrders}>
+                            <RefreshCw className="h-4 w-4 ml-2" />
+                            إعادة المحاولة
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
+                          <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
@@ -1914,6 +2005,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 </AlertDialogContent>
               </AlertDialog>
             </motion.div>
+            </OrdersErrorBoundary>
           )}
           {/* ===== تبويب التحليلات ===== */}
           {activeTab === "analytics" && hasFeature("advancedAnalytics") && (

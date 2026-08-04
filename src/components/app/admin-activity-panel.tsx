@@ -207,13 +207,13 @@ export function AdminActivityPanel({ orders, className }: AdminActivityPanelProp
                     idx < 8 && `delay-${Math.min(idx + 1, 8)}`
                   )}
                 >
-                  <div className="absolute right-2 top-[14px] w-[9px] h-[9px] rounded-full border-2 border-background z-[1] activity-feed-dot"
-                    style={{ background: 'currentColor', color: event.dotColor.includes('bg-') ? undefined : event.dotColor }}
+                  <div
                     className={cn(
                       "absolute right-2 top-[14px] w-[9px] h-[9px] rounded-full border-2 border-background z-[1]",
                       event.dotColor,
                       event.type === "new_order" && "badge-ring"
                     )}
+                    style={{ background: 'currentColor', color: event.dotColor.includes('bg-') ? undefined : event.dotColor }}
                   />
                   <div className="flex items-start gap-3 pr-3">
                     <div className={cn(

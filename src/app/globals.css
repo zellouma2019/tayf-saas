@@ -34849,3 +34849,18 @@ input[type="password"].v23-input:focus {
   background: rgba(234, 179, 8, 0.15);
   color: #facc15;
 }
+
+/* ===== منع التمرير الأفقي على جميع الصفحات ===== */
+html, body {
+  overflow-x: hidden !important;
+}
+
+/* تأكد من أن جميع العناصر لا تتجاوز عرض الشاشة */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* استثناء للعناصر الثابتة والعائمة */
+.fixed, [style*="position: fixed"], [style*="position:fixed"] {
+  max-width: none !important;
+}
