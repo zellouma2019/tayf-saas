@@ -31,22 +31,30 @@ import {
   HIDDEN_OPTION_KEYS,
 } from "@/lib/option-translations";
 
-/// دالة حساب عمر الطلب — على مستوى الموديول لضمان عدم حذفها من الباندل
-function computeOrderAge(createdAt: string): { text: string; urgency: "normal" | "warning" | "critical" } {
+/** مكون عرض عمر الطلب — مكون منفصل لمنع Turbopack من حذف المتغير */
+function OrderAgeBadge({ createdAt, status }: { createdAt: string; status?: string }) {
+  let text = "—";
+  let urgency: "normal" | "warning" | "critical" = "normal";
   try {
     const diffMs = Date.now() - new Date(createdAt).getTime();
     const diffMin = Math.floor(diffMs / 60000);
     const diffHr = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHr / 24);
-    if (diffMin < 1) return { text: "الآن", urgency: "normal" };
-    if (diffMin < 60) return { text: diffMin + "د", urgency: diffMin > 30 ? "warning" : "normal" };
-    if (diffHr < 24) return { text: diffHr + "س", urgency: diffHr > 6 ? "warning" : "normal" };
-    if (diffDay < 7) return { text: diffDay + "ي", urgency: diffDay > 3 ? "critical" : "warning" };
-    const weeks = Math.floor(diffDay / 7);
-    return { text: weeks + "أسبوع", urgency: "critical" };
-  } catch (_e) {
-    return { text: "—", urgency: "normal" };
-  }
+    if (diffMin < 1) { text = "الآن"; }
+    else if (diffMin < 60) { text = diffMin + "د"; urgency = diffMin > 30 ? "warning" : "normal"; }
+    else if (diffHr < 24) { text = diffHr + "س"; urgency = diffHr > 6 ? "warning" : "normal"; }
+    else if (diffDay < 7) { text = diffDay + "ي"; urgency = diffDay > 3 ? "critical" : "warning"; }
+    else { text = Math.floor(diffDay / 7) + "أسبوع"; urgency = "critical"; }
+  } catch { /* keep defaults */ }
+  return (
+    <span className={cn(
+      "text-[10px] px-1.5 py-0.5 rounded-md font-sans tabular-nums",
+      urgency === 'normal' && "text-muted-foreground bg-secondary/50",
+      urgency === 'warning' && "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30",
+      urgency === 'critical' && "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30",
+      status === 'pending' && urgency !== 'normal' && "health-pulse"
+    )}>{text}</span>
+  );
 }
 
 /// هل الملف من نوع صورة؟
@@ -90,8 +98,7 @@ interface OrderDetailsRowProps {
 export function OrderDetailsRow({ order, onStatusChange, onClone, selected, onToggleSelect, onClick, onPrintReceipt, canPrintReceipt, isFavorite, onToggleFavorite, note, onSaveNote }: OrderDetailsRowProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[order.status] || { label: order.status, bg: "bg-secondary text-secondary-foreground", emoji: "", step: 0 } as any;
-  // حساب عمر الطلب — دالة على مستوى الموديول (مضمونة عدم الحذف)
-  const orderAge = computeOrderAge(order.createdAt);
+  // عمر الطلب يُعرض عبر مكون منفصل (منع Turbopack tree-shaking)
 
   const serviceEmoji: Record<string, string> = {
     document: "🖨️",
@@ -565,14 +572,8 @@ function TableRowInner({
       <TableCell className="font-mono text-xs whitespace-nowrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           {order.reference}
-          <span className={cn(
-            "text-[10px] px-1.5 py-0.5 rounded-md font-sans tabular-nums",
-            orderAge.urgency === 'normal' && "text-muted-foreground bg-secondary/50",
-            orderAge.urgency === 'warning' && "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30",
-            orderAge.urgency === 'critical' && "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30",
-            order.status === 'pending' && orderAge.urgency !== 'normal' && "health-pulse"
-          )} title={formatDateTimeAr(order.createdAt)}>
-            {orderAge.text}
+          <span title={formatDateTimeAr(order.createdAt)}>
+            <OrderAgeBadge createdAt={order.createdAt} status={order.status} />
           </span>
           {order._possibleDuplicate && (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/30" title="طلب محتمل مكرر">
