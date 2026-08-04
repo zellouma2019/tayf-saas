@@ -212,6 +212,13 @@
     @apply bg-background text-foreground overflow-x-hidden;
     font-feature-settings: "kern", "liga", "calt";
   }
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  /* منع التمرير الأفقي على جميع المستويات */
+  #__next, main, [dir="rtl"] > div, [dir="rtl"] > div > div {
+    overflow-x: hidden;
+  }
   .font-amiri {
     font-family: var(--font-amiri), serif;
   }

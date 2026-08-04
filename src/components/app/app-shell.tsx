@@ -924,7 +924,7 @@ export function AppShell() {
         <Calculator className="h-5 w-5" />
       </button>
       {showEstimator && (
-        <div className="fixed bottom-24 left-20 z-30 max-w-[calc(100vw-2rem)] w-80 sm:w-96">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 sm:left-20 sm:translate-x-0 z-30 w-[calc(100vw-2rem)] sm:w-80 sm:max-w-96">
           <PriceEstimator onRequestOrder={() => { setShowEstimator(false); setView("new"); }} />
         </div>
       )}
@@ -960,7 +960,7 @@ export function AppShell() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-32 md:bottom-20 left-4 z-30 w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors fab-ripple group"
+            className="fixed bottom-36 md:bottom-20 left-4 z-30 w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg flex items-center justify-center transition-colors fab-ripple group"
             title={t.backToTop}
           >
             <ArrowUp className="h-5 w-5" />

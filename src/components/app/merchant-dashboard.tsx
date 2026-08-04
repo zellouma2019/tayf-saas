@@ -828,30 +828,98 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     }
   }, [shopId]);
 
-  // تحميل الطلبات — مستقل عن الإحصائيات (لا يحجب الواجهة)
   const statsRef = useRef(stats);
   statsRef.current = stats;
-  const loadOrders = useCallback(async () => {
+
+  // عدد مرات إعادة المحاولة التلقائية
+  const ordersRetryRef = useRef(0);
+
+  // تحميل الطلبات — مع إعادة محاولة تلقائية + استخدام بيانات الإحصائيات كبديل
+  const loadOrders = useCallback(async (retryCount = 0) => {
     setLoading(true);
     setOrdersError(false);
     try {
-      const res = await fetch(`/api/orders?${statusFilter !== "all" ? `status=${statusFilter}` : ""}&shopId=${shopId}`, { cache: "no-store" });
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      params.set("shopId", shopId);
+      params.set("_t", String(Date.now()));
+
+      const res = await fetch(`/api/orders?${params.toString()}`, { cache: "no-store" });
       if (res.ok) {
         const o = await res.json();
         const loadedOrders = o.orders || [];
-        setRawOrders(loadedOrders);
-        // كشف عدم المزامنة: إذا كانت الإحصائيات تشير لوجود طلبات لكن القائمة فارغة
-        if (!loadedOrders.length) {
-          const hasStatsData = statsRef.current && Object.values(statsRef.current.statusCounts || {}).some((v: number) => v > 0);
-          const hasPendingFromAPI = o.pagination?.total > 0;
-          if (hasStatsData || hasPendingFromAPI) {
+        const meta = o._meta;
+
+        if (loadedOrders.length > 0) {
+          // نجاح — حفظ البيانات وإعادة تعيين العداد
+          setRawOrders(loadedOrders);
+          ordersRetryRef.current = 0;
+        } else if (o.pagination?.total > 0 || meta?.error) {
+          // الـ API يعرف أن هناك بيانات لكن الاستعلام فشل
+          // أعد المحاولة تلقائياً (حد أقصى 3 مرات)
+          if (retryCount < 3) {
+            const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+            setTimeout(() => loadOrders(retryCount + 1), delay);
+            return; // لا تُحدث setLoading = false بعد
+          }
+          // فشلت كل المحاولات — جرّب استخدام بيانات الإحصائيات كـ بديل جزئي
+          const recentFromStats = statsRef.current?.recentOrders;
+          if (recentFromStats && recentFromStats.length > 0) {
+            // تحويل بيانات الإحصائيات لتنسيق PrintOrderLite
+            const fallbackOrders = recentFromStats.map((r: Record<string, unknown>) => ({
+              id: r.id,
+              reference: r.reference,
+              serviceType: r.serviceType,
+              serviceName: r.serviceName,
+              fileName: r.fileName,
+              fileType: r.fileType,
+              fileSize: r.fileSize ? Number(r.fileSize) : null,
+              options: r.options || { pages: 1, copies: 1 },
+              customer: r.customer || { name: "", phone: "" },
+              delivery: r.delivery || { mode: "pickup", date: "" },
+              pricing: r.pricing || { total: Number(r.total) || 0 },
+              estimatedHours: 0,
+              status: r.status,
+              pages: Number(r.pages) || 1,
+              copies: Number(r.copies) || 1,
+              total: Number(r.total) || 0,
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+              readyAt: null,
+              deliveredAt: null,
+              startedPrintingAt: null,
+              completedPrintingAt: null,
+              cost: 0,
+              tags: r.tags || [],
+              adminNotes: r.adminNotes || null,
+              shopId: shopId,
+              filePreview: null,
+            }));
+            setRawOrders(fallbackOrders);
+            toast.warning("يتم عرض آخر 5 طلبات فقط — جرّب التحديث", { duration: 5000 });
+          } else {
             setOrdersError(true);
           }
+        } else {
+          // لا توجد طلبات فعلاً (العدد صفر)
+          setRawOrders([]);
+          ordersRetryRef.current = 0;
         }
       } else {
+        // HTTP error — أعد المحاولة
+        if (retryCount < 3) {
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+          setTimeout(() => loadOrders(retryCount + 1), delay);
+          return;
+        }
         setOrdersError(true);
       }
     } catch {
+      if (retryCount < 3) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        setTimeout(() => loadOrders(retryCount + 1), delay);
+        return;
+      }
       setOrdersError(true);
     } finally {
       setLoading(false);
@@ -875,8 +943,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   }, [statusFilter, unlocked, loadOrders]);
 
   // فحص المزامنة: إذا تم تحميل الإحصائيات بعد الطلبات ووجد تناقض
+  // هذا يُفعّل فقط بعد انتهاء التحميل + عدم وجود محاولات إعادة جارية
   useEffect(() => {
     if (!unlocked || !stats || loading) return;
+    if (ordersRetryRef.current > 0) return; // لا تتداخل مع إعادة المحاولة التلقائية
     const hasStatsData = Object.values(stats.statusCounts || {}).some((v: number) => v > 0);
     if (hasStatsData && rawOrders.length === 0 && !ordersError) {
       setOrdersError(true);
