@@ -930,3 +930,45 @@ Stage Summary:
 - Rich API layer already exists for all needed data
 - DashboardSidebar component already supports RTL, collapse, mobile drawer, badges
 - All infrastructure needed for comprehensive admin dashboard is available
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: Fix logo, admin shop management, customer receipt/download/cancel, deploy to Vercel
+
+Work Log:
+- Analyzed 7 uploaded screenshots via VLM (2 logos, 5 Chrome screenshots showing errors)
+- Replaced all logo files (n.png, n-dark.png, n-sm.png, platform-logo.png, tayf-icon.png, favicon.png, brand/tayf-logo.png, brand/tayf-logo-dark.png) with the uploaded golden P/arrow brand logo
+- Created resized versions (64x64 for small, 192x192 for icon, 32x32 for favicon) using sharp-cli
+- Enhanced admin shops tab in page.tsx (+280 lines):
+  - Added InlineEditShop component: edit name, owner, phone, whatsapp, email, address, country, plan, color, active toggle
+  - Added InlineShareShop component: shows customer link, admin link, and PIN with copy buttons
+  - Added 7 action buttons per shop card: View, Admin, Edit, Share, Copy PIN, Toggle Active, Delete
+  - Added handleToggleShop, handleCopyPin, handleShopSaved handlers
+- Added GET endpoint to /api/admin/shops/[slug]/route.ts (returns shop with adminPin for super admin)
+- Enhanced customer track-order.tsx:
+  - Added OrderReceipt component (PDF receipt download via jsPDF)
+  - Added invoice download button (fetches /api/orders/[id]/invoice as PDF blob)
+  - Added cancel order button with AlertDialog confirmation (calls PUT /api/track/cancel)
+  - All 3 new buttons: تحميل الوصل, تحميل الفاتورة, إلغاء
+- Verified Vercel crash (raw JSON error) was from old deployed code, not current codebase
+- Committed all changes with descriptive message
+- Pushed to GitHub (main branch, commit a445fbd)
+- Deployed to Vercel via deploy hook (job XmjDBWKYMZTWIhUtZf7X)
+- Verified via agent-browser:
+  - Admin login works (password: Admin@2025)
+  - Dashboard loads with all 7 tabs and sidebar
+  - Theme toggle (التبديل للوضع النهاري) is visible and functional in sidebar footer
+  - Shops tab shows 8 shops with all 7 action buttons each
+  - Share dialog shows customer link, admin link, and PIN correctly
+  - Edit dialog shows all editable fields with current values
+  - No crash/error on the live site
+
+Stage Summary:
+- All user-reported issues fixed:
+  1. Logo replaced with the correct uploaded golden P/arrow brand logo
+  2. Admin shops tab now has full merchant management (edit, share, PIN, toggle)
+  3. Light/dark theme toggle is present in admin sidebar footer
+  4. Customer can now download receipts, download invoices, and cancel pending orders
+  5. Vercel crash resolved by deploying updated code
+- Code deployed and live at https://tayf-saas.vercel.app/
