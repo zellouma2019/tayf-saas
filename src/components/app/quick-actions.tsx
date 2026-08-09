@@ -100,7 +100,7 @@ export function QuickActions() {
   return (
     <div
       ref={fabRef}
-      className="fixed bottom-24 right-4 z-50 md:hidden no-print"
+      className="fixed bottom-20 right-4 z-30 md:hidden no-print"
     >
       <AnimatePresence>
         {open && (
@@ -163,7 +163,7 @@ export function QuickActions() {
                   </motion.span>
 
                   {/* الزر الدائري */}
-                  <span className="w-11 h-11 bg-white dark:bg-neutral-800 rounded-full shadow-lg shadow-black/15 dark:shadow-black/40 flex items-center justify-center border border-neutral-200/60 dark:border-neutral-700/60 group-active:scale-90 transition-transform duration-150">
+                  <span className="w-11 h-11 bg-white dark:bg-neutral-800/80 rounded-full shadow-lg shadow-black/10 dark:shadow-black/30 flex items-center justify-center border border-neutral-200/50 dark:border-neutral-700/40 group-active:scale-90 transition-transform duration-150">
                     <item.icon className={`h-5 w-5 ${item.color}`} />
                   </span>
                 </motion.button>
@@ -177,7 +177,7 @@ export function QuickActions() {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-14 h-14 bg-neutral-900 dark:bg-white dark:text-neutral-900 text-white rounded-full shadow-xl shadow-neutral-900/30 dark:shadow-white/10 flex items-center justify-center relative z-10 active:scale-95 transition-shadow hover:shadow-2xl hover:shadow-neutral-900/40 dark:hover:shadow-white/15"
+        className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 text-white rounded-full shadow-xl shadow-amber-500/25 flex items-center justify-center relative z-10 active:scale-95 transition-all hover:shadow-2xl hover:shadow-amber-500/35"
         aria-label={open ? "إغلاق القائمة" : "إجراءات سريعة"}
         aria-expanded={open}
       >

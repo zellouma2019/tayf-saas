@@ -972,3 +972,376 @@ Stage Summary:
   4. Customer can now download receipts, download invoices, and cancel pending orders
   5. Vercel crash resolved by deploying updated code
 - Code deployed and live at https://tayf-saas.vercel.app/
+
+---
+Task ID: 1
+Agent: Explore Agent
+Task: Thorough exploration of customer-facing version code — layout, components, styling, dark mode
+
+## 1) ADMIN BUTTON in Customer Version
+
+**Where it appears:**
+- **Header nav (Desktop):** `/home/z/my-project/src/components/app/app-shell.tsx` lines 126-131
+  - The `navItems` array includes `{ key: "admin", label: "الإدارة", icon: LayoutGrid, show: showAdminLink }`
+  - `showAdminLink` comes from `useAppStore` and is only `true` when URL has `?preview=1` (set in `/home/z/my-project/src/components/app/shop-page.tsx` line 151)
+  - **In normal customer view, the admin tab is HIDDEN** (showAdminLink defaults to false in `/home/z/my-project/src/lib/store.ts` line 69)
+- **Header nav (Mobile):** `/home/z/my-project/src/components/app/app-shell.tsx` lines 214-226 — same navItems filtered by `showAdminLink`
+- **Footer links:** `/home/z/my-project/src/components/app/app-shell.tsx` lines 312-314 — "لوحة الإدارة" link also conditional on `showAdminLink`
+- **Bottom nav:** `/home/z/my-project/src/components/app/mobile-bottom-nav.tsx` lines 8-18 — the "admin" tab with `LayoutGrid`/`ShieldCheck` icon is ALWAYS visible (not gated by showAdminLink). When clicked without auth, it opens `AdminGate` dialog.
+- **Bottom nav admin indicator:** line 96-98: amber dot on admin tab when `!adminUnlocked`
+
+**How admin access works:**
+- User clicks admin tab → `handleTabClick` checks `adminUnlocked` → if false, opens `AdminGate` dialog
+- `AdminGate` (`/home/z/my-project/src/components/app/admin-gate.tsx`) prompts for a 4-digit PIN code
+- On success, `adminUnlocked` = true, view switches to "admin" showing `<AdminPanel />`
+- **Key finding:** The bottom nav `MobileBottomNav` does NOT check `showAdminLink` — it always shows the admin tab to everyone. Only the header nav and footer link respect the preview flag.
+
+## 2) INTRO/SPLASH SCREEN
+
+**File:** `/home/z/my-project/src/components/app/intro.tsx` (232 lines)
+
+**Structure:**
+- Full-screen overlay: `fixed inset-0 z-[100]` (lines 103-104)
+- Background color: dynamic based on theme — dark mode uses `settings.bgColor` (default `#0a0a0b`), light mode uses `#faf8f2` (lines 47-50)
+- Direction: `dir="rtl"`
+- Loads settings from `/api/settings` endpoint on mount
+
+**Logo:**
+- Image: `/n.png` (line 139) — served from `/home/z/my-project/public/n.png`
+- Container: `w-28 h-28 sm:w-32 sm:h-32 rounded-3xl` with golden glow shadow (lines 133-136)
+- Animation: scale from 0.7→1, opacity 0→1, with 0.15s delay, 0.9s duration (lines 123-129)
+- Thin golden ring around logo: 1.5px border in accent color, animated opacity (lines 148-156)
+- Radial glow behind: 400px circle with accent color at 12% opacity (lines 112-117)
+
+**Text below logo:**
+- Brand name: `{settings.title}` (default "طيف") — `text-4xl sm:text-5xl font-bold` in accent color (lines 160-172)
+- Tagline: `{settings.subtitle}` (default "منصة طباعة احترافية") — `text-sm sm:text-base` (lines 175-189)
+
+**Progress bar:** At bottom center, `w-48 sm:w-56`, thin 2px bar with accent gradient, 4.2s duration (lines 193-214)
+
+**Trigger:** Shown when `showIntro` is true (defaults to true in store). Rendered in `app-shell.tsx` line 149. On finish, `setShowIntro(false)`.
+
+**Exit:** Fades out (opacity 0, scale 1.02) over 0.6s before removal.
+
+## 3) HEADER COMPONENT
+
+**File:** `/home/z/my-project/src/components/app/app-shell.tsx` lines 182-236
+
+**Structure (top to bottom):**
+
+**A) Top promo bar** (lines 153-180, only shown when `view !== "new"`):
+- Classes: `bg-neutral-900 text-neutral-200`
+- Height: `h-8 sm:h-9`
+- Mobile: "⚡ اطلب خلال دقيقة" (text-xs, truncated)
+- Desktop: Three promos — "⚡ اطلب خلال دقيقة", "🕐 جاهز خلال ساعة", "🔔 إشعار عند الجاهزية" (responsive: hidden on sm/md/lg)
+- Right side: Phone link `tel:{displayPhone}`
+
+**B) Main header** (lines 183-236):
+- Classes: `bg-white dark:bg-neutral-950 border-b border-border sticky top-0 z-40 no-print shadow-sm`
+- Height: `h-14 md:h-16`
+- Max width: `max-w-7xl mx-auto px-3 sm:px-4`
+- Layout: flex row with items-center justify-between gap-2
+
+**Header contents:**
+1. **Logo + shop name** (left, clickable → navigates to "new" view):
+   - Logo: `w-9 h-9 md:w-10 md:h-10 rounded-xl bg-neutral-900` with `<Printer>` icon in `text-amber-400`
+   - Shop name: `font-bold text-sm md:text-base`, subtitle `text-xs text-muted-foreground`
+
+2. **LiveClock** (`/home/z/my-project/src/components/app/live-clock.tsx`):
+   - Only visible on `lg:` screens (`hidden lg:flex`)
+   - Shows time + date with green pulse dot
+   - Classes: `text-xs text-muted-foreground`
+
+3. **Desktop nav** (`hidden md:flex`):
+   - Container: `bg-muted/60 rounded-full p-1` (pill shape)
+   - Items: filtered by `showAdminLink` — each is a rounded-full button
+   - Active state: `bg-neutral-900 rounded-full` pill via framer-motion `layoutId="nav-active-desktop"`
+   - Admin item has lock icon when `!adminUnlocked`
+
+4. **Mobile nav** (`flex md:hidden`):
+   - Container: `bg-muted/60 rounded-full p-1`
+   - Each item: `w-8 h-8 rounded-full` icon-only button
+   - Active state: same dark pill via `layoutId="nav-active-mobile"`
+   - Admin has amber dot when locked
+
+5. **Right action buttons** (lines 228-234):
+   - **Calculator button:** `<Button variant="ghost" size="icon">` with `<Calculator>` icon — opens QuickPriceCalculator dialog
+   - **NotificationBadge** (`/home/z/my-project/src/components/app/notification-badge.tsx`): Bell icon with unread count badge, opens dropdown panel
+   - **ThemeToggle** (`/home/z/my-project/src/components/app/theme-toggle.tsx`): Ghost button, `w-9 h-9 rounded-full`, Sun/Moon icon
+
+## 4) FOOTER COMPONENT
+
+**File:** `/home/z/my-project/src/components/app/app-shell.tsx` lines 278-360
+
+**Only shown when `view !== "admin"`**
+
+**Classes:** `bg-neutral-900 text-neutral-300 mt-auto no-print`
+
+**Structure:**
+1. **Toggle button** (lines 280-286):
+   - Full-width button with `<Info>` icon + text "إخفاء التفاصيل" / "عرض معلومات {shop name}"
+   - `text-xs text-neutral-400 hover:text-amber-400`
+   - ChevronUp icon rotates 180° when collapsed
+   - Border bottom: `border-b border-neutral-800/60`
+
+2. **Collapsible content** (lines 288-358):
+   - Uses CSS classes: `footer-collapse` + `footer-expanded` (defined in globals.css lines 34982-34989)
+   - `footer-collapse`: `max-height: 0; overflow: hidden; transition: max-height 0.45s`
+   - `footer-expanded`: `max-height: 4000px`
+   - Contains:
+     - `<TestimonialsSection />` (customer reviews carousel)
+     - `<div className="divider-gold" />` — golden gradient divider (globals.css line 35182)
+     - 4-column grid (`grid-cols-1 md:grid-cols-4 gap-8`):
+       - Col 1: Shop branding (Store icon in amber bg-amber-400 box, shop name, description)
+       - Col 2: Quick links (طلب طباعة جديد, تتبّع طلب, لوحة الإدارة [conditional], إعادة طلب سابق) — all `hover:text-amber-400`
+       - Col 3: Services list (🖨️📄🖼️📚🪪📜) — static text
+       - Col 4: Contact info (MapPin, Phone, MessageCircle, Mail, Clock with business hours) — icons in `text-amber-400`
+     - Copyright bar: `border-t border-neutral-800 text-center text-xs text-neutral-500`
+
+## 5) BOTTOM NAVIGATION BAR
+
+**File:** `/home/z/my-project/src/components/app/mobile-bottom-nav.tsx` (117 lines)
+
+**Container:** `md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-2xl border-t border-border/60 mobile-nav-safe no-print`
+
+**Height:** `h-14`
+
+**Tabs (4 items, each gets 1/5 width = 20%):**
+| Key | Label | Icon (normal) | Icon (active) |
+|-----|-------|---------------|---------------|
+| new | جديد | Plus | Plus |
+| repeat | تكرار | RotateCcw | RotateCcw |
+| track | تتبّع | Search | Search |
+| admin | الإدارة | LayoutGrid | ShieldCheck |
+
+**Active tab styling:**
+- Background indicator: `bg-amber-500/10 dark:bg-amber-500/15`, `h-11 w-1/5 rounded-t-2xl`, positioned via framer-motion
+- Icon color: `text-amber-600 dark:text-amber-400` (vs `text-muted-foreground/70` inactive)
+- Icon animation: lifts up 2px and scales to 1.15 when active
+- Activity dot: `bg-amber-500 rounded-full` below active icon
+- Bottom glowing bar: `h-[3px] bg-gradient-to-r from-amber-400 to-amber-600 rounded-full`
+
+**Admin locked indicator:** Amber dot with ring on admin tab (`w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white dark:ring-neutral-950`)
+
+**Chat icon overlapping issue:**
+- The **FloatingAssistant FAB** is at `fixed bottom-5 left-5 z-[100]` (bottom-left corner)
+- The **QuickActions FAB** is at `fixed bottom-24 right-4 z-50 md:hidden` (right side, above bottom nav)
+- The **BackToTop** button is at `fixed bottom-6 right-6 z-50` (right side)
+- The **WhatsAppButton** exists but is NOT imported/used in app-shell (dead code)
+- The MobileBottomNav is `z-40`, FloatingAssistant is `z-[100]` — so the chat FAB sits ON TOP of the bottom nav's left area. The bottom nav is full-width, and the floating assistant at `bottom-5 left-5` overlaps the bottom-left corner of the bottom nav on mobile.
+
+## 6) DARK MODE IMPLEMENTATION
+
+**A) Theme Provider:** `/home/z/my-project/src/components/theme-provider.tsx`
+```tsx
+<NextThemesProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange={false}>
+```
+- Uses `class` strategy (adds `.dark` to `<html>`)
+- **Default theme is "dark"**
+- System preference detection is disabled
+
+**B) Theme Toggle:** `/home/z/my-project/src/components/app/theme-toggle.tsx`
+- Uses `useTheme()` from `next-themes`
+- Checks `resolvedTheme === "dark"`
+- Renders Sun icon (amber-400) when dark, Moon icon (neutral-700) when light
+- Button classes: `w-9 h-9 rounded-full`, `bg-amber-400/10` in dark, `bg-neutral-900/5` in light
+
+**C) CSS Custom Variant:** `/home/z/my-project/src/app/globals.css` line 4:
+```css
+@custom-variant dark (&:is(.dark *));
+```
+
+**D) CSS Variables — Light Mode** (`:root`, lines 78-139):
+```css
+:root {
+  --background: #faf8f2;    /* Warm cream */
+  --foreground: #1a1510;
+  --card: #ffffff;
+  --primary: #b8923a;       /* Gold */
+  --secondary: #f5f0e5;
+  --muted: #ede8dc;
+  --accent: #fdf6e3;
+  --border: rgba(0, 0, 0, 0.08);
+  --ring: #b8923a;
+}
+```
+
+**E) CSS Variables — Dark Mode** (`.dark`, lines 144-189):
+```css
+.dark {
+  --background: #0a0a0b;    /* Near black */
+  --foreground: #e8e4dc;    /* Warm light */
+  --card: #141416;
+  --primary: #d4a853;       /* Brighter gold */
+  --secondary: #1e1e22;
+  --muted: #1e1e22;
+  --accent: #251e12;
+  --border: rgba(255, 255, 255, 0.08);
+  --ring: #d4a853;
+}
+```
+
+**F) Dark mode palette overrides:** Dark color tokens are INVERTED in dark mode (e.g., `--color-dark-50` becomes `#1c1c1f` instead of `#f5f5f5`)
+
+**G) Gold color palette** (lines 48-58): Full gold scale from gold-50 (#fefcf3) to gold-950 (#3a2a14), used across the theme
+
+**H) Dark classes used in components:**
+- Header: `bg-white dark:bg-neutral-950`
+- Bottom nav: `bg-white/90 dark:bg-neutral-950/90`
+- Chat window: `bg-white dark:bg-neutral-900`
+- Theme toggle: `bg-amber-400/10` (dark) vs `bg-neutral-900/5` (light)
+- NotificationBadge: `hover:text-amber-400` in dark
+- BackToTop: `bg-neutral-900 dark:bg-white dark:text-neutral-900`
+- Glass effect: `.dark .glass { background: oklch(0.21 0.012 60 / 70%); }`
+- Testimonials: `dark:from-amber-500/10 dark:to-orange-500/10`
+
+**I) Shop themes** (`/home/z/my-project/src/lib/themes.ts`):
+- 8 pre-defined color themes per shop (gold, emerald, blue, brown, purple, red, teal, orange)
+- Applied via `getTheme(shop.themeId)` in app-shell.tsx
+- `theme.rootVars` is referenced but NOT defined on ShopTheme type (always undefined — themes system appears incomplete/unused for CSS vars)
+
+## 7) FILES UNDER src/app/s/
+
+Only ONE file:
+```
+/home/z/my-project/src/app/s/[slug]/page.tsx
+```
+
+This is a Next.js dynamic route page that:
+- Fetches shop data from `/api/shops/{slug}`
+- Generates SEO metadata and JSON-LD structured data
+- Renders `<ShopPage slug={slug} />` from `/home/z/my-project/src/components/app/shop-page.tsx`
+- `ShopPage` wraps everything in `<ShopProvider>` → `<ShopApp>` → conditional `<MerchantDashboard>` (if `?admin=1`) or `<AppShell>` (customer view)
+
+## 8) ALL COMPONENT FILES
+
+### src/components/app/ (178 files):
+**Customer-facing core:**
+- app-shell.tsx, intro.tsx, mobile-bottom-nav.tsx, theme-toggle.tsx, shop-page.tsx
+- new-order-wizard.tsx, repeat-order.tsx, track-order.tsx, order-success.tsx
+- floating-assistant.tsx, quick-actions.tsx, back-to-top.tsx
+- live-clock.tsx, notification-badge.tsx, testimonials-section.tsx
+- upload-step.tsx, price-estimator.tsx, quick-price-calculator.tsx
+- track-page-client.tsx, whatsapp-button.tsx (exists but NOT used in app-shell)
+- welcome-hero.tsx, service-showcase.tsx, shop-trust-badges.tsx
+
+**Admin/merchant-only:**
+- admin-panel.tsx, admin-gate.tsx, admin-login-gate.tsx, admin-section-boundary.tsx
+- merchant-dashboard.tsx, merchant-analytics.tsx, merchant-order-detail.tsx
+- merchant-customers.tsx, merchant-expenses.tsx, merchant-settings-advanced.tsx
+- merchant-order-notes.tsx, merchant-revenue-breakdown.tsx
+- admin-settings.tsx, admin-settings-tab.tsx, admin-settings-enhanced.tsx
+- admin-overview-tab.tsx, admin-analytics.tsx, admin-shop-dashboard.tsx
+- admin-shop-card.tsx, admin-create-shop.tsx, admin-customers.tsx
+- admin-expenses.tsx, admin-security-tab.tsx, admin-platform-settings.tsx
+- admin-notification-center.tsx, admin-notif-settings.tsx
+- admin-quick-actions.tsx, admin-quick-actions-panel.tsx
+- admin-quick-order-btn.tsx, admin-quick-search.tsx
+- admin-order-notes-panel.tsx, admin-shortcuts.tsx, admin-shortcuts-overlay.tsx
+- admin-stubs.tsx
+
+**Widgets (admin dashboard analytics):**
+- 50+ widget files (revenue, orders, charts, etc.)
+
+### src/components/ui/ (53 shadcn/ui files):
+Standard UI primitives (button, card, dialog, input, tabs, etc.)
+
+### src/components/forms/ (1 file):
+- form-filler.tsx
+
+## SUMMARY OF KEY FINDINGS
+
+1. **Admin button visibility mismatch:** `MobileBottomNav` always shows admin tab (anyone can see it, triggers PIN gate). Header nav only shows it with `?preview=1`.
+2. **Floating assistant overlaps bottom nav:** Chat FAB at `bottom-5 left-5 z-[100]` sits on top of bottom nav (`z-40`) at bottom-left.
+3. **WhatsAppButton is dead code:** Component exists but is never imported.
+4. **Dark mode default is dark:** `defaultTheme="dark"` in ThemeProvider.
+5. **Theme system (rootVars) incomplete:** `theme.rootVars` referenced in app-shell but undefined on ShopTheme type — no inline CSS vars are actually applied.
+6. **Header has hardcoded colors:** Header uses `bg-neutral-900` for top bar and `bg-white dark:bg-neutral-950` for main bar, NOT using the shop theme system.
+7. **Only 1 route file** under `src/app/s/` — the entire customer app is a single-page app driven by Zustand state (`view`).
+8. **RTL throughout:** `dir="rtl"` on root layout html and app-shell container.
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Complete redesign of intro.tsx splash screen with cinematic animations
+
+Work Log:
+- Read worklog.md and existing intro.tsx for full context
+- Analyzed IntroSettings type from /lib/default-settings.ts
+- Completely rewrote /src/components/app/intro.tsx with premium splash screen design
+- Implemented multi-stage logo animation: soft glow pulse → spring scale (0.5→1.0) → shimmer sweep
+- Added expanding circular ripple rings (3 staggered) behind logo that fade out
+- Implemented character-by-character staggered fade-in for brand name "طيف" with blur-to-clear
+- Tagline fades in from below with blur-to-clear transition
+- Redesigned progress bar: thin 2.5px line with gradient fill, glowing leading edge dot with triple box-shadow, and ambient glow trail
+- Added 4 floating ambient gradient orbs with CSS keyframe animations (performant, no JS overhead)
+- Added breathing glow animation on logo container pulsing accent color shadow (CSS keyframe)
+- Background orbs drift slowly with different speeds (18-25s cycles)
+- Exit animation includes scale-up + blur-out for cinematic departure
+- Kept same props interface (onFinish callback), IntroSettings type import, API fetch from /api/settings
+- Kept dark/light mode support via useTheme, configurable duration from settings
+- Used framer-motion for stage animations, pure CSS keyframes for continuous ambient effects
+- Fixed JSX comment syntax errors (missing closing `}`)
+- Fixed useCallback lint error (inline function expression)
+- Removed unused textColor variable
+- Verified zero lint errors in intro.tsx
+
+Stage Summary:
+- File: /src/components/app/intro.tsx — completely rewritten (460 lines)
+- All 14 requirements met, compiles cleanly
+- Animation timeline: orbs(0s) → glow pulse(0s) → logo spring(0.3s) → ripples(0.4s) → shimmer(1.2s) → brand chars(1.0s) → tagline(1.6s) → progress → exit(duration-600ms)
+---
+Task ID: 11
+Agent: Main Agent
+Task: Remove admin button, redesign intro, improve dark mode, fix overlapping icons, improve header/footer
+
+Work Log:
+- Researched dark mode design best practices and intro/splash screen designs via web search
+- Explored all customer-facing components: app-shell, mobile-bottom-nav, floating-assistant, quick-actions, back-to-top, intro
+- **Removed admin button** from customer version:
+  - mobile-bottom-nav.tsx: Removed 4th tab (الإدارة), now 3 tabs (جديد, تكرار, تتبّع) with 33.333% width each
+  - app-shell.tsx: Removed admin nav item from both desktop and mobile header navs, removed admin link from footer
+- **Redesigned intro/splash screen** (intro.tsx) with cinematic animations:
+  - Multi-stage logo reveal: radial glow pulse → spring scale (0.5→1.0) → shimmer sweep
+  - Expanding concentric ripple rings behind logo (3 rings with staggered delays)
+  - Breathing glow animation on logo container (3s cycle)
+  - Character-by-character staggered fade-in for brand name "طيف" with blur-to-clear
+  - Tagline fades in from below with blur(8px)→blur(0px) at 1.6s delay
+  - Elegant progress bar with gradient fill, glowing leading-edge dot, ambient glow trail
+  - 4 floating ambient gradient orbs with CSS keyframe drift animations
+  - Exit animation: scale up 1.05× + blur(8px) + fade out
+- **Improved dark mode visual design**:
+  - Updated globals.css .dark variables: background #0c0c0e (warmer), card #17171a (more elevated), muted-foreground #8a8578 (better readability), border 0.06 opacity (subtler), input 0.08 opacity
+  - Updated QuickActions FAB: Now uses amber gradient instead of neutral-900, consistent in both modes
+  - Updated BackToTop button: Amber gradient instead of dark/light switch
+  - Updated QuickActions action buttons: Softer borders and shadows in dark mode
+- **Fixed FloatingAssistant overlapping bottom nav**:
+  - Changed position from `bottom-5 left-5 z-[100]` to `bottom-20 left-5 z-30 md:bottom-5 md:z-30`
+  - Applied same fix to chat window position
+  - Changed BackToTop from `bottom-6 right-6 z-50` to `bottom-20 right-4 z-30 md:bottom-6 md:right-6 md:z-50`
+  - Changed QuickActions from `bottom-24 right-4 z-50` to `bottom-20 right-4 z-30`
+- **Improved header design**:
+  - Changed from solid `bg-white dark:bg-neutral-950` to translucent `bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl`
+  - Promo bar: Now uses amber gradient instead of plain neutral-900, with proper icon components (Zap, Clock, Bell) instead of emojis
+  - Phone link: Styled as pill button with `bg-white/10` and rounded-full
+  - Desktop nav: Added border, refined styling with `bg-muted/50 dark:bg-white/5`
+  - Logo container: Now uses amber gradient instead of plain dark, with shadow-amber effects
+  - Active nav indicator: Uses gradient (from-neutral-800 to-neutral-900) for premium look
+- **Improved footer design**:
+  - Toggle button: Uses border-t with muted bg instead of dark neutral-900
+  - Footer content area: Dark `bg-neutral-950 dark:bg-black/40` background
+  - Social icons: Styled as hoverable icon buttons with color transitions
+  - Section headings: Added amber dot indicator for visual hierarchy
+  - Quick links: Added hover translate-x animation
+  - Services list: Added icons aligned with text
+  - Copyright: Now includes "مدعوم بـ طيف" branding
+  - Responsive: sm:grid-cols-2 lg:grid-cols-4
+
+Stage Summary:
+- Admin button completely removed from customer-facing version (bottom nav, header nav, footer link)
+- Intro redesigned with cinematic multi-stage animations, ambient orbs, character-by-character reveal
+- Dark mode improved with warmer surfaces, better contrast, subtler borders
+- FloatingAssistant, BackToTop, QuickActions positions fixed to avoid overlapping bottom nav
+- Header redesigned with glassmorphism, amber gradient logo, proper icon components
+- Footer redesigned with social icons, better hierarchy, responsive grid, branding
+- All changes verified: lint passes (no new errors), dev server compiles clean, curl returns 200

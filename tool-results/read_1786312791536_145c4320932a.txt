@@ -1,0 +1,720 @@
+     1→"use client";
+     2→
+     3→import { useState, useRef, useEffect, useCallback } from "react";
+     4→import ReactMarkdown from "react-markdown";
+     5→import {
+     6→  MessageCircle, X, Send, Sparkles, Phone, Bot, User,
+     7→  Volume2, VolumeX, Mic, MicOff, Loader2, Globe, ImagePlus, Download,
+     8→} from "lucide-react";
+     9→import { Button } from "@/components/ui/button";
+    10→import { Input } from "@/components/ui/input";
+    11→import { Textarea } from "@/components/ui/textarea";
+    12→import { FAQS, type FAQItem } from "@/lib/smart-assistant";
+    13→import { useAppStore } from "@/lib/store";
+    14→import { toast } from "sonner";
+    15→
+    16→interface FloatingAssistantProps {
+    17→  onRepeatOrder?: () => void;
+    18→}
+    19→
+    20→interface Message {
+    21→  role: "user" | "assistant";
+    22→  text: string;
+    23→  isAI?: boolean;
+    24→  suggestions?: FAQItem[];
+    25→  searchResults?: SearchResult[];
+    26→  generatedImage?: string;
+    27→}
+    28→
+    29→interface SearchResult {
+    30→  position: number;
+    31→  title: string;
+    32→  url: string;
+    33→  description: string;
+    34→  domain: string;
+    35→}
+    36→
+    37→const WHATSAPP_NUMBER = "0560000000";
+    38→const WHATSAPP_MSG = "مرحباً، أريد الاستفسار عن خدمة الطباعة";
+    39→
+    40→type AssistantMode = "ai" | "fallback";
+    41→
+    42→export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
+    43→  const [menuOpen, setMenuOpen] = useState(false);
+    44→  const [chatOpen, setChatOpen] = useState(false);
+    45→  const assistantOpen = useAppStore((s) => s.assistantOpen);
+    46→  const setAssistantOpen = useAppStore((s) => s.setAssistantOpen);
+    47→
+    48→  // الاستجابة لفتح المساعد من خارج المكون
+    49→  useEffect(() => {
+    50→    if (assistantOpen) {
+    51→      setChatOpen(true);
+    52→      setMenuOpen(false);
+    53→      setAssistantOpen(false);
+    54→    }
+    55→  }, [assistantOpen, setAssistantOpen]);
+    56→  const [messages, setMessages] = useState<Message[]>([
+    57→    {
+    58→      role: "assistant",
+    59→      text: "مرحباً بك في مطبعة الذكي! 🖨️\nأنا مساعدك الذكي. اسألني عن الخدمات، الأسعار، أو أي شيء تحتاجه!\n\n🔍 **بحث أسعار المنافسين** — اكتب: *بحث أسعار [الخدمة]*\n🎨 **تصميم بالذكاء الاصطناعي** — اكتب: *صمم لي [الوصف]*\n🔊 يمكنك الضغط على 🔊 للاستماع للردود أو 🎤 للتحدث بالصوت.",
+    60→      isAI: true,
+    61→      suggestions: FAQS.slice(0, 4),
+    62→    },
+    63→  ]);
+    64→  const [input, setInput] = useState("");
+    65→  const [typing, setTyping] = useState(false);
+    66→  const [mode, setMode] = useState<AssistantMode>("ai");
+    67→  const messagesEndRef = useRef<HTMLDivElement>(null);
+    68→  const abortRef = useRef<AbortController | null>(null);
+    69→
+    70→  // حالة TTS
+    71→  const [playingMsgIndex, setPlayingMsgIndex] = useState<number | null>(null);
+    72→  const audioRef = useRef<HTMLAudioElement | null>(null);
+    73→
+    74→  // حالة ASR
+    75→  const [recording, setRecording] = useState(false);
+    76→  const [asrLoading, setAsrLoading] = useState(false);
+    77→  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    78→  const chunksRef = useRef<Blob[]>([]);
+    79→
+    80→  // حالة توليد الصور
+    81→  const [imgPrompt, setImgPrompt] = useState("");
+    82→  const [imgGenerating, setImgGenerating] = useState(false);
+    83→  const [showImageGen, setShowImageGen] = useState(false);
+    84→
+    85→  // حالة البحث
+    86→  const [searchLoading, setSearchLoading] = useState(false);
+    87→
+    88→  useEffect(() => {
+    89→    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    90→  }, [messages, typing]);
+    91→
+    92→  useEffect(() => {
+    93→    return () => {
+    94→      abortRef.current?.abort();
+    95→      audioRef.current?.pause();
+    96→      if (mediaRecorderRef.current?.state === "recording") {
+    97→        mediaRecorderRef.current.stop();
+    98→      }
+    99→    };
+   100→  }, []);
+   101→
+   102→  function openWhatsApp() {
+   103→    const url = `https://wa.me/213${WHATSAPP_NUMBER.substring(1)}?text=${encodeURIComponent(WHATSAPP_MSG)}`;
+   104→    window.open(url, "_blank");
+   105→    setMenuOpen(false);
+   106→    toast.success("فتح واتساب", { description: "سيتم تحويلك للمحادثة" });
+   107→  }
+   108→
+   109→  function openAssistant() {
+   110→    setChatOpen(true);
+   111→    setMenuOpen(false);
+   112→  }
+   113→
+   114→  // ===== TTS =====
+   115→  const toggleTTS = useCallback(async (msgIndex: number, text: string) => {
+   116→    if (playingMsgIndex === msgIndex) {
+   117→      audioRef.current?.pause();
+   118→      audioRef.current = null;
+   119→      setPlayingMsgIndex(null);
+   120→      return;
+   121→    }
+   122→    audioRef.current?.pause();
+   123→    setPlayingMsgIndex(msgIndex);
+   124→    try {
+   125→      const res = await fetch("/api/ai/tts", {
+   126→        method: "POST",
+   127→        headers: { "Content-Type": "application/json" },
+   128→        body: JSON.stringify({ text }),
+   129→      });
+   130→      if (!res.ok) {
+   131→        setPlayingMsgIndex(null);
+   132→        toast.error("خطأ في تشغيل الصوت");
+   133→        return;
+   134→      }
+   135→      const blob = await res.blob();
+   136→      const url = URL.createObjectURL(blob);
+   137→      const audio = new Audio(url);
+   138→      audioRef.current = audio;
+   139→      audio.onended = () => { setPlayingMsgIndex(null); audioRef.current = null; URL.revokeObjectURL(url); };
+   140→      audio.onerror = () => { setPlayingMsgIndex(null); audioRef.current = null; URL.revokeObjectURL(url); };
+   141→      await audio.play();
+   142→    } catch {
+   143→      setPlayingMsgIndex(null);
+   144→      toast.error("فشل تشغيل الصوت. تحقق من اتصالك.");
+   145→    }
+   146→  }, [playingMsgIndex]);
+   147→
+   148→  // ===== ASR =====
+   149→  const toggleRecording = useCallback(async () => {
+   150→    if (recording) {
+   151→      mediaRecorderRef.current?.stop();
+   152→      setRecording(false);
+   153→      return;
+   154→    }
+   155→    try {
+   156→      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+   157→      const mediaRecorder = new MediaRecorder(stream, {
+   158→        mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4",
+   159→      });
+   160→      chunksRef.current = [];
+   161→      mediaRecorderRef.current = mediaRecorder;
+   162→      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+   163→      mediaRecorder.onstop = async () => {
+   164→        stream.getTracks().forEach((t) => t.stop());
+   165→        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+   166→        if (blob.size < 100) { toast.error("التسجيل قصير جداً"); return; }
+   167→        setAsrLoading(true);
+   168→        try {
+   169→          const reader = new FileReader();
+   170→          const base64: string = await new Promise((resolve, reject) => {
+   171→            reader.onloadend = () => resolve(reader.result as string);
+   172→            reader.onerror = reject;
+   173→            reader.readAsDataURL(blob);
+   174→          });
+   175→          const res = await fetch("/api/ai/asr", {
+   176→            method: "POST",
+   177→            headers: { "Content-Type": "application/json" },
+   178→            body: JSON.stringify({ audio: base64 }),
+   179→          });
+   180→          const data = await res.json();
+   181→          if (data.success && data.text) {
+   182→            setInput((prev) => (prev ? prev + " " + data.text : data.text));
+   183→            toast.success("تم التعرف على الكلام", { description: data.text.slice(0, 80) });
+   184→          } else {
+   185→            toast.error(data.message || "لم يتم التعرف على الكلام");
+   186→          }
+   187→        } catch { toast.error("فشل في تحويل الصوت إلى نص"); }
+   188→        finally { setAsrLoading(false); }
+   189→      };
+   190→      mediaRecorder.start();
+   191→      setRecording(true);
+   192→      toast("جارٍ التسجيل... تحدث الآن", { icon: <Mic className="h-4 w-4 text-rose-500 animate-pulse" />, duration: 2000 });
+   193→    } catch { toast.error("لا يمكن الوصول للميكروفون. تأكد من منح الإذن."); }
+   194→  }, [recording]);
+   195→
+   196→  // ===== Web Search =====
+   197→  const performWebSearch = useCallback(async (query: string) => {
+   198→    setSearchLoading(true);
+   199→    try {
+   200→      const res = await fetch("/api/ai/web-search", {
+   201→        method: "POST",
+   202→        headers: { "Content-Type": "application/json" },
+   203→        body: JSON.stringify({ query }),
+   204→      });
+   205→      const data = await res.json();
+   206→      if (data.success && data.results?.length > 0) {
+   207→        const results: SearchResult[] = data.results;
+   208→        const summary = results
+   209→          .slice(0, 5)
+   210→          .map((r: SearchResult) => `**${r.title}**\n${r.description}\n🔗 [${r.domain}](${r.url})`)
+   211→          .join("\n\n");
+   212→        const reply = `🔍 **نتائج البحث عن:** "${query}"\n\n${summary}`;
+   213→        setMessages((prev) => [...prev, { role: "assistant", text: reply, isAI: true, searchResults: results }]);
+   214→      } else {
+   215→        setMessages((prev) => [
+   216→          ...prev,
+   217→          { role: "assistant", text: "❌ لم يتم العثور على نتائج بحث. جرّب صياغة مختلفة.", isAI: true },
+   218→        ]);
+   219→      }
+   220→    } catch {
+   221→      setMessages((prev) => [
+   222→        ...prev,
+   223→        { role: "assistant", text: "❌ فشل في البحث. تحقق من اتصالك بالإنترنت.", isAI: true },
+   224→      ]);
+   225→    } finally {
+   226→      setSearchLoading(false);
+   227→    }
+   228→  }, []);
+   229→
+   230→  // ===== Image Generation =====
+   231→  const generateImage = useCallback(async (prompt: string) => {
+   232→    if (!prompt.trim() || prompt.trim().length < 5) {
+   233→      toast.error("الوصف قصير جداً (5 أحرف على الأقل)");
+   234→      return;
+   235→    }
+   236→    setImgGenerating(true);
+   237→    try {
+   238→      const res = await fetch("/api/ai/generate-image", {
+   239→        method: "POST",
+   240→        headers: { "Content-Type": "application/json" },
+   241→        body: JSON.stringify({ prompt, size: "1024x1024" }),
+   242→      });
+   243→      const data = await res.json();
+   244→      if (data.success && data.image) {
+   245→        setMessages((prev) => [
+   246→          ...prev,
+   247→          {
+   248→            role: "assistant",
+   249→            text: `🎨 **تم إنشاء التصميم** بناءً على: "${prompt}"\n\nاضغط على الصورة لتنزيلها بجودة عالية.`,
+   250→            isAI: true,
+   251→            generatedImage: data.image,
+   252→          },
+   253→        ]);
+   254→        setImgPrompt("");
+   255→        setShowImageGen(false);
+   256→      } else {
+   257→        toast.error(data.error || "فشل في إنشاء التصميم");
+   258→      }
+   259→    } catch {
+   260→      toast.error("فشل في إنشاء التصميم. حاول مرة أخرى.");
+   261→    } finally {
+   262→      setImgGenerating(false);
+   263→    }
+   264→  }, []);
+   265→
+   266→  // ===== AI Chat =====
+   267→  const callAIChat = useCallback(async (userMessage: string, history: Message[]) => {
+   268→    try {
+   269→      const abort = abortRef.current || new AbortController();
+   270→      abortRef.current = abort;
+   271→      const res = await fetch("/api/ai/chat", {
+   272→        method: "POST",
+   273→        headers: { "Content-Type": "application/json" },
+   274→        body: JSON.stringify({
+   275→          message: userMessage,
+   276→          history: history.map((m) => ({ role: m.role, text: m.text })),
+   277→        }),
+   278→        signal: abort.signal,
+   279→      });
+   280→      if (!res.ok) throw new Error("API error");
+   281→      return await res.json();
+   282→    } catch (err) {
+   283→      if (err instanceof DOMException && err.name === "AbortError") return null;
+   284→      console.error("[AI Chat] Error:", err);
+   285→      return null;
+   286→    }
+   287→  }, []);
+   288→
+   289→  function fallbackAnswer(query: string) {
+   290→    const q = query.toLowerCase().trim();
+   291→    let bestMatch: FAQItem | null = null;
+   292→    let bestScore = 0;
+   293→    for (const faq of FAQS) {
+   294→      let score = 0;
+   295→      for (const kw of faq.keywords) {
+   296→        if (q.includes(kw.toLowerCase())) score += kw.length > 3 ? 3 : 2;
+   297→      }
+   298→      const qWords = faq.question.toLowerCase().split(/\s+/);
+   299→      for (const w of qWords) {
+   300→        if (w.length > 2 && q.includes(w)) score += 1;
+   301→      }
+   302→      if (score > bestScore) { bestScore = score; bestMatch = faq; }
+   303→    }
+   304→    if (bestMatch && bestScore >= 2) {
+   305→      const suggestions = FAQS.filter((f) => f.id !== bestMatch!.id && f.category === bestMatch!.category).slice(0, 3);
+   306→      return { text: bestMatch.answer, suggestions };
+   307→    }
+   308→    return { text: "لم أجد إجابة دقيقة. جرّب إعادة صياغة السؤال أو تواصل معنا عبر واتساب 📱", suggestions: FAQS.slice(0, 4) };
+   309→  }
+   310→
+   311→  async function askQuestion(q: string) {
+   312→    if (!q.trim()) return;
+   313→
+   314→    // كشف أوامر خاصة: بحث أسعار
+   315→    const searchMatch = q.match(/بحث\s+(أسعار|أسعار?|سعر)\s+(.+)/i);
+   316→    if (searchMatch) {
+   317→      const userMsg: Message = { role: "user", text: q };
+   318→      setMessages((prev) => [...prev, userMsg]);
+   319→      setInput("");
+   320→      setTyping(true);
+   321→      const query = `أسعار ${searchMatch[2].trim()} طباعة الجزائر 2025`;
+   322→      await performWebSearch(query);
+   323→      setTyping(false);
+   324→      return;
+   325→    }
+   326→
+   327→    // كشف أوامر خاصة: تصميم
+   328→    const imgMatch = q.match(/(?:صمم|صميم|أنشئ|ارسم)\s+(?:لي\s+)?(.+)/i);
+   329→    if (imgMatch) {
+   330→      const userMsg: Message = { role: "user", text: q };
+   331→      setMessages((prev) => [...prev, userMsg]);
+   332→      setInput("");
+   333→      setTyping(true);
+   334→      const description = imgMatch[1].trim();
+   335→      if (description.length >= 5) {
+   336→        await generateImage(description);
+   337→      } else {
+   338→        setMessages((prev) => [
+   339→          ...prev,
+   340→          { role: "assistant", text: "❌ الوصف قصير جداً. اكتب تفاصيل أكثر عن التصميم المطلوب.\n\nمثال: *صمم لي بطاقة أعمال احترافية بلون ذهبي*", isAI: true },
+   341→        ]);
+   342→      }
+   343→      setTyping(false);
+   344→      return;
+   345→    }
+   346→
+   347→    const userMsg: Message = { role: "user", text: q };
+   348→    const newMessages = [...messages, userMsg];
+   349→    setMessages(newMessages);
+   350→    setInput("");
+   351→    setTyping(true);
+   352→
+   353→    if (mode === "ai") {
+   354→      const result = await callAIChat(q, newMessages);
+   355→      setTyping(false);
+   356→      if (result && result.success) {
+   357→        setMessages((prev) => [...prev, { role: "assistant", text: result.response, isAI: true }]);
+   358→      } else {
+   359→        setMode("fallback");
+   360→        const fallback = fallbackAnswer(q);
+   361→        setMessages((prev) => [
+   362→          ...prev,
+   363→          { role: "assistant", text: fallback.text + "\n\n⚠️ تم التبديل للوضع الاحتياطي", suggestions: fallback.suggestions },
+   364→        ]);
+   365→      }
+   366→    } else {
+   367→      await new Promise((r) => setTimeout(r, 500));
+   368→      setTyping(false);
+   369→      const fallback = fallbackAnswer(q);
+   370→      setMessages((prev) => [...prev, { role: "assistant", text: fallback.text, suggestions: fallback.suggestions }]);
+   371→    }
+   372→  }
+   373→
+   374→  function handleSuggestion(faq: FAQItem) { askQuestion(faq.question); }
+   375→
+   376→  function resetChat() {
+   377→    audioRef.current?.pause();
+   378→    audioRef.current = null;
+   379→    setPlayingMsgIndex(null);
+   380→    setMessages([
+   381→      {
+   382→        role: "assistant",
+   383→        text: "مرحباً بك في مطبعة الذكي! 🖨️\nأنا مساعدك الذكي. اسألني عن الخدمات، الأسعار، أو أي شيء تحتاجه!\n\n🔍 **بحث أسعار المنافسين** — اكتب: *بحث أسعار [الخدمة]*\n🎨 **تصميم بالذكاء الاصطناعي** — اكتب: *صمم لي [الوصف]*",
+   384→        isAI: true,
+   385→        suggestions: FAQS.slice(0, 4),
+   386→      },
+   387→    ]);
+   388→    setMode("ai");
+   389→  }
+   390→
+   391→  function downloadImage(base64: string) {
+   392→    const a = document.createElement("a");
+   393→    a.href = `data:image/png;base64,${base64}`;
+   394→    a.download = `تصميم-مطبعة-الذكي-${Date.now()}.png`;
+   395→    document.body.appendChild(a);
+   396→    a.click();
+   397→    document.body.removeChild(a);
+   398→    toast.success("تم تنزيل التصميم");
+   399→  }
+   400→
+   401→  const isDisabled = typing || recording || asrLoading;
+   402→
+   403→  return (
+   404→    <>
+   405→      {/* ===== الزر العائم ===== */}
+   406→      <div className="fixed bottom-5 left-5 z-[100] flex flex-col items-start gap-2 no-print">
+   407→        {menuOpen && !chatOpen && (
+   408→          <div className="flex flex-col gap-2 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+   409→            <button
+   410→              onClick={openWhatsApp}
+   411→              className="flex items-center gap-3 bg-white border border-emerald-200 shadow-lg rounded-full ps-3 pe-5 py-2.5 hover:bg-emerald-50 transition-colors group"
+   412→            >
+   413→              <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+   414→                <MessageCircle className="h-5 w-5 text-white" />
+   415→              </div>
+   416→              <div className="text-right">
+   417→                <div className="font-bold text-sm text-neutral-900">واتساب</div>
+   418→                <div className="text-xs text-muted-foreground">تواصل مباشر</div>
+   419→              </div>
+   420→            </button>
+   421→
+   422→            <button
+   423→              onClick={openAssistant}
+   424→              className="flex items-center gap-3 bg-white border border-amber-200 shadow-lg rounded-full ps-3 pe-5 py-2.5 hover:bg-amber-50 transition-colors group"
+   425→            >
+   426→              <div className="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center shrink-0">
+   427→                <Sparkles className="h-5 w-5 text-neutral-900" />
+   428→              </div>
+   429→              <div className="text-right">
+   430→                <div className="font-bold text-sm text-neutral-900">المساعد الذكي</div>
+   431→                <div className="text-xs text-muted-foreground">AI + صوت + بحث + تصميم</div>
+   432→              </div>
+   433→            </button>
+   434→
+   435→            <a
+   436→              href="tel:0560000000"
+   437→              className="flex items-center gap-3 bg-white border border-amber-200 shadow-lg rounded-full ps-3 pe-5 py-2.5 hover:bg-amber-50 transition-colors group"
+   438→            >
+   439→              <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
+   440→                <Phone className="h-5 w-5 text-white" />
+   441→              </div>
+   442→              <div className="text-right">
+   443→                <div className="font-bold text-sm text-neutral-900">اتصال</div>
+   444→                <div className="text-xs text-muted-foreground">0560 00 00 00</div>
+   445→              </div>
+   446→            </a>
+   447→          </div>
+   448→        )}
+   449→
+   450→        <button
+   451→          onClick={() => setMenuOpen(!menuOpen)}
+   452→          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all ${
+   453→            menuOpen ? "bg-neutral-900 rotate-90" : "bg-amber-400 hover:scale-110 hover:shadow-2xl"
+   454→          }`}
+   455→          aria-label="مساعدة"
+   456→        >
+   457→          {menuOpen ? (
+   458→            <X className="h-6 w-6 text-white" />
+   459→          ) : (
+   460→            <Sparkles className="h-6 w-6 text-neutral-900" />
+   461→          )}
+   462→          {!menuOpen && (
+   463→            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white" />
+   464→          )}
+   465→        </button>
+   466→      </div>
+   467→
+   468→      {/* ===== نافذة المساعد الذكي ===== */}
+   469→      {chatOpen && (
+   470→        <div className="fixed bottom-5 left-5 z-[100] w-[calc(100vw-2.5rem)] sm:w-96 max-w-md no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
+   471→          <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-amber-200 dark:border-amber-800/50 overflow-hidden flex flex-col" style={{ height: "min(80vh, 640px)" }}>
+   472→            {/* الرأس */}
+   473→            <div className="bg-neutral-900 text-white px-4 py-3 flex items-center justify-between">
+   474→              <div className="flex items-center gap-2.5">
+   475→                <div className="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center">
+   476→                  <Sparkles className="h-5 w-5 text-neutral-900" />
+   477→                </div>
+   478→                <div>
+   479→                  <div className="font-bold text-sm">المساعد الذكي</div>
+   480→                  <div className="text-xs text-neutral-300 flex items-center gap-1">
+   481→                    <span className={`w-1.5 h-1.5 rounded-full ${mode === "ai" ? "bg-emerald-400" : "bg-amber-400"}`} />
+   482→                    {mode === "ai" ? "متصل بالذكاء الاصطناعي" : "الوضع الاحتياطي"}
+   483→                  </div>
+   484→                </div>
+   485→              </div>
+   486→              <div className="flex items-center gap-1">
+   487→                {/* أزرار الأدوات */}
+   488→                <button
+   489→                  onClick={() => setShowImageGen(!showImageGen)}
+   490→                  className={`w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors ${showImageGen ? "bg-amber-500/30" : ""}`}
+   491→                  title="توليد تصميم"
+   492→                >
+   493→                  <ImagePlus className="h-4 w-4" />
+   494→                </button>
+   495→                <button
+   496→                  onClick={resetChat}
+   497→                  className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+   498→                  title="محادثة جديدة"
+   499→                >
+   500→                  <MessageCircle className="h-4 w-4" />
+   501→                </button>
+   502→                <button
+   503→                  onClick={() => setChatOpen(false)}
+   504→                  className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+   505→                >
+   506→                  <X className="h-4 w-4" />
+   507→                </button>
+   508→              </div>
+   509→            </div>
+   510→
+   511→            {/* لوحة توليد الصور */}
+   512→            {showImageGen && (
+   513→              <div className="border-b border-amber-100 bg-amber-50/50 p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+   514→                <div className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+   515→                  <ImagePlus className="h-3.5 w-3.5" />
+   516→                  توليد تصميم بالذكاء الاصطناعي
+   517→                </div>
+   518→                <Textarea
+   519→                  value={imgPrompt}
+   520→                  onChange={(e) => setImgPrompt(e.target.value)}
+   521→                  placeholder="مثال: بطاقة أعمال احترافية بلون ذهبي وأسود..."
+   522→                  className="text-xs min-h-[60px] max-h-[100px] resize-none"
+   523→                  dir="rtl"
+   524→                />
+   525→                <div className="flex gap-2">
+   526→                  <Button
+   527→                    size="sm"
+   528→                    className="flex-1 h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+   529→                    onClick={() => generateImage(imgPrompt)}
+   530→                    disabled={imgGenerating || imgPrompt.trim().length < 5}
+   531→                  >
+   532→                    {imgGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImagePlus className="h-3 w-3" />}
+   533→                    {imgGenerating ? "جارٍ التصميم..." : "إنشاء التصميم"}
+   534→                  </Button>
+   535→                  <Button
+   536→                    size="sm"
+   537→                    variant="ghost"
+   538→                    className="h-8 text-xs"
+   539→                    onClick={() => setShowImageGen(false)}
+   540→                  >
+   541→                    إلغاء
+   542→                  </Button>
+   543→                </div>
+   544→              </div>
+   545→            )}
+   546→
+   547→            {/* الرسائل */}
+   548→            <div className="flex-1 overflow-y-auto custom-scroll p-4 space-y-3 bg-amber-50/30">
+   549→              {messages.map((msg, i) => (
+   550→                <div key={i} className={msg.role === "user" ? "flex justify-start" : "flex justify-end"}>
+   551→                  <div className="max-w-[85%]">
+   552→                    {/* مؤشر AI + أزرار */}
+   553→                    {msg.isAI && msg.role === "assistant" && (
+   554→                      <div className="flex items-center justify-end gap-1.5 mb-1">
+   555→                        <button
+   556→                          onClick={() => toggleTTS(i, msg.text)}
+   557→                          disabled={playingMsgIndex !== null && playingMsgIndex !== i}
+   558→                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+   559→                            playingMsgIndex === i ? "bg-amber-500 text-white scale-110 shadow-md" : "hover:bg-amber-100 text-amber-600"
+   560→                          } disabled:opacity-40`}
+   561→                          title={playingMsgIndex === i ? "إيقاف الصوت" : "استمع للرد"}
+   562→                        >
+   563→                          {playingMsgIndex === i ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+   564→                        </button>
+   565→                        <span className="text-[10px] text-amber-600">✨ بالذكاء الاصطناعي</span>
+   566→                      </div>
+   567→                    )}
+   568→
+   569→                    <div
+   570→                      className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed chat-markdown ${
+   571→                        msg.role === "user"
+   572→                          ? "bg-neutral-900 text-white rounded-bl-sm"
+   573→                          : "bg-white border border-amber-100 text-neutral-800 rounded-br-sm shadow-sm"
+   574→                      }`}
+   575→                    >
+   576→                      {msg.role === "user" ? (
+   577→                        <p className="whitespace-pre-wrap">{msg.text}</p>
+   578→                      ) : (
+   579→                        <ReactMarkdown
+   580→                          components={{
+   581→                            a: ({ href, children }) => (
+   582→                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-amber-600 underline hover:text-amber-800">
+   583→                                {children}
+   584→                              </a>
+   585→                            ),
+   586→                          }}
+   587→                        >
+   588→                          {msg.text}
+   589→                        </ReactMarkdown>
+   590→                      )}
+   591→                    </div>
+   592→
+   593→                    {/* صورة مُولَّدة */}
+   594→                    {msg.generatedImage && (
+   595→                      <div className="mt-2 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
+   596→                        <img
+   597→                          src={`data:image/png;base64,${msg.generatedImage}`}
+   598→                          alt="تصميم مُولَّد"
+   599→                          className="w-full cursor-pointer hover:opacity-90 transition-opacity"
+   600→                          onClick={() => downloadImage(msg.generatedImage!)}
+   601→                        />
+   602→                        <button
+   603→                          onClick={() => downloadImage(msg.generatedImage!)}
+   604→                          className="w-full flex items-center justify-center gap-1.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition-colors"
+   605→                        >
+   606→                          <Download className="h-3.5 w-3.5" />
+   607→                          تنزيل التصميم
+   608→                        </button>
+   609→                      </div>
+   610→                    )}
+   611→
+   612→                    {/* نتائج البحث */}
+   613→                    {msg.searchResults && msg.searchResults.length > 0 && (
+   614→                      <div className="mt-2 space-y-1.5">
+   615→                        {msg.searchResults.slice(0, 5).map((r) => (
+   616→                          <a
+   617→                            key={r.position}
+   618→                            href={r.url}
+   619→                            target="_blank"
+   620→                            rel="noopener noreferrer"
+   621→                            className="block text-right bg-white hover:bg-amber-50 border border-amber-200 hover:border-amber-400 rounded-lg px-3 py-2 transition-colors"
+   622→                          >
+   623→                            <div className="text-xs font-medium text-neutral-900 flex items-center gap-1.5">
+   624→                              <Globe className="h-3 w-3 text-amber-500 shrink-0" />
+   625→                              <span className="truncate">{r.title}</span>
+   626→                            </div>
+   627→                            <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2 mr-5">
+   628→                              {r.description}
+   629→                            </div>
+   630→                            <div className="text-[10px] text-amber-600 mt-0.5 mr-5">{r.domain}</div>
+   631→                          </a>
+   632→                        ))}
+   633→                      </div>
+   634→                    )}
+   635→
+   636→                    {/* اقتراحات */}
+   637→                    {msg.suggestions && msg.suggestions.length > 0 && (
+   638→                      <div className="mt-2 space-y-1.5">
+   639→                        {msg.suggestions.map((s) => (
+   640→                          <button
+   641→                            key={s.id}
+   642→                            onClick={() => handleSuggestion(s)}
+   643→                            className="block w-full text-right text-xs bg-white hover:bg-amber-50 border border-amber-200 hover:border-amber-400 rounded-lg px-3 py-2 transition-colors"
+   644→                          >
+   645→                            <span className="text-amber-600">💬</span> {s.question}
+   646→                          </button>
+   647→                        ))}
+   648→                      </div>
+   649→                    )}
+   650→                  </div>
+   651→                </div>
+   652→              ))}
+   653→
+   654→              {/* مؤشر الكتابة */}
+   655→              {typing && (
+   656→                <div className="flex justify-end">
+   657→                  <div className="bg-white border border-amber-100 rounded-2xl rounded-br-sm px-4 py-3 shadow-sm">
+   658→                    <div className="flex items-center gap-2">
+   659→                      <Bot className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+   660→                      <div className="flex gap-1">
+   661→                        <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+   662→                        <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+   663→                        <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+   664→                      </div>
+   665→                    </div>
+   666→                  </div>
+   667→                </div>
+   668→              )}
+   669→
+   670→              <div ref={messagesEndRef} />
+   671→            </div>
+   672→
+   673→            {/* إدخال + ميكروفون */}
+   674→            <div className="border-t bg-white p-3">
+   675→              <form
+   676→                onSubmit={(e) => { e.preventDefault(); askQuestion(input); }}
+   677→                className="flex gap-2"
+   678→              >
+   679→                <Input
+   680→                  value={input}
+   681→                  onChange={(e) => setInput(e.target.value)}
+   682→                  placeholder="اكتب سؤالك أو: بحث أسعار / صمم لي..."
+   683→                  className="flex-1"
+   684→                  disabled={isDisabled}
+   685→                />
+   686→                <button
+   687→                  type="button"
+   688→                  onClick={toggleRecording}
+   689→                  disabled={asrLoading}
+   690→                  className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
+   691→                    recording
+   692→                      ? "bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-200"
+   693→                      : asrLoading
+   694→                        ? "bg-muted text-muted-foreground"
+   695→                        : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600"
+   696→                  } disabled:opacity-40`}
+   697→                  title={recording ? "إيقاف التسجيل" : "تحدث بالصوت"}
+   698→                >
+   699→                  {asrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : recording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+   700→                </button>
+   701→                <Button
+   702→                  type="submit"
+   703→                  size="icon"
+   704→                  className="bg-amber-400 hover:bg-amber-500 text-neutral-900 shrink-0"
+   705→                  disabled={!input.trim() || isDisabled}
+   706→                >
+   707→                  <Send className="h-4 w-4" />
+   708→                </Button>
+   709→              </form>
+   710→              <div className="text-xs text-muted-foreground text-center mt-1.5 flex items-center justify-center gap-1">
+   711→                <Bot className="h-3 w-3" />
+   712→                <span>AI + صوت + بحث + تصميم · للطلبات الخاصة استخدم واتساب</span>
+   713→              </div>
+   714→            </div>
+   715→          </div>
+   716→        </div>
+   717→      )}
+   718→    </>
+   719→  );
+   720→}

@@ -1,0 +1,1262 @@
+     1→---
+     2→Task ID: 1-8
+     3→Agent: Main Agent
+     4→Task: Full analysis and update of tayf-saas project
+     5→
+     6→Work Log:
+     7→- Cloned GitHub repo from zellouma2019/tayf-saas
+     8→- Analyzed 3 live URLs via agent-browser: admin dashboard, merchant admin, customer view
+     9→- Identified 7 active shops, 49 orders, 74,271 DA revenue
+    10→- Updated prisma/schema.prisma: Added rating, review, editableUntil to PrintOrder
+    11→- Created 5 new components: whatsapp-button, testimonials-section, welcome-hero, loyalty-checker, order-rating
+    12→- Created 4 new API routes: orders/[id]/rate, reviews, loyalty/check, loyalty/apply-discount
+    13→- Integrated WelcomeHero, TestimonialsSection, LoyaltyChecker into app-shell.tsx
+    14→- Added loyalty tab to navigation items
+    15→- Pushed commit 2993347 to GitHub main branch
+    16→- Sandbox limitation: 162 components + 35K globals.css too heavy for Turbopack in sandbox
+    17→
+    18→Stage Summary:
+    19→- All code changes committed and pushed to GitHub
+    20→- Vercel auto-deployment will apply changes
+    21→
+    22→---
+    23→Task ID: 10
+    24→Agent: Main Agent
+    25→Task: Complete replacement of customer-facing pages with matbaa-dhaki (7.zip) version
+    26→
+    27→Work Log:
+    28→- Cloned both GitHub repos: zellouma2019/matbaa-dhaki (7.zip) and zellouma2019/tayf-saas
+    29→- Analyzed all 28 components in matbaa-dhaki, classified as customer-facing vs admin/merchant
+    30→- Identified key integration differences: matbaa-dhaki uses props, tayf-saas uses ShopProvider context
+    31→- Replaced app-shell.tsx: Adapted to use useShop() instead of AppShellProps, simplified 4-view navigation
+    32→- Replaced track-order.tsx: Added shopApi() for multi-tenant /api/track calls
+    33→- Replaced repeat-order.tsx: Added shopApi() for multi-tenant /api/orders/by-phone calls
+    34→- Replaced order-success.tsx: Direct copy from matbaa-dhaki
+    35→- Replaced intro.tsx: Added shopApi() for multi-tenant /api/settings calls
+    36→- Replaced theme-toggle.tsx: Direct copy from matbaa-dhaki
+    37→- Replaced floating-assistant.tsx: Dynamic WhatsApp from useShop(), shopApi() for AI APIs
+    38→- Replaced new-order-wizard.tsx: Added shopApi() for /api/orders and /api/settings, removed /api/orders/upload (doesn't exist), unified to chunked upload only
+    39→- Replaced upload-step.tsx: Direct copy (pure presentational component)
+    40→- Replaced offer-popup.tsx: Direct copy from matbaa-dhaki
+    41→- Replaced premium-feature.tsx: Direct copy from matbaa-dhaki
+    42→- Verified Prisma schema already has rating, review, editableUntil fields
+    43→- Verified no broken imports across all replaced components
+    44→- shop-page.tsx requires no changes (AppShell called without props)
+    45→
+    46→Stage Summary:
+    47→- ALL 12 customer-facing components completely replaced with matbaa-dhaki versions
+    48→- Multi-tenancy maintained via shopApi() and useShop() context
+    49→- File upload unified to chunked upload (removes dependency on non-existent /api/orders/upload)
+    50→- Ready to push to GitHub for Vercel deployment
+    51→- 5-tier loyalty system: bronze(0)/silver(5,5%)/gold(15,10%)/platinum(30,15%)/diamond(50,20%)
+    52→- Customer reviews with star ratings on delivered orders
+    53→- Testimonials carousel in shop footer
+    54→- Welcome hero for first-time visitors
+    55→- WhatsApp floating button already existed in project
+    56→
+    57→---
+    58→Task ID: 2
+    59→Agent: Main Agent
+    60→Task: Fix errors and build admin panel for root page
+    61→
+    62→Work Log:
+    63→- Fixed Store View type to include "loyalty" in src/lib/store.ts
+    64→- Fixed WelcomeHero component to accept onDismiss prop
+    65→- Fixed reviews API response format (added id, serviceEmoji fields)
+    66→- Fixed LoyaltyChecker to read totalOrders instead of orderCount from API
+    67→- Built complete admin panel at root page (/) with:
+    68→  - Inline login gate with SHA-256 password authentication
+    69→  - Stats dashboard (orders, revenue, shops, today's orders)
+    70→  - Shops management tab (list, create, delete, view, admin links)
+    71→  - Orders tab (recent orders across all shops)
+    72→  - Settings tab
+    73→- Fixed multiple import errors (Dialog from wrong module, missing Lock import)
+    74→- Server compiles and returns HTTP 200 in ~7s
+    75→
+    76→Stage Summary:
+    77→- Admin panel at / renders with login gate (password: Admin@2025)
+    78→- All TypeScript errors in customer page components fixed
+    79→- Reviews API now returns correct format for TestimonialsSection
+    80→- Loyalty system properly reads order count from API
+    81→
+    82→---
+    83→Task ID: 3
+    84→Agent: Main Agent
+    85→Task: Fix light theme and admin sidebar issues
+    86→
+    87→Work Log:
+    88→- Diagnosed two root causes:
+    89→  1. ThemeProvider missing from layout.tsx (next-themes was never initialized)
+    90→  2. CSS theme structure inverted: :root had dark values, .light had light values, but next-themes uses .dark class
+    91→- Created /src/components/theme-provider.tsx wrapping next-themes ThemeProvider with attribute="class", defaultTheme="dark"
+    92→- Updated layout.tsx: added ThemeProvider wrapper, changed lang to "ar" and added dir="rtl"
+    93→- Swapped globals.css theme structure:
+    94→  - :root now has LIGHT theme values (#faf8f2 background, cream/gold palette)
+    95→  - .dark now has DARK theme values (#0a0a0b background, dark/gold palette)
+    96→  - Changed .light references to .dark (scrollbar, premium-card)
+    97→  - :root.dark references remain correct (apply when dark mode active)
+    98→- Rebuilt standalone and verified via agent-browser:
+    99→  - Root admin (/): ThemeToggle switches between dark (#0a0a0b) and light (#faf8f2)
+   100→  - Merchant admin (/s/[slug]?admin=1): Sidebar visible with all sections, theme toggle works
+   101→  - Customer view (/s/[slug]): Theme toggle works
+   102→
+   103→Stage Summary:
+   104→- Light theme now works across ALL levels (admin, merchant, customer)
+   105→- Merchant admin sidebar is present and functional (DashboardSidebar component)
+   106→- Sidebar sections: القائمة (الرئيسية/الطلبات/إعدادات), البيانات (العملاء/المصاريف), أدوات (مشاركة/معاينة)
+   107→- CSS variables verified: --sidebar dark=#0e0e10, light=#f5f0e5
+   108→
+   109→---
+   110→Task ID: 3b
+   111→Agent: Main Agent
+   112→Task: Fix logo files, restore custom logo, comprehensive rebuild
+   113→
+   114→Work Log:
+   115→- Diagnosed missing logo files: code referenced /n.png, /n-sm.png but files didn't exist
+   116→- Created logo symlinks: platform-logo.png→n.png, tayf-logo-sm.png→n-sm.png, tayf-logo-sm-dark.png→n-sm-dark.png, brand/tayf-logo-dark.png→n-dark.png, platform-logo.png→brand/n.png, favicon.svg→n.svg
+   117→- Updated admin page login gate: replaced 'ط' text character with <img src="/n.png"> actual logo
+   118→- Updated admin header: replaced 'ط' text with <img src="/n-sm.png"> actual logo
+   119→- Comprehensive rebuild: bun run build succeeded with 0 errors
+   120→- Verified via curl: ThemeProvider in HTML, lang=ar dir=rtl, logo files HTTP 200, API returns shops data
+   121→
+   122→Stage Summary:
+   123→- Custom Tayf logo now appears in admin login page and header
+   124→- All logo file paths (/n.png, /n-sm.png, /brand/n.png, /n.svg) resolve correctly
+   125→- Ready for Vercel deployment
+   126→
+   127→---
+   128→Task ID: 4
+   129→Agent: Agent 4
+   130→Task: Redesign customer intro splash screen + add sidebar layout to root admin page
+   131→
+   132→Work Log:
+   133→- Redesigned `/src/components/app/intro.tsx` with SHEIN-inspired premium splash screen:
+   134→  - Replaced emoji/printer icon with actual `/n.png` logo via next/image
+   135→  - Added framer-motion animations: smooth scale+fade logo entrance, staggered text reveals
+   136→  - Dark background (#0a0a0b) with subtle radial golden glow behind logo
+   137→  - Brand name "طيف" in elegant gold typography (#D4AF37)
+   138→  - Tagline "منصة طباعة احترافية" in muted text below
+   139→  - Thin 2px golden progress bar at bottom with smooth fill animation
+   140→  - Theme-aware: adapts background/text colors via `useTheme()` (dark: #0a0a0b, light: #faf8f2)
+   141→  - Smooth fade-out exit animation with subtle scale-up before disappearing
+   142→  - Respects API settings (enabled/disabled, duration) via IntroSettings interface
+   143→  - Removed spinning ring, scattered dots, and pulsing background blobs for cleaner look
+   144→- Redesigned `/src/app/page.tsx` with proper sidebar layout:
+   145→  - Imported DashboardSidebar from `@/components/ui/dashboard-sidebar`
+   146→  - Created sidebar sections: القائمة (المتاجر, الطلبات, الإعدادات)
+   147→  - Sidebar logo uses `/n-sm.png` with brand name text
+   148→  - Sidebar footer includes admin name + ThemeToggle button
+   149→  - Replaced Tabs component with sidebar navigation (sidebar controls activeTab state)
+   150→  - Added mobile hamburger menu button in header (visible on md:hidden)
+   151→  - Sidebar is collapsible on desktop via toggle button, drawer on mobile (handled by DashboardSidebar)
+   152→  - Kept all existing functionality: login gate, shops CRUD, orders list, settings tab
+   153→  - Kept stats cards, search bar, create shop dialog, delete confirmation
+   154→  - Header shows active tab title, admin name, refresh button, logout button
+   155→  - Layout: `flex` with sidebar on right + main content area (RTL native)
+   156→
+   157→Stage Summary:
+   158→- Intro screen now has a premium, minimal SHEIN-style design with smooth framer-motion animations
+   159→- Root admin page now has a proper collapsible sidebar matching the merchant dashboard pattern
+   160→- All existing API calls, state management, and functionality preserved unchanged
+   161→- Both files pass lint (only pre-existing lint warning in page.tsx fetchData effect)
+   162→- No new dependencies added (framer-motion, next/image, next-themes already available)
+   163→
+   164→---
+   165→Task ID: 1-research
+   166→Agent: Explore Agent
+   167→Task: Research original admin dashboard features from 7z version and current root admin state
+   168→
+   169→Work Log:
+   170→- Read worklog to understand full project context (Tasks 1-8, 10, 2, 3, 3b, 4)
+   171→- /tmp/extract-main/tayf-saas-main/ does NOT exist (not extracted)
+   172→- Analyzed /tmp/inspect-7z/my-project/ (the 7z/matbaa-dhaki original) as the reference
+   173→- Read all admin-related components:
+   174→  - admin-panel.tsx (1379 lines) — merchant admin with 6 tabs
+   175→  - admin-gate.tsx (127 lines) — PIN code authentication dialog
+   176→  - admin-settings.tsx (1728 lines) — 5 sub-tabs of settings
+   177→  - admin-analytics.tsx (979 lines) — full analytics with Recharts
+   178→  - admin-customers.tsx (555 lines) — customer CRUD with pagination
+   179→  - admin-expenses.tsx — expense management with categories
+   180→  - admin-shortcuts.tsx — keyboard shortcuts (invisible component)
+   181→  - kanban-board.tsx — dnd-kit drag-and-drop kanban
+   182→  - app-shell.tsx — 4 views: new, repeat, track, admin
+   183→  - dashboard.tsx — forms management dashboard (separate feature)
+   184→- Read current /home/z/my-project/src/app/page.tsx (583 lines) — root platform admin
+   185→- Read /tmp/inspect-7z/my-project/src/lib/default-settings.ts — AppSettings interface
+   186→- Read /tmp/inspect-7z/my-project/src/lib/print-config.ts — service definitions, pricing, status metadata
+   187→- Listed all 160+ components in /home/z/my-project/src/components/app/
+   188→- Listed all 38 API routes in /tmp/inspect-7z/my-project/src/app/api/
+   189→
+   190→FINDINGS — ORIGINAL MERCHANT ADMIN (7z version, per-shop admin):
+   191→
+   192→### A. Main Tab Navigation (6 tabs via Tabs component):
+   193→1. **الطلبات (Orders)** — ListOrdered icon
+   194→   - Search bar (order ref, customer name/phone)
+   195→   - Advanced filters (collapsible): status pills (5), service type pills (6), date range (from/to)
+   196→   - Notification bell with unread badge (polls /api/notifications every 30s)
+   197→   - Export to Excel button (POST /api/orders/export → .xlsx blob)
+   198→   - Desktop: full table (checkbox, order#, service, customer, phone, details, total, profit, status, date, actions)
+   199→   - Mobile: card-based order list with expandable details
+   200→   - Batch operations: select all, batch status change (dropdown), batch delete
+   201→   - Order detail modal (OrderDetailModal) on click
+   202→   - Per-order actions: status change dropdown, clone order, download invoice, download file
+   203→   - File preview: image thumbnails, PDF thumbnails, file type badges
+   204→   - Customer info display: name, phone, WhatsApp, email, address, delivery method
+   205→
+   206→2. **سبورة الطلبات (Kanban Board)** — Table2 icon
+   207→   - @dnd-kit drag-and-drop columns
+   208→   - 4 status columns: pending, printing, ready, delivered (+ cancelled)
+   209→   - Cards: time-ago, price, customer, service emoji, file preview, priority
+   210→   - Drag order between columns to change status
+   211→
+   212→3. **التحليلات (Analytics)** — BarChart3 icon
+   213→   - Monthly overview cards (4): revenue, orders count, avg order value, delivery rate — with trend %
+   214→   - 6-month revenue & orders BarChart (dual Y-axis, Recharts)
+   215→   - 14-day daily revenue AreaChart with gradient fill
+   216→   - Service distribution PieChart (donut) with labels
+   217→   - Status distribution PieChart (donut) with labels
+   218→   - Service revenue comparison horizontal BarChart
+   219→   - Top customers leaderboard (🥇🥈🥉 with name, phone, orders, total)
+   220→   - Weekly activity heatmap (4 weeks × 7 days, CSS grid, color intensity)
+   221→
+   222→4. **العملاء (Customers)** — Users icon
+   223→   - Search by name or phone
+   224→   - Stats cards: total customers, total spending, avg per customer
+   225→   - Sync from orders button (POST /api/customers?action=sync)
+   226→   - Desktop table: name, phone, email, address, orders count, spending, last order, actions
+   227→   - Mobile cards with same info
+   228→   - Edit dialog: name, email, address, notes (phone is read-only)
+   229→   - Delete with AlertDialog confirmation
+   230→   - Pagination (20 per page)
+   231→
+   232→5. **المصاريف (Expenses)** — Wallet icon
+   233→   - Categories: ورق(📄), حبر(🖤), صيانة(🔧), إيجار(🏠), أخرى(📦)
+   234→   - Add expense: category select, amount, description, date
+   235→   - Monthly summary: total, by-category breakdown
+   236→   - Desktop table with inline edit
+   237→   - Delete with confirmation
+   238→   - Pagination
+   239→
+   240→6. **الإعدادات (Settings)** — Settings icon (5 sub-tabs):
+   241→   a. **الخدمات والأسعار** — Layers icon
+   242→      - Accordion per service (6: document, photo, binding, copy, card, poster)
+   243→      - Each service: name, emoji, description, isPopular badge, sections with options
+   244→      - Options include: multiplier, surcharge, label, emoji, values list
+   245→      - Add new service button, delete service with confirmation
+   246→   b. **خيارات التسليم** — Truck icon
+   247→      - Grid of delivery option cards
+   248→      - Each: label, emoji, badge, description, surcharge (DA)
+   249→      - Add/delete delivery options
+   250→   c. **الإعدادات العامة** — SlidersHorizontal icon
+   251→      - Shop identity: shopName, shopLogo (URL or emoji)
+   252→      - Discounts: quantityDiscount10(%), quantityDiscount50(%), sidesDiscount(%), minOrder(DA)
+   253→      - Contact: whatsappNumber, phoneNumber, email, address, workHours
+   254→      - Security: adminCode (PIN), autoDeleteDays, minOrder repeat
+   255→   d. **شاشة الإنترو** — Sparkles icon
+   256→      - Enable/disable toggle
+   257→      - Title, subtitle, emoji/icon, footerText
+   258→      - Color pickers: bgColor, accentColor
+   259→      - Duration (ms, 2000-10000)
+   260→      - Toggles: showProgress, showSpinningRing
+   261→      - Live preview panel
+   262→   e. **إعادة التعيين** — CircleAlert icon
+   263→      - Reset all settings to defaults (with AlertDialog confirmation)
+   264→      - Shows what will be reset
+   265→      - Reload from server button
+   266→      - Unsaved changes warning
+   267→   - Floating save bar (dark, sticky bottom, appears when unsaved changes)
+   268→
+   269→### B. Stats Cards (always visible above tabs):
+   270→1. إجمالي الطلبات (Total Orders) — Package, blue
+   271→2. إجمالي الإيرادات (Total Revenue) — DollarSign, emerald
+   272→3. طلبات اليوم (Today's Orders) — TrendingUp, amber
+   273→4. قيد الطباعة (In Printing = pending+printing) — Clock, rose
+   274→5. صافي الربح (Net Profit = revenue - expenses) — Wallet, green/red dynamic
+   275→
+   276→### C. Keyboard Shortcuts (AdminShortcuts, invisible component):
+   277→- Ctrl+K: Focus search input
+   278→- Ctrl+R: Refresh all data
+   279→- Keys 1-6: Switch to tabs (orders, kanban, analytics, customers, expenses, settings)
+   280→
+   281→### D. Notification System:
+   282→- Types: new_order, status_change, stale_order, system
+   283→- Polls /api/notifications?since=... every 30 seconds
+   284→- Bell icon with red unread count badge
+   285→- Dropdown: notification list with emoji, title, body, time
+   286→- Click notification → opens related order detail
+   287→- "Mark all as read" button
+   288→- Max 30 notifications cached
+   289→
+   290→### E. Authentication (AdminGate):
+   291→- Dialog modal with PIN input (4-digit, numeric)
+   292→- Loads admin code from /api/settings (general.adminCode)
+   293→- 3 attempts then 5-second temporary lockout
+   294→- Visual: Lock icon, error state, loading state
+   295→
+   296→### F. API Endpoints Supporting Admin:
+   297→- /api/admin/stats — AdminStats (totalOrders, totalRevenue, totalExpenses, profit, todayOrders, statusCounts, serviceCounts, recentOrders)
+   298→- /api/admin/analytics — Analytics data
+   299→- /api/orders — CRUD, list with filters
+   300→- /api/orders/export — XLSX export
+   301→- /api/orders/[id] — Status change, delete
+   302→- /api/orders/[id]/invoice — PDF invoice
+   303→- /api/orders/[id]/file — File download
+   304→- /api/orders/[id]/thumbnail — PDF thumbnail
+   305→- /api/orders/[id]/notes — Admin notes
+   306→- /api/orders/[id]/audit — Audit trail
+   307→- /api/orders/[id]/preview — File preview
+   308→- /api/customers — List, search, sync, create
+   309→- /api/customers/[id] — Update, delete
+   310→- /api/expenses — List, create (CRUD with categories)
+   311→- /api/expenses/[id] — Update, delete
+   312→- /api/notifications — Poll for new notifications
+   313→- /api/settings — Get/put all settings (services, delivery, general, intro)
+   314→- /api/track — Order tracking
+   315→- /api/reviews — Customer reviews
+   316→- /api/loyalty/check, /api/loyalty/apply-discount — Loyalty system
+   317→
+   318→GAP ANALYSIS — CURRENT ROOT ADMIN vs. WHAT IT SHOULD HAVE:
+   319→
+   320→### Current State (/home/z/my-project/src/app/page.tsx):
+   321→- Sidebar: 3 items only (المتاجر, الطلبات, الإعدادات)
+   322→- Stats: 4 cards (Total Orders, Revenue, Shops, Today's Orders)
+   323→- Shops tab: CRUD (create, delete, view link, admin link) ✓ functional
+   324→- Orders tab: Simple read-only list of recent orders across all shops
+   325→- Settings tab: Only admin name card + logout button (essentially empty)
+   326→- Login: SHA-256 password auth (Admin@2025)
+   327→
+   328→### What Root Admin (Platform Level) SHOULD Have (based on original + platform role):
+   329→1. **لوحة التحكم (Dashboard)** — Overview with enhanced platform stats
+   330→2. **المتاجر (Shops)** — ✓ exists, needs enrichment (performance metrics per shop)
+   331→3. **الطلبات (Orders)** — needs enrichment: filters, batch ops, export, detail modal
+   332→4. **العملاء (Customers)** — MISSING: platform-wide customer management
+   333→5. **التحليلات (Analytics)** — MISSING: platform-wide analytics with charts
+   334→6. **المصاريف (Expenses)** — MISSING: platform-wide expense tracking
+   335→7. **الإعدادات (Settings)** — MISSING: needs full implementation
+   336→8. **الإشعارات (Notifications)** — MISSING: notification center
+   337→
+   338→### Recommended Sidebar Structure for Root Admin:
+   339→- القائمة (Main):
+   340→  - الرئيسية (Dashboard/Overview)
+   341→  - المتاجر (Shops) [exists]
+   342→  - الطلبات (Orders) [exists, needs enrichment]
+   343→- البيانات (Data):
+   344→  - العملاء (Customers) [MISSING]
+   345→  - المصاريف (Expenses) [MISSING]
+   346→  - التحليلات (Analytics) [MISSING]
+   347→- النظام (System):
+   348→  - الإعدادات (Settings) [exists but empty]
+   349→  - الإشعارات (Notifications) [MISSING]
+   350→
+   351→Stage Summary:
+   352→- Original merchant admin has 6 rich tabs: Orders, Kanban, Analytics, Customers, Expenses, Settings(5 sub-tabs)
+   353→- Current root admin has 3 basic sidebar items: Shops, Orders, Settings(minimal)
+   354→- Major gaps: Analytics, Customers, Expenses, Notifications all missing from root admin
+   355→- Settings tab is essentially empty (just admin name + logout)
+   356→- Orders tab lacks: advanced filters, batch ops, export, detail modal, kanban view
+   357→- All original components exist in /home/z/my-project/src/components/app/ (admin-panel.tsx, admin-analytics.tsx, etc.) but are designed for per-shop use
+   358→- Root admin needs platform-level adaptations of these features
+   359→- Many stub/placeholder components already exist (160+ files) that could be leveraged
+   360→
+   361→---
+   362→Task ID: 2-explore
+   363→Agent: Explore Agent
+   364→Task: Comprehensive exploration of existing APIs, merchant dashboard, lib utilities, Prisma schema, and UI components
+   365→
+   366→Work Log:
+   367→- Read worklog.md for full project history context
+   368→- Analyzed all API routes under src/app/api/ (47+ routes found)
+   369→- Read merchant-dashboard.tsx (4178 lines, 8 tabs with full CRUD)
+   370→- Read Prisma schema (10 models: Shop, PrintOrder, Setting, SuperAdmin, Expense, Customer, AuditLog, FormTemplate, FileUpload, FileChunk, FormRecord)
+   371→- Analyzed 35 lib files (types, utils, configs, auth, turso-lite, features, themes, etc.)
+   372→- Inventoried 42 UI components under src/components/ui/
+   373→- Inventoried 160+ app components under src/components/app/
+   374→
+   375→FINDINGS:
+   376→
+   377→## 1. ALL API ROUTES (47+ endpoints)
+   378→
+   379→### Core Platform Routes:
+   380→| Route | Methods | Description |
+   381→|-------|---------|-------------|
+   382→| `/api/health` | GET | Health check endpoint |
+   383→| `/api/deploy` | POST | Deployment trigger/webhook |
+   384→| `/api/setup` | POST | Initial database setup |
+   385→| `/api/seed` | POST | Seed database with sample data |
+   386→| `/api/route` | GET | API root/discovery |
+   387→
+   388→### Super Admin Routes (Platform-level):
+   389→| Route | Methods | Description |
+   390→|-------|---------|-------------|
+   391→| `/api/super-admin/auth` | POST | Platform admin login (SHA-256 password auth) |
+   392→| `/api/super-admin/verify` | POST | Session verification (token+ts) |
+   393→| `/api/super-admin/team` | GET/POST/PUT/DELETE | Team members CRUD |
+   394→| `/api/super-admin/platform-settings` | GET/PUT | Platform-wide settings (name, logo, maintenance, defaults) |
+   395→| `/api/super-admin/password` | PUT | Change admin password |
+   396→| `/api/super-admin/upload-logo` | POST | Upload platform logo |
+   397→
+   398→### Admin Routes (Shared merchant/platform):
+   399→| Route | Methods | Description |
+   400→|-------|---------|-------------|
+   401→| `/api/admin/stats` | GET | Stats for specific shop or global (orders, revenue, expenses, status/service counts) |
+   402→| `/api/admin/analytics` | GET | Advanced analytics (monthly, daily, heatmap, top customers, service/status distribution) |
+   403→| `/api/admin/global-stats` | GET | Platform-wide stats (all shops, all orders, shopStats per-shop) |
+   404→| `/api/admin/daily-stats` | GET | Daily stats aggregation |
+   405→| `/api/admin/pdf-report` | GET | PDF stats report generation |
+   406→| `/api/admin/shops/[slug]` | GET/PUT/DELETE | Single shop management |
+   407→
+   408→### Shop Routes:
+   409→| Route | Methods | Description |
+   410→|-------|---------|-------------|
+   411→| `/api/shops` | GET/POST | List all shops / Create new shop |
+   412→| `/api/shops/[slug]` | GET | Get shop by slug (used by ShopProvider) |
+   413→| `/api/shops/[slug]/change-pin` | POST | Change shop admin PIN |
+   414→
+   415→### Order Routes:
+   416→| Route | Methods | Description |
+   417→|-------|---------|-------------|
+   418→| `/api/orders` | GET/POST | List orders (with filters) / Create order |
+   419→| `/api/orders/by-phone` | GET | Find orders by phone number |
+   420→| `/api/orders/export` | POST | Export orders to Excel (XLSX) |
+   421→| `/api/orders/bulk` | PUT/DELETE | Bulk status change / bulk delete |
+   422→| `/api/orders/bulk-status` | PUT | Bulk status update (alternative) |
+   423→| `/api/orders/pending-count` | GET | Count of pending orders (SSE compatible) |
+   424→| `/api/orders/report` | GET | Generate order report for date range |
+   425→| `/api/orders/upload-chunk` | POST | Upload file chunk (large file support) |
+   426→| `/api/orders/[id]` | GET/PUT/DELETE | Get/update/delete single order |
+   427→| `/api/orders/[id]/file` | GET | Download order file |
+   428→| `/api/orders/[id]/thumbnail` | GET | PDF thumbnail generation |
+   429→| `/api/orders/[id]/invoice` | GET | PDF invoice generation |
+   430→| `/api/orders/[id]/notes` | POST | Save admin notes on order |
+   431→| `/api/orders/[id]/audit` | GET | Order audit trail |
+   432→| `/api/orders/[id]/preview` | GET | File preview (image/PDF) |
+   433→| `/api/orders/[id]/rate` | POST | Customer rating/review |
+   434→| `/api/orders/[id]/verify-print` | POST | Verify print job |
+   435→
+   436→### Customer Routes:
+   437→| Route | Methods | Description |
+   438→|-------|---------|-------------|
+   439→| `/api/customers` | GET/POST | List/search customers / Create customer |
+   440→| `/api/customers/[id]` | PUT/DELETE | Update/delete customer |
+   441→
+   442→### Expense Routes:
+   443→| Route | Methods | Description |
+   444→|-------|---------|-------------|
+   445→| `/api/expenses` | GET/POST | List/create expenses |
+   446→| `/api/expenses/[id]` | PUT/DELETE | Update/delete expense |
+   447→
+   448→### Notification Routes:
+   449→| Route | Methods | Description |
+   450→|-------|---------|-------------|
+   451→| `/api/notifications` | GET | Poll notifications |
+   452→| `/api/notifications/stream` | GET | SSE stream for real-time notifications |
+   453→
+   454→### Settings Routes:
+   455→| Route | Methods | Description |
+   456→|-------|---------|-------------|
+   457→| `/api/settings` | GET/PUT | Get/update shop settings (services, delivery, general, intro) |
+   458→
+   459→### Other Routes:
+   460→| Route | Methods | Description |
+   461→|-------|---------|-------------|
+   462→| `/api/track` | GET | Order tracking by reference |
+   463→| `/api/track/cancel` | POST | Cancel tracked order |
+   464→| `/api/reviews` | GET | Customer reviews |
+   465→| `/api/loyalty/check` | GET | Check loyalty tier |
+   466→| `/api/loyalty/apply-discount` | POST | Apply loyalty discount |
+   467→| `/api/file-preview` | GET | Generic file preview |
+   468→| `/api/convert` | POST | File conversion |
+   469→| `/api/templates` | GET/POST | Form templates CRUD |
+   470→| `/api/templates/reorder` | POST | Reorder form templates |
+   471→| `/api/records` | GET/POST | Form records CRUD |
+   472→| `/api/records/[id]` | PUT/DELETE | Update/delete form record |
+   473→| `/api/stats` | GET | Form/stats endpoint |
+   474→| `/api/stats/overview` | GET | Stats overview |
+   475→| `/api/ai/chat` | POST | AI chat |
+   476→| `/api/ai/web-search` | POST | AI web search |
+   477→| `/api/ai/analyze-file` | POST | AI file analysis |
+   478→| `/api/ai/tts` | POST | Text-to-speech |
+   479→| `/api/ai/asr` | POST | Speech recognition |
+   480→| `/api/ai/generate-image` | POST | AI image generation |
+   481→| `/api/uploadthing/core` | - | UploadThing core config |
+   482→| `/api/uploadthing` | - | UploadThing route |
+   483→
+   484→## 2. MERCHANT DASHBOARD STRUCTURE (merchant-dashboard.tsx - 4178 lines)
+   485→
+   486→### Tab Navigation (8 tabs via DashboardSidebar):
+   487→1. **الرئيسية (home)** — Dashboard overview
+   488→   - 5 stats cards: Total Orders, Revenue, Today Orders, In Printing (pending+printing), Net Profit
+   489→   - PrintQueueWidget (dynamic import)
+   490→   - RevenueGoalWidget (dynamic import)
+   491→   - Quick actions toolbar
+   492→
+   493→2. **الطلبات (orders)** — Full order management
+   494→   - Search bar + status filter + sort (field/direction)
+   495→   - Quick date filter: all/today/week/favorites
+   496→   - View mode: table/card toggle
+   497→   - SSE real-time pending count with polling fallback
+   498→   - Batch operations: select all, bulk status change, bulk delete
+   499→   - Order detail modal with file preview
+   500→   - Per-order: status change, clone, invoice, file download, print receipt
+   501→   - Favorite orders (localStorage), admin notes (saved to API)
+   502→   - Export to PDF report (date range picker)
+   503→
+   504→3. **التحليلات (analytics)** — Charts & insights (requires `advancedAnalytics` feature)
+   505→   - Recharts integration (AreaChart, BarChart)
+   506→   - Data from `/api/admin/analytics`
+   507→
+   508→4. **العملاء (customers)** — Customer management
+   509→   - Embedded customer list component
+   510→
+   511→5. **المصاريف (expenses)** — Expense tracking
+   512→   - Embedded expense management component
+   513→
+   514→6. **إعدادات المتجر (settings)** — Basic shop settings
+   515→
+   516→7. **إعدادات متقدمة (advancedSettings)** — Advanced settings
+   517→
+   518→8. **أدوات (Tools)**:
+   519→   - **مشاركة الرابط (share)** — Share shop link dialog
+   520→   - **معاينة المتجر (preview)** — Preview customer view
+   521→
+   522→### Sidebar Sections:
+   523→- القائمة (Main): home, orders, settings, advancedSettings
+   524→- البيانات (Data): customers, expenses, analytics (conditional)
+   525→- أدوات (Tools): share, preview
+   526→
+   527→### Key Features:
+   528→- Uses `useShop()` context for multi-tenant data
+   529→- PIN authentication gate (4-digit)
+   530→- Dynamic imports for heavy components (PrintQueueWidget, RevenueGoalWidget)
+   531→- framer-motion animations
+   532→- RTL-aware throughout
+   533→- Real-time updates via SSE
+   534→- Feature gating via `hasFeature()` (e.g. advancedAnalytics)
+   535→
+   536→## 3. LIBRARY FILES (src/lib/ — 35 files)
+   537→
+   538→### Core Infrastructure:
+   539→| File | Purpose |
+   540→|------|---------|
+   541→| `db.ts` | Prisma client with Turso LibSQL adapter + ensureDb() for migrations |
+   542→| `turso-lite.ts` | Lightweight Turso HTTP client (bypasses Prisma, 10x faster on Vercel) |
+   543→| `db-migrations.ts` | Runtime ALTER TABLE migrations for SuperAdmin table |
+   544→| `store.ts` | Zustand store: view navigation, shop context, admin gate state, refresh |
+   545→| `shop-context.tsx` | React context: shop data, features, trial days, plan detection |
+   546→| `shop-api.ts` | shopApi() — fetch wrapper that auto-appends shopId query param |
+   547→| `middleware.ts` | Next.js middleware |
+   548→
+   549→### Types & Schemas:
+   550→| File | Purpose |
+   551→|------|---------|
+   552→| `types.ts` | Form system types: FormField, FormSection, FormSchema, FormTemplateT, FormRecordT, status/priority metadata |
+   553→| `admin-types.ts` | Platform admin types: ShopItem, ShopStat, GlobalOrder, GlobalStats, TeamMember |
+   554→| `order-types.ts` | Order types: SmartAnalysis, PrintOrderCustomer, PrintOrderDelivery, PrintOrderOptions, PrintOrderPricing, PrintOrderLite |
+   555→| `print-config.ts` | Service definitions (7 services), pricing options (color, paper, sides, binding, delivery), STATUS_META, calculatePricing(), generateReference(), analyzeFileSmartly(), formatDA/DateAr |
+   556→
+   557→### Auth & Security:
+   558→| File | Purpose |
+   559→|------|---------|
+   560→| `admin-auth.ts` | Server-side: getAdminCode(), verifyAdminRequest(), requireAdmin() — middleware helper for API routes |
+   561→| `admin-utils.ts` | Client-side: isAuthenticated(), verifySession(), markAuthenticated(), clearSession(), SESSION_KEY, getTimeAgo/Short, SERVICE_EMOJI, STATUS_COLORS/LABELS, TAB_TITLES, setFaviconBadge() |
+   562→
+   563→### Business Logic:
+   564→| File | Purpose |
+   565→|------|---------|
+   566→| `default-settings.ts` | DEFAULT_SETTINGS: services, delivery options, general config, intro settings. AppSettings + IntroSettings interfaces |
+   567→| `service-specs.ts` | SPEC_LIST — detailed service specifications |
+   568→| `shop-features.ts` | 27 feature definitions (7 free + 20 paid), feature gating, plan-based feature resolution |
+   569→| `themes.ts` | SHOP_THEMES — 8 color themes for shops |
+   570→| `countries.ts` | ARAB_COUNTRIES — country configs (currency, locale) |
+   571→| `offers.ts` | applyOfferCode — discount code logic |
+   572→| `phone-validation.ts` | Phone number validation |
+   573→| `rate-limit.ts` | withRateLimit() — API rate limiting |
+   574→| `audit.ts` | Audit logging helpers |
+   575→| `order-lookup.ts` | Order lookup utilities |
+   576→| `cleanup.ts` | Data cleanup utilities |
+   577→| `i18n.ts` | Internationalization strings |
+   578→| `utils.ts` | cn() (Tailwind merge), general utilities |
+   579→
+   580→### File & PDF:
+   581→| File | Purpose |
+   582→|------|---------|
+   583→| `file-analyzer.ts` | Smart file analysis (PDF page count, image detection) |
+   584→| `file-resolver.ts` | File resolution utilities |
+   585→| `uploadthing.ts` | UploadThing configuration |
+   586→| `pdf-invoice.ts` | PDF invoice generation |
+   587→| `pdf-stats-report.ts` | PDF stats report generation |
+   588→| `print-receipt.ts` | Thermal receipt printing |
+   589→
+   590→### UI State:
+   591→| File | Purpose |
+   592→|------|---------|
+   593→| `sound-notifications.ts` | Sound notification helpers |
+   594→| `smart-assistant.ts` | AI assistant logic |
+   595→| `use-realtime-orders.ts` | Real-time order subscription hook |
+   596→| `content-classifier.ts` | Content classification for AI |
+   597→| `analysis-cache.ts` | Analysis result caching |
+   598→| `option-translations.ts` | Translation mappings for print options |
+   599→| `form-templates.ts` | Pre-built form template schemas |
+   600→
+   601→## 4. PRISMA SCHEMA (10 models, SQLite+Turso)
+   602→
+   603→### Models:
+   604→1. **Shop** (main entity)
+   605→   - id, slug(unique), name, adminPin, phone, whatsapp, email, address
+   606→   - logoUrl, logoIcon, primaryColor, themeId(1-8)
+   607→   - country(DZ), language(ar), customCurrency
+   608→   - settings(JSON), ownerName, ownerPhone
+   609→   - isActive, plan(free/paid), features(JSON)
+   610→   - trialDays, trialStartsAt, ownerNotes, paymentInfo
+   611→   - Relations: orders[], shopSettings[], expenses[], customers[], auditLogs[], formTemplates[], formRecords[]
+   612→   - Indexes: slug, isActive
+   613→
+   614→2. **PrintOrder**
+   615→   - id, reference(unique), serviceType, serviceName
+   616→   - fileName, fileType, fileSize, fileData(base64), smartAnalysis(JSON)
+   617→   - options(JSON), customer(JSON), delivery(JSON), pricing(JSON)
+   618→   - estimatedHours, status(default:"pending"), pages, copies, total
+   619→   - readyAt, deliveredAt, startedPrintingAt, completedPrintingAt
+   620→   - cost, tags(JSON[]), adminNotes
+   621→   - rating(1-5), review, editableUntil
+   622→   - shopId(FK→Shop)
+   623→   - Indexes: status, createdAt, shopId
+   624→
+   625→3. **Setting** (key-value per shop)
+   626→   - id, key(services/delivery/general), value(JSON)
+   627→   - shopId(FK→Shop), unique(shopId, key)
+   628→
+   629→4. **SuperAdmin** (singleton)
+   630→   - id, key(unique:"main"), password, name
+   631→   - teamMembers(JSON), platformSettings(JSON)
+   632→
+   633→5. **Expense**
+   634→   - id, shopId(FK→Shop), category, amount, description, date
+   635→   - Indexes: shopId, category, date
+   636→
+   637→6. **Customer**
+   638→   - id, shopId(FK→Shop), name, phone(unique per shop), email, address, notes
+   639→   - totalOrders, totalSpent, lastOrderAt
+   640→   - Indexes: shopId, phone
+   641→
+   642→7. **AuditLog**
+   643→   - id, shopId(FK→Shop), orderId, action, field, oldValue, newValue, details, userId
+   644→   - Indexes: shopId, orderId, createdAt
+   645→
+   646→8. **FormTemplate**
+   647→   - id, shopId(FK→Shop), title, icon, category, fields(JSON), sortOrder, isActive
+   648→   - Index: shopId
+   649→
+   650→9. **FileUpload** (chunked upload)
+   651→   - id, fileName, fileSize, fileExt, totalChunks, receivedCount, status, assembledBase64
+   652→   - Relations: chunks[]
+   653→
+   654→10. **FileChunk**
+   655→    - id, uploadId(FK→FileUpload), chunkIndex, data(base64)
+   656→
+   657→11. **FormRecord**
+   658→    - id, shopId(FK→Shop), templateId(FK→FormTemplate), title, data(JSON), status, priority
+   659→    - Indexes: shopId, status
+   660→
+   661→## 5. UI COMPONENTS (src/components/ui/ — 42 shadcn components)
+   662→
+   663→### Layout & Navigation:
+   664→- `dashboard-sidebar.tsx` — Custom collapsible sidebar (RTL, mobile drawer, badge support, glow indicators)
+   665→- `sidebar.tsx` — shadcn sidebar
+   666→- `sheet.tsx` — Slide-over panel
+   667→- `drawer.tsx` — Bottom drawer
+   668→- `tabs.tsx` — Tab navigation
+   669→- `breadcrumb.tsx` — Breadcrumb navigation
+   670→- `menubar.tsx` — Menu bar
+   671→- `resizable.tsx` — Resizable panels
+   672→- `collapsible.tsx` — Collapsible sections
+   673→- `separator.tsx` — Visual separator
+   674→
+   675→### Data Display:
+   676→- `card.tsx` — Card container
+   677→- `table.tsx` — Data table
+   678→- `badge.tsx` — Status badges
+   679→- `avatar.tsx` — User avatars
+   680→- `skeleton.tsx` — Loading skeletons
+   681→- `tooltip.tsx` — Tooltips
+   682→- `carousel.tsx` — Image/content carousel
+   683→- `animated-counter.tsx` — Animated number counter
+   684→- `chart.tsx` — Recharts wrapper (shadcn)
+   685→- `scroll-area.tsx` — Custom scrollbar
+   686→- `hover-card.tsx` — Hover card
+   687→- `aspect-ratio.tsx` — Aspect ratio container
+   688→
+   689→### Form Controls:
+   690→- `input.tsx` — Text input
+   691→- `textarea.tsx` — Multi-line input
+   692→- `select.tsx` — Dropdown select
+   693→- `checkbox.tsx` — Checkbox
+   694→- `radio-group.tsx` — Radio buttons
+   695→- `switch.tsx` — Toggle switch
+   696→- `slider.tsx` — Range slider
+   697→- `calendar.tsx` — Date picker calendar
+   698→- `input-otp.tsx` — OTP/PIN input
+   699→- `label.tsx` — Form label
+   700→- `form.tsx` — React Hook Form integration
+   701→- `pagination.tsx` — Pagination controls
+   702→
+   703→### Feedback & Overlays:
+   704→- `dialog.tsx` — Modal dialog
+   705→- `alert-dialog.tsx` — Confirmation dialog
+   706→- `alert.tsx` — Alert banners
+   707→- `popover.tsx` — Popover overlay
+   708→- `dropdown-menu.tsx` — Dropdown menu
+   709→- `context-menu.tsx` — Right-click menu
+   710→- `command.tsx` — Command palette (Cmd+K)
+   711→- `toast.tsx` + `toaster.tsx` — Toast notifications
+   712→- `sonner.tsx` — Sonner toast integration
+   713→- `progress.tsx` — Progress bar
+   714→
+   715→### Actions:
+   716→- `button.tsx` — Button component
+   717→- `toggle.tsx` + `toggle-group.tsx` — Toggle buttons
+   718→- `navigation-menu.tsx` — Navigation menu
+   719→
+   720→## 6. KEY REUSABLE COMPONENTS (src/components/app/ — 160+ files)
+   721→
+   722→### Admin Dashboard Components (already built, per-shop):
+   723→- `admin-panel.tsx` — Original merchant admin (1379 lines, 6 tabs)
+   724→- `admin-analytics.tsx` — Full analytics with Recharts (979 lines)
+   725→- `admin-settings.tsx` — 5 sub-tabs of settings (1728 lines)
+   726→- `admin-customers.tsx` — Customer CRUD with pagination (555 lines)
+   727→- `admin-expenses.tsx` — Expense management
+   728→- `admin-gate.tsx` — PIN code authentication dialog
+   729→- `admin-shortcuts.tsx` — Keyboard shortcuts
+   730→- `kanban-board.tsx` — Drag-and-drop kanban (@dnd-kit)
+   731→
+   732→### Root Admin Components:
+   733→- `merchant-dashboard.tsx` — The NEW merchant dashboard (4178 lines, this is the main admin)
+   734→- `admin-login-gate.tsx` — Platform login gate
+   735→- `admin-overview-tab.tsx` — Overview/dashboard tab
+   736→- `admin-settings-tab.tsx` — Settings tab
+   737→- `admin-quick-actions.tsx` — Quick actions panel
+   738→- `admin-quick-actions-panel.tsx` — Quick actions panel
+   739→- `admin-quick-search.tsx` — Quick search
+   740→- `admin-create-shop.tsx` — Shop creation dialog
+   741→- `admin-shop-card.tsx` — Shop display card
+   742→- `admin-shop-dashboard.tsx` — Shop dashboard view
+   743→- `admin-notification-center.tsx` — Notification center
+   744→- `admin-notif-settings.tsx` — Notification settings
+   745→- `admin-activity-panel.tsx` — Activity feed
+   746→- `admin-platform-settings.tsx` — Platform settings
+   747→- `admin-security-tab.tsx` — Security settings
+   748→- `admin-settings-enhanced.tsx` — Enhanced settings
+   749→- `admin-stubs.tsx` — Stub/placeholder components
+   750→- `admin-section-boundary.tsx` — Section boundary component
+   751→- `admin-quick-order-btn.tsx` — Quick order button
+   752→- `admin-order-notes-panel.tsx` — Order notes panel
+   753→- `admin-shortcuts-overlay.tsx` — Shortcuts overlay
+   754→
+   755→### Widget Components (reusable):
+   756→- `stats-overview.tsx`, `quick-stats-row.tsx`, `quick-stats-overview.tsx`
+   757→- `revenue-chart-widget.tsx`, `revenue-trend-mini.tsx`, `revenue-goal-widget.tsx`
+   758→- `revenue-forecast-widget.tsx`, `order-revenue-distribution.tsx`
+   759→- `shop-performance-card.tsx`, `shop-analytics-card.tsx`, `shop-comparison-widget.tsx`
+   760→- `top-customers-widget.tsx`, `customer-stats-widget.tsx`, `customer-reviews-widget.tsx`
+   761→- `customer-retention-widget.tsx`, `customer-feedback-chart.tsx`, `customer-loyalty-badge.tsx`
+   762→- `top-services-widget.tsx`, `service-popularity-chart.tsx`, `service-status-banner.tsx`
+   763→- `orders-heatmap.tsx`, `peak-hours-heatmap.tsx`
+   764→- `expense-categories-breakdown.tsx`, `expense-category-breakdown.tsx`, `expense-budget-tracker.tsx`
+   765→- `profit-margin-chart.tsx`, `cost-breakdown-widget.tsx`
+   766→- `print-queue-widget.tsx`, `print-queue-manager.tsx`, `print-quality-monitor.tsx`
+   767→- `activity-feed.tsx`, `live-activity-feed.tsx`, `shop-activity-feed.tsx`
+   768→- `notification-center.tsx`, `notification-badge.tsx`, `notification-preferences.tsx`
+   769→- `daily-performance-bar.tsx`, `daily-sales-summary.tsx`, `daily-goal-tracker.tsx`
+   770→- `monthly-target-progress.tsx`, `weekly-report-chart.tsx`
+   771→- `quick-search-widget.tsx`, `advanced-search-modal.tsx`, `command-palette.tsx`
+   772→- `quick-actions-toolbar.tsx`, `quick-actions-panel.tsx`
+   773→- `batch-status-updater.tsx`, `order-bulk-actions.tsx`
+   774→- `loyalty-checker.tsx`, `loyalty-badge.tsx`, `coupon-management-widget.tsx`
+   775→- `marketing-campaign-widget.tsx`, `referral-tracker-widget.tsx`, `seasonal-demand-widget.tsx`
+   776→- `schedule-calendar-widget.tsx`, `delivery-tracker-map.tsx`, `shipping-tracker-widget.tsx`
+   777→- `staff-activity-widget.tsx`, `employee-performance-chart.tsx`, `team-performance-chart.tsx`, `team-workload-widget.tsx`
+   778→- `machine-maintenance-widget.tsx`, `production-efficiency-dashboard.tsx`
+   779→- `business-hours-widget.tsx`, `live-clock.tsx`
+   780→- `smart-data-table.tsx`, `order-details-row.tsx`
+   781→
+   782→### Customer-facing Components:
+   783→- `app-shell.tsx`, `shop-page.tsx`, `intro.tsx`, `new-order-wizard.tsx`, `upload-step.tsx`
+   784→- `track-order.tsx`, `repeat-order.tsx`, `order-success.tsx`, `track-page-client.tsx`
+   785→- `floating-assistant.tsx`, `welcome-hero.tsx`, `testimonials-section.tsx`
+   786→- `whatsapp-button.tsx`, `theme-toggle.tsx`, `offer-popup.tsx`, `premium-feature.tsx`
+   787→
+   788→### Utility Components:
+   789→- `empty-state.tsx`, `page-skeleton.tsx`, `skeleton-cards.tsx`, `error-boundary.tsx`
+   790→- `back-to-top.tsx`, `keyboard-shortcuts-overlay.tsx`, `theme-provider.tsx`
+   791→- `order-detail-modal.tsx`, `order-confirm-dialog.tsx`, `order-invoice-card.tsx`
+   792→- `order-notes.tsx`, `order-tags.tsx`, `order-summary-card.tsx`, `order-rating.tsx`
+   793→- `order-timeline.tsx`, `order-status-timeline.tsx`, `order-progress-bar.tsx`
+   794→- `file-upload-preview.tsx`, `file-analysis-panel.tsx`
+   795→- `share-dialog.tsx`, `mobile-bottom-nav.tsx`
+   796→
+   797→## INFRASTRUCTURE SUMMARY FOR ADMIN DASHBOARD REUSE:
+   798→
+   799→### Database Access Patterns:
+   800→- **turso-lite.ts**: Primary data access layer — all API routes use tursoQuery/tursoExecute (bypasses Prisma, 10x faster)
+   801→- **db.ts (Prisma)**: Used only for write operations (create shop, migrations)
+   802→- **admin-auth.ts**: requireAdmin() middleware — accepts either x-admin-code header OR shopId query param
+   803→
+   804→### Auth System:
+   805→- **Platform admin**: SHA-256 password via `/api/super-admin/auth` → localStorage token+ts → 4hr session
+   806→- **Merchant admin**: PIN code per shop via `/api/settings` general.adminCode → state-based unlock
+   807→- **Session verify**: `/api/super-admin/verify` with 5-min sessionStorage cache
+   808→
+   809→### State Management:
+   810→- **Zustand store** (`store.ts`): View navigation, shopId, admin gate state
+   811→- **React Context** (`shop-context.tsx`): Shop data, features, trial, plan
+   812→- **shopApi()**: Auto-appends shopId to all API calls
+   813→
+   814→### Feature Gating:
+   815→- 27 features defined (7 free + 20 paid)
+   816→- `hasFeature()` from ShopContext — supports plan-based feature resolution
+   817→- Paid plans unlock all features by default
+   818→
+   819→### Available Data APIs:
+   820→- `/api/admin/global-stats` — Platform-wide (all shops stats, per-shop breakdown, recent orders)
+   821→- `/api/admin/stats` — Per-shop or global stats (with shopId param)
+   822→- `/api/admin/analytics` — Advanced analytics (monthly/daily/heatmap/customers/services)
+   823→- `/api/shops` — Shop CRUD
+   824→- `/api/orders` — Order CRUD with filters
+   825→- `/api/customers` — Customer management
+   826→- `/api/expenses` — Expense tracking
+   827→- `/api/notifications` — Notification system
+   828→- `/api/settings` — Shop settings (services, delivery, general, intro)
+   829→
+   830→### UI Component Library (shadcn/ui + custom):
+   831→- Full set of 42 shadcn components available
+   832→- Custom `DashboardSidebar` with RTL, collapse, mobile drawer, badges
+   833→- Recharts integration for charts
+   834→- framer-motion for animations
+   835→- sonner for toasts
+   836→- @dnd-kit for kanban drag-and-drop
+   837→
+   838→### Current Root Admin Gaps (vs. what merchant admin has):
+   839→| Feature | Merchant Dashboard | Root Admin (page.tsx) |
+   840→|---------|-------------------|----------------------|
+   841→| Sidebar | ✅ 8 tabs, 3 sections | ⚠️ 3 tabs only |
+   842→| Stats Cards | ✅ 5 cards | ⚠️ 4 cards (no profit) |
+   843→| Orders | ✅ Full CRUD, filters, batch, export | ⚠️ Read-only list |
+   844→| Analytics | ✅ Charts, heatmap, top customers | ❌ Missing |
+   845→| Customers | ✅ Full CRUD | ❌ Missing |
+   846→| Expenses | ✅ Full CRUD | ❌ Missing |
+   847→| Settings | ✅ 5 sub-tabs | ⚠️ Empty (name+logout) |
+   848→| Kanban | ✅ @dnd-kit | ❌ Missing |
+   849→| Notifications | ✅ Bell + polling | ❌ Missing |
+   850→| Real-time | ✅ SSE | ❌ Missing |
+   851→
+   852→Stage Summary:
+   853→- Project has 47+ API routes, 42 UI components, 160+ app components, 35 lib files, 10 Prisma models
+   854→- Merchant dashboard is comprehensive (4178 lines, 8 tabs) — can serve as reference
+   855→- Root admin has basic shell but lacks most features
+   856→- All necessary infrastructure exists: turso-lite, admin auth, feature gating, sidebar component
+   857→- Massive library of pre-built widgets can be reused for root admin dashboard
+   858→- Dual DB access: turso-lite (reads, fast) + Prisma (writes, migrations)
+   859→- Auth: SHA-256 session for platform admin, PIN per shop for merchant admin
+   860→---
+   861→Task ID: 5
+   862→Agent: Main Agent
+   863→Task: Comprehensive admin dashboard rewrite with full settings and missing features
+   864→
+   865→Work Log:
+   866→- Analyzed original admin dashboard (3 tabs: Shops, Orders, minimal Settings)
+   867→- Compared with merchant dashboard (8 tabs, 4178 lines) and identified missing features
+   868→- Created `/api/admin/global-daily-stats` endpoint for platform-wide daily stats (no shopId required)
+   869→- Completely rewrote `/src/app/page.tsx` with 7 comprehensive sidebar tabs:
+   870→  1. **الرئيسية (Dashboard)**: 4 KPI cards, 7-day mini bar charts, status distribution, top shops, recent activity
+   871→  2. **المتاجر (Shops)**: Enhanced shop cards with CRUD, search, status badges, owner info
+   872→  3. **الطلبات (Orders)**: Search, status filter (6 statuses), color-coded status bars, order details
+   873→  4. **التحليلات (Analytics)**: Monthly KPIs, daily revenue horizontal bar chart, status distribution, top customers
+   874→  5. **العملاء (Customers)**: Unique customer list derived from all orders, search, spending totals
+   875→  6. **الإعدادات (Settings)**: Full platform settings panel with 5 sub-sections:
+   876→     - Platform Info (name, tagline, email, phone, whatsapp, description)
+   877→     - General Settings (country, language, currency, trial days, max shops, welcome message)
+   878→     - Feature Toggles (6 toggles: whatsapp notifications, order tracking, dark mode, repeat orders, customer login, advanced analytics)
+   879→     - Notification Settings (4 toggles: new order sound, status change, daily summary, low balance)
+   880→     - Maintenance Mode (toggle + custom message, allow new shops toggle)
+   881→  7. **الفريق والأمان (Team & Security)**:
+   882→     - Password change form (current + new + confirm)
+   883→     - Team member management (add with name/email/role, remove, role badges)
+   884→     - System info panel (shops count, active shops, total orders, unique customers)
+   885→     - Logout button
+   886→- Sidebar: 3 sections (القائمة, البيانات, النظام) with proper icons and badges
+   887→- Uses existing APIs: /api/admin/global-stats, /api/admin/global-daily-stats, /api/shops, /api/super-admin/platform-settings, /api/super-admin/team, /api/super-admin/password
+   888→- Build succeeded with 0 errors
+   889→- API testing confirmed global-daily-stats returns correct data structure
+   890→- Logo files confirmed at /n.png, /n-sm.png, /platform-logo.png, /brand/tayf-logo.png
+   891→- Theme system verified: ThemeProvider in layout.tsx, CSS has proper :root (light) and .dark (dark) variables
+   892→
+   893→Stage Summary:
+   894→- Admin dashboard expanded from 3 minimal tabs to 7 comprehensive tabs
+   895→- Settings tab expanded from 2 basic cards to full platform management panel
+   896→- All existing functionality preserved (login gate, shops CRUD, orders list)
+   897→- New features: analytics, customers, team management, password change, maintenance mode, feature toggles, notification settings
+   898→- Verification: Build passes, APIs work, HTML renders correctly. Agent-browser verification blocked by 4GB RAM OOM (Chrome + Node can't coexist in sandbox)
+   899→
+   900→---
+   901→Task ID: 1-research
+   902→Agent: Explore Agent
+   903→Task: Research original admin dashboard features
+   904→
+   905→Work Log:
+   906→- Analyzed extracted 7z project (matbaa-dhaki) merchant admin: 6 tabs with full features
+   907→- Compared with current root admin: only 3 tabs (shops/orders/minimal settings)
+   908→- Identified missing: Dashboard overview, Analytics, Customers, Expenses, Notifications, Full Settings
+   909→- Recommended 8-item sidebar structure for root admin
+   910→
+   911→Stage Summary:
+   912→- Original merchant dashboard has: Orders (with filters/batch/export), Kanban, Analytics (charts), Customers, Expenses, Settings (5 sub-tabs)
+   913→- Root admin was missing most of these features
+   914→- Research findings documented for implementation
+   915→
+   916→---
+   917→Task ID: 2-explore  
+   918→Agent: Explore Agent
+   919→Task: Explore existing APIs and infrastructure
+   920→
+   921→Work Log:
+   922→- Found 47+ API routes across 9 route groups
+   923→- Confirmed Super Admin APIs: auth, session verify, team CRUD, platform settings, password change, logo upload
+   924→- Confirmed Admin APIs: stats, analytics, global-stats, daily-stats, PDF report
+   925→- Found 42 shadcn/ui components including custom DashboardSidebar
+   926→- Found 35+ lib files including turso-lite (10x faster than Prisma), admin-auth, admin-utils
+   927→- Prisma schema has 11 models (Shop, PrintOrder, Setting, Expense, Customer, AuditLog, etc.)
+   928→
+   929→Stage Summary:
+   930→- Rich API layer already exists for all needed data
+   931→- DashboardSidebar component already supports RTL, collapse, mobile drawer, badges
+   932→- All infrastructure needed for comprehensive admin dashboard is available
+   933→
+   934→---
+   935→Task ID: 9
+   936→Agent: Main Agent
+   937→Task: Fix logo, admin shop management, customer receipt/download/cancel, deploy to Vercel
+   938→
+   939→Work Log:
+   940→- Analyzed 7 uploaded screenshots via VLM (2 logos, 5 Chrome screenshots showing errors)
+   941→- Replaced all logo files (n.png, n-dark.png, n-sm.png, platform-logo.png, tayf-icon.png, favicon.png, brand/tayf-logo.png, brand/tayf-logo-dark.png) with the uploaded golden P/arrow brand logo
+   942→- Created resized versions (64x64 for small, 192x192 for icon, 32x32 for favicon) using sharp-cli
+   943→- Enhanced admin shops tab in page.tsx (+280 lines):
+   944→  - Added InlineEditShop component: edit name, owner, phone, whatsapp, email, address, country, plan, color, active toggle
+   945→  - Added InlineShareShop component: shows customer link, admin link, and PIN with copy buttons
+   946→  - Added 7 action buttons per shop card: View, Admin, Edit, Share, Copy PIN, Toggle Active, Delete
+   947→  - Added handleToggleShop, handleCopyPin, handleShopSaved handlers
+   948→- Added GET endpoint to /api/admin/shops/[slug]/route.ts (returns shop with adminPin for super admin)
+   949→- Enhanced customer track-order.tsx:
+   950→  - Added OrderReceipt component (PDF receipt download via jsPDF)
+   951→  - Added invoice download button (fetches /api/orders/[id]/invoice as PDF blob)
+   952→  - Added cancel order button with AlertDialog confirmation (calls PUT /api/track/cancel)
+   953→  - All 3 new buttons: تحميل الوصل, تحميل الفاتورة, إلغاء
+   954→- Verified Vercel crash (raw JSON error) was from old deployed code, not current codebase
+   955→- Committed all changes with descriptive message
+   956→- Pushed to GitHub (main branch, commit a445fbd)
+   957→- Deployed to Vercel via deploy hook (job XmjDBWKYMZTWIhUtZf7X)
+   958→- Verified via agent-browser:
+   959→  - Admin login works (password: Admin@2025)
+   960→  - Dashboard loads with all 7 tabs and sidebar
+   961→  - Theme toggle (التبديل للوضع النهاري) is visible and functional in sidebar footer
+   962→  - Shops tab shows 8 shops with all 7 action buttons each
+   963→  - Share dialog shows customer link, admin link, and PIN correctly
+   964→  - Edit dialog shows all editable fields with current values
+   965→  - No crash/error on the live site
+   966→
+   967→Stage Summary:
+   968→- All user-reported issues fixed:
+   969→  1. Logo replaced with the correct uploaded golden P/arrow brand logo
+   970→  2. Admin shops tab now has full merchant management (edit, share, PIN, toggle)
+   971→  3. Light/dark theme toggle is present in admin sidebar footer
+   972→  4. Customer can now download receipts, download invoices, and cancel pending orders
+   973→  5. Vercel crash resolved by deploying updated code
+   974→- Code deployed and live at https://tayf-saas.vercel.app/
+   975→
+   976→---
+   977→Task ID: 1
+   978→Agent: Explore Agent
+   979→Task: Thorough exploration of customer-facing version code — layout, components, styling, dark mode
+   980→
+   981→## 1) ADMIN BUTTON in Customer Version
+   982→
+   983→**Where it appears:**
+   984→- **Header nav (Desktop):** `/home/z/my-project/src/components/app/app-shell.tsx` lines 126-131
+   985→  - The `navItems` array includes `{ key: "admin", label: "الإدارة", icon: LayoutGrid, show: showAdminLink }`
+   986→  - `showAdminLink` comes from `useAppStore` and is only `true` when URL has `?preview=1` (set in `/home/z/my-project/src/components/app/shop-page.tsx` line 151)
+   987→  - **In normal customer view, the admin tab is HIDDEN** (showAdminLink defaults to false in `/home/z/my-project/src/lib/store.ts` line 69)
+   988→- **Header nav (Mobile):** `/home/z/my-project/src/components/app/app-shell.tsx` lines 214-226 — same navItems filtered by `showAdminLink`
+   989→- **Footer links:** `/home/z/my-project/src/components/app/app-shell.tsx` lines 312-314 — "لوحة الإدارة" link also conditional on `showAdminLink`
+   990→- **Bottom nav:** `/home/z/my-project/src/components/app/mobile-bottom-nav.tsx` lines 8-18 — the "admin" tab with `LayoutGrid`/`ShieldCheck` icon is ALWAYS visible (not gated by showAdminLink). When clicked without auth, it opens `AdminGate` dialog.
+   991→- **Bottom nav admin indicator:** line 96-98: amber dot on admin tab when `!adminUnlocked`
+   992→
+   993→**How admin access works:**
+   994→- User clicks admin tab → `handleTabClick` checks `adminUnlocked` → if false, opens `AdminGate` dialog
+   995→- `AdminGate` (`/home/z/my-project/src/components/app/admin-gate.tsx`) prompts for a 4-digit PIN code
+   996→- On success, `adminUnlocked` = true, view switches to "admin" showing `<AdminPanel />`
+   997→- **Key finding:** The bottom nav `MobileBottomNav` does NOT check `showAdminLink` — it always shows the admin tab to everyone. Only the header nav and footer link respect the preview flag.
+   998→
+   999→## 2) INTRO/SPLASH SCREEN
+  1000→
+  1001→**File:** `/home/z/my-project/src/components/app/intro.tsx` (232 lines)
+  1002→
+  1003→**Structure:**
+  1004→- Full-screen overlay: `fixed inset-0 z-[100]` (lines 103-104)
+  1005→- Background color: dynamic based on theme — dark mode uses `settings.bgColor` (default `#0a0a0b`), light mode uses `#faf8f2` (lines 47-50)
+  1006→- Direction: `dir="rtl"`
+  1007→- Loads settings from `/api/settings` endpoint on mount
+  1008→
+  1009→**Logo:**
+  1010→- Image: `/n.png` (line 139) — served from `/home/z/my-project/public/n.png`
+  1011→- Container: `w-28 h-28 sm:w-32 sm:h-32 rounded-3xl` with golden glow shadow (lines 133-136)
+  1012→- Animation: scale from 0.7→1, opacity 0→1, with 0.15s delay, 0.9s duration (lines 123-129)
+  1013→- Thin golden ring around logo: 1.5px border in accent color, animated opacity (lines 148-156)
+  1014→- Radial glow behind: 400px circle with accent color at 12% opacity (lines 112-117)
+  1015→
+  1016→**Text below logo:**
+  1017→- Brand name: `{settings.title}` (default "طيف") — `text-4xl sm:text-5xl font-bold` in accent color (lines 160-172)
+  1018→- Tagline: `{settings.subtitle}` (default "منصة طباعة احترافية") — `text-sm sm:text-base` (lines 175-189)
+  1019→
+  1020→**Progress bar:** At bottom center, `w-48 sm:w-56`, thin 2px bar with accent gradient, 4.2s duration (lines 193-214)
+  1021→
+  1022→**Trigger:** Shown when `showIntro` is true (defaults to true in store). Rendered in `app-shell.tsx` line 149. On finish, `setShowIntro(false)`.
+  1023→
+  1024→**Exit:** Fades out (opacity 0, scale 1.02) over 0.6s before removal.
+  1025→
+  1026→## 3) HEADER COMPONENT
+  1027→
+  1028→**File:** `/home/z/my-project/src/components/app/app-shell.tsx` lines 182-236
+  1029→
+  1030→**Structure (top to bottom):**
+  1031→
+  1032→**A) Top promo bar** (lines 153-180, only shown when `view !== "new"`):
+  1033→- Classes: `bg-neutral-900 text-neutral-200`
+  1034→- Height: `h-8 sm:h-9`
+  1035→- Mobile: "⚡ اطلب خلال دقيقة" (text-xs, truncated)
+  1036→- Desktop: Three promos — "⚡ اطلب خلال دقيقة", "🕐 جاهز خلال ساعة", "🔔 إشعار عند الجاهزية" (responsive: hidden on sm/md/lg)
+  1037→- Right side: Phone link `tel:{displayPhone}`
+  1038→
+  1039→**B) Main header** (lines 183-236):
+  1040→- Classes: `bg-white dark:bg-neutral-950 border-b border-border sticky top-0 z-40 no-print shadow-sm`
+  1041→- Height: `h-14 md:h-16`
+  1042→- Max width: `max-w-7xl mx-auto px-3 sm:px-4`
+  1043→- Layout: flex row with items-center justify-between gap-2
+  1044→
+  1045→**Header contents:**
+  1046→1. **Logo + shop name** (left, clickable → navigates to "new" view):
+  1047→   - Logo: `w-9 h-9 md:w-10 md:h-10 rounded-xl bg-neutral-900` with `<Printer>` icon in `text-amber-400`
+  1048→   - Shop name: `font-bold text-sm md:text-base`, subtitle `text-xs text-muted-foreground`
+  1049→
+  1050→2. **LiveClock** (`/home/z/my-project/src/components/app/live-clock.tsx`):
+  1051→   - Only visible on `lg:` screens (`hidden lg:flex`)
+  1052→   - Shows time + date with green pulse dot
+  1053→   - Classes: `text-xs text-muted-foreground`
+  1054→
+  1055→3. **Desktop nav** (`hidden md:flex`):
+  1056→   - Container: `bg-muted/60 rounded-full p-1` (pill shape)
+  1057→   - Items: filtered by `showAdminLink` — each is a rounded-full button
+  1058→   - Active state: `bg-neutral-900 rounded-full` pill via framer-motion `layoutId="nav-active-desktop"`
+  1059→   - Admin item has lock icon when `!adminUnlocked`
+  1060→
+  1061→4. **Mobile nav** (`flex md:hidden`):
+  1062→   - Container: `bg-muted/60 rounded-full p-1`
+  1063→   - Each item: `w-8 h-8 rounded-full` icon-only button
+  1064→   - Active state: same dark pill via `layoutId="nav-active-mobile"`
+  1065→   - Admin has amber dot when locked
+  1066→
+  1067→5. **Right action buttons** (lines 228-234):
+  1068→   - **Calculator button:** `<Button variant="ghost" size="icon">` with `<Calculator>` icon — opens QuickPriceCalculator dialog
+  1069→   - **NotificationBadge** (`/home/z/my-project/src/components/app/notification-badge.tsx`): Bell icon with unread count badge, opens dropdown panel
+  1070→   - **ThemeToggle** (`/home/z/my-project/src/components/app/theme-toggle.tsx`): Ghost button, `w-9 h-9 rounded-full`, Sun/Moon icon
+  1071→
+  1072→## 4) FOOTER COMPONENT
+  1073→
+  1074→**File:** `/home/z/my-project/src/components/app/app-shell.tsx` lines 278-360
+  1075→
+  1076→**Only shown when `view !== "admin"`**
+  1077→
+  1078→**Classes:** `bg-neutral-900 text-neutral-300 mt-auto no-print`
+  1079→
+  1080→**Structure:**
+  1081→1. **Toggle button** (lines 280-286):
+  1082→   - Full-width button with `<Info>` icon + text "إخفاء التفاصيل" / "عرض معلومات {shop name}"
+  1083→   - `text-xs text-neutral-400 hover:text-amber-400`
+  1084→   - ChevronUp icon rotates 180° when collapsed
+  1085→   - Border bottom: `border-b border-neutral-800/60`
+  1086→
+  1087→2. **Collapsible content** (lines 288-358):
+  1088→   - Uses CSS classes: `footer-collapse` + `footer-expanded` (defined in globals.css lines 34982-34989)
+  1089→   - `footer-collapse`: `max-height: 0; overflow: hidden; transition: max-height 0.45s`
+  1090→   - `footer-expanded`: `max-height: 4000px`
+  1091→   - Contains:
+  1092→     - `<TestimonialsSection />` (customer reviews carousel)
+  1093→     - `<div className="divider-gold" />` — golden gradient divider (globals.css line 35182)
+  1094→     - 4-column grid (`grid-cols-1 md:grid-cols-4 gap-8`):
+  1095→       - Col 1: Shop branding (Store icon in amber bg-amber-400 box, shop name, description)
+  1096→       - Col 2: Quick links (طلب طباعة جديد, تتبّع طلب, لوحة الإدارة [conditional], إعادة طلب سابق) — all `hover:text-amber-400`
+  1097→       - Col 3: Services list (🖨️📄🖼️📚🪪📜) — static text
+  1098→       - Col 4: Contact info (MapPin, Phone, MessageCircle, Mail, Clock with business hours) — icons in `text-amber-400`
+  1099→     - Copyright bar: `border-t border-neutral-800 text-center text-xs text-neutral-500`
+  1100→
+  1101→## 5) BOTTOM NAVIGATION BAR
+  1102→
+  1103→**File:** `/home/z/my-project/src/components/app/mobile-bottom-nav.tsx` (117 lines)
+  1104→
+  1105→**Container:** `md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-2xl border-t border-border/60 mobile-nav-safe no-print`
+  1106→
+  1107→**Height:** `h-14`
+  1108→
+  1109→**Tabs (4 items, each gets 1/5 width = 20%):**
+  1110→| Key | Label | Icon (normal) | Icon (active) |
+  1111→|-----|-------|---------------|---------------|
+  1112→| new | جديد | Plus | Plus |
+  1113→| repeat | تكرار | RotateCcw | RotateCcw |
+  1114→| track | تتبّع | Search | Search |
+  1115→| admin | الإدارة | LayoutGrid | ShieldCheck |
+  1116→
+  1117→**Active tab styling:**
+  1118→- Background indicator: `bg-amber-500/10 dark:bg-amber-500/15`, `h-11 w-1/5 rounded-t-2xl`, positioned via framer-motion
+  1119→- Icon color: `text-amber-600 dark:text-amber-400` (vs `text-muted-foreground/70` inactive)
+  1120→- Icon animation: lifts up 2px and scales to 1.15 when active
+  1121→- Activity dot: `bg-amber-500 rounded-full` below active icon
+  1122→- Bottom glowing bar: `h-[3px] bg-gradient-to-r from-amber-400 to-amber-600 rounded-full`
+  1123→
+  1124→**Admin locked indicator:** Amber dot with ring on admin tab (`w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white dark:ring-neutral-950`)
+  1125→
+  1126→**Chat icon overlapping issue:**
+  1127→- The **FloatingAssistant FAB** is at `fixed bottom-5 left-5 z-[100]` (bottom-left corner)
+  1128→- The **QuickActions FAB** is at `fixed bottom-24 right-4 z-50 md:hidden` (right side, above bottom nav)
+  1129→- The **BackToTop** button is at `fixed bottom-6 right-6 z-50` (right side)
+  1130→- The **WhatsAppButton** exists but is NOT imported/used in app-shell (dead code)
+  1131→- The MobileBottomNav is `z-40`, FloatingAssistant is `z-[100]` — so the chat FAB sits ON TOP of the bottom nav's left area. The bottom nav is full-width, and the floating assistant at `bottom-5 left-5` overlaps the bottom-left corner of the bottom nav on mobile.
+  1132→
+  1133→## 6) DARK MODE IMPLEMENTATION
+  1134→
+  1135→**A) Theme Provider:** `/home/z/my-project/src/components/theme-provider.tsx`
+  1136→```tsx
+  1137→<NextThemesProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange={false}>
+  1138→```
+  1139→- Uses `class` strategy (adds `.dark` to `<html>`)
+  1140→- **Default theme is "dark"**
+  1141→- System preference detection is disabled
+  1142→
+  1143→**B) Theme Toggle:** `/home/z/my-project/src/components/app/theme-toggle.tsx`
+  1144→- Uses `useTheme()` from `next-themes`
+  1145→- Checks `resolvedTheme === "dark"`
+  1146→- Renders Sun icon (amber-400) when dark, Moon icon (neutral-700) when light
+  1147→- Button classes: `w-9 h-9 rounded-full`, `bg-amber-400/10` in dark, `bg-neutral-900/5` in light
+  1148→
+  1149→**C) CSS Custom Variant:** `/home/z/my-project/src/app/globals.css` line 4:
+  1150→```css
+  1151→@custom-variant dark (&:is(.dark *));
+  1152→```
+  1153→
+  1154→**D) CSS Variables — Light Mode** (`:root`, lines 78-139):
+  1155→```css
+  1156→:root {
+  1157→  --background: #faf8f2;    /* Warm cream */
+  1158→  --foreground: #1a1510;
+  1159→  --card: #ffffff;
+  1160→  --primary: #b8923a;       /* Gold */
+  1161→  --secondary: #f5f0e5;
+  1162→  --muted: #ede8dc;
+  1163→  --accent: #fdf6e3;
+  1164→  --border: rgba(0, 0, 0, 0.08);
+  1165→  --ring: #b8923a;
+  1166→}
+  1167→```
+  1168→
+  1169→**E) CSS Variables — Dark Mode** (`.dark`, lines 144-189):
+  1170→```css
+  1171→.dark {
+  1172→  --background: #0a0a0b;    /* Near black */
+  1173→  --foreground: #e8e4dc;    /* Warm light */
+  1174→  --card: #141416;
+  1175→  --primary: #d4a853;       /* Brighter gold */
+  1176→  --secondary: #1e1e22;
+  1177→  --muted: #1e1e22;
+  1178→  --accent: #251e12;
+  1179→  --border: rgba(255, 255, 255, 0.08);
+  1180→  --ring: #d4a853;
+  1181→}
+  1182→```
+  1183→
+  1184→**F) Dark mode palette overrides:** Dark color tokens are INVERTED in dark mode (e.g., `--color-dark-50` becomes `#1c1c1f` instead of `#f5f5f5`)
+  1185→
+  1186→**G) Gold color palette** (lines 48-58): Full gold scale from gold-50 (#fefcf3) to gold-950 (#3a2a14), used across the theme
+  1187→
+  1188→**H) Dark classes used in components:**
+  1189→- Header: `bg-white dark:bg-neutral-950`
+  1190→- Bottom nav: `bg-white/90 dark:bg-neutral-950/90`
+  1191→- Chat window: `bg-white dark:bg-neutral-900`
+  1192→- Theme toggle: `bg-amber-400/10` (dark) vs `bg-neutral-900/5` (light)
+  1193→- NotificationBadge: `hover:text-amber-400` in dark
+  1194→- BackToTop: `bg-neutral-900 dark:bg-white dark:text-neutral-900`
+  1195→- Glass effect: `.dark .glass { background: oklch(0.21 0.012 60 / 70%); }`
+  1196→- Testimonials: `dark:from-amber-500/10 dark:to-orange-500/10`
+  1197→
+  1198→**I) Shop themes** (`/home/z/my-project/src/lib/themes.ts`):
+  1199→- 8 pre-defined color themes per shop (gold, emerald, blue, brown, purple, red, teal, orange)
+  1200→- Applied via `getTheme(shop.themeId)` in app-shell.tsx
+  1201→- `theme.rootVars` is referenced but NOT defined on ShopTheme type (always undefined — themes system appears incomplete/unused for CSS vars)
+  1202→
+  1203→## 7) FILES UNDER src/app/s/
+  1204→
+  1205→Only ONE file:
+  1206→```
+  1207→/home/z/my-project/src/app/s/[slug]/page.tsx
+  1208→```
+  1209→
+  1210→This is a Next.js dynamic route page that:
+  1211→- Fetches shop data from `/api/shops/{slug}`
+  1212→- Generates SEO metadata and JSON-LD structured data
+  1213→- Renders `<ShopPage slug={slug} />` from `/home/z/my-project/src/components/app/shop-page.tsx`
+  1214→- `ShopPage` wraps everything in `<ShopProvider>` → `<ShopApp>` → conditional `<MerchantDashboard>` (if `?admin=1`) or `<AppShell>` (customer view)
+  1215→
+  1216→## 8) ALL COMPONENT FILES
+  1217→
+  1218→### src/components/app/ (178 files):
+  1219→**Customer-facing core:**
+  1220→- app-shell.tsx, intro.tsx, mobile-bottom-nav.tsx, theme-toggle.tsx, shop-page.tsx
+  1221→- new-order-wizard.tsx, repeat-order.tsx, track-order.tsx, order-success.tsx
+  1222→- floating-assistant.tsx, quick-actions.tsx, back-to-top.tsx
+  1223→- live-clock.tsx, notification-badge.tsx, testimonials-section.tsx
+  1224→- upload-step.tsx, price-estimator.tsx, quick-price-calculator.tsx
+  1225→- track-page-client.tsx, whatsapp-button.tsx (exists but NOT used in app-shell)
+  1226→- welcome-hero.tsx, service-showcase.tsx, shop-trust-badges.tsx
+  1227→
+  1228→**Admin/merchant-only:**
+  1229→- admin-panel.tsx, admin-gate.tsx, admin-login-gate.tsx, admin-section-boundary.tsx
+  1230→- merchant-dashboard.tsx, merchant-analytics.tsx, merchant-order-detail.tsx
+  1231→- merchant-customers.tsx, merchant-expenses.tsx, merchant-settings-advanced.tsx
+  1232→- merchant-order-notes.tsx, merchant-revenue-breakdown.tsx
+  1233→- admin-settings.tsx, admin-settings-tab.tsx, admin-settings-enhanced.tsx
+  1234→- admin-overview-tab.tsx, admin-analytics.tsx, admin-shop-dashboard.tsx
+  1235→- admin-shop-card.tsx, admin-create-shop.tsx, admin-customers.tsx
+  1236→- admin-expenses.tsx, admin-security-tab.tsx, admin-platform-settings.tsx
+  1237→- admin-notification-center.tsx, admin-notif-settings.tsx
+  1238→- admin-quick-actions.tsx, admin-quick-actions-panel.tsx
+  1239→- admin-quick-order-btn.tsx, admin-quick-search.tsx
+  1240→- admin-order-notes-panel.tsx, admin-shortcuts.tsx, admin-shortcuts-overlay.tsx
+  1241→- admin-stubs.tsx
+  1242→
+  1243→**Widgets (admin dashboard analytics):**
+  1244→- 50+ widget files (revenue, orders, charts, etc.)
+  1245→
+  1246→### src/components/ui/ (53 shadcn/ui files):
+  1247→Standard UI primitives (button, card, dialog, input, tabs, etc.)
+  1248→
+  1249→### src/components/forms/ (1 file):
+  1250→- form-filler.tsx
+  1251→
+  1252→## SUMMARY OF KEY FINDINGS
+  1253→
+  1254→1. **Admin button visibility mismatch:** `MobileBottomNav` always shows admin tab (anyone can see it, triggers PIN gate). Header nav only shows it with `?preview=1`.
+  1255→2. **Floating assistant overlaps bottom nav:** Chat FAB at `bottom-5 left-5 z-[100]` sits on top of bottom nav (`z-40`) at bottom-left.
+  1256→3. **WhatsAppButton is dead code:** Component exists but is never imported.
+  1257→4. **Dark mode default is dark:** `defaultTheme="dark"` in ThemeProvider.
+  1258→5. **Theme system (rootVars) incomplete:** `theme.rootVars` referenced in app-shell but undefined on ShopTheme type — no inline CSS vars are actually applied.
+  1259→6. **Header has hardcoded colors:** Header uses `bg-neutral-900` for top bar and `bg-white dark:bg-neutral-950` for main bar, NOT using the shop theme system.
+  1260→7. **Only 1 route file** under `src/app/s/` — the entire customer app is a single-page app driven by Zustand state (`view`).
+  1261→8. **RTL throughout:** `dir="rtl"` on root layout html and app-shell container.
+  1262→

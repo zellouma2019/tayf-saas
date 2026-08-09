@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, RotateCcw, Search, LayoutGrid, ShieldCheck } from "lucide-react";
+import { Plus, RotateCcw, Search, Home } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { View } from "@/lib/store";
 
@@ -14,24 +14,13 @@ const tabs: {
   { key: "new", label: "جديد", icon: Plus, iconActive: Plus },
   { key: "repeat", label: "تكرار", icon: RotateCcw, iconActive: RotateCcw },
   { key: "track", label: "تتبّع", icon: Search, iconActive: Search },
-  { key: "admin", label: "الإدارة", icon: LayoutGrid, iconActive: ShieldCheck },
 ];
 
 export function MobileBottomNav() {
   const view = useAppStore((s) => s.view);
   const setView = useAppStore((s) => s.setView);
-  const adminUnlocked = useAppStore((s) => s.adminUnlocked);
-  const setAdminGateOpen = useAppStore((s) => s.setAdminGateOpen);
 
   const activeIndex = tabs.findIndex((t) => t.key === view);
-
-  function handleTabClick(key: View) {
-    if (key === "admin" && !adminUnlocked) {
-      setAdminGateOpen(true);
-      return;
-    }
-    setView(key);
-  }
 
   return (
     <nav
@@ -43,14 +32,14 @@ export function MobileBottomNav() {
         {/* خلفية مؤشر التبويب النشط */}
         <motion.div
           layoutId="mobile-tab-bg"
-          className="absolute bottom-0 h-11 w-1/5 rounded-t-2xl bg-amber-500/10 dark:bg-amber-500/15"
+          className="absolute bottom-0 h-11 w-1/3 rounded-t-2xl bg-amber-500/10 dark:bg-amber-500/15"
           style={{
-            right: `${activeIndex * 20}%`,
+            right: `${activeIndex * 33.333}%`,
           }}
           transition={{ type: "spring", stiffness: 350, damping: 30 }}
         />
 
-        {tabs.map((tab, index) => {
+        {tabs.map((tab) => {
           const isActive = tab.key === view;
           const Icon = isActive ? tab.iconActive : tab.icon;
 
@@ -60,7 +49,7 @@ export function MobileBottomNav() {
               role="tab"
               aria-selected={isActive}
               aria-label={tab.label}
-              onClick={() => handleTabClick(tab.key)}
+              onClick={() => setView(tab.key)}
               className={`relative flex-1 flex flex-col items-center justify-center py-1.5 gap-0.5 transition-all duration-200 active:scale-90 ${
                 isActive
                   ? "text-amber-600 dark:text-amber-400"
@@ -91,11 +80,6 @@ export function MobileBottomNav() {
               }`}>
                 {tab.label}
               </span>
-
-              {/* مؤشر الإدارة المقفل */}
-              {tab.key === "admin" && !adminUnlocked ? (
-                <span className="absolute top-0.5 left-1/2 ml-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white dark:ring-neutral-950" />
-              ) : null}
             </button>
           );
         })}
@@ -105,8 +89,8 @@ export function MobileBottomNav() {
           layoutId="mobile-bottom-bar"
           className="absolute bottom-0 h-[3px] bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
           style={{
-            width: "20%",
-            right: `${activeIndex * 20}%`,
+            width: "33.333%",
+            right: `${activeIndex * 33.333}%`,
           }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
         />
