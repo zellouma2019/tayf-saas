@@ -1,248 +1,194 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Star, CheckCircle2, Loader2, Send } from "lucide-react";
-import { useShop } from "@/lib/shop-context";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Star, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 interface OrderRatingProps {
-  /** The order ID to rate */
-  orderId: string;
-  /** The current order status */
-  orderStatus: string;
-  /** Whether the order already has a rating */
-  hasRating?: boolean;
-  /** Whether the dialog is open */
-  open: boolean;
-  /** Callback when dialog open state changes */
-  onOpenChange: (open: boolean) => void;
+  order: {
+    id: string;
+    reference: string;
+    status: string;
+    rating?: number | null;
+    serviceName: string;
+  };
 }
 
-const starVariants = {
-  idle: { scale: 1, rotate: 0 },
-  hover: { scale: 1.25, rotate: -8 },
-  selected: { scale: 1.15, rotate: 0 },
-};
+const STAR_LABELS = ["سيء جداً", "سيء", "عادي", "جيد", "ممتاز"];
 
-const RATING_LABELS: Record<number, string> = {
-  1: "سيء",
-  2: "ضعيف",
-  3: "مقبول",
-  4: "جيد",
-  5: "ممتاز",
-};
-
-export function OrderRating({
-  orderId,
-  orderStatus,
-  hasRating = false,
-  open,
-  onOpenChange,
-}: OrderRatingProps) {
-  const { shop } = useShop();
-  const [hoveredStar, setHoveredStar] = useState(0);
-  const [selectedRating, setSelectedRating] = useState(0);
+export function OrderRating({ order }: OrderRatingProps) {
+  const [selected, setSelected] = useState(0);
+  const [hovered, setHovered] = useState(0);
   const [review, setReview] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  // Don't render if order isn't delivered or already rated
-  const shouldShow = orderStatus === "delivered" && !hasRating && !success;
+  // لا تُعرض إلا للطلبات المُسلَّمة غير المُقيَّمة
+  if (order.status !== "delivered" || order.rating) return null;
 
-  const handleSubmit = async () => {
-    if (selectedRating === 0 || !shop?.id) return;
-    setSubmitting(true);
-    setError(null);
+  const displayStars = hovered || selected;
 
+  async function handleSubmit() {
+    if (selected === 0) {
+      toast.error("يرجى اختيار التقييم أولاً");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await fetch(`/api/orders/${orderId}/rate`, {
+      const res = await fetch(`/api/orders/${order.id}/rate`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rating: selectedRating,
+          rating: selected,
           review: review.trim() || undefined,
-          shopId: shop.id,
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "فشل إرسال التقييم");
+        toast.error(data.error || "حدث خطأ أثناء إرسال التقييم");
+        return;
       }
 
-      setSuccess(true);
-      // Auto close after a short delay
-      setTimeout(() => onOpenChange(false), 2500);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "حدث خطأ");
+      setSubmitted(true);
+    } catch {
+      toast.error("تعذر الاتصال بالخادم");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
-  };
-
-  const displayRating = hoveredStar || selectedRating;
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
-        <AnimatePresence mode="wait">
-          {success ? (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center gap-4 py-8"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
-              >
-                <CheckCircle2 className="h-20 w-20 text-emerald-500" />
-              </motion.div>
-              <motion.h3
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-xl font-bold text-foreground"
-              >
-                شكراً لتقييمك! 🎉
-              </motion.h3>
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45 }}
-                className="text-sm text-muted-foreground text-center"
-              >
-                نحن نقدر رأيك وسنعمل دائماً على تحسين خدماتنا
-              </motion.p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col gap-5"
-            >
-              <DialogHeader>
-                <DialogTitle className="text-xl">
-                قيّم طلبك ⭐
-                </DialogTitle>
-                <DialogDescription>
-                  كيف كانت تجربتك مع هذا الطلب؟ تقييمك يساعدنا على التحسين.
-                </DialogDescription>
-              </DialogHeader>
+    <AnimatePresence>
+      {!submitted ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="rounded-2xl border bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border-amber-200 dark:border-amber-800/50 p-5"
+        >
+          {/* العنوان */}
+          <div className="text-center mb-4">
+            <div className="text-3xl mb-2">😊</div>
+            <h3 className="text-lg font-bold text-amber-900 dark:text-amber-200">
+              كيف كانت تجربتك؟
+            </h3>
+            <p className="text-sm text-amber-700/70 dark:text-amber-400/70 mt-1">
+              شاركنا رأيك في خدمة &quot;{order.serviceName}&quot;
+            </p>
+          </div>
 
-              {/* Star rating */
-              <div className="flex flex-col items-center gap-2 py-2">
-                <div className="flex gap-2" dir="ltr">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <motion.button
-                      key={star}
-                      type="button"
-                      onClick={() => setSelectedRating(star)}
-                      onMouseEnter={() => setHoveredStar(star)}
-                      onMouseLeave={() => setHoveredStar(0)}
-                      variants={starVariants}
-                      animate={
-                        selectedRating === star
-                          ? "selected"
-                          : hoveredStar === star
-                            ? "hover"
-                            : "idle"
-                      }
-                      whileTap={{ scale: 0.9 }}
-                      className={cn(
-                        "p-1 rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        star <= displayRating
-                          ? "text-amber-400"
-                          : "text-muted-foreground/30"
-                      )}
-                      aria-label={`${star} نجوم`}
-                    >
-                      <Star
-                        className="h-10 w-10"
-                        fill={star <= displayRating ? "currentColor" : "none"}
-                        strokeWidth={star <= displayRating ? 1 : 1.5}
-                      />
-                    </motion.button>
-                  ))}
-                </div>
-                {displayRating > 0 && (
-                  <motion.span
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-sm font-medium text-amber-600 dark:text-amber-400"
-                  >
-                    {RATING_LABELS[displayRating]}
-                  </motion.span>
-                )}
-              </div>
-
-              {/* Optional text review */
-              <div className="space-y-2">
-                <Textarea
-                  placeholder="أضف تعليقاً اختيارياً (اختياري)..."
-                  value={review}
-                  onChange={(e) => {
-                    if (e.target.value.length <= 300) {
-                      setReview(e.target.value);
-                      setError(null);
-                    }
-                  }}
-                  rows={3}
-                  className="resize-none"
+          {/* النجوم */}
+          <div className="flex justify-center gap-2 mb-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                disabled={loading}
+                className="focus:outline-none transition-transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                onMouseEnter={() => setHovered(star)}
+                onMouseLeave={() => setHovered(0)}
+                onClick={() => setSelected(star)}
+                aria-label={`${star} نجوم`}
+              >
+                <Star
+                  className={`h-9 w-9 transition-colors duration-150 ${
+                    star <= displayStars
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-transparent text-muted-foreground/30"
+                  }`}
                 />
-                <div className="flex justify-end">
-                  <span className="text-[11px] text-muted-foreground tabular-nums">
-                    {review.length}/300
-                  </span>
-                </div>
-              </div>
+              </button>
+            ))}
+          </div>
 
-              {error && (
-                <p className="text-destructive text-xs text-center">{error}</p>
-              )}
+          {/* وصف التقييم */}
+          {displayStars > 0 && (
+            <motion.p
+              key={displayStars}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center text-sm font-medium text-amber-700 dark:text-amber-300 mb-4"
+            >
+              {STAR_LABELS[displayStars - 1]}
+            </motion.p>
+          )}
 
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={submitting}
-                >
-                  لاحقاً
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={selectedRating === 0 || submitting}
-                  className="gap-2"
-                >
-                  {submitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  إرسال التقييم
-                </Button>
-              </DialogFooter>
+          {/* حقل التعليق */}
+          {selected > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-4"
+            >
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                placeholder="أضف تعليقاً اختيارياً... (اختياري)"
+                rows={3}
+                disabled={loading}
+                className="w-full rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-neutral-900 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 placeholder:text-muted-foreground/50 disabled:opacity-50"
+              />
             </motion.div>
           )}
-        </AnimatePresence>
-      </DialogContent>
-    </Dialog>
+
+          {/* زر الإرسال */}
+          {selected > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-center"
+            >
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-amber-600 hover:bg-amber-700 text-white gap-2 px-8 rounded-xl"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    جارٍ الإرسال...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    إرسال التقييم
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          )}
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="rounded-2xl border bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/20 border-emerald-200 dark:border-emerald-800/50 p-5 text-center"
+        >
+          <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
+          <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-200">
+            شكراً لتقييمك! 🙏
+          </h3>
+          <div className="flex justify-center gap-1 mt-3">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`h-6 w-6 ${
+                  star <= selected
+                    ? "fill-amber-400 text-amber-400"
+                    : "fill-transparent text-muted-foreground/20"
+                }`}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

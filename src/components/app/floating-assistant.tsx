@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { shopApi } from "@/lib/shop-api";
-import { useShop } from "@/lib/shop-context";
 import ReactMarkdown from "react-markdown";
 import {
   MessageCircle, X, Send, Sparkles, Phone, Bot, User,
@@ -12,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FAQS, type FAQItem } from "@/lib/smart-assistant";
+import { useAppStore } from "@/lib/store";
 import { toast } from "sonner";
 
 interface FloatingAssistantProps {
@@ -35,14 +34,25 @@ interface SearchResult {
   domain: string;
 }
 
+const WHATSAPP_NUMBER = "0560000000";
 const WHATSAPP_MSG = "مرحباً، أريد الاستفسار عن خدمة الطباعة";
 
 type AssistantMode = "ai" | "fallback";
 
 export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
-  const { shop } = useShop();
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const assistantOpen = useAppStore((s) => s.assistantOpen);
+  const setAssistantOpen = useAppStore((s) => s.setAssistantOpen);
+
+  // الاستجابة لفتح المساعد من خارج المكون
+  useEffect(() => {
+    if (assistantOpen) {
+      setChatOpen(true);
+      setMenuOpen(false);
+      setAssistantOpen(false);
+    }
+  }, [assistantOpen, setAssistantOpen]);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -90,8 +100,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
   }, []);
 
   function openWhatsApp() {
-    const number = shop?.whatsapp || shop?.phone || "0560000000";
-    const url = `https://wa.me/213${number.substring(1)}?text=${encodeURIComponent(WHATSAPP_MSG)}`;
+    const url = `https://wa.me/213${WHATSAPP_NUMBER.substring(1)}?text=${encodeURIComponent(WHATSAPP_MSG)}`;
     window.open(url, "_blank");
     setMenuOpen(false);
     toast.success("فتح واتساب", { description: "سيتم تحويلك للمحادثة" });
@@ -113,7 +122,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
     audioRef.current?.pause();
     setPlayingMsgIndex(msgIndex);
     try {
-      const res = await shopApi("/api/ai/tts", {
+      const res = await fetch("/api/ai/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -163,7 +172,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
             reader.onerror = reject;
             reader.readAsDataURL(blob);
           });
-          const res = await shopApi("/api/ai/asr", {
+          const res = await fetch("/api/ai/asr", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ audio: base64 }),
@@ -188,7 +197,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
   const performWebSearch = useCallback(async (query: string) => {
     setSearchLoading(true);
     try {
-      const res = await shopApi("/api/ai/web-search", {
+      const res = await fetch("/api/ai/web-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
@@ -226,7 +235,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
     }
     setImgGenerating(true);
     try {
-      const res = await shopApi("/api/ai/generate-image", {
+      const res = await fetch("/api/ai/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, size: "1024x1024" }),
@@ -259,7 +268,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
     try {
       const abort = abortRef.current || new AbortController();
       abortRef.current = abort;
-      const res = await shopApi("/api/ai/chat", {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -390,12 +399,11 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
   }
 
   const isDisabled = typing || recording || asrLoading;
-  const phoneNumber = shop?.phone || shop?.whatsapp || "0560000000";
 
   return (
     <>
       {/* ===== الزر العائم ===== */}
-      <div className="fixed bottom-5 left-5 z-50 flex flex-col items-start gap-2 no-print">
+      <div className="fixed bottom-5 left-5 z-[100] flex flex-col items-start gap-2 no-print">
         {menuOpen && !chatOpen && (
           <div className="flex flex-col gap-2 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
@@ -425,15 +433,15 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
             </button>
 
             <a
-              href={`tel:${phoneNumber}`}
-              className="flex items-center gap-3 bg-white border border-blue-200 shadow-lg rounded-full ps-3 pe-5 py-2.5 hover:bg-blue-50 transition-colors group"
+              href="tel:0560000000"
+              className="flex items-center gap-3 bg-white border border-amber-200 shadow-lg rounded-full ps-3 pe-5 py-2.5 hover:bg-amber-50 transition-colors group"
             >
-              <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
                 <Phone className="h-5 w-5 text-white" />
               </div>
               <div className="text-right">
                 <div className="font-bold text-sm text-neutral-900">اتصال</div>
-                <div className="text-xs text-muted-foreground">{phoneNumber}</div>
+                <div className="text-xs text-muted-foreground">0560 00 00 00</div>
               </div>
             </a>
           </div>
@@ -459,8 +467,8 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
 
       {/* ===== نافذة المساعد الذكي ===== */}
       {chatOpen && (
-        <div className="fixed bottom-5 left-5 z-50 w-[calc(100vw-2.5rem)] sm:w-96 max-w-md no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl border border-amber-200 overflow-hidden flex flex-col" style={{ height: "min(80vh, 640px)" }}>
+        <div className="fixed bottom-5 left-5 z-[100] w-[calc(100vw-2.5rem)] sm:w-96 max-w-md no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-amber-200 dark:border-amber-800/50 overflow-hidden flex flex-col" style={{ height: "min(80vh, 640px)" }}>
             {/* الرأس */}
             <div className="bg-neutral-900 text-white px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">

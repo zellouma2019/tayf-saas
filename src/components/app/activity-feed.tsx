@@ -1,168 +1,256 @@
 "use client";
 
-import { useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Package,
-  UserPlus,
-  Store,
-  Settings,
-  CheckCircle2,
-  Printer,
-  Clock,
-  Star,
-  Tag,
-  TrendingUp,
-  AlertCircle,
-  CreditCard,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, ArrowLeft, Clock, Inbox } from "lucide-react";
+import { STATUS_META, formatDateTimeAr, SERVICE_MAP } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
-import { getTimeAgo } from "@/lib/admin-utils";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface ActivityItem {
-  id: string;
-  type: "order_new" | "order_status" | "order_completed" | "shop_created" | "settings_change" | "payment" | "review";
-  title: string;
-  description: string;
-  timestamp: Date;
-  meta?: { amount?: string; status?: string; shopName?: string; customerName?: string };
-}
+// ─── Status visual mapping ───────────────────────────────────────────────────
 
-interface ActivityFeedProps {
-  orders: PrintOrderLite[];
-  className?: string;
-}
-
-const ACTIVITY_ICONS: Record<string, { icon: typeof Package; color: string; bgColor: string }> = {
-  order_new: { icon: Package, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
-  order_status: { icon: Printer, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/30" },
-  order_completed: { icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/30" },
-  shop_created: { icon: Store, color: "text-violet-600 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-900/30" },
-  settings_change: { icon: Settings, color: "text-neutral-600 dark:text-neutral-400", bgColor: "bg-neutral-100 dark:bg-neutral-800" },
-  payment: { icon: CreditCard, color: "text-gold-600 dark:text-gold-400", bgColor: "bg-gold-100 dark:bg-gold-900/30" },
-  review: { icon: Star, color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
+const STATUS_BORDER: Record<string, string> = {
+  pending: "border-l-amber-500",
+  printing: "border-l-amber-600",
+  ready: "border-l-emerald-500",
+  delivered: "border-l-emerald-600",
+  cancelled: "border-l-red-500",
 };
 
-export function ActivityFeed({ orders, className = "" }: ActivityFeedProps) {
-  const activities = useMemo<ActivityItem[]>(() => {
-    if (!orders || orders.length === 0) return [];
+const STATUS_DOT: Record<string, string> = {
+  pending: "bg-amber-500 dark:bg-amber-400",
+  printing: "bg-amber-600 dark:bg-amber-400",
+  ready: "bg-emerald-500 dark:bg-emerald-400",
+  delivered: "bg-emerald-600 dark:bg-emerald-400",
+  cancelled: "bg-red-500 dark:bg-red-400",
+};
 
-    const items: ActivityItem[] = [];
+const STATUS_DOT_RING: Record<string, string> = {
+  pending: "ring-amber-500/30 dark:ring-amber-400/20",
+  printing: "ring-amber-500/30 dark:ring-amber-400/20",
+  ready: "ring-emerald-500/30 dark:ring-emerald-400/20",
+  delivered: "ring-emerald-600/30 dark:ring-emerald-400/20",
+  cancelled: "ring-red-500/30 dark:ring-red-400/20",
+};
 
-    // Process orders into activity items
-    const recentOrders = orders.slice(0, 20);
-    for (const order of recentOrders) {
-      const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
-      const updatedAt = order.updatedAt ? new Date(order.updatedAt) : createdAt;
+// ─── Relative time in Arabic ─────────────────────────────────────────────────
 
-      // New order activity
-      items.push({
-        id: `new-${order.id}`,
-        type: "order_new",
-        title: "طلب جديد",
-        description: `${order.serviceName || "طباعة"} — ${order.customerName || "زبون"}`,
-        timestamp: createdAt,
-        meta: { amount: order.total?.toString(), shopName: order.shopName, customerName: order.customerName },
-      });
+function timeAgoAr(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
 
-      // Status change activity (if different from creation)
-      if (updatedAt.getTime() - createdAt.getTime() > 60000) {
-        items.push({
-          id: `status-${order.id}`,
-          type: order.status === "delivered" || order.status === "completed" ? "order_completed" : "order_status",
-          title: order.status === "delivered" || order.status === "completed" ? "تم إنجاز الطلب" : "تحديث حالة",
-          description: `${order.reference} — ${getStatusAr(order.status)}`,
-          timestamp: updatedAt,
-          meta: { status: order.status, shopName: order.shopName },
-        });
-      }
-    }
+  if (diffMs < 0) return "الآن";
 
-    // Sort by timestamp descending
-    items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    return items.slice(0, 12);
-  }, [orders]);
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
-  if (activities.length === 0) {
-    return (
-      <div className={`empty-state ${className}`}>
-        <div className="empty-state-icon">
-          <Clock className="h-7 w-7 text-muted-foreground/50" />
-        </div>
-        <p className="text-sm font-medium text-muted-foreground">لا يوجد نشاط حتى الآن</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">ستظهر التحديثات هنا تلقائياً</p>
-      </div>
-    );
-  }
+  if (seconds < 60) return "منذ لحظات";
+  if (minutes < 60) return `منذ ${minutes} دقيقة`;
+  if (hours < 24) return `منذ ${hours} ساعة`;
+  if (days === 1) return "منذ يوم";
+  if (days < 7) return `منذ ${days} أيام`;
+  if (days < 30) return `منذ ${Math.floor(days / 7)} أسبوع`;
+  if (days < 365) return `منذ ${Math.floor(days / 30)} شهر`;
+  return `منذ ${Math.floor(days / 365)} سنة`;
+}
 
+// ─── Skeleton loader ─────────────────────────────────────────────────────────
+
+function LoadingSkeleton() {
   return (
-    <div className={`space-y-0 ${className}`}>
-      <AnimatePresence initial={false}>
-        {activities.map((item, index) => {
-          const iconConfig = ACTIVITY_ICONS[item.type] || ACTIVITY_ICONS.order_new;
-          const IconComponent = iconConfig.icon;
-          const isLatest = index === 0;
-
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="relative flex gap-3 group"
-            >
-              {/* Timeline line */}
-              <div className="flex flex-col items-center shrink-0">
-                <div className={`timeline-dot ${isLatest ? "timeline-dot-active" : ""}`} />
-                {index < activities.length - 1 && (
-                  <div className="w-0.5 flex-1 bg-gradient-to-b from-border to-transparent min-h-[24px]" />
-                )}
-              </div>
-
-              {/* Content */}
-              <div className={`flex-1 pb-4 min-w-0 notif-hover rounded-lg p-2 transition-all hover:bg-muted/30 ${isLatest ? 'ring-1 ring-primary/10 bg-primary/[0.02]' : ''}`}>
-                <div className="flex items-start gap-2.5">
-                  <div className={`w-8 h-8 rounded-lg ${iconConfig.bgColor} flex items-center justify-center shrink-0 mt-0.5`}>
-                    <IconComponent className={`h-4 w-4 ${iconConfig.color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-foreground truncate">
-                        {item.title}
-                      </span>
-                      {item.meta?.amount && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gold-100 dark:bg-gold-900/20 text-gold-700 dark:text-gold-400 font-bold">
-                          {item.meta.amount} د.ج
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {item.description}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/50 mt-1">
-                      {getTimeAgo(item.timestamp.toISOString())}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+    <div className="space-y-0 divide-y divide-border/50">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-3 px-4 py-3.5"
+        >
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-full ring-4 ring-muted" />
+          </div>
+          <div className="flex flex-1 flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3.5 w-16 rounded-full" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+      ))}
     </div>
   );
 }
 
-function getStatusAr(status: string): string {
-  const map: Record<string, string> = {
-    pending: "بانتظار الطباعة",
-    confirmed: "تم التأكيد",
-    printing: "جارٍ الطباعة",
-    ready: "جاهز للاستلام",
-    delivered: "تم التسليم",
-    completed: "مكتمل",
-    cancelled: "ملغى",
-  };
-  return map[status] || status;
+// ─── Empty state ─────────────────────────────────────────────────────────────
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/80 dark:bg-muted/40">
+        <Inbox className="h-7 w-7 text-muted-foreground/60" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">
+          لا توجد طلبات بعد
+        </p>
+        <p className="text-xs text-muted-foreground/70">
+          ستظهر هنا آخر الطلبات عند استلامها
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Single activity row ─────────────────────────────────────────────────────
+
+interface ActivityRowProps {
+  order: PrintOrderLite;
+  isLast: boolean;
+}
+
+function ActivityRow({ order, isLast }: ActivityRowProps) {
+  const meta = STATUS_META[order.status];
+  const service = SERVICE_MAP[order.serviceType];
+  const borderClass = STATUS_BORDER[order.status] ?? "border-l-muted-foreground/30";
+  const dotClass = STATUS_DOT[order.status] ?? "bg-muted-foreground";
+  const ringClass = STATUS_DOT_RING[order.status] ?? "ring-muted-foreground/20";
+
+  return (
+    <div
+      className={`
+        group relative flex items-center gap-3 pl-7 pr-4 py-3.5
+        transition-colors duration-150
+        hover:bg-muted/40 dark:hover:bg-muted/20
+        ${!isLast ? "border-b border-border/40" : ""}
+      `}
+    >
+      {/* Left colored border accent */}
+      <div
+        className={`absolute inset-y-0 left-0 w-[3px] rounded-r-full ${borderClass}`}
+      />
+
+      {/* Status dot with ring */}
+      <div className="flex shrink-0 items-center justify-center">
+        <div
+          className={`h-2.5 w-2.5 rounded-full ring-[3px] ${dotClass} ${ringClass}`}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {/* Top line: service emoji + name + ref */}
+        <div className="flex items-center gap-2">
+          <span className="text-base leading-none" aria-hidden>
+            {service?.emoji ?? "📄"}
+          </span>
+          <span className="truncate text-sm font-medium text-foreground">
+            {order.serviceName}
+          </span>
+          <span className="shrink-0 text-xs font-mono text-muted-foreground/70">
+            {order.reference}
+          </span>
+        </div>
+
+        {/* Bottom line: time ago */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>{timeAgoAr(order.createdAt)}</span>
+          <span className="text-muted-foreground/40">·</span>
+          <span>{formatDateTimeAr(order.createdAt)}</span>
+        </div>
+      </div>
+
+      {/* Status badge */}
+      {meta && (
+        <span
+          className={`
+            shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-medium leading-tight
+            ${meta.bg}
+          `}
+        >
+          {meta.emoji} {meta.label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
+
+export function ActivityFeed() {
+  const [orders, setOrders] = useState<PrintOrderLite[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const res = await fetch("/api/orders?limit=5&sort=desc");
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(Array.isArray(data) ? data : []);
+        }
+      } catch {
+        // silent fail — shows empty state
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, []);
+
+  return (
+    <div
+      className="
+        overflow-hidden rounded-xl border border-border/60
+        bg-card shadow-sm
+        dark:border-border/30 dark:shadow-none
+      "
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border/50 px-5 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20">
+            <Activity className="h-4 w-4 text-primary" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground">
+            آخر الطلبات
+          </h3>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => {
+            /* لا يوجد تنقل — يمكن تمرير onNavigate كـ prop */
+          }}
+        >
+          عرض الكل
+          <ArrowLeft className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {/* Body */}
+      <div>
+        {loading && <LoadingSkeleton />}
+
+        {!loading && orders.length === 0 && <EmptyState />}
+
+        {!loading &&
+          orders.length > 0 &&
+          orders.map((order, i) => (
+            <ActivityRow
+              key={order.id}
+              order={order}
+              isLast={i === orders.length - 1}
+            />
+          ))}
+      </div>
+    </div>
+  );
 }

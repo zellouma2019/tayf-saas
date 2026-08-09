@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { shopApi } from "@/lib/shop-api";
 import {
   Card,
   CardContent,
@@ -35,18 +34,18 @@ interface Stats {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: "مسودة", color: "text-dark-600", bg: "bg-dark-100" },
-  submitted: { label: "مُقدّم", color: "text-dark-700", bg: "bg-gold-500/15 text-gold-400" },
-  under_review: { label: "قيد المراجعة", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-900/30" },
-  approved: { label: "معتمد", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
-  rejected: { label: "مرفوض", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-100 dark:bg-rose-900/30" },
+  draft: { label: "مسودة", color: "text-slate-600", bg: "bg-slate-100" },
+  submitted: { label: "مُقدّم", color: "text-slate-700", bg: "bg-blue-100 text-blue-700" },
+  under_review: { label: "قيد المراجعة", color: "text-amber-700", bg: "bg-amber-100" },
+  approved: { label: "معتمد", color: "text-emerald-700", bg: "bg-emerald-100" },
+  rejected: { label: "مرفوض", color: "text-rose-700", bg: "bg-rose-100" },
 };
 
 export function Dashboard({ templates, onNavigate, onNewForm }: DashboardProps) {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    shopApi("/api/stats")
+    fetch("/api/stats")
       .then((r) => r.json())
       .then(setStats)
       .catch(() => {});
@@ -61,7 +60,7 @@ export function Dashboard({ templates, onNavigate, onNewForm }: DashboardProps) 
       icon: Files,
       desc: "قوالب جاهزة للاستخدام",
       color: "text-emerald-600",
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
+      bg: "bg-emerald-50",
     },
     {
       title: "إجمالي السجلات",
@@ -77,7 +76,7 @@ export function Dashboard({ templates, onNavigate, onNewForm }: DashboardProps) 
       icon: Clock,
       desc: "طلب جديد هذا الأسبوع",
       color: "text-amber-600",
-      bg: "bg-amber-50 dark:bg-amber-950/30",
+      bg: "bg-amber-50",
     },
     {
       title: "طلبات معتمدة",
@@ -85,7 +84,7 @@ export function Dashboard({ templates, onNavigate, onNewForm }: DashboardProps) 
       icon: CheckCircle2,
       desc: "طلب تم اعتماده",
       color: "text-emerald-600",
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
+      bg: "bg-emerald-50",
     },
   ];
 
@@ -106,7 +105,7 @@ export function Dashboard({ templates, onNavigate, onNewForm }: DashboardProps) 
             <Button
               variant="secondary"
               onClick={() => onNewForm(featured)}
-              className="bg-white dark:bg-neutral-800 text-primary hover:bg-white/90 dark:hover:bg-neutral-700"
+              className="bg-white text-primary hover:bg-white/90"
             >
               <Plus className="h-4 w-4" />
               ابدأ بـ {featured.code}

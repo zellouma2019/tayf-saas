@@ -1,145 +1,95 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tursoQuery, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
+import { db } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
-}
-
-interface LoyaltyTier {
-  tier: string;
-  tierLabel: string;
-  tierLabelAr: string;
-  minOrders: number;
-  discount: number; // percentage
-}
-
-const TIERS: LoyaltyTier[] = [
-  { tier: "bronze",    tierLabel: "Bronze",    tierLabelAr: "برونزي",   minOrders: 0,  discount: 0  },
-  { tier: "silver",    tierLabel: "Silver",    tierLabelAr: "فضي",     minOrders: 5,  discount: 5  },
-  { tier: "gold",      tierLabel: "Gold",      tierLabelAr: "ذهبي",    minOrders: 15, discount: 10 },
-  { tier: "platinum",  tierLabel: "Platinum",  tierLabelAr: "بلاتيني", minOrders: 30, discount: 15 },
-  { tier: "diamond",   tierLabel: "Diamond",   tierLabelAr: "ألماسي",   minOrders: 50, discount: 20 },
-];
-
-function getTier(orderCount: number): LoyaltyTier {
-  let current = TIERS[0];
-  for (const t of TIERS) {
-    if (orderCount >= t.minOrders) current = t;
-    else break;
-  }
-  return current;
-}
-
-function getNextTier(currentTier: LoyaltyTier): LoyaltyTier | null {
-  const idx = TIERS.findIndex((t) => t.tier === currentTier.tier);
-  if (idx < TIERS.length - 1) return TIERS[idx + 1];
-  return null;
-}
+// مستويات الولاء
+const LOYALTY_TIERS = [
+  { tier: "platinum", tierName: "بلاتيني", minAmount: 30000, discountPercent: 15, icon: "💎", color: "#8ECAE6" },
+  { tier: "gold",     tierName: "ذهبي",   minAmount: 15000, discountPercent: 10, icon: "🥇", color: "#D4AF37" },
+  { tier: "silver",   tierName: "فضي",     minAmount: 5000,  discountPercent: 5,  icon: "🥈", color: "#C0C0C0" },
+  { tier: "bronze",   tierName: "برونزي",  minAmount: 0,     discountPercent: 0,  icon: "🥉", color: "#CD7F32" },
+] as const;
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = req.nextUrl;
-    const phone = (searchParams.get("phone") || "").trim();
-    const shopId = (searchParams.get("shopId") || "").trim();
+    const { searchParams } = new URL(req.url);
+    const phone = (searchParams.get("phone") || "").replace(/[\s\-+]/g, "");
 
-    if (!phone) {
-      return NextResponse.json(
-        { error: "رقم الهاتف مطلوب" },
-        { status: 400, headers: CORS_HEADERS }
-      );
-    }
-    if (!shopId) {
-      return NextResponse.json(
-        { error: "shopId مطلوب" },
-        { status: 400, headers: CORS_HEADERS }
-      );
+    if (!phone || phone.length < 8) {
+      return NextResponse.json({ error: "رقم الهاتف غير صالح" }, { status: 400 });
     }
 
-    // Count non-cancelled orders and sum totals for this phone + shopId
-    const stats = await tursoQuery<Record<string, unknown>>(
-      `SELECT
-        COUNT(*) as orderCount,
-        COALESCE(SUM(total), 0) as totalSpent
-      FROM "PrintOrder"
-      WHERE customer LIKE ?
-        AND "shopId" = ?
-        AND status != 'cancelled'`,
-      [`%"phone":"${phone}"%`, shopId]
-    );
+    // البحث عن العميل
+    let customer = await db.customer.findUnique({ where: { phone } });
 
-    const totalOrders = toNum(stats[0]?.orderCount);
-    const totalSpent = toNum(stats[0]?.totalSpent);
+    // إذا لم يكن العميل مسجلاً، نحاول إنشاؤه من الطلبات السابقة
+    if (!customer) {
+      const orders = await db.printOrder.findMany({
+        where: { customer: { contains: phone } },
+        orderBy: { createdAt: "desc" },
+      });
 
-    const currentTier = getTier(totalOrders);
-    const nextTier = getNextTier(currentTier);
+      if (orders.length > 0) {
+        const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const lastOrder = orders[0];
+        let customerName = "";
+        try {
+          const parsed = JSON.parse(lastOrder.customer);
+          customerName = parsed.name || "";
+        } catch { /* ignore */ }
 
-    // Calculate progress towards next tier
-    let progress = 100;
-    if (nextTier) {
-      const range = nextTier.minOrders - currentTier.minOrders;
-      const current = totalOrders - currentTier.minOrders;
-      progress = Math.min(100, Math.round((current / range) * 100));
+        customer = await db.customer.create({
+          data: {
+            phone,
+            name: customerName || "عميل",
+            totalOrders: orders.length,
+            totalSpent,
+            lastOrderAt: lastOrder.createdAt,
+          },
+        });
+      } else {
+        // عميل جديد بدون طلبات
+        customer = await db.customer.create({
+          data: {
+            phone,
+            name: "عميل جديد",
+            totalOrders: 0,
+            totalSpent: 0,
+          },
+        });
+      }
     }
 
-    // Upsert Customer record
-    const existingCustomer = await tursoQuery<Record<string, unknown>>(
-      `SELECT id, name FROM "Customer" WHERE phone = ? AND "shopId" = ? LIMIT 1`,
-      [phone, shopId]
-    );
-
-    const now = new Date().toISOString();
-    if (existingCustomer.length > 0) {
-      await tursoExecute(
-        `UPDATE "Customer" SET "totalOrders" = ?, "totalSpent" = ?, "lastOrderAt" = ?, "updatedAt" = ? WHERE id = ?`,
-        [totalOrders, totalSpent, now, now, existingCustomer[0].id]
-      );
-    } else {
-      await tursoExecute(
-        `INSERT INTO "Customer" (id, "shopId", name, phone, "totalOrders", "totalSpent", "lastOrderAt", "createdAt", "updatedAt")
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          `cust_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-          shopId,
-          "",
-          phone,
-          totalOrders,
-          totalSpent,
-          now,
-          now,
-          now,
-        ]
-      );
+    // تحديد المستوى الحالي
+    let currentTier = LOYALTY_TIERS[LOYALTY_TIERS.length - 1]; // bronze
+    for (const t of LOYALTY_TIERS) {
+      if (customer.totalSpent >= t.minAmount) {
+        currentTier = t;
+        break;
+      }
     }
 
-    return NextResponse.json(
-      {
-        tier: currentTier.tier,
-        tierLabel: currentTier.tierLabel,
-        tierLabelAr: currentTier.tierLabelAr,
-        discount: currentTier.discount,
-        totalOrders,
-        totalSpent,
-        minOrdersCurrent: currentTier.minOrders,
-        minOrdersNext: nextTier?.minOrders ?? null,
-        nextTier: nextTier?.tierLabel ?? null,
-        nextTierAr: nextTier?.tierLabelAr ?? null,
-        progress,
-      },
-      { headers: CORS_HEADERS }
-    );
+    // تحديد المستوى التالي
+    const currentTierIndex = LOYALTY_TIERS.findIndex((t) => t.tier === currentTier.tier);
+    const nextTier = currentTierIndex > 0 ? LOYALTY_TIERS[currentTierIndex - 1] : null;
+    const pointsToNext = nextTier ? nextTier.minAmount - customer.totalSpent : 0;
+
+    return NextResponse.json({
+      phone: customer.phone,
+      name: customer.name,
+      totalOrders: customer.totalOrders,
+      totalSpent: customer.totalSpent,
+      tier: currentTier.tier,
+      tierName: currentTier.tierName,
+      tierIcon: currentTier.icon,
+      tierColor: currentTier.color,
+      discountPercent: currentTier.discountPercent,
+      nextTier: nextTier ? nextTier.tierName : null,
+      nextTierIcon: nextTier?.icon || null,
+      nextTierAmount: nextTier ? nextTier.minAmount : null,
+      pointsToNext,
+      lastOrderAt: customer.lastOrderAt,
+    });
   } catch (e) {
-    console.error("[loyalty/check/GET]", e);
-    return NextResponse.json(
-      { error: "حدث خطأ أثناء فحص مستوى الولاء" },
-      { status: 500, headers: CORS_HEADERS }
-    );
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }

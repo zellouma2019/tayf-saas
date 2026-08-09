@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { shopApi } from "@/lib/shop-api";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -21,7 +20,6 @@ import {
 import {
   Table,
   TableBody,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -55,7 +53,11 @@ import {
   Wallet,
   Copy,
   Calendar,
+  ChevronDown,
+  X,
+  SlidersHorizontal,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   STATUS_META,
@@ -65,7 +67,6 @@ import {
 } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { OrderDetailsRow } from "@/components/app/order-details-row";
 import { OrderDetailModal } from "@/components/app/order-detail-modal";
@@ -89,26 +90,6 @@ interface Notification {
   orderId?: string;
   read: boolean;
   createdAt: string;
-}
-
-// 🔔 صوت إشعار بسيط باستخدام Web Audio API
-function playNotificationSound() {
-  try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
-    osc.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.2); // C6
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.35);
-  } catch {
-    /* silent — Web Audio not supported */
-  }
 }
 
 /// هل الملف من نوع صورة؟
@@ -166,43 +147,74 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   const adminHeaders: Record<string, string> = { "x-admin-code": adminCode };
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [serviceFilters, setServiceFilters] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [batchStatusLoading, setBatchStatusLoading] = useState(false);
-  const [batchStatus, setBatchStatus] = useState("");
   const [detailOrder, setDetailOrder] = useState<PrintOrderLite | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotif, setShowNotif] = useState(false);
   const [lastCheck, setLastCheck] = useState(() => new Date().toISOString());
   const notifRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const selectAllRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState("orders");
 
-  // ===== Browser native notifications =====
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
+  // ===== بيانات الفلاتر المتقدمة =====
+  const ALL_STATUSES = ["pending", "printing", "ready", "delivered", "cancelled"];
+  const STATUS_SHORT: Record<string, string> = {
+    pending: "معلّق", printing: "يطبع", ready: "جاهز",
+    delivered: "تم التسليم", cancelled: "ملغي",
+  };
+  const SERVICE_FILTER_LIST = [
+    { type: "document", label: "مستند", emoji: "📄" },
+    { type: "photo", label: "صور", emoji: "🖼️" },
+    { type: "binding", label: "تجليد", emoji: "📚" },
+    { type: "copy", label: "نسخ", emoji: "📋" },
+    { type: "card", label: "بطاقات", emoji: "🪪" },
+    { type: "poster", label: "ملصقات", emoji: "📜" },
+  ];
 
-  function showBrowserNotification(title: string, body: string) {
-    try {
-      if ("Notification" in window && Notification.permission === "granted" && document.visibilityState === "hidden") {
-        new Notification(title, {
-          body,
-          icon: "/platform-logo.png",
-          badge: "/platform-logo.png",
-          tag: "tayf-new-order",
-        });
-      }
-    } catch {
-      // Not supported
-    }
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    ALL_STATUSES.forEach((s) => (counts[s] = 0));
+    orders.forEach((o) => { if (counts[o.status] !== undefined) counts[o.status]++; });
+    return counts;
+  }, [orders]);
+
+  const serviceCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    SERVICE_FILTER_LIST.forEach((s) => (counts[s.type] = 0));
+    orders.forEach((o) => { if (counts[o.serviceType] !== undefined) counts[o.serviceType]++; });
+    return counts;
+  }, [orders]);
+
+  const hasActiveFilters = statusFilters.length > 0 || serviceFilters.length > 0 || !!dateFrom || !!dateTo;
+
+  function toggleStatusFilter(status: string) {
+    setStatusFilters((prev) => {
+      const next = prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status];
+      return next.length === ALL_STATUSES.length ? [] : next;
+    });
+  }
+
+  function toggleServiceFilter(type: string) {
+    setServiceFilters((prev) => {
+      const next = prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type];
+      return next.length === SERVICE_FILTER_LIST.length ? [] : next;
+    });
+  }
+
+  function clearAllFilters() {
+    setStatusFilters([]);
+    setServiceFilters([]);
+    setDateFrom("");
+    setDateTo("");
+    setSearch("");
   }
 
   // ===== Polling notifications every 30s =====
@@ -214,20 +226,11 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         });
         if (res.ok) {
           const data = await res.json();
-          const newNotifs = (data.notifications as Notification[]).filter(
-            (n) => !notifications.some((existing) => existing.id === n.id)
-          );
-          if (newNotifs.length > 0) {
-            setNotifications((prev) => [...newNotifs, ...prev].slice(0, 30));
-
-            // Browser native notification for new orders
-            for (const n of newNotifs) {
-              if (n.type === "new_order") {
-                showBrowserNotification(n.title, n.body);
-                playNotificationSound();
-              }
-            }
-          }
+          setNotifications((prev) => {
+            const ids = new Set(prev.map((n) => n.id));
+            const fresh = (data.notifications as Notification[]).filter((n) => !ids.has(n.id));
+            return [...fresh, ...prev].slice(0, 30);
+          });
           setLastCheck(new Date().toISOString());
         }
       } catch {
@@ -250,19 +253,12 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Sync indeterminate state for Select All checkbox
-  useEffect(() => {
-    if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredOrders.length;
-    }
-  }, [selectedIds.size, filteredOrders.length]);
-
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   async function exportXLSX() {
     setExporting(true);
     try {
-      const res = await shopApi("/api/orders/export", { method: "POST", headers: adminHeaders });
+      const res = await fetch("/api/orders/export", { method: "POST", headers: adminHeaders });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -285,11 +281,10 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
   // ===== TanStack Query: إحصائيات مع كاش تلقائي =====
   const { data: queryStats } = useQuery({
-    queryKey: ["admin-stats", adminCode],
+    queryKey: ["admin-stats"],
     queryFn: () => fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
     staleTime: 15 * 1000,
     refetchInterval: 60 * 1000,
-    enabled: !!adminCode,
   });
 
   // مزامنة بيانات Query مع الحالة المحلية
@@ -297,110 +292,43 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     if (queryStats) setStats(queryStats);
   }, [queryStats]);
 
-  // Track last successful load
-  const lastLoadSuccessRef = useRef<number>(0);
-
-  async function fetchOrdersWithRetry(maxRetries = 3): Promise<Record<string, unknown>[]> {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const res = await fetch("/api/orders?limit=500&noPreview=true", {
-          cache: 'no-store',
-        });
-        const data = await res.json();
-        const rawOrders = Array.isArray(data?.orders) ? data.orders : [];
-        const total = data?.pagination?.total;
-        // If we got orders, return immediately
-        if (rawOrders.length > 0) {
-          return rawOrders;
-        }
-        // If no orders but total > 0, the DB had a hiccup — retry with delay
-        if (total > 0 && attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, 1500 * attempt));
-          continue;
-        }
-        // No orders and no total — genuinely empty
-        return rawOrders;
-      } catch (err) {
-        if (attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, 1000 * attempt));
-          continue;
-        }
-        console.error('fetchOrdersWithRetry failed after', maxRetries, 'attempts:', err);
-        return [];
-      }
-    }
-    return [];
-  }
-
   function loadAll() {
-    if (!adminCode) return;
     setLoading(true);
-    const startTime = Date.now();
     Promise.all([
-      fetch("/api/admin/stats", { headers: { ...adminHeaders, 'Cache-Control': 'no-cache' }, cache: 'no-store' }).then((r) => r.json()).catch(() => null),
-      fetchOrdersWithRetry(3),
+      fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
+      fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
-      .then(([s, rawOrders]) => {
+      .then(([s, o]) => {
         if (s) setStats(s);
-        const mapped = safeMapOrders(rawOrders);
-        if (mapped.length > 0 || (rawOrders as unknown[]).length === 0) {
-          setOrders(mapped);
-          lastLoadSuccessRef.current = Date.now();
-        }
+        const rawOrders = Array.isArray(o?.orders) ? o.orders : [];
+        // تأمين بيانات العميل لكل طلب
+        const safeOrders = rawOrders.map((order: Record<string, unknown>) => ({
+          ...order,
+          customer: order.customer && typeof order.customer === "object"
+            ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
+            : { name: "", phone: "", deliveryMethod: "pickup" },
+        }));
+        setOrders(safeOrders);
       })
       .catch((err) => {
         console.error("loadAll error:", err);
-        // Don't clear orders on error — keep last successful data
+        setOrders([]);
       })
       .finally(() => setLoading(false));
   }
 
-  function safeMapOrders(rawOrders: Record<string, unknown>[]) {
-    return rawOrders.map((order) => {
-      const safe = {
-        ...order,
-        customer: order.customer && typeof order.customer === "object"
-          ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
-          : { name: "", phone: "", deliveryMethod: "pickup" },
-      };
-      // كشف الطلبات المكررة: نفس الهاتف + نفس نوع الخدمة + نفس عدد الصفحات خلال 24 ساعة
-      const sameDayOrders = rawOrders.filter((o) => {
-        if (o.id === order.id) return false;
-        const oCustomer = o.customer && typeof o.customer === "object" ? o.customer : {};
-        if (!oCustomer.phone || oCustomer.phone !== safe.customer.phone) return false;
-        const timeDiff = Math.abs(new Date(String(order.createdAt)).getTime() - new Date(String(o.createdAt)).getTime());
-        return timeDiff < 24 * 60 * 60 * 1000 && o.serviceType === order.serviceType && o.pages === order.pages;
-      });
-      return { ...safe, _possibleDuplicate: sameDayOrders.length > 0 };
-    });
-  }
-
-  // Auto-refresh orders every 45 seconds
   useEffect(() => {
     loadAll();
-    const interval = setInterval(() => {
-      if (adminCode) loadAll();
-    }, 45_000);
-    return () => clearInterval(interval);
-  }, [adminCode]);
-
-  // Retry if orders are empty but stats show there should be data
-  useEffect(() => {
-    if (!loading && orders.length === 0 && stats && (stats.totalOrders ?? 0) > 0) {
-      const elapsed = Date.now() - lastLoadSuccessRef.current;
-      // Only retry if we haven't successfully loaded in the last 30s
-      if (elapsed > 30_000) {
-        const retryTimer = setTimeout(() => loadAll(), 3000);
-        return () => clearTimeout(retryTimer);
-      }
-    }
-  }, [loading, orders.length, stats?.totalOrders]);
+  }, []);
 
   // تصفية: حالة + بحث + تاريخ
   const filteredOrders = useMemo(() => {
     let list = orders;
-    if (statusFilter !== "all") {
-      list = list.filter((o) => o.status === statusFilter);
+    if (statusFilters.length > 0) {
+      list = list.filter((o) => statusFilters.includes(o.status));
+    }
+    if (serviceFilters.length > 0) {
+      list = list.filter((o) => serviceFilters.includes(o.serviceType));
     }
     if (search) {
       const q = search.toLowerCase();
@@ -422,7 +350,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       list = list.filter((o) => new Date(o.createdAt) <= to);
     }
     return list;
-  }, [orders, statusFilter, search, dateFrom, dateTo]);
+  }, [orders, statusFilters, serviceFilters, search, dateFrom, dateTo]);
 
   async function changeStatus(order: PrintOrderLite, status: string) {
     try {
@@ -455,7 +383,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         customer: order.customer,
         delivery: order.delivery,
       };
-      const res = await shopApi("/api/orders", {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -530,60 +458,57 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       title: "إجمالي الطلبات",
       value: stats?.totalOrders ?? 0,
       icon: Package,
-      color: "text-gold-500",
-      bg: "bg-gold-500/10 dark:bg-gold-500/15",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 dark:bg-blue-950/50",
+      ring: "ring-blue-200 dark:ring-blue-800/40",
     },
     {
       title: "إجمالي الإيرادات",
       value: formatDA(stats?.totalRevenue ?? 0),
       icon: DollarSign,
       color: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
+      bg: "bg-emerald-50 dark:bg-emerald-950/50",
+      ring: "ring-emerald-200 dark:ring-emerald-800/40",
     },
     {
       title: "طلبات اليوم",
       value: stats?.todayOrders ?? 0,
       icon: TrendingUp,
       color: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-50 dark:bg-amber-950/30",
+      bg: "bg-amber-50 dark:bg-amber-950/50",
+      ring: "ring-amber-200 dark:ring-amber-800/40",
     },
     {
       title: "قيد الطباعة",
       value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0),
       icon: Clock,
       color: "text-rose-600 dark:text-rose-400",
-      bg: "bg-rose-50 dark:bg-rose-950/30",
+      bg: "bg-rose-50 dark:bg-rose-950/50",
+      ring: "ring-rose-200 dark:ring-rose-800/40",
     },
     {
       title: "صافي الربح",
       value: formatDA(stats?.profit ?? 0),
-      icon: DollarSign,
+      icon: Wallet,
       color: (stats?.profit ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
-      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-red-50 dark:bg-red-950/30",
+      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50 dark:bg-emerald-950/50" : "bg-red-50 dark:bg-red-950/50",
+      ring: (stats?.profit ?? 0) >= 0 ? "ring-emerald-200 dark:ring-emerald-800/40" : "ring-red-200 dark:ring-red-800/40",
     },
-  ];
-
-  const quickFilters = [
-    { value: "all", label: "الكل", count: stats?.totalOrders ?? 0 },
-    { value: "pending", label: STATUS_META.pending.label, count: stats?.statusCounts?.pending ?? 0 },
-    { value: "printing", label: STATUS_META.printing.label, count: stats?.statusCounts?.printing ?? 0 },
-    { value: "ready", label: STATUS_META.ready.label, count: stats?.statusCounts?.ready ?? 0 },
-    { value: "delivered", label: STATUS_META.delivered.label, count: stats?.statusCounts?.delivered ?? 0 },
   ];
 
   return (
     <div className="space-y-6">
       {/* بطاقات الإحصائيات */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         {statCards.map((c, i) => (
-          <Card key={i} className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 card-glow">
+          <Card key={i} className="enhanced-card border shadow-sm">
             <CardContent className="p-3 md:p-5">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
                   <div className="text-base md:text-2xl font-bold tabular-nums truncate">{c.value}</div>
                   <div className="text-xs md:text-xs text-muted-foreground mt-1">{c.title}</div>
                 </div>
-                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}>
+                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl ${c.bg} ring-1 ${c.ring} flex items-center justify-center shrink-0`}>
                   <c.icon className={`h-4 w-4 md:h-5 md:w-5 ${c.color}`} />
                 </div>
               </div>
@@ -648,18 +573,25 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Package className="h-3.5 w-3.5" />
-                الإجمالي:
-                <span className="font-bold text-foreground tabular-nums">
-                  {stats?.totalOrders ?? 0}
-                </span>
-              </span>
-              <span className="text-muted-foreground/40">|</span>
-              <span className="text-muted-foreground">
-                المعروض:
-                <span className="font-bold text-foreground tabular-nums mr-1">
+                عرض
+                <span className="font-bold text-neutral-900 tabular-nums">
                   {filteredOrders.length}
                 </span>
+                من
+                <span className="font-bold text-neutral-900 tabular-nums">
+                  {orders.length}
+                </span>
+                طلب
               </span>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  مسح الفلاتر
+                </button>
+              )}
             </div>
             <span className="text-muted-foreground tabular-nums shrink-0 hidden sm:flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
@@ -668,7 +600,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             <button
               onClick={exportXLSX}
               disabled={exporting}
-              className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 disabled:border-emerald-100"
+              className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 border border-emerald-200 disabled:border-emerald-100"
               title="تصدير ملف Excel"
             >
               {exporting ? (
@@ -680,10 +612,10 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
             </button>
           </div>
 
-          {/* الفلاتر */}
+          {/* شريط البحث والفلاتر المتقدمة */}
           <div className="space-y-2.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-              <div className="relative sm:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   ref={searchRef}
@@ -693,100 +625,60 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                   className="pr-9 text-sm h-9"
                 />
               </div>
-              <div className="">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="text-sm h-9">
-                    <SelectValue placeholder="كل الحالات" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">كل الحالات</SelectItem>
-                    {STATUS_FLOW.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {STATUS_META[s].label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="cancelled">ملغي</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="relative">
-                <label className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>من</span>
-                </label>
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="text-sm h-9 pr-16"
-                />
-              </div>
-              <div className="relative">
-                <label className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>إلى</span>
-                </label>
-                <Input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="text-sm h-9 pr-16"
-                />
-              </div>
               <div className="flex gap-2 items-center">
+                {/* زر الفلاتر المتقدمة */}
+                <Button
+                  variant={showAdvancedFilters ? "default" : "outline"}
+                  onClick={() => setShowAdvancedFilters((v) => !v)}
+                  className={cn(
+                    "h-9 text-xs gap-1.5 flex-1 sm:flex-none",
+                    showAdvancedFilters
+                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+                      : "",
+                  )}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  <span>فلاتر متقدمة</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 transition-transform duration-200",
+                      showAdvancedFilters && "rotate-180",
+                    )}
+                  />
+                </Button>
                 {/* جرس الإشعارات */}
                 <div ref={notifRef} className="relative shrink-0">
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => setShowNotif((v) => !v)}
-                    className={cn(
-                      "relative h-9 w-9",
-                      unreadCount > 0 && "border-rose-300 dark:border-rose-700",
-                    )}
+                    className="relative h-9 w-9"
                   >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none pulse-ring-rose badge-pulse">
+                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
-                    {unreadCount > 0 && (
-                      <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-background" />
-                    )}
                   </Button>
                   {showNotif && (
-                    <div className="absolute top-full left-0 mt-1 z-50 w-80 sm:w-96 rounded-xl border bg-background shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
-                        <div className="flex items-center gap-2">
-                          <Bell className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-xs font-bold">الإشعارات</span>
-                          {unreadCount > 0 && (
-                            <span className="flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-rose-500 text-[10px] font-bold text-white">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        {unreadCount > 0 && (
+                    <div className="absolute top-full left-0 mt-1 z-50 w-72 sm:w-80 rounded-xl border bg-background shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center justify-between px-3 py-2 border-b">
+                        <span className="text-xs font-bold">الإشعارات</span>
+                        {notifications.length > 0 && (
                           <button
                             onClick={() => {
                               setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
                             }}
-                            className="flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/40 transition-colors"
+                            className="text-[10px] text-muted-foreground hover:text-foreground"
                           >
                             تعيين الكل كمقروء
                           </button>
                         )}
                       </div>
-                      <div className="max-h-80 overflow-y-auto notif-scroll-custom">
+                      <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
-                          <div className="py-12 text-center">
-                            <div className="empty-state-icon mx-auto mb-3">
-                              <Bell className="h-6 w-6 text-muted-foreground/40" />
-                            </div>
-                            <p className="text-xs font-medium text-muted-foreground">لا توجد إشعارات جديدة</p>
-                            <p className="text-[10px] text-muted-foreground/50 mt-1">ستظهر الإشعارات الجديدة هنا تلقائياً</p>
-                          </div>
+                          <div className="py-8 text-center text-xs text-muted-foreground">لا توجد إشعارات</div>
                         ) : (
                           notifications.map((n) => (
                             <button
@@ -799,22 +691,22 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                                 setShowNotif(false);
                               }}
                               className={cn(
-                                "w-full text-right px-4 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors relative",
-                                !n.read && "bg-rose-50/40 dark:bg-rose-950/20",
+                                "w-full text-right px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/50 transition-colors",
+                                !n.read && "bg-rose-50/40",
                               )}
                             >
-                              <div className="flex items-start gap-2.5">
-                                <span className="text-base mt-0.5 shrink-0">
+                              <div className="flex items-start gap-2">
+                                <span className="text-sm mt-0.5 shrink-0">
                                   {n.type === "new_order" ? "🆕" : n.type === "stale_order" ? "⏰" : "🔔"}
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                  <div className={cn("text-xs font-bold text-foreground", !n.read && "text-rose-700 dark:text-rose-400")}>{n.title}</div>
+                                  <div className="text-xs font-bold text-foreground">{n.title}</div>
                                   <div className="text-xs text-muted-foreground mt-0.5 truncate">{n.body}</div>
                                   <div className="text-[10px] text-muted-foreground/60 mt-0.5">
                                     {formatDateTimeAr(n.createdAt)}
                                   </div>
                                 </div>
-                                {!n.read && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1.5 pulse-ring-rose" />}
+                                {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 mt-1.5" />}
                               </div>
                             </button>
                           ))
@@ -829,31 +721,144 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               </div>
             </div>
 
-            {/* شرائح التصفية السريعة */}
-            <div className="flex items-center gap-1.5 overflow-x-auto custom-scroll pb-1 -mx-1 px-1">
-              {quickFilters.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setStatusFilter(f.value)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border shrink-0",
-                    statusFilter === f.value
-                      ? "bg-neutral-900 text-white border-neutral-900"
-                      : "bg-background hover:bg-muted border-border text-foreground",
-                  )}
+            {/* الفلاتر المتقدمة - قابلة للطي */}
+            <AnimatePresence initial={false}>
+              {showAdvancedFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
                 >
-                  {f.label}
-                  <span
-                    className={cn(
-                      "tabular-nums text-xs px-1.5 rounded-full",
-                      statusFilter === f.value ? "bg-white/20" : "bg-muted",
+                  <div className="bg-muted/30 rounded-xl p-4 space-y-4">
+                    {/* فلاتر الحالة */}
+                    <div>
+                      <div className="text-xs font-semibold text-muted-foreground mb-2">الحالة</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          onClick={() => setStatusFilters([])}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+                            statusFilters.length === 0
+                              ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                              : "bg-background hover:bg-muted border-border text-foreground",
+                          )}
+                        >
+                          الكل
+                          <span
+                            className={cn(
+                              "tabular-nums text-xs px-1.5 rounded-full",
+                              statusFilters.length === 0 ? "bg-white/25" : "bg-muted",
+                            )}
+                          >
+                            {orders.length}
+                          </span>
+                        </button>
+                        {ALL_STATUSES.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => toggleStatusFilter(s)}
+                            className={cn(
+                              "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+                              statusFilters.includes(s)
+                                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                : "bg-background hover:bg-muted border-border text-foreground",
+                            )}
+                          >
+                            {STATUS_META[s].emoji} {STATUS_SHORT[s]}
+                            <span
+                              className={cn(
+                                "tabular-nums text-xs px-1.5 rounded-full",
+                                statusFilters.includes(s) ? "bg-white/25" : "bg-muted",
+                              )}
+                            >
+                              {statusCounts[s] || 0}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* فلاتر نوع الخدمة */}
+                    <div>
+                      <div className="text-xs font-semibold text-muted-foreground mb-2">نوع الخدمة</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          onClick={() => setServiceFilters([])}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+                            serviceFilters.length === 0
+                              ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                              : "bg-background hover:bg-muted border-border text-foreground",
+                          )}
+                        >
+                          الكل
+                        </button>
+                        {SERVICE_FILTER_LIST.map((svc) => (
+                          <button
+                            key={svc.type}
+                            onClick={() => toggleServiceFilter(svc.type)}
+                            className={cn(
+                              "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+                              serviceFilters.includes(svc.type)
+                                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                : "bg-background hover:bg-muted border-border text-foreground",
+                            )}
+                          >
+                            {svc.emoji} {svc.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* نطاق التاريخ */}
+                    <div>
+                      <div className="text-xs font-semibold text-muted-foreground mb-2">نطاق التاريخ</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="relative">
+                          <label className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>من</span>
+                          </label>
+                          <Input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="text-sm h-9 pr-16"
+                          />
+                        </div>
+                        <div className="relative">
+                          <label className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>إلى</span>
+                          </label>
+                          <Input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="text-sm h-9 pr-16"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* مسح الفلاتر */}
+                    {hasActiveFilters && (
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={clearAllFilters}
+                          className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-medium transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          مسح جميع الفلاتر
+                        </button>
+                      </div>
                     )}
-                  >
-                    {f.count}
-                  </span>
-                </button>
-              ))}
-            </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* جدول الطلبات - حاسوب */}
@@ -904,93 +909,27 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {loading && orders.length === 0 ? (
-                <div className="py-8 space-y-3 px-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <RefreshCw className="h-4 w-4 animate-spin text-primary/60" />
-                    <span>جارٍ تحميل الطلبات...</span>
-                    <span className="text-xs text-muted-foreground/50 mr-auto">المحاولة 1/3</span>
-                  </div>
-                  {/* Skeleton rows */}
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="flex items-center gap-3 py-2.5 border-b last:border-b-0">
-                      <div className="w-4 h-4 rounded bg-muted animate-pulse" />
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-3 w-24 rounded bg-muted animate-pulse" />
-                        <div className="h-2.5 w-32 rounded bg-muted/70 animate-pulse" />
-                      </div>
-                      <div className="h-3 w-16 rounded bg-muted animate-pulse" />
-                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                      <div className="h-3 w-14 rounded bg-muted animate-pulse" />
-                      <div className="w-5 h-5 rounded bg-muted animate-pulse" />
-                    </div>
-                  ))}
+              {loading ? (
+                <div className="py-16 text-center text-muted-foreground text-sm">
+                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                  جارٍ التحميل...
                 </div>
               ) : filteredOrders.length === 0 ? (
-                <div className="py-20 text-center fade-in-up">
-                  <div className="empty-state-icon"><Inbox className="h-8 w-8 text-primary/60" /></div>
-                  <p className="text-sm font-medium text-foreground">لا توجد طلبات</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    {search || statusFilter !== "all" || dateFrom || dateTo
-                      ? "جرّب تغيير معايير البحث أو التصفية"
-                      : stats && (stats.totalOrders ?? 0) > 0
-                        ? "يتم إعادة المحاولة... جارٍ تحميل البيانات من قاعدة البيانات"
-                        : "ستظهر الطلبات الجديدة هنا تلقائياً"}
-                  </p>
-                  {stats && (stats.totalOrders ?? 0) > 0 && orders.length === 0 && !loading && (
-                    <button
-                      onClick={loadAll}
-                      className="mt-3 text-xs font-medium text-primary hover:underline flex items-center gap-1 mx-auto"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      إعادة تحميل
-                    </button>
-                  )}
+                <div className="py-16 text-center">
+                  <Inbox className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
                 </div>
               ) : (
-                <>
-                {/* شريط الإحصائيات السريعة */}
-                <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/30 border-b text-xs flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="text-muted-foreground">بانتظار:</span>
-                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'pending').length}</span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-violet-500" />
-                    <span className="text-muted-foreground">طباعة:</span>
-                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'printing').length}</span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-muted-foreground">جاهز:</span>
-                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'ready').length}</span>
-                  </div>
-                  <div className="w-px h-4 bg-border" />
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-sky-500" />
-                    <span className="text-muted-foreground">تم التسليم:</span>
-                    <span className="font-semibold tabular-nums">{orders.filter(o => o.status === 'delivered').length}</span>
-                  </div>
-                  <div className="mr-auto flex items-center gap-1 text-muted-foreground">
-                    <Package className="h-3.5 w-3.5" />
-                    <span>المجموع: <span className="font-semibold text-foreground">{orders.length}</span></span>
-                  </div>
-                </div>
                 <div className="overflow-x-auto custom-scroll">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/40">
                         <TableHead className="w-10 text-center">
                           <input
-                            ref={selectAllRef}
                             type="checkbox"
                             checked={selectedIds.size === filteredOrders.length && filteredOrders.length > 0}
                             onChange={toggleSelectAll}
                             className="w-4 h-4 rounded accent-rose-500 cursor-pointer"
-                            title={selectedIds.size === filteredOrders.length && filteredOrders.length > 0 ? "إلغاء تحديد الكل" : "تحديد الكل"}
                           />
                         </TableHead>
                         <TableHead className="text-right text-xs">رقم الطلب</TableHead>
@@ -1018,23 +957,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
                         />
                       ))}
                     </TableBody>
-                    <TableFooter>
-                      <TableRow className="bg-muted/50 font-semibold text-xs">
-                        <TableHead colSpan={5} className="text-right text-xs font-semibold">
-                          المجموع ({filteredOrders.length} طلب)
-                        </TableHead>
-                        <TableHead className="text-right text-xs font-semibold text-amber-700 dark:text-amber-400">
-                          {formatDA(filteredOrders.reduce((s, o) => s + o.total, 0))}
-                        </TableHead>
-                        <TableHead className="text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 hidden lg:table-cell">
-                          {formatDA(filteredOrders.reduce((s, o) => s + Math.max(0, o.total - (o.cost || 0)), 0))}
-                        </TableHead>
-                        <TableHead colSpan={2} />
-                      </TableRow>
-                    </TableFooter>
                   </Table>
                 </div>
-                </>
               )}
             </CardContent>
           </Card>
@@ -1079,33 +1003,15 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
               </div>
             </CardHeader>
             <CardContent className="p-3 space-y-2">
-              {loading && orders.length === 0 ? (
-                <div className="py-6 space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    جارٍ التحميل...
-                  </div>
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="rounded-xl border bg-card p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded bg-muted animate-pulse" />
-                        <div className="h-3 w-20 rounded bg-muted animate-pulse" />
-                        <div className="ml-auto h-5 w-14 rounded-full bg-muted animate-pulse" />
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="h-2.5 w-24 rounded bg-muted/70 animate-pulse" />
-                        <div className="h-3 w-12 rounded bg-muted animate-pulse" />
-                      </div>
-                    </div>
-                  ))}
+              {loading ? (
+                <div className="py-10 text-center text-muted-foreground text-sm">
+                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                  جارٍ التحميل...
                 </div>
               ) : filteredOrders.length === 0 ? (
                 <div className="py-10 text-center">
                   <Inbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
                   <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
-                  {stats && (stats.totalOrders ?? 0) > 0 && (
-                    <button onClick={loadAll} className="mt-2 text-xs text-primary hover:underline">إعادة محاولة</button>
-                  )}
                 </div>
               ) : (
                 filteredOrders.map((o) => (
@@ -1127,21 +1033,13 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
         {/* ===== تبويب سبورة الطلبات ===== */}
         <TabsContent value="kanban" className="mt-4">
-          {loading && orders.length === 0 ? (
+          {loading ? (
             <div className="py-16 text-center text-muted-foreground text-sm">
               <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
               جارٍ التحميل...
             </div>
           ) : (
-            <div className="relative">
-              {loading && orders.length > 0 && (
-                <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-primary font-medium">
-                  <RefreshCw className="h-3 w-3 animate-spin" />
-                  جارٍ التحديث...
-                </div>
-              )}
-              <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
-            </div>
+            <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
           )}
         </TabsContent>
 
@@ -1173,82 +1071,6 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         onClose={() => setDetailOrder(null)}
         onStatusChange={changeStatus}
       />
-
-      {/* شريط الإجراءات الجماعية العائم */}
-      <AnimatePresence>
-        {selectedIds.size > 0 && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-auto sm:bottom-6 sm:w-auto sm:min-w-[480px]"
-          >
-            <div className="glass-card rounded-2xl border-2 border-gold-500/40 dark:border-gold-500/30 shadow-2xl shadow-gold-500/10 px-4 py-3 sm:px-5 sm:py-3.5">
-              <div className="flex items-center gap-3 sm:gap-4">
-                {/* عدد المحدد */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-xl bg-gold-500/10 border border-gold-500/20 shrink-0">
-                    <span className="text-sm font-bold text-gold-600 dark:text-gold-400 tabular-nums">{selectedIds.size}</span>
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground hidden sm:inline whitespace-nowrap">
-                    طلب محدد
-                  </span>
-                </div>
-
-                {/* فاصل */}
-                <div className="w-px h-8 bg-border shrink-0" />
-
-                {/* اختيار الحالة */}
-                <Select value={batchStatus} onValueChange={setBatchStatus} disabled={batchStatusLoading}>
-                  <SelectTrigger className="h-8 text-xs w-auto min-w-[150px] sm:min-w-[180px] border-gold-500/20">
-                    <SelectValue placeholder={batchStatusLoading ? "جارٍ التطبيق..." : "اختر الحالة الجديدة"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_FLOW.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {STATUS_META[s].emoji} {STATUS_META[s].label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="cancelled">❌ إلغاء الطلبات</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* أزرار */}
-                <div className="flex items-center gap-2 mr-auto">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (batchStatus) {
-                        batchChangeStatus(batchStatus);
-                        setBatchStatus("");
-                      }
-                    }}
-                    disabled={!batchStatus || batchStatusLoading}
-                    className="h-8 text-xs bg-gold-500 hover:bg-gold-600 text-black font-semibold px-4"
-                  >
-                    {batchStatusLoading ? (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    ) : null}
-                    تطبيق
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedIds(new Set());
-                      setBatchStatus("");
-                    }}
-                    className="h-8 text-xs border-border"
-                  >
-                    إلغاء
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -1274,7 +1096,7 @@ function MobileOrderCard({
   const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
 
   return (
-    <div className={`rounded-xl border bg-card overflow-hidden transition-all ${selected ? "border-rose-400 bg-rose-50/30 dark:bg-rose-950/20 ring-1 ring-rose-200 dark:ring-rose-800/40" : ""}`}>
+    <div className={`rounded-xl border bg-card overflow-hidden transition-all ${selected ? "border-rose-400 bg-rose-50/30 ring-1 ring-rose-200" : ""}`}>
       {/* رأس البطاقة - قابل للنقر */}
       <div className="w-full p-3 flex items-start gap-2">
         {/* مربع الاختيار */}
@@ -1296,7 +1118,18 @@ function MobileOrderCard({
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl shrink-0">{serviceEmoji}</span>
             <div className="min-w-0">
-              <div className="font-mono text-xs font-bold text-neutral-900 dark:text-neutral-100">{order.reference}</div>
+              <div className="font-mono text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                {order.reference}
+                {order.adminNotes && (
+                  <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400" title="يحتوي على ملاحظات">📝</span>
+                )}
+                {order.rating && (
+                  <span className="inline-flex items-center gap-0.5 text-amber-400 text-[10px]" title={`تقييم: ${order.rating}/5`}>
+                    <span className="text-[9px]">{order.rating}</span>
+                    <span>⭐</span>
+                  </span>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground">{order.serviceName}</div>
             </div>
           </div>
@@ -1310,7 +1143,7 @@ function MobileOrderCard({
             <div className="text-xs text-muted-foreground" dir="ltr">{order.customer?.phone || "—"}</div>
           </div>
           <div className="text-left shrink-0">
-            <div className="font-bold text-amber-700 dark:text-amber-400 text-sm">{formatDA(order.total)}</div>
+            <div className="font-bold text-amber-700 text-sm">{formatDA(order.total)}</div>
             <div className="text-xs text-muted-foreground">{order.pages}ص × {order.copies}ن</div>
           </div>
         </div>
@@ -1326,17 +1159,17 @@ function MobileOrderCard({
 
       {/* التفاصيل المنسدلة */}
       {expanded && (
-        <div className="border-t bg-amber-50/40 dark:bg-amber-950/10 p-3 space-y-3">
+        <div className="border-t bg-amber-50/40 p-3 space-y-3">
           {/* مواصفات الطباعة */}
           <div>
-            <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">مواصفات الطباعة</div>
+            <div className="text-xs font-bold text-neutral-700 mb-1.5">مواصفات الطباعة</div>
             <div className="grid grid-cols-2 gap-1.5">
               {Object.entries(order.options)
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
                 .map(([k, v]) => (
-                  <div key={k} className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 px-2 py-1">
+                  <div key={k} className="rounded bg-white border border-amber-100 px-2 py-1">
                     <div className="text-xs text-muted-foreground">{translateOptionKey(k)}</div>
-                    <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">{translateOptionValue(String(v))}</div>
+                    <div className="text-xs font-semibold text-neutral-900">{translateOptionValue(String(v))}</div>
                   </div>
                 ))}
             </div>
@@ -1345,8 +1178,8 @@ function MobileOrderCard({
           {/* الملف + معاينة حقيقية */}
           {order.fileName && (
             <div>
-              <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">ملف الزبون</div>
-              <div className="rounded-lg bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2.5">
+              <div className="text-xs font-bold text-neutral-700 mb-1.5">ملف الزبون</div>
+              <div className="rounded-lg bg-white border border-amber-100 p-2.5">
                 <div className="flex items-start gap-2.5">
                   {/* معاينة الملف */}
                   <div className="shrink-0">
@@ -1370,10 +1203,10 @@ function MobileOrderCard({
                         </div>
                       </div>
                     ) : order.fileData && order.fileData.startsWith("file_") ? (
-                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 dark:border-amber-800/40 shadow-sm bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center">
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm bg-neutral-50 flex items-center justify-center">
                         <div className="text-center">
                           <FileText className="h-5 w-5 text-amber-500 mx-auto" />
-                          <span className="text-[8px] font-bold text-neutral-600 dark:text-neutral-400 mt-0.5 block">{order.fileType}</span>
+                          <span className="text-[8px] font-bold text-neutral-600 mt-0.5 block">{order.fileType}</span>
                         </div>
                       </div>
                     ) : (
@@ -1388,7 +1221,7 @@ function MobileOrderCard({
                     <div className="text-xs font-medium truncate break-all">{order.fileName}</div>
                     <div className="flex flex-wrap gap-1 mt-1 text-[10px]">
                       {order.fileType && (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/40 text-amber-700 dark:text-amber-400">
+                        <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-700">
                           {order.fileType}
                         </span>
                       )}
@@ -1421,8 +1254,8 @@ function MobileOrderCard({
 
           {/* معلومات العميل */}
           <div>
-            <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">معلومات العميل</div>
-            <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2 space-y-1.5 text-xs">
+            <div className="text-xs font-bold text-neutral-700 mb-1.5">معلومات العميل</div>
+            <div className="rounded bg-white border border-amber-100 p-2 space-y-1.5 text-xs">
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">الاسم</span>
                 <span className="font-medium">{order.customer?.name || "—"}</span>
@@ -1454,11 +1287,11 @@ function MobileOrderCard({
 
           {/* العميل والتسليم */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2">
+            <div className="rounded bg-white border border-amber-100 p-2">
               <div className="text-muted-foreground mb-0.5">الاستلام</div>
               <div className="font-medium">{order.customer?.deliveryMethod === "delivery" ? "توصيل" : "من المطبعة"}</div>
             </div>
-            <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2">
+            <div className="rounded bg-white border border-amber-100 p-2">
               <div className="text-muted-foreground mb-0.5">الوقت المتوقع</div>
               <div className="font-medium">{order.estimatedHours} ساعة</div>
             </div>
@@ -1466,10 +1299,16 @@ function MobileOrderCard({
 
           {/* ملاحظات */}
           {order.options.notes && (
-            <div>
-              <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">ملاحظات</div>
-              <div className="rounded bg-white dark:bg-neutral-800 border border-amber-100 dark:border-amber-800/40 p-2 text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
-                {order.options.notes}
+            <div className="relative">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-xs">💬</span>
+                <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">ملاحظات الزبون</span>
+              </div>
+              <div className="relative rounded-lg border border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 p-3">
+                <div className="absolute top-2 right-2 text-amber-300 dark:text-amber-700 text-2xl leading-none select-none" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 opacity-40"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                </div>
+                <p className="relative text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed pr-5">{order.options.notes}</p>
               </div>
             </div>
           )}
@@ -1480,7 +1319,7 @@ function MobileOrderCard({
               size="sm"
               variant="outline"
               className="text-sm h-9"
-              onClick={() => { const s = useAppStore.getState().shopId; window.open(`/api/orders/${order.id}/invoice${s ? `?shopId=${encodeURIComponent(s)}` : ""}`, "_blank"); }}
+              onClick={() => window.open(`/api/orders/${order.id}/invoice`, "_blank")}
             >
               <Download className="h-3.5 w-3.5" />
               الفاتورة
@@ -1517,12 +1356,12 @@ function ChangeStatusSelect({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" className="text-sm h-9 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white">
+        <Button size="sm" className="text-sm h-9 bg-neutral-900 hover:bg-neutral-800 text-white">
           <MoreHorizontal className="h-3.5 w-3.5" />
           تغيير الحالة
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-40 dropdown-menu">
+      <DropdownMenuContent align="start" className="w-40">
         {STATUS_FLOW.filter((s) => s !== order.status).map((s) => (
           <DropdownMenuItem key={s} onClick={() => { onChange(order, s); setOpen(false); }}>
             <span className="mr-2">{STATUS_META[s].emoji}</span>

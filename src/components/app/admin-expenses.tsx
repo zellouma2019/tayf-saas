@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { shopApi } from "@/lib/shop-api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -164,7 +163,7 @@ export function AdminExpenses() {
     }
     setSubmitting(true);
     try {
-      const res = await shopApi("/api/expenses", {
+      const res = await fetch("/api/expenses", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -294,7 +293,7 @@ export function AdminExpenses() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">المبلغ</Label>
+              <Label className="text-xs">المبلغ (دج)</Label>
               <Input
                 type="number"
                 min="0"
@@ -489,7 +488,7 @@ export function AdminExpenses() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                 onClick={() => handleSaveEdit(exp.id)}
                                 disabled={savingId === exp.id}
                               >
@@ -514,7 +513,7 @@ export function AdminExpenses() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                                 onClick={() => startEdit(exp)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
@@ -522,7 +521,7 @@ export function AdminExpenses() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                                className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
                                 onClick={() => handleDelete(exp.id)}
                                 disabled={deletingId === exp.id}
                               >
@@ -569,7 +568,7 @@ export function AdminExpenses() {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <Label className="text-xs">المبلغ</Label>
+                          <Label className="text-xs">المبلغ (دج)</Label>
                           <Input
                             type="number"
                             min="0"

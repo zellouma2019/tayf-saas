@@ -1,324 +1,352 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Medal, Shield, Trophy, Award, Crown, Search, Loader2, Percent, ShoppingBag,
-} from "lucide-react";
-import { useShop } from "@/lib/shop-context";
-import { getLoyaltyTier } from "@/components/app/customer-loyalty-badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import { Phone, Search, Shield, Award, Crown, Star, TrendingUp, Gift, Sparkles, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-type LoyaltyTier = "bronze" | "silver" | "gold" | "platinum" | "diamond";
-
-interface TierInfo {
-  key: LoyaltyTier;
-  labelAr: string;
-  labelEn: string;
-  icon: React.ReactNode;
-  discount: number;
-  minOrders: number;
-  gradient: string;
-  border: string;
-  badgeBg: string;
-  badgeText: string;
-  description: string;
+interface LoyaltyData {
+  phone: string;
+  name: string;
+  totalOrders: number;
+  totalSpent: number;
+  tier: string;
+  tierName: string;
+  tierIcon: string;
+  tierColor: string;
+  discountPercent: number;
+  nextTier: string | null;
+  nextTierIcon: string | null;
+  nextTierAmount: number | null;
+  pointsToNext: number;
+  lastOrderAt: string | null;
 }
 
-const TIERS: TierInfo[] = [
-  {
-    key: "bronze",
-    labelAr: "برونزي",
-    labelEn: "Bronze",
-    icon: <Medal className="h-5 w-5" />,
-    discount: 0,
-    minOrders: 0,
-    gradient: "from-amber-100 to-amber-50 dark:from-amber-950/40 dark:to-amber-900/20",
-    border: "border-amber-200 dark:border-amber-800/50",
-    badgeBg: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300",
-    badgeText: "text-amber-700 dark:text-amber-300",
-    description: "زبون جديد",
-  },
-  {
-    key: "silver",
-    labelAr: "فضي",
-    labelEn: "Silver",
-    icon: <Shield className="h-5 w-5" />,
-    discount: 5,
-    minOrders: 5,
-    gradient: "from-gray-100 to-slate-50 dark:from-gray-900/40 dark:to-slate-900/20",
-    border: "border-gray-300 dark:border-gray-700/50",
-    badgeBg: "bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-300",
-    badgeText: "text-gray-600 dark:text-gray-300",
-    description: "زبون منتظم",
-  },
-  {
-    key: "gold",
-    labelAr: "ذهبي",
-    labelEn: "Gold",
-    icon: <Trophy className="h-5 w-5" />,
-    discount: 10,
-    minOrders: 15,
-    gradient: "from-yellow-100 to-amber-50 dark:from-yellow-950/40 dark:to-amber-900/20",
-    border: "border-yellow-300 dark:border-yellow-700/50",
-    badgeBg: "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300",
-    badgeText: "text-yellow-700 dark:text-yellow-300",
-    description: "زبون مميز",
-  },
-  {
-    key: "platinum",
-    labelAr: "بلاتيني",
-    labelEn: "Platinum",
-    icon: <Award className="h-5 w-5" />,
-    discount: 15,
-    minOrders: 30,
-    gradient: "from-cyan-100 to-sky-50 dark:from-cyan-950/40 dark:to-sky-900/20",
-    border: "border-cyan-300 dark:border-cyan-700/50",
-    badgeBg: "bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300",
-    badgeText: "text-cyan-700 dark:text-cyan-300",
-    description: "زبون مميز",
-  },
-  {
-    key: "diamond",
-    labelAr: "ألماسي",
-    labelEn: "Diamond",
-    icon: <Crown className="h-5 w-5" />,
-    discount: 20,
-    minOrders: 50,
-    gradient: "from-violet-100 to-fuchsia-50 dark:from-violet-950/40 dark:to-fuchsia-900/20",
-    border: "border-violet-300 dark:border-violet-700/50",
-    badgeBg: "bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300",
-    badgeText: "text-violet-700 dark:text-violet-300",
-    description: "زبون ملكي",
-  },
+const ALL_TIERS = [
+  { tier: "bronze", tierName: "برونزي", minAmount: 0, discountPercent: 0, icon: "🥉", color: "oklch(0.7 0.1 55)", iconComp: Shield },
+  { tier: "silver", tierName: "فضي", minAmount: 5000, discountPercent: 5, icon: "🥈", color: "oklch(0.8 0.01 260)", iconComp: Award },
+  { tier: "gold", tierName: "ذهبي", minAmount: 15000, discountPercent: 10, icon: "🥇", color: "oklch(0.78 0.13 85)", iconComp: Crown },
+  { tier: "platinum", tierName: "بلاتيني", minAmount: 30000, discountPercent: 15, icon: "💎", color: "oklch(0.75 0.08 220)", iconComp: Star },
 ];
 
-const ALGERIAN_PHONE_REGEX = /^0[5-7]\d{8}$/;
+const TIER_STYLES: Record<string, { gradient: string; border: string; bg: string; text: string; darkBg: string; darkBorder: string }> = {
+  bronze: {
+    gradient: "from-oklch-[0.7_0.1_55] to-oklch-[0.6_0.08_50]",
+    border: "border-oklch-[0.7_0.1_55]/30",
+    bg: "bg-oklch-[0.7_0.1_55]/8",
+    text: "text-oklch-[0.5_0.1_50]",
+    darkBg: "dark:bg-oklch-[0.5_0.08_50]/15",
+    darkBorder: "dark:border-oklch-[0.6_0.08_50]/30",
+  },
+  silver: {
+    gradient: "from-oklch-[0.85_0.005_260] to-oklch-[0.75_0.01_260]",
+    border: "border-oklch-[0.85_0.005_260]/30",
+    bg: "bg-oklch-[0.85_0.005_260]/8",
+    text: "text-oklch-[0.55_0.01_260]",
+    darkBg: "dark:bg-oklch-[0.55_0.01_260]/15",
+    darkBorder: "dark:border-oklch-[0.65_0.01_260]/30",
+  },
+  gold: {
+    gradient: "from-oklch-[0.82_0.13_85] to-oklch-[0.7_0.12_80]",
+    border: "border-oklch-[0.82_0.13_85]/30",
+    bg: "bg-oklch-[0.82_0.13_85]/8",
+    text: "text-oklch-[0.65_0.13_80]",
+    darkBg: "dark:bg-oklch-[0.65_0.12_80]/15",
+    darkBorder: "dark:border-oklch-[0.7_0.12_80]/30",
+  },
+  platinum: {
+    gradient: "from-oklch-[0.78_0.08_220] to-oklch-[0.68_0.1_230]",
+    border: "border-oklch-[0.78_0.08_220]/30",
+    bg: "bg-oklch-[0.78_0.08_220]/8",
+    text: "text-oklch-[0.6_0.08_230]",
+    darkBg: "dark:bg-oklch-[0.5_0.08_220]/15",
+    darkBorder: "dark:border-oklch-[0.6_0.08_230]/30",
+  },
+};
 
-interface CheckResult {
-  orderCount: number;
-  totalSpent: number;
+function formatDA(amount: number): string {
+  return new Intl.NumberFormat("ar-DZ").format(amount) + " دج";
 }
 
 export function LoyaltyChecker() {
-  const { shop } = useShop();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CheckResult | null>(null);
+  const [data, setData] = useState<LoyaltyData | null>(null);
 
-  const phoneValid = ALGERIAN_PHONE_REGEX.test(phone);
-
-  const handleCheck = async () => {
-    if (!phoneValid || !shop?.id) return;
+  async function handleCheck(e?: React.FormEvent) {
+    e?.preventDefault();
+    const clean = phone.replace(/[\s\-+]/g, "");
+    if (clean.length < 8) {
+      toast.error("رقم الهاتف غير صحيح");
+      return;
+    }
     setLoading(true);
-    setError(null);
-    setResult(null);
-
+    setData(null);
     try {
-      const res = await fetch(
-        `/api/loyalty/check?phone=${encodeURIComponent(phone)}&shopId=${shop.id}`
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "فشل التحقق");
-      }
-      const data = await res.json();
-      setResult({
-        orderCount: data.totalOrders ?? 0,
-        totalSpent: data.totalSpent ?? 0,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "حدث خطأ");
+      const res = await fetch("/api/loyalty/check?phone=" + encodeURIComponent(clean));
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      setData(d);
+    } catch {
+      toast.error("خطأ في البحث عن مستوى الولاء");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const currentTier = result ? getLoyaltyTier(result.orderCount) : null;
-  const currentTierInfo = currentTier
-    ? TIERS.find((t) => t.key === currentTier)
-    : null;
-  const nextTierIdx = currentTier ? TIERS.findIndex((t) => t.key === currentTier) + 1 : -1;
-  const nextTier = nextTierIdx < TIERS.length ? TIERS[nextTierIdx] : null;
+  const style = data ? (TIER_STYLES[data.tier] || TIER_STYLES.bronze) : null;
 
-  const progressValue =
-    result && currentTierInfo && nextTier
-      ? ((result.orderCount - currentTierInfo.minOrders) /
-          (nextTier.minOrders - currentTierInfo.minOrders)) *
-        100
-      : 0;
+  // حساب نسبة التقدم
+  function getProgressPercent(): number {
+    if (!data || !data.nextTierAmount) return 100;
+    const currentMin = ALL_TIERS.find(function(t) { return t.tier === data.tier; })?.minAmount || 0;
+    const range = data.nextTierAmount - currentMin;
+    const progress = data.totalSpent - currentMin;
+    return Math.min(100, Math.max(0, Math.round((progress / range) * 100)));
+  }
+
+  function getNextTierDiscount(): number {
+    if (!data || !data.nextTier) return 0;
+    return ALL_TIERS.find(function(t) { return t.tier === data.nextTier; })?.discountPercent || 0;
+  }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Input card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <ShoppingBag className="h-5 w-5 text-primary" />
-            تحقق من مستوى ولائك
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Input
-              type="tel"
-              placeholder="0XXXXXXXXX"
-              value={phone}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
-                setPhone(val);
-                setError(null);
-              }}
-              dir="ltr"
-              className={cn(
-                "flex-1 text-center text-lg tracking-widest font-mono",
-                phone && !phoneValid && "border-destructive focus-visible:border-destructive"
-              )}
-              maxLength={10}
-            />
+    <div className="space-y-4">
+      {/* بطاقة البحث */}
+      <Card className="overflow-hidden">
+        <div className="h-1 bg-gradient-to-l from-oklch-[0.78_0.13_85] via-oklch-[0.75_0.08_220] to-oklch-[0.85_0.005_260]" />
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-oklch-[0.78_0.13_85] to-oklch-[0.65_0.12_80] flex items-center justify-center shadow-md">
+              <Gift className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">برنامج الولاء</h3>
+              <p className="text-[11px] text-muted-foreground">تحقّق من مستواك واستفد من الخصومات</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleCheck} className="flex gap-2">
+            <div className="relative flex-1">
+              <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="05XX XX XX XX"
+                className="pr-9 h-11 text-sm"
+                dir="ltr"
+                type="tel"
+              />
+            </div>
             <Button
-              onClick={handleCheck}
-              disabled={!phoneValid || loading}
-              className="gap-2 min-w-[120px]"
+              type="submit"
+              size="lg"
+              className="h-11 px-5 bg-neutral-900 hover:bg-neutral-800 text-white"
+              disabled={loading}
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Search className="h-4 w-4" />
               )}
-              تحقق
+              <span className="mr-1.5">تحقّق</span>
             </Button>
-          </div>
-          {phone && !phoneValid && (
-            <p className="text-destructive text-xs mt-2">
-              أدخل رقم هاتف جزائري صحيح (يبدأ بـ 05 أو 06 أو 07)
-            </p>
-          )}
-          {error && (
-            <p className="text-destructive text-xs mt-2">{error}</p>
-          )}
+          </form>
         </CardContent>
       </Card>
 
-      {/* Current tier result */}
-      {result && currentTierInfo && (
-        <Card className={cn("bg-gradient-to-br", currentTierInfo.gradient, currentTierInfo.border)}>
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", currentTierInfo.badgeBg)}>
-                  {currentTierInfo.icon}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-lg text-foreground">
-                      مستواك: {currentTierInfo.labelAr}
-                    </h3>
-                    <Badge className={cn("text-xs", currentTierInfo.badgeBg)} variant="secondary">
-                      {currentTierInfo.discount}% خصم
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{currentTierInfo.description}</p>
-                </div>
-              </div>
-            </div>
+      {/* النتيجة */}
+      <AnimatePresence mode="wait">
+        {loading && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <Card>
+              <CardContent className="p-6 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="text-sm">جارٍ التحقق من مستوى الولاء...</span>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-            {/* Stats row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">الطلبات:</span>
-                <span className="font-bold tabular-nums">{result.orderCount}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">الإنفاق:</span>
-                <span className="font-bold tabular-nums">
-                  {result.totalSpent.toLocaleString("ar-DZ")} د.ج
-                </span>
-              </div>
-            </div>
-
-            {/* Progress to next tier */}
-            {nextTier && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">
-                    الترقية إلى{" "}
-                    <span className={cn("font-semibold", nextTier.badgeText)}>
-                      {nextTier.labelAr}
-                    </span>
-                  </span>
-                  <span className="text-muted-foreground tabular-nums">
-                    {result.orderCount} / {nextTier.minOrders}
-                  </span>
+        {data && style && !loading && (
+          <motion.div
+            key="result"
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.5, type: "spring", bounce: 0.2 }}
+            className="space-y-4"
+          >
+            {/* بطاقة المستوى الحالي */}
+            <Card className={"overflow-hidden border-2 " + style.border + " " + style.darkBorder}>
+              <div className={"h-2 bg-gradient-to-l " + style.gradient} />
+              <CardContent className="p-5 space-y-4">
+                {/* الرأس */}
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    initial={{ rotate: -20, scale: 0.5 }}
+                    animate={{ rotate: 0, scale: 1 }}
+                    transition={{ duration: 0.6, delay: 0.1, type: "spring", bounce: 0.5 }}
+                    className={"w-14 h-14 rounded-2xl bg-gradient-to-br " + style.gradient + " flex items-center justify-center shadow-lg"}
+                  >
+                    <span className="text-2xl">{data.tierIcon}</span>
+                  </motion.div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold">{data.tierName}</h3>
+                      {data.discountPercent > 0 && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.3, type: "spring" }}
+                          className={"inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-l " + style.gradient + " text-white shadow-sm"}
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          <span>{"خصم " + data.discountPercent + "%"}</span>
+                        </motion.span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      <span>{data.name}</span>
+                      <span>{" \u00B7 " + data.totalOrders + " طلب"}</span>
+                    </p>
+                  </div>
                 </div>
-                <Progress value={Math.min(progressValue, 100)} className="h-2.5" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Tier comparison grid */}
-      <div>
-        <h3 className="text-base font-bold text-foreground mb-3 px-1">
-          مستويات الولاء
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {TIERS.map((tier) => {
-            const isActive = tier.key === currentTier;
-            return (
-              <Card
-                key={tier.key}
-                className={cn(
-                  "bg-gradient-to-br transition-all duration-300 relative overflow-hidden",
-                  tier.gradient,
-                  tier.border,
-                  isActive && "ring-2 ring-primary shadow-md scale-[1.02]"
-                )}
-              >
-                {isActive && (
-                  <div className="absolute top-2 left-2">
-                    <Badge variant="default" className="text-[10px] px-1.5 py-0">
-                      مستواك الحالي
-                    </Badge>
-                  </div>
-                )}
-                <CardContent className="p-4 flex flex-col items-center gap-2 text-center">
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", tier.badgeBg)}>
-                    {tier.icon}
-                  </div>
-                  <span className={cn("font-bold text-sm", tier.badgeText)}>
-                    {tier.labelAr}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {tier.description}
-                  </span>
-                  <div className="flex flex-col gap-1 w-full mt-1 pt-2 border-t border-border/50">
-                    <div className="flex items-center justify-center gap-1 text-xs">
-                      <ShoppingBag className="h-3 w-3 text-muted-foreground" />
+                {/* إحصائيات */}
+                <div className="grid grid-cols-3 gap-2">
+                  <StatCell label="الإنفاق الكلي" value={formatDA(data.totalSpent)} style={style} />
+                  <StatCell label="الطلبات" value={String(data.totalOrders)} style={style} />
+                  <StatCell
+                    label="خصمك الحالي"
+                    value={data.discountPercent > 0 ? data.discountPercent + "%" : "\u2014"}
+                    style={style}
+                  />
+                </div>
+
+                {/* التقدم للمستوى التالي */}
+                {data.nextTier && data.nextTierAmount ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        التقدم للمستوى التالي
+                      </span>
+                      <span className="font-medium">
+                        {data.tierIcon} {data.tierName}
+                        <ChevronLeft className="inline h-3 w-3 mx-0.5" />
+                        {data.nextTierIcon} {data.nextTier}
+                      </span>
+                    </div>
+
+                    <Progress value={getProgressPercent()} className="h-3" />
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      className={"text-center text-xs p-2.5 rounded-xl border " + style.border + " " + style.darkBorder + " " + style.bg + " " + style.darkBg}
+                    >
+                      <Gift className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                       <span className="text-muted-foreground">
-                        {tier.minOrders === 0 ? "من أول طلب" : `${tier.minOrders}+ طلب`}
+                        {"أتمّ طلبات بقيمة "}
+                        <span className={"font-bold " + style.text}>{formatDA(data.pointsToNext)}</span>
+                        {" للحصول على خصم "}
+                        <span className={"font-bold " + style.text}>{getNextTierDiscount()}%</span>
+                        {" في مستوى "}
+                        <span className="font-bold">{data.nextTier}</span>
                       </span>
+                    </motion.div>
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-center py-2"
+                  >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-l from-oklch-[0.78_0.08_220]/10 to-oklch-[0.78_0.08_220]/5 dark:from-oklch-[0.5_0.08_220]/15 dark:to-oklch-[0.5_0.08_220]/5 border border-oklch-[0.78_0.08_220]/20 dark:border-oklch-[0.5_0.08_220]/20">
+                      <Crown className="h-4 w-4 text-oklch-[0.7_0.1_220] dark:text-oklch-[0.75_0.08_220]" />
+                      <span className="text-sm font-bold">وصلت أعلى مستوى — شكراً لولائك! 🎉</span>
                     </div>
-                    <div className="flex items-center justify-center gap-1 text-xs">
-                      <Percent className="h-3 w-3 text-muted-foreground" />
-                      <span className={cn("font-semibold", tier.badgeText)}>
-                        {tier.discount > 0 ? `${tier.discount}% خصم` : "بدون خصم"}
-                      </span>
-                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* جدول المستويات */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Card>
+                <CardHeader className="pb-2 px-4 pt-4">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    مستويات الولاء
+                  </CardTitle>
+                  <CardDescription className="text-[11px]">كلما أنفقت أكثر، حصلت على خصم أكبر</CardDescription>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {ALL_TIERS.map(function(t, i) {
+                      const tStyle = TIER_STYLES[t.tier];
+                      const isCurrent = t.tier === data.tier;
+                      const isLocked = data.totalSpent < t.minAmount;
+                      const cellClass = isCurrent
+                        ? tStyle.bg + " " + tStyle.darkBg + " " + tStyle.border + " " + tStyle.darkBorder + " border-2 shadow-sm"
+                        : isLocked
+                          ? "opacity-50 bg-muted/30 border-border/50"
+                          : "bg-muted/40 border-border/50";
+                      return (
+                        <motion.div
+                          key={t.tier}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.6 + i * 0.1 }}
+                          className={"relative rounded-xl p-3 text-center border transition-all " + cellClass}
+                        >
+                          {isCurrent && (
+                            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-foreground text-background text-[9px] font-bold">
+                              مستواك
+                            </div>
+                          )}
+                          <div className="text-xl mb-1">{t.icon}</div>
+                          <div className={"text-xs font-bold " + (isCurrent ? tStyle.text : "")}>{t.tierName}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {t.discountPercent > 0 ? t.discountPercent + "% خصم" : "البدء"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {"من " + formatDA(t.minAmount)}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
-      </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function StatCell({ label, value, style }: { label: string; value: string; style: { bg: string; darkBg: string; text: string } }) {
+  return (
+    <div className={"rounded-xl " + style.bg + " " + style.darkBg + " p-3 text-center"}>
+      <div className="text-[11px] text-muted-foreground mb-1">{label}</div>
+      <div className={"text-sm font-bold " + style.text}>{value}</div>
     </div>
   );
 }

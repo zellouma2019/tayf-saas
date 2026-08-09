@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { shopApi } from "@/lib/shop-api";
 import {
   Card,
   CardContent,
@@ -70,6 +69,7 @@ import {
   Sparkles,
   AlertTriangle,
   Printer,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -186,14 +186,13 @@ export function AdminSettings() {
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await shopApi("/api/settings");
+      const res = await fetch("/api/settings");
       if (!res.ok) throw new Error("فشل تحميل الإعدادات");
       const data = (await res.json()) as AppSettings;
       const safe: AppSettings = {
         services: data.services ?? DEFAULT_SETTINGS.services,
         deliveryOptions: data.deliveryOptions ?? DEFAULT_SETTINGS.deliveryOptions,
         general: { ...DEFAULT_SETTINGS.general, ...(data.general ?? {}) },
-        intro: data.intro ?? DEFAULT_SETTINGS.intro,
       };
       setSettings(safe);
       setOriginal(deepClone(safe));
@@ -461,7 +460,7 @@ export function AdminSettings() {
     if (!settings) return;
     setSaving(true);
     try {
-      const res = await shopApi("/api/settings", {
+      const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...adminHeaders },
         body: JSON.stringify(settings),
@@ -487,7 +486,7 @@ export function AdminSettings() {
   async function handleReset() {
     setResetting(true);
     try {
-      const res = await shopApi("/api/settings", { method: "DELETE", headers: adminHeaders });
+      const res = await fetch("/api/settings", { method: "DELETE", headers: adminHeaders });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "فشل إعادة التعيين");
@@ -535,7 +534,7 @@ export function AdminSettings() {
       {/* ===== الترويسة ===== */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0">
             <Settings className="h-5 w-5 text-amber-400" />
           </div>
           <div>
@@ -544,7 +543,7 @@ export function AdminSettings() {
               {hasChanges && (
                 <Badge
                   variant="outline"
-                  className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40 text-xs gap-1"
+                  className="bg-amber-50 text-amber-700 border-amber-200 text-xs gap-1"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                   تغييرات غير محفوظة
@@ -573,7 +572,7 @@ export function AdminSettings() {
             size="sm"
             onClick={handleSave}
             disabled={!hasChanges || saving}
-            className="bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-900 text-white gap-1.5"
+            className="bg-neutral-900 hover:bg-neutral-800 text-white gap-1.5"
           >
             {saving ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -594,35 +593,35 @@ export function AdminSettings() {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1 bg-muted/60">
           <TabsTrigger
             value="services"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
           >
             <Layers className="h-4 w-4" />
             الخدمات والأسعار
           </TabsTrigger>
           <TabsTrigger
             value="delivery"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
           >
             <Truck className="h-4 w-4" />
             خيارات التسليم
           </TabsTrigger>
           <TabsTrigger
             value="general"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
           >
             <SlidersHorizontal className="h-4 w-4" />
             الإعدادات العامة
           </TabsTrigger>
           <TabsTrigger
             value="intro"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
           >
             <Sparkles className="h-4 w-4" />
             شاشة الإنترو
           </TabsTrigger>
           <TabsTrigger
             value="reset"
-            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
+            className="flex items-center gap-1.5 py-2 text-xs sm:text-sm data-[state=active]:bg-neutral-900 data-[state=active]:text-white"
           >
             <CircleAlert className="h-4 w-4" />
             إعادة التعيين
@@ -631,7 +630,7 @@ export function AdminSettings() {
 
         {/* ===== التبويب 1: الخدمات ===== */}
         <TabsContent value="services" className="space-y-4 outline-none">
-          <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-l from-amber-50/50 dark:from-amber-950/20 to-transparent">
+          <Card className="border-amber-200/60 bg-gradient-to-l from-amber-50/50 to-transparent">
             <CardContent className="p-4 flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-muted-foreground leading-relaxed">
@@ -652,7 +651,7 @@ export function AdminSettings() {
               >
                 <AccordionTrigger className="px-4 hover:no-underline hover:bg-muted/40">
                   <div className="flex items-center gap-3 w-full pr-2">
-                    <div className="w-10 h-10 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center text-xl shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-neutral-900 flex items-center justify-center text-xl shrink-0">
                       {service.emoji}
                     </div>
                     <div className="flex-1 text-right">
@@ -709,8 +708,8 @@ export function AdminSettings() {
                         </AlertDialogContent>
                       </AlertDialog>
                       <div>
-                        <div className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                          {service.basePricePerPage}/صفحة
+                        <div className="text-sm font-bold text-amber-700">
+                          {service.basePricePerPage} دج
                         </div>
                         <div className="text-xs text-muted-foreground">
                           لكل صفحة
@@ -736,7 +735,7 @@ export function AdminSettings() {
                       dir="ltr"
                     />
                     <Field
-                      label="السعر الأساسي/صفحة"
+                      label="السعر الأساسي/صفحة (دج)"
                       type="number"
                       value={service.basePricePerPage}
                       onChange={(v) =>
@@ -946,7 +945,7 @@ export function AdminSettings() {
                                         dir="ltr"
                                       />
                                       <Field
-                                        label="سعر ثابت"
+                                        label="سعر ثابت (دج)"
                                         type="number"
                                         value={opt.price ?? 0}
                                         onChange={(v) =>
@@ -956,7 +955,7 @@ export function AdminSettings() {
                                         }
                                       />
                                       <Field
-                                        label="سعر/صفحة"
+                                        label="سعر/صفحة (دج)"
                                         type="number"
                                         value={opt.pricePerPage ?? 0}
                                         onChange={(v) =>
@@ -1023,7 +1022,7 @@ export function AdminSettings() {
           {/* زر إضافة خدمة جديدة */}
           <Button
             variant="outline"
-            className="w-full border-dashed border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-400 gap-2 h-12"
+            className="w-full border-dashed border-2 border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400 gap-2 h-12"
             onClick={addService}
           >
             <Plus className="h-5 w-5" />
@@ -1033,7 +1032,7 @@ export function AdminSettings() {
 
         {/* ===== التبويب 2: التسليم ===== */}
         <TabsContent value="delivery" className="space-y-4 outline-none">
-          <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-l from-amber-50/50 dark:from-amber-950/20 to-transparent">
+          <Card className="border-amber-200/60 bg-gradient-to-l from-amber-50/50 to-transparent">
             <CardContent className="p-4 flex items-start gap-3">
               <Truck className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-muted-foreground leading-relaxed">
@@ -1093,7 +1092,7 @@ export function AdminSettings() {
                     onChange={(v) => updateDelivery(dIdx, { description: v })}
                   />
                   <Field
-                    label="رسوم إضافية"
+                    label="رسوم إضافية (دج)"
                     type="number"
                     value={del.surcharge}
                     onChange={(v) =>
@@ -1118,6 +1117,58 @@ export function AdminSettings() {
 
         {/* ===== التبويب 3: عام ===== */}
         <TabsContent value="general" className="space-y-4 outline-none">
+          {/* هوية المطبعة */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Store className="h-4 w-4 text-amber-500" />
+                هوية المطبعة
+              </CardTitle>
+              <CardDescription className="text-xs">
+                اسم وشعار المطبعة — يظهر في الترويسة والتذييل وشاشة البداية
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Field
+                label="اسم المطبعة"
+                value={settings.general.shopName}
+                onChange={(v) => updateGeneral("shopName", v)}
+                hint="يظهر في الترويسة والتذييل والعنوان"
+              />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  شعار المطبعة
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={settings.general.shopLogo}
+                    onChange={(e) => updateGeneral("shopLogo", e.target.value)}
+                    dir="ltr"
+                    className="h-9 text-sm flex-1"
+                    placeholder="رابط صورة (https://...) أو إيموجي (مثلاً: 🖨️)"
+                  />
+                  {settings.general.shopLogo && (
+                    <div className="w-9 h-9 rounded-lg bg-muted border flex items-center justify-center shrink-0 overflow-hidden">
+                      {settings.general.shopLogo.length <= 4 && !settings.general.shopLogo.startsWith("http") ? (
+                        <span className="text-xl">{settings.general.shopLogo}</span>
+                      ) : (
+                        <img
+                          src={settings.general.shopLogo}
+                          alt="شعار"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground/80">
+                  اتركه فارغاً لاستخدام الأيقونة الافتراضية
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* الخصومات */}
           <Card>
             <CardHeader className="pb-3">
@@ -1156,7 +1207,7 @@ export function AdminSettings() {
                 hint="نسبة التوفير عند الطباعة على الوجهين"
               />
               <Field
-                label="أدنى مبلغ للطلب"
+                label="أدنى مبلغ للطلب (دج)"
                 type="number"
                 value={settings.general.minOrder}
                 onChange={(v) => updateGeneral("minOrder", toNumber(v))}
@@ -1194,7 +1245,7 @@ export function AdminSettings() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-gold-400" />
+                  <Phone className="h-3.5 w-3.5 text-blue-500" />
                   رقم الهاتف
                 </Label>
                 <Input
@@ -1248,7 +1299,7 @@ export function AdminSettings() {
           </Card>
 
           {/* الأمان والنظام */}
-          <Card className="border-amber-200/60 dark:border-amber-800/40">
+          <Card className="border-amber-200/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Lock className="h-4 w-4 text-amber-500" />
@@ -1272,14 +1323,14 @@ export function AdminSettings() {
                   maxLength={8}
                   placeholder="2514"
                 />
-                <p className="text-xs text-amber-700/80 dark:text-amber-400/80 flex items-center gap-1">
+                <p className="text-xs text-amber-700/80 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
                   تغييره سيؤثر على دخول الموظفين
                 </p>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <CalendarClock className="h-3.5 w-3.5 text-gold-400" />
+                  <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
                   الحذف التلقائي (أيام)
                 </Label>
                 <Input
@@ -1309,7 +1360,7 @@ export function AdminSettings() {
                   className="h-9 text-sm"
                 />
                 <p className="text-xs text-muted-foreground/80">
-                  بالعملة المحلية
+                  بالدينار الجزائري
                 </p>
               </div>
             </CardContent>
@@ -1318,7 +1369,7 @@ export function AdminSettings() {
 
         {/* ===== التبويب: شاشة الإنترو ===== */}
         <TabsContent value="intro" className="space-y-4 outline-none">
-          <Card className="border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-l from-amber-50/50 dark:from-amber-950/20 to-transparent">
+          <Card className="border-amber-200/60 bg-gradient-to-l from-amber-50/50 to-transparent">
             <CardContent className="p-4 flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-xs text-muted-foreground leading-relaxed">
@@ -1347,7 +1398,7 @@ export function AdminSettings() {
                     type="checkbox"
                     checked={settings.intro?.enabled ?? true}
                     onChange={(e) =>
-                      setSettings({ ...settings, intro: { ...settings.intro!, enabled: e.target.checked } })
+                      setSettings({ ...local, intro: { ...settings.intro!, enabled: e.target.checked } })
                     }
                     className="w-5 h-5 rounded accent-amber-500"
                   />
@@ -1360,13 +1411,13 @@ export function AdminSettings() {
                 <Field
                   label="العنوان الرئيسي"
                   value={settings.intro?.title ?? ""}
-                  onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, title: v } })}
-                  placeholder="طيف"
+                  onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, title: v } })}
+                  placeholder="مطبعة الذكي"
                 />
                 <Field
                   label="الشعار السفلي"
                   value={settings.intro?.subtitle ?? ""}
-                  onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, subtitle: v } })}
+                  onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, subtitle: v } })}
                   placeholder="اطبع بسهولة — أسرع من واتساب"
                 />
               </div>
@@ -1376,15 +1427,15 @@ export function AdminSettings() {
                 <Field
                   label="الإيموجي / الأيقونة"
                   value={settings.intro?.emoji ?? ""}
-                  onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, emoji: v } })}
+                  onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, emoji: v } })}
                   placeholder="🖨️"
                   hint="ضع إيموجي (مثل 🖨️) أو اتركه فارغاً لأيقونة الطابعة الافتراضية"
                 />
                 <Field
                   label="نص التذييل"
                   value={settings.intro?.footerText ?? ""}
-                  onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, footerText: v } })}
-                  placeholder="صُمّم بحب ❤️"
+                  onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, footerText: v } })}
+                  placeholder="🇩🇿 صُمّم بحب في الجزائر"
                 />
               </div>
 
@@ -1397,14 +1448,13 @@ export function AdminSettings() {
                       type="color"
                       value={settings.intro?.bgColor ?? "#1a1a1a"}
                       onChange={(e) =>
-                        setSettings({ ...settings, intro: { ...settings.intro!, bgColor: e.target.value } })
+                        setSettings({ ...local, intro: { ...settings.intro!, bgColor: e.target.value } })
                       }
                       className="w-10 h-10 rounded-lg border cursor-pointer"
                     />
                     <Field
-                      label="لون الخلفية"
                       value={settings.intro?.bgColor ?? "#1a1a1a"}
-                      onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, bgColor: v } })}
+                      onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, bgColor: v } })}
                       placeholder="#1a1a1a"
                     />
                   </div>
@@ -1416,14 +1466,13 @@ export function AdminSettings() {
                       type="color"
                       value={settings.intro?.accentColor ?? "#D4AF37"}
                       onChange={(e) =>
-                        setSettings({ ...settings, intro: { ...settings.intro!, accentColor: e.target.value } })
+                        setSettings({ ...local, intro: { ...settings.intro!, accentColor: e.target.value } })
                       }
                       className="w-10 h-10 rounded-lg border cursor-pointer"
                     />
                     <Field
-                      label="لون التمييز"
                       value={settings.intro?.accentColor ?? "#D4AF37"}
-                      onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, accentColor: v } })}
+                      onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, accentColor: v } })}
                       placeholder="#D4AF37"
                     />
                   </div>
@@ -1434,7 +1483,7 @@ export function AdminSettings() {
               <Field
                 label="مدة العرض (بالملي ثانية - 3000 = 3 ثوانٍ)"
                 value={String(settings.intro?.duration ?? 4200)}
-                onChange={(v) => setSettings({ ...settings, intro: { ...settings.intro!, duration: toNumber(v) } })}
+                onChange={(v) => setSettings({ ...local, intro: { ...settings.intro!, duration: toNumber(v) } })}
                 placeholder="4200"
                 hint="الحد الأدنى 2000 (ثانيتان)، الحد الأقصى 10000 (10 ثوانٍ)"
               />
@@ -1448,7 +1497,7 @@ export function AdminSettings() {
                       type="checkbox"
                       checked={settings.intro?.showProgress ?? true}
                       onChange={(e) =>
-                        setSettings({ ...settings, intro: { ...settings.intro!, showProgress: e.target.checked } })
+                        setSettings({ ...local, intro: { ...settings.intro!, showProgress: e.target.checked } })
                       }
                       className="w-4 h-4 rounded accent-amber-500"
                     />
@@ -1461,7 +1510,7 @@ export function AdminSettings() {
                       type="checkbox"
                       checked={settings.intro?.showSpinningRing ?? true}
                       onChange={(e) =>
-                        setSettings({ ...settings, intro: { ...settings.intro!, showSpinningRing: e.target.checked } })
+                        setSettings({ ...local, intro: { ...settings.intro!, showSpinningRing: e.target.checked } })
                       }
                       className="w-4 h-4 rounded accent-amber-500"
                     />
@@ -1470,8 +1519,8 @@ export function AdminSettings() {
               </div>
 
               {/* معاينة مباشرة */}
-              <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 overflow-hidden">
-                <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-800/40 text-xs font-bold text-amber-800 dark:text-amber-400">
+              <div className="rounded-xl border border-amber-200 overflow-hidden">
+                <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs font-bold text-amber-800">
                   معاينة مباشرة
                 </div>
                 <div
@@ -1625,7 +1674,7 @@ export function AdminSettings() {
               </div>
 
               {hasChanges && (
-                <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   لديك تغييرات غير محفوظة حالياً. إعادة التعيين ستحل محلها
                   كلها.
@@ -1639,7 +1688,7 @@ export function AdminSettings() {
       {/* ===== شريط الحفظ السفلي العائم (يظهر فقط عند وجود تغييرات) ===== */}
       {hasChanges && (
         <div className="sticky bottom-4 z-30 mx-auto max-w-md">
-          <div className="bg-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-amber-500/30">
+          <div className="bg-neutral-900 text-white rounded-xl shadow-lg p-3 flex items-center justify-between gap-3 border border-amber-500/30">
             <div className="flex items-center gap-2 text-xs">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               <span>لديك تغييرات غير محفوظة</span>
@@ -1648,7 +1697,7 @@ export function AdminSettings() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-neutral-300 dark:text-neutral-600 hover:text-white dark:hover:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 h-8"
+                className="text-neutral-300 hover:text-white hover:bg-neutral-800 h-8"
                 onClick={handleDiscard}
                 disabled={saving}
               >

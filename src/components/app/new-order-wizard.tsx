@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,6 +16,9 @@ import {
   CalendarDays,
   Timer,
   ChevronDown,
+  Eye,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +40,7 @@ import {
   type ServiceType,
   type PricingInput,
 } from "@/lib/print-config";
+import { ServiceStatusBanner } from "@/components/app/service-status-banner";
 import {
   SERVICE_SPECS as STATIC_SERVICE_SPECS,
   SPEC_LIST,
@@ -49,10 +53,13 @@ import { analyzeFileReal, analyzeFileWithAI, parsePageRange, type RealFileAnalys
 import UploadStep, { type AnalysisPhase } from "@/components/app/upload-step";
 import { isValidAlgerianPhone, getPhoneErrorMessage } from "@/lib/phone-validation";
 import { selectOffer, type Offer } from "@/lib/offers";
-import { shopApi } from "@/lib/shop-api";
 import { OfferPopup } from "@/components/app/offer-popup";
+// ServiceShowcase مخفي حسب طلب التبسيط
+// import { ServiceShowcase } from "@/components/app/service-showcase";
+import { OrderConfirmDialog } from "@/components/app/order-confirm-dialog";
 import type { CreatedOrder } from "@/components/app/app-shell";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { useAppStore } from "@/lib/store";
 // FileAnalysisPanel replaced by UploadStep
 
 interface NewOrderWizardProps {
@@ -63,8 +70,8 @@ interface NewOrderWizardProps {
   onPrefillConsumed?: () => void;
 }
 
-const STEP_LABELS = ["رفع الملف والتحليل", "إعدادات الطباعة", "وقت التسليم", "معلومات التواصل", "مراجعة الطلب"];
-const STEP_DURATIONS = ["أقل من 15 ثانية", "حوالي 30 ثانية", "5 ثوانٍ", "15 ثانية", "10 ثوانٍ"];
+const STEP_LABELS = ["رفع الملف والتحليل", "إعدادات الطباعة", "معاينة الطباعة", "وقت التسليم", "معلومات التواصل", "مراجعة الطلب"];
+const STEP_DURATIONS = ["أقل من 15 ثانية", "حوالي 30 ثانية", "5 ثوانٍ", "5 ثوانٍ", "15 ثانية", "10 ثوانٍ"];
 
 export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: NewOrderWizardProps) {
   const [step, setStep] = useState(0);
@@ -97,7 +104,16 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   const [custEmail, setCustEmail] = useState("");
   const [custDelivery, setCustDelivery] = useState("pickup");
   const [custAddress, setCustAddress] = useState("");
+  const [deliveryNotes, setDeliveryNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // تتبع وقت التنفيذ لكل مرحلة تحليل
+  const [analysisTimings, setAnalysisTimings] = useState<{
+    upload: number | null;
+    local: number | null;
+    ai: number | null;
+    total: number | null;
+  }>({ upload: null, local: null, ai: null, total: null });
   const [offer, setOffer] = useState<Offer | null>(null);
   const [offerShown, setOfferShown] = useState(false);
   const [offerPopupOpen, setOfferPopupOpen] = useState(false);
@@ -106,13 +122,27 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   // الخيارات المخصصة لكل خدمة (موحّدة في كائن واحد)
   const [specOptions, setSpecOptions] = useState<Record<string, string>>({});
 
+  // === تحويل التنسيق ===
+  const [convertTarget, setConvertTarget] = useState("");
+  const [converting, setConverting] = useState(false);
+  const [convertedFileType, setConvertedFileType] = useState("");
+
+  // === المعاينة الحية ===
+  const [previewUrl, setPreviewUrl] = useState("");
+
   function setSpecOption(key: string, value: string) {
     setSpecOptions((prev) => ({ ...prev, [key]: value }));
   }
 
   // التعبئة المسبقة من طلب سابق (لتكرار الطلب)
+  // نستخدم ref لعملية processFile لأنها تعتمد على state لا يمكن إضافتها للـ deps
+  const processFileRef = useRef<(f: File) => Promise<void>>();
+
   useEffect(() => {
     if (prefillOrder) {
+      // قراءة pendingFile قبل استهلاكه
+      const pending = useAppStore.getState().pendingFile;
+
       setServiceType(prefillOrder.serviceType as ServiceType);
       setFileName(prefillOrder.fileName || "");
       setFileType(prefillOrder.fileType || "");
@@ -154,10 +184,24 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setCustEmail(prefillOrder.customer.email || "");
       setCustDelivery(prefillOrder.customer.deliveryMethod);
       setCustAddress(prefillOrder.customer.address || "");
-      setStep(1); // ابدأ من إعدادات الطباعة للتعديل
-      toast.info("تم تحميل بيانات الطلب السابق", {
-        description: "عدّل ما تريد ثم أكّد الطلب الجديد",
-      });
+      if (prefillOrder.delivery?.notes) setDeliveryNotes(prefillOrder.delivery.notes);
+
+      if (pending && processFileRef.current) {
+        // يوجد ملف جديد — نعرض خطوة رفع الملف ونعالجه تلقائياً
+        setStep(0);
+        toast.info("جارٍ تحليل الملف الجديد...", {
+          description: pending.name,
+        });
+        processFileRef.current(pending).then(() => {
+          setStep(1);
+        });
+      } else {
+        // لا ملف جديد — نبدأ من إعدادات الطباعة للتعديل
+        setStep(1);
+        toast.info("تم تحميل بيانات الطلب السابق", {
+          description: "عدّل ما تريد ثم أكّد الطلب الجديد",
+        });
+      }
       onPrefillConsumed?.();
     }
   }, [prefillOrder]);
@@ -168,7 +212,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   );
 
   useEffect(() => {
-    shopApi("/api/settings")
+    fetch("/api/settings")
       .then((r) => r.json())
       .then((data: AppSettings) => {
         if (data.services?.length) {
@@ -207,7 +251,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   // إظهار عرض مفاجئ عند الوصول لمراجعة الطلب (الخطوة 4)
   // التأخير 4 ثواني بعد ظهور صفحة المراجعة لإعطاء العميل وقتاً للاطلاع
   useEffect(() => {
-    if (step === 4 && !offerShown && serviceType) {
+    if (step === 5 && !offerShown && serviceType) {
       const selectedOffer = selectOffer(serviceType, pages, copies);
       if (selectedOffer) {
         setOffer(selectedOffer);
@@ -271,9 +315,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     const hours = estimatedHours;
     const readyTime = new Date(now.getTime() + hours * 60 * 60 * 1000);
 
-    // ساعات العمل: 8 صباحاً - 8 مساءً
+    // ساعات العمل: 8 صباحاً - 7 مساءً
     const WORK_START = 8;
-    const WORK_END = 20;
+    const WORK_END = 19;
     const currentHour = now.getHours();
     const currentMin = now.getMinutes();
 
@@ -336,7 +380,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       const slots = [
         { id: "morning", label: "الصباح", time: "8:00 - 12:00", icon: Sun },
         { id: "noon", label: "الظهيرة", time: "12:00 - 16:00", icon: Clock },
-        { id: "evening", label: "المساء", time: "16:00 - 20:00", icon: Moon },
+        { id: "evening", label: "المساء", time: "16:00 - 19:00", icon: Moon },
       ];
 
       // عند اختيار "غداً" كل الفترات متاحة لأن الزبون يحدد يوم كامل
@@ -344,45 +388,39 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         return slots.map((s) => ({ ...s, available: true, earliest: "" }));
       }
 
-      // نهايات الفترات بالساعة (بالتوقيت 24 ساعة)
-      const slotEndHours: Record<string, number> = { morning: 12, noon: 16, evening: 20 };
-      const readyHour = tempEnd.getHours();
+      // بدايات ونهايات الفترات بالدقائق
+      const slotRanges: Record<string, { start: number; end: number }> = {
+        morning: { start: 8 * 60, end: 12 * 60 },
+        noon: { start: 12 * 60, end: 16 * 60 },
+        evening: { start: 16 * 60, end: 19 * 60 },
+      };
+
+      // الوقت الجاهز بالدقائق (التاريخ + الساعة)
+      const readyMinutes = tempEnd.getHours() * 60 + tempEnd.getMinutes();
 
       // هل الطلب سيُنجز اليوم أم غداً؟
       const todayStr = now.toDateString();
       const readyDateStr2 = tempEnd.toDateString();
       const isReadyToday = readyDateStr2 === todayStr;
 
+      // الوقت الحالي بالدقائق
+      const currentTotalMinutes = currentHour * 60 + currentMin;
+
       return slots.map((s) => {
         let available = false;
         let earliest = "";
+        const range = slotRanges[s.id];
 
-        if (deliveryMode === "today") {
-          // للتسليم اليوم: نتحقق من أن الفترة لم تنتهِ بعد (بناءً على الوقت الحالي)
-          // وأن الطلب سيكون جاهزاً قبل نهاية هذه الفترة
-          const slotEnd = slotEndHours[s.id];
-          const currentTotalMinutes = currentHour * 60 + currentMin;
-          const slotEndMinutes = slotEnd * 60;
-
-          if (currentTotalMinutes < slotEndMinutes && isReadyToday && readyHour <= slotEnd) {
-            available = true;
-            earliest = formatTime(tempEnd);
-          } else if (!isReadyToday) {
+        if (deliveryMode === "today" || deliveryMode === "hour") {
+          if (!isReadyToday) {
             // الطلب سيكون جاهزاً غداً - لا يمكن تسليمه "اليوم"
             available = false;
-          }
-        } else if (deliveryMode === "hour") {
-          // التسليم خلال ساعة: نتحقق أن الفترة لم تنتهِ بعد والطلب جاهز خلالها
-          const slotEnd = slotEndHours[s.id];
-          const currentTotalMinutes = currentHour * 60 + currentMin;
-          const slotEndMinutes = slotEnd * 60;
-
-          if (currentTotalMinutes < slotEndMinutes && isReadyToday && readyHour <= slotEnd) {
-            available = true;
-            earliest = formatTime(tempEnd);
-          } else if (!isReadyToday) {
-            // خارج ساعات العمل - الطلب سيكون جاهزاً في اليوم التالي
-            available = false;
+          } else {
+            // التسليم اليوم: الفترة لم تنتهِ بعد + الطلب جاهز قبل/خلال نهاية الفترة
+            if (currentTotalMinutes < range.end && readyMinutes <= range.end) {
+              available = true;
+              earliest = formatTime(tempEnd);
+            }
           }
         }
 
@@ -392,7 +430,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
     // هل التسليم "اليوم" متاحًا؟ (خارج ساعات العمل لا يمكن التسليم اليوم)
     const isTodayDeliveryPossible = currentHour >= WORK_START && currentHour < WORK_END;
-    const isHourDeliveryPossible = currentHour >= WORK_START && currentHour < WORK_END;
+    // التسليم خلال ساعة: يجب أن يكون هناك ساعة على الأقل قبل الإغلاق
+    const minutesToClose = (WORK_END * 60) - (currentHour * 60 + currentMin);
+    const isHourDeliveryPossible = currentHour >= WORK_START && minutesToClose >= 60;
 
     return {
       readyTime: tempEnd,
@@ -405,13 +445,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       isTodayDeliveryPossible,
       isHourDeliveryPossible,
       workStart: "8:00 صباحاً",
-      workEnd: "8:00 مساءً",
+      workEnd: "7:00 مساءً",
     };
   }, [deliveryMode, estimatedHours]);
 
   // تبديل تلقائي من "اليوم"/"خلال ساعة" إلى "غداً" خارج ساعات العمل
   useEffect(() => {
-    if (step === 2 && !deliveryEstimate.isWorkingHours) {
+    if (step === 3 && !deliveryEstimate.isWorkingHours) {
       if (deliveryMode === "today" || deliveryMode === "hour") {
         setDeliveryMode("tomorrow");
         setDeliveryTimeSlot("");
@@ -426,12 +466,13 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   function canProceed(): boolean {
     if (step === 0) return !!serviceType;
     if (step === 1 && printRange === "custom") return pages > 0;
-    if (step === 2) {
+    // الخطوة 2 (معاينة) — دائماً يمكن المتابعة
+    if (step === 3) {
       if (!deliveryMode) return false;
       if (deliveryMode === "scheduled" && !deliveryDate) return false;
       return true;
     }
-    if (step === 3) {
+    if (step === 4) {
       if (!custName.trim() || !custPhone.trim()) return false;
       if (!isValidAlgerianPhone(custPhone)) return false;
       if (custWhatsapp.trim() && !isValidAlgerianPhone(custWhatsapp)) return false;
@@ -442,6 +483,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   }
 
   async function processFile(f: File) {
+    const tTotalStart = performance.now();
     // التحقق من الصيغة
     const ACCEPTED = [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
     const ext = (f.name.split(".").pop() || "").toLowerCase();
@@ -472,71 +514,106 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setAnalysisPhase("uploading");
     setUploadStatus("uploading");
     setUploadProgress(0);
+    setAnalysisTimings({ upload: null, local: null, ai: null, total: null });
+    const tUploadStart = performance.now();
 
     try {
-      const CHUNK_SIZE = 900 * 1024; // 900 كيلوبايت
+      const CHUNK_THRESHOLD = 900 * 1024; // 900 كيلوبايت
+      const CHUNK_SIZE = 900 * 1024;
 
       let storedFileName: string;
 
-      // رفع مجزأ لجميع الملفات (لتجاوز حد 1 ميغا في البوابة)
-      const fileId = crypto.randomUUID();
-      const totalChunks = Math.ceil(f.size / CHUNK_SIZE);
-      let overallLoaded = 0;
-
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, f.size);
-        const blob = f.slice(start, end);
-
+      if (f.size <= CHUNK_THRESHOLD) {
+        // ملف صغير — رفع مباشر
         const formData = new FormData();
-        formData.append("chunk", blob, `chunk_${i}`);
-        formData.append("fileId", fileId);
-        formData.append("chunkIndex", String(i));
-        formData.append("totalChunks", String(totalChunks));
-        formData.append("fileName", f.name);
-        formData.append("fileSize", String(f.size));
-        formData.append("fileExt", ext);
+        formData.append("file", f);
 
-        const result = await new Promise<{ complete: boolean; storedFileName?: string; error?: string }>((resolve, reject) => {
+        storedFileName = await new Promise<string>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/api/orders/upload-chunk");
+          xhr.open("POST", "/api/orders/upload");
 
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
-              const chunkPct = e.loaded / e.total;
-              const pct = Math.round(((overallLoaded + start + e.loaded) / f.size) * 100);
-              setUploadProgress(Math.min(pct, 99));
+              setUploadProgress(Math.round((e.loaded / e.total) * 100));
             }
           };
 
           xhr.onload = () => {
             if (xhr.status === 200) {
-              resolve(JSON.parse(xhr.responseText));
+              const data = JSON.parse(xhr.responseText);
+              resolve(data.storedFileName);
             } else {
-              let msg = `فشل رفع الجزء ${i + 1}/${totalChunks} — رمز الخطأ: ${xhr.status}`;
+              let msg = `فشل رفع الملف — رمز الخطأ: ${xhr.status}`;
               try { const d = JSON.parse(xhr.responseText); if (d.error) msg = d.error; } catch {}
               reject(new Error(msg));
             }
           };
 
-          xhr.onerror = () => reject(new Error(`خطأ في الاتصال أثناء رفع الجزء ${i + 1}/${totalChunks}`));
+          xhr.onerror = () => reject(new Error("خطأ في الاتصال بالخادم. تحقق من اتصالك بالإنترنت."));
           xhr.send(formData);
         });
+      } else {
+        // ملف كبير — رفع مجزأ (لتجاوز حد 1 ميغا في البوابة)
+        const fileId = crypto.randomUUID();
+        const totalChunks = Math.ceil(f.size / CHUNK_SIZE);
+        let overallLoaded = 0;
 
-        overallLoaded = end;
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, f.size);
+          const blob = f.slice(start, end);
 
-        if (result.complete && result.storedFileName) {
-          storedFileName = result.storedFileName;
+          const formData = new FormData();
+          formData.append("chunk", blob, `chunk_${i}`);
+          formData.append("fileId", fileId);
+          formData.append("chunkIndex", String(i));
+          formData.append("totalChunks", String(totalChunks));
+          formData.append("fileName", f.name);
+          formData.append("fileSize", String(f.size));
+          formData.append("fileExt", ext);
+
+          const result = await new Promise<{ complete: boolean; storedFileName?: string; error?: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/orders/upload-chunk");
+
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const chunkPct = e.loaded / e.total;
+                const pct = Math.round(((overallLoaded + start + e.loaded) / f.size) * 100);
+                setUploadProgress(Math.min(pct, 99));
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status === 200) {
+                resolve(JSON.parse(xhr.responseText));
+              } else {
+                let msg = `فشل رفع الجزء ${i + 1}/${totalChunks} — رمز الخطأ: ${xhr.status}`;
+                try { const d = JSON.parse(xhr.responseText); if (d.error) msg = d.error; } catch {}
+                reject(new Error(msg));
+              }
+            };
+
+            xhr.onerror = () => reject(new Error(`خطأ في الاتصال أثناء رفع الجزء ${i + 1}/${totalChunks}`));
+            xhr.send(formData);
+          });
+
+          overallLoaded = end;
+
+          if (result.complete && result.storedFileName) {
+            storedFileName = result.storedFileName;
+          }
         }
-      }
-      // إذا لم نحصل على storedFileName من آخر جزء
-      if (!storedFileName) {
-        throw new Error("فشل في تجميع الملف. حاول مرة أخرى.");
+        // إذا لم نحصل على storedFileName من آخر جزء
+        if (!storedFileName) {
+          throw new Error("فشل في تجميع الملف. حاول مرة أخرى.");
+        }
       }
 
       setFileDataUrl(storedFileName);
       setUploadProgress(100);
       setUploadStatus("done");
+      setAnalysisTimings((prev) => ({ ...prev, upload: Math.round(performance.now() - tUploadStart) }));
     } catch (uploadErr) {
       setAnalysisPhase("error");
       setUploadError((uploadErr as Error).message || "فشل رفع الملف");
@@ -548,9 +625,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     setAnalyzing(true);
     setAnalysis(null);
     setAnalysisPhase("local-analysis");
+    const tLocalStart = performance.now();
 
     try {
       const basicResult = await analyzeFileReal(f);
+      setAnalysisTimings((prev) => ({ ...prev, local: Math.round(performance.now() - tLocalStart) }));
 
       // عرض النتيجة الأساسية فوراً
       setAnalysis(basicResult);
@@ -565,15 +644,26 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       const defaults: Record<string, string> = {};
       if (spec) {
         spec.sections.forEach((section) => {
+          // تطبيق توصيات التحليل الأساسي (color, paperSize, paperType, binding, photoSize)
           if (section.optionKey === "color" && basicResult.suggestedColor) {
-            defaults.color = basicResult.suggestedColor;
+            const valid = section.options.find((o) => o.id === basicResult.suggestedColor);
+            if (valid) { defaults.color = basicResult.suggestedColor; return; }
           } else if (section.optionKey === "paperSize" && basicResult.suggestedPaperSize) {
-            defaults.paperSize = basicResult.suggestedPaperSize;
+            const valid = section.options.find((o) => o.id === basicResult.suggestedPaperSize);
+            if (valid) { defaults.paperSize = basicResult.suggestedPaperSize; return; }
           } else if (section.optionKey === "paperType" && basicResult.suggestedPaperType) {
-            defaults.paperType = basicResult.suggestedPaperType;
+            const valid = section.options.find((o) => o.id === basicResult.suggestedPaperType);
+            if (valid) { defaults.paperType = basicResult.suggestedPaperType; return; }
           } else if (section.optionKey === "binding" && basicResult.suggestedBinding) {
-            defaults.binding = basicResult.suggestedBinding;
-          } else if (section.options.length > 0) {
+            const valid = section.options.find((o) => o.id === basicResult.suggestedBinding);
+            if (valid) { defaults.binding = basicResult.suggestedBinding; return; }
+          } else if (section.optionKey === "photoSize" && basicResult.suggestedPhotoSize) {
+            // خدمة "photo" تستخدم photoSize لا paperSize — كانت مفقودة سابقاً
+            const valid = section.options.find((o) => o.id === basicResult.suggestedPhotoSize);
+            if (valid) { defaults.photoSize = basicResult.suggestedPhotoSize; return; }
+          }
+          // القيمة الافتراضية: أول خيار
+          if (section.options.length > 0) {
             defaults[section.optionKey] = section.options[0].id;
           }
         });
@@ -586,8 +676,10 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
       // ─── المرحلة 3: التحليل الذكي بالـ VLM ───
       setAnalysisPhase("ai-analysis");
+      const tAiStart = performance.now();
 
       analyzeFileWithAI(f, basicResult).then(({ vlmAnalysis, enhancedAnalysis }) => {
+        setAnalysisTimings((prev) => ({ ...prev, ai: Math.round(performance.now() - tAiStart) }));
         if (vlmAnalysis) {
           setAnalysis(enhancedAnalysis);
           setServiceType(enhancedAnalysis.detectedService as ServiceType);
@@ -596,17 +688,38 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
           const updatedSpec = dynamicSpecs[enhancedAnalysis.detectedService] || STATIC_SERVICE_SPECS[enhancedAnalysis.detectedService as ServiceType];
           const updatedDefaults: Record<string, string> = {};
+          const aiOptions = enhancedAnalysis.suggestedOptions || {};
           if (updatedSpec) {
             updatedSpec.sections.forEach((section) => {
+              // 1. تحقق أولاً من suggestedOptions المباشر (من VLM)
+              const aiValue = aiOptions[section.optionKey];
+              if (aiValue) {
+                // تحقق أن القيمة موجودة فعلاً في خيارات هذا القسم
+                const validOption = section.options.find((o) => o.id === aiValue);
+                if (validOption) {
+                  updatedDefaults[section.optionKey] = aiValue;
+                  return; // تم تطبيق اقتراح VLM
+                }
+              }
+              // 2. التوافق مع الحقول القديمة (suggestedColor, suggestedPaperSize, إلخ)
               if (section.optionKey === "color" && enhancedAnalysis.suggestedColor) {
-                updatedDefaults.color = enhancedAnalysis.suggestedColor;
+                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedColor);
+                if (valid) { updatedDefaults.color = enhancedAnalysis.suggestedColor; return; }
               } else if (section.optionKey === "paperSize" && enhancedAnalysis.suggestedPaperSize) {
-                updatedDefaults.paperSize = enhancedAnalysis.suggestedPaperSize;
+                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedPaperSize);
+                if (valid) { updatedDefaults.paperSize = enhancedAnalysis.suggestedPaperSize; return; }
               } else if (section.optionKey === "paperType" && enhancedAnalysis.suggestedPaperType) {
-                updatedDefaults.paperType = enhancedAnalysis.suggestedPaperType;
+                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedPaperType);
+                if (valid) { updatedDefaults.paperType = enhancedAnalysis.suggestedPaperType; return; }
               } else if (section.optionKey === "binding" && enhancedAnalysis.suggestedBinding) {
-                updatedDefaults.binding = enhancedAnalysis.suggestedBinding;
-              } else if (section.options.length > 0) {
+                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedBinding);
+                if (valid) { updatedDefaults.binding = enhancedAnalysis.suggestedBinding; return; }
+              } else if (section.optionKey === "photoSize" && enhancedAnalysis.suggestedPhotoSize) {
+                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedPhotoSize);
+                if (valid) { updatedDefaults.photoSize = enhancedAnalysis.suggestedPhotoSize; return; }
+              }
+              // 3. القيمة الافتراضية: أول خيار في القسم
+              if (section.options.length > 0) {
                 updatedDefaults[section.optionKey] = section.options[0].id;
               }
             });
@@ -618,9 +731,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           });
         }
         setAnalysisPhase("done");
+        setAnalysisTimings((prev) => ({ ...prev, total: Math.round(performance.now() - tTotalStart) }));
       }).catch(() => {
         // VLM فشل — التحليل الأساسي كافٍ
         setAnalysisPhase("done");
+        setAnalysisTimings((prev) => ({ ...prev, total: Math.round(performance.now() - tTotalStart) }));
       });
     } catch (err) {
       setAnalysisPhase("error");
@@ -631,11 +746,14 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     }
   }
 
+  // مزامنة ref لاستخدامه في useEffect (التعبئة المسبقة)
+  processFileRef.current = processFile;
+
   async function handleSubmit() {
     if (!serviceType || !pricing || !finalPricing) return;
     setSubmitting(true);
     try {
-      const res = await shopApi("/api/orders", {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -684,7 +802,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             deliveryMethod: custDelivery,
             address: custAddress,
           },
-          delivery: { mode: deliveryMode, date: deliveryDate, timeSlot: deliveryTimeSlot },
+          delivery: { mode: deliveryMode, date: deliveryDate, timeSlot: deliveryTimeSlot, notes: deliveryNotes || undefined },
           // السعر النهائي بعد تطبيق العرض
           finalTotal: finalPricing.total,
           appliedOfferCode: appliedOffer?.code || null,
@@ -700,6 +818,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         total: finalPricing.total,
         status: order.status,
         estimatedHours: order.estimatedHours,
+        editableUntil: order.editableUntil,
       });
       // إعادة التعيين
       setStep(0);
@@ -724,6 +843,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       setCustWhatsapp("");
       setCustEmail("");
       setCustAddress("");
+      setDeliveryNotes("");
+      setConvertTarget("");
+      setConverting(false);
+      setConvertedFileType("");
+      setPreviewUrl("");
     } catch (e) {
       toast.error("خطأ في إرسال الطلب", { description: (e as Error).message });
     } finally {
@@ -736,8 +860,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       toast.error("يرجى إكمال البيانات المطلوبة");
       return;
     }
-    if (step < 4) setStep(step + 1);
-    else handleSubmit();
+    if (step < 5) setStep(step + 1);
+    else setConfirmOpen(true);
   }
 
   function prev() {
@@ -762,57 +886,265 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div>
-        {/* رأس المعالج */}
+        {/* رأس المعالج المحسّن */}
+        {step > 0 && (
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {STEP_DURATIONS[step]}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                الخطوة {step + 1} من 5
-              </span>
-            </div>
+          {/* شريط التقدم العلوي */}
+          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden mb-4">
+            <div
+              className="h-full rounded-full bg-gradient-to-l from-amber-400 to-amber-500 transition-all duration-500 ease-out"
+              style={{ width: `${((step + 1) / 6) * 100}%` }}
+            />
+          </div>
+
+          {/* مؤشر الخطوات: أرقام + تسميات + خطوط ربط */}
+          <div className="flex items-center justify-between mb-4">
+            {[0, 1, 2, 3, 4, 5].map((i) => {
+              const isCompleted = i < step;
+              const isActive = i === step;
+              return (
+                <div key={i} className="flex items-center flex-1 last:flex-none">
+                  {/* دائرة الخطوة */}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
+                        isCompleted
+                          ? "bg-emerald-500 text-white"
+                          : isActive
+                            ? "bg-amber-500 text-white ring-4 ring-amber-500/20 shadow-lg shadow-amber-500/25"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        <span>{i + 1}</span>
+                      )}
+                    </div>
+                    {/* التسمية والمدة — تُخفى على الجوال */}
+                    <div className="hidden md:flex flex-col items-center gap-0.5">
+                      <span className={`text-[11px] font-medium transition-colors duration-300 ${
+                        isActive ? "text-amber-700 dark:text-amber-400" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+                      }`}>
+                        {STEP_LABELS[i]}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                        <Clock className="h-2.5 w-2.5" />
+                        {STEP_DURATIONS[i]}
+                      </span>
+                    </div>
+                  </div>
+                  {/* خط الربط بين الخطوات */}
+                  {i < 5 && (
+                    <div className="flex-1 mx-2 mt-[-18px] md:mt-[-30px]">
+                      <div className={`h-0.5 rounded-full transition-all duration-300 ${
+                        i < step ? "bg-amber-400" : "bg-muted"
+                      }`} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* عنوان الخطوة الحالية */}
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-xl md:text-2xl font-bold">{STEP_LABELS[step]}</h2>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Sparkles className="h-3 w-3 text-amber-500" />
               المجموع ≈ دقيقة واحدة
             </span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold">{STEP_LABELS[step]}</h2>
-          <div className="mt-3 flex items-center gap-1.5">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className={`h-1.5 flex-1 rounded-full transition-all ${
-                  i <= step ? "bg-amber-400" : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
         </div>
+        )}
+          <span className="text-xs md:hidden font-medium text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {STEP_DURATIONS[step]} · الخطوة {step + 1} من 6
+          </span>
 
         {/* ===== الخطوة 0: رفع الملف والتحليل المحسّن ===== */}
         {step === 0 && (
-          <UploadStep
-            fileName={fileName}
-            fileType={fileType}
-            fileSize={fileSize}
-            analysisPhase={analysisPhase}
-            uploadProgress={uploadProgress}
-            analysis={analysis}
-            analyzing={analyzing}
-            serviceType={serviceType}
-            errorMessage={uploadError}
-            onFileSelected={processFile}
-          />
+          <div className="relative z-0 space-y-6 min-h-[70vh] rounded-2xl p-6 md:p-8 overflow-hidden">
+            {/* طبقة الخلفية: تدرج احترافي يدل على الطباعة بدون صورة */}
+            <div className="absolute inset-0 -z-10">
+              <div className="w-full h-full" style={{
+                background: `
+                  radial-gradient(ellipse at 20% 50%, rgba(245,158,11,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 20%, rgba(217,119,6,0.06) 0%, transparent 40%),
+                  radial-gradient(ellipse at 60% 80%, rgba(180,83,9,0.05) 0%, transparent 45%),
+                  linear-gradient(135deg, #fefce8 0%, #fff7ed 50%, #fef3c7 100%)
+                `,
+              }} />
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/70" />
+            </div>
+            {/* نمط الشبكة الدقيق (ورق/طباعة) */}
+            <div className="absolute inset-0 -z-[9] opacity-[0.08]" style={{
+              backgroundImage: `
+                linear-gradient(rgba(180,140,80,.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(180,140,80,.15) 1px, transparent 1px)
+              `,
+              backgroundSize: '24px 24px',
+            }} />
+            {/* نقاط CMYK ملونة */}
+            <div className="absolute inset-0 -z-[8] opacity-[0.05] pointer-events-none" style={{
+              backgroundImage: `
+                radial-gradient(circle, rgba(245,158,11,0.6) 1.5px, transparent 1.5px),
+                radial-gradient(circle, rgba(59,130,246,0.5) 1px, transparent 1px),
+                radial-gradient(circle, rgba(239,68,68,0.4) 1px, transparent 1px)
+              `,
+              backgroundSize: '48px 48px',
+              backgroundPosition: '0 0, 16px 16px, 32px 32px',
+            }} />
+            {/* خطوط زخرفية ذهبية */}
+            <div className="absolute top-0 left-0 right-0 h-1 -z-[6]" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
+            <div className="absolute bottom-0 left-0 right-0 h-1 -z-[6]" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent)' }} />
+            <div className="absolute top-6 right-0 w-0.5 h-24 -z-[6] opacity-40" style={{ background: 'linear-gradient(180deg, transparent, rgba(245,158,11,0.5), transparent)' }} />
+            <div className="absolute top-6 left-0 w-0.5 h-16 -z-[6] opacity-30" style={{ background: 'linear-gradient(180deg, transparent, rgba(245,158,11,0.3), transparent)' }} />
+
+            {step > 0 && <ServiceStatusBanner />}
+            <UploadStep
+              fileName={fileName}
+              fileType={fileType}
+              fileSize={fileSize}
+              analysisPhase={analysisPhase}
+              uploadProgress={uploadProgress}
+              analysis={analysis}
+              analyzing={analyzing}
+              serviceType={serviceType}
+              errorMessage={uploadError}
+              analysisTimings={analysisTimings}
+              onFileSelected={processFile}
+            />
+            {/* اختيار يدوي للخدمة — مخفي حسب طلب التبسيط */}
+
+            {/* ===== تحويل التنسيق (بعد اكتمال التحليل) ===== */}
+            {analysisPhase === "done" && fileDataUrl && (
+              <div className="rounded-2xl border bg-card overflow-hidden">
+                <div className="px-5 py-3.5 border-b bg-gradient-to-l from-violet-50 to-purple-50">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 text-amber-600" />
+                    <h3 className="font-bold text-sm">تحويل التنسيق</h3>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">اختياري</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">غيّر صيغة الملف إذا كنت تحتاج تنسيقاً مختلفاً</p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1">
+                      <Label className="text-xs font-medium mb-1.5 block">الصيغة الحالية</Label>
+                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border text-sm font-bold">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        {convertedFileType || fileType}
+                      </div>
+                    </div>
+                    <div className="flex items-end">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                        <ArrowLeft className="h-4 w-4 text-amber-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-xs font-medium mb-1.5 block">حوّل إلى</Label>
+                      <select
+                        value={convertTarget}
+                        onChange={(e) => setConvertTarget(e.target.value)}
+                        className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                      >
+                        <option value="">اختر التنسيق...</option>
+                        {fileType === "PDF" && (
+                          <>
+                            <option value="JPG">JPG (صورة)</option>
+                            <option value="PNG">PNG (صورة عالية الجودة)</option>
+                          </>
+                        )}
+                        {(fileType === "JPG" || fileType === "JPEG" || fileType === "PNG" || fileType === "WEBP") && (
+                          <>
+                            <option value="PDF">PDF (مستند)</option>
+                            {fileType !== "PNG" && <option value="PNG">PNG (عالية الجودة)</option>}
+                            {(fileType === "PNG" || fileType === "WEBP") && <option value="JPG">JPG (أصغر حجماً)</option>}
+                          </>
+                        )}
+                        {fileType === "DOCX" && (
+                          <option value="PDF">PDF (مستند)</option>
+                        )}
+                        {fileType === "XLSX" && (
+                          <option value="PDF">PDF (مستند)</option>
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                  {convertTarget && (
+                    <Button
+                      onClick={async () => {
+                        if (!convertTarget || !fileDataUrl) return;
+                        setConverting(true);
+                        try {
+                          const res = await fetch("/api/convert", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ storedFileName: fileDataUrl, targetFormat: convertTarget }),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setFileDataUrl(data.newStoredFileName);
+                            setFileType(convertTarget);
+                            setConvertedFileType(convertTarget);
+                            if (data.pageCount) {
+                              setTotalPages(data.pageCount);
+                              setPages(data.pageCount);
+                            }
+                            setConvertTarget("");
+                            toast.success("تم تحويل التنسيق بنجاح ✓", {
+                              description: `الصيغة الجديدة: ${data.newFileType}`,
+                            });
+                          } else {
+                            toast.error("فشل التحويل", { description: data.error || "تنسيق غير مدعوم" });
+                          }
+                        } catch {
+                          toast.error("خطأ في التحويل", { description: "تحقق من اتصالك بالإنترنت" });
+                        } finally {
+                          setConverting(false);
+                        }
+                      }}
+                      disabled={converting}
+                      className="bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      {converting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          جارٍ التحويل...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4" />
+                          تحويل إلى {convertTarget}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  {convertedFileType && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+                      <Check className="h-4 w-4 shrink-0" />
+                      تم التحويل إلى {convertedFileType} بنجاح
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* ===== الخطوة 1: إعدادات الطباعة ===== */}
         {step === 1 && selectedService && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
-              <div className="text-2xl md:text-3xl">{selectedService.emoji}</div>
+              {/* صورة مصغّرة حقيقية للملف إن وُجدت */}
+              {analysis?.thumbnailUrl ? (
+                <div className="shrink-0 w-14 h-16 md:w-16 md:h-18 rounded-lg overflow-hidden border-2 border-amber-200 bg-white shadow-sm">
+                  <img src={analysis.thumbnailUrl} alt="معاينة الملف" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="text-2xl md:text-3xl">{selectedService.emoji}</div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-sm">{selectedService.name}</div>
                 <div className="text-xs text-muted-foreground">{selectedService.description}</div>
@@ -824,7 +1156,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             </div>
 
             {analysis && (
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 flex items-start gap-2">
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex items-start gap-2">
                 <Zap className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>الإعدادات الحالية مُطبّقة من التحليل الحقيقي للملف — يمكنك تعديلها بحرية</span>
               </div>
@@ -981,8 +1313,242 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           </div>
         )}
 
-        {/* ===== الخطوة 2: وقت التسليم ===== */}
+        {/* ===== الخطوة 2: معاينة الطباعة ===== */}
         {step === 2 && (
+          <div className="space-y-5">
+            <div className="rounded-2xl border bg-card overflow-hidden">
+              <div className="px-5 py-4 border-b bg-gradient-to-l from-amber-50 to-orange-50">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-amber-600" />
+                  <h3 className="font-bold text-sm">معاينة حية للطباعة</h3>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">تحقق من شكل الملف النهائي قبل التأكيد</p>
+              </div>
+              <div className="p-5">
+                {fileDataUrl && (fileType === "PDF" || convertedFileType === "PDF") ? (
+                  <div className="rounded-xl border overflow-hidden bg-white">
+                    <iframe
+                      src={`/api/file-preview?file=${encodeURIComponent(fileDataUrl)}&scale=3`}
+                      className="w-full h-[700px] md:h-[900px] border-0"
+                      title="معاينة الملف"
+                    />
+                  </div>
+                ) : fileDataUrl && ["JPG", "JPEG", "PNG", "WEBP"].includes(fileType) ? (
+                  <div className="rounded-xl border overflow-hidden bg-white p-2 flex items-center justify-center">
+                    <img
+                      src={`/api/file-preview?file=${encodeURIComponent(fileDataUrl)}&scale=3`}
+                      alt="معاينة الصورة"
+                      className="max-w-full max-h-[800px] md:max-h-[900px] object-contain"
+                    />
+                  </div>
+                ) : analysis?.thumbnailUrl ? (
+                  <div className="rounded-xl border overflow-hidden bg-white p-2 flex items-center justify-center">
+                    <img
+                      src={analysis.thumbnailUrl}
+                      alt="معاينة الملف"
+                      className="max-w-full max-h-[700px] md:max-h-[800px] object-contain rounded-lg"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    {analysis?.thumbnailUrl ? (
+                      <div className="relative w-28 h-36 rounded-2xl overflow-hidden border-2 border-amber-200 bg-white shadow-md">
+                        <img
+                          src={analysis.thumbnailUrl}
+                          alt="معاينة الملف"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="inline-flex flex-col items-center justify-center w-28 h-36 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-dashed border-slate-300 shadow-sm">
+                        <FileText className="h-10 w-10 text-slate-400 mb-1" />
+                        <span className="text-lg font-extrabold text-slate-500 tracking-tight">{fileType}</span>
+                      </div>
+                    )}
+                    <div className="text-sm font-bold mt-4 mb-1">الملف: {fileName}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-3">
+                      <span>{fileType}</span>
+                      <span>•</span>
+                      <span>{totalPages} صفحة</span>
+                      {fileSize > 0 && <><span>•</span><span>{(fileSize / 1024).toFixed(0)} ك.ب</span></>}
+                    </div>
+                    {analysis?.fileNature && (
+                      <div className="text-xs text-muted-foreground mt-1">{analysis.fileNature}</div>
+                    )}
+                    <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 max-w-sm">
+                      ⚠️ معاينة مباشرة غير متاحة لهذا التنسيق. سيتم مراجعة الملف من قبل المطبعة قبل الطباعة.
+                    </div>
+                  </div>
+                )}
+                {/* ===== معاينة محاكاة الطباعة ===== */}
+                {selectedService && (() => {
+                  const getOptionLabel = (key: string, fallback: string) => {
+                    for (const section of currentSpec.sections) {
+                      if (section.optionKey === key) {
+                        const selectedId = specOptions[key];
+                        if (selectedId) {
+                          const opt = section.options.find(o => o.id === selectedId);
+                          if (opt) return opt.label;
+                        }
+                      }
+                    }
+                    return fallback;
+                  };
+                  const paperSize = specOptions.paperSize || analysis?.suggestedPaperSize || "A4";
+                  const paperLabel = getOptionLabel("paperSize", paperSize);
+                  const colorVal = specOptions.color || analysis?.suggestedColor || "color";
+                  const colorLabel = getOptionLabel("color", colorVal === "bw" ? "أبيض وأسود" : "ملون");
+                  const isBW = colorVal === "bw";
+                  const paperTypeLabel = getOptionLabel("paperType", analysis?.suggestedPaperType || "عادي");
+                  const sidesLabel = getOptionLabel("sides", "وجه واحد");
+                  const hasBinding = currentSpec.sections.some(s => s.optionKey === "binding");
+                  const bindingLabel = hasBinding ? getOptionLabel("binding", "بدون") : null;
+                  // حساب نسبة الورق
+                  const paperAspectMap: Record<string, { w: number; h: number; label: string }> = {
+                    "A3": { w: 297, h: 420, label: "A3" },
+                    "A4": { w: 210, h: 297, label: "A4" },
+                    "A5": { w: 148, h: 210, label: "A5" },
+                    "B4": { w: 257, h: 364, label: "B4" },
+                    "B5": { w: 182, h: 257, label: "B5" },
+                    "letter": { w: 216, h: 279, label: "Letter" },
+                    "legal": { w: 216, h: 356, label: "Legal" },
+                  };
+                  const paperInfo = paperAspectMap[paperSize] || paperAspectMap["A4"];
+                  // صورة أو A4 عمودي = عمودي، وإلا أفقي
+                  const isLandscape = analysis?.orientation === "أفقي" || paperSize === "A3" || paperSize === "legal";
+                  const previewMaxW = 320;
+                  const previewMaxH = 440;
+                  const rawRatio = isLandscape
+                    ? paperInfo.h / paperInfo.w
+                    : paperInfo.w / paperInfo.h;
+                  let paperW: number;
+                  let paperH: number;
+                  if (rawRatio * previewMaxH > previewMaxW) {
+                    paperH = previewMaxW / rawRatio;
+                    paperW = previewMaxW;
+                  } else {
+                    paperW = rawRatio * previewMaxH;
+                    paperH = previewMaxH;
+                  }
+                  if (isLandscape) { const t = paperW; paperW = paperH; paperH = t; }
+                  return (
+                    <div className="mt-6 space-y-4">
+                      {/* شريط المعلومات */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+                          <div className="text-muted-foreground">الصفحات</div>
+                          <div className="font-bold">{pages}</div>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+                          <div className="text-muted-foreground">النسخ</div>
+                          <div className="font-bold">{copies}</div>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+                          <div className="text-muted-foreground">التنسيق</div>
+                          <div className="font-bold">{convertedFileType || fileType}</div>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+                          <div className="text-muted-foreground">الحجم</div>
+                          <div className="font-bold">{(fileSize / 1024).toFixed(0)} ك.ب</div>
+                        </div>
+                      </div>
+
+                      {/* محاكاة الورقة المطبوعة */}
+                      <div className="flex items-center justify-center p-6 bg-gradient-to-b from-slate-100 to-slate-200 rounded-2xl border">
+                        <div
+                          className="relative bg-white shadow-2xl border border-slate-200"
+                          style={{
+                            width: `${paperW}px`,
+                            height: `${paperH}px`,
+                            borderRadius: '4px',
+                          }}
+                        >
+                          {/* هوامش الورقة */}
+                          <div
+                            className="absolute inset-3 border border-dashed border-slate-200/60 pointer-events-none"
+                            style={{ borderRadius: '2px' }}
+                          />
+                          {/* مؤشر الهامش */}
+                          <div className="absolute top-0 left-0 right-0 h-2.5 bg-slate-50/40" />
+                          <div className="absolute bottom-0 left-0 right-0 h-2.5 bg-slate-50/40" />
+                          <div className="absolute top-0 bottom-0 right-0 w-2.5 bg-slate-50/40" />
+                          <div className="absolute top-0 bottom-0 left-0 w-2.5 bg-slate-50/40" />
+
+                          {/* محتوى المعاينة داخل الورقة */}
+                          <div className="absolute inset-4 flex items-center justify-center overflow-hidden">
+                            {fileDataUrl && (fileType === "PDF" || convertedFileType === "PDF") ? (
+                              <div className="w-full h-full rounded border bg-slate-50 flex items-center justify-center">
+                                <div className="text-center">
+                                  <FileText className="h-8 w-8 text-red-400 mx-auto mb-1" />
+                                  <span className="text-[10px] font-bold text-slate-500">PDF</span>
+                                </div>
+                              </div>
+                            ) : fileDataUrl && ["JPG", "JPEG", "PNG", "WEBP"].includes(fileType) ? (
+                              <img
+                                src={`/api/file-preview?file=${encodeURIComponent(fileDataUrl)}&scale=2`}
+                                alt="معاينة"
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : analysis?.thumbnailUrl ? (
+                              <img
+                                src={analysis.thumbnailUrl}
+                                alt="معاينة الملف"
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <FileText className="h-6 w-6 text-slate-300 mx-auto mb-1" />
+                                <span className="text-[9px] text-slate-400 font-bold">{fileType}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* شارة الحجم */}
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-slate-700 text-white text-[9px] font-bold rounded shadow-sm whitespace-nowrap">
+                            {paperInfo.label}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* إعدادات الطباعة - شارات محدّثة في الوقت الفعلي */}
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">إعدادات الطباعة المحددة</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                            <span>📐</span>{paperLabel}
+                          </span>
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${isBW ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-gradient-to-l from-rose-50 to-violet-50 text-rose-700 border-rose-200'}`}>
+                            <span>{isBW ? '⬛' : '🎨'}</span>{colorLabel}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span>📄</span>{paperTypeLabel}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                            <span>📑</span>{sidesLabel}
+                          </span>
+                          {bindingLabel && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                              <span>📚</span>{bindingLabel}
+                            </span>
+                          )}
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
+                            <span>📊</span>{pages} × {copies}
+                          </span>
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${isLandscape ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-teal-50 text-teal-700 border-teal-200'}`}>
+                            <span>{isLandscape ? '↔️' : '↕️'}</span>{isLandscape ? 'أفقي' : 'عمودي'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== الخطوة 3: وقت التسليم ===== */}
+        {step === 3 && (
           <div className="space-y-5">
             {/* شريط حالة اليوم والتقدم */}
             <div className="rounded-2xl bg-gradient-to-l from-amber-50 to-orange-50 border border-amber-200 p-4">
@@ -1019,12 +1585,34 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {DELIVERY_OPTIONS.map((d) => {
                   const isSelected = deliveryMode === d.id;
-                  // حساب الوقت المتوقع لكل خيار
+                  // حساب الوقت المتوقع لكل خيار مع مراعاة ساعات العمل
                   const optHours = estimateDeliveryHours(d.id, pages, copies);
-                  const optReady = new Date(Date.now() + optHours * 3600000);
-                  const readyH = optReady.getHours();
-                  const readyM = optReady.getMinutes().toString().padStart(2, "0");
-                  const readyStr = readyH === 0 ? `12:${readyM} ص` : readyH < 12 ? `${readyH}:${readyM} ص` : readyH === 12 ? `12:${readyM} م` : `${readyH - 12}:${readyM} م`;
+                  // استخدام deliveryEstimate.readyTimeStr للوضع المحدد حالياً،
+                  // وللخيارات الأخرى نستخدم حساب تقريبي مع مراعاة ساعات العمل
+                  let readyStr: string;
+                  if (isSelected) {
+                    readyStr = deliveryEstimate.readyTimeStr;
+                  } else {
+                    // حساب تقريبي مع مراعاة ساعات العمل
+                    const _now = new Date();
+                    const _h = _now.getHours();
+                    const _WORK_S = 8; const _WORK_E = 19;
+                    let _eff = new Date(_now);
+                    if (_h >= _WORK_E || _h < _WORK_S) {
+                      _eff.setHours(_WORK_S, 0, 0, 0);
+                      if (_h >= _WORK_E) _eff.setDate(_eff.getDate() + 1);
+                    }
+                    let _tmp = new Date(_eff);
+                    let _rem = optHours * 60;
+                    while (_rem > 0) {
+                      const _eod = new Date(_tmp); _eod.setHours(_WORK_E, 0, 0, 0);
+                      const _mte = Math.max(0, (_eod.getTime() - _tmp.getTime()) / 60000);
+                      if (_rem <= _mte) { _tmp = new Date(_tmp.getTime() + _rem * 60000); _rem = 0; }
+                      else { _rem -= _mte; _tmp.setDate(_tmp.getDate() + 1); _tmp.setHours(_WORK_S, 0, 0, 0); }
+                    }
+                    const _rh = _tmp.getHours(); const _rm = _tmp.getMinutes().toString().padStart(2, "0");
+                    readyStr = _rh === 0 ? `12:${_rm} ص` : _rh < 12 ? `${_rh}:${_rm} ص` : _rh === 12 ? `12:${_rm} م` : `${_rh - 12}:${_rm} م`;
+                  }
 
                   // تعطيل "اليوم" و"خلال ساعة" خارج ساعات العمل
                   const isDisabled = (d.id === "today" && !deliveryEstimate.isTodayDeliveryPossible)
@@ -1168,11 +1756,27 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 )}
               </div>
             </div>
+
+            {/* ملاحظات حول التسليم */}
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4 text-amber-600" />
+                ملاحظات حول التسليم
+              </Label>
+              <Textarea
+                value={deliveryNotes}
+                onChange={(e) => setDeliveryNotes(e.target.value)}
+                placeholder="مثال: اتصل بي قبل التسليم بنصف ساعة، أو التسليم عند الباب...
+(اختياري)"
+                rows={3}
+                className="mt-1.5"
+              />
+            </div>
           </div>
         )}
 
-        {/* ===== الخطوة 3: معلومات التواصل ===== */}
-        {step === 3 && (
+        {/* ===== الخطوة 4: معلومات التواصل ===== */}
+        {step === 4 && (
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1299,8 +1903,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           </div>
         )}
 
-        {/* ===== الخطوة 4: مراجعة الطلب ===== */}
-        {step === 4 && selectedService && pricing && (
+        {/* ===== الخطوة 5: مراجعة الطلب ===== */}
+        {step === 5 && selectedService && pricing && (
           <div className="space-y-4">
             <div className="rounded-2xl border bg-card overflow-hidden">
               <div className="px-5 py-5 bg-neutral-900 text-white flex items-center justify-between">
@@ -1423,6 +2027,28 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     label="التسليم"
                     value={DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label || deliveryMode}
                   />
+                  {deliveryNotes && (
+                    <div className="mt-2 rounded-xl bg-amber-50/80 border border-amber-200 p-3">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center">
+                          <Clock className="h-3 w-3 text-amber-600" />
+                        </div>
+                        <span className="text-xs font-bold text-amber-800">ملاحظات التسليم</span>
+                      </div>
+                      <p className="text-xs text-amber-700 leading-relaxed pr-7">{deliveryNotes}</p>
+                    </div>
+                  )}
+                  {notes && (
+                    <div className="mt-2 rounded-xl bg-amber-50/80 border border-amber-200 p-3">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center">
+                          <FileText className="h-3 w-3 text-amber-600" />
+                        </div>
+                        <span className="text-xs font-bold text-amber-800">ملاحظات إضافية</span>
+                      </div>
+                      <p className="text-xs text-amber-700 leading-relaxed pr-7">{notes}</p>
+                    </div>
+                  )}
                   <ReviewRow label="العميل" value={custName} />
                 </div>
 
@@ -1455,7 +2081,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             السابق
           </Button>
           <div className="text-xs text-muted-foreground">
-            {step + 1} / 5
+            {step + 1} / 6
           </div>
           <Button
             onClick={next}
@@ -1464,7 +2090,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           >
             {submitting ? (
               <span className="animate-pulse">جارٍ الإرسال...</span>
-            ) : step === 4 ? (
+            ) : step === 5 ? (
               <>
                 <Check className="h-4 w-4" />
                 إنشاء طلب الطباعة
@@ -1480,6 +2106,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
       </div>
 
       {/* ===== الشريط الجانبي: ملخص الطلب ===== */}
+      {step > 0 && (
       <aside className="lg:sticky lg:top-24 h-fit">
         <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
           <div className="px-5 py-4 border-b bg-neutral-900 text-white">
@@ -1518,7 +2145,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       })}
                     </>
                   )}
-                  {step >= 2 && (
+                  {step >= 3 && (
                     <SummaryRow
                       label="التسليم"
                       value={
@@ -1528,8 +2155,11 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       }
                     />
                   )}
-                  {step >= 3 && custName && (
+                  {step >= 4 && custName && (
                     <SummaryRow label="العميل" value={custName} />
+                  )}
+                  {step >= 1 && notes && (
+                    <SummaryRow label="ملاحظات" value={notes.length > 30 ? notes.slice(0, 30) + "..." : notes} />
                   )}
                 </div>
               </>
@@ -1583,25 +2213,8 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           </div>
         </div>
 
-        <div className="mt-3 rounded-2xl border bg-card p-4 space-y-2.5 text-xs shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-500">✓</span>
-            <span>سعر شفاف — لا مفاجآت</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-500">✓</span>
-            <span>تابع طلبك لحظة بلحظة</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-500">✓</span>
-            <span>أسرع من إرسال واتساب</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-500">✓</span>
-            <span>أعد طلبك السابق بنقرة</span>
-          </div>
-        </div>
       </aside>
+      )}
 
       {/* نافذة العرض المفاجئ */}
       <OfferPopup
@@ -1618,6 +2231,28 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
             description: `${saving} · الكود: ${o.code}`,
           });
         }}
+      />
+
+      {/* نافذة تأكيد الطلب */}
+      <OrderConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          handleSubmit();
+        }}
+        orderSummary={{
+          serviceName: STATIC_SERVICES.find((s) => s.type === serviceType)?.name || serviceType || "",
+          serviceType: serviceType || "",
+          copies,
+          pages: totalPages,
+          total: finalPricing?.total || 0,
+          customerName: custName,
+          customerPhone: custPhone,
+          deliveryMode: DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label || deliveryMode,
+          fileName: fileName || undefined,
+        }}
+        loading={submitting}
       />
     </div>
   );

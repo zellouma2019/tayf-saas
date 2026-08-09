@@ -5,7 +5,7 @@ import {
   Ruler,
   BookOpen,
   Search,
-  ImageIcon,
+  Image,
   ClipboardList,
   RefreshCw,
   Ratio,
@@ -32,7 +32,7 @@ function dpiCategoryColor(cat: string | undefined) {
     case "جاهزة للطباعة":
       return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
     case "عالية":
-      return "bg-gold-500/15 text-gold-300 border-gold-500/30";
+      return "bg-blue-500/15 text-blue-400 border-blue-500/30";
     case "متوسطة":
       return "bg-amber-500/15 text-amber-400 border-amber-500/30";
     case "منخفضة":
@@ -140,7 +140,7 @@ export default function FileAnalysisPanel({ analysis }: FileAnalysisPanelProps) 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
               {a.pageDimensionsMM && (
                 <DataRow
-                  icon={<ImageIcon className="h-4 w-4 text-amber-400" />}
+                  icon={<Image className="h-4 w-4 text-amber-400" />}
                   label="أبعاد الصفحة"
                   value={`${a.pageDimensionsMM.width} × ${a.pageDimensionsMM.height} مم`}
                   ltr
@@ -295,7 +295,7 @@ export default function FileAnalysisPanel({ analysis }: FileAnalysisPanelProps) 
                 {a.insights.slice(0, 4).map((insight, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <span className="mt-0.5 shrink-0">
-                      <span role="img" aria-label="رؤية">
+                      <span role="img" aria-label="insight">
                         💡
                       </span>
                     </span>

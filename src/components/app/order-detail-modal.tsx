@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy, Check, Printer, Clock, PackageCheck, Truck, XCircle, CalendarClock, StickyNote, AlertCircle, Timer, Zap } from "lucide-react";
+import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, Star, MessageSquare, Percent } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,8 @@ import {
 } from "@/lib/option-translations";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { OrderStatusNotesTimeline } from "@/components/app/order-status-notes-timeline";
+import { OrderNotes } from "@/components/app/order-notes";
+import { LoyaltyBadge } from "@/components/app/loyalty-badge";
 
 const SERVICE_EMOJI: Record<string, string> = {
   document: "🖨️",
@@ -54,155 +55,6 @@ interface OrderDetailModalProps {
   onStatusChange: (order: PrintOrderLite, status: string) => void;
 }
 
-/* ===== مسار حالة الطلب المرئي ===== */
-const TIMELINE_STATUSES = [
-  { key: "pending",   label: "بانتظار الطباعة", icon: Clock,       color: "amber" },
-  { key: "confirmed", label: "مؤكد",            icon: Check,       color: "sky" },
-  { key: "printing",  label: "جارٍ التنفيذ",    icon: Printer,     color: "gold" },
-  { key: "ready",     label: "جاهز للاستلام",  icon: PackageCheck, color: "emerald" },
-  { key: "delivered", label: "تم التسليم",      icon: Truck,       color: "emerald" },
-];
-
-function OrderStatusTimeline({ status }: { status: string }) {
-  const isCancelled = status === "cancelled";
-  const currentIndex = TIMELINE_STATUSES.findIndex((s) => s.key === status);
-
-  return (
-    <div className="rounded-xl bg-muted/30 dark:bg-muted/20 border border-border/50 p-4 glass-card-v4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-        <Clock className="h-3.5 w-3.5" />
-        <span className="font-medium">مسار الطلب</span>
-      </div>
-      {isCancelled ? (
-        <div className="flex items-center justify-center gap-2 py-2">
-          <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-            <XCircle className="h-4 w-4 text-rose-500" />
-          </div>
-          <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">تم إلغاء الطلب</span>
-        </div>
-      ) : (
-        <>
-          {/* === تخطيط أفقي للحاسوب === */}
-          <div className="relative flex items-start justify-between gap-1 max-sm:hidden">
-            {/* خلفية الخط الرابط */}
-            <div className="absolute top-4 right-[10%] left-[10%] h-0.5 bg-muted rounded-full" />
-            {/* الخط المكتمل */}
-            {currentIndex >= 1 && (
-              <div
-                className="absolute top-4 right-[10%] h-0.5 bg-emerald-500 rounded-full transition-all duration-500"
-                style={{ width: `${(currentIndex / (TIMELINE_STATUSES.length - 1)) * 80}%` }}
-              />
-            )}
-            {TIMELINE_STATUSES.map((step, i) => {
-              const Icon = step.icon;
-              const isCompleted = i < currentIndex;
-              const isCurrent = i === currentIndex;
-              const isFuture = i > currentIndex;
-              const currentColorClass = isCurrent
-                ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
-                  : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
-                  : step.color === "gold" ? "bg-gold-500 border-gold-500 ring-gold-500/30"
-                  : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
-                : "";
-              const currentTextColorClass = isCurrent
-                ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
-                  : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
-                  : step.color === "gold" ? "text-gold-600 dark:text-gold-400"
-                  : "text-emerald-600 dark:text-emerald-400")
-                : "";
-              return (
-                <div key={step.key} className="relative z-10 flex flex-col items-center gap-1.5 progress-step" style={{ width: "20%" }}>
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-                      isCompleted && "bg-emerald-500 border-emerald-500",
-                      isCurrent && `border-primary ${currentColorClass} ring-2 ring-offset-2 ring-offset-background status-dot-animated`,
-                      isFuture && "bg-card border-muted-foreground/20"
-                    )}
-                  >
-                    {isCompleted ? (
-                      <Check className="h-3.5 w-3.5 text-white" />
-                    ) : (
-                      <Icon className={cn("h-3.5 w-3.5", isCurrent ? "text-white" : isFuture ? "text-muted-foreground/40" : "text-foreground")} />
-                    )}
-                  </div>
-                  <span className={cn(
-                    "text-[10px] font-medium text-center leading-tight",
-                    isCurrent && currentTextColorClass,
-                    isCompleted && "text-emerald-600 dark:text-emerald-400",
-                    isFuture && "text-muted-foreground/50"
-                  )}>
-                    {step.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* === تخطيط عمودي للجوال === */}
-          <div className="sm:hidden space-y-0">
-            {TIMELINE_STATUSES.map((step, i) => {
-              const Icon = step.icon;
-              const isCompleted = i < currentIndex;
-              const isCurrent = i === currentIndex;
-              const isFuture = i > currentIndex;
-              const isLast = i === TIMELINE_STATUSES.length - 1;
-              const currentColorClass = isCurrent
-                ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
-                  : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
-                  : step.color === "gold" ? "bg-gold-500 border-gold-500 ring-gold-500/30"
-                  : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
-                : "";
-              const currentTextColorClass = isCurrent
-                ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
-                  : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
-                  : step.color === "gold" ? "text-gold-600 dark:text-gold-400"
-                  : "text-emerald-600 dark:text-emerald-400")
-                : "";
-              return (
-                <div key={step.key} className="relative flex items-start gap-3 progress-step">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 shrink-0",
-                        isCompleted && "bg-emerald-500 border-emerald-500",
-                        isCurrent && `border-primary ${currentColorClass} ring-2 ring-offset-2 ring-offset-background status-dot-animated`,
-                        isFuture && "bg-card border-muted-foreground/20"
-                      )}
-                    >
-                      {isCompleted ? (
-                        <Check className="h-3.5 w-3.5 text-white" />
-                      ) : (
-                        <Icon className={cn("h-3.5 w-3.5", isCurrent ? "text-white" : isFuture ? "text-muted-foreground/40" : "text-foreground")} />
-                      )}
-                    </div>
-                    {!isLast && (
-                      <div className={cn(
-                        "w-0.5 h-6 rounded-full",
-                        isCompleted || isCurrent ? "bg-emerald-500" : "bg-muted"
-                      )} />
-                    )}
-                  </div>
-                  <div className={cn("pt-1.5", isLast && "pb-1")}>
-                    <span className={cn(
-                      "text-xs font-medium",
-                      isCurrent && currentTextColorClass,
-                      isCompleted && "text-emerald-600 dark:text-emerald-400",
-                      isFuture && "text-muted-foreground/50"
-                    )}>
-                      {step.label}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 export function OrderDetailModal({
   order,
   open,
@@ -211,6 +63,7 @@ export function OrderDetailModal({
 }: OrderDetailModalProps) {
   const adminCode = useAppStore((s) => s.adminCode);
   const [saving, setSaving] = useState(false);
+  const [applyingLoyalty, setApplyingLoyalty] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [auditLogs, setAuditLogs] = useState<{
     id: string;
@@ -222,35 +75,6 @@ export function OrderDetailModal({
     createdAt: string;
   }[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
-
-  // سجل طلبات الزبون السابقة
-  const [customerHistory, setCustomerHistory] = useState<{
-    id: string;
-    reference: string;
-    serviceType: string;
-    serviceName: string;
-    total: number;
-    status: string;
-    createdAt: string;
-  }[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
-  const fetchCustomerHistory = useCallback(async () => {
-    if (!order?.customer?.phone) return;
-    setHistoryLoading(true);
-    try {
-      const phone = order.customer.phone;
-      const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}&limit=10`);
-      if (res.ok) {
-        const data = await res.json();
-        setCustomerHistory((data.orders || []).filter((o: { id: string }) => o.id !== order.id));
-      }
-    } catch {
-      /* silent */
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, [order]);
 
   const fetchAuditLogs = useCallback(async () => {
     if (!order) return;
@@ -272,11 +96,9 @@ export function OrderDetailModal({
     if (open && order) {
       setShowAudit(false);
       setAuditLogs([]);
-      setCustomerHistory([]);
       fetchAuditLogs();
-      fetchCustomerHistory();
     }
-  }, [open, order, fetchAuditLogs, fetchCustomerHistory]);
+  }, [open, order, fetchAuditLogs]);
 
   // حقول التعديل
   const [editName, setEditName] = useState("");
@@ -289,15 +111,6 @@ export function OrderDetailModal({
   const [editCost, setEditCost] = useState(0);
   const [editAdminNotes, setEditAdminNotes] = useState("");
   const [editTags, setEditTags] = useState<string[]>([]);
-
-  // ملاحظات الحالة (تظهر عند تغيير الحالة)
-  const [statusNote, setStatusNote] = useState("");
-  const [showStatusNoteInput, setShowStatusNoteInput] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-
-  // موعد التسليم المجدول
-  const [scheduledDelivery, setScheduledDelivery] = useState("");
-  const [scheduledTime, setScheduledTime] = useState("");
 
   // تعبئة الحقول عند فتح النافذة أو تغيير الطلب
   useEffect(() => {
@@ -320,7 +133,6 @@ export function OrderDetailModal({
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) {
-      cancelStatusChange();
       onClose();
     }
   }
@@ -378,52 +190,30 @@ export function OrderDetailModal({
 
   function handleStatusChange(status: string) {
     if (!order) return;
-    // Always ask for a note before changing status
-    setPendingStatus(status);
-    setShowStatusNoteInput(true);
-    setStatusNote("");
+    onStatusChange(order, status);
   }
 
-  async function confirmStatusChange() {
-    if (!order || !pendingStatus) return;
-    setSaving(true);
+  async function handleApplyLoyaltyDiscount(discountPercent: number) {
+    const currentOrder = order;
+    if (!currentOrder || !adminCode) return;
+    setApplyingLoyalty(true);
     try {
-      const payload: Record<string, unknown> = { status: pendingStatus };
-      if (statusNote.trim()) {
-        payload.statusNotes = statusNote.trim();
-      }
-      // Include scheduled delivery if set
-      if (scheduledDelivery) {
-        const existingDelivery = order.delivery || {};
-        const updatedDelivery = { ...existingDelivery, scheduledDate: scheduledDelivery, scheduledTime: scheduledTime || null };
-        payload.delivery = updatedDelivery;
-      }
-
-      const res = await fetch(`/api/orders/${order.id}`, {
-        method: "PUT",
+      const res = await fetch("/api/loyalty/apply-discount", {
+        method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ orderId: currentOrder.id, discountPercent }),
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "فشل تحديث الحالة");
+        throw new Error(err.error || "فشل تطبيق الخصم");
       }
-      toast.success(`تم تغيير الحالة إلى: ${STATUS_META[pendingStatus]?.label || pendingStatus}`);
-      setShowStatusNoteInput(false);
-      setPendingStatus(null);
-      setStatusNote("");
-      onStatusChange(order, pendingStatus);
+      toast.success(`تم تطبيق خصم ولاء ${discountPercent}% بنجاح`);
+      onClose();
     } catch (e) {
-      toast.error("خطأ في تحديث الحالة", { description: (e as Error).message });
+      toast.error("خطأ في تطبيق الخصم", { description: (e as Error).message });
     } finally {
-      setSaving(false);
+      setApplyingLoyalty(false);
     }
-  }
-
-  function cancelStatusChange() {
-    setShowStatusNoteInput(false);
-    setPendingStatus(null);
-    setStatusNote("");
   }
 
   if (!order) return null;
@@ -458,12 +248,12 @@ export function OrderDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto custom-scroll modal-card-lg" dir="rtl" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-2xl max-h-[95dvh] overflow-y-auto custom-scroll p-4 sm:p-6" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <span className="text-xl">{serviceEmoji}</span>
-            <span className="font-mono">{order.reference}</span>
-            <span className="text-muted-foreground font-normal text-sm">— {order.serviceName}</span>
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg flex-wrap">
+            <span className="text-lg sm:text-xl">{serviceEmoji}</span>
+            <span className="font-mono text-sm sm:text-base">{order.reference}</span>
+            <span className="text-muted-foreground font-normal text-xs sm:text-sm">— {order.serviceName}</span>
           </DialogTitle>
           <DialogDescription>
             {formatDateTimeAr(order.createdAt)}
@@ -471,11 +261,9 @@ export function OrderDetailModal({
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* ===== مسار حالة الطلب ===== */}
-          <OrderStatusTimeline status={order.status} />
-          {/* شريط الحالة + أزرار التواصل السريع */}
+          {/* شريط الحالة */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn('status-badge-icon', order.status)} key={order.status}>
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${meta.bg}`}>
               {meta.emoji} {meta.label}
             </span>
             {availableStatuses
@@ -485,138 +273,18 @@ export function OrderDetailModal({
                   key={s}
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs btn-magnetic"
+                  className="h-7 text-xs"
                   onClick={() => handleStatusChange(s)}
                 >
                   {STATUS_META[s].label}
                 </Button>
               ))}
-            {/* موعد التسليم المجدول */}
-            {scheduledDelivery && (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border border-sky-200 dark:border-sky-800/40 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-300">
-                <CalendarClock className="h-3 w-3" />
-                {scheduledDelivery}{scheduledTime ? ` ${scheduledTime}` : ''}
-              </span>
-            )}
-            <div className="mr-auto flex items-center gap-1.5">
-              {order.customer?.phone && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 ripple-btn micro-bounce neon-border-emerald"
-                    onClick={() => {
-                      const phone = order.customer.phone.replace(/[^0-9]/g, '');
-                      const msg = encodeURIComponent(`مرحباً ${order.customer.name || ''}! طلبك ${order.reference} الآن: ${STATUS_META[order.status].label}. ${order.status === 'ready' ? 'يمكنك الاستلام من المطبعة.' : ''}`);
-                      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-                    }}
-                  >
-                    <MessageCircle className="h-3 w-3" />
-                    <span className="hidden sm:inline">واتساب</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce"
-                    onClick={() => {
-                      window.open(`tel:${order.customer.phone}`, '_self');
-                    }}
-                  >
-                    <Phone className="h-3 w-3" />
-                    <span className="hidden sm:inline">اتصال</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs gap-1 text-gold-700 dark:text-gold-400 border-gold-200 dark:border-gold-800/40 hover:bg-gold-50 dark:hover:bg-gold-950/30 ripple-btn micro-bounce"
-                    onClick={() => {
-                      navigator.clipboard.writeText(order.customer.phone);
-                      toast.success("تم نسخ رقم الهاتف");
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </>
-              )}
-            </div>
           </div>
-
-          {/* ===== ملاحظة تغيير الحالة (تظهر عند اختيار حالة جديدة) ===== */}
-          {showStatusNoteInput && pendingStatus && (
-            <div className="rounded-xl border-2 border-gold-300 dark:border-gold-700 bg-gold-50/50 dark:bg-gold-950/20 p-4 space-y-3 anim-pop-in">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gold-100 dark:bg-gold-900/50">
-                  <StickyNote className="h-4 w-4 text-gold-600 dark:text-gold-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-foreground">تغيير الحالة إلى: {STATUS_META[pendingStatus]?.label}</h4>
-                  <p className="text-xs text-muted-foreground">أضف ملاحظة اختيارية قبل التأكيد</p>
-                </div>
-              </div>
-              <Textarea
-                value={statusNote}
-                onChange={(e) => setStatusNote(e.target.value)}
-                className="text-sm min-h-[50px] border-gold-200 dark:border-gold-800/50 focus-visible:ring-gold-400/30"
-                placeholder="مثال: تم الاتفاق مع الزبون على تسعير خاص..."
-                autoFocus
-              />
-              {/* موعد التسليم المجدول */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CalendarClock className="h-3.5 w-3.5" />
-                  <span>موعد التسليم:</span>
-                </div>
-                <Input
-                  type="date"
-                  value={scheduledDelivery}
-                  onChange={(e) => setScheduledDelivery(e.target.value)}
-                  className="h-8 text-xs w-auto"
-                />
-                <Input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  className="h-8 text-xs w-auto"
-                  placeholder="--:--"
-                />
-              </div>
-              <div className="flex items-center gap-2 justify-end">
-                <Button size="sm" variant="ghost" className="text-xs micro-bounce" onClick={cancelStatusChange}>
-                  <X className="h-3 w-3 ml-1" />
-                  إلغاء
-                </Button>
-                <Button
-                  size="sm"
-                  className="text-xs bg-gold-600 hover:bg-gold-700 gap-1 ripple-btn micro-bounce"
-                  onClick={confirmStatusChange}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Check className="h-3 w-3" />
-                  )}
-                  تأكيد التغيير
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* عرض ملاحظة الحالة الحالية */}
-          {order.statusNotes && !showStatusNoteInput && (
-            <div className="flex items-start gap-2 rounded-lg border border-gold-100 dark:border-gold-900/50 bg-gold-50/30 dark:bg-gold-950/10 p-2.5 anim-fade-in">
-              <StickyNote className="h-4 w-4 text-gold-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-gold-700 dark:text-gold-300 font-medium">ملاحظة الحالة</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{order.statusNotes}</p>
-              </div>
-            </div>
-          )}
 
           {/* معلومات العميل — قابل للتعديل */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">معلومات العميل</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <h3 className="text-sm font-bold text-neutral-700 mb-2">معلومات العميل</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">الاسم</Label>
                 <Input
@@ -633,6 +301,9 @@ export function OrderDetailModal({
                   className="h-9 text-sm"
                   dir="ltr"
                 />
+                {editPhone && editPhone.replace(/[\s\-+]/g, "").length >= 8 && (
+                  <LoyaltyBadge phone={editPhone} compact />
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">واتساب</Label>
@@ -666,60 +337,10 @@ export function OrderDetailModal({
             </div>
           </section>
 
-          {/* سجل طلبات الزبون السابقة */}
-          {order.customer?.phone && (
-            <section className="rounded-lg border bg-muted/30 p-3 glass-card-v4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
-                  <History className="h-3.5 w-3.5 text-muted-foreground" />
-                  طلبات سابقة
-                </h3>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {customerHistory.length}
-                </Badge>
-              </div>
-              {historyLoading ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="skeleton-gradient h-8 rounded-md" />
-                  ))}
-                </div>
-              ) : customerHistory.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  لا توجد طلبات سابقة لهذا الرقم
-                </p>
-              ) : (
-                <div className="space-y-1.5 max-h-32 overflow-y-auto smooth-scrollbar">
-                  {customerHistory.slice(0, 5).map((prev) => (
-                    <div
-                      key={prev.id}
-                      className="flex items-center justify-between text-xs rounded-md bg-background/50 border px-2.5 py-1.5 hover:bg-accent/5 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-muted-foreground">{prev.reference}</span>
-                        <span className="text-muted-foreground">·</span>
-                        <span>{prev.serviceName || prev.serviceType}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={cn("text-[10px] px-1.5 py-0", STATUS_META[prev.status]?.color)}
-                        >
-                          {STATUS_META[prev.status]?.label || prev.status}
-                        </Badge>
-                        <span className="font-semibold tabular-nums">{formatDA(prev.total)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-
           {/* مواصفات الطباعة — للقراءة فقط */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">مواصفات الطباعة</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <h3 className="text-sm font-bold text-neutral-700 mb-2">مواصفات الطباعة</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {Object.entries(order.options)
                 .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
                 .map(([k, v]) => (
@@ -736,8 +357,8 @@ export function OrderDetailModal({
 
           {/* الكميات والأسعار — قابل للتعديل */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الكميات والأسعار</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <h3 className="text-sm font-bold text-neutral-700 mb-2">الكميات والأسعار</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">الصفحات</Label>
                 <Input
@@ -759,7 +380,7 @@ export function OrderDetailModal({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">تكلفة الإنتاج</Label>
+                <Label className="text-xs">تكلفة الإنتاج (دج)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -770,14 +391,14 @@ export function OrderDetailModal({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">المجموع</Label>
-                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700 dark:text-amber-400 number-highlight-amber">
+                <Label className="text-xs">المجموع (دج)</Label>
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700">
                   {formatDA(order.total)}
                 </div>
               </div>
             </div>
             {/* تفاصيل التسعير */}
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <div>سعر الصفحة: {formatDA(order.pricing.perPage)}</div>
               <div>تكلفة الصفحات: {formatDA(order.pricing.pagesCost)}</div>
               <div>تكلفة النسخ: {formatDA(order.pricing.copiesCost)}</div>
@@ -796,38 +417,34 @@ export function OrderDetailModal({
               )}
               <div>التوصيل: {formatDA(order.pricing.deliveryCost)}</div>
               <div>الخصم: {formatDA(order.pricing.discount)}</div>
+              {(order.pricing as unknown as Record<string, unknown>).loyaltyDiscount != null && (order.pricing as unknown as Record<string, unknown>).loyaltyDiscountPercent != null && (
+                <div className="text-emerald-600 dark:text-emerald-400 font-medium">
+                  خصم الولاء ({String((order.pricing as unknown as Record<string, unknown>).loyaltyDiscountPercent)}%): -{formatDA((order.pricing as unknown as Record<string, unknown>).loyaltyDiscount as number)}
+                </div>
+              )}
             </div>
-          </section>
-
-          {/* ملاحظات إدارية */}
-          <section className="glass-card-animated p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
-                <StickyNote className="h-4 w-4 text-gold-500" />
-                ملاحظات إدارية
-              </h3>
-              <span className="text-[10px] text-muted-foreground tabular-nums">{editAdminNotes.length} حرف</span>
-            </div>
-            <Textarea
-              value={editAdminNotes}
-              onChange={(e) => setEditAdminNotes(e.target.value)}
-              className="text-sm min-h-[80px] notes-textarea"
-              placeholder="أضف ملاحظة داخلية عن هذا الطلب... مثال: طلب خاص، تسعير مخصص، ملاحظات للتسليم"
-            />
-            {editAdminNotes.length > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-px flex-1 bg-gradient-to-l from-gold-300/50 to-transparent" />
-                <span className="text-[10px] text-gold-500 font-medium">ملاحظة محفوظة محلياً</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-gold-300/50 to-transparent" />
-              </div>
+            {/* زر تطبيق خصم الولاء */}
+            {editPhone && editPhone.replace(/[\s\-+]/g, "").length >= 8 && (
+              <LoyaltyDiscountButton
+                phone={editPhone}
+                onApply={handleApplyLoyaltyDiscount}
+                loading={applyingLoyalty}
+              />
             )}
           </section>
 
+          {/* ملاحظات الإدارة — نظام الملاحظات المستقل */}
+          <OrderNotes
+            orderId={order.id}
+            initialNotes={order.adminNotes}
+            updatedAt={order.updatedAt}
+          />
+
           {/* الوسوم */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الوسوم</h3>
+            <h3 className="text-sm font-bold text-neutral-700 mb-2">الوسوم</h3>
             <div className="flex flex-wrap gap-2">
-              {["عاجل", "مميز", "مرتجع", "خاص"].map((tag) => (
+              {["عاجل", "VIP", "مرتجع", "خاص"].map((tag) => (
                 <Badge
                   key={tag}
                   variant={editTags.includes(tag) ? "default" : "outline"}
@@ -847,8 +464,8 @@ export function OrderDetailModal({
           {/* معلومات الملف */}
           {order.fileName && (
             <section>
-              <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الملف المرفق</h3>
-              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3 inset-shadow-card">
+              <h3 className="text-sm font-bold text-neutral-700 mb-2">الملف المرفق</h3>
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
                 <FileText className="h-8 w-8 text-amber-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{order.fileName}</div>
@@ -864,50 +481,70 @@ export function OrderDetailModal({
             </section>
           )}
 
-          {/* التسليم + الأولوية */}
+          {/* التسليم */}
           <section>
-            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">التسليم</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-sky">
+            <h3 className="text-sm font-bold text-neutral-700 mb-2">التسليم</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2">
                 <div className="text-xs text-muted-foreground">الطريقة</div>
                 <div className="font-medium">{order.delivery.mode === "pickup" ? "استلام من المحل" : "توصيل"}</div>
               </div>
-              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-gold">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2">
                 <div className="text-xs text-muted-foreground">الموعد</div>
                 <div className="font-medium">{order.delivery.date || "—"} (≈{order.estimatedHours} س)</div>
               </div>
-              <div className="rounded-lg bg-muted/50 border px-3 py-2">
-                <div className="text-xs text-muted-foreground">الأولوية</div>
-                <div className="font-medium flex items-center gap-1">
-                  {order.total >= 5000 ? (
-                    <><Zap className="h-3.5 w-3.5 text-rose-500" /><span className="text-rose-600 dark:text-rose-400">عاجل</span></>
-                  ) : order.total >= 2000 ? (
-                    <><Timer className="h-3.5 w-3.5 text-amber-500" /><span className="text-amber-600 dark:text-amber-400">متوسط</span></>
-                  ) : (
-                    <><Clock className="h-3.5 w-3.5 text-emerald-500" /><span className="text-emerald-600 dark:text-emerald-400">عادي</span></>
-                  )}
+              {order.delivery.timeSlot && (
+                <div className="rounded-lg bg-muted/50 border px-3 py-2 col-span-2">
+                  <div className="text-xs text-muted-foreground">الفترة الزمنية</div>
+                  <div className="font-medium">{order.delivery.timeSlot}</div>
                 </div>
-              </div>
+              )}
+              {order.delivery.notes && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 col-span-2">
+                  <div className="text-xs text-amber-700">ملاحظات التسليم</div>
+                  <div className="font-medium text-sm mt-0.5">{order.delivery.notes}</div>
+                </div>
+              )}
             </div>
-            {/* موعد التسليم المجدول */}
-            {order.delivery?.scheduledDate && (
-              <div className="mt-2 rounded-lg border border-sky-200 dark:border-sky-800/40 bg-sky-50/50 dark:bg-sky-950/20 px-3 py-2 flex items-center gap-2">
-                <CalendarClock className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
-                <div>
-                  <div className="text-xs text-muted-foreground">موعد التسليم المجدول</div>
-                  <div className="text-sm font-semibold text-sky-700 dark:text-sky-300">
-                    {order.delivery.scheduledDate}{order.delivery.scheduledTime ? ` — ${order.delivery.scheduledTime}` : ''}
-                  </div>
-                </div>
-              </div>
-            )}
           </section>
+
+          {/* تقييم العميل */}
+          {order.rating && (
+            <section className="rounded-xl border border-amber-200 dark:border-amber-400/20 bg-amber-50/50 dark:bg-amber-400/5 p-4">
+              <h3 className="text-sm font-bold text-neutral-700 mb-2 flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                تقييم العميل
+              </h3>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`h-5 w-5 ${star <= order.rating! ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"}`}
+                    />
+                  ))}
+                </div>
+                <span className="text-lg font-bold text-amber-700">{order.rating}/5</span>
+              </div>
+              {order.review && (
+                <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground bg-white/60 dark:bg-white/5 rounded-lg p-2.5 border border-amber-100 dark:border-amber-400/10">
+                  <MessageSquare className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                  <span>{order.review}</span>
+                </div>
+              )}
+              {order.ratedAt && (
+                <div className="text-[10px] text-muted-foreground/60 mt-1.5">
+                  {formatDateTimeAr(order.ratedAt)}
+                </div>
+              )}
+            </section>
+          )}
 
           {/* سجل التغييرات */}
           <section>
             <button
               type="button"
-              className="flex items-center gap-2 text-sm font-bold text-foreground w-full text-right"
+              className="flex items-center gap-2 text-sm font-bold text-neutral-700 w-full text-right"
               onClick={() => setShowAudit(!showAudit)}
             >
               {showAudit ? (
@@ -923,7 +560,7 @@ export function OrderDetailModal({
               )}
             </button>
             {showAudit && (
-              <div className="mt-2 scroll-shadow-container smooth-scrollbar">
+              <div className="mt-2">
                 {auditLoading ? (
                   <div className="text-xs text-muted-foreground py-2 text-center">
                     <RefreshCw className="h-3 w-3 animate-spin inline-block ml-1" />
@@ -934,7 +571,7 @@ export function OrderDetailModal({
                     لا يوجد سجل تغييرات
                   </p>
                 ) : (
-                  <div className="max-h-48 overflow-y-auto smooth-scrollbar space-y-1">
+                  <div className="max-h-48 overflow-y-auto custom-scroll space-y-1">
                     {auditLogs.map((log) => {
                       const icon = log.action === "status_change" ? "🔄" : log.action === "edit" ? "✏️" : log.action === "create" ? "➕" : log.action === "delete" ? "🗑️" : "📝";
                       const actionLabel = log.action === "status_change"
@@ -984,11 +621,11 @@ export function OrderDetailModal({
 
           {/* أزرار الحفظ */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs micro-bounce">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">
               <X className="h-3.5 w-3.5 ml-1" />
               إغلاق
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving} className="text-xs bg-amber-600 hover:bg-amber-700 ripple-btn micro-bounce">
+            <Button size="sm" onClick={handleSave} disabled={saving} className="text-xs bg-amber-600 hover:bg-amber-700">
               <Save className="h-3.5 w-3.5 ml-1" />
               {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
             </Button>
@@ -996,5 +633,61 @@ export function OrderDetailModal({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// مكون فرعي: زر تطبيق خصم الولاء
+function LoyaltyDiscountButton({
+  phone,
+  onApply,
+  loading,
+}: {
+  phone: string;
+  onApply: (percent: number) => void;
+  loading: boolean;
+}) {
+  const [loyaltyData, setLoyaltyData] = useState<{
+    discountPercent: number;
+    tierName: string;
+    tierIcon: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const clean = phone.replace(/[\s\-+]/g, "");
+    if (clean.length < 8) return;
+    let cancelled = false;
+    fetch(`/api/loyalty/check?phone=${encodeURIComponent(clean)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && d.discountPercent > 0) {
+          setLoyaltyData({
+            discountPercent: d.discountPercent,
+            tierName: d.tierName,
+            tierIcon: d.tierIcon,
+          });
+        }
+      })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, [phone]);
+
+  if (!loyaltyData || loyaltyData.discountPercent <= 0) return null;
+
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-8 text-xs border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+        disabled={loading}
+        onClick={() => onApply(loyaltyData.discountPercent)}
+      >
+        <Percent className="h-3.5 w-3.5 ml-1" />
+        {loading ? "جارٍ التطبيق..." : `تطبيق خصم الولاء ${loyaltyData.discountPercent}%`}
+      </Button>
+      <span className="text-[11px] text-muted-foreground">
+        {loyaltyData.tierIcon} {loyaltyData.tierName}
+      </span>
+    </div>
   );
 }

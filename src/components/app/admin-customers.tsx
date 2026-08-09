@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { shopApi } from "@/lib/shop-api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -129,7 +128,7 @@ export function AdminCustomers() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const res = await shopApi("/api/customers", {
+      const res = await fetch("/api/customers", {
         method: "POST",
         headers,
         body: JSON.stringify({ action: "sync" }),
@@ -357,7 +356,7 @@ export function AdminCustomers() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
                           onClick={() => confirmDelete(c.id)}
                           disabled={deletingId === c.id}
                         >
@@ -493,7 +492,7 @@ export function AdminCustomers() {
 
       {/* ===== نافذة تعديل العميل ===== */}
       <Dialog open={!!editingCustomer} onOpenChange={(open) => !open && setEditingCustomer(null)}>
-        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5 text-amber-600" />

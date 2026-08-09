@@ -32,6 +32,7 @@ import {
   Link,
   Camera,
   Smartphone,
+  Timer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -60,6 +61,12 @@ export interface UploadStepProps {
   analyzing: boolean;
   serviceType: ServiceType | null;
   errorMessage?: string;
+  analysisTimings?: {
+    upload: number | null;
+    local: number | null;
+    ai: number | null;
+    total: number | null;
+  };
   onFileSelected: (file: File) => void;
 }
 
@@ -68,6 +75,134 @@ export interface UploadStepProps {
    ═══════════════════════════════════════════════════════ */
 
 const ACCEPTED_TYPES = [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
+
+// ترجمة مفاتيح الخيارات للعرض
+const OPTION_KEY_LABELS: Record<string, string> = {
+  color: "نوع الطباعة",
+  paperSize: "حجم الورق",
+  sides: "الوجهين",
+  paperType: "نوع الورق",
+  printMethod: "طريقة الطباعة",
+  colorProcessing: "معالجة الألوان",
+  bleedCut: "القص والحواف",
+  binding: "التجليد",
+  photoSize: "حجم الصورة",
+  dpiBoost: "ضبط الدقة",
+  imageFit: "ملائمة الصورة",
+  finish: "التشطيب",
+  retouch: "تحسينات",
+  bindingType: "نوع التجليد",
+  coverColor: "لون الغلاف",
+  coverPrint: "طباعة الغلاف",
+  pageNumbering: "ترقيم الصفحات",
+  extras: "إضافات",
+  sorting: "ترتيب النسخ",
+  cardType: "نوع البطاقة",
+  lamination: "التغليف",
+  posterSize: "حجم الملصق",
+  material: "المادة",
+};
+
+const OPTION_VALUE_LABELS: Record<string, string> = {
+  bw: "أبيض وأسود",
+  color: "ملون",
+  A4: "A4",
+  A3: "A3",
+  A5: "A5",
+  Legal: "Legal",
+  single: "وجه واحد",
+  double: "وجهان",
+  normal: "عادي",
+  glossy: "لامع",
+  matte: "مطفي",
+  cardboard: "مقوّى",
+  "cardboard-250": "مقوّى 250غ",
+  "cardboard-300": "مقوّى 300غ",
+  "cardboard-350": "مقوّى 350غ",
+  pvc: "بلاستيك PVC",
+  recycled: "مُعاد تدويره",
+  premium: "فاخر برو",
+  metallic: "معدني",
+  digital: "رقمية",
+  offset: "أوفست",
+  "large-format": "طباعة كبيرة",
+  "as-is": "كما هو",
+  "force-bw": "تحويل أبيض/أسود",
+  enhance: "تعزيز الألوان",
+  "color-correct": "تصحيح ألوان احترافي",
+  "auto-cut": "قص تلقائي",
+  "margin-5": "هامش 5 مم",
+  bleed: "بدون حواف",
+  "safe-margin": "حواف آمنة",
+  none: "بدون",
+  staple: "تدبيس",
+  spiral: "لولبي",
+  glue: "غراء",
+  "10x15": "10×15 سم",
+  "13x18": "13×18 سم",
+  "15x21": "15×21 سم",
+  "20x30": "20×30 سم",
+  auto: "تلقائي",
+  "dpi-150": "150 DPI",
+  "dpi-300": "300 DPI",
+  "keep-ratio": "حفظ النسبة",
+  fill: "ملء الصفحة",
+  "white-bg": "خلفية بيضاء",
+  "crop-fill": "اقتصاص وملء",
+  borderless: "بلا إطار",
+  border: "مع إطار",
+  whiteframe: "إطار عريض",
+  standard: "قياسي",
+  foil: "ختم ذهبي/فضي",
+  emboss: "نقش بارز",
+  rounded: "حواف مدورة",
+  "removebg": "إزالة الخلفية",
+  restore: "ترميم الصور",
+  "spiral-metal": "لولبي معدني",
+  thermal: "حراري بغلاف",
+  hardcover: "غلاف مقوّى فاخر",
+  transparent: "شفاف",
+  black: "أسود",
+  blue: "أزرق",
+  red: "أحمر",
+  leather: "جلد صناعي",
+  "bw-title": "عنوان أبيض وأسود",
+  "color-title": "عنوان ملون",
+  "full-design": "تصميم كامل",
+  simple: "ترقيم بسيط",
+  "with-header": "ترقيم مع عنوان",
+  center: "ترقيم مركزي",
+  tabs: "فواصم ملونة",
+  lamination: "تغليف حراري",
+  ribbon: "إشارة مرجعية",
+  collated: "مرتبة",
+  uncollated: "غير مرتبة",
+  business: "بطاقة عمل",
+  id: "بطاقة هوية",
+  invitation: "دعوة",
+  greeting: "بطاقة تهنئة",
+  loyalty: "بطاقة ولاء",
+  "glossy-lam": "تغليف لامع",
+  "matte-lam": "تغليف مطفي",
+  "soft-touch": "لمسة ناعمة",
+  "spot-uv": "UV بارز",
+  A2: "A2",
+  A1: "A1",
+  A0: "A0",
+  custom: "مخصص",
+  "photo-paper": "ورق صور",
+  vinyl: "فينيل",
+  canvas: "قماش",
+  backlit: "إضاءة خلفية",
+};
+
+function translateOptionKeyDisplay(key: string): string {
+  return OPTION_KEY_LABELS[key] || key;
+}
+
+function translateOptionValueDisplay(val: string): string {
+  return OPTION_VALUE_LABELS[val] || val;
+}
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg: string; label: string }> = {
@@ -81,14 +216,14 @@ const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg:
 
 const PHASE_CONFIG: Record<
   AnalysisPhase,
-  { label: string; icon: typeof Upload; description: string }
+  { label: string; icon: typeof Upload; description: string; estimatedSeconds: number }
 > = {
-  idle: { label: "بانتظار الملف", icon: Upload, description: "" },
-  uploading: { label: "رفع الملف", icon: Upload, description: "جارٍ رفع الملف إلى الخادم الآمن..." },
-  "local-analysis": { label: "التحليل المحلي", icon: Brain, description: "تحليل محتوى الملف الفعلي..." },
-  "ai-analysis": { label: "التحليل الذكي", icon: Sparkles, description: "تحليل بالذكاء الاصطناعي..." },
-  done: { label: "اكتمل", icon: CheckCircle2, description: "" },
-  error: { label: "خطأ", icon: XCircle, description: "" },
+  idle: { label: "بانتظار الملف", icon: Upload, description: "", estimatedSeconds: 0 },
+  uploading: { label: "رفع الملف", icon: Upload, description: "جارٍ رفع الملف إلى الخادم الآمن...", estimatedSeconds: 1 },
+  "local-analysis": { label: "التحليل المحلي", icon: Brain, description: "تحليل محتوى الملف الفعلي...", estimatedSeconds: 5 },
+  "ai-analysis": { label: "التحليل الذكي", icon: Sparkles, description: "تحليل بالذكاء الاصطناعي...", estimatedSeconds: 20 },
+  done: { label: "اكتمل", icon: CheckCircle2, description: "", estimatedSeconds: 0 },
+  error: { label: "خطأ", icon: XCircle, description: "", estimatedSeconds: 0 },
 };
 
 /* ═══════════════════════════════════════════════════════
@@ -166,6 +301,7 @@ function CircularGauge({
   value,
   max,
   size = 64,
+  smSize,
   strokeWidth = 5,
   color,
   label,
@@ -174,6 +310,7 @@ function CircularGauge({
   value: number;
   max: number;
   size?: number;
+  smSize?: number;
   strokeWidth?: number;
   color: string;
   label: string;
@@ -183,37 +320,41 @@ function CircularGauge({
   const circumference = 2 * Math.PI * radius;
   const percentage = Math.min(value / max, 1);
   const offset = circumference - percentage * circumference;
+  // Use CSS to make the gauge responsive: smaller on mobile, larger on desktop (smSize)
+  const responsiveClass = smSize ? "w-14 h-14 sm:w-[72px] sm:h-[72px]" : "";
 
   const gauge = (
     <div className="flex flex-col items-center gap-1">
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          className="text-muted/40"
-        />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-bold" style={{ color }}>
-          <AnimatedCounter value={value} />
-        </span>
+      <div className={`relative ${responsiveClass}`} style={!smSize ? { width: size, height: size } : undefined}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            className="text-muted/40"
+          />
+          <motion.circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs sm:text-sm font-bold" style={{ color }}>
+            <AnimatedCounter value={value} />
+          </span>
+        </div>
       </div>
       <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
     </div>
@@ -263,7 +404,7 @@ function InfoChip({
       <div className="min-w-0 flex-1">
         <div className="text-[11px] text-muted-foreground leading-tight">{label}</div>
         <div
-          className={`text-sm font-semibold truncate leading-tight mt-0.5 ${ltr ? "dir-ltr" : ""}`}
+          className={`text-xs font-semibold truncate leading-tight mt-0.5 ${ltr ? "dir-ltr" : ""}`}
           dir={ltr ? "ltr" : undefined}
         >
           {value}
@@ -326,6 +467,7 @@ export default function UploadStep({
   analyzing,
   serviceType,
   errorMessage,
+  analysisTimings,
   onFileSelected,
 }: UploadStepProps) {
   const isMobile = useIsMobile();
@@ -335,6 +477,26 @@ export default function UploadStep({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
   const currentFileRef = useRef<File | null>(null);
+
+  // مؤقت زمني — يبدأ مع أول مراحل نشطة
+  const analysisStartRef = useRef<number | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
+
+  useEffect(() => {
+    const isActive = analysisPhase === "uploading" || analysisPhase === "local-analysis" || analysisPhase === "ai-analysis";
+    if (!isActive) {
+      analysisStartRef.current = null;
+      return undefined;
+    }
+    // بداية المؤقت عند أول مراحل نشطة (لم يسبق تحديث)
+    if (analysisStartRef.current === null) {
+      analysisStartRef.current = Date.now();
+    }
+    const interval = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - (analysisStartRef.current || Date.now())) / 1000));
+    }, 500);
+    return () => clearInterval(interval);
+  }, [analysisPhase]);
 
   // ─── Validation helpers ───
   function validateFile(file: File): string | null {
@@ -469,7 +631,8 @@ export default function UploadStep({
         </motion.div>
       </div>
 
-      {/* ─── Dropzone ─── */}
+      {/* ─── Dropzone (hidden during processing) ─── */}
+      {!isProcessing && (
       <motion.div
         ref={dropzoneRef}
         onDragEnter={handleDragEnter}
@@ -608,6 +771,7 @@ export default function UploadStep({
           </AnimatePresence>
         </motion.div>
       </motion.div>
+      )}
 
       {/* ─── URL / Text Input ─── */}
       {!hasFile && (
@@ -699,8 +863,8 @@ export default function UploadStep({
             </button>
           ) : (
             <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-dashed border-border bg-muted/20">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                <Upload className="h-4.5 w-4.5 text-blue-500" />
+              <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+                <Upload className="h-4.5 w-4.5 text-amber-500" />
               </div>
               <span className="text-[11px] font-medium text-muted-foreground/60 leading-tight text-center">
                 اسحب ملف هنا
@@ -720,8 +884,8 @@ export default function UploadStep({
             }}
             className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
-              <Copy className="h-4.5 w-4.5 text-violet-500" />
+            <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center">
+              <Copy className="h-4.5 w-4.5 text-orange-500" />
             </div>
             <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
               {isMobile ? "الصق من الحافظة" : "الصق (Ctrl+V)"}
@@ -822,6 +986,15 @@ export default function UploadStep({
                           }`}
                         >
                           {PHASE_CONFIG[phase].label}
+                          {isComplete && phase === "uploading" && analysisTimings?.upload != null && (
+                            <span className="block text-[9px] font-mono tabular-nums text-emerald-500 mt-0.5" dir="ltr">{(analysisTimings.upload / 1000).toFixed(1)}s</span>
+                          )}
+                          {isComplete && phase === "local-analysis" && analysisTimings?.local != null && (
+                            <span className="block text-[9px] font-mono tabular-nums text-emerald-500 mt-0.5" dir="ltr">{(analysisTimings.local / 1000).toFixed(1)}s</span>
+                          )}
+                          {isComplete && phase === "ai-analysis" && analysisTimings?.ai != null && (
+                            <span className="block text-[9px] font-mono tabular-nums text-emerald-500 mt-0.5" dir="ltr">{(analysisTimings.ai / 1000).toFixed(1)}s</span>
+                          )}
                         </span>
                       </div>
                       {i < phases.length - 1 && (
@@ -841,7 +1014,7 @@ export default function UploadStep({
                 })}
               </div>
 
-              {/* Current phase description + progress */}
+              {/* Current phase description + progress + timer */}
               {analysisPhase === "uploading" && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
@@ -870,11 +1043,41 @@ export default function UploadStep({
               )}
 
               {(analysisPhase === "local-analysis" || analysisPhase === "ai-analysis") && (
-                <div className="flex items-center gap-2 text-xs text-amber-700">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span className="font-medium">
-                    {PHASE_CONFIG[analysisPhase].description}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-amber-700 font-medium">
+                      {PHASE_CONFIG[analysisPhase].description}
+                    </span>
+                    {elapsedSec > 0 && (
+                      <span className="text-amber-600 font-bold tabular-nums" dir="ltr">
+                        {elapsedSec}ث
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-2 bg-amber-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-l from-amber-500 to-amber-400"
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: analysisPhase === "ai-analysis"
+                          ? `${Math.min(100, (elapsedSec / (PHASE_CONFIG["ai-analysis"].estimatedSeconds || 20)) * 100)}%`
+                          : "80%",
+                      }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>
+                      {analysisPhase === "local-analysis"
+                        ? "🧠 فحص النصوص والصور والأبعاد..."
+                        : "🤖 معالجة بالذكاء الاصطناعي..."}
+                    </span>
+                    {PHASE_CONFIG[analysisPhase].estimatedSeconds > 0 && elapsedSec > 0 && (
+                      <span className="tabular-nums" dir="ltr">
+                        ≈ {Math.max(0, PHASE_CONFIG[analysisPhase].estimatedSeconds - elapsedSec)}ث متبقّي
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -921,380 +1124,446 @@ export default function UploadStep({
             className="space-y-4"
           >
             <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-              <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-0">
-                {/* ─── Left: Analysis Cards (last on mobile, first on desktop) ─── */}
-                <div className="p-4 sm:p-5 space-y-4 order-2 lg:order-1">
-                  {/* ─── Gauges Row: DPI + Confidence ─── */}
-                  {analysis.estimatedDPI != null && (
-                    <motion.div variants={itemVariants} className="flex items-center justify-center gap-5 sm:gap-8 py-2 sm:py-3">
-                      <CircularGauge
-                        value={analysis.estimatedDPI}
-                        max={600}
-                        size={72}
-                        strokeWidth={5}
-                        color={
-                          (analysis.dpiCategory === "جاهزة للطباعة"
-                            ? "#10b981"
-                            : analysis.dpiCategory === "عالية"
-                              ? "#3b82f6"
-                              : analysis.dpiCategory === "متوسطة"
-                                ? "#f59e0b"
-                                : "#ef4444")
-                        }
-                        label="DPI"
-                        tooltipText="DPI (نقاط لكل إنش) — كلما زادت كانت جودة الطباعة أعلى. 300 DPI هو الحد الأدنى للطباعة الاحترافية."
-                      />
-                      <CircularGauge
-                        value={confidencePercent}
-                        max={100}
-                        size={72}
-                        strokeWidth={5}
-                        color="#f59e0b"
-                        label="الثقة %"
-                        tooltipText="نسبة ثقة الذكاء الاصطناعي في تحليل الملف واقتراحاته. كلما اقتربت من 100% كانت التوصيات أدق."
-                      />
-                    </motion.div>
-                  )}
-
-                  {/* ─── Basic Info Cards Grid ─── */}
+              {/* ─── Preview Column (stacked on mobile, side-by-side on desktop) ─── */}
+              {analysis.thumbnailUrl && (
+                <motion.div
+                  variants={scaleIn}
+                  className="p-4 sm:p-5 border-b border-border bg-muted/20 flex flex-col items-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-3 self-start">
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      معاينة
+                    </span>
+                  </div>
                   <motion.div
-                    variants={containerVariants}
-                    className="grid grid-cols-2 sm:grid-cols-3 gap-2.5"
+                    className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full max-w-xs mx-auto"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    <InfoChip
-                      icon={<FileText className="h-4 w-4" />}
-                      label="نوع الملف"
-                      value={analysis.fileType || "غير معروف"}
-                      tooltipText="صيغة الملف المرفوع. PDF الأفضل للطباعة لأنه يحافظ على التنسيق."
+                    <img
+                      src={analysis.thumbnailUrl}
+                      alt={analysis.fileName || "معاينة الملف"}
+                      className="w-full h-auto max-h-64 sm:max-h-72 object-contain"
                     />
-                    <InfoChip
-                      icon={<Ruler className="h-4 w-4" />}
-                      label="حجم الملف"
-                      value={
-                        analysis.fileSizeFormatted
-                          ? analysis.fileSizeFormatted
-                          : analysis.fileSizeMB >= 1
-                            ? `${analysis.fileSizeMB.toFixed(2)} ميغابايت`
-                            : `${analysis.fileSizeKB.toFixed(1)} كيلوبايت`
-                      }
-                      tooltipText="حجم الملف على القرص. الملفات الأكبر عادة تحتوي تفاصيل أكثر أو صفحات أكثر."
-                    />
-                    <InfoChip
-                      icon={<BookOpen className="h-4 w-4" />}
-                      label="عدد الصفحات"
-                      value={<AnimatedCounter value={analysis.pageCount} suffix=" صفحة" />}
-                      ltr
-                      tooltipText="عدد صفحات الملف كما اكتشفها التحليل الفعلي."
-                    />
-                    <InfoChip
-                      icon={<Search className="h-4 w-4" />}
-                      label="طبيعة الملف"
-                      value={analysis.fileNature || analysis.detectedServiceName}
-                      tooltipText="وصف تلقائي لمحتوى الملف بناءً على التحليل."
-                    />
-                    {analysis.detectedLanguage && (
-                      <InfoChip
-                        icon={<Type className="h-4 w-4" />}
-                        label="اللغة"
-                        value={analysis.detectedLanguage}
-                        tooltipText="اللغة المكتشفة في نصوص الملف."
-                      />
-                    )}
-                    {analysis.pdfAuthor && (
-                      <InfoChip
-                        icon={<File className="h-4 w-4" />}
-                        label="المؤلف"
-                        value={analysis.pdfAuthor}
-                        tooltipText="اسم المؤلف كما هو مسجّل في بيانات الملف الوصفية."
-                      />
+                    {analysis.fileType?.toLowerCase().includes("pdf") && (
+                      <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/90 text-white text-[11px] font-bold backdrop-blur-sm">
+                        <Monitor className="h-3 w-3" />
+                        PDF
+                      </span>
                     )}
                   </motion.div>
-
-                  {/* ─── Dimensions Section ─── */}
-                  {(analysis.pageDimensionsMM || analysis.closestPaperSize || analysis.orientation) && (
-                    <motion.div variants={itemVariants}>
-                      <div className="flex items-center gap-1.5 mb-2.5">
-                        <Ruler className="h-3.5 w-3.5 text-amber-500" />
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          الأبعاد والمقاس
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                        {analysis.pageDimensionsMM && (
-                          <InfoChip
-                            icon={<ImageIconLucide className="h-4 w-4" />}
-                            label="أبعاد الصفحة"
-                            value={`${analysis.pageDimensionsMM.width} × ${analysis.pageDimensionsMM.height} مم`}
-                            ltr
-                            tooltipText="الأبعاد الفعلية للصفحة بالمليمتر."
-                          />
-                        )}
-                        {analysis.closestPaperSize && (
-                          <InfoChip
-                            icon={<ClipboardList className="h-4 w-4" />}
-                            label="أقرب مقاس قياسي"
-                            value={analysis.closestPaperSize}
-                            tooltipText="أقرب مقاس ورقي قياسي لأبعاد ملفك. إذا ظهر 'مخصص' فالأبعاد لا تطابق أي مقاس معياري."
-                            colorClass={
-                              analysis.closestPaperSize !== "مخصص"
-                                ? "text-emerald-500"
-                                : "text-amber-500"
-                            }
-                          />
-                        )}
-                        {analysis.orientation && (
-                          <InfoChip
-                            icon={
-                              analysis.orientation === "عمودي" ? (
-                                <Ruler className="h-4 w-4" />
-                              ) : analysis.orientation === "أفقي" ? (
-                                <RefreshCw className="h-4 w-4 rotate-90" />
-                              ) : (
-                                <Ratio className="h-4 w-4" />
-                              )
-                            }
-                            label="الاتجاه"
-                            value={analysis.orientation}
-                            tooltipText="اتجاه الصفحة: عمودي (طولي) أو أفقي (عرضي) أو مربع."
-                          />
-                        )}
-                        {analysis.aspectRatio && (
-                          <InfoChip
-                            icon={<Ratio className="h-4 w-4" />}
-                            label="نسبة العرض:الارتفاع"
-                            value={analysis.aspectRatio}
-                            ltr
-                            tooltipText="نسبة العرض للارتفاع. مثلاً 3:4 يعني أن الارتفاع أكبر بـ 4/3 من العرض."
-                          />
-                        )}
-                      </div>
-                    </motion.div>
+                  {analysis.textPreview && analysis.textPreview.length > 0 && (
+                    <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed line-clamp-4 text-center max-w-xs mx-auto">
+                      {analysis.textPreview.length > 150
+                        ? analysis.textPreview.slice(0, 150) + "..."
+                        : analysis.textPreview}
+                    </p>
                   )}
-
-                  {/* ─── Quality & Colors Section ─── */}
-                  <motion.div variants={itemVariants}>
-                    <div className="flex items-center gap-1.5 mb-2.5">
-                      <Target className="h-3.5 w-3.5 text-amber-500" />
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        الجودة والألوان
+                  {analysis.imageDimensions && (
+                    <div className="mt-3 w-full text-center">
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {analysis.imageDimensions.width} × {analysis.imageDimensions.height} بكسل
                       </span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {analysis.estimatedDPI != null && (
-                        <InfoChip
-                          icon={<Target className="h-4 w-4" />}
-                          label="الدقة المقدّرة"
-                          value={
-                            <span className="flex items-center gap-1.5">
-                              <AnimatedCounter value={analysis.estimatedDPI} suffix=" DPI" />
-                              {analysis.dpiCategory && (
-                                <span
-                                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium border ${
-                                    analysis.dpiCategory === "جاهزة للطباعة"
-                                      ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                                      : analysis.dpiCategory === "عالية"
-                                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                                        : analysis.dpiCategory === "متوسطة"
-                                          ? "bg-amber-50 text-amber-600 border-amber-200"
-                                          : "bg-rose-50 text-rose-600 border-rose-200"
-                                  }`}
-                                >
-                                  {analysis.dpiCategory}
-                                </span>
-                              )}
-                            </span>
-                          }
-                          ltr
-                          tooltipText="دقة الملف المقدّرة بالنقاط لكل إنش. 300+ ممتازة، 200+ جيدة، أقل من 100 منخفضة."
-                        />
+                      {analysis.imageDimensions.megapixels > 0 && (
+                        <span className="text-[11px] text-muted-foreground mr-2">
+                          ({analysis.imageDimensions.megapixels.toFixed(1)} ميجابكسل)
+                        </span>
                       )}
-                      {analysis.colorSpace && (
-                        <InfoChip
-                          icon={<Palette className="h-4 w-4" />}
-                          label="المساحة اللونية"
-                          value={analysis.colorSpace}
-                          tooltipText="نظام الألوان المستخدم: RGB للشاشات، CMYK للطباعة، تدرج رمادي للأبيض والأسود."
-                        />
-                      )}
-                      <InfoChip
-                        icon={
-                          analysis.hasText ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-muted-foreground/40" />
-                          )
-                        }
-                        label="يحتوي نصوص"
-                        value={analysis.hasText ? "نعم" : "لا"}
-                        colorClass={analysis.hasText ? "text-emerald-500" : "text-muted-foreground/40"}
-                      />
-                      <InfoChip
-                        icon={
-                          analysis.hasImages ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-muted-foreground/40" />
-                          )
-                        }
-                        label="يحتوي صور"
-                        value={analysis.hasImages ? "نعم" : "لا"}
-                        colorClass={analysis.hasImages ? "text-emerald-500" : "text-muted-foreground/40"}
-                      />
                     </div>
+                  )}
+                </motion.div>
+              )}
 
-                    {/* ─── Dominant Colors ─── */}
-                    {analysis.dominantColors && analysis.dominantColors.length > 0 && (
-                      <motion.div
-                        variants={itemVariants}
-                        className="flex items-center gap-2.5 mt-2.5 p-2.5 bg-muted/30 rounded-xl"
-                      >
-                        <Palette className="h-4 w-4 text-amber-500 shrink-0" />
-                        <span className="text-xs text-muted-foreground shrink-0">ألوان سائدة</span>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {analysis.dominantColors.map((color, i) => (
-                            <Tooltip key={i}>
-                              <TooltipTrigger asChild>
-                                <motion.span
-                                  initial={{ opacity: 0, scale: 0 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ delay: 0.5 + i * 0.08, type: "spring", stiffness: 400 }}
-                                  className="inline-block h-6 w-6 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
-                                  style={{ backgroundColor: color }}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <span className="font-mono">{color}</span>
-                              </TooltipContent>
-                            </Tooltip>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
+              {/* ─── Gauges Row: DPI + Confidence (responsive) ─── */}
+              <div className="px-4 sm:px-5 py-3 border-b border-border">
+                {analysis.estimatedDPI != null && (
+                  <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 sm:gap-8">
+                    <CircularGauge
+                      value={analysis.estimatedDPI}
+                      max={600}
+                      size={56}
+                      strokeWidth={5}
+                      smSize={72}
+                      color={
+                        (analysis.dpiCategory === "جاهزة للطباعة"
+                          ? "#10b981"
+                          : analysis.dpiCategory === "عالية"
+                            ? "#3b82f6"
+                            : analysis.dpiCategory === "متوسطة"
+                              ? "#f59e0b"
+                              : "#ef4444")
+                      }
+                      label="DPI"
+                      tooltipText="DPI (نقاط لكل إنش) — كلما زادت كانت جودة الطباعة أعلى. 300 DPI هو الحد الأدنى للطباعة الاحترافية."
+                    />
+                    <CircularGauge
+                      value={confidencePercent}
+                      max={100}
+                      size={56}
+                      strokeWidth={5}
+                      smSize={72}
+                      color="#f59e0b"
+                      label="الثقة %"
+                      tooltipText="نسبة ثقة الذكاء الاصطناعي في تحليل الملف واقتراحاته. كلما اقتربت من 100% كانت التوصيات أدق."
+                    />
+                  </motion.div>
+                )}
+              </div>
+
+              {/* ─── Analysis Cards Grid: 1 col mobile, 2 cols desktop ─── */}
+              <div className="p-4 sm:p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* ─── Card 1: معلومات الملف ─── */}
+                  <motion.div variants={itemVariants} className="rounded-xl border bg-muted/20 p-3 sm:p-4">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <FileText className="h-3.5 w-3.5 text-amber-600" />
+                      </div>
+                      <span className="text-xs font-bold text-foreground">معلومات الملف</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <InfoChip
+                        icon={<FileText className="h-4 w-4" />}
+                        label="نوع الملف"
+                        value={analysis.fileType || "غير معروف"}
+                        tooltipText="صيغة الملف المرفوع."
+                      />
+                      <InfoChip
+                        icon={<Ruler className="h-4 w-4" />}
+                        label="حجم الملف"
+                        value={
+                          analysis.fileSizeFormatted
+                            ? analysis.fileSizeFormatted
+                            : analysis.fileSizeMB >= 1
+                              ? `${analysis.fileSizeMB.toFixed(2)} ميغابايت`
+                              : `${analysis.fileSizeKB.toFixed(1)} كيلوبايت`
+                        }
+                        tooltipText="حجم الملف على القرص."
+                      />
+                      <InfoChip
+                        icon={<BookOpen className="h-4 w-4" />}
+                        label="عدد الصفحات"
+                        value={<AnimatedCounter value={analysis.pageCount} suffix=" صفحة" />}
+                        ltr
+                        tooltipText="عدد صفحات الملف."
+                      />
+                      {analysis.fileNature && (
+                        <InfoChip
+                          icon={<Search className="h-4 w-4" />}
+                          label="طبيعة الملف"
+                          value={analysis.fileNature}
+                          tooltipText="وصف تلقائي لمحتوى الملف."
+                        />
+                      )}
+                      {analysis.pageDimensionsMM && (
+                        <InfoChip
+                          icon={<ImageIconLucide className="h-4 w-4" />}
+                          label="أبعاد الصفحة"
+                          value={`${analysis.pageDimensionsMM.width} × ${analysis.pageDimensionsMM.height} مم`}
+                          ltr
+                          tooltipText="الأبعاد الفعلية للصفحة."
+                        />
+                      )}
+                      {analysis.closestPaperSize && (
+                        <InfoChip
+                          icon={<ClipboardList className="h-4 w-4" />}
+                          label="أقرب مقاس"
+                          value={analysis.closestPaperSize}
+                          tooltipText="أقرب مقاس ورقي قياسي."
+                          colorClass={
+                            analysis.closestPaperSize !== "مخصص"
+                              ? "text-emerald-500"
+                              : "text-amber-500"
+                          }
+                        />
+                      )}
+                      {analysis.orientation && (
+                        <InfoChip
+                          icon={
+                            analysis.orientation === "عمودي" ? (
+                              <Ruler className="h-4 w-4" />
+                            ) : analysis.orientation === "أفقي" ? (
+                              <RefreshCw className="h-4 w-4 rotate-90" />
+                            ) : (
+                              <Ratio className="h-4 w-4" />
+                            )
+                          }
+                          label="الاتجاه"
+                          value={analysis.orientation}
+                          tooltipText="اتجاه الصفحة."
+                        />
+                      )}
+                      {analysis.aspectRatio && (
+                        <InfoChip
+                          icon={<Ratio className="h-4 w-4" />}
+                          label="النسبة"
+                          value={analysis.aspectRatio}
+                          ltr
+                          tooltipText="نسبة العرض للارتفاع."
+                        />
+                      )}
+                      {analysis.detectedLanguage && (
+                        <InfoChip
+                          icon={<Type className="h-4 w-4" />}
+                          label="اللغة"
+                          value={analysis.detectedLanguage}
+                          tooltipText="اللغة المكتشفة."
+                        />
+                      )}
+                      {analysis.pdfAuthor && (
+                        <InfoChip
+                          icon={<File className="h-4 w-4" />}
+                          label="المؤلف"
+                          value={analysis.pdfAuthor}
+                          tooltipText="اسم المؤلف."
+                        />
+                      )}
+                    </div>
                   </motion.div>
 
-                  {/* ─── AI Recommendations Section ─── */}
-                  <motion.div variants={itemVariants}>
-                    <div className="flex items-center gap-1.5 mb-2.5">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        توصيات الذكاء الاصطناعي
-                      </span>
+                  {/* ─── Card 2: تحليل الطباعة + اقتراحات ─── */}
+                  <motion.div variants={itemVariants} className="rounded-xl border bg-emerald-50/30 p-3 sm:p-4">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                      </div>
+                      <span className="text-xs font-bold text-foreground">تحليل الطباعة</span>
                     </div>
 
-                    {/* Detected service */}
-                    <div className="flex items-center justify-between mb-2.5 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                    <div className="flex items-center justify-between mb-3 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500" />
-                        <span className="text-sm font-semibold text-amber-800">
+                        <span className="text-xs font-semibold text-amber-800">
                           {analysis.detectedServiceName}
                         </span>
                       </div>
-                      <span className="text-amber-600 text-sm font-bold" dir="ltr">
+                      <span className="text-amber-600 text-xs font-bold" dir="ltr">
                         <AnimatedCounter value={confidencePercent} suffix="%" />
                       </span>
                     </div>
 
-                    {/* Suggested settings pills */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {analysis.suggestedColor && (
-                        <SuggestionPill
-                          icon={<Palette className="h-3 w-3" />}
-                          label={analysis.suggestedColor === "bw" ? "أبيض وأسود" : analysis.suggestedColor === "color" ? "ملون" : analysis.suggestedColor}
-                        />
-                      )}
-                      {analysis.suggestedPaperSize && (
-                        <SuggestionPill
-                          icon={<FileText className="h-3 w-3" />}
-                          label={analysis.suggestedPaperSize}
-                        />
-                      )}
-                      {analysis.suggestedPaperType && (
-                        <SuggestionPill
-                          icon={<Type className="h-3 w-3" />}
-                          label={analysis.suggestedPaperType}
-                        />
-                      )}
-                      {analysis.suggestedBinding && analysis.suggestedBinding !== "none" && (
-                        <SuggestionPill
-                          icon={<BookOpen className="h-3 w-3" />}
-                          label={analysis.suggestedBinding}
-                        />
-                      )}
-                    </div>
-
-                    {/* Insights */}
-                    {analysis.insights && analysis.insights.length > 0 && (
-                      <ul className="space-y-1.5">
-                        {analysis.insights.slice(0, 5).map((insight, i) => (
-                          <motion.li
-                            key={i}
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.6 + i * 0.1 }}
-                            className="flex items-start gap-2 text-sm"
-                          >
-                            <span className="mt-0.5 shrink-0 text-amber-400">
-                              <Zap className="h-3.5 w-3.5" />
-                            </span>
-                            <span className="text-muted-foreground leading-relaxed">{insight}</span>
-                          </motion.li>
-                        ))}
-                      </ul>
-                    )}
-                  </motion.div>
-                </div>
-
-                {/* ─── Right: Preview Column (first on mobile, second on desktop) ─── */}
-                {analysis.thumbnailUrl && (
-                  <motion.div
-                    variants={scaleIn}
-                    className="p-4 sm:p-5 lg:border-r border-b lg:border-b-0 border-border bg-muted/20 flex flex-col items-center order-1 lg:order-2"
-                  >
-                    <div className="flex items-center gap-1.5 mb-3 self-start">
-                      <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        معاينة
-                      </span>
-                    </div>
-                    <motion.div
-                      className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
-                      <img
-                        src={analysis.thumbnailUrl}
-                        alt={analysis.fileName || "معاينة الملف"}
-                        className="w-full h-auto max-h-72 object-contain"
-                      />
-                      {analysis.fileType?.toLowerCase().includes("pdf") && (
-                        <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/90 text-white text-[11px] font-bold backdrop-blur-sm">
-                          <Monitor className="h-3 w-3" />
-                          PDF
-                        </span>
-                      )}
-                    </motion.div>
-                    {analysis.textPreview && analysis.textPreview.length > 0 && (
-                      <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed line-clamp-4 text-center">
-                        {analysis.textPreview.length > 150
-                          ? analysis.textPreview.slice(0, 150) + "..."
-                          : analysis.textPreview}
-                      </p>
-                    )}
-                    {analysis.imageDimensions && (
-                      <div className="mt-3 w-full text-center">
-                        <span className="text-[11px] text-muted-foreground font-medium">
-                          {analysis.imageDimensions.width} × {analysis.imageDimensions.height} بكسل
-                        </span>
-                        {analysis.imageDimensions.megapixels > 0 && (
-                          <span className="text-[11px] text-muted-foreground mr-2">
-                            ({analysis.imageDimensions.megapixels.toFixed(1)} ميجابكسل)
-                          </span>
+                    {analysis.suggestedReasons && Object.keys(analysis.suggestedReasons).length > 0 ? (
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                        {Object.entries(analysis.suggestedReasons).map(([key, reason], idx) => {
+                          const optValue = analysis.suggestedOptions?.[key];
+                          return (
+                            <motion.div
+                              key={key}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.05 * idx, type: "spring", stiffness: 300, damping: 25 }}
+                              className="flex items-start gap-2 p-2 rounded-lg bg-emerald-50/50 border border-emerald-100"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-semibold text-emerald-800">
+                                  {translateOptionKeyDisplay(key)}{optValue ? `: ${translateOptionValueDisplay(optValue)}` : ""}
+                                </span>
+                                {reason && (
+                                  <p className="text-[11px] text-emerald-600/70 mt-0.5 leading-relaxed">← {reason}</p>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {analysis.suggestedColor && (
+                          <SuggestionPill
+                            icon={<Palette className="h-3 w-3" />}
+                            label={analysis.suggestedColor === "bw" ? "أبيض وأسود" : analysis.suggestedColor === "color" ? "ملون" : analysis.suggestedColor}
+                          />
+                        )}
+                        {analysis.suggestedPaperSize && (
+                          <SuggestionPill
+                            icon={<FileText className="h-3 w-3" />}
+                            label={analysis.suggestedPaperSize}
+                          />
+                        )}
+                        {analysis.suggestedPaperType && (
+                          <SuggestionPill
+                            icon={<Type className="h-3 w-3" />}
+                            label={analysis.suggestedPaperType}
+                          />
+                        )}
+                        {analysis.suggestedBinding && analysis.suggestedBinding !== "none" && (
+                          <SuggestionPill
+                            icon={<BookOpen className="h-3 w-3" />}
+                            label={analysis.suggestedBinding}
+                          />
                         )}
                       </div>
                     )}
+
+                    {/* جودة الطباعة */}
+                    <div className="mt-3 pt-3 border-t border-emerald-100">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Target className="h-3 w-3 text-emerald-600" />
+                        <span className="text-[11px] font-bold text-emerald-700">جودة الطباعة</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {analysis.estimatedDPI != null && (
+                          <InfoChip
+                            icon={<Target className="h-4 w-4" />}
+                            label="الدقة"
+                            value={
+                              <span className="flex items-center gap-1">
+                                <AnimatedCounter value={analysis.estimatedDPI} suffix=" DPI" />
+                                {analysis.dpiCategory && (
+                                  <span
+                                    className={`text-[9px] px-1 py-0.5 rounded-full font-medium border ${
+                                      analysis.dpiCategory === "جاهزة للطباعة"
+                                        ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                        : analysis.dpiCategory === "عالية"
+                                          ? "bg-amber-50 text-amber-600 border-amber-200"
+                                          : analysis.dpiCategory === "متوسطة"
+                                            ? "bg-amber-50 text-amber-600 border-amber-200"
+                                            : "bg-rose-50 text-rose-600 border-rose-200"
+                                    }`}
+                                  >
+                                    {analysis.dpiCategory}
+                                  </span>
+                                )}
+                              </span>
+                            }
+                            ltr
+                            tooltipText="دقة الملف."
+                          />
+                        )}
+                        {analysis.colorSpace && (
+                          <InfoChip
+                            icon={<Palette className="h-4 w-4" />}
+                            label="المساحة اللونية"
+                            value={analysis.colorSpace}
+                            tooltipText="نظام الألوان."
+                          />
+                        )}
+                        <InfoChip
+                          icon={
+                            analysis.hasText ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                            )
+                          }
+                          label="نصوص"
+                          value={analysis.hasText ? "نعم" : "لا"}
+                          colorClass={analysis.hasText ? "text-emerald-500" : "text-muted-foreground/40"}
+                        />
+                        <InfoChip
+                          icon={
+                            analysis.hasImages ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                            )
+                          }
+                          label="صور"
+                          value={analysis.hasImages ? "نعم" : "لا"}
+                          colorClass={analysis.hasImages ? "text-emerald-500" : "text-muted-foreground/40"}
+                        />
+                      </div>
+
+                      {analysis.dominantColors && analysis.dominantColors.length > 0 && (
+                        <motion.div
+                          variants={itemVariants}
+                          className="flex items-center gap-2 mt-2 p-2 bg-white/50 rounded-lg border border-emerald-100"
+                        >
+                          <Palette className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                          <span className="text-[11px] text-muted-foreground shrink-0">ألوان</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {analysis.dominantColors.map((color, i) => (
+                              <Tooltip key={i}>
+                                <TooltipTrigger asChild>
+                                  <motion.span
+                                    initial={{ opacity: 0, scale: 0 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.5 + i * 0.08, type: "spring", stiffness: 400 }}
+                                    className="inline-block h-4.5 w-4.5 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <span className="font-mono text-xs">{color}</span>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* ─── Insights Card (full width) ─── */}
+                {analysis.insights && analysis.insights.length > 0 && (
+                  <motion.div variants={itemVariants} className="mt-4 rounded-xl border bg-amber-50/30 p-3 sm:p-4">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <Zap className="h-3.5 w-3.5 text-amber-600" />
+                      </div>
+                      <span className="text-xs font-bold text-foreground">ملاحظات ذكية</span>
+                    </div>
+                    <ul className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {analysis.insights.slice(0, 5).map((insight, i) => (
+                        <motion.li
+                          key={i}
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.6 + i * 0.1 }}
+                          className="flex items-start gap-2 text-xs"
+                        >
+                          <span className="mt-0.5 shrink-0 text-amber-400">
+                            <Zap className="h-3 w-3" />
+                          </span>
+                          <span className="text-muted-foreground leading-relaxed">{insight}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
                   </motion.div>
                 )}
               </div>
+
+              {/* ─── Timing Bar ─── */}
+              {analysisTimings && (analysisTimings.upload != null || analysisTimings.local != null || analysisTimings.ai != null) && (
+                <div className="border-t border-border bg-muted/30 px-4 sm:px-5 py-2.5">
+                  <div className="flex items-center justify-center gap-3 sm:gap-5 text-[11px] sm:text-xs text-muted-foreground flex-wrap">
+                    {analysisTimings.upload != null && (
+                      <span className="flex items-center gap-1">
+                        <Upload className="h-3 w-3 text-sky-400" />
+                        <span className="font-medium text-sky-600">رفع</span>
+                        <span className="font-mono tabular-nums">{(analysisTimings.upload / 1000).toFixed(1)}s</span>
+                      </span>
+                    )}
+                    {analysisTimings.local != null && (
+                      <span className="flex items-center gap-1">
+                        <Monitor className="h-3 w-3 text-orange-400" />
+                        <span className="font-medium text-orange-600">تحليل محلي</span>
+                        <span className="font-mono tabular-nums">{(analysisTimings.local / 1000).toFixed(1)}s</span>
+                      </span>
+                    )}
+                    {analysisTimings.ai != null && (
+                      <span className="flex items-center gap-1">
+                        <Brain className="h-3 w-3 text-amber-400" />
+                        <span className="font-medium text-amber-600">تحليل ذكي</span>
+                        <span className="font-mono tabular-nums">{(analysisTimings.ai / 1000).toFixed(1)}s</span>
+                      </span>
+                    )}
+                    {analysisTimings.total != null && (
+                      <>
+                        <span className="w-px h-3.5 bg-border" />
+                        <span className="flex items-center gap-1">
+                          <Timer className="h-3 w-3 text-emerald-400" />
+                          <span className="font-semibold text-emerald-700">المجموع</span>
+                          <span className="font-mono tabular-nums font-bold text-emerald-700">{(analysisTimings.total / 1000).toFixed(1)}s</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -1302,7 +1571,7 @@ export default function UploadStep({
 
       {/* ─── Empty State (before upload) ─── */}
       <AnimatePresence>
-        {!hasAnalysis && !analyzing && (
+        {!hasAnalysis && !analyzing && analysisPhase === "idle" && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

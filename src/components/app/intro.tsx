@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Printer, Sparkles } from "lucide-react";
-import { shopApi } from "@/lib/shop-api";
 import type { IntroSettings } from "@/lib/default-settings";
 
 interface IntroProps {
@@ -30,7 +29,7 @@ export function Intro({ onFinish }: IntroProps) {
 
   // تحميل إعدادات الإنترو
   useEffect(() => {
-    shopApi("/api/settings")
+    fetch("/api/settings")
       .then((r) => r.json())
       .then((d) => {
         if (d.intro) setSettings({ ...DEFAULT_INTRO, ...d.intro });
@@ -64,7 +63,7 @@ export function Intro({ onFinish }: IntroProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-700 ${
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-700 focus-ring-animated ${
         phase >= 4 ? "opacity-0 scale-105 pointer-events-none" : "opacity-100"
       }`}
       style={{ backgroundColor: bg, color: "#fff" }}
@@ -96,7 +95,7 @@ export function Intro({ onFinish }: IntroProps) {
       </div>
 
       {/* ===== المحتوى ===== */}
-      <div className="relative z-10 flex flex-col items-center gap-4 px-6">
+      <div className="relative z-10 flex flex-col items-center gap-4 px-6 btn-press">
         {/* الأيقونة / الإيموجي */}
         <div
           className={`relative transition-all duration-700 ${

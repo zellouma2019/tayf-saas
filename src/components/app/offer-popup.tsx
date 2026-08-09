@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, X, Sparkles, Gift, Clock, ChevronLeft } from "lucide-react";
@@ -53,6 +54,7 @@ export function OfferPopup({ offer, open, onClose, onAccept }: OfferPopupProps) 
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md p-0 gap-0 overflow-hidden border-0" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
         <DialogTitle className="sr-only">عرض خاص لك</DialogTitle>
+        <DialogDescription className="sr-only">عرض خصم حصري لطلبات الطباعة</DialogDescription>
 
         {/* ===== الخلفية المتدرجة + الكونفيتي ===== */}
         <div className={`relative bg-gradient-to-br ${theme.bg} overflow-hidden`}>

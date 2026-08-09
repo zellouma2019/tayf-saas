@@ -1,277 +1,406 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Star, MessageSquarePlus, ChevronLeft, ChevronRight } from "lucide-react";
-import { useShop } from "@/lib/shop-context";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, ChevronRight, ChevronLeft, MessageSquare, Printer } from "lucide-react";
 
 interface Review {
-  id: string;
   rating: number;
-  review?: string;
-  serviceEmoji?: string;
-  serviceName?: string;
-  createdAt: string;
-  customerName?: string;
+  review: string;
+  serviceName: string;
+  serviceType: string;
+  ratedAt: string;
 }
 
-const WARM_COLORS = [
-  "from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200/60 dark:border-amber-800/40",
-  "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200/60 dark:border-emerald-800/40",
-  "from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30 border-rose-200/60 dark:border-rose-800/40",
-  "from-orange-50 to-yellow-50 dark:from-orange-950/30 dark:to-yellow-950/30 border-orange-200/60 dark:border-orange-800/40",
+/** ألوان دافئة فقط — بدون أزرق/بنفسجي/سيان */
+const AVATAR_COLORS = [
+  "from-amber-400 to-orange-500",
+  "from-rose-400 to-pink-500",
+  "from-emerald-400 to-teal-500",
+  "from-orange-400 to-red-500",
+  "from-yellow-400 to-amber-500",
 ];
 
-function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
-  const starSize = size === "sm" ? "h-3.5 w-3.5" : "h-5 w-5";
+const BORDER_ACCENTS = [
+  "border-l-amber-400",
+  "border-l-rose-400",
+  "border-l-emerald-400",
+  "border-l-orange-400",
+  "border-l-yellow-400",
+];
+
+const CARD_GRADIENTS = [
+  "from-amber-500/5 to-orange-500/5 dark:from-amber-500/10 dark:to-orange-500/10",
+  "from-rose-500/5 to-pink-500/5 dark:from-rose-500/10 dark:to-pink-500/10",
+  "from-emerald-500/5 to-teal-500/5 dark:from-emerald-500/10 dark:to-teal-500/10",
+  "from-orange-500/5 to-red-500/5 dark:from-orange-500/10 dark:to-red-500/10",
+  "from-yellow-500/5 to-amber-500/5 dark:from-yellow-500/10 dark:to-amber-500/10",
+];
+
+const SERVICE_EMOJI: Record<string, string> = {
+  document: "🖨️",
+  photo: "🖼️",
+  binding: "📚",
+  copy: "📄",
+  card: "🪪",
+  poster: "📜",
+};
+
+function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5" dir="ltr">
-      {Array.from({ length: 5 }).map((_, i) => (
+    <div className="flex items-center gap-0.5" dir="ltr">
+      {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={cn(
-            starSize,
-            i < rating
-              ? "fill-amber-400 text-amber-400"
-              : "fill-muted text-muted"
-          )}
+          className={`h-4 w-4 ${
+            i <= rating
+              ? "text-amber-400 fill-amber-400"
+              : "text-neutral-300 dark:text-neutral-600"
+          }`}
         />
       ))}
     </div>
   );
 }
 
-function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("ar-DZ", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+function formatReviewDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("ar-DZ-u-nu-latn", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }
 
+function TestimonialCard({
+  review,
+  index,
+}: {
+  review: Review;
+  index: number;
+}) {
+  const colorClass = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const gradientClass = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
+  const borderAccent = BORDER_ACCENTS[index % BORDER_ACCENTS.length];
+
+  return (
+    <div
+      className={`bg-gradient-to-br ${gradientClass} border border-border/60 ${borderAccent} border-l-4 rounded-2xl p-5 md:p-6 relative overflow-hidden min-w-0 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-border/80`}
+    >
+      {/* علامة اقتباس */}
+      <span className="absolute top-3 right-4 text-6xl leading-none select-none opacity-[0.06] dark:opacity-[0.10] font-serif text-amber-500">
+        &ldquo;
+      </span>
+
+      {/* التقييم + اسم الخدمة */}
+      <div className="mb-3 flex items-center gap-3 relative z-10">
+        <StarRating rating={review.rating} />
+        <span className="text-xs text-muted-foreground">
+          {SERVICE_EMOJI[review.serviceType] || "📄"} {review.serviceName}
+        </span>
+      </div>
+
+      {/* نص التعليق */}
+      <p className="text-sm leading-relaxed text-foreground/85 relative z-10 min-h-[3.5rem]">
+        {review.review}
+      </p>
+
+      {/* علامة اقتباس نهاية */}
+      <span className="absolute bottom-4 left-4 text-6xl leading-none select-none opacity-[0.06] dark:opacity-[0.10] font-serif text-amber-500 rotate-180">
+        &ldquo;
+      </span>
+
+      {/* فاصل + تاريخ */}
+      <div className="relative z-10 my-4 border-t border-border/40" />
+      <div className="flex items-center gap-2 relative z-10">
+        <div
+          className={`w-10 h-10 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white shrink-0 shadow-sm`}
+        >
+          <MessageSquare className="h-4 w-4" />
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {formatReviewDate(review.ratedAt)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** حالة فارغة — لا توجد آراء بعد */
+function EmptyReviews() {
+  return (
+    <div className="py-12 text-center">
+      <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+        <Printer className="h-8 w-8 text-amber-700 dark:text-amber-400" />
+      </div>
+      <h3 className="text-lg font-bold mb-1">لا توجد آراء بعد</h3>
+      <p className="text-sm text-muted-foreground max-w-md mx-auto">
+        كن أول من يُقيّم تجربته معنا! بعد استلام طلبك يمكنك ترك تقييمك في صفحة التتبع.
+      </p>
+    </div>
+  );
+}
+
+const AUTO_SCROLL_INTERVAL = 5000;
+
 export function TestimonialsSection() {
-  const { shop } = useShop();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isPausedRef = useRef(false);
 
-  const fetchReviews = useCallback(async () => {
-    if (!shop?.id) return;
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/reviews?shopId=${shop.id}`);
-      if (!res.ok) throw new Error("فشل تحميل التقييمات");
-      const data = await res.json();
-      setReviews(Array.isArray(data.reviews) ? data.reviews : data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "خطأ غير معروف");
-    } finally {
-      setLoading(false);
-    }
-  }, [shop?.id]);
-
+  // جلب الآراء الحقيقية من قاعدة البيانات
   useEffect(() => {
+    async function fetchReviews() {
+      try {
+        const res = await fetch("/api/reviews");
+        if (res.ok) {
+          const data = await res.json();
+          setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+        }
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    }
     fetchReviews();
-  }, [fetchReviews]);
+  }, []);
 
-  // Auto-scroll every 5 seconds
+  const goNext = useCallback(() => {
+    if (reviews.length === 0) return;
+    setDirection(1);
+    setActiveIndex((prev) => (prev + 1) % reviews.length);
+  }, [reviews.length]);
+
+  const goPrev = useCallback(() => {
+    if (reviews.length === 0) return;
+    setDirection(-1);
+    setActiveIndex(
+      (prev) => (prev - 1 + reviews.length) % reviews.length
+    );
+  }, [reviews.length]);
+
+  const goTo = useCallback(
+    (index: number, dir?: number) => {
+      setDirection(dir ?? (index > activeIndex ? 1 : -1));
+      setActiveIndex(index);
+    },
+    [activeIndex]
+  );
+
+  // التمرير التلقائي
   useEffect(() => {
-    if (reviews.length <= 1 || isPaused) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-
+    if (reviews.length <= 1) return;
     intervalRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % reviews.length);
-    }, 5000);
-
+      if (!isPausedRef.current) {
+        goNext();
+      }
+    }, AUTO_SCROLL_INTERVAL);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [reviews.length, isPaused]);
+  }, [goNext, reviews.length]);
 
-  // Smooth scroll to current card
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || reviews.length === 0) return;
+  // إعادة ضبط المؤقت عند التفاعل اليدوي
+  const resetAutoScroll = useCallback(() => {
+    if (reviews.length <= 1) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      if (!isPausedRef.current) {
+        goNext();
+      }
+    }, AUTO_SCROLL_INTERVAL);
+  }, [goNext, reviews.length]);
 
-    const cardWidth = container.scrollWidth / reviews.length;
-    container.scrollTo({
-      left: currentIndex * cardWidth,
-      behavior: "smooth",
-    });
-  }, [currentIndex, reviews.length]);
+  const handleDotClick = useCallback(
+    (index: number) => {
+      goTo(index);
+      resetAutoScroll();
+    },
+    [goTo, resetAutoScroll]
+  );
 
-  const visibleCount = typeof window !== "undefined" && window.innerWidth >= 1024 ? 3 : 1;
-  const maxIndex = Math.max(0, reviews.length - visibleCount);
+  const handlePrev = useCallback(() => {
+    goPrev();
+    resetAutoScroll();
+  }, [goPrev, resetAutoScroll]);
 
-  const goNext = () => setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  const goPrev = () => setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
+  const handleNext = useCallback(() => {
+    goNext();
+    resetAutoScroll();
+  }, [goNext, resetAutoScroll]);
 
+  // حالة التحميل
   if (loading) {
     return (
-      <section className="w-full py-8" dir="rtl">
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="flex-1 min-w-[280px] h-40 rounded-xl" />
-          ))}
+      <section className="py-8 md:py-12 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-xl md:text-2xl font-bold">آراء عملائنا</h2>
+            <div className="mt-2 mx-auto w-12 h-1 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-52 rounded-2xl bg-muted animate-pulse" />
+            ))}
+          </div>
         </div>
       </section>
     );
   }
 
-  if (error) {
-    return (
-      <section className="w-full py-8" dir="rtl">
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-            <p className="text-muted-foreground text-sm">{error}</p>
-            <Button variant="outline" size="sm" onClick={fetchReviews}>
-              إعادة المحاولة
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-    );
-  }
-
-  // Empty state
+  // لا توجد آراء
   if (reviews.length === 0) {
     return (
-      <section className="w-full py-8" dir="rtl">
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <MessageSquarePlus className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h3 className="font-semibold text-foreground">لا توجد تقييمات بعد</h3>
-            <p className="text-muted-foreground text-sm max-w-xs">
-              كن أول من يقيّم خدماتنا! نحن نسعى لتقديم أفضل تجربة لك.
-            </p>
-            <Button size="sm" className="mt-1">
-              أضف تقييمك
-            </Button>
-          </CardContent>
-        </Card>
+      <section className="py-8 md:py-12 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4">
+          <div className="text-center mb-6">
+            <h2 className="text-xl md:text-2xl font-bold">آراء عملائنا</h2>
+            <div className="mt-2 mx-auto w-12 h-1 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
+          </div>
+          <EmptyReviews />
+        </div>
       </section>
     );
   }
 
+  // الكاروسيل
   return (
-    <section
-      className="w-full py-8"
-      dir="rtl"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      {/* Header with navigation */}
-      <div className="flex items-center justify-between mb-4 px-1">
-        <h2 className="text-lg font-bold text-foreground">آراء العملاء ✨</h2>
-        {reviews.length > visibleCount && (
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={goNext}
-              aria-label="التالي"
+    <section className="py-8 md:py-12 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4">
+        {/* العنوان + عدد الآراء */}
+        <div className="mb-8 text-center">
+          <h2 className="text-xl md:text-2xl font-bold">آراء عملائنا</h2>
+          <div className="mt-2 mx-auto w-12 h-1 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
+          <p className="text-sm text-muted-foreground mt-2">
+            {reviews.length} تقييم حقيقي من عملائنا
+          </p>
+        </div>
+
+        {/* منطقة الكاروسيل */}
+        <div
+          className="relative"
+          onMouseEnter={() => (isPausedRef.current = true)}
+          onMouseLeave={() => (isPausedRef.current = false)}
+        >
+          {/* أزرار التنقل */}
+          <button
+            onClick={handlePrev}
+            className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-neutral-800 border border-border shadow-sm items-center justify-center hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+            aria-label="السابق"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleNext}
+            className="hidden md:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-neutral-800 border border-border shadow-sm items-center justify-center hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+            aria-label="التالي"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          {/* الجوال: بطاقة واحدة */}
+          <div className="md:hidden overflow-hidden">
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={activeIndex}
+                custom={direction}
+                initial={{ opacity: 0, x: direction * 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: direction * -60 }}
+                transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                <TestimonialCard
+                  review={reviews[activeIndex]}
+                  index={activeIndex}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* الحاسوب: 3 بطاقات */}
+          <div className="hidden md:grid md:grid-cols-3 gap-4">
+            {reviews.map((r, i) => {
+              const offset =
+                ((i - activeIndex) % reviews.length + reviews.length) %
+                reviews.length;
+              const isVisible = offset <= 2;
+
+              return (
+                <AnimatePresence key={i} initial={false}>
+                  {isVisible && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -15, scale: 0.97 }}
+                      transition={{
+                        duration: 0.4,
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
+                    >
+                      <TestimonialCard review={r} index={i} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* مؤشرات النقاط */}
+        <div className="flex items-center justify-center gap-2 mt-5">
+          {reviews.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => handleDotClick(i)}
+              aria-label={`الانتقال للرأي ${i + 1}`}
+              className="relative group outline-none"
             >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={goPrev}
-              aria-label="السابق"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              <motion.span
+                className="block rounded-full"
+                animate={{
+                  width: i === activeIndex ? 24 : 8,
+                  height: 8,
+                  backgroundColor:
+                    i === activeIndex
+                      ? "oklch(0.82 0.13 85)"
+                      : "oklch(0.7 0.01 260 / 0.3)",
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 350,
+                  damping: 25,
+                }}
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* شريط التقدم */}
+        {reviews.length > 1 && (
+          <div className="flex justify-center mt-3">
+            <div className="w-24 h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+              <motion.div
+                key={activeIndex}
+                className="h-full bg-amber-400 rounded-full origin-right"
+                initial={{ scaleX: 1, x: "0%" }}
+                animate={{ scaleX: 0, x: "100%" }}
+                transition={{
+                  duration: AUTO_SCROLL_INTERVAL / 1000,
+                  ease: "linear",
+                }}
+                style={{ width: "100%" }}
+              />
+            </div>
           </div>
         )}
       </div>
-
-      {/* Scrollable cards container */}
-      <div
-        ref={scrollContainerRef}
-        className={cn(
-          "flex gap-4 overflow-x-auto scroll-smooth",
-          "scrollbar-none",
-          "snap-x snap-mandatory"
-        )}
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {reviews.map((review, idx) => (
-          <Card
-            key={review.id}
-            className={cn(
-              "min-w-[300px] md:min-w-[320px] lg:min-w-[calc(33.333%-1rem)] flex-shrink-0 snap-start",
-              "bg-gradient-to-br transition-all duration-500",
-              WARM_COLORS[idx % WARM_COLORS.length]
-            )}
-          >
-            <CardContent className="p-4 flex flex-col gap-3">
-              {/* Top row: emoji + name + date */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  {review.serviceEmoji && (
-                    <span className="text-xl" role="img" aria-label={review.serviceName}>
-                      {review.serviceEmoji}
-                    </span>
-                  )}
-                  {review.customerName && (
-                    <span className="font-medium text-sm text-foreground">
-                      {review.customerName}
-                    </span>
-                  )}
-                </div>
-                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                  {formatDate(review.createdAt)}
-                </span>
-              </div>
-
-              {/* Stars */}
-              <StarRating rating={review.rating} size="sm" />
-
-              {/* Review text */}
-              {review.review ? (
-                <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
-                  &ldquo;{review.review}&rdquo;
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">بدون تعليق</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Dots indicator */}
-      {reviews.length > visibleCount && (
-        <div className="flex justify-center gap-1.5 mt-4">
-          {Array.from({ length: maxIndex + 1 }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentIndex(i)}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-300",
-                i === currentIndex
-                  ? "w-6 bg-primary"
-                  : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              )}
-              aria-label={`انتقل إلى المجموعة ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
     </section>
   );
 }
