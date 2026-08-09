@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
   ShoppingCart, DollarSign, Store, TrendingUp,
   Plus, LogOut, RefreshCw,
   User, Search, Shield, Trash2, Eye, Lock,
-  Settings, CalendarDays,
+  Settings, CalendarDays, Menu,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Dialog, DialogContent, DialogTitle,
 } from '@/components/ui/dialog';
@@ -26,6 +26,10 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ThemeToggle } from '@/components/app/theme-toggle';
+import {
+  DashboardSidebar,
+  type SidebarSection,
+} from '@/components/ui/dashboard-sidebar';
 import {
   isAuthenticated,
   verifySession,
@@ -82,7 +86,7 @@ function InlineLoginGate({ onUnlock }: { onUnlock: () => void }) {
       <Card className="max-w-sm w-full">
         <CardContent className="p-6 space-y-4">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">ط</div>
+            <img src="/n.png" alt="طيف" className="w-16 h-16 rounded-2xl object-contain shadow-lg" />
             <div className="text-center">
               <h1 className="text-xl font-bold">لوحة تحكم المنصة</h1>
               <p className="text-sm text-muted-foreground">أدخل كلمة المرور للدخول</p>
@@ -238,6 +242,8 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [adminName, setAdminName] = useState('مدير');
   const [deleteTarget, setDeleteTarget] = useState<ShopItem | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -306,6 +312,56 @@ export default function AdminPage() {
 
   const totalOrders = shops.reduce((sum, s) => sum + (s._count?.orders || 0), 0);
 
+  // Sidebar sections definition
+  const sidebarSections: SidebarSection[] = [
+    {
+      title: 'القائمة',
+      items: [
+        {
+          key: 'shops',
+          label: 'المتاجر',
+          icon: Store,
+          badge: shops.length || undefined,
+        },
+        {
+          key: 'orders',
+          label: 'الطلبات',
+          icon: ShoppingCart,
+          badge: recentOrders.length || undefined,
+        },
+        {
+          key: 'settings',
+          label: 'الإعدادات',
+          icon: Settings,
+        },
+      ],
+    },
+  ];
+
+  // Sidebar logo
+  const sidebarLogo = (
+    <div className="flex items-center gap-3 overflow-hidden">
+      <Image
+        src="/n-sm.png"
+        alt="طيف"
+        width={32}
+        height={32}
+        className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-sm"
+      />
+      <span className="font-bold text-sidebar-foreground text-sm truncate">
+        طيف إدارة المنصة
+      </span>
+    </div>
+  );
+
+  // Sidebar footer with theme toggle
+  const sidebarFooter = (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-sidebar-foreground/50 truncate">{adminName}</span>
+      <ThemeToggle className="h-8 w-8" />
+    </div>
+  );
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl"><Skeleton className="w-48 h-48 rounded-2xl" /></div>;
   }
@@ -315,57 +371,83 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background" dir="rtl">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg shadow-md">ط</div>
-            <div>
-              <h1 className="text-sm font-bold">طيف إدارة المنصة</h1>
-              <p className="text-[10px] text-muted-foreground">مرحباً، {adminName}</p>
+    <div className="min-h-screen flex bg-background" dir="rtl">
+      {/* Sidebar */}
+      <DashboardSidebar
+        sections={sidebarSections}
+        activeKey={activeTab}
+        onNavigate={setActiveTab}
+        logo={sidebarLogo}
+        footer={sidebarFooter}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+        mobileOpen={mobileMenuOpen}
+        onMobileToggle={() => setMobileMenuOpen((v) => !v)}
+      />
+
+      {/* Main content */}
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-sm border-b shadow-sm">
+          <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {/* Mobile hamburger */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+                aria-label="القائمة"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-sm font-bold">
+                  {activeTab === 'shops' && 'المتاجر'}
+                  {activeTab === 'orders' && 'الطلبات'}
+                  {activeTab === 'settings' && 'الإعدادات'}
+                </h1>
+                <p className="text-[10px] text-muted-foreground">مرحباً، {adminName}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5"><RefreshCw className="h-3.5 w-3.5" /><span className="hidden sm:inline">تحديث</span></Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-rose-500"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5"><RefreshCw className="h-3.5 w-3.5" /><span className="hidden sm:inline">تحديث</span></Button>
-            <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-rose-500"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
+        </header>
+
+        {/* Stats */}
+        <div className="px-4 sm:px-6 pt-6 w-full">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              { label: 'إجمالي الطلبات', value: totalOrders, icon: ShoppingCart, color: 'from-amber-400 to-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30' },
+              { label: 'الإيرادات', value: formatDA(totalRevenue), icon: DollarSign, color: 'from-emerald-400 to-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
+              { label: 'المتاجر', value: shops.length, icon: Store, color: 'from-violet-400 to-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+              { label: 'طلبات اليوم', value: todayOrders, icon: TrendingUp, color: 'from-sky-400 to-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/30' },
+            ].map((c, i) => (
+              <motion.div key={c.label} {...fadeIn} transition={{ delay: i * 0.08 }}>
+                <Card className={`${c.bg} border-0 shadow-sm`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div><p className="text-xs text-muted-foreground mb-1">{c.label}</p><p className="text-xl font-bold tabular-nums">{c.value}</p></div>
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm`}><c.icon className="h-5 w-5 text-white" /></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </header>
 
-      {/* Stats */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 w-full">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[
-            { label: 'إجمالي الطلبات', value: totalOrders, icon: ShoppingCart, color: 'from-amber-400 to-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30' },
-            { label: 'الإيرادات', value: formatDA(totalRevenue), icon: DollarSign, color: 'from-emerald-400 to-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-            { label: 'المتاجر', value: shops.length, icon: Store, color: 'from-violet-400 to-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
-            { label: 'طلبات اليوم', value: todayOrders, icon: TrendingUp, color: 'from-sky-400 to-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/30' },
-          ].map((c, i) => (
-            <motion.div key={c.label} {...fadeIn} transition={{ delay: i * 0.08 }}>
-              <Card className={`${c.bg} border-0 shadow-sm`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div><p className="text-xs text-muted-foreground mb-1">{c.label}</p><p className="text-xl font-bold tabular-nums">{c.value}</p></div>
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm`}><c.icon className="h-5 w-5 text-white" /></div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-8 w-full flex-1">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {/* Content */}
+        <div className="px-4 sm:px-6 pt-6 pb-8 w-full flex-1">
+          {/* Search + Create button row */}
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <TabsList>
-              <TabsTrigger value="shops" className="gap-1.5"><Store className="h-3.5 w-3.5" />المتاجر</TabsTrigger>
-              <TabsTrigger value="orders" className="gap-1.5"><ShoppingCart className="h-3.5 w-3.5" />الطلبات</TabsTrigger>
-              <TabsTrigger value="settings" className="gap-1.5"><Settings className="h-3.5 w-3.5" />الإعدادات</TabsTrigger>
-            </TabsList>
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="بحث..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+            </div>
             {activeTab === 'shops' && (
               <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
                 <Plus className="h-4 w-4" />إنشاء متجر
@@ -373,15 +455,9 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* Search */}
-          <div className="mb-4 relative max-w-sm">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="بحث..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
-          </div>
-
           {/* Shops Tab */}
-          <TabsContent value="shops">
-            {filteredShops.length === 0 ? (
+          {activeTab === 'shops' && (
+            filteredShops.length === 0 ? (
               <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-4 py-16"><Store className="h-12 w-12 text-muted-foreground/30" /><h3 className="font-bold">لا توجد متاجر</h3><p className="text-sm text-muted-foreground">أنشئ أول متجر للبدء</p></CardContent></Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -422,12 +498,12 @@ export default function AdminPage() {
                   </motion.div>
                 ))}
               </div>
-            )}
-          </TabsContent>
+            )
+          )}
 
           {/* Orders Tab */}
-          <TabsContent value="orders">
-            {filteredOrders.length === 0 ? (
+          {activeTab === 'orders' && (
+            filteredOrders.length === 0 ? (
               <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-3 py-16"><ShoppingCart className="h-12 w-12 text-muted-foreground/30" /><p className="text-muted-foreground">لا توجد طلبات</p></CardContent></Card>
             ) : (
               <div className="space-y-3">
@@ -453,11 +529,11 @@ export default function AdminPage() {
                   </Card>
                 ))}
               </div>
-            )}
-          </TabsContent>
+            )
+          )}
 
           {/* Settings Tab */}
-          <TabsContent value="settings">
+          {activeTab === 'settings' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-6 space-y-3">
@@ -478,12 +554,12 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          )}
+        </div>
 
-      {/* Footer */}
-      <footer className="mt-auto border-t py-4 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} طيف — منصة إدارة المطابع</footer>
+        {/* Footer */}
+        <footer className="mt-auto border-t py-4 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} طيف — منصة إدارة المطابع</footer>
+      </div>
 
       {/* Create Dialog */}
       <InlineCreateShop open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleShopCreated} />

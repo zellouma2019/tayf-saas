@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Printer, Sparkles } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { useTheme } from "next-themes";
 import type { IntroSettings } from "@/lib/default-settings";
 
 interface IntroProps {
@@ -10,24 +12,26 @@ interface IntroProps {
 
 const DEFAULT_INTRO: IntroSettings = {
   enabled: true,
-  title: "مطبعة الذكي",
-  subtitle: "اطبع بسهولة — أسرع من واتساب",
+  title: "طيف",
+  subtitle: "منصة طباعة احترافية",
   emoji: "🖨️",
   bgIcon: "Printer",
   duration: 4200,
-  footerText: "🇩🇿 صُمّم بحب في الجزائر",
-  bgColor: "#1a1a1a",
+  footerText: "",
+  bgColor: "#0a0a0b",
   accentColor: "#D4AF37",
   showProgress: true,
-  showSpinningRing: true,
+  showSpinningRing: false,
 };
 
 export function Intro({ onFinish }: IntroProps) {
-  const [phase, setPhase] = useState(0);
   const [settings, setSettings] = useState<IntroSettings>(DEFAULT_INTRO);
   const [loaded, setLoaded] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const { resolvedTheme } = useTheme();
 
-  // تحميل إعدادات الإنترو
+  // تحميل إعدادات الإنترو من API
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
@@ -38,6 +42,38 @@ export function Intro({ onFinish }: IntroProps) {
       .catch(() => setLoaded(true));
   }, []);
 
+  const isDark = resolvedTheme === "dark" || resolvedTheme === undefined;
+
+  const bgColor = useMemo(() => {
+    if (isDark) return settings.bgColor || "#0a0a0b";
+    return "#faf8f2";
+  }, [isDark, settings.bgColor]);
+
+  const accent = settings.accentColor || "#D4AF37";
+  const textColor = isDark ? "#f5f5f5" : "#1a1a1a";
+  const mutedColor = isDark ? "#a1a1aa" : "#71717a";
+  const progressBg = isDark ? "#1f1f23" : "#e7e5e4";
+
+  // Progress bar animation
+  useEffect(() => {
+    if (!loaded || !settings.enabled || exiting) return;
+    const duration = settings.duration || 4200;
+    const interval = 50;
+    const step = (interval / duration) * 100;
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + step;
+        if (next >= 100) {
+          clearInterval(timer);
+          return 100;
+        }
+        return next;
+      });
+    }, interval);
+    return () => clearInterval(timer);
+  }, [loaded, settings.enabled, settings.duration, exiting]);
+
+  // Exit & finish timing
   useEffect(() => {
     if (!loaded) return;
     if (!settings.enabled) {
@@ -46,164 +82,150 @@ export function Intro({ onFinish }: IntroProps) {
     }
 
     const duration = settings.duration || 4200;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => setPhase(1), 200));
-    timers.push(setTimeout(() => setPhase(2), Math.min(1000, duration * 0.24)));
-    timers.push(setTimeout(() => setPhase(3), Math.min(1800, duration * 0.43)));
-    timers.push(setTimeout(() => setPhase(4), duration - 1000));
-    timers.push(setTimeout(() => onFinish(), duration));
-    return () => timers.forEach(clearTimeout);
+    const exitTimer = setTimeout(() => {
+      setExiting(true);
+    }, duration - 600);
+    const finishTimer = setTimeout(() => {
+      onFinish();
+    }, duration);
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(finishTimer);
+    };
   }, [loaded, settings, onFinish]);
 
-  // إذا لم تُحمَّل الإعدادات بعد أو الإنترو معطّل، لا تعرض شيئاً
   if (!loaded || !settings.enabled) return null;
 
-  const accent = settings.accentColor || "#D4AF37";
-  const bg = settings.bgColor || "#1a1a1a";
-
   return (
-    <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-700 focus-ring-animated ${
-        phase >= 4 ? "opacity-0 scale-105 pointer-events-none" : "opacity-100"
-      }`}
-      style={{ backgroundColor: bg, color: "#fff" }}
-      dir="rtl"
-    >
-      {/* ===== خلفية متدرجة متحركة ===== */}
-      <div className="absolute inset-0 overflow-hidden">
+    <AnimatePresence>
+      {!exiting ? null : null}
+      <motion.div
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+        style={{ backgroundColor: bgColor }}
+        dir="rtl"
+        initial={{ opacity: 1 }}
+        animate={exiting ? { opacity: 0, scale: 1.02 } : { opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+      >
+        {/* Subtle radial glow behind logo */}
         <div
-          className="absolute -top-1/4 -right-1/4 w-[600px] h-[600px] rounded-full blur-3xl animate-pulse"
-          style={{ backgroundColor: accent + "1A" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${accent}12 0%, transparent 70%)`,
+          }}
         />
-        <div
-          className="absolute -bottom-1/4 -left-1/4 w-[500px] h-[500px] rounded-full blur-3xl animate-pulse"
-          style={{ backgroundColor: accent + "14", animationDelay: "0.5s" }}
-        />
-        {/* نقاط متفرقة */}
-        {Array.from({ length: 12 }).map((_, i) => (
-          <span
-            key={i}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              backgroundColor: accent + "4D",
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `pulse 2s ease-in-out ${Math.random() * 2}s infinite`,
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center gap-5 px-6">
+          {/* Logo with scale + fade animation */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{
+              duration: 0.9,
+              ease: [0.22, 1, 0.36, 1],
+              delay: 0.15,
             }}
-          />
-        ))}
-      </div>
-
-      {/* ===== المحتوى ===== */}
-      <div className="relative z-10 flex flex-col items-center gap-4 px-6 btn-press">
-        {/* الأيقونة / الإيموجي */}
-        <div
-          className={`relative transition-all duration-700 ${
-            phase >= 1
-              ? "opacity-100 scale-100 translate-y-0"
-              : "opacity-0 scale-50 translate-y-8"
-          }`}
-        >
-          {/* إذا كان الإيموجي مخصصاً */}
-          {settings.emoji && settings.emoji.length <= 4 ? (
+            className="relative"
+          >
             <div
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center shadow-2xl text-5xl sm:text-6xl"
+              className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl flex items-center justify-center overflow-hidden"
               style={{
-                background: `linear-gradient(135deg, ${accent}, ${accent}CC)`,
-                boxShadow: `0 0 40px ${accent}4D`,
+                boxShadow: `0 0 60px ${accent}18, 0 8px 32px rgba(0,0,0,0.3)`,
               }}
             >
-              {settings.emoji}
+              <Image
+                src="/n.png"
+                alt="طيف"
+                width={128}
+                height={128}
+                className="w-full h-full object-contain p-3"
+                priority
+              />
             </div>
-          ) : (
-            <div
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center shadow-2xl"
+            {/* Thin golden ring around logo */}
+            <motion.div
+              className="absolute inset-0 -m-1.5 rounded-[1.35rem] pointer-events-none"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
               style={{
-                background: `linear-gradient(135deg, ${accent}, ${accent}CC)`,
-                boxShadow: `0 0 40px ${accent}4D`,
-              }}
-            >
-              <Printer className="h-10 w-10 sm:h-12 sm:w-12" style={{ color: bg }} />
-            </div>
-          )}
-          {/* حلقة دوارة */}
-          {settings.showSpinningRing && (
-            <div
-              className="absolute inset-0 -m-2 rounded-2xl border-2 animate-spin"
-              style={{
-                borderColor: accent + "4D",
-                borderTopColor: accent,
-                animationDuration: "1.2s",
+                border: `1.5px solid ${accent}30`,
               }}
             />
-          )}
-        </div>
+          </motion.div>
 
-        {/* العنوان */}
-        <div
-          className={`text-center transition-all duration-500 ${
-            phase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-          style={{ transitionDelay: "0.1s" }}
-        >
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+          {/* Brand name "طيف" */}
+          <motion.h1
+            className="text-4xl sm:text-5xl font-bold tracking-tight"
+            style={{ color: accent }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.7,
+              ease: [0.22, 1, 0.36, 1],
+              delay: 0.6,
+            }}
+          >
             {settings.title}
-          </h1>
+          </motion.h1>
+
+          {/* Tagline */}
+          {settings.subtitle && (
+            <motion.p
+              className="text-sm sm:text-base font-medium tracking-wide"
+              style={{ color: mutedColor }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.6,
+                ease: [0.22, 1, 0.36, 1],
+                delay: 0.85,
+              }}
+            >
+              {settings.subtitle}
+            </motion.p>
+          )}
         </div>
 
-        {/* الشعار السفلي */}
-        {settings.subtitle && (
-          <div
-            className={`flex items-center gap-2 transition-all duration-500 ${
-              phase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-            }`}
-            style={{ transitionDelay: "0.15s" }}
-          >
-            <Sparkles className="h-3.5 w-3.5" style={{ color: accent }} />
-            <p className="text-sm sm:text-base font-medium" style={{ color: accent + "E6" }}>
-              {settings.subtitle}
-            </p>
-            <Sparkles className="h-3.5 w-3.5" style={{ color: accent }} />
-          </div>
-        )}
-
-        {/* شريط التحميل */}
+        {/* Progress bar at bottom */}
         {settings.showProgress && (
-          <div
-            className={`mt-2 w-32 h-1 rounded-full overflow-hidden transition-all duration-500 ${
-              phase >= 3 ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ transitionDelay: "0.2s", backgroundColor: bg === "#1a1a1a" ? "#404040" : "#ffffff20" }}
+          <motion.div
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 w-48 sm:w-56"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
           >
             <div
-              className="h-full rounded-full"
-              style={{
-                background: `linear-gradient(to right, ${accent}AA, ${accent})`,
-                animation: "introProgress 3s ease-out forwards",
-              }}
-            />
-          </div>
+              className="h-[2px] rounded-full overflow-hidden"
+              style={{ backgroundColor: progressBg }}
+            >
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, ${accent}80, ${accent})`,
+                  width: `${progress}%`,
+                }}
+                transition={{ duration: 0.05, ease: "linear" }}
+              />
+            </div>
+          </motion.div>
         )}
-      </div>
 
-      {/* ===== تذييل ===== */}
-      {settings.footerText && (
-        <div
-          className={`absolute bottom-6 text-center transition-opacity duration-500 ${
-            phase >= 3 ? "opacity-60" : "opacity-0"
-          }`}
-        >
-          <p className="text-xs text-neutral-500">{settings.footerText}</p>
-        </div>
-      )}
-
-      {/* ===== أنيميشن CSS ===== */}
-      <style jsx>{`
-        @keyframes introProgress {
-          0% { width: 0%; }
-          100% { width: 100%; }
-        }
-      `}</style>
-    </div>
+        {/* Footer text if set */}
+        {settings.footerText && (
+          <motion.p
+            className="absolute bottom-4 text-[10px]"
+            style={{ color: mutedColor }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            transition={{ delay: 1, duration: 0.8 }}
+          >
+            {settings.footerText}
+          </motion.p>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 }

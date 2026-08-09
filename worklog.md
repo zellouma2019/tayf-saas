@@ -105,3 +105,58 @@ Stage Summary:
 - Merchant admin sidebar is present and functional (DashboardSidebar component)
 - Sidebar sections: القائمة (الرئيسية/الطلبات/إعدادات), البيانات (العملاء/المصاريف), أدوات (مشاركة/معاينة)
 - CSS variables verified: --sidebar dark=#0e0e10, light=#f5f0e5
+
+---
+Task ID: 3b
+Agent: Main Agent
+Task: Fix logo files, restore custom logo, comprehensive rebuild
+
+Work Log:
+- Diagnosed missing logo files: code referenced /n.png, /n-sm.png but files didn't exist
+- Created logo symlinks: platform-logo.png→n.png, tayf-logo-sm.png→n-sm.png, tayf-logo-sm-dark.png→n-sm-dark.png, brand/tayf-logo-dark.png→n-dark.png, platform-logo.png→brand/n.png, favicon.svg→n.svg
+- Updated admin page login gate: replaced 'ط' text character with <img src="/n.png"> actual logo
+- Updated admin header: replaced 'ط' text with <img src="/n-sm.png"> actual logo
+- Comprehensive rebuild: bun run build succeeded with 0 errors
+- Verified via curl: ThemeProvider in HTML, lang=ar dir=rtl, logo files HTTP 200, API returns shops data
+
+Stage Summary:
+- Custom Tayf logo now appears in admin login page and header
+- All logo file paths (/n.png, /n-sm.png, /brand/n.png, /n.svg) resolve correctly
+- Ready for Vercel deployment
+
+---
+Task ID: 4
+Agent: Agent 4
+Task: Redesign customer intro splash screen + add sidebar layout to root admin page
+
+Work Log:
+- Redesigned `/src/components/app/intro.tsx` with SHEIN-inspired premium splash screen:
+  - Replaced emoji/printer icon with actual `/n.png` logo via next/image
+  - Added framer-motion animations: smooth scale+fade logo entrance, staggered text reveals
+  - Dark background (#0a0a0b) with subtle radial golden glow behind logo
+  - Brand name "طيف" in elegant gold typography (#D4AF37)
+  - Tagline "منصة طباعة احترافية" in muted text below
+  - Thin 2px golden progress bar at bottom with smooth fill animation
+  - Theme-aware: adapts background/text colors via `useTheme()` (dark: #0a0a0b, light: #faf8f2)
+  - Smooth fade-out exit animation with subtle scale-up before disappearing
+  - Respects API settings (enabled/disabled, duration) via IntroSettings interface
+  - Removed spinning ring, scattered dots, and pulsing background blobs for cleaner look
+- Redesigned `/src/app/page.tsx` with proper sidebar layout:
+  - Imported DashboardSidebar from `@/components/ui/dashboard-sidebar`
+  - Created sidebar sections: القائمة (المتاجر, الطلبات, الإعدادات)
+  - Sidebar logo uses `/n-sm.png` with brand name text
+  - Sidebar footer includes admin name + ThemeToggle button
+  - Replaced Tabs component with sidebar navigation (sidebar controls activeTab state)
+  - Added mobile hamburger menu button in header (visible on md:hidden)
+  - Sidebar is collapsible on desktop via toggle button, drawer on mobile (handled by DashboardSidebar)
+  - Kept all existing functionality: login gate, shops CRUD, orders list, settings tab
+  - Kept stats cards, search bar, create shop dialog, delete confirmation
+  - Header shows active tab title, admin name, refresh button, logout button
+  - Layout: `flex` with sidebar on right + main content area (RTL native)
+
+Stage Summary:
+- Intro screen now has a premium, minimal SHEIN-style design with smooth framer-motion animations
+- Root admin page now has a proper collapsible sidebar matching the merchant dashboard pattern
+- All existing API calls, state management, and functionality preserved unchanged
+- Both files pass lint (only pre-existing lint warning in page.tsx fetchData effect)
+- No new dependencies added (framer-motion, next/image, next-themes already available)
