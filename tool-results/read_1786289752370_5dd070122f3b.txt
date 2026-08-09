@@ -1,0 +1,980 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useMemo, useState } from "react";
+     4→import { shopApi } from "@/lib/shop-api";
+     5→import {
+     6→  Card,
+     7→  CardContent,
+     8→  CardDescription,
+     9→  CardHeader,
+    10→  CardTitle,
+    11→} from "@/components/ui/card";
+    12→import {
+    13→  TrendingUp,
+    14→  TrendingDown,
+    15→  Calendar,
+    16→  BarChart3,
+    17→  Users,
+    18→  DollarSign,
+    19→  Package,
+    20→  RefreshCw,
+    21→  Inbox,
+    22→  CheckCircle2,
+    23→  Sparkles,
+    24→  ArrowUpRight,
+    25→} from "lucide-react";
+    26→import {
+    27→  BarChart,
+    28→  Bar,
+    29→  XAxis,
+    30→  YAxis,
+    31→  CartesianGrid,
+    32→  Tooltip,
+    33→  ResponsiveContainer,
+    34→  PieChart,
+    35→  Pie,
+    36→  Cell,
+    37→  AreaChart,
+    38→  Area,
+    39→  Legend,
+    40→} from "recharts";
+    41→import { STATUS_META, STATUS_FLOW, formatDA } from "@/lib/print-config";
+    42→import type { PrintOrderLite } from "@/lib/order-types";
+    43→import { cn } from "@/lib/utils";
+    44→
+    45→// ===== الأنواع =====
+    46→interface AdminStats {
+    47→  totalOrders: number;
+    48→  totalRevenue: number;
+    49→  todayOrders: number;
+    50→  statusCounts: Record<string, number>;
+    51→  serviceCounts: { serviceType: string; count: number; revenue: number }[];
+    52→  recentOrders: PrintOrderLite[];
+    53→}
+    54→
+    55→interface AdminAnalyticsProps {
+    56→  stats: AdminStats | null;
+    57→}
+    58→
+    59→interface MonthBucket {
+    60→  label: string;
+    61→  revenue: number;
+    62→  count: number;
+    63→}
+    64→
+    65→interface TopCustomer {
+    66→  name: string;
+    67→  phone: string;
+    68→  count: number;
+    69→  total: number;
+    70→}
+    71→
+    72→interface WeekBucket {
+    73→  label: string;
+    74→  rangeLabel: string;
+    75→  days: { date: Date; count: number }[];
+    76→  total: number;
+    77→}
+    78→
+    79→interface DayBucket {
+    80→  label: string;
+    81→  revenue: number;
+    82→  count: number;
+    83→}
+    84→
+    85→interface AnalyticsResult {
+    86→  monthlyRevenue: number;
+    87→  monthlyCount: number;
+    88→  monthlyRevenueTrend: number;
+    89→  monthlyCountTrend: number;
+    90→  avgOrderValue: number;
+    91→  deliveryRate: number;
+    92→  last6Months: MonthBucket[];
+    93→  topCustomers: TopCustomer[];
+    94→  weeklyHeatmap: WeekBucket[];
+    95→  dailyTrend: DayBucket[];
+    96→}
+    97→
+    98→// ===== ثوابت الألوان للمخططات =====
+    99→const CHART_COLORS = [
+   100→  "#D97706", // amber-600
+   101→  "#059669", // emerald-600
+   102→  "#DC2626", // red-600
+   103→  "#7C3AED", // violet-600
+   104→  "#0891B2", // cyan-600
+   105→  "#EA580C", // orange-600
+   106→];
+   107→
+   108→const SERVICE_LABELS: Record<string, string> = {
+   109→  document: "طباعة مستند",
+   110→  photo: "طباعة صور",
+   111→  binding: "تجليد",
+   112→  copy: "نسخ",
+   113→  card: "بطاقات",
+   114→  poster: "ملصقات",
+   115→};
+   116→
+   117→const SERVICE_EMOJI: Record<string, string> = {
+   118→  document: "🖨️",
+   119→  photo: "🖼️",
+   120→  binding: "📚",
+   121→  copy: "📄",
+   122→  card: "🪪",
+   123→  poster: "📜",
+   124→};
+   125→
+   126→const MONTH_NAMES_AR = [
+   127→  "جانفي", "فيفري", "مارس", "أفريل", "ماي", "جوان",
+   128→  "جويلية", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+   129→];
+   130→
+   131→const WEEKDAY_NAMES_AR = [
+   132→  "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت",
+   133→];
+   134→
+   135→const STATUS_PIE_COLORS: Record<string, string> = {
+   136→  pending: "#F59E0B",
+   137→  printing: "#0891B2",
+   138→  ready: "#10B981",
+   139→  delivered: "#059669",
+   140→  cancelled: "#EF4444",
+   141→};
+   142→
+   143→// ===== تلميح مخصص بالعربية =====
+   144→function ArabicTooltip({
+   145→  active,
+   146→  payload,
+   147→  label,
+   148→  valueLabel,
+   149→  countLabel,
+   150→}: {
+   151→  active?: boolean;
+   152→  payload?: Array<{ value: number; name: string; color: string; dataKey: string }>;
+   153→  label?: string;
+   154→  valueLabel?: string;
+   155→  countLabel?: string;
+   156→}) {
+   157→  if (!active || !payload?.length) return null;
+   158→  return (
+   159→    <div className="bg-white dark:bg-neutral-800 border border-border rounded-lg shadow-lg px-3 py-2 text-sm min-w-[140px]" dir="rtl">
+   160→      <div className="font-bold text-neutral-800 dark:text-neutral-200 mb-1">{label}</div>
+   161→      {payload.map((entry, i) => (
+   162→        <div key={i} className="flex items-center justify-between gap-3">
+   163→          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+   164→            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: entry.color }} />
+   165→            {entry.dataKey === "revenue" ? valueLabel || "الإيرادات" : countLabel || "الطلبات"}
+   166→          </span>
+   167→          <span className="font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
+   168→            {entry.dataKey === "revenue"
+   169→              ? entry.value.toLocaleString("ar-SA-u-nu-latn")
+   170→              : entry.value + " طلب"}
+   171→          </span>
+   172→        </div>
+   173→      ))}
+   174→    </div>
+   175→  );
+   176→}
+   177→
+   178→function PieTooltip({
+   179→  active,
+   180→  payload,
+   181→}: {
+   182→  active?: boolean;
+   183→  payload?: Array<{ name: string; value: number; payload: { fill: string; percent?: number } }>;
+   184→}) {
+   185→  if (!active || !payload?.length) return null;
+   186→  const d = payload[0];
+   187→  return (
+   188→    <div className="bg-white dark:bg-neutral-800 border border-border rounded-lg shadow-lg px-3 py-2 text-sm" dir="rtl">
+   189→      <div className="flex items-center gap-1.5">
+   190→        <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.payload.fill }} />
+   191→        <span className="font-medium text-neutral-800 dark:text-neutral-200">{d.name}</span>
+   192→      </div>
+   193→      <div className="font-bold tabular-nums text-neutral-900 dark:text-neutral-100 mt-0.5">
+   194→        {d.value} طلب {d.payload.percent ? `(${(d.payload.percent * 100).toFixed(0)}%)` : ""}
+   195→      </div>
+   196→    </div>
+   197→  );
+   198→}
+   199→
+   200→// ===== المكوّن الرئيسي =====
+   201→export function AdminAnalytics({ stats }: AdminAnalyticsProps) {
+   202→  const [orders, setOrders] = useState<PrintOrderLite[]>([]);
+   203→  const [loading, setLoading] = useState(true);
+   204→
+   205→  useEffect(() => {
+   206→    let cancelled = false;
+   207→    shopApi("/api/orders?limit=10000&noPreview=true")
+   208→      .then((r) => r.json())
+   209→      .then((o) => {
+   210→        if (!cancelled) setOrders(o.orders || []);
+   211→      })
+   212→      .catch(() => {})
+   213→      .finally(() => {
+   214→        if (!cancelled) setLoading(false);
+   215→      });
+   216→    return () => {
+   217→      cancelled = true;
+   218→    };
+   219→  }, []);
+   220→
+   221→  const analytics = useMemo(() => computeAnalytics(Array.isArray(orders) ? orders : []), [orders]);
+   222→
+   223→  if (loading) {
+   224→    return (
+   225→      <div className="py-16 text-center text-muted-foreground text-sm">
+   226→        <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+   227→        جارٍ تحميل التحليلات...
+   228→      </div>
+   229→    );
+   230→  }
+   231→
+   232→  const totalRevenue6m = analytics.last6Months.reduce((s, m) => s + m.revenue, 0);
+   233→  const totalOrders6m = analytics.last6Months.reduce((s, m) => s + m.count, 0);
+   234→
+   235→  return (
+   236→    <div className="space-y-4">
+   237→      {/* ===== A. بطاقات النظرة الشهرية ===== */}
+   238→      <div>
+   239→        <SectionHeading
+   240→          icon={Sparkles}
+   241→          title="النظرة الشهرية"
+   242→          subtitle={`${MONTH_NAMES_AR[new Date().getMonth()]} ${new Date().getFullYear()}`}
+   243→        />
+   244→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   245→          <MonthlyCard
+   246→            title="إجمالي إيرادات الشهر"
+   247→            value={formatDA(analytics.monthlyRevenue)}
+   248→            icon={DollarSign}
+   249→            trend={analytics.monthlyRevenueTrend}
+   250→            color="emerald"
+   251→          />
+   252→          <MonthlyCard
+   253→            title="طلبات هذا الشهر"
+   254→            value={String(analytics.monthlyCount)}
+   255→            icon={Package}
+   256→            trend={analytics.monthlyCountTrend}
+   257→            color="amber"
+   258→          />
+   259→          <MonthlyCard
+   260→            title="متوسط قيمة الطلب"
+   261→            value={formatDA(Math.round(analytics.avgOrderValue))}
+   262→            icon={BarChart3}
+   263→            color="cyan"
+   264→          />
+   265→          <MonthlyCard
+   266→            title="معدل التسليم"
+   267→            value={`${analytics.deliveryRate.toFixed(1)}%`}
+   268→            icon={CheckCircle2}
+   269→            color="emerald"
+   270→          />
+   271→        </div>
+   272→      </div>
+   273→
+   274→      {/* ===== B. مخطط الإيرادات لآخر 6 أشهر (Recharts BarChart) ===== */}
+   275→      <Card>
+   276→        <CardHeader className="pb-2">
+   277→          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   278→            <BarChart3 className="h-4 w-4 text-amber-500" />
+   279→            إيرادات وطلبات آخر 6 أشهر
+   280→          </CardTitle>
+   281→          <CardDescription className="text-xs">
+   282→            الإجمالي: {formatDA(totalRevenue6m)} — {totalOrders6m} طلب
+   283→          </CardDescription>
+   284→        </CardHeader>
+   285→        <CardContent>
+   286→          <div className="h-64 md:h-72">
+   287→            <ResponsiveContainer width="100%" height="100%">
+   288→              <BarChart data={analytics.last6Months} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+   289→                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+   290→                <XAxis
+   291→                  dataKey="label"
+   292→                  tick={{ fontSize: 11, fill: "#6B7280" }}
+   293→                  axisLine={false}
+   294→                  tickLine={false}
+   295→                />
+   296→                <YAxis
+   297→                  yAxisId="revenue"
+   298→                  tick={{ fontSize: 10, fill: "#6B7280" }}
+   299→                  axisLine={false}
+   300→                  tickLine={false}
+   301→                  tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+   302→                />
+   303→                <YAxis
+   304→                  yAxisId="count"
+   305→                  orientation="left"
+   306→                  tick={{ fontSize: 10, fill: "#6B7280" }}
+   307→                  axisLine={false}
+   308→                  tickLine={false}
+   309→                />
+   310→                <Tooltip content={<ArabicTooltip valueLabel="الإيرادات" countLabel="الطلبات" />} />
+   311→                <Legend
+   312→                  wrapperStyle={{ fontSize: 12, direction: "rtl" }}
+   313→                  formatter={(value: string) =>
+   314→                    value === "revenue" ? "الإيرادات" : "عدد الطلبات"
+   315→                  }
+   316→                />
+   317→                <Bar
+   318→                  yAxisId="revenue"
+   319→                  dataKey="revenue"
+   320→                  fill="#D97706"
+   321→                  radius={[4, 4, 0, 0]}
+   322→                  maxBarSize={48}
+   323→                />
+   324→                <Bar
+   325→                  yAxisId="count"
+   326→                  dataKey="count"
+   327→                  fill="#FCD34D"
+   328→                  radius={[4, 4, 0, 0]}
+   329→                  maxBarSize={48}
+   330→                />
+   331→              </BarChart>
+   332→            </ResponsiveContainer>
+   333→          </div>
+   334→        </CardContent>
+   335→      </Card>
+   336→
+   337→      {/* ===== B2. منحنى الإيرادات اليومية (AreaChart جديد) ===== */}
+   338→      <Card>
+   339→        <CardHeader className="pb-2">
+   340→          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   341→            <TrendingUp className="h-4 w-4 text-amber-500" />
+   342→            منحنى الإيرادات اليومية
+   343→          </CardTitle>
+   344→          <CardDescription className="text-xs">
+   345→            آخر 14 يوم
+   346→          </CardDescription>
+   347→        </CardHeader>
+   348→        <CardContent>
+   349→          {analytics.dailyTrend.length === 0 ? (
+   350→            <EmptyState text="لا توجد بيانات كافية" />
+   351→          ) : (
+   352→            <div className="h-48 md:h-56">
+   353→              <ResponsiveContainer width="100%" height="100%">
+   354→                <AreaChart data={analytics.dailyTrend} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+   355→                  <defs>
+   356→                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+   357→                      <stop offset="5%" stopColor="#D97706" stopOpacity={0.2} />
+   358→                      <stop offset="95%" stopColor="#D97706" stopOpacity={0} />
+   359→                    </linearGradient>
+   360→                  </defs>
+   361→                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+   362→                  <XAxis
+   363→                    dataKey="label"
+   364→                    tick={{ fontSize: 10, fill: "#6B7280" }}
+   365→                    axisLine={false}
+   366→                    tickLine={false}
+   367→                  />
+   368→                  <YAxis
+   369→                    tick={{ fontSize: 10, fill: "#6B7280" }}
+   370→                    axisLine={false}
+   371→                    tickLine={false}
+   372→                    tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+   373→                  />
+   374→                  <Tooltip content={<ArabicTooltip valueLabel="الإيرادات" />} />
+   375→                  <Area
+   376→                    type="monotone"
+   377→                    dataKey="revenue"
+   378→                    stroke="#D97706"
+   379→                    strokeWidth={2}
+   380→                    fill="url(#revenueGradient)"
+   381→                    dot={{ fill: "#D97706", r: 3 }}
+   382→                    activeDot={{ r: 5, fill: "#B45309" }}
+   383→                  />
+   384→                </AreaChart>
+   385→              </ResponsiveContainer>
+   386→            </div>
+   387→          )}
+   388→        </CardContent>
+   389→      </Card>
+   390→
+   391→      {/* ===== C + D. مخطط دائري للخدمات + الحالات (Recharts PieChart) ===== */}
+   392→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   393→        <Card>
+   394→          <CardHeader className="pb-2">
+   395→            <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   396→              <Package className="h-4 w-4 text-amber-500" />
+   397→              توزيع الطلبات حسب الخدمة
+   398→            </CardTitle>
+   399→            <CardDescription className="text-xs">
+   400→              {(stats?.serviceCounts || []).reduce((s, x) => s + x.count, 0)} طلب إجمالي
+   401→            </CardDescription>
+   402→          </CardHeader>
+   403→          <CardContent>
+   404→            {(!stats?.serviceCounts || stats.serviceCounts.length === 0) ? (
+   405→              <EmptyState text="لا توجد طلبات بعد" />
+   406→            ) : (
+   407→              <div className="h-56">
+   408→                <ResponsiveContainer width="100%" height="100%">
+   409→                  <PieChart>
+   410→                    <Pie
+   411→                      data={stats.serviceCounts
+   412→                        .slice()
+   413→                        .sort((a, b) => b.count - a.count)
+   414→                        .map((s) => ({
+   415→                          name: `${SERVICE_EMOJI[s.serviceType] || ""} ${SERVICE_LABELS[s.serviceType] || s.serviceType}`,
+   416→                          value: s.count,
+   417→                        }))}
+   418→                      cx="50%"
+   419→                      cy="50%"
+   420→                      innerRadius={50}
+   421→                      outerRadius={85}
+   422→                      paddingAngle={3}
+   423→                      dataKey="value"
+   424→                      label={({ name, percent }: { name: string; percent: number }) =>
+   425→                        percent > 0.05 ? (
+   426→                          <tspan x={0} dy={0} textAnchor="middle" fill="#374151" fontSize={11}>
+   427→                            {name} {(percent * 100).toFixed(0)}%
+   428→                          </tspan>
+   429→                        ) : null
+   430→                      }
+   431→                      labelLine={false}
+   432→                    >
+   433→                      {stats.serviceCounts.map((_, i) => (
+   434→                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+   435→                      ))}
+   436→                    </Pie>
+   437→                    <Tooltip content={<PieTooltip />} />
+   438→                  </PieChart>
+   439→                </ResponsiveContainer>
+   440→              </div>
+   441→            )}
+   442→          </CardContent>
+   443→        </Card>
+   444→
+   445→        <Card>
+   446→          <CardHeader className="pb-2">
+   447→            <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   448→              <BarChart3 className="h-4 w-4 text-amber-500" />
+   449→              توزيع الطلبات حسب الحالة
+   450→            </CardTitle>
+   451→            <CardDescription className="text-xs">
+   452→              {(() => {
+   453→                const allStatuses = [...STATUS_FLOW, "cancelled"];
+   454→                const counts = stats?.statusCounts || {};
+   455→                return allStatuses.reduce((s, st) => s + (counts[st] || 0), 0);
+   456→              })()} طلب إجمالي
+   457→            </CardDescription>
+   458→          </CardHeader>
+   459→          <CardContent>
+   460→            {(() => {
+   461→              const allStatuses = [...STATUS_FLOW, "cancelled"];
+   462→              const counts = stats?.statusCounts || {};
+   463→              const pieData = allStatuses
+   464→                .map((st) => ({
+   465→                  name: `${STATUS_META[st].emoji} ${STATUS_META[st].label}`,
+   466→                  value: counts[st] || 0,
+   467→                  fill: STATUS_PIE_COLORS[st] || "#9CA3AF",
+   468→                }))
+   469→                .filter((d) => d.value > 0);
+   470→
+   471→              if (pieData.length === 0) return <EmptyState text="لا توجد طلبات بعد" />;
+   472→
+   473→              return (
+   474→                <div className="h-56">
+   475→                  <ResponsiveContainer width="100%" height="100%">
+   476→                    <PieChart>
+   477→                      <Pie
+   478→                        data={pieData}
+   479→                        cx="50%"
+   480→                        cy="50%"
+   481→                        innerRadius={50}
+   482→                        outerRadius={85}
+   483→                        paddingAngle={3}
+   484→                        dataKey="value"
+   485→                        label={({ name, percent }: { name: string; percent: number }) =>
+   486→                          percent > 0.05 ? (
+   487→                            <tspan x={0} dy={0} textAnchor="middle" fill="#374151" fontSize={11}>
+   488→                              {name} {(percent * 100).toFixed(0)}%
+   489→                            </tspan>
+   490→                          ) : null
+   491→                        }
+   492→                        labelLine={false}
+   493→                      >
+   494→                        {pieData.map((entry, i) => (
+   495→                          <Cell key={i} fill={entry.fill} />
+   496→                        ))}
+   497→                      </Pie>
+   498→                      <Tooltip content={<PieTooltip />} />
+   499→                    </PieChart>
+   500→                  </ResponsiveContainer>
+   501→                </div>
+   502→              );
+   503→            })()}
+   504→          </CardContent>
+   505→        </Card>
+   506→      </div>
+   507→
+   508→      {/* ===== E. إيرادات الخدمات (مخطط أفقي) ===== */}
+   509→      <Card>
+   510→        <CardHeader className="pb-2">
+   511→          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   512→            <ArrowUpRight className="h-4 w-4 text-amber-500" />
+   513→            مقارنة إيرادات الخدمات
+   514→          </CardTitle>
+   515→          <CardDescription className="text-xs">
+   516→            إجمالي الإيرادات حسب نوع الخدمة
+   517→          </CardDescription>
+   518→        </CardHeader>
+   519→        <CardContent>
+   520→          {(!stats?.serviceCounts || stats.serviceCounts.length === 0) ? (
+   521→            <EmptyState text="لا توجد بيانات" />
+   522→          ) : (
+   523→            <div className="h-52 md:h-60">
+   524→              <ResponsiveContainer width="100%" height="100%">
+   525→                <BarChart
+   526→                  data={stats.serviceCounts
+   527→                    .slice()
+   528→                    .sort((a, b) => b.revenue - a.revenue)
+   529→                    .map((s) => ({
+   530→                      name: `${SERVICE_EMOJI[s.serviceType]} ${SERVICE_LABELS[s.serviceType] || s.serviceType}`,
+   531→                      revenue: s.revenue,
+   532→                      count: s.count,
+   533→                    }))}
+   534→                  layout="vertical"
+   535→                  margin={{ top: 4, right: 20, left: 4, bottom: 4 }}
+   536→                >
+   537→                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
+   538→                  <XAxis
+   539→                    type="number"
+   540→                    tick={{ fontSize: 10, fill: "#6B7280" }}
+   541→                    axisLine={false}
+   542→                    tickLine={false}
+   543→                    tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+   544→                  />
+   545→                  <YAxis
+   546→                    type="category"
+   547→                    dataKey="name"
+   548→                    tick={{ fontSize: 11, fill: "#374151" }}
+   549→                    axisLine={false}
+   550→                    tickLine={false}
+   551→                    width={110}
+   552→                  />
+   553→                  <Tooltip content={<ArabicTooltip valueLabel="الإيرادات" />} />
+   554→                  <Bar
+   555→                    dataKey="revenue"
+   556→                    fill="#D97706"
+   557→                    radius={[0, 4, 4, 0]}
+   558→                    maxBarSize={28}
+   559→                  />
+   560→                </BarChart>
+   561→              </ResponsiveContainer>
+   562→            </div>
+   563→          )}
+   564→        </CardContent>
+   565→      </Card>
+   566→
+   567→      {/* ===== F. أفضل العملاء ===== */}
+   568→      <Card>
+   569→        <CardHeader className="pb-2">
+   570→          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   571→            <Users className="h-4 w-4 text-amber-500" />
+   572→            أفضل العملاء
+   573→          </CardTitle>
+   574→          <CardDescription className="text-xs">
+   575→            ترتيب حسب عدد الطلبات
+   576→          </CardDescription>
+   577→        </CardHeader>
+   578→        <CardContent>
+   579→          <TopCustomers customers={analytics.topCustomers} />
+   580→        </CardContent>
+   581→      </Card>
+   582→
+   583→      {/* ===== G. خريطة النشاط الأسبوعي ===== */}
+   584→      <Card>
+   585→        <CardHeader className="pb-2">
+   586→          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+   587→            <Calendar className="h-4 w-4 text-amber-500" />
+   588→            النشاط الأسبوعي
+   589→          </CardTitle>
+   590→          <CardDescription className="text-xs">
+   591→            آخر 4 أسابيع — كل خلية تمثّل يوماً واحداً
+   592→          </CardDescription>
+   593→        </CardHeader>
+   594→        <CardContent>
+   595→          <WeeklyHeatmap weeks={analytics.weeklyHeatmap} />
+   596→        </CardContent>
+   597→      </Card>
+   598→    </div>
+   599→  );
+   600→}
+   601→
+   602→// ===== عناوين الأقسام =====
+   603→function SectionHeading({
+   604→  icon: Icon,
+   605→  title,
+   606→  subtitle,
+   607→}: {
+   608→  icon: React.ComponentType<{ className?: string }>;
+   609→  title: string;
+   610→  subtitle?: string;
+   611→}) {
+   612→  return (
+   613→    <div className="flex items-center justify-between gap-2 mb-2.5">
+   614→      <div className="flex items-center gap-2">
+   615→        <div className="w-7 h-7 rounded-lg bg-neutral-900 flex items-center justify-center shrink-0">
+   616→          <Icon className="h-3.5 w-3.5 text-amber-400" />
+   617→        </div>
+   618→        <h3 className="text-sm md:text-base font-bold">{title}</h3>
+   619→      </div>
+   620→      {subtitle && (
+   621→        <span className="text-xs text-muted-foreground tabular-nums">{subtitle}</span>
+   622→      )}
+   623→    </div>
+   624→  );
+   625→}
+   626→
+   627→// ===== بطاقة شهرية =====
+   628→function MonthlyCard({
+   629→  title,
+   630→  value,
+   631→  icon: Icon,
+   632→  trend,
+   633→  color,
+   634→}: {
+   635→  title: string;
+   636→  value: string;
+   637→  icon: React.ComponentType<{ className?: string }>;
+   638→  trend?: number;
+   639→  color: "emerald" | "amber" | "cyan" | "rose";
+   640→}) {
+   641→  const colorMap = {
+   642→    emerald: { text: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+   643→    amber: { text: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30" },
+   644→    cyan: { text: "text-cyan-600", bg: "bg-cyan-50 dark:bg-cyan-950/30" },
+   645→    rose: { text: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30" },
+   646→  };
+   647→  const c = colorMap[color];
+   648→  const hasTrend = typeof trend === "number" && isFinite(trend);
+   649→  const isUp = hasTrend && trend! >= 0;
+   650→  return (
+   651→    <Card>
+   652→      <CardContent className="p-3 md:p-4">
+   653→        <div className="flex items-start justify-between gap-2">
+   654→          <div className="min-w-0 flex-1">
+   655→            <div className="text-xs text-muted-foreground truncate">{title}</div>
+   656→            <div className="text-base md:text-xl font-bold tabular-nums truncate mt-1">
+   657→              {value}
+   658→            </div>
+   659→            {hasTrend && (
+   660→              <div
+   661→                className={cn(
+   662→                  "text-xs mt-1 flex items-center gap-0.5 tabular-nums",
+   663→                  isUp ? "text-emerald-600" : "text-rose-600 dark:text-rose-400",
+   664→                )}
+   665→              >
+   666→                {isUp ? (
+   667→                  <TrendingUp className="h-3 w-3" />
+   668→                ) : (
+   669→                  <TrendingDown className="h-3 w-3" />
+   670→                )}
+   671→                {Math.abs(trend!).toFixed(0)}% عن الشهر الماضي
+   672→              </div>
+   673→            )}
+   674→          </div>
+   675→          <div
+   676→            className={cn(
+   677→              "w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0",
+   678→              c.bg,
+   679→            )}
+   680→          >
+   681→            <Icon className={cn("h-4 w-4 md:h-5 md:w-5", c.text)} />
+   682→          </div>
+   683→        </div>
+   684→      </CardContent>
+   685→    </Card>
+   686→  );
+   687→}
+   688→
+   689→// ===== أفضل العملاء =====
+   690→function TopCustomers({ customers }: { customers: TopCustomer[] }) {
+   691→  if (customers.length === 0) {
+   692→    return <EmptyState text="لا توجد بيانات عملاء بعد" />;
+   693→  }
+   694→  const medals = ["🥇", "🥈", "🥉"];
+   695→  return (
+   696→    <div className="space-y-2">
+   697→      {customers.map((c, i) => (
+   698→        <div
+   699→          key={i}
+   700→          className="flex items-center gap-3 p-2.5 md:p-3 rounded-lg bg-muted/40 border border-border/50"
+   701→        >
+   702→          <span className="text-xl shrink-0 w-7 text-center">
+   703→            {medals[i] || "👤"}
+   704→          </span>
+   705→          <div className="flex-1 min-w-0">
+   706→            <div className="font-medium text-sm truncate">{c.name}</div>
+   707→            <div className="text-xs text-muted-foreground" dir="ltr">
+   708→              {c.phone || "—"}
+   709→            </div>
+   710→          </div>
+   711→          <div className="text-left shrink-0">
+   712→            <div className="text-xs text-muted-foreground tabular-nums">
+   713→              {c.count} طلب
+   714→            </div>
+   715→            <div className="font-bold text-sm text-amber-700 dark:text-amber-400 tabular-nums">
+   716→              {formatDA(c.total)}
+   717→            </div>
+   718→          </div>
+   719→        </div>
+   720→      ))}
+   721→    </div>
+   722→  );
+   723→}
+   724→
+   725→// ===== خريطة النشاط الأسبوعي (CSS Grid) =====
+   726→function WeeklyHeatmap({ weeks }: { weeks: WeekBucket[] }) {
+   727→  const maxCount = Math.max(
+   728→    ...weeks.flatMap((w) => w.days.map((d) => d.count)),
+   729→    1,
+   730→  );
+   731→
+   732→  function colorForCount(count: number) {
+   733→    if (count === 0) return "bg-muted/60";
+   734→    const intensity = count / maxCount;
+   735→    if (intensity > 0.75) return "bg-amber-500 text-white";
+   736→    if (intensity > 0.5) return "bg-amber-400 text-neutral-900 dark:text-neutral-900";
+   737→    if (intensity > 0.25) return "bg-amber-300 text-neutral-900 dark:text-neutral-900";
+   738→    return "bg-amber-200 text-neutral-900 dark:text-neutral-900";
+   739→  }
+   740→
+   741→  return (
+   742→    <div className="space-y-2">
+   743→      <div className="flex items-center gap-1" dir="rtl">
+   744→        <div className="w-14 md:w-20 text-xs text-muted-foreground shrink-0">
+   745→          اليوم
+   746→        </div>
+   747→        {weeks.map((w, i) => (
+   748→          <div
+   749→            key={i}
+   750→            title={w.rangeLabel}
+   751→            className="flex-1 text-center text-xs font-bold text-neutral-700 tabular-nums cursor-help"
+   752→          >
+   753→            {w.label}
+   754→          </div>
+   755→        ))}
+   756→      </div>
+   757→      {WEEKDAY_NAMES_AR.map((dayName, dayIdx) => (
+   758→        <div key={dayIdx} className="flex items-center gap-1" dir="rtl">
+   759→          <div className="w-14 md:w-20 text-xs text-muted-foreground shrink-0 truncate">
+   760→            {dayName}
+   761→          </div>
+   762→          {weeks.map((w, weekIdx) => {
+   763→            const day = w.days.find((d) => d.date.getDay() === dayIdx);
+   764→            const count = day?.count || 0;
+   765→            const dateLabel = day
+   766→              ? day.date.toLocaleDateString("ar-SA-u-nu-latn", {
+   767→                  day: "2-digit",
+   768→                  month: "2-digit",
+   769→                })
+   770→              : "";
+   771→            return (
+   772→              <div
+   773→                key={weekIdx}
+   774→                className={cn(
+   775→                  "flex-1 aspect-square rounded-md flex items-center justify-center text-xs font-bold tabular-nums transition-colors",
+   776→                  colorForCount(count),
+   777→                )}
+   778→                title={`${dayName} ${dateLabel}: ${count} طلب`}
+   779→              >
+   780→                {count > 0 ? count : ""}
+   781→              </div>
+   782→            );
+   783→          })}
+   784→        </div>
+   785→      ))}
+   786→      <div
+   787→        className="flex items-center gap-1 pt-2 border-t border-border/50"
+   788→        dir="rtl"
+   789→      >
+   790→        <div className="w-14 md:w-20 text-xs text-muted-foreground shrink-0">
+   791→          الإجمالي
+   792→        </div>
+   793→        {weeks.map((w, i) => (
+   794→          <div
+   795→            key={i}
+   796→            className="flex-1 text-center text-xs font-bold text-neutral-900 dark:text-neutral-100 tabular-nums py-1 rounded bg-muted/40"
+   797→          >
+   798→            {w.total}
+   799→          </div>
+   800→        ))}
+   801→      </div>
+   802→      <div className="flex items-center justify-center gap-3 pt-2 text-xs text-muted-foreground flex-wrap">
+   803→        <span>أقل</span>
+   804→        <span className="w-4 h-4 rounded-sm bg-muted/60" />
+   805→        <span className="w-4 h-4 rounded-sm bg-amber-200" />
+   806→        <span className="w-4 h-4 rounded-sm bg-amber-300" />
+   807→        <span className="w-4 h-4 rounded-sm bg-amber-400" />
+   808→        <span className="w-4 h-4 rounded-sm bg-amber-500" />
+   809→        <span>أكثر</span>
+   810→      </div>
+   811→    </div>
+   812→  );
+   813→}
+   814→
+   815→// ===== حالة فارغة =====
+   816→function EmptyState({ text }: { text: string }) {
+   817→  return (
+   818→    <div className="py-8 text-center text-muted-foreground text-xs">
+   819→      <Inbox className="h-8 w-8 mx-auto mb-2 opacity-50" />
+   820→      {text}
+   821→    </div>
+   822→  );
+   823→}
+   824→
+   825→// ===== حساب كل المؤشرات =====
+   826→function computeAnalytics(orders: PrintOrderLite[]): AnalyticsResult {
+   827→  const now = new Date();
+   828→  const thisMonth = now.getMonth();
+   829→  const thisYear = now.getFullYear();
+   830→
+   831→  // طلبات الشهر الحالي
+   832→  const monthlyOrders = orders.filter((o) => {
+   833→    const d = new Date(o.createdAt);
+   834→    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+   835→  });
+   836→  const monthlyRevenue = monthlyOrders.reduce((s, o) => s + o.total, 0);
+   837→  const monthlyCount = monthlyOrders.length;
+   838→
+   839→  // طلبات الشهر الماضي
+   840→  const lastMonthDate = new Date(thisYear, thisMonth - 1, 1);
+   841→  const lastMonthOrders = orders.filter((o) => {
+   842→    const d = new Date(o.createdAt);
+   843→    return (
+   844→      d.getMonth() === lastMonthDate.getMonth() &&
+   845→      d.getFullYear() === lastMonthDate.getFullYear()
+   846→    );
+   847→  });
+   848→  const lastMonthRevenue = lastMonthOrders.reduce((s, o) => s + o.total, 0);
+   849→  const lastMonthCount = lastMonthOrders.length;
+   850→
+   851→  const monthlyRevenueTrend =
+   852→    lastMonthRevenue > 0
+   853→      ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+   854→      : monthlyRevenue > 0
+   855→        ? 100
+   856→        : 0;
+   857→  const monthlyCountTrend =
+   858→    lastMonthCount > 0
+   859→      ? ((monthlyCount - lastMonthCount) / lastMonthCount) * 100
+   860→      : monthlyCount > 0
+   861→        ? 100
+   862→        : 0;
+   863→
+   864→  const avgOrderValue = monthlyCount > 0 ? monthlyRevenue / monthlyCount : 0;
+   865→
+   866→  const nonCancelled = orders.filter((o) => o.status !== "cancelled");
+   867→  const delivered = orders.filter((o) => o.status === "delivered");
+   868→  const deliveryRate =
+   869→    nonCancelled.length > 0
+   870→      ? (delivered.length / nonCancelled.length) * 100
+   871→      : 0;
+   872→
+   873→  // آخر 6 أشهر
+   874→  const last6Months: MonthBucket[] = [];
+   875→  for (let i = 5; i >= 0; i--) {
+   876→    const d = new Date(thisYear, thisMonth - i, 1);
+   877→    const m = d.getMonth();
+   878→    const y = d.getFullYear();
+   879→    const monthOrders = orders.filter((o) => {
+   880→      const od = new Date(o.createdAt);
+   881→      return od.getMonth() === m && od.getFullYear() === y;
+   882→    });
+   883→    last6Months.push({
+   884→      label: MONTH_NAMES_AR[m],
+   885→      revenue: monthOrders.reduce((s, o) => s + o.total, 0),
+   886→      count: monthOrders.length,
+   887→    });
+   888→  }
+   889→
+   890→  // منحنى يومي (آخر 14 يوم)
+   891→  const dailyTrend: DayBucket[] = [];
+   892→  for (let i = 13; i >= 0; i--) {
+   893→    const dayDate = new Date(now);
+   894→    dayDate.setDate(now.getDate() - i);
+   895→    dayDate.setHours(0, 0, 0, 0);
+   896→    const nextDay = new Date(dayDate);
+   897→    nextDay.setDate(dayDate.getDate() + 1);
+   898→    const dayOrders = orders.filter((o) => {
+   899→      const od = new Date(o.createdAt);
+   900→      return od >= dayDate && od < nextDay;
+   901→    });
+   902→    dailyTrend.push({
+   903→      label: dayDate.toLocaleDateString("ar-SA-u-nu-latn", {
+   904→        day: "2-digit",
+   905→        month: "2-digit",
+   906→      }),
+   907→      revenue: dayOrders.reduce((s, o) => s + o.total, 0),
+   908→      count: dayOrders.length,
+   909→    });
+   910→  }
+   911→
+   912→  // أفضل العملاء
+   913→  const customerMap: Record<string, TopCustomer> = {};
+   914→  orders.forEach((o) => {
+   915→    const key = o.customer.phone || o.customer.name;
+   916→    if (!customerMap[key]) {
+   917→      customerMap[key] = {
+   918→        name: o.customer.name,
+   919→        phone: o.customer.phone,
+   920→        count: 0,
+   921→        total: 0,
+   922→      };
+   923→    }
+   924→    customerMap[key].count += 1;
+   925→    customerMap[key].total += o.total;
+   926→  });
+   927→  const topCustomers = Object.values(customerMap)
+   928→    .sort((a, b) => b.count - a.count || b.total - a.total)
+   929→    .slice(0, 3);
+   930→
+   931→  // خريطة النشاط الأسبوعي
+   932→  const today = new Date();
+   933→  today.setHours(0, 0, 0, 0);
+   934→  const dayOfWeek = today.getDay();
+   935→  const currentWeekStartOffset = (dayOfWeek + 1) % 7;
+   936→  const currentWeekStart = new Date(today);
+   937→  currentWeekStart.setDate(today.getDate() - currentWeekStartOffset);
+   938→
+   939→  const weeklyHeatmap: WeekBucket[] = [];
+   940→  for (let w = 3; w >= 0; w--) {
+   941→    const weekStart = new Date(currentWeekStart);
+   942→    weekStart.setDate(currentWeekStart.getDate() - w * 7);
+   943→    const weekEnd = new Date(weekStart);
+   944→    weekEnd.setDate(weekStart.getDate() + 6);
+   945→    const days: { date: Date; count: number }[] = [];
+   946→    let total = 0;
+   947→    for (let d = 0; d < 7; d++) {
+   948→      const dayDate = new Date(weekStart);
+   949→      dayDate.setDate(weekStart.getDate() + d);
+   950→      const dayCount = orders.filter((o) => {
+   951→        const od = new Date(o.createdAt);
+   952→        return od.toDateString() === dayDate.toDateString();
+   953→      }).length;
+   954→      days.push({ date: dayDate, count: dayCount });
+   955→      total += dayCount;
+   956→    }
+   957→    const weekNum = 4 - w;
+   958→    const rangeLabel = `${weekStart.toLocaleDateString("ar-SA-u-nu-latn", {
+   959→      day: "2-digit",
+   960→      month: "2-digit",
+   961→    })} - ${weekEnd.toLocaleDateString("ar-SA-u-nu-latn", {
+   962→      day: "2-digit",
+   963→      month: "2-digit",
+   964→    })}`;
+   965→    weeklyHeatmap.push({ label: `أ${weekNum}`, rangeLabel, days, total });
+   966→  }
+   967→
+   968→  return {
+   969→    monthlyRevenue,
+   970→    monthlyCount,
+   971→    monthlyRevenueTrend,
+   972→    monthlyCountTrend,
+   973→    avgOrderValue,
+   974→    deliveryRate,
+   975→    last6Months,
+   976→    topCustomers,
+   977→    weeklyHeatmap,
+   978→    dailyTrend,
+   979→  };
+   980→}
