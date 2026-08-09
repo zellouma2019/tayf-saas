@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withRateLimit } from "@/lib/rate-limit";
 
+/// جلب تفاصيل متجر مع كلمة المرور (للمدير العام فقط)
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const rl = withRateLimit(_req, "admin-shop-get");
+  if (!rl.ok) return rl.response;
+
+  try {
+    const { slug } = await params;
+    const shop = await db.shop.findUnique({
+      where: { slug },
+      include: { _count: { select: { orders: true } } },
+    });
+    if (!shop) {
+      return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
+    }
+    return NextResponse.json({ shop });
+  } catch {
+    return NextResponse.json({ error: "خطأ في جلب بيانات المتجر" }, { status: 500 });
+  }
+}
+
 /// تحديث متجر من طرف المالك (بدون كلمة مرور)
 export async function PUT(
   req: NextRequest,

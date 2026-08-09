@@ -9,7 +9,7 @@ import {
   Lock, Settings, CalendarDays, Menu, LayoutDashboard, BarChart3,
   Users, UsersRound, Globe, Key, Bell, ToggleLeft, ToggleRight,
   Mail, Phone, MessageCircle, Palette, Clock, AlertTriangle, CheckCircle2,
-  ChevronDown, ChevronUp, Save, X, Copy, ExternalLink, Pencil, Zap,
+  ChevronDown, ChevronUp, Save, X, Copy, ExternalLink, Pencil, Zap, Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -217,6 +217,240 @@ function InlineCreateShop({ open, onClose, onCreated }: { open: boolean; onClose
   );
 }
 
+// ===== Edit Shop Dialog =====
+interface EditShopData {
+  slug: string; name: string; phone: string | null;
+  ownerName: string | null; ownerPhone: string | null;
+  whatsapp: string | null; email: string | null; address: string | null;
+  country: string | null; isActive: boolean; plan: string;
+  primaryColor: string | null; adminPin: string;
+}
+
+function InlineEditShop({ open, onClose, shop, onSaved }: {
+  open: boolean; onClose: () => void;
+  shop: ShopItem | null; onSaved: () => void;
+}) {
+  const [data, setData] = useState<EditShopData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // جلب بيانات المتجر الكاملة عند الفتح
+  useEffect(() => {
+    if (!open || !shop) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/shops/${shop.slug}`);
+        if (res.ok && !cancelled) {
+          const d = await res.json();
+          const s = d.shop;
+          setData({
+            slug: s.slug, name: s.name, phone: s.phone,
+            ownerName: s.ownerName, ownerPhone: s.ownerPhone,
+            whatsapp: s.whatsapp, email: s.email, address: s.address,
+            country: s.country, isActive: s.isActive,
+            plan: s.plan || 'free', primaryColor: s.primaryColor,
+            adminPin: s.adminPin,
+          });
+        } else if (!cancelled) {
+          toast.error('فشل تحميل بيانات المتجر');
+          onClose();
+        }
+      } catch { if (!cancelled) { toast.error('خطأ في الاتصال'); onClose(); } }
+      finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [open, shop, onClose]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!data) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/shops/${data.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name, phone: data.phone, ownerName: data.ownerName,
+          ownerPhone: data.ownerPhone, whatsapp: data.whatsapp,
+          email: data.email, address: data.address, country: data.country,
+          isActive: data.isActive, plan: data.plan,
+          primaryColor: data.primaryColor, adminPin: data.adminPin,
+        }),
+      });
+      if (res.ok) { toast.success('تم تحديث المتجر بنجاح'); onSaved(); onClose(); }
+      else { const d = await res.json().catch(() => ({})); toast.error(d.error || 'فشل التحديث'); }
+    } catch { toast.error('خطأ في الاتصال'); }
+    finally { setSaving(false); }
+  }
+
+  function setField<K extends keyof EditShopData>(key: K, val: EditShopData[K]) {
+    setData((prev) => (prev ? { ...prev, [key]: val } : prev));
+  }
+
+  if (!open) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogTitle>تعديل المتجر</DialogTitle>
+        <DialogDescription>تعديل بيانات وإعدادات المتجر</DialogDescription>
+        {loading || !data ? (
+          <div className="py-8 flex justify-center"><Skeleton className="h-48 w-full rounded-lg" /></div>
+        ) : (
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسم المتجر *</Label>
+              <Input value={data.name} onChange={(e) => setField('name', e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>اسم المالك</Label>
+                <Input value={data.ownerName || ''} onChange={(e) => setField('ownerName', e.target.value || null)} />
+              </div>
+              <div className="space-y-2">
+                <Label>هاتف المالك</Label>
+                <Input value={data.ownerPhone || ''} onChange={(e) => setField('ownerPhone', e.target.value || null)} dir="ltr" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>هاتف المتجر</Label>
+                <Input value={data.phone || ''} onChange={(e) => setField('phone', e.target.value || null)} dir="ltr" />
+              </div>
+              <div className="space-y-2">
+                <Label>واتساب</Label>
+                <Input value={data.whatsapp || ''} onChange={(e) => setField('whatsapp', e.target.value || null)} dir="ltr" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>البريد الإلكتروني</Label>
+                <Input value={data.email || ''} onChange={(e) => setField('email', e.target.value || null)} dir="ltr" type="email" />
+              </div>
+              <div className="space-y-2">
+                <Label>الدولة</Label>
+                <Select value={data.country || 'DZ'} onValueChange={(v) => setField('country', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{ARAB_COUNTRIES.map((c) => (<SelectItem key={c.code} value={c.code}>{c.flag} {c.name_ar}</SelectItem>))}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>العنوان</Label>
+              <Input value={data.address || ''} onChange={(e) => setField('address', e.target.value || null)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>الخطة</Label>
+                <Select value={data.plan} onValueChange={(v) => setField('plan', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">مجانية</SelectItem>
+                    <SelectItem value="paid">مدفوعة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>اللون الأساسي</Label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="h-9 w-12 rounded-md border cursor-pointer" />
+                  <Input value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="flex-1 font-mono text-xs" dir="ltr" />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <Label className="!mb-0">حالة المتجر</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{data.isActive ? 'نشط' : 'متوقف'}</span>
+                <Switch checked={data.isActive} onCheckedChange={(v) => setField('isActive', v)} />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">إلغاء</Button>
+              <Button type="submit" disabled={saving || !data.name} className="flex-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+                {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+              </Button>
+            </div>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===== Share Shop Dialog =====
+function InlineShareShop({ open, onClose, shop }: {
+  open: boolean; onClose: () => void; shop: ShopItem | null;
+}) {
+  const [pinData, setPinData] = useState<{ pin: string; loaded: boolean }>({ pin: '', loaded: false });
+
+  useEffect(() => {
+    if (!open || !shop) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/shops/${shop.slug}`);
+        if (res.ok && !cancelled) {
+          const d = await res.json();
+          setPinData({ pin: d.shop.adminPin || '', loaded: true });
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [open, shop]);
+
+  if (!open || !shop) return null;
+
+  const customerLink = `/s/${shop.slug}`;
+  const adminLink = `/s/${shop.slug}?admin=1`;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogTitle>مشاركة المتجر</DialogTitle>
+        <DialogDescription>روابط وكلمة مرور متجر {shop.name}</DialogDescription>
+        <div className="space-y-3 pt-2">
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">رابط الزبون</span>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono" dir="ltr">{customerLink}</code>
+              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(customerLink, 'تم النسخ', customerLink)}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">رابط الإدارة</span>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono" dir="ltr">{adminLink}</code>
+              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(adminLink, 'تم النسخ', adminLink)}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          <Separator />
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">كلمة مرور الإدارة (PIN)</span>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-sm bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-lg font-mono font-bold text-amber-700 dark:text-amber-300" dir="ltr">
+                {pinData.loaded ? (pinData.pin || '—') : '...'}
+              </code>
+              {pinData.loaded && pinData.pin && (
+                <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(pinData.pin, 'تم نسخ PIN', pinData.pin)}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        <Button onClick={onClose} className="w-full mt-4">تم</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ===== Mini Bar Chart (CSS-based, no Recharts) =====
 function MiniBarChart({ data, maxValue, color = 'bg-primary' }: { data: number[]; maxValue?: number; color?: string }) {
   const max = maxValue || Math.max(...data, 1);
@@ -250,6 +484,8 @@ export default function AdminPage() {
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [adminName, setAdminName] = useState('مدير المنصة');
   const [deleteTarget, setDeleteTarget] = useState<ShopItem | null>(null);
+  const [editTarget, setEditTarget] = useState<ShopItem | null>(null);
+  const [shareTarget, setShareTarget] = useState<ShopItem | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -343,6 +579,34 @@ export default function AdminPage() {
     catch { toast.error('خطأ'); }
     setDeleteTarget(null);
   }, [deleteTarget, fetchData]);
+
+  const handleToggleShop = useCallback(async (shop: ShopItem) => {
+    try {
+      const res = await fetch(`/api/admin/shops/${shop.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !shop.isActive }),
+      });
+      if (res.ok) {
+        toast.success(shop.isActive ? 'تم إيقاف المتجر' : 'تم تفعيل المتجر');
+        fetchData();
+      } else toast.error('فشل تغيير الحالة');
+    } catch { toast.error('خطأ'); }
+  }, [fetchData]);
+
+  const handleCopyPin = useCallback(async (shop: ShopItem) => {
+    try {
+      const res = await fetch(`/api/admin/shops/${shop.slug}`);
+      if (res.ok) {
+        const d = await res.json();
+        const pin = d.shop?.adminPin;
+        if (pin) { robustCopy(pin, 'تم نسخ PIN', pin); }
+        else toast.error('لا توجد كلمة مرور');
+      } else toast.error('فشل جلب PIN');
+    } catch { toast.error('خطأ في الاتصال'); }
+  }, []);
+
+  const handleShopSaved = useCallback(() => { setEditTarget(null); fetchData(); }, [fetchData]);
 
   const handleLogout = useCallback(() => { clearSession(); setAuthenticated(false); setShops([]); setRecentOrders([]); }, []);
 
@@ -672,9 +936,21 @@ export default function AdminPage() {
                               <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50"><CalendarDays className="h-3 w-3 text-muted-foreground" /><span>{getTimeAgoShort(shop.createdAt)}</span></div>
                             </div>
                             {shop.ownerName && <p className="text-xs text-muted-foreground">👤 {shop.ownerName}{shop.phone ? ` · ${shop.phone}` : ''}</p>}
-                            <div className="flex gap-2 pt-1">
-                              <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs" onClick={() => window.open(`/s/${shop.slug}`, '_blank')}><Eye className="h-3 w-3" />عرض</Button>
-                              <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs" onClick={() => window.open(`/s/${shop.slug}?admin=1`, '_blank')}><Shield className="h-3 w-3" />إدارة</Button>
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => window.open(`/s/${shop.slug}`, '_blank')}><Eye className="h-3 w-3" />عرض</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => window.open(`/s/${shop.slug}?admin=1`, '_blank')}><Shield className="h-3 w-3" />إدارة</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setEditTarget(shop)}><Pencil className="h-3 w-3" />تعديل</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShareTarget(shop)}><Share2 className="h-3 w-3" />مشاركة</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleCopyPin(shop)}><Key className="h-3 w-3" />PIN</Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={"gap-1 text-xs " + (shop.isActive ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700')}
+                                onClick={() => handleToggleShop(shop)}
+                              >
+                                {shop.isActive ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
+                                {shop.isActive ? 'إيقاف' : 'تفعيل'}
+                              </Button>
                               <Button size="sm" variant="outline" className="gap-1 text-xs text-rose-500 hover:text-rose-600" onClick={() => setDeleteTarget(shop)}><Trash2 className="h-3 w-3" /></Button>
                             </div>
                           </CardContent>
@@ -1097,6 +1373,8 @@ export default function AdminPage() {
       </div>
 
       <InlineCreateShop open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleShopCreated} />
+      <InlineEditShop open={!!editTarget} onClose={() => setEditTarget(null)} shop={editTarget} onSaved={handleShopSaved} />
+      <InlineShareShop open={!!shareTarget} onClose={() => setShareTarget(null)} shop={shareTarget} />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent dir="rtl">

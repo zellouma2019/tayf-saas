@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Package, Clock, FileText, Eye, Printer } from "lucide-react";
+import { Search, Package, Clock, FileText, Eye, Printer, FileDown, Trash2 } from "lucide-react";
 import { OrderTimeline } from "@/components/app/order-timeline";
 import { toast } from "sonner";
 import {
@@ -14,6 +14,17 @@ import {
   formatDateTimeAr,
 } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
+import { OrderReceipt } from "@/components/app/order-receipt";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/app/empty-state";
 
 function isPdfFile(fileType: string | null): boolean {
@@ -200,7 +211,7 @@ export function TrackOrder() {
               </div>
             </div>
             {orders.map((o) => (
-              <OrderTrackingCard key={o.id} order={o} onViewFile={handleViewFile} />
+              <OrderTrackingCard key={o.id} order={o} onViewFile={handleViewFile} onRefresh={() => performSearch(lastQueryRef.current)} />
             ))}
           </div>
         )}
@@ -209,13 +220,58 @@ export function TrackOrder() {
   );
 }
 
+const handleDownloadInvoice = async (orderId: string, reference: string) => {
+  try {
+    const res = await fetch(`/api/orders/${orderId}/invoice`);
+    if (!res.ok) throw new Error();
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice-${reference}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('تم تحميل الفاتورة');
+  } catch {
+    toast.error('فشل تحميل الفاتورة');
+  }
+};
+
 function OrderTrackingCard({
   order,
   onViewFile,
+  onRefresh,
 }: {
   order: PrintOrderLite;
   onViewFile: (order: PrintOrderLite) => void;
+  onRefresh: () => void;
 }) {
+  const [cancelTarget, setCancelTarget] = useState<PrintOrderLite | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancel = async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      const res = await fetch('/api/track/cancel', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference: cancelTarget.reference }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'فشل في إلغاء الطلب');
+      }
+      toast.success('تم إلغاء الطلب بنجاح');
+      setCancelTarget(null);
+      onRefresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'فشل في إلغاء الطلب');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const meta = STATUS_META[order.status];
   const serviceEmoji: Record<string, string> = {
     document: "🖨️",
@@ -294,7 +350,7 @@ function OrderTrackingCard({
             </div>
           </div>
 
-          <div className="flex gap-1.5 shrink-0">
+          <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
             {order.fileType && (
               <Button
                 size="sm"
@@ -306,7 +362,49 @@ function OrderTrackingCard({
                 معاينة
               </Button>
             )}
+            <OrderReceipt orderId={order.id} />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-2 text-xs"
+              onClick={() => handleDownloadInvoice(order.id, order.reference)}
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              تحميل الفاتورة
+            </Button>
+            {order.status === 'pending' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-800/50"
+                onClick={() => setCancelTarget(order)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                إلغاء
+              </Button>
+            )}
           </div>
+
+          <AlertDialog open={!!cancelTarget} onOpenChange={(open) => { if (!open) setCancelTarget(null); }}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>تأكيد إلغاء الطلب</AlertDialogTitle>
+                <AlertDialogDescription>
+                  هل أنت متأكد من إلغاء الطلب رقم <span className="font-bold text-foreground">{cancelTarget?.reference}</span>؟ لا يمكن التراجع عن هذا الإجراء.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={cancelling}>تراجع</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => { e.preventDefault(); handleCancel(); }}
+                  disabled={cancelling}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {cancelling ? 'جارٍ الإلغاء...' : 'نعم، إلغاء الطلب'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         <div className="mt-3">
