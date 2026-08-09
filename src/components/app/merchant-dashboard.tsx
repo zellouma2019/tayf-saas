@@ -1,0 +1,4178 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useState, useEffect, useCallback, useMemo, useRef, Component } from "react";
+import { useShop } from "@/lib/shop-context";
+import {
+  Package,
+  Settings,
+  Store,
+  Link2,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Search,
+  MoreHorizontal,
+  Lock,
+  ShieldCheck,
+  AlertCircle,
+  Copy,
+  ExternalLink,
+  Printer,
+  Phone,
+  Mail,
+  MapPin,
+  MessageCircle,
+  User,
+  Palette,
+  Save,
+  ChevronLeft,
+  TrendingUp,
+  DollarSign,
+  Clock,
+  Inbox,
+  Download,
+  FileText,
+  Upload,
+  X,
+  Crown,
+  QrCode,
+  Trash2,
+  CheckSquare,
+  Check,
+  CheckCircle2,
+  LayoutGrid, Menu,
+  ListChecks,
+  Tag,
+  StickyNote,
+  SlidersHorizontal,
+  Table2,
+  Columns3,
+  Plus,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Bell,
+  BarChart3,
+  Users,
+  Calendar as CalendarIcon,
+  Star,
+  Share2,
+  Repeat,
+  Timer,
+  Flame,
+  Activity,
+} from "lucide-react";
+import { ThemeToggle } from "@/components/app/theme-toggle";
+import { OrderInvoiceCard } from "@/components/app/order-invoice-card";
+import ShopCustomizationPreview from "@/components/app/shop-customization-preview";
+import QuickActionsToolbar from "@/components/app/quick-actions-toolbar";
+import type { LucideIcon } from "lucide-react";
+import {
+  Printer as PrinterIcon,
+  BookOpen as BookOpenIcon,
+  Scissors as ScissorsIcon,
+  Palette as PaletteIcon,
+  Image as ImageIcon,
+  Tag as TagIcon,
+  Layers as LayersIcon,
+  PenTool as PenToolIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  STATUS_META,
+  STATUS_FLOW,
+  SERVICE_MAP,
+  formatDA,
+  formatDateTimeAr,
+} from "@/lib/print-config";
+import type { PrintOrderLite } from "@/lib/order-types";
+import { printReceipt } from "@/lib/print-receipt";
+import { generateStatsReport, type StatsReportData } from "@/lib/pdf-stats-report";
+import { DashboardSidebar, type SidebarSection } from "@/components/ui/dashboard-sidebar";
+import { SHOP_THEMES } from "@/lib/themes";
+import { Skeleton } from "@/components/ui/skeleton";
+import { type FeatureKey } from "@/lib/shop-features";
+const PrintQueueWidget = dynamic(() => import("@/components/app/print-queue-widget").then((m) => ({ default: m.PrintQueueWidget })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const RevenueGoalWidget = dynamic(() => import("@/components/app/revenue-goal-widget").then((m) => ({ default: m.RevenueGoalWidget })), { ssr: false, loading: () => <DynamicSkeleton /> });
+// Dynamic imports لتقليل استهلاك الذاكرة أثناء التجميع
+const MotionDiv = dynamic(() => import('framer-motion').then(m => ({ default: m.motion.div })), { ssr: false });
+import { motion, AnimatePresence } from 'framer-motion';
+const OrderDetailsRow = dynamic(() => import("@/components/app/order-details-row").then((m) => ({ default: m.OrderDetailsRow })), { ssr: false });
+const AdminAnalytics = dynamic(() => import("@/components/app/admin-analytics").then((m) => ({ default: m.AdminAnalytics })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const MerchantOrderDetail = dynamic(() => import("@/components/app/merchant-order-detail").then((m) => ({ default: m.MerchantOrderDetail })), { ssr: false });
+const MerchantSettingsAdvanced = dynamic(() => import("@/components/app/merchant-settings-advanced").then((m) => ({ default: m.MerchantSettingsAdvanced })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const MerchantCustomers = dynamic(() => import("@/components/app/merchant-customers").then((m) => ({ default: m.MerchantCustomers })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const CustomerLoyaltyBadge = dynamic(() => import("@/components/app/customer-loyalty-badge").then((m) => ({ default: m.CustomerLoyaltyBadge })), { ssr: false });
+const MerchantExpenses = dynamic(() => import("@/components/app/merchant-expenses").then((m) => ({ default: m.MerchantExpenses })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const KanbanBoard = dynamic(() => import("@/components/app/kanban-board").then((m) => ({ default: m.KanbanBoard })), { ssr: false, loading: () => <DynamicSkeleton /> });
+const MerchantAnalytics = dynamic(() => import("@/components/app/merchant-analytics").then((m) => ({ default: m.MerchantAnalytics })), { ssr: false, loading: () => <DynamicSkeleton /> });
+
+// ===== Sound Notification Helper =====
+function playNotificationSound() {
+  if (typeof window === "undefined") return;
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(587, ctx.currentTime);
+    oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(1047, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.5);
+  } catch {}
+}
+
+function DynamicSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-64 rounded-xl" />
+    </div>
+  );
+}
+
+// QRCode import خفيف
+let QRCodeModule: typeof import("qrcode") | null = null;
+async function getQRCode() {
+  if (!QRCodeModule) QRCodeModule = await import("qrcode");
+  return QRCodeModule;
+}
+
+// ===== الأنواع =====
+interface AdminStats {
+  totalOrders: number;
+  totalRevenue: number;
+  todayOrders: number;
+  statusCounts: Record<string, number>;
+  serviceCounts: { serviceType: string; count: number; revenue: number }[];
+  recentOrders: PrintOrderLite[];
+}
+
+type MerchantTab = "home" | "orders" | "customers" | "expenses" | "analytics" | "settings" | "advancedSettings" | "share" | "preview";
+type OrderViewMode = "table" | "kanban";
+
+// ===== مقياس إنجاز اليوم =====
+function TodayAchievementGauge({ achievement }: { achievement: { total: number; completed: number; percentage: number } }) {
+  const [animatedPct, setAnimatedPct] = useState(0);
+  const pct = achievement.percentage;
+  const color = pct > 70 ? "emerald" : pct >= 40 ? "amber" : "rose";
+  const strokeColor =
+    color === "emerald"
+      ? "#10b981"
+      : color === "amber"
+        ? "#f59e0b"
+        : "#f43f5e";
+  const trackColor =
+    color === "emerald"
+      ? "rgba(16,185,129,0.15)"
+      : color === "amber"
+        ? "rgba(245,158,11,0.15)"
+        : "rgba(244,63,94,0.15)";
+  const textColorClass =
+    color === "emerald"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : color === "amber"
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-rose-600 dark:text-rose-400";
+  const bgClass =
+    color === "emerald"
+      ? "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/10"
+      : color === "amber"
+        ? "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/10"
+        : "from-rose-50 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/10";
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatedPct(pct), 100);
+    return () => clearTimeout(timer);
+  }, [pct]);
+
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (animatedPct / 100) * circumference;
+
+  return (
+    <div className={cn(
+      "flex items-center gap-5 p-4 sm:p-5 rounded-xl border bg-gradient-to-l",
+      bgClass,
+      color === "emerald" && "border-emerald-200 dark:border-emerald-800/40",
+      color === "amber" && "border-amber-200 dark:border-amber-800/40",
+      color === "rose" && "border-rose-200 dark:border-rose-800/40",
+      "card-glow card-glow-hover",
+    )}>
+      {/* دائرة التقدم */}
+      <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+        <svg
+          viewBox="0 0 128 128"
+          className="w-full h-full -rotate-90"
+          style={{ transform: "rotate(-90deg)" }}
+        >
+          {/* المسار الخلفي */}
+          <circle
+            cx="64" cy="64" r={radius}
+            fill="none"
+            stroke={trackColor}
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+          {/* مسار التقدم المتحرك */}
+          <circle
+            cx="64" cy="64" r={radius}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            style={{
+              transition: "stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={cn("text-xl font-bold tabular-nums", textColorClass)}>
+            {animatedPct}%
+          </span>
+        </div>
+      </div>
+
+      {/* النص */}
+      <div className="min-w-0">
+        <div className="text-sm font-bold text-foreground">إنجاز اليوم</div>
+        <div className="text-xs text-muted-foreground mt-0.5">
+          {achievement.completed} من {achievement.total} طلب مكتمل
+        </div>
+        <div className={cn("text-[11px] font-medium mt-1.5", textColorClass)}>
+          {pct >= 80
+            ? "أداء ممتاز! 🎉"
+            : pct >= 60
+              ? "أداء جيد 👍"
+              : pct >= 40
+                ? "استمر في العمل 💪"
+                : "يحتاج تسريع ⚡"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== المكون الرئيسي =====
+// ===== Quick Customer Phone Search =====
+function QuickCustomerSearch({ orders }: { orders: PrintOrderLite[] }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Array<{ name: string; phone: string; orderCount: number }>>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const q = query.toLowerCase().trim();
+      const customerMap = new Map<string, { name: string; phone: string; orderCount: number }>();
+      orders.forEach((o) => {
+        const phone = o.customer?.phone || "";
+        const name = o.customer?.name || "";
+        if (phone.includes(q) || name.toLowerCase().includes(q)) {
+          const key = phone || name;
+          const existing = customerMap.get(key);
+          if (existing) {
+            existing.orderCount += 1;
+          } else {
+            customerMap.set(key, { name, phone, orderCount: 1 });
+          }
+        }
+      });
+      setResults(Array.from(customerMap.values()).slice(0, 8));
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, orders]);
+
+  return (
+    <div className="mb-5 relative">
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+        <Input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
+          placeholder="ابحث عن عميل بالاسم أو الهاتف..."
+          className="pr-10 text-sm h-10 rounded-lg focus:ring-ring focus:border-ring bg-background focus-outline input-glow"
+        />
+      </div>
+      {results.length > 0 && !selected && (
+        <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden cluster">
+          {results.map((c, idx) => (
+            <button
+              key={`${c.phone}-${idx}`}
+              onClick={() => setSelected(c.phone || c.name)}
+              className="w-full flex items-center justify-between px-4 py-3 text-right hover:bg-accent/50 transition-colors"
+            >
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-foreground truncate">{c.name || "—"}</div>
+                <div className="text-xs text-muted-foreground tabular-nums" dir="ltr">{c.phone || "—"}</div>
+              </div>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0 tabular-nums">
+                {c.orderCount} طلب
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {selected && (
+        <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+          <span className="text-foreground">{results.find(c => (c.phone || c.name) === selected)?.name}</span>
+          <span className="text-muted-foreground tabular-nums" dir="ltr">{selected}</span>
+          <button onClick={() => { setSelected(null); setQuery(""); }} className="mr-auto text-muted-foreground hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== Error Boundary مخصص لقسم الطلبات =====
+class OrdersErrorBoundary extends Component<
+  { children: React.ReactNode; onRetry: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; onRetry: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="py-20 text-center">
+          <AlertCircle className="h-12 w-12 mx-auto text-amber-400/60 mb-3" />
+          <p className="text-sm text-muted-foreground mb-3">حدث خطأ أثناء عرض الطلبات</p>
+          <Button variant="outline" size="sm" onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            إعادة المحاولة
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
+  const { shop, hasFeature, refreshShop } = useShop();
+  const [unlocked, setUnlocked] = useState(false);
+  const [pin, setPin] = useState("");
+  const verifiedPinRef = useRef("");
+  const [pinError, setPinError] = useState(false);
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [verifying, setVerifying] = useState(false);
+  const [activeTab, setActiveTab] = useState<MerchantTab>("home");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // حالة الطلبات والإحصائيات
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [rawOrders, setRawOrders] = useState<PrintOrderLite[]>([]);
+  const [ordersError, setOrdersError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortField, setSortField] = useState<string>("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [viewMode, setViewMode] = useState<OrderViewMode>("table");
+  const [selectedOrder, setSelectedOrder] = useState<PrintOrderLite | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  // ===== المفضلة والملاحظات =====
+  const [favoriteOrders, setFavoriteOrders] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try { const d = localStorage.getItem("tayf-favorite-orders"); return d ? new Set(JSON.parse(d)) : new Set(); } catch { return new Set(); }
+  });
+  const [orderNotes, setOrderNotes] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
+    try { const d = localStorage.getItem("tayf-order-notes"); return d ? JSON.parse(d) : {}; } catch { return {}; }
+  });
+  const [quickDateFilter, setQuickDateFilter] = useState<"all" | "today" | "week" | "favorites">("all");
+
+  const toggleFavorite = useCallback((orderId: string) => {
+    setFavoriteOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId); else next.add(orderId);
+      localStorage.setItem("tayf-favorite-orders", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const saveNote = useCallback(async (orderId: string, note: string) => {
+    setOrderNotes(prev => {
+      const next = { ...prev, [orderId]: note };
+      localStorage.setItem("tayf-order-notes", JSON.stringify(next));
+      return next;
+    });
+    if (note.trim()) {
+      try {
+        await fetch(`/api/orders/${orderId}/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ note, shopId: shop?.id || "" }),
+        });
+      } catch {}
+      toast.success("تم حفظ الملاحظة");
+    }
+  }, [shop?.id]);
+
+  // حالة التقرير
+  const [reportOpen, setReportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [reportFrom, setReportFrom] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  });
+  const [reportTo, setReportTo] = useState<Date>(new Date());
+  const [reportLoading, setReportLoading] = useState(false);
+
+  // جلب عدد الطلبات المعلقة — SSE with polling fallback
+  const fetchPendingCount = useCallback(() => {
+    fetch(`/api/orders/pending-count?shopId=${shopId}`)
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.count === "number") setPendingCount(d.count); })
+      .catch(() => {});
+  }, [shopId]);
+
+  useEffect(() => {
+    fetchPendingCount();
+
+    // Try SSE connection for real-time updates
+    try {
+      const es = new EventSource(`/api/notifications/stream?shopId=${shopId}`);
+      eventSourceRef.current = es;
+
+      es.addEventListener("connected", () => {
+        console.log("[SSE] Connected to notification stream");
+      });
+
+      es.addEventListener("orders", (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === "new_orders" && typeof data.count === "number") {
+            setPendingCount(data.count);
+            // Play notification sound for new orders
+            try {
+              const ctx = new AudioContext();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.frequency.value = 660;
+              osc.type = "sine";
+              gain.gain.setValueAtTime(0.12, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.4);
+            } catch {}
+            toast.success(data.message || "طلب جديد", { duration: 4000 });
+          } else if (data.type === "status_update" && typeof data.count === "number") {
+            setPendingCount(data.count);
+          }
+        } catch {}
+      });
+
+      es.addEventListener("heartbeat", (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (typeof data.count === "number") setPendingCount(data.count);
+        } catch {}
+      });
+
+      es.onerror = () => {
+        console.log("[SSE] Connection failed, falling back to polling");
+        es.close();
+        eventSourceRef.current = null;
+        // Fallback to polling
+        pendingIntervalRef.current = setInterval(fetchPendingCount, 30000);
+      };
+    } catch {
+      // SSE not supported — use polling
+      pendingIntervalRef.current = setInterval(fetchPendingCount, 30000);
+    }
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (pendingIntervalRef.current) clearInterval(pendingIntervalRef.current);
+    };
+  }, [fetchPendingCount, shopId]);
+
+  // فلترة + ترتيب الطلبات بالذاكرة
+  const orders = useMemo(() => {
+    let result = rawOrders;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (x) =>
+          x.reference.toLowerCase().includes(q) ||
+          x.customer.name.toLowerCase().includes(q) ||
+          x.customer.phone.includes(search),
+      );
+    }
+    // فلترة التاريخ والمفضلة
+    if (quickDateFilter === "today") {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      result = result.filter((o) => new Date(o.createdAt) >= today);
+    } else if (quickDateFilter === "week") {
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); weekAgo.setHours(0, 0, 0, 0);
+      result = result.filter((o) => new Date(o.createdAt) >= weekAgo);
+    } else if (quickDateFilter === "favorites") {
+      result = result.filter((o) => favoriteOrders.has(o.id));
+    }
+    // ترتيب
+    result = [...result].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === "date") cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      else if (sortField === "total") cmp = a.total - b.total;
+      else if (sortField === "reference") cmp = a.reference.localeCompare(b.reference);
+      else if (sortField === "status") cmp = (STATUS_META[a.status]?.step ?? 0) - (STATUS_META[b.status]?.step ?? 0);
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+    return result;
+  }, [rawOrders, search, sortField, sortDir, quickDateFilter, favoriteOrders]);
+
+  // حسابات الربح (قبل أي return مبكر)
+  const totalCost = useMemo(() => rawOrders.reduce((s, o) => s + (o.cost || 0), 0), [rawOrders]);
+  const totalProfit = (stats?.totalRevenue ?? 0) - totalCost;
+  const todayOrdersList = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return rawOrders.filter((o) => new Date(o.createdAt) >= today);
+  }, [rawOrders]);
+  const todayRevenue = useMemo(() => todayOrdersList.reduce((s, o) => s + o.total, 0), [todayOrdersList]);
+  const todayCost = useMemo(() => todayOrdersList.reduce((s, o) => s + (o.cost || 0), 0), [todayOrdersList]);
+  const todayAchievement = useMemo(() => {
+    if (todayOrdersList.length === 0) return null;
+    const completed = todayOrdersList.filter(
+      (o) => o.status === "delivered" || o.status === "ready"
+    ).length;
+    return {
+      total: todayOrdersList.length,
+      completed,
+      percentage: Math.round((completed / todayOrdersList.length) * 100),
+    };
+  }, [todayOrdersList]);
+  const serviceBreakdown = useMemo(() => {
+    const map = new Map<string, { count: number; revenue: number }>();
+    rawOrders.forEach((o) => {
+      const existing = map.get(o.serviceType) || { count: 0, revenue: 0 };
+      map.set(o.serviceType, { count: existing.count + 1, revenue: existing.revenue + o.total });
+    });
+    return Array.from(map.entries())
+      .map(([serviceType, data]) => ({ serviceType, ...data }))
+      .sort((a, b) => b.count - a.count);
+  }, [rawOrders]);
+
+  // اشتقاق عداد الحالات من الطلبات المحملة (قبل أي return مبكر)
+  const derivedStatusCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    rawOrders.forEach(o => { map[o.status] = (map[o.status] || 0) + 1; });
+    return map;
+  }, [rawOrders]);
+
+  // مساعد الترتيب
+  function toggleSort(field: string) {
+    if (sortField === field) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else { setSortField(field); setSortDir("desc"); }
+  }
+  function SortIcon({ field }: { field: string }) {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-gold-500" /> : <ArrowUp className="h-3 w-3 text-gold-500" />;
+  }
+
+  // اشتقاق الحالات المتاحة من STATUS_FLOW
+  const bulkStatusOptions = useMemo(() => ["pending", "printing", "ready", "delivered"], []);
+
+  const sidebarSections: SidebarSection[] = useMemo(() => {
+    const dataSection: SidebarSection = {
+      title: "البيانات",
+      items: [
+        { key: "customers", label: "العملاء", icon: User },
+        { key: "expenses", label: "المصاريف", icon: FileText },
+      ],
+    };
+    if (hasFeature("advancedAnalytics")) {
+      dataSection.items.push({ key: "analytics", label: "التحليلات", icon: BarChart3 });
+    }
+    return [
+      {
+        title: "القائمة",
+        items: [
+          { key: "home", label: "الرئيسية", icon: LayoutGrid },
+          { key: "orders", label: "الطلبات", icon: Package, badge: pendingCount > 0 ? pendingCount : undefined },
+          { key: "settings", label: "إعدادات المتجر", icon: Settings },
+          { key: "advancedSettings", label: "إعدادات متقدمة", icon: SlidersHorizontal },
+        ],
+      },
+      dataSection,
+      {
+        title: "أدوات",
+        items: [
+          { key: "share", label: "مشاركة الرابط", icon: Link2 },
+          { key: "preview", label: "معاينة المتجر", icon: Eye },
+        ],
+      },
+    ];
+  }, [pendingCount, hasFeature]);
+
+  function toggleSelectAll() {
+    if (selectedIds.size === orders.length && orders.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(orders.map((o) => o.id)));
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function bulkChangeStatus(newStatus: string) {
+    if (selectedIds.size === 0 || bulkLoading) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch(`/api/orders/bulk?shopId=${shopId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), status: newStatus }),
+      });
+      if (!res.ok) throw new Error("فشل التحديث");
+      toast.success("تم تحديث الحالة", {
+        description: `${selectedIds.size} طلب ← ${STATUS_META[newStatus].label}`,
+      });
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+      setBulkStatus("");
+      loadAll();
+    } catch (e) {
+      toast.error("خطأ", { description: (e as Error).message });
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  async function bulkDelete() {
+    if (selectedIds.size === 0 || bulkLoading) return;
+    setBulkDeleteOpen(true);
+  }
+
+  async function confirmBulkDelete() {
+    setBulkLoading(true);
+    setBulkDeleteOpen(false);
+    try {
+      const res = await fetch(`/api/orders/bulk?shopId=${shopId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      if (!res.ok) throw new Error("فشل الحذف");
+      toast.success("تم حذف الطلبات", {
+        description: `تم حذف ${selectedIds.size} طلب`,
+      });
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+      loadAll();
+    } catch (e) {
+      toast.error("خطأ", { description: (e as Error).message });
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  function exportCSV() {
+    if (!rawOrders.length) { toast.error("لا توجد بيانات للتصدير"); return; }
+    const headers = ["رقم الطلب", "اسم الزبون", "الخدمة", "الحالة", "السعر", "التاريخ"];
+    const statusMap: Record<string, string> = { pending: "معلق", confirmed: "مؤكد", printing: "طباعة", ready: "جاهز", delivered: "تم التسليم", cancelled: "ملغى" };
+    const rows = rawOrders.map(o => [
+      o.reference || o.id,
+      o.customer?.name || "",
+      o.serviceName || o.serviceType || "",
+      statusMap[o.status] || STATUS_META[o.status]?.label || o.status,
+      o.total?.toString() || "0",
+      formatDateTimeAr(o.createdAt) || o.createdAt
+    ]);
+    const csv = "\uFEFF" + [headers, ...rows].map(r => r.map(c => `"${(c || "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders-${shopSlug}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("تم تصدير الطلبات بنجاح");
+  }
+
+  async function deleteOrder(id: string) {
+    try {
+      const res = await fetch(`/api/orders/${id}?shopId=${shopId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("فشل الحذف");
+      toast.success("تم حذف الطلب");
+      setSelectedOrder(null);
+      loadAll();
+    } catch (e) {
+      toast.error("خطأ", { description: (e as Error).message });
+    }
+  }
+
+  // تحميل الإحصائيات — مع SWR cache في sessionStorage (عرض فوري للبيانات المخزنة)
+  const loadStats = useCallback(async (useCache = true) => {
+    const cacheKey = `tayf-stats-${shopId}`;
+    // اعرض البيانات المخزنة فوراً (SWR pattern)
+    if (useCache) {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          setStats(JSON.parse(cached));
+        }
+      } catch { /* ignore */ }
+    }
+    setStatsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/stats?shopId=${shopId}&_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* ignore */ }
+      }
+    } catch {
+      /* silent — keep cached data if present */
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [shopId]);
+
+  const statsRef = useRef(stats);
+  statsRef.current = stats;
+
+  // عدد مرات إعادة المحاولة التلقائية
+  const ordersRetryRef = useRef(0);
+
+  // تحميل الطلبات — مع إعادة محاولة تلقائية + استخدام بيانات الإحصائيات كبديل
+  const loadOrders = useCallback(async (retryCount = 0) => {
+    setLoading(true);
+    setOrdersError(false);
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      params.set("shopId", shopId);
+      params.set("_t", String(Date.now()));
+
+      const res = await fetch(`/api/orders?${params.toString()}`, { cache: "no-store" });
+      if (res.ok) {
+        const o = await res.json();
+        const loadedOrders = o.orders || [];
+        const meta = o._meta;
+
+        if (loadedOrders.length > 0) {
+          // نجاح — حفظ البيانات وإعادة تعيين العداد
+          setRawOrders(loadedOrders);
+          ordersRetryRef.current = 0;
+        } else if (o.pagination?.total > 0 || meta?.error) {
+          // الـ API يعرف أن هناك بيانات لكن الاستعلام فشل
+          // أعد المحاولة تلقائياً (حد أقصى 3 مرات)
+          if (retryCount < 3) {
+            const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+            setTimeout(() => loadOrders(retryCount + 1), delay);
+            return; // لا تُحدث setLoading = false بعد
+          }
+          // فشلت كل المحاولات — جرّب استخدام بيانات الإحصائيات كـ بديل جزئي
+          const recentFromStats = statsRef.current?.recentOrders;
+          if (recentFromStats && recentFromStats.length > 0) {
+            // تحويل بيانات الإحصائيات لتنسيق PrintOrderLite
+            const fallbackOrders = recentFromStats.map((r: Record<string, unknown>) => ({
+              id: r.id,
+              reference: r.reference,
+              serviceType: r.serviceType,
+              serviceName: r.serviceName,
+              fileName: r.fileName,
+              fileType: r.fileType,
+              fileSize: r.fileSize ? Number(r.fileSize) : null,
+              options: r.options || { pages: 1, copies: 1 },
+              customer: r.customer || { name: "", phone: "" },
+              delivery: r.delivery || { mode: "pickup", date: "" },
+              pricing: r.pricing || { total: Number(r.total) || 0 },
+              estimatedHours: 0,
+              status: r.status,
+              pages: Number(r.pages) || 1,
+              copies: Number(r.copies) || 1,
+              total: Number(r.total) || 0,
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+              readyAt: null,
+              deliveredAt: null,
+              startedPrintingAt: null,
+              completedPrintingAt: null,
+              cost: 0,
+              tags: r.tags || [],
+              adminNotes: r.adminNotes || null,
+              shopId: shopId,
+              filePreview: null,
+            }));
+            setRawOrders(fallbackOrders);
+            toast.warning("يتم عرض آخر 5 طلبات فقط — جرّب التحديث", { duration: 5000 });
+          } else {
+            setOrdersError(true);
+          }
+        } else {
+          // لا توجد طلبات فعلاً (العدد صفر)
+          setRawOrders([]);
+          ordersRetryRef.current = 0;
+        }
+      } else {
+        // HTTP error — أعد المحاولة
+        if (retryCount < 3) {
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+          setTimeout(() => loadOrders(retryCount + 1), delay);
+          return;
+        }
+        setOrdersError(true);
+      }
+    } catch {
+      if (retryCount < 3) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        setTimeout(() => loadOrders(retryCount + 1), delay);
+        return;
+      }
+      setOrdersError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [shopId, statusFilter]);
+
+  // تحميل كامل (موازي لكن مستقل)
+  const loadAll = useCallback(() => {
+    loadStats();
+    loadOrders();
+    refreshShop();
+  }, [loadStats, loadOrders, refreshShop]);
+
+  useEffect(() => {
+    if (unlocked) loadAll();
+  }, [unlocked, loadAll]);
+
+  // عند تغيير فلتر الحالة، أعد تحميل الطلبات فقط (دون الإحصائيات)
+  useEffect(() => {
+    if (unlocked) loadOrders();
+  }, [statusFilter, unlocked, loadOrders]);
+
+  // فحص المزامنة: إذا تم تحميل الإحصائيات بعد الطلبات ووجد تناقض
+  // هذا يُفعّل فقط بعد انتهاء التحميل + عدم وجود محاولات إعادة جارية
+  useEffect(() => {
+    if (!unlocked || !stats || loading) return;
+    if (ordersRetryRef.current > 0) return; // لا تتداخل مع إعادة المحاولة التلقائية
+    const hasStatsData = Object.values(stats.statusCounts || {}).some((v: number) => v > 0);
+    if (hasStatsData && rawOrders.length === 0 && !ordersError) {
+      setOrdersError(true);
+    }
+  }, [stats, rawOrders.length, loading, ordersError, unlocked]);
+
+  // ===== إشعار الطلبات الجديدة في الوقت الفعلي =====
+  const lastKnownCountRef = useRef(0);
+  const notifIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!unlocked) return;
+    // تحقق من الطلبات الجديدة كل 20 ثانية
+    const checkNewOrders = async () => {
+      try {
+        const res = await fetch(`/api/orders/pending-count?shopId=${shopId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const currentCount = data.count || 0;
+          if (lastKnownCountRef.current > 0 && currentCount > lastKnownCountRef.current) {
+            const diff = currentCount - lastKnownCountRef.current;
+            toast.info(`📦 ${diff === 1 ? 'طلب جديد' : `${diff} طلبات جديدة`}!`, {
+              description: diff === 1 ? 'تم استلام طلب جديد — تحقق من قائمة الطلبات' : `تم استلام ${diff} طلبات جديدة`,
+              duration: 6000,
+            });
+            playNotificationSound();
+            // تحديث البيانات تلقائياً
+            loadStats(false);
+            loadOrders();
+          }
+          lastKnownCountRef.current = currentCount;
+        }
+      } catch { /* silent */ }
+    };
+    // تحقق فوري عند الفتح
+    checkNewOrders();
+    notifIntervalRef.current = setInterval(checkNewOrders, 20000);
+    return () => { if (notifIntervalRef.current) clearInterval(notifIntervalRef.current); };
+  }, [unlocked, shopId, loadStats, loadOrders]);
+
+  // ===== رابط المتجر للزبون =====
+  const customerLink = typeof window !== "undefined" ? `${window.location.origin}/s/${shopSlug}` : `/s/${shopSlug}`;
+
+  // ===== اختصارات لوحة المفاتيح =====
+  useEffect(() => {
+    if (!unlocked) return;
+    const handler = (e: KeyboardEvent) => {
+      // Alt+N: طلب جديد
+      if (e.altKey && e.key === "n") {
+        e.preventDefault();
+        window.open(customerLink, "_blank");
+      }
+      // Alt+R: تحديث
+      if (e.altKey && e.key === "r") {
+        e.preventDefault();
+        loadAll();
+      }
+      // Alt+1-5: التنقل بين التبويبات
+      const tabMap: Record<string, MerchantTab> = { "1": "home", "2": "orders", "3": "customers", "4": "expenses", "5": "analytics" };
+      if (e.altKey && tabMap[e.key]) {
+        e.preventDefault();
+        setActiveTab(tabMap[e.key]);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [unlocked, customerLink, loadAll]);
+
+  async function handlePinSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pin || verifying) return;
+    setVerifying(true);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminPin: pin }),
+      });
+      if (res.ok) {
+        toast.success("مرحباً بك في لوحة التحكم");
+        verifiedPinRef.current = pin;
+        setUnlocked(true);
+        setPin("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (data.code === "DB_ERROR") {
+          // خطأ في قاعدة البيانات وليس كلمة المرور
+          toast.error("مشكلة في الاتصال", {
+            description: "تعذر الوصول لقاعدة البيانات، يرجى المحاولة مرة أخرى",
+          });
+          setPinError(false);
+        } else {
+          handleWrongPin();
+        }
+      }
+    } catch {
+      toast.error("خطأ في الاتصال", {
+        description: "تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  function handleWrongPin() {
+    setPinError(true);
+    setPinAttempts((a) => a + 1);
+    toast.error("كلمة المرور غير صحيحة", {
+      description: pinAttempts >= 2 ? "محاولة أخيرة قبل القفل المؤقت" : `المتبقي ${3 - pinAttempts - 1} محاولات`,
+    });
+    setPin("");
+    if (pinAttempts >= 2) {
+      setTimeout(() => { setPinAttempts(0); setPinError(false); }, 5000);
+    }
+  }
+
+  async function changeStatus(order: PrintOrderLite, status: string, statusNotes?: string) {
+    try {
+      const payload: Record<string, unknown> = { status };
+      if (statusNotes) payload.statusNotes = statusNotes;
+      const res = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("فشل التحديث");
+      toast.success("تم تحديث الحالة", {
+        description: `${order.reference} → ${STATUS_META[status].label}`,
+      });
+      setRawOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status, statusNotes: statusNotes || o.statusNotes } : o)));
+      // تأخير بسيط لضمان تحديث قاعدة البيانات قبل إعادة تحميل الإحصائيات
+      setTimeout(() => loadStats(false), 300);
+      loadOrders();
+    } catch (e) {
+      toast.error("خطأ", { description: (e as Error).message });
+    }
+  }
+
+  // ===== شاشة كلمة المرور =====
+  if (!unlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-gold-50/30 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950 p-4" dir="rtl">
+        {/* Decorative grid pattern */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, #d4a853 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        {/* Decorative floating orbs */}
+        <div className="pointer-events-none absolute top-1/4 left-1/4 w-64 h-64 bg-gold-300/10 dark:bg-gold-700/10 rounded-full blur-3xl animate-float-gentle" />
+        <div className="pointer-events-none absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-300/10 dark:bg-amber-700/10 rounded-full blur-3xl animate-float-gentle animate-float-gentle-delay-2" />
+        <Card className="max-w-sm w-full rounded-2xl shadow-xl border border-border relative z-10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 glass-card form-card">
+          <CardContent className="p-8">
+            <div className="text-center mb-8">
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center mb-5 shadow-lg shadow-gold-300/40 dark:shadow-gold-900/40" style={{ animation: "float 3s ease-in-out infinite" }}>
+                <Lock className="h-12 w-12 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">لوحة تحكم المتجر</h2>
+              <p className="text-sm text-muted-foreground mt-2">أدخل رمز PIN للوصول إلى لوحة التحكم</p>
+              <p className="text-xs text-gold-500 font-medium mt-1">طيف</p>
+            </div>
+
+            <form onSubmit={handlePinSubmit} className="space-y-5">
+              <div className="relative">
+                <Input
+                  type="password"
+                  value={pin}
+                  onChange={(e) => { setPin(e.target.value); setPinError(false); }}
+                  placeholder="• • • •"
+                  className={cn(
+                    "text-center text-2xl tracking-[0.5em] h-12 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 shadow-sm bg-card transition-shadow",
+                    pinError && "ring-2 ring-rose-400 bg-rose-50/50 dark:bg-rose-950/20 shadow-rose-100",
+                  )}
+                  autoFocus
+                  dir="ltr"
+                  disabled={verifying}
+                />
+              </div>
+              {pinError && (
+                <div className="flex items-center justify-center gap-2 text-sm text-rose-500 dark:text-rose-400">
+                  <AlertCircle className="h-4 w-4" />
+                  كلمة المرور غير صحيحة
+                </div>
+              )}
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
+                disabled={pin.length < 1 || verifying}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {verifying ? "جارٍ التحقق..." : "دخول"}
+              </Button>
+            </form>
+
+            <button
+              type="button"
+              className="text-xs text-gold-400 hover:text-gold-600 transition-colors mt-4 w-full text-center"
+              onClick={() => toast.info("تواصل مع صاحب المنصة")}
+            >
+              هل نسيت الرمز؟
+            </button>
+            <p className="text-xs text-muted-foreground mt-4 text-center">
+              🔒 هذا القسم مخصص لصاحب المتجر فقط
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ===== لوحة التحكم الرئيسية =====
+
+  // مزامنة الإحصائيات — نستخدم البيانات المحملة عند توفرها، والاحتياطي من stats API
+  const syncedTotalOrders = rawOrders.length > 0 ? rawOrders.length : (stats?.totalOrders ?? 0);
+  const syncedTotalRevenue = rawOrders.length > 0 ? rawOrders.reduce((s, o) => s + o.total, 0) : (stats?.totalRevenue ?? 0);
+  const syncedPending = derivedStatusCounts.pending ?? stats?.statusCounts?.pending ?? 0;
+  const syncedPrinting = derivedStatusCounts.printing ?? stats?.statusCounts?.printing ?? 0;
+  const syncedReady = derivedStatusCounts.ready ?? stats?.statusCounts?.ready ?? 0;
+  const syncedDelivered = derivedStatusCounts.delivered ?? stats?.statusCounts?.delivered ?? 0;
+
+  const statCards = [
+    { title: "إجمالي الطلبات", value: syncedTotalOrders, icon: Package, color: "text-gold-500", bg: "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20", borderColor: "border-t-gold-400" },
+    { title: "إجمالي الإيرادات", value: formatDA(syncedTotalRevenue), icon: DollarSign, color: "text-emerald-600", bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20", borderColor: "border-t-emerald-400" },
+    { title: "صافي الربح", value: formatDA(totalProfit), icon: TrendingUp, color: totalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: totalProfit >= 0 ? "bg-gradient-to-br from-emerald-50 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: totalProfit >= 0 ? "border-t-emerald-400" : "border-t-rose-400" },
+    { title: "قيد التنفيذ", value: syncedPending + syncedPrinting, icon: Clock, color: "text-amber-600", bg: "bg-gradient-to-br from-amber-50 to-amber-100/60 dark:from-amber-950/40 dark:to-amber-900/20", borderColor: "border-t-amber-400" },
+    { title: "إيرادات اليوم", value: formatDA(todayRevenue), icon: Inbox, color: "text-sky-600", bg: "bg-gradient-to-br from-sky-50 to-sky-100/60 dark:from-sky-950/40 dark:to-sky-900/20", borderColor: "border-t-sky-400", trend: todayRevenue > 0 ? "up" : todayRevenue < 0 ? "down" : undefined },
+    { title: "ربح اليوم", value: formatDA(todayRevenue - todayCost), icon: Crown, color: (todayRevenue - todayCost) >= 0 ? "text-gold-500" : "text-rose-600", bg: (todayRevenue - todayCost) >= 0 ? "bg-gradient-to-br from-gold-50 to-gold-100/60 dark:from-gold-950/40 dark:to-gold-900/20" : "bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/40 dark:to-rose-900/20", borderColor: (todayRevenue - todayCost) >= 0 ? "border-t-gold-400" : "border-t-rose-400", trend: (todayRevenue - todayCost) > 0 ? "up" : (todayRevenue - todayCost) < 0 ? "down" : undefined },
+  ];
+
+  const quickFilters = [
+    { value: "all" as const, label: "الكل", count: rawOrders.length > 0 ? rawOrders.length : syncedTotalOrders, icon: null },
+    { value: "pending" as const, label: STATUS_META.pending.label, count: syncedPending },
+    { value: "printing" as const, label: STATUS_META.printing.label, count: syncedPrinting },
+    { value: "ready" as const, label: STATUS_META.ready.label, count: syncedReady },
+    { value: "delivered" as const, label: STATUS_META.delivered.label, count: syncedDelivered },
+  ];
+
+  return (
+    <div className="flex h-screen overflow-hidden overflow-x-hidden" dir="rtl">
+      {/* ===== الشريط الجانبي ===== */}
+      <DashboardSidebar
+        sections={sidebarSections}
+        activeKey={activeTab}
+        onNavigate={(key) => setActiveTab(key as MerchantTab)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileOpen}
+        onMobileToggle={() => setMobileOpen(!mobileOpen)}
+        logo={
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ backgroundColor: shop?.primaryColor || '#d4a853' }}
+            >
+              {(() => {
+                const Comp = DYN_ICON_MAP[shop?.logoIcon || "Printer"] || PrinterIcon;
+                return <Comp className="h-5 w-5 text-dark-950" />;
+              })()}
+            </div>
+            <span className="font-bold text-sm text-gold-300 truncate">{shop?.name || "المتجر"}</span>
+          </div>
+        }
+      />
+
+      {/* ===== المحتوى الرئيسي ===== */}
+      <div className="flex-1 min-w-0 bg-background overflow-auto overflow-x-hidden page-transition">
+        {/* ===== الشريط العلوي ===== */}
+        <header className="bg-card border-b border-border shadow-sm h-16 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ backgroundColor: shop?.primaryColor || '#d4a853' }}
+            >
+              {(() => {
+                const Comp = DYN_ICON_MAP[shop?.logoIcon || "Printer"] || PrinterIcon;
+                return <Comp className="h-5 w-5 text-white" />;
+              })()}
+            </div>
+            <div className="hidden sm:flex items-center gap-2.5 bg-secondary/50 border border-border px-3 py-1.5 rounded-xl">
+              <div className="min-w-0">
+                <div className="font-bold text-sm truncate text-foreground">{shop?.name || "المتجر"}</div>
+                <div className="text-xs text-muted-foreground truncate">لوحة التحكم</div>
+              </div>
+            </div>
+            <div className="sm:hidden min-w-0">
+              <div className="font-bold text-sm truncate text-foreground">{shop?.name || "المتجر"}</div>
+              <div className="text-xs text-muted-foreground truncate">لوحة التحكم</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); }}
+              className="relative p-2.5 rounded-lg hover:bg-secondary transition-colors"
+              title="طلبات معلقة"
+            >
+              <Bell className="h-4.5 w-4.5 text-muted-foreground" />
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -left-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center badge-pulse-red">
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              )}
+            </button>
+            <ThemeToggle />
+            <div className="hidden lg:flex items-center gap-1 text-[10px] text-muted-foreground/50">
+              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px]">Alt+N</kbd>
+              <span>طلب</span>
+              <kbd className="px-1 py-0.5 rounded bg-secondary border border-border text-[9px] ml-1">Alt+R</kbd>
+              <span>تحديث</span>
+            </div>
+            <a
+              href={customerLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-3.5 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">طلب جديد</span>
+            </a>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={loadAll}
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary h-10 w-10 rounded-lg shrink-0 transition-all duration-200"
+              title="تحديث"
+            >
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            </Button>
+          </div>
+        </header>
+
+        {/* ===== المحتوى ===== */}
+        <main className="p-4 sm:p-6 space-y-6 min-w-0 overflow-x-hidden">
+          {/* ===== شريط الإحصائيات السريعة ===== */}
+          <div className="glass-card-premium rounded-xl p-responsive">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab("orders")}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-border/50 hover:border-gold-500/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Package className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-muted-foreground truncate">📋 طلبات اليوم</div>
+                  <div className="text-sm font-bold tabular-nums text-foreground">{todayOrdersList.length}</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("home")}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-border/50 hover:border-gold-500/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-muted-foreground truncate">💰 إيرادات اليوم</div>
+                  <div className="text-sm font-bold tabular-nums text-foreground">{formatDA(todayRevenue)}</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab("orders"); setStatusFilter("pending"); }}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-amber-500/20 hover:border-amber-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-amber-600 dark:text-amber-400 truncate font-medium">⏳ معلقة</div>
+                  <div className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{syncedPending}</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab("orders"); setStatusFilter("delivered"); }}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group text-right w-full"
+              >
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] text-emerald-600 dark:text-emerald-400 truncate font-medium">✅ مكتملة</div>
+                  <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{syncedDelivered}</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+          {/* ===== تبويب الرئيسية ===== */}
+          {activeTab === "home" && (
+            <motion.div
+              key="tab-home"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-6"
+            >
+              {/* ===== مقياس إنجاز اليوم ===== */}
+              {todayAchievement && todayAchievement.total > 0 && (
+                <TodayAchievementGauge achievement={todayAchievement} />
+              )}
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-grid">
+                {statCards.map((c, i) => (
+                  <div key={i} className={cn(
+                    "bg-card border border-border rounded-xl border-t-2 shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 sm:p-5 card-glow group relative overflow-hidden card-tilt-3d gradient-border-animated merchant-stat-lift",
+                    c.borderColor,
+                  )}>
+                    {/* Gradient glow on hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{
+                      background: 'linear-gradient(135deg, rgba(212,168,83,0.08) 0%, transparent 50%, rgba(212,168,83,0.04) 100%)',
+                    }} />
+                    <div className="relative flex items-start justify-between">
+                      <div className="min-w-0">
+                        <div className={cn("text-xl sm:text-2xl font-bold tabular-nums truncate text-foreground animate-count-up", c.title === "إجمالي الإيرادات" && "revenue-shimmer")}>{c.value}</div>
+                        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">{c.title}{c.trend && (c.trend === "up" ? <ArrowUp className="h-3 w-3 text-emerald-500" /> : <ArrowDown className="h-3 w-3 text-rose-500" />)}</div>
+                      </div>
+                      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110", c.bg)}>
+                        <c.icon className={cn("h-5 w-5", c.color)} />
+                      </div>
+                    </div>
+                    {/* Bottom gradient line on hover */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(212,168,83,0.4), transparent)',
+                    }} />
+                  </div>
+                ))}
+              </div>
+
+              {/* ملخص اليوم */}
+              <div className="bg-gradient-to-l from-gold-50 to-gold-100/50 dark:from-gold-950/20 dark:to-gold-950/20 border border-gold-200/60 dark:border-gold-800/30 rounded-xl p-5 card-glow glass-card glass-card-premium neu-raised card-stack">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-gold-500" />
+                      ملخص اليوم
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">الطلبات</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number metric-large-number count-pulse">{todayOrdersList.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">الإيرادات</div>
+                        <div className="text-lg font-bold tabular-nums text-gradient bg-clip-text text-transparent text-gradient-emerald-to-sky counter-number revenue-shimmer count-pulse">{formatDA(todayRevenue)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">متوسط الطلب</div>
+                        <div className="text-lg font-bold tabular-nums text-foreground counter-number count-pulse">{todayOrdersList.length > 0 ? formatDA(Math.round(todayRevenue / todayOrdersList.length)) : '0'}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-muted-foreground">مكتملة</div>
+                        <div className="text-lg font-bold tabular-nums text-gold-600 dark:text-gold-400 counter-number">{todayOrdersList.filter(o => o.status === 'ready' || o.status === 'delivered').length}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center shrink-0">
+                    <div className="text-3xl mb-1">{todayOrdersList.length > 3 ? '🔥' : todayOrdersList.length > 0 ? '👍' : '📋'}</div>
+                    <div className="text-[11px] text-muted-foreground font-medium">
+                      {todayOrdersList.length > 3 ? 'يوم نشط!' : todayOrdersList.length > 0 ? 'بداية جيدة' : 'ابدأ يومك'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* شريط ملخص اليوم */}
+              {stats && (stats.todayOrders || 0) > 0 && (
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                    <Package className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">اليوم</div>
+                      <div className="text-sm font-bold tabular-nums">{stats.todayOrders || 0}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border shadow-sm min-w-fit">
+                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">إيرادات</div>
+                      <div className="text-sm font-bold tabular-nums">{formatDA(todayRevenue)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* إجراءات سريعة */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-grid cluster">
+                {[
+                  { icon: Plus, label: "طلب جديد", color: "from-gold-500 to-gold-600", action: () => window.open(customerLink, '_blank') },
+                  { icon: BarChart3, label: "تقرير يومي", color: "from-emerald-500 to-emerald-600", action: () => setReportOpen(true) },
+                  { icon: Download, label: "تصدير CSV", color: "from-sky-500 to-sky-600", action: () => exportCSV() },
+                  { icon: Users, label: "العملاء", color: "from-amber-500 to-amber-600", action: () => setActiveTab("customers") },
+                  { icon: FileText, label: "المصاريف", color: "from-rose-500 to-rose-600", action: () => setActiveTab("expenses") },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={item.action}
+                    className="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border bg-card hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group press-effect"
+                  >
+                    <div className={cn("w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform", item.color)}>
+                      <item.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* هدف الإيرادات + طابور الطباعة */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 accordion-smooth">
+                <RevenueGoalWidget todayRevenue={todayRevenue} todayOrders={todayOrdersList.length} />
+                <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+                  <CardContent className="pt-4">
+                    <PrintQueueWidget orders={orders} />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {!(stats?.totalOrders ?? 0) && (
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-gold-50 via-gold-100/50 to-sky-50 dark:from-gold-950/30 dark:via-gold-950/20 dark:to-sky-950/30 border border-gold-200/60 dark:border-gold-500/20 p-6 sm:p-8 gradient-flow-bg card-spotlight">
+                  <div className="absolute -top-10 -left-10 w-32 h-32 bg-gold-200/30 dark:bg-gold-800/20 rounded-full blur-2xl animate-pulse" />
+                  <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+                  {/* Floating particles */}
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <span
+                      key={i}
+                      className="absolute w-1 h-1 rounded-full bg-gold-400/40 animate-float-gentle"
+                      style={{
+                        top: `${15 + i * 18}%`,
+                        left: `${8 + i * 22}%`,
+                        animationDelay: `${i * 0.3}s`,
+                      }}
+                    />
+                  ))}
+                  <div className="relative text-center">
+                    <MotionDiv
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
+                      transition={{ duration: 0.5, ease: "easeOut", y: { duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } }}
+                      className="text-4xl mb-3 empty-bounce"
+                    >
+                      🎉
+                    </MotionDiv>
+                    <MotionDiv
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                    <h2 className="text-lg sm:text-xl font-bold mb-2 text-foreground">{shop?.name || "المتجر"} جاهز لاستقبال الطلبات!</h2>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+                      شارك رابط متجرك مع زبائنك لبدء استقبال طلبات الطباعة أونلاين
+                    </p>
+                    </MotionDiv>
+                    <MotionDiv
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="flex items-center justify-center gap-3"
+                    >
+                      <a href={customerLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gold-500/30">
+                        <Eye className="h-4 w-4" />
+                        معاينة المتجر
+                      </a>
+                      <button onClick={() => { navigator.clipboard.writeText(customerLink); toast.success("تم نسخ الرابط!"); }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card hover:bg-secondary border border-border text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                        <Copy className="h-4 w-4" />
+                        نسخ الرابط
+                      </button>
+                      <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-700 text-white text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gold-500/30">
+                        <Share2 className="h-4 w-4" />
+                        مشاركة
+                      </button>
+                    </MotionDiv>
+                  </div>
+                </div>
+              )}
+
+              {/* آخر الطلبات */}
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                <div className="border-b border-border px-4 sm:px-6 pt-5 pb-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                      <Clock className="h-4 w-4 text-gold-400" />
+                      آخر الطلبات
+                      {stats?.recentOrders?.length ? (
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-gold-500/15 text-gold-500 text-[11px] font-bold tabular-nums">
+                          {stats.recentOrders.length}
+                        </span>
+                      ) : null}
+                    </h3>
+                    {stats?.recentOrders?.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("orders")}
+                        className="text-xs text-gold-500 hover:text-gold-600 font-medium flex items-center gap-1 transition-colors"
+                      >
+                        عرض الكل
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="p-0">
+                  {loading ? (
+                    <div className="py-12 text-center text-muted-foreground text-sm">
+                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                      جارٍ التحميل...
+                    </div>
+                  ) : !stats?.recentOrders?.length ? (
+                    <div className="py-14 flex flex-col items-center">
+                      <Inbox className="h-10 w-10 text-muted-foreground/30 mb-3 empty-bounce" />
+                      <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا آخر الطلبات الواردة</p>
+                      <a
+                        href={customerLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 text-xs text-gold-500 hover:text-gold-600 font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        افتح المتجر واطلب الآن
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {stats.recentOrders.slice(0, 5).map((o) => {
+                        const meta = STATUS_META[o.status] || STATUS_META.pending;
+                        const statusBorderMap: Record<string, string> = {
+                          pending: "border-r-amber-400",
+                          printing: "border-r-blue-400",
+                          ready: "border-r-emerald-400",
+                          delivered: "border-r-emerald-500",
+                          cancelled: "border-r-rose-400",
+                        };
+                        const serviceEmoji = SERVICE_MAP[o.serviceType]?.emoji ?? "";
+                        // أزرار تغيير الحالة السريعة
+                        const nextStatus = o.status === "pending" ? "printing" : o.status === "printing" ? "ready" : o.status === "ready" ? "delivered" : null;
+                        const nextStatusMeta = nextStatus ? STATUS_META[nextStatus] : null;
+                        return (
+                          <div key={o.id} className={cn("flex items-center justify-between px-4 sm:px-6 py-3.5 gap-3 hover:bg-secondary transition-colors duration-150 border-r-[3px] slide-in-rtl", o.status === "pending" && "animate-pulse-slow", statusBorderMap[o.status] || "border-r-border")}>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="font-mono text-xs font-bold text-foreground cursor-pointer hover:text-gold-500 transition-colors"
+                                  onClick={() => setSelectedOrder(o)}
+                                >{o.reference}</span>
+                                <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium", meta.bg)}>{meta.label}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate mt-0.5">
+                                {o.customer.name} · {serviceEmoji}{o.serviceName}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {nextStatus && nextStatusMeta && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); changeStatus(o, nextStatus); }}
+                                  className="hidden sm:flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors border border-emerald-200 dark:border-emerald-800/40"
+                                  title={`تحويل إلى: ${nextStatusMeta.label}`}
+                                >
+                                  <Check className="h-3 w-3" />
+                                  {nextStatusMeta.label}
+                                </button>
+                              )}
+                              <div className="text-left">
+                                <div className="text-sm font-bold text-gold-500">{formatDA(o.total)}</div>
+                                <div className="text-xs text-muted-foreground text-left">{formatDateTimeAr(o.createdAt)}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* توزيع الخدمات */}
+              {serviceBreakdown.length > 0 && (
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+                <div className="border-b border-border px-4 sm:px-6 pt-5 pb-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                    <LayoutGrid className="h-4 w-4 text-primary" />
+                    أكثر الخدمات طلباً
+                  </h3>
+                </div>
+                <div className="p-4 sm:px-6 space-y-2.5">
+                  {serviceBreakdown.slice(0, 5).map((s) => {
+                    const emoji = SERVICE_MAP[s.serviceType]?.emoji ?? "📄";
+                    const name = SERVICE_MAP[s.serviceType]?.name ?? s.serviceType;
+                    const maxCount = serviceBreakdown[0]?.count ?? 1;
+                    const pct = maxCount > 0 ? (s.count / maxCount) * 100 : 0;
+                    return (
+                      <div key={s.serviceType} className="flex items-center gap-3">
+                        <span className="text-base shrink-0 w-6 text-center">{emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-foreground truncate">{name}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">{s.count} طلب</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-l from-primary to-primary/60 transition-all duration-700 animate-progress"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-primary tabular-nums shrink-0">{formatDA(s.revenue)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              )}
+
+              {/* التحليلات */}
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden chart-fade-in">
+                <AdminAnalytics stats={stats} />
+              </div>
+            </motion.div>
+          )}
+
+          {/* ===== تبويب الطلبات ===== */}
+          {activeTab === "orders" && (
+            <OrdersErrorBoundary onRetry={loadOrders}>
+            <motion.div
+              key="tab-orders"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-5"
+            >
+              {/* أزرار التبديل بين جدول ولوحة كانبان + وضع التحديد */}
+              <div className="flex items-center gap-2 btn-group-connected">
+                {viewMode === "table" && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectionMode(!selectionMode); if (selectionMode) setSelectedIds(new Set()); }}
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
+                      selectionMode
+                        ? "bg-rose-500 text-white"
+                        : "text-muted-foreground hover:text-foreground hover:bg-rose-500/10",
+                    )}
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                    {selectionMode ? "إلغاء التحديد" : "تحديد"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setViewMode("table"); if (selectionMode) { setSelectionMode(false); setSelectedIds(new Set()); } }}
+                  className={cn(
+                    "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
+                    viewMode === "table"
+                      ? "bg-gold-500 text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10",
+                  )}
+                >
+                  <Table2 className="h-4 w-4" />
+                  جدول
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setViewMode("kanban"); if (selectionMode) { setSelectionMode(false); setSelectedIds(new Set()); } }}
+                  className={cn(
+                    "flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-[44px] px-4 py-2 rounded-lg",
+                    viewMode === "kanban"
+                      ? "bg-gold-500 text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10",
+                  )}
+                >
+                  <Columns3 className="h-4 w-4" />
+                  كانبان
+                </button>
+              </div>
+              {/* الفلاتر */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="relative input-animated-border">
+                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="ابحث برقم الطلب أو اسم/هاتف العميل..."
+                    className="pr-10 text-sm h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
+                    onKeyDown={(e) => e.key === "Enter" && loadAll()}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="text-sm h-11 rounded-xl border-border">
+                        <SelectValue placeholder="كل الحالات" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">كل الحالات</SelectItem>
+                        {STATUS_FLOW.map((s) => (
+                          <SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>
+                        ))}
+                        <SelectItem value="cancelled">ملغي</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {hasFeature("exportExcel") && (
+                    <Button variant="outline" onClick={exportCSV} className="shrink-0 h-11 w-11 rounded-lg border-border hover:bg-secondary transition-all duration-200" title="تصدير CSV">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={loadAll} className="shrink-0 h-11 w-11 rounded-lg border-border hover:bg-secondary transition-all duration-200">
+                    <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* شرائح التصفية السريعة - التاريخ */}
+              <div className="flex items-center gap-2 overflow-x-auto smooth-scrollbar pb-1 cluster">
+                {[
+                  { value: "all" as const, label: "الكل", icon: null },
+                  { value: "today" as const, label: "اليوم", icon: <CalendarIcon className="h-3.5 w-3.5" /> },
+                  { value: "week" as const, label: "هذا الأسبوع", icon: <Clock className="h-3.5 w-3.5" /> },
+                  { value: "favorites" as const, label: "المفضلة", icon: <Star className="h-3.5 w-3.5" /> },
+                ].map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setQuickDateFilter(f.value)}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 min-h-[36px] rounded-lg px-3 py-1.5",
+                      quickDateFilter === f.value
+                        ? "bg-gold-500 text-white shadow-md"
+                        : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10",
+                    )}
+                  >
+                    {f.icon}
+                    {f.label}
+                    {f.value === "favorites" && favoriteOrders.size > 0 && (
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-md",
+                        quickDateFilter === "favorites" ? "bg-white/20" : "bg-secondary",
+                      )}>{favoriteOrders.size}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* شرائح التصفية السريعة - الحالة */}
+              <div className="flex items-center gap-2 overflow-x-auto custom-scroll pb-1 cluster tag-group">
+                {quickFilters.map((f) => {
+                  const dotColor: Record<string, string> = {
+                    all: "bg-dark-400",
+                    pending: "bg-amber-400",
+                    printing: "bg-gold-300",
+                    ready: "bg-emerald-400",
+                    delivered: "bg-emerald-500",
+                  };
+                  const isActive = statusFilter === f.value;
+                  return (
+                  <button
+                    key={f.value}
+                    onClick={() => setStatusFilter(f.value)}
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0 min-h-[44px]",
+                      isActive
+                        ? "bg-gold-500 text-white rounded-lg px-4 py-2 shadow-md shadow-gold-200"
+                        : "text-muted-foreground hover:text-foreground hover:bg-gold-500/10 hover:shadow-sm hover:-translate-y-0.5 rounded-lg px-4 py-2",
+                    )}
+                  >
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", isActive && f.value !== "all" ? "bg-white/70" : dotColor[f.value] || "bg-dark-400")} />
+                    {f.label}
+                    <span className={cn(
+                      "tabular-nums text-xs px-2 py-0.5 rounded-md",
+                      isActive ? "bg-white/20 text-white" : "bg-secondary text-muted-foreground",
+                    )}>
+                      {f.count}
+                    </span>
+                  </button>
+                  );
+                })}
+              </div>
+
+              {/* ===== عرض الجدول ===== */}
+              {viewMode === "table" && (<>
+              {/* جدول الطلبات - حاسوب */}
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] hidden md:block">
+                <div className="border-b border-border px-6 pt-5 pb-3">
+                  <h3 className="text-sm font-semibold text-foreground">الطلبات ({orders.length})</h3>
+                </div>
+                <div className="p-0">
+                  {loading ? (
+                    <div className="py-16 text-center text-muted-foreground text-sm">
+                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                      جارٍ التحميل...
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="py-16 text-center">
+                      {ordersError || (stats && Object.values(stats.statusCounts || {}).some((v: number) => v > 0)) ? (
+                        <>
+                          <AlertCircle className="h-12 w-12 mx-auto text-amber-400/60 mb-3" />
+                          <p className="text-sm text-muted-foreground mb-3">تعذر تحميل الطلبات</p>
+                          <Button variant="outline" size="sm" onClick={loadOrders}>
+                            <RefreshCw className="h-4 w-4 ml-2" />
+                            إعادة المحاولة
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
+                          <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto custom-scroll">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/50 hover:bg-secondary/80 border-b border-border">
+                            {selectionMode && (
+                              <TableHead className="w-10 p-2">
+                                <Checkbox
+                                  checked={orders.length > 0 && selectedIds.size === orders.length}
+                                  onCheckedChange={toggleSelectAll}
+                                  aria-label="تحديد الكل"
+                                />
+                              </TableHead>
+                            )}
+                            <TableHead>
+                              <button onClick={() => toggleSort("reference")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors">
+                                رقم الطلب <SortIcon field="reference" />
+                              </button>
+                            </TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium">الخدمة</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium">العميل</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium hidden md:table-cell">الهاتف</TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium hidden lg:table-cell">التفاصيل</TableHead>
+                            <TableHead>
+                              <button onClick={() => toggleSort("total")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors">
+                                المجموع <SortIcon field="total" />
+                              </button>
+                            </TableHead>
+                            <TableHead className="text-right text-xs text-muted-foreground font-medium hidden lg:table-cell">الربح</TableHead>
+                            <TableHead>
+                              <button onClick={() => toggleSort("status")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors">
+                                الحالة <SortIcon field="status" />
+                              </button>
+                            </TableHead>
+                            <TableHead>
+                              <button onClick={() => toggleSort("date")} className="flex items-center gap-1 text-right text-xs text-muted-foreground font-medium hover:text-foreground transition-colors hidden sm:flex">
+                                التاريخ <SortIcon field="date" />
+                              </button>
+                              <span className="text-right text-xs text-muted-foreground font-medium sm:hidden">التاريخ</span>
+                            </TableHead>
+                            <TableHead className="text-center text-xs w-16"></TableHead>
+                            <TableHead className="text-center text-xs w-10"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {orders.map((o) => (
+                            <OrderDetailsRow
+                              key={o.id}
+                              order={o}
+                              onStatusChange={changeStatus}
+                              onClick={() => setSelectedOrder(o)}
+                              selected={selectionMode ? selectedIds.has(o.id) : undefined}
+                              onToggleSelect={selectionMode ? () => toggleSelect(o.id) : undefined}
+                              canPrintReceipt={hasFeature("receiptPrinting")}
+                              onPrintReceipt={() => printReceipt(o, shop?.name || "", shop?.phone || "", shop?.address || null)}
+                              isFavorite={favoriteOrders.has(o.id)}
+                              onToggleFavorite={() => toggleFavorite(o.id)}
+                              note={orderNotes[o.id] || ""}
+                              onSaveNote={(n) => saveNote(o.id, n)}
+                            />
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* بطاقات الطلبات - جوال */}
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] md:hidden">
+                <div className="border-b border-border px-5 pt-5 pb-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">الطلبات ({orders.length})</h3>
+                    <div className="flex items-center gap-1">
+                      {!selectionMode && orders.length > 0 && (
+                        <button
+                          onClick={() => setSelectionMode(true)}
+                          className="text-[11px] px-3 py-1.5 rounded-md transition-colors bg-gold-500 text-white hover:bg-gold-600 flex items-center gap-1 min-h-[32px]"
+                        >
+                          <ListChecks className="h-3 w-3" />
+                          تحديد
+                        </button>
+                      )}
+                      {selectionMode && (
+                        <button
+                          onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+                          className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-foreground min-h-[32px]"
+                        >
+                          إلغاء
+                        </button>
+                      )}
+                      <button onClick={() => toggleSort("date")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "date" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
+                        {sortDir === "desc" ? "الأحدث" : "الأقدم"}
+                      </button>
+                      <button onClick={() => toggleSort("total")} className={cn("text-[11px] px-2.5 py-1.5 rounded-md transition-colors min-h-[32px]", sortField === "total" ? "bg-gold-100 text-gold-600" : "text-muted-foreground hover:text-foreground")}>
+                        الأعلى سعراً
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 space-y-3">
+                  {loading ? (
+                    <div className="py-10 text-center text-muted-foreground text-sm">
+                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                      جارٍ التحميل...
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="py-10 text-center">
+                      {ordersError || (stats && Object.values(stats.statusCounts || {}).some((v: number) => v > 0)) ? (
+                        <>
+                          <AlertCircle className="h-10 w-10 mx-auto text-amber-400/60 mb-2" />
+                          <p className="text-xs text-muted-foreground mb-2">تعذر تحميل الطلبات</p>
+                          <Button variant="outline" size="sm" className="text-xs" onClick={loadOrders}>
+                            <RefreshCw className="h-3 w-3 ml-1" />
+                            إعادة المحاولة
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2 empty-bounce" />
+                          <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    orders.map((o) => <MobileOrderCard key={o.id} order={o} onStatusChange={changeStatus} onClick={() => setSelectedOrder(o)} shopId={shopId} shopName={shop?.name || ""} shopPhone={shop?.phone || ""} shopAddress={shop?.address || null} selectionMode={selectionMode} selected={selectionMode ? selectedIds.has(o.id) : undefined} onToggleSelect={selectionMode ? () => toggleSelect(o.id) : undefined} />)
+                  )}
+                </div>
+              </div>
+              </>)}
+
+              {/* ===== عرض كانبان ===== */}
+              {viewMode === "kanban" && (
+                <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4">
+                  {loading ? (
+                    <div className="py-16 text-center text-muted-foreground text-sm">
+                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                      جارٍ التحميل...
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="py-16 text-center">
+                      {ordersError || (stats && Object.values(stats.statusCounts || {}).some((v: number) => v > 0)) ? (
+                        <>
+                          <AlertCircle className="h-12 w-12 mx-auto text-amber-400/60 mb-3" />
+                          <p className="text-sm text-muted-foreground mb-3">تعذر تحميل الطلبات</p>
+                          <Button variant="outline" size="sm" onClick={loadOrders}>
+                            <RefreshCw className="h-4 w-4 ml-2" />
+                            إعادة المحاولة
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3 empty-bounce" />
+                          <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
+                  )}
+                </div>
+              )}
+
+              {/* شريط الإجراءات الجماعية العائم */}
+              {hasFeature("bulkActions") && selectedIds.size > 0 && (
+                <div className="fixed bottom-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto z-50 flex items-center gap-2 sm:gap-3 bg-gold-500 text-white rounded-xl px-3 sm:px-5 py-3 sm:py-3.5 shadow-2xl shadow-gold-600/30 animate-in slide-in-from-bottom-4 duration-300 ease-out overflow-x-auto">
+                  <span className="text-sm font-semibold whitespace-nowrap">
+                    <CheckSquare className="h-4 w-4 inline-block ml-1.5 -mt-0.5" />
+                    {selectedIds.size} محدد
+                  </span>
+                  <div className="w-px h-6 bg-white/25 shrink-0" />
+                  <Select onValueChange={(v) => setBulkStatus(v)} disabled={bulkLoading}>
+                    <SelectTrigger className="h-9 w-auto min-w-[110px] sm:min-w-[130px] text-xs rounded-lg border-white/30 bg-white/15 text-white hover:bg-white/25 focus:ring-white/40 [&_svg]:text-white">
+                      <SelectValue placeholder="تغيير الحالة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bulkStatusOptions.map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_META[s].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    onClick={() => { if (bulkStatus) bulkChangeStatus(bulkStatus); }}
+                    disabled={bulkLoading || !bulkStatus}
+                    className="h-9 text-xs gap-1.5 rounded-lg bg-white text-gold-700 hover:bg-white/90 font-semibold border border-white/30 active:scale-[0.98] transition-all duration-200"
+                  >
+                    {bulkLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    تطبيق
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={bulkDelete}
+                    disabled={bulkLoading}
+                    className="h-9 text-xs gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/30 active:scale-[0.98] transition-all duration-200"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    حذف المحدد
+                  </Button>
+                  <button
+                    onClick={() => { setSelectedIds(new Set()); setSelectionMode(false); }}
+                    className="w-9 h-9 rounded-full hover:bg-white/25 flex items-center justify-center transition-all duration-200 text-white/70 hover:text-white"
+                    aria-label="إلغاء التحديد"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* تأكيد حذف جماعي */}
+              <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                <AlertDialogContent className="max-w-sm">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>تأكيد حذف الطلبات</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      هل أنت متأكد من حذف {selectedIds.size} طلب محدد؟ لا يمكن التراجع عن هذا الإجراء.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="gap-2 sm:gap-0">
+                    <AlertDialogCancel className="mt-0 sm:mt-0">إلغاء</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmBulkDelete} className="bg-rose-600 hover:bg-rose-700 text-white">
+                      حذف {selectedIds.size} طلب
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </motion.div>
+            </OrdersErrorBoundary>
+          )}
+          {/* ===== تبويب التحليلات ===== */}
+          {activeTab === "analytics" && hasFeature("advancedAnalytics") && (
+            <motion.div
+              key="tab-analytics"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-5"
+            >
+            <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl dark:border-dark-700/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden chart-fade-in">
+              <div className="p-4 sm:p-6">
+                <MerchantAnalytics stats={stats} orders={rawOrders} />
+              </div>
+            </div>
+
+            {/* ===== تحليلات متقدمة إضافية ===== */}
+            {(() => {
+              /* --- بيانات الإيرادات اليومية (آخر 14 يوم) --- */
+              const dailyRevenueMap = new Map<string, number>();
+              const now = Date.now();
+              for (let i = 13; i >= 0; i--) {
+                const d = new Date(now - i * 86400000);
+                const key = d.toISOString().slice(0, 10);
+                dailyRevenueMap.set(key, 0);
+              }
+              rawOrders.forEach(o => {
+                const day = (o.createdAt || "").slice(0, 10);
+                if (dailyRevenueMap.has(day)) {
+                  dailyRevenueMap.set(day, (dailyRevenueMap.get(day) || 0) + (o.total || 0));
+                }
+              });
+              const dailyRevenueData = Array.from(dailyRevenueMap.entries()).map(([date, revenue]) => ({
+                date: date.slice(5), // MM-DD
+                revenue: Math.round(revenue),
+              }));
+
+              /* --- أفضل 5 خدمات حسب الإيرادات --- */
+              const serviceRevenueMap = new Map<string, number>();
+              rawOrders.forEach(o => {
+                const key = o.serviceType || "أخرى";
+                serviceRevenueMap.set(key, (serviceRevenueMap.get(key) || 0) + (o.total || 0));
+              });
+              const topServicesData = Array.from(serviceRevenueMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([service, revenue]) => ({
+                  name: SERVICE_MAP[service]?.name || service,
+                  revenue: Math.round(revenue),
+                }));
+
+              /* --- ساعات الذروة (خريطة حرارية) --- */
+              const hourCounts = new Array(24).fill(0);
+              rawOrders.forEach(o => {
+                try {
+                  const h = new Date(o.createdAt).getHours();
+                  hourCounts[h] = (hourCounts[h] || 0) + 1;
+                } catch { /* skip */ }
+              });
+              const maxHour = Math.max(...hourCounts, 1);
+              const peakPeriods = [
+                { label: "فجر", hours: [0, 1, 2, 3, 4, 5] },
+                { label: "صباح", hours: [6, 7, 8, 9, 10, 11] },
+                { label: "ظهر", hours: [12, 13, 14, 15, 16, 17] },
+                { label: "مساء", hours: [18, 19, 20, 21, 22, 23] },
+              ];
+
+              /* --- نسبة الزبائن العائدين --- */
+              const customerOrderCount = new Map<string, number>();
+              rawOrders.forEach(o => {
+                const key = o.customer?.phone || o.customer?.name || "unknown";
+                customerOrderCount.set(key, (customerOrderCount.get(key) || 0) + 1);
+              });
+              const totalCustomers = customerOrderCount.size;
+              const repeatCustomers = Array.from(customerOrderCount.values()).filter(c => c > 1).length;
+              const retentionPct = totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
+
+              /* --- متوسط وقت الإنجاز (بالساعات) --- */
+              const completionTimes: number[] = [];
+              rawOrders.forEach(o => {
+                if (o.deliveredAt && o.createdAt) {
+                  try {
+                    const diff = new Date(o.deliveredAt).getTime() - new Date(o.createdAt).getTime();
+                    if (diff > 0) completionTimes.push(diff / 3600000);
+                  } catch { /* skip */ }
+                }
+              });
+              const avgCompletionHours = completionTimes.length > 0
+                ? (completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length)
+                : 0;
+
+              return (
+                <>
+            {/* 1. مخطط اتجاه الإيرادات اليومية */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">اتجاه الإيرادات</h3>
+                  <p className="text-xs text-muted-foreground">آخر 14 يوم</p>
+                </div>
+              </div>
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dailyRevenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, direction: "rtl" }}
+                      formatter={(value: number) => [`${value.toLocaleString("ar-DZ")} د.ج`, "الإيرادات"]}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#revenueGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 2. أفضل الخدمات حسب الإيرادات */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-gold-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">أفضل الخدمات أداءً</h3>
+                  <p className="text-xs text-muted-foreground">حسب الإيرادات</p>
+                </div>
+              </div>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topServicesData} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} width={55} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, direction: "rtl" }}
+                      formatter={(value: number) => [`${value.toLocaleString("ar-DZ")} د.ج`, "الإيرادات"]}
+                    />
+                    <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 6, 6, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 3. خريطة ساعات الذروة */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center">
+                  <Flame className="h-4 w-4 text-gold-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">ساعات الذروة</h3>
+                  <p className="text-xs text-muted-foreground">توزيع الطلبات حسب الساعة</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {peakPeriods.map(period => (
+                  <div key={period.label} className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground w-10 shrink-0 text-right">{period.label}</span>
+                    <div className="flex gap-1 flex-1">
+                      {period.hours.map(h => {
+                        const count = hourCounts[h];
+                        const intensity = maxHour > 0 ? count / maxHour : 0;
+                        const bgOpacity = Math.max(0.05, intensity);
+                        return (
+                          <div
+                            key={h}
+                            className="flex-1 h-8 rounded flex items-center justify-center text-[10px] font-medium transition-all"
+                            style={{
+                              backgroundColor: `rgba(139, 92, 246, ${bgOpacity})`,
+                              color: intensity > 0.4 ? "#fff" : "hsl(var(--muted-foreground))",
+                            }}
+                            title={`${h}:00 — ${count} طلب`}
+                          >
+                            {count}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* مفتاح الألوان */}
+              <div className="flex items-center justify-end gap-3 mt-3">
+                <span className="text-[10px] text-muted-foreground">أقل</span>
+                <div className="flex gap-0.5">
+                  {[0.05, 0.2, 0.4, 0.6, 0.8, 1].map(v => (
+                    <div key={v} className="w-4 h-3 rounded-sm" style={{ backgroundColor: `rgba(139, 92, 246, ${v})` }} />
+                  ))}
+                </div>
+                <span className="text-[10px] text-muted-foreground">أكثر</span>
+              </div>
+            </div>
+
+            {/* 4. نسبة الزبائن العائدين */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center">
+                  <Repeat className="h-4 w-4 text-gold-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">نسبة الزبائن العائدين</h3>
+                  <p className="text-xs text-muted-foreground">زبائن لديهم أكثر من طلب</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-4">
+                <span className="text-value-gradient-purple text-5xl font-black tracking-tight">
+                  {retentionPct}%
+                </span>
+                <span className="text-sm text-muted-foreground mt-2">
+                  {repeatCustomers} من {totalCustomers} زبون عائد
+                </span>
+              </div>
+            </div>
+
+            {/* 5. متوسط وقت الإنجاز */}
+            <div className="glass-card-premium card-hover-glow rounded-xl p-4 sm:p-5 chart-fade-in widget-fade-in">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Timer className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">متوسط وقت الإنجاز</h3>
+                  <p className="text-xs text-muted-foreground">من الإنشاء إلى التسليم</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-4">
+                <span className="count-pulse text-5xl font-black text-emerald-600 tracking-tight">
+                  {avgCompletionHours > 0 ? avgCompletionHours.toFixed(1) : "—"}
+                </span>
+                <span className="text-sm text-muted-foreground mt-2">ساعة</span>
+              </div>
+            </div>
+                </>
+              );
+            })()}
+            </motion.div>
+          )}
+
+          {/* ===== تبويب العملاء ===== */}
+          {activeTab === "customers" && (
+            <motion.div
+              key="tab-customers"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
+            <QuickCustomerSearch orders={rawOrders} />
+            {/* شارة الولاء للزبون الأكثر طلبات */}
+            {(() => {
+              const customerCounts = new Map<string, { name: string; orders: number; total: number; firstDate: string }>();
+              rawOrders.forEach(o => {
+                const key = o.customer?.phone || o.customer?.name || "unknown";
+                const existing = customerCounts.get(key);
+                if (existing) {
+                  existing.orders += 1;
+                  existing.total += o.total || 0;
+                } else {
+                  customerCounts.set(key, {
+                    name: o.customer?.name || "زبون",
+                    orders: 1,
+                    total: o.total || 0,
+                    firstDate: o.createdAt || new Date().toISOString(),
+                  });
+                }
+              });
+              const top = Array.from(customerCounts.values()).sort((a, b) => b.orders - a.orders)[0];
+              if (!top || top.orders < 2) return null;
+              return (
+                <div className="mb-4 p-4 rounded-xl border border-border/50 bg-card stat-card animate-fade-up">
+                  <h4 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <Star className="h-3 w-3 text-amber-500" />
+                    أفضل زبون
+                  </h4>
+                  <CustomerLoyaltyBadge
+                    orderCount={top.orders}
+                    totalSpent={top.total}
+                    sinceDate={new Date(top.firstDate).toLocaleDateString('ar-DZ', { month: 'short', year: 'numeric' })}
+                  />
+                </div>
+              );
+            })()}
+            <MerchantCustomers />
+            </motion.div>
+          )}
+
+          {/* ===== تبويب المصاريف ===== */}
+          {activeTab === "expenses" && (
+            <motion.div
+              key="tab-expenses"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
+            <MerchantExpenses revenue={stats?.totalRevenue ?? 0} />
+            </motion.div>
+          )}
+
+          {/* ===== تبويب إعدادات المتجر ===== */}
+          {activeTab === "settings" && (
+            <motion.div
+              key="tab-settings"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
+            <MerchantShopSettings shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            <div className="mt-6">
+              <ShopCustomizationPreview />
+            </div>
+            </motion.div>
+          )}
+
+          {/* ===== تبويب الإعدادات المتقدمة ===== */}
+          {activeTab === "advancedSettings" && (
+            <motion.div
+              key="tab-advanced"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
+            <MerchantSettingsAdvanced shopId={shopId} shopSlug={shopSlug} adminPin={verifiedPinRef.current} />
+            </motion.div>
+          )}
+
+          {/* ===== تبويب مشاركة الرابط ===== */}
+          {activeTab === "share" && (
+            <motion.div
+              key="tab-share"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
+            <ShareLinkTab shopName={shop?.name || ""} shopSlug={shopSlug} customerLink={customerLink} />
+            </motion.div>
+          )}
+
+          {/* ===== تبويب المعاينة ===== */}
+          {activeTab === "preview" && (
+            <motion.div
+              key="tab-preview"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="space-y-5"
+            >
+                <div>
+                  <h2 className="font-bold text-lg text-foreground">معاينة متجرك</h2>
+                  <p className="text-sm text-muted-foreground mt-1">هذا ما يراه زبائنك عند فتح الرابط</p>
+                </div>
+                <div className="flex gap-2">
+                <Button variant="outline" onClick={() => window.open(customerLink, "_blank")} className="border border-border text-foreground hover:bg-secondary rounded-lg shrink-0">
+                  <ExternalLink className="h-4 w-4" />
+                  فتح في نافذة جديدة
+                </Button>
+                </div>
+              <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+                <div className="p-0">
+                  <div className="bg-muted p-3 flex items-center gap-2.5 border-b border-border">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-rose-400" />
+                      <div className="w-3 h-3 rounded-full bg-amber-400" />
+                      <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                    </div>
+                    <div className="flex-1 bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl" dir="ltr">
+                      {customerLink}
+                    </div>
+                  </div>
+                  <iframe
+                    src={customerLink}
+                    className="w-full border-0"
+                    style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}
+                    title="معاينة المتجر"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+          </AnimatePresence>
+        </main>
+      </div>
+
+      {/* ===== نافذة تفاصيل الطلب ===== */}
+      <MerchantOrderDetail
+        order={selectedOrder}
+        open={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onStatusChange={(order, status) => {
+          changeStatus(order, status);
+          setSelectedOrder((prev) => prev ? { ...prev, status } : null);
+        }}
+        onUpdated={loadAll}
+        shopId={shopId}
+        shopName={shop?.name || ""}
+        shopPhone={shop?.phone || ""}
+        shopAddress={shop?.address || null}
+        hasReceiptPrinting={hasFeature("receiptPrinting")}
+        hasDirectPrinting={hasFeature("directPrinting")}
+      />
+
+      {/* ===== نافذة تقرير الإحصائيات ===== */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              تقرير الإحصائيات
+            </DialogTitle>
+            <DialogDescription>
+              اختر فترة التقرير ثم اضغط &quot;إنشاء التقرير&quot;
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">من تاريخ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-right font-normal">
+                      <CalendarIcon className="ml-2 h-4 w-4 text-muted-foreground" />
+                      {reportFrom ? reportFrom.toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }) : "اختر"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={reportFrom}
+                      onSelect={(d) => d && setReportFrom(d)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">إلى تاريخ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-right font-normal">
+                      <CalendarIcon className="ml-2 h-4 w-4 text-muted-foreground" />
+                      {reportTo ? reportTo.toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }) : "اختر"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={reportTo}
+                      onSelect={(d) => d && setReportTo(d)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  const today = new Date();
+                  setReportTo(today);
+                  const d = new Date();
+                  d.setDate(d.getDate() - 1);
+                  setReportFrom(d);
+                }}
+              >
+                أمس
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  const today = new Date();
+                  setReportTo(today);
+                  const d = new Date();
+                  d.setDate(d.getDate() - 7);
+                  setReportFrom(d);
+                }}
+              >
+                آخر 7 أيام
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  const today = new Date();
+                  setReportTo(today);
+                  const d = new Date();
+                  d.setDate(d.getDate() - 30);
+                  setReportFrom(d);
+                }}
+              >
+                آخر 30 يوم
+              </Button>
+            </div>
+
+            <Button
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+              disabled={reportLoading}
+              onClick={async () => {
+                setReportLoading(true);
+                try {
+                  const from = reportFrom.toISOString().slice(0, 10);
+                  const to = reportTo.toISOString().slice(0, 10);
+                  const res = await fetch(`/api/orders/report?shopId=${shopId}&from=${from}&to=${to}`);
+                  if (!res.ok) throw new Error("فشل في جلب التقرير");
+                  const data: StatsReportData = await res.json();
+                  generateStatsReport(data);
+                  setReportOpen(false);
+                  toast.success("تم إنشاء التقرير", { description: "استخدم زر الطباعة لحفظ التقرير كـ PDF" });
+                } catch (e) {
+                  toast.error("فشل إنشاء التقرير", { description: (e as Error).message });
+                } finally {
+                  setReportLoading(false);
+                }
+              }}
+            >
+              {reportLoading ? (
+                <>
+                  <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                  جارٍ الإنشاء...
+                </>
+              ) : (
+                <>
+                  <Download className="ml-2 h-4 w-4" />
+                  إنشاء التقرير
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== نافذة مشاركة رابط المتجر ===== */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-gold-600" />
+              مشاركة رابط المتجر
+            </DialogTitle>
+            <DialogDescription>
+              شارك رابط متجرك مع زبائنك عبر وسائل التواصل
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={customerLink}
+                className="text-left font-mono text-sm"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  navigator.clipboard.writeText(customerLink);
+                  toast.success("تم نسخ الرابط!");
+                  setShareOpen(false);
+                }}
+              >
+                <Copy className="h-4 w-4 ml-1" />
+                نسخ
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent("اطبع أونلاين من " + (shop?.name || "المتجر") + " — " + customerLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.163 0-4.186-.67-5.849-1.81l-.406-.29-2.96.99.99-2.96-.29-.406A9.96 9.96 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                واتساب
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(customerLink)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                تيليجرام
+              </a>
+            </div>
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(customerLink);
+                toast.success("تم نسخ الرابط!");
+                setShareOpen(false);
+              }}
+            >
+              <Copy className="h-4 w-4 ml-2" />
+              نسخ الرابط
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ===== خريطة الأيقونات الديناميكية =====
+const DYN_ICON_MAP: Record<string, LucideIcon> = {
+  Printer: PrinterIcon,
+  BookOpen: BookOpenIcon,
+  Scissors: ScissorsIcon,
+  Palette: PaletteIcon,
+  Image: ImageIcon,
+  Tag: TagIcon,
+  Layers: LayersIcon,
+  PenTool: PenToolIcon,
+};
+
+const ICON_LABELS: Record<string, string> = {
+  Printer: "طابعة",
+  BookOpen: "كتاب",
+  Scissors: "مقص",
+  Palette: "لوحة ألوان",
+  Image: "صورة",
+  Tag: "وسم",
+  Layers: "طبقات",
+  PenTool: "قلم",
+};
+
+// ===== قفل الميزات الاحترافية — يقرأ الحالة من قاعدة البيانات =====
+function ProLock({ featureKey, children, title, desc }: { featureKey: FeatureKey | FeatureKey[]; children: React.ReactNode; title: string; desc: string }) {
+  const { hasFeature, shop } = useShop();
+  const keys = Array.isArray(featureKey) ? featureKey : [featureKey];
+  const isEnabled = keys.some((k) => hasFeature(k));
+  const [showContact, setShowContact] = useState(false);
+  const contactNumber = shop?.ownerPhone || shop?.whatsapp || shop?.phone || "";
+
+  return (
+    <div className="relative">
+      <div className={cn(!isEnabled && "opacity-50 blur-[1px] pointer-events-none select-none")}>
+        {children}
+      </div>
+      {!isEnabled && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center rounded-xl z-10">
+          <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center mb-4 shadow-lg shadow-gold-200/50">
+              <ShieldCheck className="h-8 w-8 text-white" />
+            </div>
+            <h4 className="font-bold text-sm mb-1 text-foreground">{title}</h4>
+            <p className="text-xs text-muted-foreground mb-5">{desc}</p>
+            {!showContact ? (
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-gold-500 to-gold-700 hover:from-gold-600 hover:to-gold-800 text-white rounded-lg shadow-sm transition-all duration-200 active:scale-[0.98]"
+                onClick={() => setShowContact(true)}
+              >
+                <Crown className="h-4 w-4 ml-1" />
+                طلب تفعيل الميزة
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                {contactNumber && (
+                  <Button
+                    size="sm"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+                    onClick={() => {
+                      const clean = contactNumber.replace(/\s/g, "");
+                      const msg = encodeURIComponent(`مرحباً، أريد تفعيل ميزة "${title}" لمتجري`);
+                      window.open(`https://wa.me/${clean.startsWith("0") ? "213" + clean.substring(1) : clean}?text=${msg}`, "_blank");
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 ml-1" />
+                    واتساب
+                  </Button>
+                )}
+                {contactNumber && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full rounded-lg border-border hover:bg-secondary transition-all duration-200"
+                    onClick={() => window.open(`tel:${contactNumber.replace(/\s/g, "")}`, "_self")}
+                  >
+                    <Phone className="h-4 w-4 ml-1" />
+                    اتصل
+                  </Button>
+                )}
+                <button
+                  className="text-xs text-muted-foreground hover:text-foreground mt-1 transition-colors duration-200"
+                  onClick={() => setShowContact(false)}
+                >
+                  إلغاء
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== الخدمات الافتراضية =====
+const DEFAULT_SERVICES = [
+  { type: "document", name: "طباعة مستند", emoji: "🖨️", basePricePerPage: 5, enabled: true },
+  { type: "photo", name: "طباعة صور", emoji: "🖼️", basePricePerPage: 25, enabled: true },
+  { type: "binding", name: "تجليد", emoji: "📚", basePricePerPage: 0, enabled: true },
+  { type: "copy", name: "نسخ مستندات", emoji: "📄", basePricePerPage: 4, enabled: true },
+  { type: "card", name: "بطاقات", emoji: "🪪", basePricePerPage: 30, enabled: true },
+  { type: "poster", name: "ملصقات", emoji: "📜", basePricePerPage: 50, enabled: true },
+];
+
+// ===== إعدادات المتجر (داخل لوحة التاجر) =====
+function MerchantShopSettings({ shopId, shopSlug, adminPin }: { shopId: string; shopSlug: string; adminPin: string }) {
+  const { shop, hasFeature, refreshShop } = useShop();
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    whatsapp: "",
+    email: "",
+    address: "",
+    primaryColor: "",
+    ownerName: "",
+    ownerPhone: "",
+    logoIcon: "Printer",
+    themeId: 1,
+  });
+
+  // حالة تغيير كلمة المرور
+  const [pinForm, setPinForm] = useState({
+    currentPin: "",
+    newPin: "",
+    confirmPin: "",
+  });
+  const [changingPin, setChangingPin] = useState(false);
+  const [showCurrentPin, setShowCurrentPin] = useState(false);
+  const [showNewPin, setShowNewPin] = useState(false);
+
+  // حالة الأيقونة المختارة
+  const [selectedIcon, setSelectedIcon] = useState("Printer");
+  // حالة القالب اللوني
+  const [selectedThemeId, setSelectedThemeId] = useState(1);
+  // حالة الشعار
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (shop) {
+      setForm((f) => ({
+        ...f,
+        name: shop.name || "",
+        phone: shop.phone || "",
+        whatsapp: shop.whatsapp || "",
+        email: shop.email || "",
+        address: shop.address || "",
+        primaryColor: shop.primaryColor || "",
+        ownerName: shop.ownerName || "",
+        ownerPhone: shop.ownerPhone || "",
+        logoIcon: shop.logoIcon || "Printer",
+        themeId: shop.themeId || 1,
+      }));
+      setLogoUrl(shop.logoUrl || null);
+    }
+  }, [shop]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const updateData: Record<string, string | number> = { ...form, adminPin };
+
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "فشل الحفظ");
+      }
+      toast.success("تم حفظ الإعدادات بنجاح");
+      refreshShop();
+    } catch (err) {
+      toast.error("فشل الحفظ", { description: (err as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleChangePin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pinForm.currentPin) {
+      toast.error("أدخل كلمة المرور الحالية");
+      return;
+    }
+    if (!pinForm.newPin || pinForm.newPin.length < 4) {
+      toast.error("كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل");
+      return;
+    }
+    if (pinForm.newPin !== pinForm.confirmPin) {
+      toast.error("كلمة المرور الجديدة غير متطابقة");
+      return;
+    }
+    if (pinForm.currentPin === pinForm.newPin) {
+      toast.error("كلمة المرور الجديدة يجب أن تكون مختلفة عن الحالية");
+      return;
+    }
+    setChangingPin(true);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}/change-pin`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPin: pinForm.currentPin, newPin: pinForm.newPin }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "فشل تغيير كلمة المرور");
+      }
+      toast.success("تم تغيير كلمة المرور بنجاح ✅");
+      setPinForm({ currentPin: "", newPin: "", confirmPin: "" });
+    } catch (err) {
+      toast.error("فشل تغيير كلمة المرور", { description: (err as Error).message });
+    } finally {
+      setChangingPin(false);
+    }
+  }
+
+  async function handleSaveOwnerInfo() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerName: form.ownerName, ownerPhone: form.ownerPhone, adminPin }),
+      });
+      if (!res.ok) throw new Error("فشل الحفظ");
+      toast.success("تم حفظ معلومات المالك");
+      refreshShop();
+    } catch (err) {
+      toast.error("فشل الحفظ", { description: (err as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // ===== ضغط الصورة قبل الرفع =====
+  async function compressLogo(dataUrl: string, maxSize = 512): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = Math.round((height / width) * maxSize);
+            width = maxSize;
+          } else {
+            width = Math.round((width / height) * maxSize);
+            height = maxSize;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("فشل إنشاء سياق الرسم")); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = () => reject(new Error("فشل تحميل الصورة"));
+      img.src = dataUrl;
+    });
+  }
+
+  // ===== رفع الشعار =====
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("حجم الملف كبير جداً", { description: "الحد الأقصى 2 م.ب" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const rawDataUrl: string = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("فشل قراءة الملف"));
+        reader.readAsDataURL(file);
+      });
+      // ضغط الصورة إلى 512x512 كحد أقصى بصيغة JPEG
+      const dataUrl = await compressLogo(rawDataUrl);
+      // حفظ الرابط في المتجر
+      const saveRes = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl: dataUrl, adminPin }),
+      });
+      if (!saveRes.ok) throw new Error("فشل حفظ الشعار");
+      setLogoUrl(dataUrl);
+      refreshShop();
+      toast.success("تم رفع الشعار بنجاح", { description: "سيظهر الشعار الجديد للزبائن فوراً" });
+    } catch (err) {
+      toast.error("فشل رفع الشعار", { description: (err as Error).message });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemoveLogo() {
+    setUploading(true);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl: null, adminPin }),
+      });
+      if (!res.ok) throw new Error("فشل حذف الشعار");
+      setLogoUrl(null);
+      refreshShop();
+      toast.success("تم حذف الشعار");
+    } catch (err) {
+      toast.error("فشل حذف الشعار", { description: (err as Error).message });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // ===== حفظ أيقونة الشعار =====
+  async function handleSelectIcon(iconName: string) {
+    setSelectedIcon(iconName);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoIcon: iconName, adminPin }),
+      });
+      if (!res.ok) throw new Error("فشل الحفظ");
+      toast.success("تم تغيير أيقونة الشعار");
+      refreshShop();
+    } catch (err) {
+      toast.error("فشل الحفظ", { description: (err as Error).message });
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* ===== عنوان التاجر ===== */}
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-gold-50 flex items-center justify-center">
+          <User className="h-5 w-5 text-gold-500" />
+        </div>
+        <div>
+          <h2 className="font-bold text-lg text-foreground">{shop?.name || "التاجر"}</h2>
+          <p className="text-xs text-muted-foreground">إعدادات المتجر والحساب</p>
+        </div>
+      </div>
+
+      {/* ===== 1. رفع الشعار (customLogo) ===== */}
+      <ProLock featureKey="customLogo" title="شعار المتجر" desc="ارفع شعار متجرك ليظهر للزبائن">
+        <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <div className="p-4 sm:p-6 space-y-5">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+              <Upload className="h-4 w-4 text-gold-500" />
+              شعار المتجر
+              <Badge className="bg-gradient-to-r from-gold-500 to-gold-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
+            </h3>
+            <div className="flex items-center gap-4">
+              {logoUrl ? (
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden shadow-sm shrink-0 border border-border">
+                  <img src={logoUrl} alt="شعار المتجر" className="w-full h-full object-cover" />
+                  <button
+                    onClick={handleRemoveLogo}
+                    disabled={uploading}
+                    className="absolute top-1 left-1 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-all duration-200 shadow-sm"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-xl bg-muted border border-border shadow-sm flex items-center justify-center shrink-0">
+                  <Store className="h-8 w-8 text-muted-foreground/60" />
+                </div>
+              )}
+              <div className="flex-1 space-y-3">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                    disabled={uploading}
+                  />
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gold-50 hover:bg-gold-100 transition-all duration-200 border border-gold-200/60">
+                    <Upload className="h-4 w-4 text-gold-500" />
+                    <span className="text-sm font-medium text-gold-600">
+                      {uploading ? "جارٍ الرفع..." : "اختر صورة"}
+                    </span>
+                  </div>
+                </label>
+                <p className="text-xs text-muted-foreground">الحد الأقصى: 2 م.ب (يُضغط تلقائياً)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProLock>
+
+      {/* ===== 2. أيقونة الشعار (customLogo) ===== */}
+      <ProLock featureKey="customLogo" title="أيقونة الشعار" desc="اختر أيقونة مميزة لشعار متجرك">
+        <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <div className="p-4 sm:p-6 space-y-5">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+              <Palette className="h-4 w-4 text-gold-500" />
+              أيقونة الشعار
+              <Badge className="bg-gradient-to-r from-gold-500 to-gold-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
+            </h3>
+            <div className="grid grid-cols-4 sm:grid-cols-4 gap-2.5">
+              {Object.entries(DYN_ICON_MAP).map(([name, IconComp]) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => handleSelectIcon(name)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
+                    selectedIcon === name
+                      ? "bg-secondary shadow-md ring-1 ring-gold-500/30 border-gold-200"
+                      : "bg-muted hover:bg-gold-500/10 hover:shadow-md",
+                  )}
+                >
+                  <IconComp className={cn("h-7 w-7", selectedIcon === name ? "text-gold-500 font-bold" : "text-dark-500")} />
+                  <span className="text-xs font-medium text-muted-foreground">{ICON_LABELS[name]}</span>
+                </button>
+              ))}
+            </div>
+            {/* معاينة حية */}
+            <div className="mt-3 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-3">معاينة:</p>
+              <div className="inline-flex items-center gap-2.5 p-3 rounded-xl shadow-sm" style={{ backgroundColor: shop?.primaryColor || "#d4a853" }}>
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
+                  {(() => {
+                    const Comp = DYN_ICON_MAP[selectedIcon] || PrinterIcon;
+                    return <Comp className="h-5 w-5 text-white" />;
+                  })()}
+                </div>
+                <span className="font-bold text-sm text-white">{form.name || "اسم المتجر"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProLock>
+
+      {/* ===== 3. القالب اللوني (customLogo) ===== */}
+      <ThemePickerSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} />
+
+      {/* ===== 4. معلومات المتجر (مجاني) ===== */}
+      <form onSubmit={handleSave} className="space-y-5">
+        <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <div className="p-4 sm:p-6 space-y-5">
+            <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+              <Store className="h-4 w-4 text-gold-500" />
+              معلومات المتجر
+            </h3>
+            <div>
+              <Label className="text-muted-foreground text-sm">اسم المتجر</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><Phone className="h-3.5 w-3.5 text-muted-foreground" />الهاتف</Label>
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
+              </div>
+              <div>
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />واتساب</Label>
+                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
+              </div>
+              <div>
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><Mail className="h-3.5 w-3.5 text-muted-foreground" />البريد الإلكتروني</Label>
+                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
+              </div>
+              <div>
+                <Label className="flex items-center gap-1.5 text-muted-foreground text-sm"><MapPin className="h-3.5 w-3.5 text-muted-foreground" />العنوان</Label>
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Button type="submit" className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50" disabled={saving}>
+          <Save className="h-4 w-4" />
+          {saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
+        </Button>
+      </form>
+
+      {/* ===== 5. إدارة الأسعار والخدمات (customPricing / serviceToggle) ===== */}
+      <PriceEditorSection shopSlug={shopSlug} shop={shop} adminPin={adminPin} />
+
+      {/* ===== 6. معلومات المالك + تغيير كلمة المرور (مجاني) ===== */}
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="p-4 sm:p-6 space-y-5">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+            <User className="h-4 w-4 text-gold-500" />
+            معلومات المالك
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-muted-foreground text-sm">الاسم</Label>
+              <Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-sm">الهاتف</Label>
+              <Input value={form.ownerPhone} onChange={(e) => setForm({ ...form, ownerPhone: e.target.value })} className="mt-1.5 h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all" dir="ltr" />
+            </div>
+          </div>
+          <Button onClick={handleSaveOwnerInfo} className="w-full h-11 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50" disabled={saving}>
+            <Save className="h-4 w-4" />
+            {saving ? "جارٍ الحفظ..." : "حفظ معلومات المالك"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="p-4 sm:p-6 space-y-5">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+            <Lock className="h-4 w-4 text-gold-500" />
+            تغيير كلمة المرور
+          </h3>
+          <form onSubmit={handleChangePin} className="space-y-3 max-w-md">
+            {/* كلمة المرور الحالية */}
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">كلمة المرور الحالية</Label>
+              <div className="relative">
+                <Input
+                  type={showCurrentPin ? "text" : "password"}
+                  value={pinForm.currentPin}
+                  onChange={(e) => setPinForm({ ...pinForm, currentPin: e.target.value })}
+                  placeholder="أدخل كلمة المرور الحالية"
+                  dir="ltr"
+                  className="h-11 pe-10 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPin(!showCurrentPin)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showCurrentPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            {/* كلمة المرور الجديدة */}
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">كلمة المرور الجديدة</Label>
+              <div className="relative">
+                <Input
+                  type={showNewPin ? "text" : "password"}
+                  value={pinForm.newPin}
+                  onChange={(e) => setPinForm({ ...pinForm, newPin: e.target.value })}
+                  placeholder="4 أحرف على الأقل"
+                  dir="ltr"
+                  className="h-11 pe-10 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
+                  required
+                  minLength={4}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPin(!showNewPin)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showNewPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            {/* تأكيد كلمة المرور */}
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">تأكيد كلمة المرور الجديدة</Label>
+              <Input
+                type="password"
+                value={pinForm.confirmPin}
+                onChange={(e) => setPinForm({ ...pinForm, confirmPin: e.target.value })}
+                placeholder="أعد إدخال كلمة المرور"
+                dir="ltr"
+                className="h-11 rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
+                required
+                minLength={4}
+              />
+              {pinForm.confirmPin && pinForm.newPin !== pinForm.confirmPin && (
+                <p className="text-xs text-rose-500 mt-1">كلمة المرور غير متطابقة</p>
+              )}
+            </div>
+            <Button
+              type="submit"
+              className="w-full h-11 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
+              disabled={changingPin || !pinForm.currentPin || !pinForm.newPin || pinForm.newPin !== pinForm.confirmPin}
+            >
+              {changingPin ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              <span className="mr-1.5">تغيير كلمة المرور</span>
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== القالب اللوني =====
+function ThemePickerSection({
+  shopSlug,
+  shop,
+  adminPin,
+}: {
+  shopSlug: string;
+  shop: { themeId?: number } | null;
+  adminPin: string;
+}) {
+  const { hasFeature, refreshShop } = useShop();
+  const canCustomize = hasFeature("customLogo");
+  const [selectedThemeId, setSelectedThemeId] = useState(1);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (shop) {
+      setSelectedThemeId(shop.themeId || 1);
+    }
+  }, [shop]);
+
+  async function handleSelectTheme(themeId: number) {
+    setSelectedThemeId(themeId);
+    if (!canCustomize) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ themeId, adminPin }),
+      });
+      if (!res.ok) throw new Error("فشل الحفظ");
+      toast.success("تم تغيير القالب اللوني");
+      refreshShop();
+    } catch (err) {
+      toast.error("فشل الحفظ", { description: (err as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ProLock featureKey="customTheme" title="القالب اللوني" desc="اختر قالب ألوان يناسب متجرك">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="p-4 sm:p-6 space-y-5">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+            <Palette className="h-4 w-4 text-gold-500" />
+            القالب اللوني
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {SHOP_THEMES.map((theme) => (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => handleSelectTheme(theme.id)}
+                className={cn(
+                  "rounded-xl overflow-hidden transition-all duration-200 text-right border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
+                  selectedThemeId === theme.id
+                    ? "ring-2 ring-gold-500 shadow-md border-gold-200"
+                    : "hover:shadow-md",
+                )}
+              >
+                {/* معاينة مصغرة */}
+                <div className="space-y-0">
+                  {/* الشريط العلوي */}
+                  <div className="h-2" style={{ backgroundColor: theme.topBar.bg }} />
+                  {/* الترويسة */}
+                  <div className="h-5 flex items-center gap-1 px-2" style={{ backgroundColor: theme.header.bg }}>
+                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: theme.accent }} />
+                    <div className="flex-1 h-1 rounded-full bg-dark-200" />
+                  </div>
+                  {/* المحتوى */}
+                  <div className="h-8" style={{ backgroundColor: theme.contentBg }} />
+                  {/* التذييل */}
+                  <div className="h-2" style={{ backgroundColor: theme.footer.bg }} />
+                </div>
+                {/* اسم القالب */}
+                <div className="px-2.5 py-2 bg-muted">
+                  <span className="text-[10px] font-medium text-dark-700">{theme.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </ProLock>
+  );
+}
+
+// ===== محرر الأسعار والخدمات =====
+interface ServiceSpec {
+  type: string;
+  name: string;
+  emoji: string;
+  basePricePerPage: number;
+  enabled: boolean;
+}
+
+function PriceEditorSection({
+  shopSlug,
+  shop,
+  adminPin,
+}: {
+  shopSlug: string;
+  shop: { settings?: string | null } | null;
+  adminPin: string;
+}) {
+  const { hasFeature } = useShop();
+  const canCustomize = hasFeature("customPricing") || hasFeature("serviceToggle");
+  const [services, setServices] = useState<ServiceSpec[]>(DEFAULT_SERVICES);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (shop) {
+      try {
+        const raw = (shop.settings as string) || "{}";
+        const parsed = JSON.parse(raw);
+        if (parsed.services && Array.isArray(parsed.services)) {
+          setServices(parsed.services);
+        }
+      } catch {
+        // use defaults
+      }
+    }
+  }, [shop]);
+
+  function updateService(idx: number, patch: Partial<ServiceSpec>) {
+    setServices((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
+  }
+
+  async function handleSaveServices() {
+    setSaving(true);
+    try {
+      // دمج مع الإعدادات الحالية
+      let existingSettings: Record<string, unknown> = {};
+      try {
+        const raw = (shop?.settings as string) || "{}";
+        existingSettings = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+      const newSettings = { ...existingSettings, services };
+      const res = await fetch(`/api/shops/${encodeURIComponent(shopSlug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: JSON.stringify(newSettings), adminPin }),
+      });
+      if (!res.ok) throw new Error("فشل الحفظ");
+      toast.success("تم حفظ الأسعار والخدمات");
+    } catch (err) {
+      toast.error("فشل الحفظ", { description: (err as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ProLock featureKey={["customPricing", "serviceToggle"]} title="إدارة الأسعار والخدمات" desc="خصّص أسعار خدماتك بسهولة">
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="p-4 sm:p-6 space-y-5">
+          <h3 className="text-sm font-semibold flex items-center gap-2.5 text-foreground border-r-4 border-gold-500 pr-3">
+            <DollarSign className="h-4 w-4 text-gold-500" />
+            إدارة الأسعار والخدمات
+            <Badge className="bg-gradient-to-r from-gold-500 to-gold-700 text-white text-[10px] px-2 py-0.5 rounded-md border-0 shadow-sm">مميز</Badge>
+          </h3>
+
+          <div className="space-y-2.5">
+            {services.map((svc, idx) => (
+              <div key={svc.type} className="rounded-xl bg-muted border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+                {/* رأس الخدمة */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
+                  className="w-full flex items-center justify-between px-4 py-3.5 text-right hover:bg-gold-500/10 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{svc.emoji}</span>
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{svc.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {svc.basePricePerPage > 0 ? `${svc.basePricePerPage} د.ج/صفحة` : "مجاني"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!svc.enabled && (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground border-dark-300 rounded-lg">معطّل</Badge>
+                    )}
+                    <ChevronLeft
+                      className={cn(
+                        "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                        expandedIdx === idx && "rotate-90",
+                      )}
+                    />
+                  </div>
+                </button>
+
+                {/* تفاصيل الخدمة */}
+                {expandedIdx === idx && (
+                  <div className="border-t border-border bg-card px-4 py-4 space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">اسم الخدمة</Label>
+                      <Input
+                        value={svc.name}
+                        onChange={(e) => updateService(idx, { name: e.target.value })}
+                        className="mt-1 h-10 text-sm rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">السعر الأساسي لكل صفحة (د.ج)</Label>
+                      <Input
+                        type="number"
+                        value={svc.basePricePerPage}
+                        onChange={(e) => updateService(idx, { basePricePerPage: parseInt(e.target.value) || 0 })}
+                        className="mt-1 h-10 text-sm rounded-xl border-border focus-visible:ring-gold-500/30 focus-visible:border-gold-500 transition-all"
+                        dir="ltr"
+                        min={0}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`svc-enabled-${idx}`}
+                        checked={svc.enabled}
+                        onCheckedChange={(checked) => updateService(idx, { enabled: !!checked })}
+                      />
+                      <Label htmlFor={`svc-enabled-${idx}`} className="text-xs cursor-pointer text-foreground">
+                        الخدمة مفعّلة
+                      </Label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <Button
+            onClick={handleSaveServices}
+            className="w-full h-12 rounded-xl bg-gold-500 hover:bg-gold-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-gold-500/50"
+            disabled={saving}
+          >
+            <Save className="h-4 w-4" />
+            {saving ? "جارٍ الحفظ..." : "حفظ الأسعار"}
+          </Button>
+        </div>
+      </div>
+    </ProLock>
+  );
+}
+
+// ===== تبويب مشاركة الرابط =====
+function ShareLinkTab({ shopName, shopSlug, customerLink }: { shopName: string; shopSlug: string; customerLink: string }) {
+  const [copied, setCopied] = useState(false);
+  const [adminCopied, setAdminCopied] = useState(false);
+  const [qrUrl, setQrUrl] = useState("");
+
+  useEffect(() => {
+    if (!customerLink) return;
+    getQRCode().then((QR) => {
+      QR.toDataURL(customerLink, {
+        width: 300,
+        margin: 2,
+        color: { dark: "#1a1a1a", light: "#ffffff" },
+      }).then(setQrUrl).catch(() => {});
+    });
+  }, [customerLink]);
+
+  async function robustCopy(text: string, successMsg: string, desc: string) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      toast.success(successMsg, { description: desc });
+      return true;
+    } catch {
+      toast.error("فشل النسخ", { description: "جرب تحديد النص ونسخه يدوياً" });
+      return false;
+    }
+  }
+
+  function copyCustomerLink() {
+    robustCopy(customerLink, "تم نسخ رابط الزبائن", "شاركه مع زبائنك");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function copyAdminLink() {
+    const adminLink = `${customerLink}?admin=1`;
+    robustCopy(adminLink, "تم نسخ رابط الإدارة", "احفظه لنفسك فقط — لا تشاركه");
+    setAdminCopied(true);
+    setTimeout(() => setAdminCopied(false), 2000);
+  }
+
+  function shareViaWhatsApp() {
+    const text = `مرحباً! يمكنك تقديم طلبات الطباعة مباشرة من هنا: ${customerLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
+  function downloadQR() {
+    if (!qrUrl) return;
+    const a = document.createElement("a");
+    a.href = qrUrl;
+    a.download = `qr-${shopSlug}.png`;
+    a.click();
+  }
+
+  function printQR() {
+    if (!qrUrl) return;
+    const printWin = window.open("", "_blank");
+    if (!printWin) return;
+    // Escape HTML to prevent XSS
+    const safeName = shopName ? shopName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") : "المتجر";
+    const safeLink = customerLink ? customerLink.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") : "";
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>${safeName} - رمز QR</title>
+        <style>
+          @media print { body { margin: 0; } }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+          .container { text-align: center; border: 3px solid #1a1a1a; border-radius: 16px; padding: 30px 40px; max-width: 400px; }
+          h1 { font-size: 24px; font-weight: bold; margin-bottom: 8px; direction: rtl; }
+          p { font-size: 13px; color: #666; margin-bottom: 20px; direction: rtl; }
+          img { width: 250px; height: 250px; margin: 0 auto 16px; display: block; }
+          .url { font-size: 11px; color: #999; direction: ltr; word-break: break-all; margin-top: 12px; }
+          .hint { font-size: 12px; color: #888; margin-top: 16px; direction: rtl; }
+          .print-btn { margin-top: 20px; padding: 10px 32px; background: #1a1a1a; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+          .print-btn:hover { background: #333; }
+          @media print { .print-btn, .no-print { display: none !important; } }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>${safeName}</h1>
+          <p>امسح الرمز للوصول إلى متجرنا</p>
+          <img src="${qrUrl}" alt="رمز QR" />
+          <div class="url">${safeLink}</div>
+          <div class="hint">📱 افتح كاميرا هاتفك ووجّهها نحو الرمز</div>
+        </div>
+        <button class="print-btn no-print" onclick="window.print()">🖨️ طباعة</button>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  }
+
+  return (
+    <div className="max-w-lg mx-auto space-y-6">
+      <div className="text-center">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-gold-50 flex items-center justify-center mb-4 border border-gold-200/60">
+          <Link2 className="h-8 w-8 text-gold-500" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">مشاركة متجرك</h2>
+        <p className="text-sm text-muted-foreground mt-1.5">انشر رابط متجرك ليزوره زبائنك ويقدمون طلباتهم</p>
+      </div>
+
+      {/* رابط الزبائن */}
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="p-4 sm:p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50/80 flex items-center justify-center">
+              <Link2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">رابط الزبائن</h3>
+              <p className="text-xs text-muted-foreground">هذا الرابط لمشاركته مع الزبائن فقط</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={customerLink}
+              readOnly
+              className="flex-1 bg-muted text-sm rounded-xl border-border h-11"
+              dir="ltr"
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
+            <Button onClick={copyCustomerLink} variant="outline" className="shrink-0 rounded-lg border-border hover:bg-secondary transition-all duration-200 h-11 px-4">
+              <Copy className="h-4 w-4" />
+              {copied ? "تم!" : "نسخ"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== رمز QR / الباركود ===== */}
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-gold-50/80 flex items-center justify-center">
+              <QrCode className="h-4 w-4 text-gold-500" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">رمز QR للمتجر</h3>
+              <p className="text-xs text-muted-foreground">اطبعه واعرضه في محلك أو على وسائل التواصل</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-5">
+            {qrUrl ? (
+              <>
+                <div className="rounded-xl p-5 bg-card shadow-sm border border-dashed border-border">
+                  <img src={qrUrl} alt="رمز QR" className="w-48 h-48 md:w-56 md:h-56" />
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  📱 امسح الرمز بكاميرا الهاتف للوصول مباشرة إلى متجر <strong className="text-dark-700">{shopName}</strong>
+                </p>
+                <div className="flex gap-3 w-full">
+                  <Button onClick={printQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-border hover:bg-secondary transition-all duration-200">
+                    <Printer className="h-4 w-4" />
+                    طباعة الباركود
+                  </Button>
+                  <Button onClick={downloadQR} variant="outline" className="flex-1 h-11 gap-2 rounded-lg border-border hover:bg-secondary transition-all duration-200">
+                    <Download className="h-4 w-4" />
+                    تحميل الصورة
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="w-48 h-48 bg-muted rounded-xl flex items-center justify-center border border-border">
+                <div className="text-center">
+                  <div className="animate-spin w-6 h-6 border-2 border-border border-t-gold-500 rounded-full mx-auto mb-2" />
+                  <span className="text-xs text-muted-foreground">جارٍ توليد الرمز...</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* مشاركة عبر واتساب */}
+      <Button onClick={shareViaWhatsApp} className="w-full h-12 bg-gold-500 hover:bg-gold-600 text-white gap-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]">
+        <MessageCircle className="h-5 w-5" />
+        مشاركة عبر واتساب
+      </Button>
+
+      {/* رابط الإدارة */}
+      <div className="bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ borderWidth: "1.5px", borderStyle: "dashed", borderColor: "#d4a853" }}>
+        <div className="p-4 sm:p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gold-50/80 flex items-center justify-center">
+              <AlertCircle className="h-4 w-4 text-gold-500" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">رابط الإدارة (لك أنت فقط)</h3>
+              <p className="text-xs text-gold-500">⚠️ لا تشارك هذا الرابط مع أحد</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={`${customerLink}?admin=1`}
+              readOnly
+              className="flex-1 bg-muted text-sm rounded-xl border-border h-11"
+              dir="ltr"
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
+            <Button onClick={copyAdminLink} variant="outline" size="icon" className={cn("shrink-0 rounded-lg border-dark-200 transition-all duration-200 h-11 w-11", adminCopied ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" : "hover:bg-secondary")}>
+              {adminCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* تعليمات */}
+      <div className="bg-gold-50 rounded-xl p-5 space-y-3 border border-gold-500/15">
+        <h4 className="font-bold text-sm text-foreground">📌 كيف تستخدم هذه الأدوات؟</h4>
+        <ul className="text-xs text-gold-600/90 space-y-2">
+          <li className="flex items-start gap-2.5">
+            <span className="shrink-0 mt-0.5">✅</span>
+            <span><strong>رابط الزبائن:</strong> أرسله لعملائك ليقدموا طلباتهم مباشرة</span>
+          </li>
+          <li className="flex items-start gap-2.5">
+            <span className="shrink-0 mt-0.5">📸</span>
+            <span><strong>رمز QR:</strong> اطبعه وضعه في محلك أو انشره على وسائل التواصل الاجتماعي</span>
+          </li>
+          <li className="flex items-start gap-2.5">
+            <span className="shrink-0 mt-0.5">🖨️</span>
+            <span><strong>طباعة الباركود:</strong> يمكنك وضعه على واجهة المحل أو كاونتر الاستقبال</span>
+          </li>
+          <li className="flex items-start gap-2.5">
+            <span className="shrink-0 mt-0.5">🔒</span>
+            <span><strong>رابط الإدارة:</strong> احفظه في هاتفك لمتابعة الطلبات وإدارة متجرك</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ===== بطاقة طلب للجوال =====
+const SERVICE_EMOJI: Record<string, string> = {
+  document: "🖨️", photo: "🖼️", binding: "📚", copy: "📄", card: "🪪", poster: "📜",
+};
+
+const OPTION_LABELS: Record<string, string> = {
+  pages: "الصفحات", copies: "النسخ", color: "نوع الطباعة", paperSize: "حجم الورق",
+  sides: "الوجهين", binding: "التجليد", paperType: "نوع الورق", photoSize: "حجم الصورة",
+  finish: "التشطيب", retouch: "تحسينات", bindingType: "نوع التجليد", coverColor: "لون الغلاف",
+  coverPrint: "طباعة الغلاف", cardType: "نوع البطاقة", lamination: "التغليف",
+  posterSize: "حجم الملصق", material: "الخامة", sorting: "الترتيب", extras: "إضافات",
+};
+
+function MobileOrderCard({
+  order,
+  onStatusChange,
+  shopId,
+  onClick,
+  shopName,
+  shopPhone,
+  shopAddress,
+  selectionMode,
+  selected,
+  onToggleSelect,
+}: {
+  order: PrintOrderLite;
+  onStatusChange: (order: PrintOrderLite, status: string, note?: string) => void;
+  shopId: string;
+  onClick?: (order: PrintOrderLite) => void;
+  shopName: string;
+  shopPhone: string;
+  shopAddress: string | null;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const { hasFeature } = useShop();
+  const canDownloadFile = hasFeature("merchantFileDownload");
+  const meta = STATUS_META[order.status] || { label: order.status, bg: "bg-secondary text-secondary-foreground", emoji: "", step: 0 } as any;
+  const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
+
+  // تنزيل الملف عبر fetch + blob (أكثر موثوقية من window.open الذي قد يحظره مانع النوافذ)
+  async function handleDownload(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/file?shopId=${shopId}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "فشل تنزيل الملف");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = order.fileName || `order-${order.reference}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("تم تنزيل الملف");
+    } catch (err) {
+      toast.error("تعذّر تنزيل الملف", { description: (err as Error).message });
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  const statusBorderClass: Record<string, string> = {
+    pending: "border-l-amber-400",
+    printing: "border-l-blue-400",
+    ready: "border-l-emerald-400",
+    delivered: "border-l-emerald-500",
+    cancelled: "border-l-rose-400",
+  };
+  const borderClass = statusBorderClass[order.status] || "border-l-slate-300";
+
+  return (
+    <div className={cn("bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-200", borderClass, selected && "ring-2 ring-gold-500 ring-offset-1")}>
+      <button
+        onClick={() => { if (selectionMode) { onToggleSelect?.(); return; } setExpanded(!expanded); if (!expanded && onClick) onClick(order); }}
+        className="w-full p-4 text-right hover:bg-secondary transition-colors duration-200"
+      >
+        <div className="flex items-start justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {selectionMode && (
+              <Checkbox
+                checked={selected || false}
+                onCheckedChange={() => onToggleSelect?.()}
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0"
+              />
+            )}
+            <span className="text-xl shrink-0">{serviceEmoji}</span>
+            <div className="min-w-0">
+              <div className="font-mono text-xs font-bold text-foreground">{order.reference || "—"}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{order.serviceName || "—"}</div>
+            </div>
+          </div>
+          <span className={cn("text-xs px-2.5 py-1 rounded-lg font-medium shrink-0", meta.bg)}>
+            {meta.label}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-sm font-medium truncate text-foreground">{order.customer?.name || "—"}</div>
+            <div className="text-xs text-muted-foreground" dir="ltr">{order.customer?.phone || "—"}</div>
+          </div>
+          <div className="text-left shrink-0">
+            <div className="font-bold text-gold-500 text-sm">{formatDA(order.total || 0)}</div>
+            <div className="text-xs text-muted-foreground">{order.pages || 0}ص × {order.copies || 0}ن</div>
+          </div>
+        </div>
+        <div className="mt-2.5 pt-2.5 border-t border-dark-100 flex items-center justify-between text-xs text-muted-foreground">
+          <span>{formatDateTimeAr(order.createdAt)}</span>
+          <span className={cn("flex items-center gap-1 text-gold-400", expanded && "rotate-90", "transition-transform duration-200")}>
+            <ChevronLeft className="h-3.5 w-3.5" />
+            {expanded ? "إخفاء" : "عرض التفاصيل"}
+          </span>
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-dark-100 bg-card border border-gold-500/10 dark:border-gold-500/15 rounded-xl p-4 space-y-3">
+          <div>
+            <div className="text-xs font-bold text-dark-700 mb-2">مواصفات الطباعة</div>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(order.options)
+                .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !["notes", "printRange", "pageRange", "totalPages"].includes(k))
+                .map(([k, v]) => (
+                  <div key={k} className="rounded-xl bg-card shadow-sm border border-border px-3 py-2">
+                    <div className="text-[11px] text-muted-foreground">{OPTION_LABELS[k as keyof typeof OPTION_LABELS] || k}</div>
+                    <div className="text-xs font-semibold text-foreground">{String(v)}</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {order.fileName && (
+            <div>
+              <div className="text-xs font-bold text-dark-700 mb-2">ملف الزبون</div>
+              <div className="flex items-center gap-2 rounded-xl bg-card shadow-sm border border-border p-2.5">
+                <FileText className="h-4 w-4 text-gold-400 shrink-0" />
+                <span className="text-xs truncate text-dark-700 flex-1">{order.fileName}</span>
+                {canDownloadFile ? (
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px] px-2.5 bg-gold-500 hover:bg-gold-600 text-white rounded-lg shrink-0 transition-all duration-200 active:scale-[0.97] disabled:opacity-60"
+                    onClick={handleDownload}
+                    disabled={downloading}
+                  >
+                    {downloading ? <RefreshCw className="h-3 w-3 ml-1 animate-spin" /> : <Download className="h-3 w-3 ml-1" />}
+                    {downloading ? "جارٍ..." : "تنزيل"}
+                  </Button>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-2 py-0.5 rounded-full shrink-0">
+                    <Crown className="h-2.5 w-2.5" />
+                    مميز
+                  </span>
+                )}
+              </div>
+              <div className="mt-1.5 flex items-start gap-1.5 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/40 dark:border-amber-800/40 rounded-lg p-2">
+                <AlertCircle className="h-3 w-3 shrink-0 mt-0.5 text-amber-500" />
+                <span>الملفات لا تُحفظ على السيرفر. يُرجى تنزيل الملف وحفظه على جهازك فوراً بعد استلام الطلب.</span>
+              </div>
+            </div>
+          )}
+
+          {/* وسوم الطلب */}
+          {order.tags && order.tags.length > 0 && (
+            <div>
+              <div className="text-xs font-bold text-dark-700 mb-2">الوسوم</div>
+              <div className="flex flex-wrap gap-1.5">
+                {order.tags.map((tag, i) => (
+                  <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-gold-50 text-gold-600 border border-gold-200/60">
+                    <Tag className="h-2.5 w-2.5" />
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ملاحظات تغيير الحالة */}
+          {order.statusNotes && (
+            <div>
+              <div className="flex items-start gap-1.5 rounded-xl bg-gold-50 dark:bg-gold-950/20 border border-gold-200/50 dark:border-gold-800/30 p-2.5">
+                <StickyNote className="h-3.5 w-3.5 text-gold-500 shrink-0 mt-0.5" />
+                <span className="text-xs text-gold-700 dark:text-gold-300">{order.statusNotes}</span>
+              </div>
+            </div>
+          )}
+
+          {/* ملاحظات الإدارة */}
+          {order.adminNotes && (
+            <div>
+              <div className="text-xs font-bold text-dark-700 mb-2">ملاحظات داخلية</div>
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 p-2.5">
+                <div className="flex items-start gap-1.5">
+                  <StickyNote className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <span className="text-xs text-amber-800">{order.adminNotes}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* تواريخ الطباعة */}
+          {(order.startedPrintingAt || order.completedPrintingAt) && (
+            <div>
+              <div className="text-xs font-bold text-dark-700 mb-2">مراحل الطباعة</div>
+              <div className="space-y-1.5">
+                {order.startedPrintingAt && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <PrinterIcon className="h-3.5 w-3.5 text-gold-400" />
+                    <span>بدأ: {formatDateTimeAr(order.startedPrintingAt)}</span>
+                  </div>
+                )}
+                {order.completedPrintingAt && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>انتهى: {formatDateTimeAr(order.completedPrintingAt)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className={cn("grid gap-2.5 pt-1", hasFeature("receiptPrinting") ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2")}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs sm:text-sm h-11 rounded-lg border-border hover:bg-secondary transition-all duration-200"
+              onClick={() => window.open(`/api/orders/${order.id}/invoice?shopId=${shopId}`, "_blank")}
+            >
+              <Download className="h-3.5 w-3.5" />
+              الفاتورة
+            </Button>
+            {hasFeature("receiptPrinting") && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs sm:text-sm h-11 rounded-lg border-border hover:bg-secondary transition-all duration-200"
+                onClick={() => printReceipt(order, shopName, shopPhone, shopAddress)}
+              >
+                <Printer className="h-3.5 w-3.5" />
+                إيصال
+              </Button>
+            )}
+            <ChangeStatusSelect order={order} onChange={onStatusChange} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChangeStatusSelect({
+  order,
+  onChange,
+}: {
+  order: PrintOrderLite;
+  onChange: (order: PrintOrderLite, status: string, note?: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+
+  function handleSelectStatus(status: string) {
+    setPendingStatus(status);
+    setNote("");
+    setOpen(true);
+  }
+
+  function handleConfirm() {
+    if (!pendingStatus) return;
+    onChange(order, pendingStatus, note || undefined);
+    setOpen(false);
+    setPendingStatus(null);
+    setNote("");
+  }
+
+  return (
+    <>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" className="text-sm h-11 bg-gold-500 hover:bg-gold-600 text-white rounded-lg transition-all duration-200 active:scale-[0.98]">
+          <MoreHorizontal className="h-3.5 w-3.5" />
+          تغيير الحالة
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-40 rounded-lg">
+        {STATUS_FLOW.filter((s) => s !== order.status).map((s) => (
+          <DropdownMenuItem key={s} onClick={() => handleSelectStatus(s)}>
+            <span className="mr-2">{STATUS_META[s].emoji}</span>
+            {STATUS_META[s].label}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuItem onClick={() => handleSelectStatus("cancelled")}>
+          إلغاء الطلب
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+
+    <Dialog open={pendingStatus !== null} onOpenChange={(isOpen) => { if (!isOpen) { setPendingStatus(null); setNote(""); } }}>
+      <DialogContent className="max-w-sm rounded-xl p-0 gap-0" dir="rtl" aria-describedby={undefined}>
+        <DialogHeader className="p-5 pb-3">
+          <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+            {pendingStatus ? STATUS_META[pendingStatus]?.emoji : ""}
+            تغيير حالة الطلب
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {order.reference} ← {STATUS_META[pendingStatus || "pending"]?.label}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="px-5 pb-4 space-y-4">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
+            <span className="text-sm">{STATUS_META[order.status]?.emoji}</span>
+            <span className="text-sm text-muted-foreground">{STATUS_META[order.status]?.label}</span>
+            <span className="text-sm text-muted-foreground mx-1">←</span>
+            <span className="text-sm">{STATUS_META[pendingStatus || "pending"]?.emoji}</span>
+            <span className="text-sm font-medium text-foreground">{STATUS_META[pendingStatus || "pending"]?.label}</span>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <StickyNote className="h-3.5 w-3.5" />
+              ملاحظة (اختياري)
+            </Label>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="أضف ملاحظة حول تغيير الحالة..."
+              className="text-sm min-h-[70px] rounded-lg border-border resize-none"
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              onClick={handleConfirm}
+              className="flex-1 h-10 bg-gold-500 hover:bg-gold-600 text-white rounded-lg transition-all duration-200 active:scale-[0.98]"
+            >
+              تأكيد التغيير
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setPendingStatus(null); setNote(""); }}
+              className="h-10 rounded-lg border-border hover:bg-secondary transition-all duration-200"
+            >
+              إلغاء
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    <QuickActionsToolbar />
+    </>
+  );
+}

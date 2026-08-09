@@ -1,0 +1,1000 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { Save, X, FileText, Download, ChevronDown, ChevronUp, RefreshCw, History, Phone, MessageCircle, Copy, Check, Printer, Clock, PackageCheck, Truck, XCircle, CalendarClock, StickyNote, AlertCircle, Timer, Zap } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  STATUS_META,
+  STATUS_FLOW,
+  formatDA,
+  formatDateTimeAr,
+} from "@/lib/print-config";
+import type { PrintOrderLite } from "@/lib/order-types";
+import {
+  translateOptionKey,
+  translateOptionValue,
+  HIDDEN_OPTION_KEYS,
+} from "@/lib/option-translations";
+import { useAppStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
+import { OrderStatusNotesTimeline } from "@/components/app/order-status-notes-timeline";
+
+const SERVICE_EMOJI: Record<string, string> = {
+  document: "🖨️",
+  photo: "🖼️",
+  binding: "📚",
+  copy: "📄",
+  card: "🪪",
+  poster: "📜",
+};
+
+interface OrderDetailModalProps {
+  order: PrintOrderLite | null;
+  open: boolean;
+  onClose: () => void;
+  onStatusChange: (order: PrintOrderLite, status: string) => void;
+}
+
+/* ===== مسار حالة الطلب المرئي ===== */
+const TIMELINE_STATUSES = [
+  { key: "pending",   label: "بانتظار الطباعة", icon: Clock,       color: "amber" },
+  { key: "confirmed", label: "مؤكد",            icon: Check,       color: "sky" },
+  { key: "printing",  label: "جارٍ التنفيذ",    icon: Printer,     color: "gold" },
+  { key: "ready",     label: "جاهز للاستلام",  icon: PackageCheck, color: "emerald" },
+  { key: "delivered", label: "تم التسليم",      icon: Truck,       color: "emerald" },
+];
+
+function OrderStatusTimeline({ status }: { status: string }) {
+  const isCancelled = status === "cancelled";
+  const currentIndex = TIMELINE_STATUSES.findIndex((s) => s.key === status);
+
+  return (
+    <div className="rounded-xl bg-muted/30 dark:bg-muted/20 border border-border/50 p-4 glass-card-v4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+        <Clock className="h-3.5 w-3.5" />
+        <span className="font-medium">مسار الطلب</span>
+      </div>
+      {isCancelled ? (
+        <div className="flex items-center justify-center gap-2 py-2">
+          <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+            <XCircle className="h-4 w-4 text-rose-500" />
+          </div>
+          <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">تم إلغاء الطلب</span>
+        </div>
+      ) : (
+        <>
+          {/* === تخطيط أفقي للحاسوب === */}
+          <div className="relative flex items-start justify-between gap-1 max-sm:hidden">
+            {/* خلفية الخط الرابط */}
+            <div className="absolute top-4 right-[10%] left-[10%] h-0.5 bg-muted rounded-full" />
+            {/* الخط المكتمل */}
+            {currentIndex >= 1 && (
+              <div
+                className="absolute top-4 right-[10%] h-0.5 bg-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${(currentIndex / (TIMELINE_STATUSES.length - 1)) * 80}%` }}
+              />
+            )}
+            {TIMELINE_STATUSES.map((step, i) => {
+              const Icon = step.icon;
+              const isCompleted = i < currentIndex;
+              const isCurrent = i === currentIndex;
+              const isFuture = i > currentIndex;
+              const currentColorClass = isCurrent
+                ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
+                  : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
+                  : step.color === "gold" ? "bg-gold-500 border-gold-500 ring-gold-500/30"
+                  : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
+                : "";
+              const currentTextColorClass = isCurrent
+                ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
+                  : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
+                  : step.color === "gold" ? "text-gold-600 dark:text-gold-400"
+                  : "text-emerald-600 dark:text-emerald-400")
+                : "";
+              return (
+                <div key={step.key} className="relative z-10 flex flex-col items-center gap-1.5 progress-step" style={{ width: "20%" }}>
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                      isCompleted && "bg-emerald-500 border-emerald-500",
+                      isCurrent && `border-primary ${currentColorClass} ring-2 ring-offset-2 ring-offset-background status-dot-animated`,
+                      isFuture && "bg-card border-muted-foreground/20"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-3.5 w-3.5 text-white" />
+                    ) : (
+                      <Icon className={cn("h-3.5 w-3.5", isCurrent ? "text-white" : isFuture ? "text-muted-foreground/40" : "text-foreground")} />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-medium text-center leading-tight",
+                    isCurrent && currentTextColorClass,
+                    isCompleted && "text-emerald-600 dark:text-emerald-400",
+                    isFuture && "text-muted-foreground/50"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* === تخطيط عمودي للجوال === */}
+          <div className="sm:hidden space-y-0">
+            {TIMELINE_STATUSES.map((step, i) => {
+              const Icon = step.icon;
+              const isCompleted = i < currentIndex;
+              const isCurrent = i === currentIndex;
+              const isFuture = i > currentIndex;
+              const isLast = i === TIMELINE_STATUSES.length - 1;
+              const currentColorClass = isCurrent
+                ? (step.color === "amber" ? "bg-amber-500 border-amber-500 ring-amber-500/30"
+                  : step.color === "sky" ? "bg-sky-500 border-sky-500 ring-sky-500/30"
+                  : step.color === "gold" ? "bg-gold-500 border-gold-500 ring-gold-500/30"
+                  : "bg-emerald-500 border-emerald-500 ring-emerald-500/30")
+                : "";
+              const currentTextColorClass = isCurrent
+                ? (step.color === "amber" ? "text-amber-600 dark:text-amber-400"
+                  : step.color === "sky" ? "text-sky-600 dark:text-sky-400"
+                  : step.color === "gold" ? "text-gold-600 dark:text-gold-400"
+                  : "text-emerald-600 dark:text-emerald-400")
+                : "";
+              return (
+                <div key={step.key} className="relative flex items-start gap-3 progress-step">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 shrink-0",
+                        isCompleted && "bg-emerald-500 border-emerald-500",
+                        isCurrent && `border-primary ${currentColorClass} ring-2 ring-offset-2 ring-offset-background status-dot-animated`,
+                        isFuture && "bg-card border-muted-foreground/20"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-3.5 w-3.5 text-white" />
+                      ) : (
+                        <Icon className={cn("h-3.5 w-3.5", isCurrent ? "text-white" : isFuture ? "text-muted-foreground/40" : "text-foreground")} />
+                      )}
+                    </div>
+                    {!isLast && (
+                      <div className={cn(
+                        "w-0.5 h-6 rounded-full",
+                        isCompleted || isCurrent ? "bg-emerald-500" : "bg-muted"
+                      )} />
+                    )}
+                  </div>
+                  <div className={cn("pt-1.5", isLast && "pb-1")}>
+                    <span className={cn(
+                      "text-xs font-medium",
+                      isCurrent && currentTextColorClass,
+                      isCompleted && "text-emerald-600 dark:text-emerald-400",
+                      isFuture && "text-muted-foreground/50"
+                    )}>
+                      {step.label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function OrderDetailModal({
+  order,
+  open,
+  onClose,
+  onStatusChange,
+}: OrderDetailModalProps) {
+  const adminCode = useAppStore((s) => s.adminCode);
+  const [saving, setSaving] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<{
+    id: string;
+    action: string;
+    field: string | null;
+    oldValue: string | null;
+    newValue: string | null;
+    details: string | null;
+    createdAt: string;
+  }[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  // سجل طلبات الزبون السابقة
+  const [customerHistory, setCustomerHistory] = useState<{
+    id: string;
+    reference: string;
+    serviceType: string;
+    serviceName: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  }[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const fetchCustomerHistory = useCallback(async () => {
+    if (!order?.customer?.phone) return;
+    setHistoryLoading(true);
+    try {
+      const phone = order.customer.phone;
+      const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}&limit=10`);
+      if (res.ok) {
+        const data = await res.json();
+        setCustomerHistory((data.orders || []).filter((o: { id: string }) => o.id !== order.id));
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [order]);
+
+  const fetchAuditLogs = useCallback(async () => {
+    if (!order) return;
+    setAuditLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/audit?x-admin-code=${adminCode}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAuditLogs(data.logs || []);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setAuditLoading(false);
+    }
+  }, [order, adminCode]);
+
+  useEffect(() => {
+    if (open && order) {
+      setShowAudit(false);
+      setAuditLogs([]);
+      setCustomerHistory([]);
+      fetchAuditLogs();
+      fetchCustomerHistory();
+    }
+  }, [open, order, fetchAuditLogs, fetchCustomerHistory]);
+
+  // حقول التعديل
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editWhatsApp, setEditWhatsApp] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editCopies, setEditCopies] = useState(1);
+  const [editPages, setEditPages] = useState(1);
+  const [editCost, setEditCost] = useState(0);
+  const [editAdminNotes, setEditAdminNotes] = useState("");
+  const [editTags, setEditTags] = useState<string[]>([]);
+
+  // ملاحظات الحالة (تظهر عند تغيير الحالة)
+  const [statusNote, setStatusNote] = useState("");
+  const [showStatusNoteInput, setShowStatusNoteInput] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+
+  // موعد التسليم المجدول
+  const [scheduledDelivery, setScheduledDelivery] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
+
+  // تعبئة الحقول عند فتح النافذة أو تغيير الطلب
+  useEffect(() => {
+    if (!open || !order) return;
+    setEditName(order.customer?.name || "");
+    setEditPhone(order.customer?.phone || "");
+    setEditWhatsApp(order.customer?.whatsapp || "");
+    setEditEmail(order.customer?.email || "");
+    setEditAddress(order.customer?.address || "");
+    setEditCopies(order.copies);
+    setEditPages(order.pages);
+    setEditCost(order.cost || 0);
+    setEditAdminNotes(order.adminNotes || "");
+    try {
+      setEditTags(Array.isArray(order.tags) ? order.tags : JSON.parse(order.tags || "[]"));
+    } catch {
+      setEditTags([]);
+    }
+  }, [open, order]);
+
+  function handleOpenChange(isOpen: boolean) {
+    if (!isOpen) {
+      cancelStatusChange();
+      onClose();
+    }
+  }
+
+  async function handleSave() {
+    if (!order) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = { action: "edit" };
+
+      // حقول العميل
+      const customerUpdates: Record<string, string> = {};
+      if (editName !== (order.customer?.name || "")) customerUpdates.name = editName;
+      if (editPhone !== (order.customer?.phone || "")) customerUpdates.phone = editPhone;
+      if (editWhatsApp !== (order.customer.whatsapp || "")) customerUpdates.whatsapp = editWhatsApp;
+      if (editEmail !== (order.customer.email || "")) customerUpdates.email = editEmail;
+      if (editAddress !== (order.customer.address || "")) customerUpdates.address = editAddress;
+      if (Object.keys(customerUpdates).length > 0) payload.customer = customerUpdates;
+
+      if (editAdminNotes !== (order.adminNotes || "")) payload.adminNotes = editAdminNotes;
+
+      const currentTags = Array.isArray(order.tags) ? order.tags : [];
+      if (JSON.stringify(editTags) !== JSON.stringify(currentTags)) payload.tags = JSON.stringify(editTags);
+
+      if (editCost !== (order.cost || 0)) payload.cost = editCost;
+
+      if (editCopies !== order.copies) payload.copies = editCopies;
+      if (editPages !== order.pages) payload.pages = editPages;
+
+      // لا شيء تغيّر
+      if (Object.keys(payload).length <= 1) {
+        toast.info("لا توجد تغييرات لحفظها");
+        setSaving(false);
+        return;
+      }
+
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "فشل التحديث");
+      }
+
+      toast.success("تم تحديث الطلب بنجاح");
+      onClose();
+    } catch (e) {
+      toast.error("خطأ في التحديث", { description: (e as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleStatusChange(status: string) {
+    if (!order) return;
+    // Always ask for a note before changing status
+    setPendingStatus(status);
+    setShowStatusNoteInput(true);
+    setStatusNote("");
+  }
+
+  async function confirmStatusChange() {
+    if (!order || !pendingStatus) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = { status: pendingStatus };
+      if (statusNote.trim()) {
+        payload.statusNotes = statusNote.trim();
+      }
+      // Include scheduled delivery if set
+      if (scheduledDelivery) {
+        const existingDelivery = order.delivery || {};
+        const updatedDelivery = { ...existingDelivery, scheduledDate: scheduledDelivery, scheduledTime: scheduledTime || null };
+        payload.delivery = updatedDelivery;
+      }
+
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "فشل تحديث الحالة");
+      }
+      toast.success(`تم تغيير الحالة إلى: ${STATUS_META[pendingStatus]?.label || pendingStatus}`);
+      setShowStatusNoteInput(false);
+      setPendingStatus(null);
+      setStatusNote("");
+      onStatusChange(order, pendingStatus);
+    } catch (e) {
+      toast.error("خطأ في تحديث الحالة", { description: (e as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function cancelStatusChange() {
+    setShowStatusNoteInput(false);
+    setPendingStatus(null);
+    setStatusNote("");
+  }
+
+  if (!order) return null;
+
+  const meta = STATUS_META[order.status];
+  const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
+  const availableStatuses = STATUS_FLOW;
+
+  function downloadFile() {
+    if (order.fileData && order.fileData.startsWith("file_")) {
+      fetch(`/api/orders/${order.id}/file?x-admin-code=${adminCode}`)
+        .then((r) => r.blob())
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = order.fileName || "file";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+    } else if (order.fileData) {
+      const a = document.createElement("a");
+      a.href = order.fileData;
+      a.download = order.fileName || "file";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto custom-scroll modal-card-lg" dir="rtl" aria-describedby={undefined}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <span className="text-xl">{serviceEmoji}</span>
+            <span className="font-mono">{order.reference}</span>
+            <span className="text-muted-foreground font-normal text-sm">— {order.serviceName}</span>
+          </DialogTitle>
+          <DialogDescription>
+            {formatDateTimeAr(order.createdAt)}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          {/* ===== مسار حالة الطلب ===== */}
+          <OrderStatusTimeline status={order.status} />
+          {/* شريط الحالة + أزرار التواصل السريع */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={cn('status-badge-icon', order.status)} key={order.status}>
+              {meta.emoji} {meta.label}
+            </span>
+            {availableStatuses
+              .filter((s) => s !== order.status)
+              .map((s) => (
+                <Button
+                  key={s}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs btn-magnetic"
+                  onClick={() => handleStatusChange(s)}
+                >
+                  {STATUS_META[s].label}
+                </Button>
+              ))}
+            {/* موعد التسليم المجدول */}
+            {scheduledDelivery && (
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border border-sky-200 dark:border-sky-800/40 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-300">
+                <CalendarClock className="h-3 w-3" />
+                {scheduledDelivery}{scheduledTime ? ` ${scheduledTime}` : ''}
+              </span>
+            )}
+            <div className="mr-auto flex items-center gap-1.5">
+              {order.customer?.phone && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 ripple-btn micro-bounce neon-border-emerald"
+                    onClick={() => {
+                      const phone = order.customer.phone.replace(/[^0-9]/g, '');
+                      const msg = encodeURIComponent(`مرحباً ${order.customer.name || ''}! طلبك ${order.reference} الآن: ${STATUS_META[order.status].label}. ${order.status === 'ready' ? 'يمكنك الاستلام من المطبعة.' : ''}`);
+                      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+                    }}
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    <span className="hidden sm:inline">واتساب</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/40 hover:bg-sky-50 dark:hover:bg-sky-950/30 ripple-btn micro-bounce"
+                    onClick={() => {
+                      window.open(`tel:${order.customer.phone}`, '_self');
+                    }}
+                  >
+                    <Phone className="h-3 w-3" />
+                    <span className="hidden sm:inline">اتصال</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-gold-700 dark:text-gold-400 border-gold-200 dark:border-gold-800/40 hover:bg-gold-50 dark:hover:bg-gold-950/30 ripple-btn micro-bounce"
+                    onClick={() => {
+                      navigator.clipboard.writeText(order.customer.phone);
+                      toast.success("تم نسخ رقم الهاتف");
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ===== ملاحظة تغيير الحالة (تظهر عند اختيار حالة جديدة) ===== */}
+          {showStatusNoteInput && pendingStatus && (
+            <div className="rounded-xl border-2 border-gold-300 dark:border-gold-700 bg-gold-50/50 dark:bg-gold-950/20 p-4 space-y-3 anim-pop-in">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gold-100 dark:bg-gold-900/50">
+                  <StickyNote className="h-4 w-4 text-gold-600 dark:text-gold-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">تغيير الحالة إلى: {STATUS_META[pendingStatus]?.label}</h4>
+                  <p className="text-xs text-muted-foreground">أضف ملاحظة اختيارية قبل التأكيد</p>
+                </div>
+              </div>
+              <Textarea
+                value={statusNote}
+                onChange={(e) => setStatusNote(e.target.value)}
+                className="text-sm min-h-[50px] border-gold-200 dark:border-gold-800/50 focus-visible:ring-gold-400/30"
+                placeholder="مثال: تم الاتفاق مع الزبون على تسعير خاص..."
+                autoFocus
+              />
+              {/* موعد التسليم المجدول */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  <span>موعد التسليم:</span>
+                </div>
+                <Input
+                  type="date"
+                  value={scheduledDelivery}
+                  onChange={(e) => setScheduledDelivery(e.target.value)}
+                  className="h-8 text-xs w-auto"
+                />
+                <Input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="h-8 text-xs w-auto"
+                  placeholder="--:--"
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <Button size="sm" variant="ghost" className="text-xs micro-bounce" onClick={cancelStatusChange}>
+                  <X className="h-3 w-3 ml-1" />
+                  إلغاء
+                </Button>
+                <Button
+                  size="sm"
+                  className="text-xs bg-gold-600 hover:bg-gold-700 gap-1 ripple-btn micro-bounce"
+                  onClick={confirmStatusChange}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  تأكيد التغيير
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* عرض ملاحظة الحالة الحالية */}
+          {order.statusNotes && !showStatusNoteInput && (
+            <div className="flex items-start gap-2 rounded-lg border border-gold-100 dark:border-gold-900/50 bg-gold-50/30 dark:bg-gold-950/10 p-2.5 anim-fade-in">
+              <StickyNote className="h-4 w-4 text-gold-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-gold-700 dark:text-gold-300 font-medium">ملاحظة الحالة</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{order.statusNotes}</p>
+              </div>
+            </div>
+          )}
+
+          {/* معلومات العميل — قابل للتعديل */}
+          <section>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">معلومات العميل</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">الاسم</Label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">الهاتف</Label>
+                <Input
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="h-9 text-sm"
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">واتساب</Label>
+                <Input
+                  value={editWhatsApp}
+                  onChange={(e) => setEditWhatsApp(e.target.value)}
+                  className="h-9 text-sm"
+                  dir="ltr"
+                  placeholder="اختياري"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">البريد</Label>
+                <Input
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="h-9 text-sm"
+                  dir="ltr"
+                  placeholder="اختياري"
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs">العنوان</Label>
+                <Input
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  className="h-9 text-sm"
+                  placeholder="اختياري"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* سجل طلبات الزبون السابقة */}
+          {order.customer?.phone && (
+            <section className="rounded-lg border bg-muted/30 p-3 glass-card-v4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
+                  <History className="h-3.5 w-3.5 text-muted-foreground" />
+                  طلبات سابقة
+                </h3>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {customerHistory.length}
+                </Badge>
+              </div>
+              {historyLoading ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="skeleton-gradient h-8 rounded-md" />
+                  ))}
+                </div>
+              ) : customerHistory.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  لا توجد طلبات سابقة لهذا الرقم
+                </p>
+              ) : (
+                <div className="space-y-1.5 max-h-32 overflow-y-auto smooth-scrollbar">
+                  {customerHistory.slice(0, 5).map((prev) => (
+                    <div
+                      key={prev.id}
+                      className="flex items-center justify-between text-xs rounded-md bg-background/50 border px-2.5 py-1.5 hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-muted-foreground">{prev.reference}</span>
+                        <span className="text-muted-foreground">·</span>
+                        <span>{prev.serviceName || prev.serviceType}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={cn("text-[10px] px-1.5 py-0", STATUS_META[prev.status]?.color)}
+                        >
+                          {STATUS_META[prev.status]?.label || prev.status}
+                        </Badge>
+                        <span className="font-semibold tabular-nums">{formatDA(prev.total)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* مواصفات الطباعة — للقراءة فقط */}
+          <section>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">مواصفات الطباعة</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(order.options)
+                .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
+                .map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="rounded-lg bg-muted/50 border px-3 py-2"
+                  >
+                    <div className="text-xs text-muted-foreground">{translateOptionKey(k)}</div>
+                    <div className="text-sm font-semibold">{translateOptionValue(String(v))}</div>
+                  </div>
+                ))}
+            </div>
+          </section>
+
+          {/* الكميات والأسعار — قابل للتعديل */}
+          <section>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الكميات والأسعار</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">الصفحات</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={editPages}
+                  onChange={(e) => setEditPages(Number(e.target.value))}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">النسخ</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={editCopies}
+                  onChange={(e) => setEditCopies(Number(e.target.value))}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">تكلفة الإنتاج</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editCost}
+                  onChange={(e) => setEditCost(Number(e.target.value))}
+                  className="h-9 text-sm"
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">المجموع</Label>
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted/30 text-sm font-bold text-amber-700 dark:text-amber-400 number-highlight-amber">
+                  {formatDA(order.total)}
+                </div>
+              </div>
+            </div>
+            {/* تفاصيل التسعير */}
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <div>سعر الصفحة: {formatDA(order.pricing.perPage)}</div>
+              <div>تكلفة الصفحات: {formatDA(order.pricing.pagesCost)}</div>
+              <div>تكلفة النسخ: {formatDA(order.pricing.copiesCost)}</div>
+              <div>توفير الوجهين: {formatDA(order.pricing.sidesSaving)}</div>
+              {order.pricing.paperTypeSurcharge != null && order.pricing.paperTypeSurcharge > 0 && (
+                <div>رسوم الورق: {formatDA(order.pricing.paperTypeSurcharge)}</div>
+              )}
+              {order.pricing.bindingCost != null && order.pricing.bindingCost > 0 && (
+                <div>التجليد: {formatDA(order.pricing.bindingCost)}</div>
+              )}
+              {order.pricing.extrasCost != null && order.pricing.extrasCost > 0 && (
+                <div>إضافات: {formatDA(order.pricing.extrasCost)}</div>
+              )}
+              {order.pricing.finishingCost != null && order.pricing.finishingCost > 0 && (
+                <div>التشطيب: {formatDA(order.pricing.finishingCost)}</div>
+              )}
+              <div>التوصيل: {formatDA(order.pricing.deliveryCost)}</div>
+              <div>الخصم: {formatDA(order.pricing.discount)}</div>
+            </div>
+          </section>
+
+          {/* ملاحظات إدارية */}
+          <section className="glass-card-animated p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 section-title-underline">
+                <StickyNote className="h-4 w-4 text-gold-500" />
+                ملاحظات إدارية
+              </h3>
+              <span className="text-[10px] text-muted-foreground tabular-nums">{editAdminNotes.length} حرف</span>
+            </div>
+            <Textarea
+              value={editAdminNotes}
+              onChange={(e) => setEditAdminNotes(e.target.value)}
+              className="text-sm min-h-[80px] notes-textarea"
+              placeholder="أضف ملاحظة داخلية عن هذا الطلب... مثال: طلب خاص، تسعير مخصص، ملاحظات للتسليم"
+            />
+            {editAdminNotes.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="h-px flex-1 bg-gradient-to-l from-gold-300/50 to-transparent" />
+                <span className="text-[10px] text-gold-500 font-medium">ملاحظة محفوظة محلياً</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-gold-300/50 to-transparent" />
+              </div>
+            )}
+          </section>
+
+          {/* الوسوم */}
+          <section>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الوسوم</h3>
+            <div className="flex flex-wrap gap-2">
+              {["عاجل", "مميز", "مرتجع", "خاص"].map((tag) => (
+                <Badge
+                  key={tag}
+                  variant={editTags.includes(tag) ? "default" : "outline"}
+                  className="cursor-pointer select-none text-xs"
+                  onClick={() =>
+                    setEditTags((prev) =>
+                      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+                    )
+                  }
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </section>
+
+          {/* معلومات الملف */}
+          {order.fileName && (
+            <section>
+              <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">الملف المرفق</h3>
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3 inset-shadow-card">
+                <FileText className="h-8 w-8 text-amber-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{order.fileName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {order.fileType || "—"} {order.fileSize ? `• ${Math.round(order.fileSize / 1024)} ك.ب` : ""}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="h-8 text-xs shrink-0" onClick={downloadFile}>
+                  <Download className="h-3.5 w-3.5 ml-1" />
+                  تنزيل
+                </Button>
+              </div>
+            </section>
+          )}
+
+          {/* التسليم + الأولوية */}
+          <section>
+            <h3 className="text-sm font-bold text-foreground mb-2 section-title-underline">التسليم</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-sky">
+                <div className="text-xs text-muted-foreground">الطريقة</div>
+                <div className="font-medium">{order.delivery.mode === "pickup" ? "استلام من المحل" : "توصيل"}</div>
+              </div>
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 stat-card-gold">
+                <div className="text-xs text-muted-foreground">الموعد</div>
+                <div className="font-medium">{order.delivery.date || "—"} (≈{order.estimatedHours} س)</div>
+              </div>
+              <div className="rounded-lg bg-muted/50 border px-3 py-2">
+                <div className="text-xs text-muted-foreground">الأولوية</div>
+                <div className="font-medium flex items-center gap-1">
+                  {order.total >= 5000 ? (
+                    <><Zap className="h-3.5 w-3.5 text-rose-500" /><span className="text-rose-600 dark:text-rose-400">عاجل</span></>
+                  ) : order.total >= 2000 ? (
+                    <><Timer className="h-3.5 w-3.5 text-amber-500" /><span className="text-amber-600 dark:text-amber-400">متوسط</span></>
+                  ) : (
+                    <><Clock className="h-3.5 w-3.5 text-emerald-500" /><span className="text-emerald-600 dark:text-emerald-400">عادي</span></>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* موعد التسليم المجدول */}
+            {order.delivery?.scheduledDate && (
+              <div className="mt-2 rounded-lg border border-sky-200 dark:border-sky-800/40 bg-sky-50/50 dark:bg-sky-950/20 px-3 py-2 flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
+                <div>
+                  <div className="text-xs text-muted-foreground">موعد التسليم المجدول</div>
+                  <div className="text-sm font-semibold text-sky-700 dark:text-sky-300">
+                    {order.delivery.scheduledDate}{order.delivery.scheduledTime ? ` — ${order.delivery.scheduledTime}` : ''}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* سجل التغييرات */}
+          <section>
+            <button
+              type="button"
+              className="flex items-center gap-2 text-sm font-bold text-foreground w-full text-right"
+              onClick={() => setShowAudit(!showAudit)}
+            >
+              {showAudit ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+              سجل التغييرات
+              {auditLogs.length > 0 && (
+                <span className="text-xs font-normal text-muted-foreground mr-1">
+                  ({auditLogs.length})
+                </span>
+              )}
+            </button>
+            {showAudit && (
+              <div className="mt-2 scroll-shadow-container smooth-scrollbar">
+                {auditLoading ? (
+                  <div className="text-xs text-muted-foreground py-2 text-center">
+                    <RefreshCw className="h-3 w-3 animate-spin inline-block ml-1" />
+                    جارٍ التحميل...
+                  </div>
+                ) : auditLogs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-2 text-center">
+                    لا يوجد سجل تغييرات
+                  </p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto smooth-scrollbar space-y-1">
+                    {auditLogs.map((log) => {
+                      const icon = log.action === "status_change" ? "🔄" : log.action === "edit" ? "✏️" : log.action === "create" ? "➕" : log.action === "delete" ? "🗑️" : "📝";
+                      const actionLabel = log.action === "status_change"
+                        ? "تغيير الحالة"
+                        : log.action === "edit"
+                          ? "تعديل"
+                          : log.action === "create"
+                            ? "إنشاء"
+                            : log.action === "delete"
+                              ? "حذف"
+                              : log.action;
+                      return (
+                    <div
+                      key={log.id}
+                      className="flex items-start gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 border border-border/50"
+                    >
+                      <span className="shrink-0 mt-0.5">{icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-medium text-foreground">{actionLabel}</span>
+                          {log.field && (
+                            <span className="text-muted-foreground">— {log.field}</span>
+                          )}
+                        </div>
+                        {log.oldValue != null && log.newValue != null && (
+                          <div className="text-muted-foreground mt-0.5">
+                            <span className="text-rose-500 line-through">{log.oldValue}</span>
+                            <span className="mx-1">→</span>
+                            <span className="text-emerald-600 font-medium">{log.newValue}</span>
+                          </div>
+                        )}
+                        {log.details && (
+                          <div className="text-muted-foreground mt-0.5">{log.details}</div>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap shrink-0">
+                        {formatDateTimeAr(log.createdAt)}
+                      </span>
+                    </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* أزرار الحفظ */}
+          <div className="flex items-center justify-between pt-2 border-t">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs micro-bounce">
+              <X className="h-3.5 w-3.5 ml-1" />
+              إغلاق
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={saving} className="text-xs bg-amber-600 hover:bg-amber-700 ripple-btn micro-bounce">
+              <Save className="h-3.5 w-3.5 ml-1" />
+              {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
