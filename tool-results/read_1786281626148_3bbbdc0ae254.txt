@@ -1,0 +1,2002 @@
+     1→@import "tailwindcss";
+     2→@import "tw-animate-css";
+     3→
+     4→@custom-variant dark (&:is(.dark *));
+     5→@custom-variant xs (&:where(@media (min-width: 400px)));
+     6→
+     7→@theme {
+     8→  --color-background: var(--background);
+     9→  --color-foreground: var(--foreground);
+    10→  --font-sans: var(--font-cairo);
+    11→  --font-cairo: var(--font-cairo);
+    12→  --font-amiri: var(--font-amiri);
+    13→  --font-mono: var(--font-cairo);
+    14→  --color-sidebar-ring: var(--sidebar-ring);
+    15→  --color-sidebar-border: var(--sidebar-border);
+    16→  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    17→  --color-sidebar-accent: var(--sidebar-accent);
+    18→  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    19→  --color-sidebar-primary: var(--sidebar-primary);
+    20→  --color-sidebar-foreground: var(--sidebar-foreground);
+    21→  --color-sidebar: var(--sidebar);
+    22→  --color-chart-5: var(--chart-5);
+    23→  --color-chart-4: var(--chart-4);
+    24→  --color-chart-3: var(--chart-3);
+    25→  --color-chart-2: var(--chart-2);
+    26→  --color-chart-1: var(--chart-1);
+    27→  --color-ring: var(--ring);
+    28→  --color-input: var(--input);
+    29→  --color-border: var(--border);
+    30→  --color-destructive: var(--destructive);
+    31→  --color-accent-foreground: var(--accent-foreground);
+    32→  --color-accent: var(--accent);
+    33→  --color-muted-foreground: var(--muted-foreground);
+    34→  --color-muted: var(--muted);
+    35→  --color-secondary-foreground: var(--secondary-foreground);
+    36→  --color-secondary: var(--secondary);
+    37→  --color-primary-foreground: var(--primary-foreground);
+    38→  --color-primary: var(--primary);
+    39→  --color-popover-foreground: var(--popover-foreground);
+    40→  --color-popover: var(--popover);
+    41→  --color-card-foreground: var(--card-foreground);
+    42→  --color-card: var(--card);
+    43→  --radius-sm: calc(var(--radius) - 4px);
+    44→  --radius-md: calc(var(--radius) - 2px);
+    45→  --radius-lg: var(--radius);
+    46→  --radius-xl: calc(var(--radius) + 4px);
+    47→  /* Tayf Gold Palette — default (light mode) values */
+    48→  --color-gold-50: #fefcf3;
+    49→  --color-gold-100: #fdf6e3;
+    50→  --color-gold-200: #f8e8b8;
+    51→  --color-gold-300: #f0d58a;
+    52→  --color-gold-400: #e8c060;
+    53→  --color-gold-500: #d4a853;
+    54→  --color-gold-600: #b8923a;
+    55→  --color-gold-700: #9a7830;
+    56→  --color-gold-800: #7a5e28;
+    57→  --color-gold-900: #5c4420;
+    58→  --color-gold-950: #3a2a14;
+    59→  /* Tayf Dark Palette — default (light mode) values.
+    60→     These are overridden in :root (dark) and .light below.
+    61→     Using @theme (not inline) so utilities reference var() and respect overrides. */
+    62→  --color-dark-50: #f5f5f5;
+    63→  --color-dark-100: #e0e0e0;
+    64→  --color-dark-200: #b0b0b0;
+    65→  --color-dark-300: #808080;
+    66→  --color-dark-400: #606060;
+    67→  --color-dark-500: #454545;
+    68→  --color-dark-600: #353535;
+    69→  --color-dark-700: #252525;
+    70→  --color-dark-800: #1a1a1a;
+    71→  --color-dark-900: #111111;
+    72→  --color-dark-950: #0d0d0d;
+    73→}
+    74→
+    75→/* ==========================================================================
+    76→   DARK THEME (Default) — Premium Dark with Gold Accents
+    77→   ========================================================================== */
+    78→:root {
+    79→  --radius: 0.75rem;
+    80→  --background: #0a0a0b;
+    81→  --foreground: #e8e4dc;
+    82→  --card: #141416;
+    83→  --card-foreground: #e8e4dc;
+    84→  --popover: #141416;
+    85→  --popover-foreground: #e8e4dc;
+    86→  --primary: #d4a853;
+    87→  --primary-foreground: #0a0a0b;
+    88→  --secondary: #1e1e22;
+    89→  --secondary-foreground: #e8e4dc;
+    90→  --muted: #1e1e22;
+    91→  --muted-foreground: #7a7568;
+    92→  --accent: #251e12;
+    93→  --accent-foreground: #e8e4dc;
+    94→  --destructive: #ef4444;
+    95→  --border: rgba(255, 255, 255, 0.08);
+    96→  --input: rgba(255, 255, 255, 0.1);
+    97→  --ring: #d4a853;
+    98→  --chart-1: #d4a853;
+    99→  --chart-2: #e8c060;
+   100→  --chart-3: #b8923a;
+   101→  --chart-4: #f0d58a;
+   102→  --chart-5: #9a7830;
+   103→  --sidebar: #0e0e10;
+   104→  --sidebar-foreground: #a8a29e;
+   105→  --sidebar-primary: #d4a853;
+   106→  --sidebar-primary-foreground: #0a0a0b;
+   107→  --sidebar-accent: #1a1814;
+   108→  --sidebar-accent-foreground: #e8e4dc;
+   109→  --sidebar-border: rgba(255, 255, 255, 0.06);
+   110→  --sidebar-ring: #d4a853;
+   111→
+   112→  /* Dark palette — INVERTED for dark mode (text becomes light, surfaces become dark) */
+   113→  --color-dark-50: #1c1c1f;
+   114→  --color-dark-100: #27272a;
+   115→  --color-dark-200: #3f3f46;
+   116→  --color-dark-300: #52525b;
+   117→  --color-dark-400: #71717a;
+   118→  --color-dark-500: #a1a1aa;
+   119→  --color-dark-600: #b4b4bc;
+   120→  --color-dark-700: #c8c8d0;
+   121→  --color-dark-800: #dcdce4;
+   122→  --color-dark-900: #111111;
+   123→  --color-dark-950: #0d0d0d;
+   124→
+   125→  /* Colored icon surfaces for dark mode */
+   126→  --color-gold-50: #29200f;
+   127→  --color-gold-100: #362a15;
+   128→  --color-gold-200: #4a3a1e;
+   129→  --color-sky-50: #0c1a2e;
+   130→  --color-sky-100: #122240;
+   131→  --color-emerald-50: #07201a;
+   132→  --color-emerald-100: #0a2e22;
+   133→  --color-rose-50: #2a0f0f;
+   134→  --color-rose-100: #3a1515;
+   135→  --color-amber-50: #2a1c0a;
+   136→  --color-amber-100: #3a2810;
+   137→  --color-violet-50: #1a0f2e;
+   138→  --color-violet-100: #251840;
+   139→}
+   140→
+   141→/* ==========================================================================
+   142→   LIGHT THEME — Warm Cream with Gold Accents
+   143→   ========================================================================== */
+   144→.light {
+   145→  --background: #faf8f2;
+   146→  --foreground: #1a1510;
+   147→  --card: #ffffff;
+   148→  --card-foreground: #1a1510;
+   149→  --popover: #ffffff;
+   150→  --popover-foreground: #1a1510;
+   151→  --primary: #b8923a;
+   152→  --primary-foreground: #ffffff;
+   153→  --secondary: #f5f0e5;
+   154→  --secondary-foreground: #3a3020;
+   155→  --muted: #ede8dc;
+   156→  --muted-foreground: #7a7060;
+   157→  --accent: #fdf6e3;
+   158→  --accent-foreground: #3a3020;
+   159→  --destructive: #dc2626;
+   160→  --border: rgba(0, 0, 0, 0.08);
+   161→  --input: rgba(0, 0, 0, 0.08);
+   162→  --ring: #b8923a;
+   163→  --chart-1: #b8923a;
+   164→  --chart-2: #d4a853;
+   165→  --chart-3: #9a7830;
+   166→  --chart-4: #e8c060;
+   167→  --chart-5: #7a5e28;
+   168→  --sidebar: #f5f0e5;
+   169→  --sidebar-foreground: #4a4030;
+   170→  --sidebar-primary: #b8923a;
+   171→  --sidebar-primary-foreground: #ffffff;
+   172→  --sidebar-accent: #ede8dc;
+   173→  --sidebar-accent-foreground: #3a3020;
+   174→  --sidebar-border: rgba(184, 146, 58, 0.15);
+   175→  --sidebar-ring: #b8923a;
+   176→
+   177→  /* Dark palette — normal grays for light mode */
+   178→  --color-dark-50: #f5f5f5;
+   179→  --color-dark-100: #e0e0e0;
+   180→  --color-dark-200: #b0b0b0;
+   181→  --color-dark-300: #808080;
+   182→  --color-dark-400: #606060;
+   183→  --color-dark-500: #454545;
+   184→  --color-dark-600: #353535;
+   185→  --color-dark-700: #252525;
+   186→  --color-dark-800: #1a1a1a;
+   187→  --color-dark-900: #111111;
+   188→  --color-dark-950: #0d0d0d;
+   189→
+   190→  /* Colored icon surfaces for light mode */
+   191→  --color-gold-50: #fefcf3;
+   192→  --color-gold-100: #fdf6e3;
+   193→  --color-gold-200: #f8e8b8;
+   194→  --color-sky-50: #f0f9ff;
+   195→  --color-sky-100: #e0f2fe;
+   196→  --color-emerald-50: #ecfdf5;
+   197→  --color-emerald-100: #d1fae5;
+   198→  --color-rose-50: #fff1f2;
+   199→  --color-rose-100: #ffe4e6;
+   200→  --color-amber-50: #fffbeb;
+   201→  --color-amber-100: #fef3c7;
+   202→  --color-violet-50: #f5f3ff;
+   203→  --color-violet-100: #ede9fe;
+   204→}
+   205→
+   206→@layer base {
+   207→  * {
+   208→    @apply border-border outline-ring/50;
+   209→  }
+   210→  html,
+   211→  body {
+   212→    @apply bg-background text-foreground overflow-x-hidden;
+   213→    font-feature-settings: "kern", "liga", "calt";
+   214→  }
+   215→  *, *::before, *::after {
+   216→    box-sizing: border-box;
+   217→  }
+   218→  /* منع التمرير الأفقي على جميع المستويات */
+   219→  #__next, main, [dir="rtl"] > div, [dir="rtl"] > div > div {
+   220→    overflow-x: hidden;
+   221→  }
+   222→  .font-amiri {
+   223→    font-family: var(--font-amiri), serif;
+   224→  }
+   225→  .font-cairo {
+   226→    font-family: var(--font-cairo), sans-serif;
+   227→  }
+   228→  /* مساحة آمنة للشريط السفلي على الأجهزة ذات النوتش (iPhone X+) */
+   229→  .safe-area-pb {
+   230→    padding-bottom: env(safe-area-inset-bottom, 0px);
+   231→  }
+   232→  .safe-area-pt {
+   233→    padding-top: env(safe-area-inset-top, 0px);
+   234→  }
+   235→  /* إخفاء العناصر عند الطباعة */
+   236→  .no-print {
+   237→    @media print {
+   238→      display: none !important;
+   239→    }
+   240→  }
+   241→}
+   242→
+   243→/* ===== ضبط حجم الخطوط على الهاتف ===== */
+   244→@media (max-width: 640px) {
+   245→  html {
+   246→    font-size: 15px;
+   247→  }
+   248→  .text-xs {
+   249→    font-size: 0.8rem;
+   250→    line-height: 1.4;
+   251→  }
+   252→}
+   253→
+   254→/* Smooth scrolling */
+   255→html {
+   256→  scroll-behavior: smooth;
+   257→}
+   258→
+   259→/* ==========================================================================
+   260→   SCROLLBAR — Gold-themed
+   261→   ========================================================================== */
+   262→.custom-scroll::-webkit-scrollbar {
+   263→  width: 6px;
+   264→  height: 6px;
+   265→}
+   266→.custom-scroll::-webkit-scrollbar-track {
+   267→  background: transparent;
+   268→}
+   269→.custom-scroll::-webkit-scrollbar-thumb {
+   270→  background: rgba(212, 168, 83, 0.25);
+   271→  border-radius: 999px;
+   272→}
+   273→.custom-scroll::-webkit-scrollbar-thumb:hover {
+   274→  background: rgba(212, 168, 83, 0.45);
+   275→}
+   276→
+   277→/* Global scrollbar */
+   278→:root *::-webkit-scrollbar {
+   279→  width: 6px;
+   280→  height: 6px;
+   281→}
+   282→:root *::-webkit-scrollbar-track {
+   283→  background: transparent;
+   284→}
+   285→:root *::-webkit-scrollbar-thumb {
+   286→  background: rgba(255, 255, 255, 0.1);
+   287→  border-radius: 999px;
+   288→}
+   289→:root *::-webkit-scrollbar-thumb:hover {
+   290→  background: rgba(255, 255, 255, 0.2);
+   291→}
+   292→.light *::-webkit-scrollbar-thumb {
+   293→  background: rgba(0, 0, 0, 0.12);
+   294→}
+   295→.light *::-webkit-scrollbar-thumb:hover {
+   296→  background: rgba(0, 0, 0, 0.2);
+   297→}
+   298→
+   299→/* ==========================================================================
+   300→   GOLD GRADIENT UTILITIES
+   301→   ========================================================================== */
+   302→.gold-gradient {
+   303→  background: linear-gradient(135deg, #f0d58a 0%, #d4a853 50%, #a88850 100%);
+   304→}
+   305→
+   306→.gold-gradient-text {
+   307→  background: linear-gradient(135deg, #ffe098 0%, #d4a853 50%, #a88850 100%);
+   308→  -webkit-background-clip: text;
+   309→  background-clip: text;
+   310→  -webkit-text-fill-color: transparent;
+   311→}
+   312→
+   313→.gold-border-gradient {
+   314→  border-image: linear-gradient(135deg, #f0d58a, #d4a853, #a88850) 1;
+   315→}
+   316→
+   317→.gold-glow {
+   318→  box-shadow: 0 0 20px rgba(212, 168, 83, 0.15), 0 0 60px rgba(212, 168, 83, 0.05);
+   319→}
+   320→
+   321→.gold-glow-sm {
+   322→  box-shadow: 0 0 8px rgba(212, 168, 83, 0.2);
+   323→}
+   324→
+   325→/* Premium card surface */
+   326→.premium-card {
+   327→  background: var(--card);
+   328→  border: 1px solid var(--border);
+   329→}
+   330→.light .premium-card {
+   331→  background: linear-gradient(145deg, #ffffff 0%, #fafaf8 100%);
+   332→  border: 1px solid rgba(184, 146, 58, 0.12);
+   333→}
+   334→
+   335→.premium-card-hover:hover {
+   336→  border-color: rgba(212, 168, 83, 0.2);
+   337→  box-shadow: 0 4px 24px rgba(212, 168, 83, 0.08);
+   338→}
+   339→
+   340→/* ==========================================================================
+   341→   ANIMATIONS
+   342→   ========================================================================== */
+   343→
+   344→/* أنيميشن النبض للعاجل */
+   345→@keyframes pulse-urgent {
+   346→  0%, 100% { opacity: 1; }
+   347→  50% { opacity: 0.6; }
+   348→}
+   349→.urgent-pulse {
+   350→  animation: pulse-urgent 1.5s ease-in-out infinite;
+   351→}
+   352→
+   353→/* Upload Drop Zone Animations */
+   354→@keyframes border-dance {
+   355→  0% { border-color: #f0d58a; }
+   356→  25% { border-color: #d4a853; }
+   357→  50% { border-color: #b8923a; }
+   358→  75% { border-color: #d4a853; }
+   359→  100% { border-color: #f0d58a; }
+   360→}
+   361→.animate-border-dance {
+   362→  animation: border-dance 3s ease-in-out infinite;
+   363→}
+   364→
+   365→@keyframes upload-icon-pulse {
+   366→  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 168, 83, 0.3); }
+   367→  50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(212, 168, 83, 0); }
+   368→}
+   369→.animate-upload-pulse {
+   370→  animation: upload-icon-pulse 2.5s ease-in-out infinite;
+   371→}
+   372→
+   373→@keyframes success-bounce {
+   374→  0% { transform: scale(0); opacity: 0; }
+   375→  50% { transform: scale(1.2); }
+   376→  70% { transform: scale(0.9); }
+   377→  100% { transform: scale(1); opacity: 1; }
+   378→}
+   379→.animate-success-bounce {
+   380→  animation: success-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+   381→}
+   382→
+   383→@keyframes shimmer {
+   384→  0% { background-position: -200% 0; }
+   385→  100% { background-position: 200% 0; }
+   386→}
+   387→.animate-shimmer {
+   388→  background: linear-gradient(90deg, transparent 25%, rgba(212, 168, 83, 0.3) 50%, transparent 75%);
+   389→  background-size: 200% 100%;
+   390→  animation: shimmer 1.5s infinite;
+   391→}
+   392→
+   393→/* Card hover lift animation */
+   394→@keyframes card-lift {
+   395→  0%, 100% { transform: translateY(0); }
+   396→  50% { transform: translateY(-2px); }
+   397→}
+   398→.animate-card-lift:hover {
+   399→  animation: card-lift 0.3s ease-in-out;
+   400→}
+   401→
+   402→@keyframes pulse-slow {
+   403→  0%, 100% { opacity: 1; }
+   404→  50% { opacity: 0.75; }
+   405→}
+   406→.animate-pulse-slow {
+   407→  animation: pulse-slow 3s ease-in-out infinite;
+   408→}
+   409→
+   410→/* Introduce progress bar animation */
+   411→@keyframes introProgress {
+   412→  0% { width: 0%; }
+   413→  100% { width: 100%; }
+   414→}
+   415→.animate-intro-progress {
+   416→  animation: introProgress 3s ease-out forwards;
+   417→}
+   418→
+   419→/* تذييل متحرك */
+   420→.footer-collapse {
+   421→  max-height: 0;
+   422→  overflow: hidden;
+   423→  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+   424→}
+   425→@media (min-width: 768px) {
+   426→  .footer-collapse {
+   427→    max-height: none !important;
+   428→    overflow: visible;
+   429→  }
+   430→}
+   431→
+   432→/* أنيميشن العوم والتوهّج */
+   433→@keyframes float {
+   434→  0%, 100% { transform: translateY(0px); }
+   435→  50% { transform: translateY(-6px); }
+   436→}
+   437→.animate-float {
+   438→  animation: float 3s ease-in-out infinite;
+   439→}
+   440→
+   441→@keyframes fadeIn {
+   442→  0% { opacity: 0; transform: translateY(4px); }
+   443→  100% { opacity: 1; transform: translateY(0); }
+   444→}
+   445→.animate-fade-in {
+   446→  animation: fadeIn 1.2s ease-out;
+   447→}
+   448→
+   449→@keyframes glow-pulse {
+   450→  0%, 100% { box-shadow: 0 0 8px rgba(212, 168, 83, 0.2); }
+   451→  50% { box-shadow: 0 0 20px rgba(212, 168, 83, 0.4); }
+   452→}
+   453→.animate-glow-pulse {
+   454→  animation: glow-pulse 2s ease-in-out infinite;
+   455→}
+   456→
+   457→@keyframes slide-up {
+   458→  from { opacity: 0; transform: translateY(8px); }
+   459→  to { opacity: 1; transform: translateY(0); }
+   460→}
+   461→.animate-slide-up {
+   462→  animation: slide-up 0.4s ease-out forwards;
+   463→}
+   464→
+   465→@keyframes glow-pulse-gold {
+   466→  0%, 100% { box-shadow: 0 0 5px rgba(212, 168, 83, 0.3); }
+   467→  50% { box-shadow: 0 0 15px rgba(212, 168, 83, 0.6); }
+   468→}
+   469→.animate-glow-pulse-amber {
+   470→  animation: glow-pulse-gold 2s ease-in-out infinite;
+   471→}
+   472→
+   473→@keyframes gradient-border-spin {
+   474→  0% { --border-angle: 0deg; }
+   475→  100% { --border-angle: 360deg; }
+   476→}
+   477→
+   478→/* Gradient border animation wrapper — Gold themed */
+   479→.gradient-border-animated {
+   480→  position: relative;
+   481→  border-radius: 1rem;
+   482→  overflow: hidden;
+   483→}
+   484→.gradient-border-animated::before {
+   485→  content: '';
+   486→  position: absolute;
+   487→  inset: 0;
+   488→  padding: 2px;
+   489→  border-radius: inherit;
+   490→  background: conic-gradient(
+   491→    from var(--border-angle, 0deg),
+   492→    #f0d58a,
+   493→    #d4a853,
+   494→    #a88850,
+   495→    #d4a853,
+   496→    #f0d58a
+   497→  );
+   498→  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+   499→  -webkit-mask-composite: xor;
+   500→  mask-composite: exclude;
+   501→  animation: gradient-border-spin 4s linear infinite;
+   502→  pointer-events: none;
+   503→}
+   504→@property --border-angle {
+   505→  syntax: '<angle>';
+   506→  initial-value: 0deg;
+   507→  inherits: false;
+   508→}
+   509→
+   510→/* Active nav glow — Gold */
+   511→.nav-active-glow {
+   512→  text-shadow: 0 0 8px rgba(212, 168, 83, 0.5), 0 0 16px rgba(212, 168, 83, 0.2);
+   513→}
+   514→
+   515→/* Confetti animation for celebration */
+   516→@keyframes confetti {
+   517→  0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+   518→  100% { opacity: 0; transform: translateY(-120px) rotate(720deg) scale(0.3); }
+   519→}
+   520→@media (prefers-reduced-motion: no-preference) {
+   521→  .animate-confetti {
+   522→    animation: confetti 1.8s ease-out forwards;
+   523→  }
+   524→}
+   525→
+   526→/* Slide-up bar animation */
+   527→@keyframes slide-up-bar {
+   528→  from { opacity: 0; transform: translateY(100%); }
+   529→  to { opacity: 1; transform: translateY(0); }
+   530→}
+   531→@media (prefers-reduced-motion: no-preference) {
+   532→  .animate-slide-up-bar {
+   533→    animation: slide-up-bar 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+   534→  }
+   535→}
+   536→
+   537→/* Typing dots indicator */
+   538→@keyframes typing-dots {
+   539→  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+   540→  30% { opacity: 1; transform: translateY(-4px); }
+   541→}
+   542→@media (prefers-reduced-motion: no-preference) {
+   543→  .typing-dot {
+   544→    animation: typing-dots 1.4s ease-in-out infinite;
+   545→  }
+   546→  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+   547→  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+   548→}
+   549→
+   550→/* Pulse glow effect for icons — Gold */
+   551→@keyframes pulse-glow {
+   552→  0%, 100% { box-shadow: 0 0 8px rgba(212, 168, 83, 0.3), 0 0 0 0 rgba(212, 168, 83, 0.4); }
+   553→  50% { box-shadow: 0 0 20px rgba(212, 168, 83, 0.6), 0 0 0 12px rgba(212, 168, 83, 0); }
+   554→}
+   555→@media (prefers-reduced-motion: no-preference) {
+   556→  .animate-pulse-glow {
+   557→    animation: pulse-glow 2s ease-in-out infinite;
+   558→  }
+   559→}
+   560→
+   561→/* Shimmer text effect — Gold */
+   562→@keyframes text-shimmer {
+   563→  0% { background-position: -200% center; }
+   564→  100% { background-position: 200% center; }
+   565→}
+   566→@media (prefers-reduced-motion: no-preference) {
+   567→  .animate-text-shimmer {
+   568→    background: linear-gradient(90deg, currentColor 0%, #d4a853 25%, currentColor 50%, #f0d58a 75%, currentColor 100%);
+   569→    background-size: 200% auto;
+   570→    -webkit-background-clip: text;
+   571→    background-clip: text;
+   572→    -webkit-text-fill-color: transparent;
+   573→    animation: text-shimmer 3s linear infinite;
+   574→  }
+   575→}
+   576→
+   577→/* Float with subtle rotation */
+   578→@keyframes float-gentle {
+   579→  0%, 100% { transform: translateY(0) rotate(0deg); }
+   580→  25% { transform: translateY(-4px) rotate(0.5deg); }
+   581→  75% { transform: translateY(-2px) rotate(-0.5deg); }
+   582→}
+   583→@media (prefers-reduced-motion: no-preference) {
+   584→  .animate-float-gentle {
+   585→    animation: float-gentle 4s ease-in-out infinite;
+   586→  }
+   587→}
+   588→
+   589→/* Confetti scattered dots */
+   590→@keyframes confetti-scatter {
+   591→  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+   592→  100% { opacity: 0; transform: translate(var(--x, 40px), var(--y, -80px)) rotate(var(--r, 360deg)); }
+   593→}
+   594→@media (prefers-reduced-motion: no-preference) {
+   595→  .confetti-dot {
+   596→    animation: confetti-scatter var(--dur, 1.5s) ease-out forwards;
+   597→    animation-delay: var(--delay, 0s);
+   598→  }
+   599→}
+   600→
+   601→/* ==========================================================================
+   602→   PRINT STYLES
+   603→   ========================================================================== */
+   604→@media print {
+   605→  body * {
+   606→    visibility: hidden !important;
+   607→  }
+   608→  #print-content,
+   609→  #print-content *,
+   610→  #direct-print-area,
+   611→  #direct-print-area * {
+   612→    visibility: visible !important;
+   613→  }
+   614→  #print-content,
+   615→  #direct-print-area {
+   616→    position: absolute !important;
+   617→    left: 0 !important;
+   618→    top: 0 !important;
+   619→    width: 100% !important;
+   620→    margin: 0 !important;
+   621→    padding: 0 !important;
+   622→  }
+   623→  /* إخفاء عناصر واجهة المستخدم أثناء الطباعة */
+   624→  .print-hide {
+   625→    display: none !important;
+   626→  }
+   627→
+   628→  .print-job-ticket {
+   629→    background: white !important;
+   630→    color: #000 !important;
+   631→    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+   632→    font-size: 12pt !important;
+   633→    line-height: 1.5 !important;
+   634→    padding: 16px !important;
+   635→    direction: rtl !important;
+   636→  }
+   637→
+   638→  .pjt-header {
+   639→    display: flex !important;
+   640→    align-items: center !important;
+   641→    gap: 12px !important;
+   642→    margin-bottom: 12px !important;
+   643→  }
+   644→  .pjt-logo {
+   645→    width: 48px !important;
+   646→    height: 48px !important;
+   647→    object-fit: contain !important;
+   648→  }
+   649→  .pjt-shop-info {
+   650→    flex: 1 !important;
+   651→  }
+   652→  .pjt-shop-name {
+   653→    font-size: 18pt !important;
+   654→    font-weight: 700 !important;
+   655→    margin: 0 !important;
+   656→    color: #000 !important;
+   657→  }
+   658→  .pjt-shop-phone,
+   659→  .pjt-shop-address {
+   660→    font-size: 9pt !important;
+   661→    color: #444 !important;
+   662→    margin: 1px 0 !important;
+   663→  }
+   664→
+   665→  .pjt-divider {
+   666→    border: none !important;
+   667→    border-top: 1.5px dashed #999 !important;
+   668→    margin: 10px 0 !important;
+   669→  }
+   670→
+   671→  .pjt-ref-row {
+   672→    display: flex !important;
+   673→    justify-content: space-between !important;
+   674→    align-items: center !important;
+   675→  }
+   676→  .pjt-ref-box {
+   677→    text-align: right !important;
+   678→  }
+   679→  .pjt-ref-label {
+   680→    font-size: 9pt !important;
+   681→    color: #666 !important;
+   682→  }
+   683→  .pjt-ref-value {
+   684→    font-size: 16pt !important;
+   685→    font-weight: 800 !important;
+   686→    font-family: monospace !important;
+   687→    letter-spacing: 1px !important;
+   688→    color: #000 !important;
+   689→  }
+   690→  .pjt-status-badge {
+   691→    font-size: 10pt !important;
+   692→    padding: 3px 12px !important;
+   693→    border: 1.5px solid #999 !important;
+   694→    border-radius: 20px !important;
+   695→    font-weight: 600 !important;
+   696→  }
+   697→
+   698→  .pjt-section {
+   699→    margin: 10px 0 !important;
+   700→  }
+   701→  .pjt-section-title {
+   702→    font-size: 11pt !important;
+   703→    font-weight: 700 !important;
+   704→    color: #000 !important;
+   705→    margin: 0 0 6px 0 !important;
+   706→    border-right: 3px solid #b8923a !important;
+   707→    padding-right: 8px !important;
+   708→  }
+   709→
+   710→  .pjt-grid-2 {
+   711→    display: grid !important;
+   712→    grid-template-columns: 1fr 1fr !important;
+   713→    gap: 4px 16px !important;
+   714→  }
+   715→  .pjt-grid-3 {
+   716→    display: grid !important;
+   717→    grid-template-columns: 1fr 1fr 1fr !important;
+   718→    gap: 4px 12px !important;
+   719→  }
+   720→  .pjt-grid-4 {
+   721→    display: grid !important;
+   722→    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+   723→    gap: 4px 12px !important;
+   724→    margin-bottom: 8px !important;
+   725→  }
+   726→  .pjt-field-full {
+   727→    grid-column: 1 / -1 !important;
+   728→  }
+   729→
+   730→  .pjt-field {
+   731→    display: flex !important;
+   732→    justify-content: space-between !important;
+   733→    align-items: baseline !important;
+   734→    padding: 2px 0 !important;
+   735→  }
+   736→  .pjt-field-label {
+   737→    font-size: 9pt !important;
+   738→    color: #666 !important;
+   739→  }
+   740→  .pjt-field-value {
+   741→    font-size: 10pt !important;
+   742→    font-weight: 600 !important;
+   743→    color: #000 !important;
+   744→  }
+   745→
+   746→  .pjt-file-row {
+   747→    display: flex !important;
+   748→    justify-content: space-between !important;
+   749→    align-items: center !important;
+   750→  }
+   751→  .pjt-file-name {
+   752→    font-size: 10pt !important;
+   753→    font-weight: 600 !important;
+   754→    color: #000 !important;
+   755→  }
+   756→  .pjt-file-meta {
+   757→    font-size: 9pt !important;
+   758→    color: #666 !important;
+   759→  }
+   760→
+   761→  .pjt-pricing-breakdown {
+   762→    margin: 6px 0 !important;
+   763→    padding: 6px 8px !important;
+   764→    border: 1px solid #ddd !important;
+   765→    border-radius: 6px !important;
+   766→    background: #fafafa !important;
+   767→  }
+   768→  .pjt-price-row {
+   769→    display: flex !important;
+   770→    justify-content: space-between !important;
+   771→    font-size: 9pt !important;
+   772→    color: #444 !important;
+   773→    padding: 1px 0 !important;
+   774→  }
+   775→  .pjt-price-saving {
+   776→    color: #16a34a !important;
+   777→  }
+   778→  .pjt-total-row {
+   779→    display: flex !important;
+   780→    justify-content: space-between !important;
+   781→    font-size: 14pt !important;
+   782→    font-weight: 800 !important;
+   783→    color: #000 !important;
+   784→    padding: 6px 0 0 0 !important;
+   785→    border-top: 2px solid #000 !important;
+   786→    margin-top: 6px !important;
+   787→  }
+   788→
+   789→  .pjt-footer {
+   790→    display: flex !important;
+   791→    justify-content: space-between !important;
+   792→    font-size: 8pt !important;
+   793→    color: #999 !important;
+   794→    margin-top: 4px !important;
+   795→  }
+   796→
+   797→  /* ===== Direct Print Area styles (للطباعة المباشرة من معاينة الملف) ===== */
+   798→  .direct-print-area {
+   799→    background: white !important;
+   800→    color: #000 !important;
+   801→    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+   802→    font-size: 11pt !important;
+   803→    line-height: 1.5 !important;
+   804→    padding: 14px !important;
+   805→    direction: rtl !important;
+   806→  }
+   807→  .dpa-header {
+   808→    display: flex !important;
+   809→    flex-direction: column !important;
+   810→    align-items: flex-start !important;
+   811→    margin-bottom: 8px !important;
+   812→  }
+   813→  .dpa-shop-name {
+   814→    font-size: 16pt !important;
+   815→    font-weight: 800 !important;
+   816→    color: #000 !important;
+   817→    margin: 0 !important;
+   818→  }
+   819→  .dpa-shop-phone,
+   820→  .dpa-shop-address {
+   821→    font-size: 9pt !important;
+   822→    color: #444 !important;
+   823→    margin: 1px 0 !important;
+   824→  }
+   825→  .dpa-divider {
+   826→    border: none !important;
+   827→    border-top: 1.5px dashed #999 !important;
+   828→    margin: 8px 0 !important;
+   829→  }
+   830→  .dpa-ref-row {
+   831→    display: flex !important;
+   832→    align-items: center !important;
+   833→    gap: 12px !important;
+   834→  }
+   835→  .dpa-ref-label {
+   836→    font-size: 9pt !important;
+   837→    color: #666 !important;
+   838→  }
+   839→  .dpa-ref-value {
+   840→    font-size: 15pt !important;
+   841→    font-weight: 800 !important;
+   842→    font-family: monospace !important;
+   843→    color: #000 !important;
+   844→  }
+   845→  .dpa-status {
+   846→    margin-right: auto !important;
+   847→    font-size: 10pt !important;
+   848→    padding: 2px 10px !important;
+   849→    border: 1.5px solid #999 !important;
+   850→    border-radius: 20px !important;
+   851→    font-weight: 600 !important;
+   852→  }
+   853→  .dpa-section {
+   854→    margin: 8px 0 !important;
+   855→  }
+   856→  .dpa-section-title {
+   857→    font-size: 11pt !important;
+   858→    font-weight: 700 !important;
+   859→    color: #000 !important;
+   860→    margin: 0 0 6px 0 !important;
+   861→    border-right: 3px solid #b8923a !important;
+   862→    padding-right: 8px !important;
+   863→  }
+   864→  .dpa-file-section {
+   865→    margin: 8px 0 !important;
+   866→    text-align: center !important;
+   867→  }
+   868→  .dpa-image {
+   869→    max-width: 100% !important;
+   870→    max-height: 70vh !important;
+   871→    object-fit: contain !important;
+   872→    border: 1px solid #ddd !important;
+   873→    border-radius: 6px !important;
+   874→  }
+   875→  .dpa-grid {
+   876→    display: grid !important;
+   877→    grid-template-columns: 1fr 1fr !important;
+   878→    gap: 4px 16px !important;
+   879→  }
+   880→  .dpa-field {
+   881→    display: flex !important;
+   882→    justify-content: space-between !important;
+   883→    align-items: baseline !important;
+   884→    padding: 2px 0 !important;
+   885→  }
+   886→  .dpa-field-label {
+   887→    font-size: 9pt !important;
+   888→    color: #666 !important;
+   889→  }
+   890→  .dpa-field-value {
+   891→    font-size: 10pt !important;
+   892→    font-weight: 600 !important;
+   893→    color: #000 !important;
+   894→  }
+   895→  .dpa-footer {
+   896→    display: flex !important;
+   897→    justify-content: space-between !important;
+   898→    font-size: 8pt !important;
+   899→    color: #999 !important;
+   900→    margin-top: 6px !important;
+   901→  }
+   902→
+   903→  @page {
+   904→    size: A4;
+   905→    margin: 12mm;
+   906→  }
+   907→}
+   908→
+   909→/* Screen-only: hide print tickets from normal view */
+   910→.print-job-ticket,
+   911→.direct-print-area {
+   912→  display: none !important;
+   913→}
+   914→
+   915→@media print {
+   916→  .print-job-ticket,
+   917→  .direct-print-area {
+   918→    display: block !important;
+   919→  }
+   920→}/* ============================================ */
+   921→/* CSS v7.7 — Round 81                           */
+   922→/* ~480+ new lines                                 */
+   923→/* ============================================ */
+   924→
+   925→/* ===== Order Aging Widget ===== */
+   926→.aging-widget {
+   927→  background: var(--card);
+   928→  border: 1px solid var(--border);
+   929→  border-radius: 1rem;
+   930→  padding: 1.25rem;
+   931→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+   932→}
+   933→.aging-widget-header {
+   934→  display: flex;
+   935→  align-items: center;
+   936→  gap: 0.5rem;
+   937→  margin-bottom: 1rem;
+   938→  font-size: 0.875rem;
+   939→  font-weight: 600;
+   940→  color: var(--foreground);
+   941→  opacity: 0.8;
+   942→}
+   943→.aging-row {
+   944→  display: flex;
+   945→  align-items: center;
+   946→  gap: 0.75rem;
+   947→  padding: 0.625rem 0;
+   948→  border-bottom: 1px solid var(--border);
+   949→}
+   950→.aging-row:last-child {
+   951→  border-bottom: none;
+   952→}
+   953→.aging-dot {
+   954→  width: 8px;
+   955→  height: 8px;
+   956→  border-radius: 50%;
+   957→  flex-shrink: 0;
+   958→}
+   959→.aging-label {
+   960→  font-size: 0.75rem;
+   961→  color: var(--foreground);
+   962→  opacity: 0.7;
+   963→  min-width: 60px;
+   964→}
+   965→.aging-bar-track {
+   966→  flex: 1;
+   967→  height: 6px;
+   968→  border-radius: 999px;
+   969→  background: var(--muted);
+   970→  overflow: hidden;
+   971→}
+   972→.aging-bar-fill {
+   973→  height: 100%;
+   974→  border-radius: 999px;
+   975→  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+   976→}
+   977→.aging-count {
+   978→  font-size: 0.75rem;
+   979→  font-weight: 700;
+   980→  color: var(--foreground);
+   981→  min-width: 28px;
+   982→  text-align: center;
+   983→  font-variant-numeric: tabular-nums;
+   984→}
+   985→.aging-time {
+   986→  font-size: 0.65rem;
+   987→  color: var(--muted-foreground);
+   988→  min-width: 55px;
+   989→  text-align: left;
+   990→  direction: ltr;
+   991→}
+   992→@keyframes agingSlideIn {
+   993→  from { opacity: 0; transform: translateX(-12px); }
+   994→  to { opacity: 1; transform: translateX(0); }
+   995→}
+   996→.aging-row {
+   997→  animation: agingSlideIn 0.4s ease-out backwards;
+   998→}
+   999→.aging-row:nth-child(1) { animation-delay: 0ms; }
+  1000→.aging-row:nth-child(2) { animation-delay: 60ms; }
+  1001→.aging-row:nth-child(3) { animation-delay: 120ms; }
+  1002→.aging-row:nth-child(4) { animation-delay: 180ms; }
+  1003→.aging-row:nth-child(5) { animation-delay: 240ms; }
+  1004→
+  1005→/* ===== Weekly Trend Widget ===== */
+  1006→.weekly-trend-widget {
+  1007→  background: var(--card);
+  1008→  border: 1px solid var(--border);
+  1009→  border-radius: 1rem;
+  1010→  padding: 1.25rem;
+  1011→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1012→}
+  1013→.weekly-trend-header {
+  1014→  display: flex;
+  1015→  align-items: center;
+  1016→  justify-content: space-between;
+  1017→  margin-bottom: 1rem;
+  1018→}
+  1019→.weekly-trend-title {
+  1020→  font-size: 0.875rem;
+  1021→  font-weight: 600;
+  1022→  color: var(--foreground);
+  1023→  opacity: 0.8;
+  1024→  display: flex;
+  1025→  align-items: center;
+  1026→  gap: 0.5rem;
+  1027→}
+  1028→.weekly-trend-badge {
+  1029→  font-size: 0.65rem;
+  1030→  padding: 2px 8px;
+  1031→  border-radius: 999px;
+  1032→  font-weight: 600;
+  1033→}
+  1034→.weekly-trend-badge-up {
+  1035→  background: rgba(16,185,129,0.12);
+  1036→  color: #10b981;
+  1037→}
+  1038→.weekly-trend-badge-down {
+  1039→  background: rgba(244,63,94,0.12);
+  1040→  color: #f43f5e;
+  1041→}
+  1042→.weekly-bars-container {
+  1043→  display: flex;
+  1044→  align-items: flex-end;
+  1045→  gap: 6px;
+  1046→  height: 100px;
+  1047→  padding-top: 0.5rem;
+  1048→}
+  1049→.weekly-bar-group {
+  1050→  flex: 1;
+  1051→  display: flex;
+  1052→  flex-direction: column;
+  1053→  align-items: center;
+  1054→  gap: 4px;
+  1055→}
+  1056→.weekly-bar-pair {
+  1057→  display: flex;
+  1058→  align-items: flex-end;
+  1059→  gap: 2px;
+  1060→  height: 80px;
+  1061→}
+  1062→.weekly-bar {
+  1063→  width: 14px;
+  1064→  border-radius: 4px 4px 2px 2px;
+  1065→  transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+  1066→  min-height: 2px;
+  1067→  position: relative;
+  1068→}
+  1069→.weekly-bar-current {
+  1070→  background: linear-gradient(to top, #8b5cf6, #a78bfa);
+  1071→}
+  1072→.weekly-bar-previous {
+  1073→  background: var(--muted);
+  1074→  opacity: 0.5;
+  1075→}
+  1076→.weekly-bar-label {
+  1077→  font-size: 0.6rem;
+  1078→  color: var(--muted-foreground);
+  1079→  font-weight: 500;
+  1080→}
+  1081→.weekly-legend {
+  1082→  display: flex;
+  1083→  align-items: center;
+  1084→  gap: 1rem;
+  1085→  margin-top: 0.75rem;
+  1086→  padding-top: 0.75rem;
+  1087→  border-top: 1px solid var(--border);
+  1088→}
+  1089→.weekly-legend-item {
+  1090→  display: flex;
+  1091→  align-items: center;
+  1092→  gap: 0.375rem;
+  1093→  font-size: 0.65rem;
+  1094→  color: var(--muted-foreground);
+  1095→}
+  1096→.weekly-legend-dot {
+  1097→  width: 8px;
+  1098→  height: 8px;
+  1099→  border-radius: 3px;
+  1100→}
+  1101→@keyframes weeklyBarGrow {
+  1102→  from { height: 2px !important; }
+  1103→}
+  1104→.weekly-bar {
+  1105→  animation: weeklyBarGrow 0.6s cubic-bezier(0.4,0,0.2,1) backwards;
+  1106→}
+  1107→.weekly-bar-group:nth-child(1) .weekly-bar { animation-delay: 0ms; }
+  1108→.weekly-bar-group:nth-child(2) .weekly-bar { animation-delay: 60ms; }
+  1109→.weekly-bar-group:nth-child(3) .weekly-bar { animation-delay: 120ms; }
+  1110→.weekly-bar-group:nth-child(4) .weekly-bar { animation-delay: 180ms; }
+  1111→.weekly-bar-group:nth-child(5) .weekly-bar { animation-delay: 240ms; }
+  1112→.weekly-bar-group:nth-child(6) .weekly-bar { animation-delay: 300ms; }
+  1113→.weekly-bar-group:nth-child(7) .weekly-bar { animation-delay: 360ms; }
+  1114→
+  1115→/* ===== Customer Loyalty Badges ===== */
+  1116→.loyalty-widget {
+  1117→  background: var(--card);
+  1118→  border: 1px solid var(--border);
+  1119→  border-radius: 1rem;
+  1120→  padding: 1.25rem;
+  1121→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1122→}
+  1123→.loyalty-widget-header {
+  1124→  display: flex;
+  1125→  align-items: center;
+  1126→  gap: 0.5rem;
+  1127→  margin-bottom: 1rem;
+  1128→  font-size: 0.875rem;
+  1129→  font-weight: 600;
+  1130→  color: var(--foreground);
+  1131→  opacity: 0.8;
+  1132→}
+  1133→.loyalty-customer-row {
+  1134→  display: flex;
+  1135→  align-items: center;
+  1136→  gap: 0.75rem;
+  1137→  padding: 0.5rem 0;
+  1138→  border-bottom: 1px solid var(--border);
+  1139→  transition: background-color 0.2s;
+  1140→}
+  1141→.loyalty-customer-row:last-child {
+  1142→  border-bottom: none;
+  1143→}
+  1144→.loyalty-customer-row:hover {
+  1145→  background: var(--accent);
+  1146→  border-radius: 0.5rem;
+  1147→  margin: 0 -0.5rem;
+  1148→  padding: 0.5rem;
+  1149→}
+  1150→.loyalty-badge {
+  1151→  width: 32px;
+  1152→  height: 32px;
+  1153→  border-radius: 50%;
+  1154→  display: flex;
+  1155→  align-items: center;
+  1156→  justify-content: center;
+  1157→  font-size: 0.875rem;
+  1158→  flex-shrink: 0;
+  1159→  font-weight: 700;
+  1160→}
+  1161→.loyalty-badge-bronze {
+  1162→  background: linear-gradient(135deg, #cd7f32, #a0522d);
+  1163→  color: white;
+  1164→  box-shadow: 0 2px 8px rgba(205,127,50,0.3);
+  1165→}
+  1166→.loyalty-badge-silver {
+  1167→  background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+  1168→  color: white;
+  1169→  box-shadow: 0 2px 8px rgba(192,192,192,0.3);
+  1170→}
+  1171→.loyalty-badge-gold {
+  1172→  background: linear-gradient(135deg, #ffd700, #daa520);
+  1173→  color: #78350f;
+  1174→  box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+  1175→}
+  1176→.loyalty-badge-platinum {
+  1177→  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  1178→  color: white;
+  1179→  box-shadow: 0 2px 8px rgba(6,182,212,0.4);
+  1180→}
+  1181→.loyalty-badge-diamond {
+  1182→  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  1183→  color: white;
+  1184→  box-shadow: 0 2px 8px rgba(139,92,246,0.4);
+  1185→}
+  1186→.loyalty-info {
+  1187→  flex: 1;
+  1188→  min-width: 0;
+  1189→}
+  1190→.loyalty-name {
+  1191→  font-size: 0.8125rem;
+  1192→  font-weight: 600;
+  1193→  color: var(--foreground);
+  1194→  white-space: nowrap;
+  1195→  overflow: hidden;
+  1196→  text-overflow: ellipsis;
+  1197→}
+  1198→.loyalty-tier-label {
+  1199→  font-size: 0.625rem;
+  1200→  color: var(--muted-foreground);
+  1201→  margin-top: 1px;
+  1202→}
+  1203→.loyalty-stats {
+  1204→  text-align: left;
+  1205→  flex-shrink: 0;
+  1206→}
+  1207→.loyalty-amount {
+  1208→  font-size: 0.8125rem;
+  1209→  font-weight: 700;
+  1210→  color: var(--foreground);
+  1211→}
+  1212→.loyalty-orders-count {
+  1213→  font-size: 0.625rem;
+  1214→  color: var(--muted-foreground);
+  1215→}
+  1216→@keyframes loyaltyFadeIn {
+  1217→  from { opacity: 0; transform: translateY(8px); }
+  1218→  to { opacity: 1; transform: translateY(0); }
+  1219→}
+  1220→.loyalty-customer-row {
+  1221→  animation: loyaltyFadeIn 0.35s ease-out backwards;
+  1222→}
+  1223→.loyalty-customer-row:nth-child(1) { animation-delay: 0ms; }
+  1224→.loyalty-customer-row:nth-child(2) { animation-delay: 50ms; }
+  1225→.loyalty-customer-row:nth-child(3) { animation-delay: 100ms; }
+  1226→.loyalty-customer-row:nth-child(4) { animation-delay: 150ms; }
+  1227→.loyalty-customer-row:nth-child(5) { animation-delay: 200ms; }
+  1228→
+  1229→/* ===== Quick Status Button ===== */
+  1230→.quick-advance-btn {
+  1231→  display: inline-flex;
+  1232→  align-items: center;
+  1233→  gap: 0.25rem;
+  1234→  padding: 3px 10px;
+  1235→  border-radius: 8px;
+  1236→  font-size: 0.6875rem;
+  1237→  font-weight: 600;
+  1238→  border: 1px solid var(--border);
+  1239→  background: var(--background);
+  1240→  color: var(--foreground);
+  1241→  cursor: pointer;
+  1242→  transition: all 0.2s;
+  1243→  white-space: nowrap;
+  1244→}
+  1245→.quick-advance-btn:hover {
+  1246→  background: var(--accent);
+  1247→  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  1248→  transform: translateY(-1px);
+  1249→}
+  1250→.quick-advance-btn:active {
+  1251→  transform: translateY(0);
+  1252→}
+  1253→.quick-advance-btn svg {
+  1254→  width: 12px;
+  1255→  height: 12px;
+  1256→}
+  1257→@keyframes quickAdvancePulse {
+  1258→  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+  1259→  50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  1260→}
+  1261→.quick-advance-btn-pending {
+  1262→  border-color: rgba(245,158,11,0.3);
+  1263→  color: #b45309;
+  1264→}
+  1265→.quick-advance-btn-pending:hover {
+  1266→  background: rgba(245,158,11,0.08);
+  1267→}
+  1268→.quick-advance-btn-printing {
+  1269→  border-color: rgba(59,130,246,0.3);
+  1270→  color: #2563eb;
+  1271→}
+  1272→.quick-advance-btn-printing:hover {
+  1273→  background: rgba(59,130,246,0.08);
+  1274→}
+  1275→.quick-advance-btn-ready {
+  1276→  border-color: rgba(16,185,129,0.3);
+  1277→  color: #059669;
+  1278→  animation: quickAdvancePulse 2s infinite;
+  1279→}
+  1280→.quick-advance-btn-ready:hover {
+  1281→  background: rgba(16,185,129,0.08);
+  1282→}
+  1283→
+  1284→/* ===== Shop Health Grid ===== */
+  1285→.health-grid-widget {
+  1286→  background: var(--card);
+  1287→  border: 1px solid var(--border);
+  1288→  border-radius: 1rem;
+  1289→  padding: 1.25rem;
+  1290→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1291→}
+  1292→.health-grid-header {
+  1293→  display: flex;
+  1294→  align-items: center;
+  1295→  gap: 0.5rem;
+  1296→  margin-bottom: 1rem;
+  1297→  font-size: 0.875rem;
+  1298→  font-weight: 600;
+  1299→  color: var(--foreground);
+  1300→  opacity: 0.8;
+  1301→}
+  1302→.health-grid {
+  1303→  display: grid;
+  1304→  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  1305→  gap: 0.75rem;
+  1306→}
+  1307→.health-grid-item {
+  1308→  background: var(--background);
+  1309→  border: 1px solid var(--border);
+  1310→  border-radius: 0.75rem;
+  1311→  padding: 0.75rem;
+  1312→  text-align: center;
+  1313→  transition: all 0.25s;
+  1314→  cursor: default;
+  1315→}
+  1316→.health-grid-item:hover {
+  1317→  transform: translateY(-2px);
+  1318→  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  1319→  border-color: var(--primary);
+  1320→}
+  1321→.health-grid-icon {
+  1322→  width: 36px;
+  1323→  height: 36px;
+  1324→  border-radius: 50%;
+  1325→  margin: 0 auto 0.5rem;
+  1326→  display: flex;
+  1327→  align-items: center;
+  1328→  justify-content: center;
+  1329→  font-size: 1rem;
+  1330→}
+  1331→.health-grid-name {
+  1332→  font-size: 0.75rem;
+  1333→  font-weight: 600;
+  1334→  color: var(--foreground);
+  1335→  white-space: nowrap;
+  1336→  overflow: hidden;
+  1337→  text-overflow: ellipsis;
+  1338→}
+  1339→.health-grid-stat {
+  1340→  font-size: 0.625rem;
+  1341→  color: var(--muted-foreground);
+  1342→  margin-top: 2px;
+  1343→}
+  1344→.health-grid-bar {
+  1345→  height: 4px;
+  1346→  border-radius: 999px;
+  1347→  background: var(--muted);
+  1348→  margin-top: 0.5rem;
+  1349→  overflow: hidden;
+  1350→}
+  1351→.health-grid-bar-fill {
+  1352→  height: 100%;
+  1353→  border-radius: 999px;
+  1354→  transition: width 0.5s ease;
+  1355→}
+  1356→@keyframes healthGridFadeIn {
+  1357→  from { opacity: 0; transform: scale(0.9); }
+  1358→  to { opacity: 1; transform: scale(1); }
+  1359→}
+  1360→.health-grid-item {
+  1361→  animation: healthGridFadeIn 0.4s ease-out backwards;
+  1362→}
+  1363→.health-grid-item:nth-child(1) { animation-delay: 0ms; }
+  1364→.health-grid-item:nth-child(2) { animation-delay: 80ms; }
+  1365→.health-grid-item:nth-child(3) { animation-delay: 160ms; }
+  1366→.health-grid-item:nth-child(4) { animation-delay: 240ms; }
+  1367→.health-grid-item:nth-child(5) { animation-delay: 320ms; }
+  1368→.health-grid-item:nth-child(6) { animation-delay: 400ms; }
+  1369→
+  1370→/* ===== Glass Card v11 ===== */
+  1371→.glass-card-v11 {
+  1372→  background: rgba(255,255,255,0.65);
+  1373→  backdrop-filter: blur(16px) saturate(180%);
+  1374→  border: 1px solid rgba(255,255,255,0.3);
+  1375→  border-radius: 1rem;
+  1376→  box-shadow: 0 4px 16px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5);
+  1377→}
+  1378→.dark .glass-card-v11 {
+  1379→  background: rgba(15,15,25,0.65);
+  1380→  border: 1px solid rgba(255,255,255,0.08);
+  1381→  box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  1382→}
+  1383→.glass-card-v11:hover {
+  1384→  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  1385→  transform: translateY(-2px);
+  1386→  transition: all 0.3s ease;
+  1387→}
+  1388→
+  1389→/* ===== Neon Glow Teal ===== */
+  1390→.neon-glow-teal {
+  1391→  box-shadow: 0 0 15px rgba(20,184,166,0.3), 0 0 30px rgba(20,184,166,0.1);
+  1392→}
+  1393→.dark .neon-glow-teal {
+  1394→  box-shadow: 0 0 15px rgba(20,184,166,0.4), 0 0 30px rgba(20,184,166,0.15);
+  1395→}
+  1396→
+  1397→/* ===== Neon Glow Indigo ===== */
+  1398→.neon-glow-indigo {
+  1399→  box-shadow: 0 0 15px rgba(99,102,241,0.3), 0 0 30px rgba(99,102,241,0.1);
+  1400→}
+  1401→.dark .neon-glow-indigo {
+  1402→  box-shadow: 0 0 15px rgba(99,102,241,0.4), 0 0 30px rgba(99,102,241,0.15);
+  1403→}
+  1404→
+  1405→/* ===== Gradient Text Teal ===== */
+  1406→.gradient-text-teal {
+  1407→  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+  1408→  -webkit-background-clip: text;
+  1409→  -webkit-text-fill-color: transparent;
+  1410→  background-clip: text;
+  1411→}
+  1412→
+  1413→/* ===== Gradient Text Indigo ===== */
+  1414→.gradient-text-indigo {
+  1415→  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  1416→  -webkit-background-clip: text;
+  1417→  -webkit-text-fill-color: transparent;
+  1418→  background-clip: text;
+  1419→}
+  1420→
+  1421→/* ===== Hover Glow Teal ===== */
+  1422→.hover-glow-teal:hover {
+  1423→  box-shadow: 0 0 20px rgba(20,184,166,0.25);
+  1424→}
+  1425→
+  1426→/* ===== Hover Glow Indigo ===== */
+  1427→.hover-glow-indigo:hover {
+  1428→  box-shadow: 0 0 20px rgba(99,102,241,0.25);
+  1429→}
+  1430→
+  1431→/* ===== Shimmer v8 ===== */
+  1432→.shimmer-v8 {
+  1433→  position: relative;
+  1434→  overflow: hidden;
+  1435→}
+  1436→.shimmer-v8::after {
+  1437→  content: '';
+  1438→  position: absolute;
+  1439→  top: 0;
+  1440→  right: -100%;
+  1441→  width: 60%;
+  1442→  height: 100%;
+  1443→  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  1444→  animation: shimmerSlideV8 3s infinite ease-in-out;
+  1445→}
+  1446→@keyframes shimmerSlideV8 {
+  1447→  0% { right: -100%; }
+  1448→  100% { right: 200%; }
+  1449→}
+  1450→
+  1451→/* ===== Skeleton v10 ===== */
+  1452→.skeleton-v10 {
+  1453→  background: linear-gradient(90deg, var(--muted) 25%, rgba(128,128,128,0.08) 50%, var(--muted) 75%);
+  1454→  background-size: 200% 100%;
+  1455→  animation: skeletonPulseV10 1.5s ease-in-out infinite;
+  1456→  border-radius: 0.5rem;
+  1457→}
+  1458→@keyframes skeletonPulseV10 {
+  1459→  0% { background-position: 200% 0; }
+  1460→  100% { background-position: -200% 0; }
+  1461→}
+  1462→
+  1463→/* ===== Hover Underline 5 ===== */
+  1464→.hover-underline-5 {
+  1465→  position: relative;
+  1466→}
+  1467→.hover-underline-5::after {
+  1468→  content: '';
+  1469→  position: absolute;
+  1470→  bottom: -2px;
+  1471→  right: 0;
+  1472→  width: 0;
+  1473→  height: 2px;
+  1474→  background: linear-gradient(to left, #14b8a6, #06b6d4);
+  1475→  border-radius: 999px;
+  1476→  transition: width 0.3s ease;
+  1477→}
+  1478→.hover-underline-5:hover::after {
+  1479→  width: 100%;
+  1480→}
+  1481→
+  1482→/* ===== Tag Chip Teal ===== */
+  1483→.tag-chip-teal {
+  1484→  display: inline-flex;
+  1485→  align-items: center;
+  1486→  gap: 0.25rem;
+  1487→  padding: 2px 10px;
+  1488→  border-radius: 999px;
+  1489→  font-size: 0.6875rem;
+  1490→  font-weight: 600;
+  1491→  background: rgba(20,184,166,0.1);
+  1492→  color: #0d9488;
+  1493→  border: 1px solid rgba(20,184,166,0.2);
+  1494→}
+  1495→.dark .tag-chip-teal {
+  1496→  background: rgba(20,184,166,0.15);
+  1497→  color: #2dd4bf;
+  1498→  border-color: rgba(20,184,166,0.25);
+  1499→}
+  1500→.tag-chip-teal:hover {
+  1501→  box-shadow: 0 0 12px rgba(20,184,166,0.2);
+  1502→}
+  1503→
+  1504→/* ===== Tag Chip Indigo ===== */
+  1505→.tag-chip-indigo {
+  1506→  display: inline-flex;
+  1507→  align-items: center;
+  1508→  gap: 0.25rem;
+  1509→  padding: 2px 10px;
+  1510→  border-radius: 999px;
+  1511→  font-size: 0.6875rem;
+  1512→  font-weight: 600;
+  1513→  background: rgba(99,102,241,0.1);
+  1514→  color: #4f46e5;
+  1515→  border: 1px solid rgba(99,102,241,0.2);
+  1516→}
+  1517→.dark .tag-chip-indigo {
+  1518→  background: rgba(99,102,241,0.15);
+  1519→  color: #a5b4fc;
+  1520→  border-color: rgba(99,102,241,0.25);
+  1521→}
+  1522→.tag-chip-indigo:hover {
+  1523→  box-shadow: 0 0 12px rgba(99,102,241,0.2);
+  1524→}
+  1525→
+  1526→/* ===== Pulse Soft v5 ===== */
+  1527→.pulse-soft-v5 {
+  1528→  animation: pulseSoftV5 3s ease-in-out infinite;
+  1529→}
+  1530→@keyframes pulseSoftV5 {
+  1531→  0%, 100% { opacity: 1; }
+  1532→  50% { opacity: 0.7; }
+  1533→}
+  1534→
+  1535→/* ===== Scrollbar v7 ===== */
+  1536→.scrollbar-v7::-webkit-scrollbar {
+  1537→  width: 6px;
+  1538→  height: 6px;
+  1539→}
+  1540→.scrollbar-v7::-webkit-scrollbar-track {
+  1541→  background: transparent;
+  1542→}
+  1543→.scrollbar-v7::-webkit-scrollbar-thumb {
+  1544→  background: linear-gradient(to bottom, #6366f1, #8b5cf6);
+  1545→  border-radius: 999px;
+  1546→}
+  1547→.scrollbar-v7::-webkit-scrollbar-thumb:hover {
+  1548→  background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+  1549→}
+  1550→
+  1551→/* ===== Focus Ring v6 ===== */
+  1552→.focus-ring-v6:focus-visible {
+  1553→  outline: 2px solid #6366f1;
+  1554→  outline-offset: 2px;
+  1555→  border-radius: 8px;
+  1556→}
+  1557→
+  1558→/* ===== Hover Scale Bounce v4 ===== */
+  1559→.hover-scale-bounce-v4 {
+  1560→  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  1561→}
+  1562→.hover-scale-bounce-v4:hover {
+  1563→  transform: scale(1.03);
+  1564→}
+  1565→.hover-scale-bounce-v4:active {
+  1566→  transform: scale(0.97);
+  1567→}
+  1568→
+  1569→/* ===== Breathe Border v4 ===== */
+  1570→.breathe-border-v4 {
+  1571→  animation: breatheBorderV4 4s ease-in-out infinite;
+  1572→}
+  1573→@keyframes breatheBorderV4 {
+  1574→  0%, 100% { border-color: var(--border); }
+  1575→  33% { border-color: rgba(99,102,241,0.3); }
+  1576→  66% { border-color: rgba(20,184,166,0.3); }
+  1577→}
+  1578→
+  1579→/* ===== Card Shine v4 ===== */
+  1580→.card-shine-v4 {
+  1581→  position: relative;
+  1582→  overflow: hidden;
+  1583→}
+  1584→.card-shine-v4::before {
+  1585→  content: '';
+  1586→  position: absolute;
+  1587→  top: -50%;
+  1588→  right: -50%;
+  1589→  width: 200%;
+  1590→  height: 200%;
+  1591→  background: linear-gradient(
+  1592→    45deg,
+  1593→    transparent 40%,
+  1594→    rgba(255,255,255,0.06) 45%,
+  1595→    rgba(255,255,255,0.12) 50%,
+  1596→    rgba(255,255,255,0.06) 55%,
+  1597→    transparent 60%
+  1598→  );
+  1599→  transform: translateX(-100%);
+  1600→  transition: none;
+  1601→  pointer-events: none;
+  1602→}
+  1603→.card-shine-v4:hover::before {
+  1604→  transform: translateX(100%);
+  1605→  transition: transform 0.6s ease;
+  1606→}
+  1607→
+  1608→/* ===== Hover Lift 6 ===== */
+  1609→.hover-lift-6 {
+  1610→  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  1611→}
+  1612→.hover-lift-6:hover {
+  1613→  transform: translateY(-3px);
+  1614→  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  1615→}
+  1616→
+  1617→/* ===== Gradient Border Animated v4 ===== */
+  1618→.gradient-border-animated-v4 {
+  1619→  position: relative;
+  1620→  border: none !important;
+  1621→  background: var(--card) !important;
+  1622→}
+  1623→.gradient-border-animated-v4::before {
+  1624→  content: '';
+  1625→  position: absolute;
+  1626→  inset: 0;
+  1627→  border-radius: inherit;
+  1628→  padding: 1px;
+  1629→  background: linear-gradient(
+  1630→    90deg,
+  1631→    #6366f1, #14b8a6, #f59e0b, #f43f5e, #6366f1
+  1632→  );
+  1633→  background-size: 300% 100%;
+  1634→  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  1635→  -webkit-mask-composite: xor;
+  1636→  mask-composite: exclude;
+  1637→  animation: gradientBorderRotateV4 4s linear infinite;
+  1638→}
+  1639→@keyframes gradientBorderRotateV4 {
+  1640→  0% { background-position: 0% 50%; }
+  1641→  100% { background-position: 300% 50%; }
+  1642→}
+  1643→
+  1644→/* ===== Stagger Grid 30 ===== */
+  1645→.stagger-grid-30 > * {
+  1646→  animation: staggerFadeIn30 0.4s ease-out backwards;
+  1647→}
+  1648→.stagger-grid-30 > *:nth-child(1) { animation-delay: 0ms; }
+  1649→.stagger-grid-30 > *:nth-child(2) { animation-delay: 30ms; }
+  1650→.stagger-grid-30 > *:nth-child(3) { animation-delay: 60ms; }
+  1651→.stagger-grid-30 > *:nth-child(4) { animation-delay: 90ms; }
+  1652→.stagger-grid-30 > *:nth-child(5) { animation-delay: 120ms; }
+  1653→.stagger-grid-30 > *:nth-child(6) { animation-delay: 150ms; }
+  1654→.stagger-grid-30 > *:nth-child(7) { animation-delay: 180ms; }
+  1655→.stagger-grid-30 > *:nth-child(8) { animation-delay: 210ms; }
+  1656→@keyframes staggerFadeIn30 {
+  1657→  from { opacity: 0; transform: translateY(10px); }
+  1658→  to { opacity: 1; transform: translateY(0); }
+  1659→}
+  1660→
+  1661→/* ===== Badge Bounce In v4 ===== */
+  1662→.badge-bounce-in-v4 {
+  1663→  animation: badgeBounceV4 0.4s cubic-bezier(0.68,-0.55,0.265,1.55) backwards;
+  1664→}
+  1665→@keyframes badgeBounceV4 {
+  1666→  0% { opacity: 0; transform: scale(0.3) rotate(-12deg); }
+  1667→  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  1668→}
+  1669→
+  1670→/* ===== Row Hover Glow v5 ===== */
+  1671→.row-hover-glow-v5 {
+  1672→  transition: background-color 0.2s, box-shadow 0.2s;
+  1673→}
+  1674→.row-hover-glow-v5:hover {
+  1675→  box-shadow: inset 0 0 20px rgba(99,102,241,0.04);
+  1676→}
+  1677→
+  1678→/* ===== Separator Gradient v4 ===== */
+  1679→.separator-gradient-v4 {
+  1680→  height: 1px;
+  1681→  background: linear-gradient(to left, transparent, var(--border), rgba(99,102,241,0.2), var(--border), transparent);
+  1682→  border: none;
+  1683→}
+  1684→
+  1685→/* ===== Stat Mini Card v2 ===== */
+  1686→.stat-mini-card-v2 {
+  1687→  background: var(--card);
+  1688→  border: 1px solid var(--border);
+  1689→  border-radius: 0.75rem;
+  1690→  padding: 0.75rem 1rem;
+  1691→  display: flex;
+  1692→  align-items: center;
+  1693→  gap: 0.75rem;
+  1694→  transition: all 0.2s;
+  1695→}
+  1696→.stat-mini-card-v2:hover {
+  1697→  border-color: var(--primary);
+  1698→  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  1699→}
+  1700→.stat-mini-card-v2-icon {
+  1701→  width: 36px;
+  1702→  height: 36px;
+  1703→  border-radius: 10px;
+  1704→  display: flex;
+  1705→  align-items: center;
+  1706→  justify-content: center;
+  1707→  flex-shrink: 0;
+  1708→}
+  1709→.stat-mini-card-v2-value {
+  1710→  font-size: 1.125rem;
+  1711→  font-weight: 700;
+  1712→  color: var(--foreground);
+  1713→  line-height: 1.2;
+  1714→  font-variant-numeric: tabular-nums;
+  1715→}
+  1716→.stat-mini-card-v2-label {
+  1717→  font-size: 0.6875rem;
+  1718→  color: var(--muted-foreground);
+  1719→}
+  1720→
+  1721→/* ===== Text Glow Teal ===== */
+  1722→.text-glow-teal {
+  1723→  text-shadow: 0 0 12px rgba(20,184,166,0.4);
+  1724→}
+  1725→.dark .text-glow-teal {
+  1726→  text-shadow: 0 0 16px rgba(20,184,166,0.5);
+  1727→}
+  1728→
+  1729→/* ===== Text Glow Indigo ===== */
+  1730→.text-glow-indigo {
+  1731→  text-shadow: 0 0 12px rgba(99,102,241,0.4);
+  1732→}
+  1733→.dark .text-glow-indigo {
+  1734→  text-shadow: 0 0 16px rgba(99,102,241,0.5);
+  1735→}
+  1736→
+  1737→/* ===== Line Clamp 5 ===== */
+  1738→.line-clamp-5 {
+  1739→  display: -webkit-box;
+  1740→  -webkit-line-clamp: 5;
+  1741→  -webkit-box-orient: vertical;
+  1742→  overflow: hidden;
+  1743→}
+  1744→
+  1745→/* ===== Dot Grid v3 ===== */
+  1746→.bg-dot-grid-v3 {
+  1747→  background-image: radial-gradient(circle, rgba(128,128,128,0.12) 1px, transparent 1px);
+  1748→  background-size: 24px 24px;
+  1749→}
+  1750→
+  1751→/* ===== Responsive ===== */
+  1752→@media (max-width: 640px) {
+  1753→  .aging-widget, .weekly-trend-widget, .loyalty-widget, .health-grid-widget {
+  1754→    padding: 1rem;
+  1755→    border-radius: 0.75rem;
+  1756→  }
+  1757→  .weekly-bars-container {
+  1758→    height: 70px;
+  1759→  }
+  1760→  .weekly-bar {
+  1761→    width: 10px;
+  1762→  }
+  1763→  .weekly-bar-pair {
+  1764→    height: 55px;
+  1765→  }
+  1766→  .health-grid {
+  1767→    grid-template-columns: repeat(2, 1fr);
+  1768→  }
+  1769→  .aging-time {
+  1770→    display: none;
+  1771→  }
+  1772→}
+  1773→
+  1774→@media (max-width: 380px) {
+  1775→  .health-grid {
+  1776→    grid-template-columns: 1fr;
+  1777→  }
+  1778→}
+  1779→
+  1780→/* ===== Reduced Motion ===== */
+  1781→@media (prefers-reduced-motion: reduce) {
+  1782→  .aging-row,
+  1783→  .weekly-bar,
+  1784→  .loyalty-customer-row,
+  1785→  .health-grid-item,
+  1786→  .stagger-grid-30 > * {
+  1787→    animation: none !important;
+  1788→  }
+  1789→  .quick-advance-btn-ready {
+  1790→    animation: none !important;
+  1791→  }
+  1792→  .breathe-border-v4 {
+  1793→    animation: none !important;
+  1794→  }
+  1795→  .gradient-border-animated-v4::before {
+  1796→    animation: none !important;
+  1797→  }
+  1798→  .shimmer-v8::after {
+  1799→    animation: none !important;
+  1800→  }
+  1801→  .pulse-soft-v5 {
+  1802→    animation: none !important;
+  1803→  }
+  1804→}/* ============================================ */
+  1805→/* CSS v7.8 — Round 82                           */
+  1806→/* ~500 new lines                                  */
+  1807→/* ============================================ */
+  1808→
+  1809→/* ===== Service Distribution Widget ===== */
+  1810→.service-dist-widget {
+  1811→  background: var(--card);
+  1812→  border: 1px solid var(--border);
+  1813→  border-radius: 1rem;
+  1814→  padding: 1.25rem;
+  1815→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1816→}
+  1817→.service-dist-header {
+  1818→  display: flex;
+  1819→  align-items: center;
+  1820→  gap: 0.5rem;
+  1821→  margin-bottom: 1rem;
+  1822→  font-size: 0.875rem;
+  1823→  font-weight: 600;
+  1824→  color: var(--foreground);
+  1825→  opacity: 0.8;
+  1826→}
+  1827→.service-dist-row {
+  1828→  display: flex;
+  1829→  align-items: center;
+  1830→  gap: 0.625rem;
+  1831→  padding: 0.5rem 0;
+  1832→}
+  1833→.service-dist-emoji {
+  1834→  font-size: 1rem;
+  1835→  width: 24px;
+  1836→  text-align: center;
+  1837→  flex-shrink: 0;
+  1838→}
+  1839→.service-dist-name {
+  1840→  font-size: 0.75rem;
+  1841→  color: var(--foreground);
+  1842→  min-width: 65px;
+  1843→  flex-shrink: 0;
+  1844→}
+  1845→.service-dist-bar-track {
+  1846→  flex: 1;
+  1847→  height: 8px;
+  1848→  border-radius: 999px;
+  1849→  background: var(--muted);
+  1850→  overflow: hidden;
+  1851→}
+  1852→.service-dist-bar-fill {
+  1853→  height: 100%;
+  1854→  border-radius: 999px;
+  1855→  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  1856→  min-width: 4px;
+  1857→}
+  1858→.service-dist-count {
+  1859→  font-size: 0.6875rem;
+  1860→  font-weight: 700;
+  1861→  color: var(--foreground);
+  1862→  min-width: 24px;
+  1863→  text-align: center;
+  1864→  font-variant-numeric: tabular-nums;
+  1865→}
+  1866→.service-dist-pct {
+  1867→  font-size: 0.625rem;
+  1868→  color: var(--muted-foreground);
+  1869→  min-width: 32px;
+  1870→  text-align: left;
+  1871→  direction: ltr;
+  1872→}
+  1873→@keyframes serviceDistSlideIn {
+  1874→  from { opacity: 0; transform: translateX(-8px); }
+  1875→  to { opacity: 1; transform: translateX(0); }
+  1876→}
+  1877→.service-dist-row {
+  1878→  animation: serviceDistSlideIn 0.35s ease-out backwards;
+  1879→}
+  1880→.service-dist-row:nth-child(1) { animation-delay: 0ms; }
+  1881→.service-dist-row:nth-child(2) { animation-delay: 50ms; }
+  1882→.service-dist-row:nth-child(3) { animation-delay: 100ms; }
+  1883→.service-dist-row:nth-child(4) { animation-delay: 150ms; }
+  1884→.service-dist-row:nth-child(5) { animation-delay: 200ms; }
+  1885→.service-dist-row:nth-child(6) { animation-delay: 250ms; }
+  1886→
+  1887→/* ===== Hourly Activity Widget ===== */
+  1888→.hourly-activity-widget {
+  1889→  background: var(--card);
+  1890→  border: 1px solid var(--border);
+  1891→  border-radius: 1rem;
+  1892→  padding: 1.25rem;
+  1893→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1894→}
+  1895→.hourly-activity-header {
+  1896→  display: flex;
+  1897→  align-items: center;
+  1898→  gap: 0.5rem;
+  1899→  margin-bottom: 1rem;
+  1900→  font-size: 0.875rem;
+  1901→  font-weight: 600;
+  1902→  color: var(--foreground);
+  1903→  opacity: 0.8;
+  1904→}
+  1905→.hourly-grid {
+  1906→  display: grid;
+  1907→  grid-template-columns: repeat(12, 1fr);
+  1908→  gap: 3px;
+  1909→}
+  1910→.hourly-cell {
+  1911→  aspect-ratio: 1;
+  1912→  border-radius: 4px;
+  1913→  display: flex;
+  1914→  align-items: center;
+  1915→  justify-content: center;
+  1916→  font-size: 0.5rem;
+  1917→  font-weight: 600;
+  1918→  color: transparent;
+  1919→  transition: all 0.2s;
+  1920→  cursor: default;
+  1921→  position: relative;
+  1922→}
+  1923→.hourly-cell:hover {
+  1924→  color: var(--foreground);
+  1925→  transform: scale(1.2);
+  1926→  z-index: 2;
+  1927→  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  1928→}
+  1929→.hourly-cell-empty {
+  1930→  background: var(--muted);
+  1931→  opacity: 0.3;
+  1932→}
+  1933→.hourly-cell-low {
+  1934→  background: rgba(99,102,241,0.2);
+  1935→}
+  1936→.hourly-cell-med {
+  1937→  background: rgba(99,102,241,0.45);
+  1938→}
+  1939→.hourly-cell-high {
+  1940→  background: rgba(99,102,241,0.7);
+  1941→  color: white;
+  1942→}
+  1943→.hourly-cell-peak {
+  1944→  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  1945→  color: white;
+  1946→  box-shadow: 0 0 8px rgba(99,102,241,0.3);
+  1947→}
+  1948→.hourly-labels {
+  1949→  display: flex;
+  1950→  justify-content: space-between;
+  1951→  margin-top: 0.375rem;
+  1952→}
+  1953→.hourly-label {
+  1954→  font-size: 0.55rem;
+  1955→  color: var(--muted-foreground);
+  1956→}
+  1957→@keyframes hourlyCellPop {
+  1958→  0% { transform: scale(0); opacity: 0; }
+  1959→  100% { transform: scale(1); opacity: 1; }
+  1960→}
+  1961→.hourly-cell {
+  1962→  animation: hourlyCellPop 0.3s cubic-bezier(0.68,-0.55,0.265,1.55) backwards;
+  1963→}
+  1964→.hourly-cell:nth-child(1) { animation-delay: 0ms; }
+  1965→.hourly-cell:nth-child(2) { animation-delay: 15ms; }
+  1966→.hourly-cell:nth-child(3) { animation-delay: 30ms; }
+  1967→.hourly-cell:nth-child(4) { animation-delay: 45ms; }
+  1968→.hourly-cell:nth-child(5) { animation-delay: 60ms; }
+  1969→.hourly-cell:nth-child(6) { animation-delay: 75ms; }
+  1970→.hourly-cell:nth-child(7) { animation-delay: 90ms; }
+  1971→.hourly-cell:nth-child(8) { animation-delay: 105ms; }
+  1972→.hourly-cell:nth-child(9) { animation-delay: 120ms; }
+  1973→.hourly-cell:nth-child(10) { animation-delay: 135ms; }
+  1974→.hourly-cell:nth-child(11) { animation-delay: 150ms; }
+  1975→.hourly-cell:nth-child(12) { animation-delay: 165ms; }
+  1976→
+  1977→/* ===== Mini Stats Row ===== */
+  1978→.mini-stats-row {
+  1979→  display: grid;
+  1980→  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  1981→  gap: 0.75rem;
+  1982→}
+  1983→.mini-stat-card {
+  1984→  background: var(--card);
+  1985→  border: 1px solid var(--border);
+  1986→  border-radius: 0.75rem;
+  1987→  padding: 0.875rem 1rem;
+  1988→  display: flex;
+  1989→  align-items: center;
+  1990→  gap: 0.75rem;
+  1991→  transition: all 0.25s;
+  1992→}
+  1993→.mini-stat-card:hover {
+  1994→  border-color: var(--primary);
+  1995→  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  1996→  transform: translateY(-1px);
+  1997→}
+  1998→.mini-stat-icon {
+  1999→  width: 40px;
+  2000→  height: 40px;
+
+[showing lines 1-2000 of 36181; use offset=2001 with limit to continue reading]

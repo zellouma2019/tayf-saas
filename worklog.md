@@ -78,3 +78,30 @@ Stage Summary:
 - All TypeScript errors in customer page components fixed
 - Reviews API now returns correct format for TestimonialsSection
 - Loyalty system properly reads order count from API
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Fix light theme and admin sidebar issues
+
+Work Log:
+- Diagnosed two root causes:
+  1. ThemeProvider missing from layout.tsx (next-themes was never initialized)
+  2. CSS theme structure inverted: :root had dark values, .light had light values, but next-themes uses .dark class
+- Created /src/components/theme-provider.tsx wrapping next-themes ThemeProvider with attribute="class", defaultTheme="dark"
+- Updated layout.tsx: added ThemeProvider wrapper, changed lang to "ar" and added dir="rtl"
+- Swapped globals.css theme structure:
+  - :root now has LIGHT theme values (#faf8f2 background, cream/gold palette)
+  - .dark now has DARK theme values (#0a0a0b background, dark/gold palette)
+  - Changed .light references to .dark (scrollbar, premium-card)
+  - :root.dark references remain correct (apply when dark mode active)
+- Rebuilt standalone and verified via agent-browser:
+  - Root admin (/): ThemeToggle switches between dark (#0a0a0b) and light (#faf8f2)
+  - Merchant admin (/s/[slug]?admin=1): Sidebar visible with all sections, theme toggle works
+  - Customer view (/s/[slug]): Theme toggle works
+
+Stage Summary:
+- Light theme now works across ALL levels (admin, merchant, customer)
+- Merchant admin sidebar is present and functional (DashboardSidebar component)
+- Sidebar sections: القائمة (الرئيسية/الطلبات/إعدادات), البيانات (العملاء/المصاريف), أدوات (مشاركة/معاينة)
+- CSS variables verified: --sidebar dark=#0e0e10, light=#f5f0e5

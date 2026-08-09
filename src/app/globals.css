@@ -57,7 +57,7 @@
   --color-gold-900: #5c4420;
   --color-gold-950: #3a2a14;
   /* Tayf Dark Palette — default (light mode) values.
-     These are overridden in :root (dark) and .light below.
+     These are overridden in :root (light) and .dark below.
      Using @theme (not inline) so utilities reference var() and respect overrides. */
   --color-dark-50: #f5f5f5;
   --color-dark-100: #e0e0e0;
@@ -73,9 +73,75 @@
 }
 
 /* ==========================================================================
-   DARK THEME (Default) — Premium Dark with Gold Accents
+   LIGHT THEME (Default when no .dark class) — Warm Cream with Gold Accents
    ========================================================================== */
 :root {
+  --radius: 0.75rem;
+  --background: #faf8f2;
+  --foreground: #1a1510;
+  --card: #ffffff;
+  --card-foreground: #1a1510;
+  --popover: #ffffff;
+  --popover-foreground: #1a1510;
+  --primary: #b8923a;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f0e5;
+  --secondary-foreground: #3a3020;
+  --muted: #ede8dc;
+  --muted-foreground: #7a7060;
+  --accent: #fdf6e3;
+  --accent-foreground: #3a3020;
+  --destructive: #dc2626;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: #b8923a;
+  --chart-1: #b8923a;
+  --chart-2: #d4a853;
+  --chart-3: #9a7830;
+  --chart-4: #e8c060;
+  --chart-5: #7a5e28;
+  --sidebar: #f5f0e5;
+  --sidebar-foreground: #4a4030;
+  --sidebar-primary: #b8923a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ede8dc;
+  --sidebar-accent-foreground: #3a3020;
+  --sidebar-border: rgba(184, 146, 58, 0.15);
+  --sidebar-ring: #b8923a;
+
+  /* Dark palette — normal grays for light mode */
+  --color-dark-50: #f5f5f5;
+  --color-dark-100: #e0e0e0;
+  --color-dark-200: #b0b0b0;
+  --color-dark-300: #808080;
+  --color-dark-400: #606060;
+  --color-dark-500: #454545;
+  --color-dark-600: #353535;
+  --color-dark-700: #252525;
+  --color-dark-800: #1a1a1a;
+  --color-dark-900: #111111;
+  --color-dark-950: #0d0d0d;
+
+  /* Colored icon surfaces for light mode */
+  --color-gold-50: #fefcf3;
+  --color-gold-100: #fdf6e3;
+  --color-gold-200: #f8e8b8;
+  --color-sky-50: #f0f9ff;
+  --color-sky-100: #e0f2fe;
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+}
+
+/* ==========================================================================
+   DARK THEME (when .dark class is on html) — Premium Dark with Gold Accents
+   ========================================================================== */
+.dark {
   --radius: 0.75rem;
   --background: #0a0a0b;
   --foreground: #e8e4dc;
@@ -136,71 +202,6 @@
   --color-amber-100: #3a2810;
   --color-violet-50: #1a0f2e;
   --color-violet-100: #251840;
-}
-
-/* ==========================================================================
-   LIGHT THEME — Warm Cream with Gold Accents
-   ========================================================================== */
-.light {
-  --background: #faf8f2;
-  --foreground: #1a1510;
-  --card: #ffffff;
-  --card-foreground: #1a1510;
-  --popover: #ffffff;
-  --popover-foreground: #1a1510;
-  --primary: #b8923a;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f0e5;
-  --secondary-foreground: #3a3020;
-  --muted: #ede8dc;
-  --muted-foreground: #7a7060;
-  --accent: #fdf6e3;
-  --accent-foreground: #3a3020;
-  --destructive: #dc2626;
-  --border: rgba(0, 0, 0, 0.08);
-  --input: rgba(0, 0, 0, 0.08);
-  --ring: #b8923a;
-  --chart-1: #b8923a;
-  --chart-2: #d4a853;
-  --chart-3: #9a7830;
-  --chart-4: #e8c060;
-  --chart-5: #7a5e28;
-  --sidebar: #f5f0e5;
-  --sidebar-foreground: #4a4030;
-  --sidebar-primary: #b8923a;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ede8dc;
-  --sidebar-accent-foreground: #3a3020;
-  --sidebar-border: rgba(184, 146, 58, 0.15);
-  --sidebar-ring: #b8923a;
-
-  /* Dark palette — normal grays for light mode */
-  --color-dark-50: #f5f5f5;
-  --color-dark-100: #e0e0e0;
-  --color-dark-200: #b0b0b0;
-  --color-dark-300: #808080;
-  --color-dark-400: #606060;
-  --color-dark-500: #454545;
-  --color-dark-600: #353535;
-  --color-dark-700: #252525;
-  --color-dark-800: #1a1a1a;
-  --color-dark-900: #111111;
-  --color-dark-950: #0d0d0d;
-
-  /* Colored icon surfaces for light mode */
-  --color-gold-50: #fefcf3;
-  --color-gold-100: #fdf6e3;
-  --color-gold-200: #f8e8b8;
-  --color-sky-50: #f0f9ff;
-  --color-sky-100: #e0f2fe;
-  --color-emerald-50: #ecfdf5;
-  --color-emerald-100: #d1fae5;
-  --color-rose-50: #fff1f2;
-  --color-rose-100: #ffe4e6;
-  --color-amber-50: #fffbeb;
-  --color-amber-100: #fef3c7;
-  --color-violet-50: #f5f3ff;
-  --color-violet-100: #ede9fe;
 }
 
 @layer base {
@@ -274,7 +275,7 @@ html {
   background: rgba(212, 168, 83, 0.45);
 }
 
-/* Global scrollbar */
+/* Global scrollbar — light mode defaults */
 :root *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -283,17 +284,17 @@ html {
   background: transparent;
 }
 :root *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 999px;
 }
 :root *::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-.light *::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-}
-.light *::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
+}
+.dark *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* ==========================================================================
@@ -327,9 +328,9 @@ html {
   background: var(--card);
   border: 1px solid var(--border);
 }
-.light .premium-card {
-  background: linear-gradient(145deg, #ffffff 0%, #fafaf8 100%);
-  border: 1px solid rgba(184, 146, 58, 0.12);
+.dark .premium-card {
+  background: linear-gradient(145deg, #141416 0%, #1a1a1e 100%);
+  border: 1px solid rgba(212, 168, 83, 0.12);
 }
 
 .premium-card-hover:hover {
