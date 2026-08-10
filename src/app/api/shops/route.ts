@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     await ensureDb();
 
     const body = await req.json();
-    const { name, slug, adminPin, ownerName, ownerPhone, phone, whatsapp, email, address, trialDays, country, language } = body;
+    const { name, slug, adminPin, ownerName, ownerPhone, phone, whatsapp, email, address, trialDays, country, language, features, logoIcon, primaryColor, plan, customCurrency, themeId } = body;
 
     if (!name || !slug || !adminPin) {
       return NextResponse.json({ error: "الاسم والمعرّف وكلمة المرور مطلوبة" }, { status: 400 });
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         name,
         slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""),
         adminPin: String(adminPin),
-        themeId: body.themeId || getNextThemeId(),
+        themeId: themeId || getNextThemeId(),
         ownerName: ownerName || null,
         ownerPhone: ownerPhone || null,
         phone: phone || null,
@@ -80,6 +80,11 @@ export async function POST(req: NextRequest) {
         address: address || null,
         country: country || "DZ",
         language: language || "ar",
+        customCurrency: customCurrency || null,
+        logoIcon: logoIcon || "Printer",
+        primaryColor: primaryColor || null,
+        plan: plan || "free",
+        features: features && typeof features === "object" ? JSON.stringify(features) : null,
         trialDays: trialDays ? Number(trialDays) : null,
         trialStartsAt: trialDays ? new Date() : null,
       },

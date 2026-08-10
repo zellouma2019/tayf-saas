@@ -21,7 +21,8 @@ import {
   MessageSquare, FileUp, Repeat, Star, Calculator, Receipt, Layers,
   LayoutDashboard, BarChart3, Users, Wallet, Settings, Kanban,
   FileText, Trash2, Download, SlidersHorizontal, RefreshCw,
-  AlertTriangle, CheckCircle2, Info,
+  AlertTriangle, CheckCircle2, Info, Globe, Languages,
+  Printer, BadgePercent, Headphones, Truck, Zap, Shield, MapPin, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ARAB_COUNTRIES } from "@/lib/countries";
@@ -38,6 +39,14 @@ const SHOP_FEATURES = [
   { key: "customerReviews", label: "تقييمات العملاء", icon: Star, desc: "السماح بتقييم الخدمة" },
   { key: "invoiceGeneration", label: "إنشاء فواتير", icon: Receipt, desc: "فواتير PDF للطلبات" },
   { key: "bulkOrders", label: "طلبات جماعية", icon: Layers, desc: "طلبات متعددة دفعة واحدة" },
+  { key: "directPrint", label: "طباعة مباشرة", icon: Printer, desc: "طباعة الطلب مباشرة من لوحة التحكم" },
+  { key: "autoReminder", label: "تذكير تلقائي", icon: Bell, desc: "تذكير الزبائن بالطلبات المنسية" },
+  { key: "customBranding", label: "هوية بصرية", icon: Palette, desc: "تخصيص شعار وألوان المتجر" },
+  { key: "multiBranch", label: "فروع متعددة", icon: MapPin, desc: "إدارة عدة فروع من حساب واحد" },
+  { key: "couponSystem", label: "نظام الكوبونات", icon: BadgePercent, desc: "إنشاء أكواد خصم للزبائن" },
+  { key: "deliveryTracking", label: "تتبّع التوصيل", icon: Truck, desc: "تتبع حالة توصيل الطلب" },
+  { key: "customerSupport", label: "دعم الزبائن", icon: Headphones, desc: "نظام تذاكر دعم للزبائن" },
+  { key: "smartPricing", label: "تسعير ذكي", icon: Zap, desc: "أسعار ديناميكية حسب الكمية" },
 ];
 
 const MERCHANT_ADMIN_TABS = [
@@ -54,6 +63,9 @@ const MERCHANT_PERMISSIONS = [
   { key: "canDeleteOrders", label: "حذف الطلبات", icon: Trash2, desc: "السماح بحذف الطلبات نهائياً" },
   { key: "canExportData", label: "تصدير البيانات", icon: Download, desc: "تصدير التقارير والطلبات" },
   { key: "canEditServices", label: "تعديل الخدمات", icon: SlidersHorizontal, desc: "تعديل أسعار وخيارات الخدمات" },
+  { key: "canChangePin", label: "تغيير كلمة المرور", icon: Shield, desc: "السماح بتغيير PIN الإدارة" },
+  { key: "canManageTeam", label: "إدارة الفريق", icon: Users, desc: "إضافة/حذف أعضاء الفريق" },
+  { key: "canViewReports", label: "عرض التقارير", icon: BarChart3, desc: "الوصول لتقارير الأداء" },
 ];
 
 const THEME_OPTIONS = [
@@ -71,7 +83,8 @@ interface ShopData {
   slug: string; name: string; phone: string | null;
   ownerName: string | null; ownerPhone: string | null;
   whatsapp: string | null; email: string | null; address: string | null;
-  country: string | null; isActive: boolean; plan: string;
+  country: string | null; language: string | null; customCurrency: string | null;
+  isActive: boolean; plan: string;
   primaryColor: string | null; adminPin: string;
   themeId: number | null;
   logoIcon: string | null;
@@ -111,7 +124,9 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
             slug: s.slug, name: s.name, phone: s.phone,
             ownerName: s.ownerName, ownerPhone: s.ownerPhone,
             whatsapp: s.whatsapp, email: s.email, address: s.address,
-            country: s.country, isActive: s.isActive,
+            country: s.country, language: s.language || "ar",
+            customCurrency: s.customCurrency || null,
+            isActive: s.isActive,
             plan: s.plan || "free", primaryColor: s.primaryColor,
             adminPin: s.adminPin, themeId: s.themeId || 1,
             logoIcon: s.logoIcon || "Printer",
@@ -152,6 +167,7 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
       const payload: Record<string, unknown> = {
         name: data.name, phone: data.phone, whatsapp: data.whatsapp,
         email: data.email, address: data.address, country: data.country,
+        language: data.language, customCurrency: data.customCurrency,
         ownerName: data.ownerName, ownerPhone: data.ownerPhone,
         adminPin: data.adminPin, isActive: data.isActive, plan: data.plan,
         primaryColor: data.primaryColor, themeId: data.themeId,
@@ -273,6 +289,24 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                         {ARAB_COUNTRIES.map((c) => <SelectItem key={c.code} value={c.code}>{c.name} ({c.code})</SelectItem>)}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div>
+                    <Label>اللغة</Label>
+                    <Select value={data.language || "ar"} onValueChange={(v) => setField("language", v)}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ar">العربية</SelectItem>
+                        <SelectItem value="fr">الفرنسية</SelectItem>
+                        <SelectItem value="en">الإنجليزية</SelectItem>
+                        <SelectItem value="tr">التركية</SelectItem>
+                        <SelectItem value="es">الإسبانية</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>عملة مخصصة</Label>
+                    <Input value={data.customCurrency || ""} onChange={(e) => setField("customCurrency", e.target.value || null)} className="mt-1" dir="ltr" placeholder="USD, EUR... (اتركه فارغاً)" />
+                    <p className="text-[10px] text-muted-foreground mt-1">تجاوز عملة الدولة الافتراضية</p>
                   </div>
                   <div>
                     <Label>اسم صاحب المتجر</Label>
@@ -544,6 +578,28 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <Label className="text-sm font-semibold">أيقونة الشعار</Label>
+                    <p className="text-xs text-muted-foreground mt-1">تظهر في رأس المتجر والتبويب</p>
+                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 mt-3">
+                      {["Printer", "BookOpen", "Scissors", "Palette", "Image", "FileText", "Store", "PenTool"].map((icon) => (
+                        <button
+                          key={icon}
+                          type="button"
+                          onClick={() => setField("logoIcon", icon)}
+                          className={`p-2.5 rounded-xl border-2 text-center transition-all ${
+                            data.logoIcon === icon ? "border-foreground shadow-md bg-amber-50/50 dark:bg-amber-500/5" : "border-border/50 hover:border-border"
+                          }`}
+                        >
+                          <div className="text-xl">{icon === "Printer" ? "🖨️" : icon === "BookOpen" ? "📖" : icon === "Scissors" ? "✂️" : icon === "Palette" ? "🎨" : icon === "Image" ? "🖼️" : icon === "FileText" ? "📄" : icon === "Store" ? "🏪" : "🖊️"}</div>
+                          <div className="text-[9px] font-medium mt-1">{icon === "Printer" ? "طابعة" : icon === "BookOpen" ? "كتاب" : icon === "Scissors" ? "مقص" : icon === "Palette" ? "لوحة" : icon === "Image" ? "صورة" : icon === "FileText" ? "مستند" : icon === "Store" ? "متجر" : "قلم"}</div>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
