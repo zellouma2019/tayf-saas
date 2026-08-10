@@ -128,9 +128,16 @@ function ShopNotFound() {
             <Store className="h-8 w-8 text-muted-foreground/50" />
           </div>
           <h2 className="text-xl font-bold mb-2 text-foreground">المتجر غير موجود</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-6">
             تأكد من صحة الرابط أو تواصل مع صاحب المتجر
           </p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = "/"}
+            className="gap-2"
+          >
+            العودة للرئيسية
+          </Button>
         </CardContent>
       </Card>
     </div>

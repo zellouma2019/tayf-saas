@@ -1346,3 +1346,117 @@
   1346→- Footer redesigned with social icons, better hierarchy, responsive grid, branding
   1347→- All changes verified: lint passes (no new errors), dev server compiles clean, curl returns 200
   1348→
+  1349→---
+  1350→Task ID: 2
+  1351→Agent: Main Agent
+  1352→Task: Complete rewrite of intro.tsx with modern minimal split-screen splash design
+  1353→
+  1354→Work Log:
+  1355→- Completely rewrote src/components/app/intro.tsx with brand new splash screen design
+  1356→- Top 55%: gradient background with 3 slowly-rotating semi-transparent geometric rings + scattered small dots
+  1357→- Bottom 45%: slides UP from below on enter, contains brand name (accent/bold) + tagline (muted/light) + thin progress line
+  1358→- Exit animation: top slides UP + fade, bottom slides DOWN + fade
+  1359→- All animations via framer-motion (no CSS keyframes)
+  1360→- Logo centered with scale-in animation from 0
+  1361→- Dark/light mode support via useTheme()
+  1362→- RTL (dir=rtl) preserved
+  1363→- Settings fetched from /api/settings, merged with DEFAULT_INTRO defaults
+  1364→- Premium minimal feel inspired by Noon/Careem app aesthetics
+  1365→- No lint errors in intro.tsx
+  1366→
+  1367→Stage Summary:
+  1368→- intro.tsx fully rewritten with modern minimal split-screen splash design
+  1369→- 3 rotating rings (260px/180px/110px) at different speeds (50s/38s/28s) with 5 scattered dots
+  1370→- Clean typography: font-extrabold title in accent, font-light tagline in muted
+  1371→- Smooth exit: top y:-25% opacity:0, bottom y:30% opacity:0 over 480ms
+  1372→---
+  1373→Task ID: 12
+  1374→Agent: Main Agent
+  1375→Task: Fix customer version issues - new intro, remove admin, fix FABs, footer colors, responsive design
+  1376→
+  1377→Work Log:
+  1378→- Analyzed user-uploaded screenshots via VLM to identify exact issues
+  1379→- Completely redesigned intro.tsx with split-screen concept (top 55% gradient+geometry, bottom 45% slides up with brand name)
+  1380→- Fixed QuickActions FAB: Replaced broken fan-angle menu with clean vertical dropdown list, fixed z-index issues (z-[-1] was hiding items), changed from Plus/X icons, proper z-50, removed md:hidden
+  1381→- Fixed FloatingAssistant position: bottom-20 left-3 on mobile, bottom-5 left-5 on desktop, z-50
+  1382→- Removed admin button completely from customer version (bottom nav 3 tabs, header nav 3 items, no admin in footer)
+  1383→- Improved footer colors: gradient background (neutral-900→950), amber-300 section headings, colored social icon buttons with matching border tints, smaller responsive text
+  1384→- Made fully responsive: Mobile bottom nav now lg:hidden (shows on phone+tablet), desktop nav lg:flex (hidden on smaller), header mobile nav lg:hidden, footer uses xs:grid-cols-2 breakpoint, responsive text sizes (xs→sm→md)
+  1385→
+  1386→Stage Summary:
+  1387→- Intro: New minimal split-screen design with rotating geometric rings, dots, and clean typography
+  1388→- Admin: Completely removed from all customer-facing navigation and footer
+  1389→- QuickActions: Fixed - now shows vertical dropdown menu with proper z-index
+  1390→- FloatingAssistant: Repositioned above bottom nav on mobile, z-50
+  1391→- Footer: Improved with gradient background, colored social icons, responsive grid
+  1392→- Responsive: Three breakpoints - mobile (<lg), tablet (lg-), desktop (lg+)
+  1393→- All verified: lint clean (only pre-existing warnings), dev server 200 OK, no runtime errors
+  1394→---
+  1395→Task ID: 1
+  1396→Agent: Main Agent
+  1397→Task: Fix browser tab icon and title - replace Z.ai branding with طيف project branding
+  1398→
+  1399→Work Log:
+  1400→- Analyzed screenshot showing "Zai Code Scaffold" title and Z.ai icon in browser tab
+  1401→- Read root layout.tsx - found `icons: { icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg" }` overriding the project's own icon.tsx
+  1402→- Found `title: "Z.ai Code Scaffold - AI-Powered Development"` as default title
+  1403→- Removed the `icons` override from root layout.tsx so Next.js uses the icon.tsx generated "طيف" favicon
+  1404→- Changed root layout metadata: title template `%s | طيف`, description, keywords, OG, Twitter all to "طيف" branding
+  1405→- Updated `/s/[slug]/page.tsx` generateMetadata to include `icons` property (shop.logo or /favicon.svg)
+  1406→- Added better fallback `{ title: "طيف — منصة إدارة المطابع" }` instead of empty `{}`
+  1407→- Verified `favicon.svg` in public/ contains proper "طيف" SVG icon
+  1408→- Verified `icon.tsx` generates proper "طيف" text icon with gold gradient
+  1409→- Dev server OOM issue prevents curl testing (known 4GB RAM constraint)
+  1410→
+  1411→Stage Summary:
+  1412→- Root layout no longer overrides icons - will use icon.tsx ("طيف" text) and favicon.svg
+  1413→- All metadata (title, description, OG, Twitter) now show "طيف" branding
+  1414→- /s/[slug] pages show shop-specific title with "| طيف" suffix and shop logo as icon
+  1415→- Files changed: src/app/layout.tsx, src/app/s/[slug]/page.tsx
+  1416→
+  1417→---
+  1418→Task ID: 2
+  1419→Agent: Main Agent
+  1420→Task: Fix customer version issues + build comprehensive admin shop management
+  1421→
+  1422→Work Log:
+  1423→- Fixed BackToTop position: moved from bottom-20 right-4 z-30 to bottom-24 right-4 z-40 (lg:bottom-6) to avoid overlap with QuickActions
+  1424→- Fixed FloatingAssistant position: moved from bottom-20 left-3 z-50 to bottom-24 left-3 z-40 (lg:bottom-5) so it doesn't cover content
+  1425→- Fixed QuickActions FAB: added inline style zIndex:9999 on menu, added scroll/escape close handlers, increased click-outside delay to 150ms, moved BackToTop away to prevent overlap
+  1426→- Completely replaced intro.tsx with new minimalist design: centered layout, subtle grid pattern, accent glow, phase-based animation timeline, decorative corner lines, no split-screen
+  1427→- Improved footer colors: changed background from neutral-900 to #141416/#111113/#0d0d0f gradient, changed section headings to amber-400, updated text colors to neutral-400/80, updated borders to white/[0.06], improved copyright section
+  1428→- Fixed shop settings dialog: replaced basic InlineEditShop with comprehensive AdminShopManagement component
+  1429→- Built AdminShopManagement with 6 tabs: Basic Info, Plan & Trial, Features, Merchant Admin Control, Appearance, Notes
+  1430→- Features tab: 10 toggleable shop features (AI assistant, whatsapp, file upload, tracking, repeat orders, loyalty, calculator, reviews, invoices, bulk orders)
+  1431→- Merchant Admin tab: 7 toggleable admin tabs (orders, analytics, customers, expenses, settings, kanban, templates) + 3 permissions (delete orders, export data, edit services)
+  1432→- Plan & Trial tab: free/paid plan selection, trial days with date picker, trial status indicator with remaining days, reactivate trial button
+  1433→- Appearance tab: 8 theme options with color preview, custom primary color picker
+  1434→- Notes tab: owner notes and payment info textareas
+  1435→- All data persisted via existing /api/admin/shops/[slug] PUT endpoint
+  1436→
+  1437→Stage Summary:
+  1438→- Files changed: back-to-top.tsx, floating-assistant.tsx, quick-actions.tsx, intro.tsx, app-shell.tsx, page.tsx
+  1439→- Files created: admin-shop-management.tsx
+  1440→- Admin icon was already removed from customer version (confirmed in mobile-bottom-nav.tsx and app-shell.tsx)
+  1441→- Lint passes with no new errors in changed files
+  1442→
+  1443→---
+  1444→Task ID: 3
+  1445→Agent: Main Agent
+  1446→Task: Responsive design improvements
+  1447→
+  1448→Work Log:
+  1449→- Added tablet-specific font size (15.5px) for 641-1023px range in globals.css
+  1450→- Added desktop-wide font size (16px) for 1280px+ screens
+  1451→- Verified all customer-facing components have proper responsive classes
+  1452→- Confirmed app-shell uses: px-3 sm:px-4, h-14 md:h-16, max-w-7xl mx-auto, py-4 md:py-8
+  1453→- Confirmed footer uses: grid-cols-1 xs:grid-cols-2 lg:grid-cols-4
+  1454→- Confirmed mobile bottom nav uses lg:hidden, desktop nav uses hidden lg:flex
+  1455→- Confirmed floating elements use different positions for mobile vs desktop (lg: breakpoints)
+  1456→- Verified no new lint errors introduced
+  1457→
+  1458→Stage Summary:
+  1459→- The project already had comprehensive responsive design with Tailwind breakpoints
+  1460→- Added refined font-size scaling for phone/tablet/desktop
+  1461→- All changed files pass lint without new errors
+  1462→

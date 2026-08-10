@@ -45,7 +45,9 @@ function getTursoClient(): Client {
     return _client;
   }
 
-  throw new Error("No database configured: set TURSO_DATABASE_URL or DATABASE_URL");
+  throw new Error(
+    "No database configured: set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN (for Vercel) or DATABASE_URL (for local)"
+  );
 }
 
 /** تحويل BigInt إلى Number */

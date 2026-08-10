@@ -18,8 +18,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "رقم الهاتف غير صالح" }, { status: 400 });
     }
 
-    // البحث عن العميل
-    let customer = await db.customer.findUnique({ where: { phone } });
+    // البحث عن العميل — نستخدم findFirst لأن phone ليس فريداً بمفرده
+    // (الفهرس الفريد مركّب: [shopId, phone])
+    let customer = await db.customer.findFirst({ where: { phone } });
 
     // إذا لم يكن العميل مسجلاً، نحاول إنشاؤه من الطلبات السابقة
     if (!customer) {

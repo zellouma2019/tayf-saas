@@ -18,10 +18,11 @@ export async function GET() {
         rating: true,
         review: true,
         serviceName: true,
-        ratedAt: true,
         serviceType: true,
+        createdAt: true,
+        shopId: true,
       },
-      orderBy: { ratedAt: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 20,
     });
 
@@ -30,7 +31,7 @@ export async function GET() {
       review: o.review!,
       serviceName: o.serviceName,
       serviceType: o.serviceType,
-      ratedAt: o.ratedAt!.toISOString(),
+      ratedAt: o.createdAt.toISOString(),
     }));
 
     return NextResponse.json({ reviews });

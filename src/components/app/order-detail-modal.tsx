@@ -532,9 +532,9 @@ export function OrderDetailModal({
                   <span>{order.review}</span>
                 </div>
               )}
-              {order.ratedAt && (
+              {order.rating && (
                 <div className="text-[10px] text-muted-foreground/60 mt-1.5">
-                  {formatDateTimeAr(order.ratedAt)}
+                  {formatDateTimeAr(order.updatedAt)}
                 </div>
               )}
             </section>

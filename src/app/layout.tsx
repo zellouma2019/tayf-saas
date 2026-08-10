@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://tayf-saas.vercel.app"),
   title: {
     default: "طيف — منصة إدارة المطابع",
     template: "%s | طيف",

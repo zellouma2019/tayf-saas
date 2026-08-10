@@ -335,7 +335,7 @@ export function TestimonialsSection() {
                       initial={{ opacity: 0, y: 15, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -15, scale: 0.97 }}
-                      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] as const }}
+                      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] }}
                     >
                       <TestimonialCard review={r} index={i} />
                     </motion.div>
@@ -345,7 +345,7 @@ export function TestimonialsSection() {
             })}
           </div>
 
-          {/* الحاسوب الكبير: 3 بطاقات */
+          {/* Desktop: 3 cards */}
           <div className="hidden lg:grid lg:grid-cols-3 gap-4">
             {reviews.map((r, i) => {
               const offset =
@@ -362,7 +362,7 @@ export function TestimonialsSection() {
                       exit={{ opacity: 0, y: -15, scale: 0.97 }}
                       transition={{
                         duration: 0.4,
-                        ease: [0.25, 0.1, 0.25, 1] as const,
+                        ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
                       }}
                     >
                       <TestimonialCard review={r} index={i} />
@@ -403,7 +403,7 @@ export function TestimonialsSection() {
           ))}
         </div>
 
-        {/* شريط التقدم */
+        {/* شريط التقدم */}
         {reviews.length > 1 && (
           <div className="flex justify-center mt-3">
             <div className="w-24 h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">

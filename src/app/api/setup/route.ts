@@ -25,6 +25,19 @@ export async function POST() {
       await db.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN "lastOrderAt" DATETIME`)
       console.log('[setup/migration] Added lastOrderAt column to Customer')
     } catch { /* موجود */ }
+    // PrintOrder: add columns that might be missing if DB was created via setup route
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "PrintOrder" ADD COLUMN "rating" INTEGER`)
+    } catch { /* موجود */ }
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "PrintOrder" ADD COLUMN "review" TEXT`)
+    } catch { /* موجود */ }
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "PrintOrder" ADD COLUMN "editableUntil" DATETIME`)
+    } catch { /* موجود */ }
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "PrintOrder" ADD COLUMN "statusNotes" TEXT`)
+    } catch { /* موجود */ }
 
     // التحقق من وجود الجداول بالفعل
     try {
@@ -110,6 +123,10 @@ export async function POST() {
         "cost" INTEGER NOT NULL DEFAULT 0,
         "tags" TEXT NOT NULL DEFAULT '[]',
         "adminNotes" TEXT,
+        "rating" INTEGER,
+        "review" TEXT,
+        "editableUntil" DATETIME,
+        "statusNotes" TEXT,
         "shopId" TEXT,
         CONSTRAINT "PrintOrder_reference_key" UNIQUE ("reference"),
         CONSTRAINT "PrintOrder_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE SET NULL ON UPDATE CASCADE
@@ -220,6 +237,28 @@ export async function POST() {
       )`,
       `CREATE INDEX IF NOT EXISTS "FormRecord_shopId_idx" ON "FormRecord"("shopId")`,
       `CREATE INDEX IF NOT EXISTS "FormRecord_status_idx" ON "FormRecord"("status")`,
+
+      `CREATE TABLE IF NOT EXISTS "FileUpload" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "fileName" TEXT NOT NULL,
+        "fileSize" INTEGER NOT NULL,
+        "fileExt" TEXT NOT NULL,
+        "totalChunks" INTEGER NOT NULL,
+        "receivedCount" INTEGER NOT NULL DEFAULT 0,
+        "status" TEXT NOT NULL DEFAULT 'uploading',
+        "assembledBase64" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "FileChunk" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "uploadId" TEXT NOT NULL,
+        "chunkIndex" INTEGER NOT NULL,
+        "data" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "FileChunk_uploadId_fkey" FOREIGN KEY ("uploadId") REFERENCES "FileUpload"("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`,
+      `CREATE INDEX IF NOT EXISTS "FileChunk_uploadId_idx" ON "FileChunk"("uploadId")`,
     ]
 
     let errors = 0

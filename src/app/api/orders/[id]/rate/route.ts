@@ -55,7 +55,6 @@ export async function PUT(
       data: {
         rating,
         review: review?.trim() || null,
-        ratedAt: new Date(),
       },
     });
 
@@ -76,7 +75,7 @@ export async function PUT(
       reference: updated.reference,
       rating: updated.rating,
       review: updated.review,
-      ratedAt: updated.ratedAt,
+      ratedAt: updated.updatedAt.toISOString(),
     });
   } catch (e) {
     return NextResponse.json(
