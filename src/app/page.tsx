@@ -42,7 +42,7 @@ import {
   robustCopy,
 } from '@/lib/admin-utils';
 import { AdminShopManagement } from '@/components/app/admin-shop-management';
-import { ARAB_COUNTRIES } from '@/lib/countries';
+import { ARAB_COUNTRIES, formatDA } from '@/lib/countries';
 import type { ShopItem } from '@/lib/admin-types';
 
 // ===== Animation =====
