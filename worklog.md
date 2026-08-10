@@ -96,3 +96,25 @@ Stage Summary:
 - ✅ Tab button touch targets: min 44×44px on mobile (icon-only mode)
 - ✅ Analytics chart responsive: narrower fixed widths and gaps on mobile
 - ✅ All existing responsive patterns verified correct (grids, header, shops table)
+---
+Task ID: 3
+Agent: Main Agent
+Task: Comprehensive check for frozen icons, fix feature toggles, ensure full responsiveness
+
+Work Log:
+- Identified critical bug: Toggle All buttons had operator precedence issue
+- Identified feature key mismatch: admin used invalid keys silently dropped by parseFeatures
+- Fixed shop-context.tsx: added rawFeatures and _tab_/_perm_ key support
+- Fixed merchant-dashboard.tsx: sidebar respects _tab_ feature keys
+- Fixed admin-shop-management.tsx: aligned 25 features with FeatureKey system
+- Fixed responsiveness: dialog max-w, padding, touch targets, chart sizing
+- Full E2E testing via agent-browser on live site
+
+Verification Results:
+- All 7 admin sidebar buttons fully clickable (no frozen icons)
+- All 26 feature switches interactive with no disabled/frozen states
+- Toggle All button works correctly
+- Paid plan auto-enables ALL features, free keeps 7 free enabled
+- Country selector shows Arabic names with flags, currency auto-selects
+- Mobile (375x812): sidebar collapses, dialog renders properly
+- Full responsiveness verified
