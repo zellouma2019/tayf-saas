@@ -10,17 +10,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://tayf-saas.vercel.app";
     const res = await fetch(`${baseUrl}/api/shops/${slug}`, { cache: "no-store" });
-    if (!res.ok) return {};
+    if (!res.ok) return { title: "طيف — منصة إدارة المطابع" };
     const { shop } = await res.json();
     return {
       title: `${shop.name} — طلب طباعة أونلاين`,
       description: `اطلب طباعتك من ${shop.name} عبر منصة طيف`,
+      icons: {
+        icon: shop.logo || "/favicon.svg",
+        apple: "/apple-touch-icon.png",
+      },
       openGraph: {
         title: `${shop.name} — طلب طباعة أونلاين | طيف`,
         description: `اطلب طباعتك من ${shop.name} عبر منصة طيف`,
         images: [
           {
-            url: "/brand/og-image.png",
+            url: shop.logo || "/brand/og-image.png",
             width: 1344,
             height: 768,
             alt: `${shop.name} — طلب طباعة أونلاين`,
@@ -29,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     };
   } catch {
-    return {};
+    return { title: "طيف — منصة إدارة المطابع" };
   }
 }
 

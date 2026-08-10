@@ -1391,3 +1391,25 @@ Stage Summary:
 - Footer: Improved with gradient background, colored social icons, responsive grid
 - Responsive: Three breakpoints - mobile (<lg), tablet (lg-), desktop (lg+)
 - All verified: lint clean (only pre-existing warnings), dev server 200 OK, no runtime errors
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix browser tab icon and title - replace Z.ai branding with طيف project branding
+
+Work Log:
+- Analyzed screenshot showing "Zai Code Scaffold" title and Z.ai icon in browser tab
+- Read root layout.tsx - found `icons: { icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg" }` overriding the project's own icon.tsx
+- Found `title: "Z.ai Code Scaffold - AI-Powered Development"` as default title
+- Removed the `icons` override from root layout.tsx so Next.js uses the icon.tsx generated "طيف" favicon
+- Changed root layout metadata: title template `%s | طيف`, description, keywords, OG, Twitter all to "طيف" branding
+- Updated `/s/[slug]/page.tsx` generateMetadata to include `icons` property (shop.logo or /favicon.svg)
+- Added better fallback `{ title: "طيف — منصة إدارة المطابع" }` instead of empty `{}`
+- Verified `favicon.svg` in public/ contains proper "طيف" SVG icon
+- Verified `icon.tsx` generates proper "طيف" text icon with gold gradient
+- Dev server OOM issue prevents curl testing (known 4GB RAM constraint)
+
+Stage Summary:
+- Root layout no longer overrides icons - will use icon.tsx ("طيف" text) and favicon.svg
+- All metadata (title, description, OG, Twitter) now show "طيف" branding
+- /s/[slug] pages show shop-specific title with "| طيف" suffix and shop logo as icon
+- Files changed: src/app/layout.tsx, src/app/s/[slug]/page.tsx
