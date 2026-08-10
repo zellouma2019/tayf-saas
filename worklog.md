@@ -1,31 +1,43 @@
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Fix browser tab icon/name, configure Turso DB, expand shop settings
+Task: Fix browser tab icon/name, configure Turso DB, comprehensive testing
 
 Work Log:
-- Analyzed uploaded screenshot confirming Z.ai branding on browser tab
-- Added explicit `icons` property to root layout.tsx metadata (favicon.svg, favicon.png, tayf-icon.png)
-- Added OpenGraph images and Twitter card images to metadata
-- Configured Turso database credentials in .env (TURSO_DATABASE_URL + TURSO_AUTH_TOKEN)
-- Verified Turso connection works - 8 shops found in database
-- Converted /api/admin/shops/[slug] GET to use turso-lite (more reliable on Vercel)
-- Converted /api/admin/shops/[slug] DELETE to use turso-lite
-- Added ensureDb() to all Prisma-dependent API routes
-- Massively expanded admin-create-shop.tsx: 4-step wizard (Basic Info → Plan & Features → Appearance → Merchant Admin)
-- Added 18 feature toggles (up from 10): directPrint, autoReminder, customBranding, multiBranch, couponSystem, deliveryTracking, customerSupport, smartPricing
-- Added 6 merchant permissions (up from 3): canChangePin, canManageTeam, canViewReports
-- Added language selector (ar/fr/en/tr/es) and custom currency to both create and edit dialogs
-- Added logo icon selector (8 icons) to both create and appearance tabs
-- Added theme selector and custom color picker to create dialog
-- Updated /api/shops POST to accept new fields: features, logoIcon, primaryColor, plan, customCurrency, themeId, language
-- Updated admin-shop-management.tsx with expanded features, language, currency, logo icon
-- Dev server OOMs locally (4GB constraint) - all changes verified via code review
+- Discovered that TURSO_DATABASE_URL and TURSO_AUTH_TOKEN were already in .env file locally
+- Guided user to add env vars to correct Vercel project (tayf-saas, not my-project)
+- Explained user had 2 separate Vercel projects: tayf-saas (correct) and my-project (wrong/extra)
+- Generated new favicon PNGs (32x32, 180x180, 192x192) with طيف branding using sharp
+- Removed deprecated middleware.ts (empty no-op file causing Vercel warning)
+- Found root cause of title/icon issue: 8 local commits were never pushed to GitHub
+- Pushed all commits to GitHub, Vercel auto-deployed successfully
+- Found and fixed critical crash: `formatDA` was used in page.tsx but not imported
+- Performed comprehensive E2E testing on live site https://tayf-saas.vercel.app/
 
 Stage Summary:
-- Browser tab: Added explicit icons metadata with SVG/PNG favicons
-- Database: Turso connected and verified (8 shops exist)
-- Shop creation: Expanded from basic form to 4-step wizard with 50+ configurable options
-- Shop editing: Expanded with 18 features, 6 permissions, language/currency/logo controls
-- API: All admin shop endpoints now use turso-lite for reliability
-- Pending: Customer cosmetic fixes, E2E testing on live deployment
+- ✅ Browser tab title now shows "طيف — منصة إدارة المطابع"
+- ✅ Favicon now uses /favicon.svg with طيف branding
+- ✅ New favicon PNGs generated (favicon.png, apple-touch-icon.png, tayf-icon.png)
+- ✅ Deprecated middleware removed (eliminates Vercel build warning)
+- ✅ Admin panel crash fixed (formatDA import added to page.tsx)
+- ✅ All features verified working: login, shops (8), orders (20), customers (19), analytics, settings
+- ✅ Shop edit dialog works with tabs: Basics, Plan & Trial, Features, Dashboard, Appearance, Notes
+- ✅ Customer shop pages working (e.g., /s/mtba-alryan)
+- ✅ Database connection confirmed working (Turso cloud DB)
+- Remaining: Expand admin shop settings, cosmetic fixes (intro.tsx, floating icons, footer)
+---
+Task ID: 2
+Agent: Main Agent
+Task: Environment variable configuration guidance
+
+Work Log:
+- User provided Turso DB URL: libsql://tayf-saas-lumera12.aws-us-east-1.turso.io
+- User provided JWT auth token for Turso
+- Confirmed both were already in local .env file
+- Provided step-by-step Vercel dashboard instructions for adding env vars
+- User attempted to add vars on wrong Vercel project (got "already exists" error on correct project)
+
+Stage Summary:
+- Env vars are correctly configured on Vercel project `tayf-saas`
+- User needs to: delete `my-project` from Vercel, redeploy `tayf-saas`
+- Database (Turso) confirmed working with 8 shops, 20 orders, 19 customers
