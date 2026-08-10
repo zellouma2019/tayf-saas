@@ -11,7 +11,6 @@ interface Review {
   serviceType: string;
   ratedAt: string;
 }
-
 /** ألوان دافئة فقط — بدون أزرق/بنفسجي/سيان */
 const AVATAR_COLORS = [
   "from-amber-400 to-orange-500",
@@ -324,8 +323,30 @@ export function TestimonialsSection() {
             </AnimatePresence>
           </div>
 
-          {/* الحاسوب: 3 بطاقات */}
-          <div className="hidden md:grid md:grid-cols-3 gap-4">
+          {/* التابلت: بطاقتين */}
+          <div className="hidden md:grid md:grid-cols-2 lg:hidden gap-4">
+            {reviews.map((r, i) => {
+              const offset = ((i - activeIndex) % reviews.length + reviews.length) % reviews.length;
+              const isVisible = offset <= 1;
+              return (
+                <AnimatePresence key={i} initial={false}>
+                  {isVisible && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -15, scale: 0.97 }}
+                      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] as const }}
+                    >
+                      <TestimonialCard review={r} index={i} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              );
+            })}
+          </div>
+
+          {/* الحاسوب الكبير: 3 بطاقات */
+          <div className="hidden lg:grid lg:grid-cols-3 gap-4">
             {reviews.map((r, i) => {
               const offset =
                 ((i - activeIndex) % reviews.length + reviews.length) %
@@ -341,7 +362,7 @@ export function TestimonialsSection() {
                       exit={{ opacity: 0, y: -15, scale: 0.97 }}
                       transition={{
                         duration: 0.4,
-                        ease: [0.25, 0.1, 0.25, 1],
+                        ease: [0.25, 0.1, 0.25, 1] as const,
                       }}
                     >
                       <TestimonialCard review={r} index={i} />
@@ -370,7 +391,7 @@ export function TestimonialsSection() {
                   backgroundColor:
                     i === activeIndex
                       ? "oklch(0.82 0.13 85)"
-                      : "oklch(0.7 0.01 260 / 0.3)",
+                      : "oklch(0.7 0.01 260 / 30%)"
                 }}
                 transition={{
                   type: "spring",
@@ -382,7 +403,7 @@ export function TestimonialsSection() {
           ))}
         </div>
 
-        {/* شريط التقدم */}
+        {/* شريط التقدم */
         {reviews.length > 1 && (
           <div className="flex justify-center mt-3">
             <div className="w-24 h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">

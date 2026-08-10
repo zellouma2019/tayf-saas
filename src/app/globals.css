@@ -252,6 +252,20 @@
   }
 }
 
+/* Tablet responsive adjustments */
+@media (min-width: 641px) and (max-width: 1023px) {
+  html {
+    font-size: 15.5px;
+  }
+}
+
+/* Desktop wide screens */
+@media (min-width: 1280px) {
+  html {
+    font-size: 16px;
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -36178,5 +36192,46 @@ input[type="radio"]:focus-visible {
   }
   .social-icon:hover {
     transform: none;
+  }
+}
+
+/* ===== Responsive: Tablet-specific improvements ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* تذييل دائم المفتوح على التابلت — لا حاجة للطي */
+  .footer-collapse {
+    max-height: none !important;
+    overflow: visible;
+    transition: none;
+  }
+}
+
+/* Touch targets: minimum 44px on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  button, [role="tab"], [role="button"],
+  .btn-press, .btn-glow, .btn-shine, .btn-ripple {
+    min-height: 44px;
+  }
+}
+
+/* Safe area bottom padding for mobile nav */
+@media (max-width: 1023px) {
+  .mobile-nav-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  /* Ensure content doesn't hide behind mobile bottom nav */
+ .no-print {
+    padding-bottom: 3.5rem;
+ }
+}
+
+/* Responsive text size clamping for Arabic content */
+@media (max-width: 400px) {
+  html {
+    font-size: 15px;
+  }
+}
+@media (min-width: 401px) {
+  html {
+    font-size: 16px;
   }
 }

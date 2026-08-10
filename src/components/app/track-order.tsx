@@ -297,8 +297,8 @@ function OrderTrackingCard({
     >
     <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 bg-card" style={{ borderLeftColor: getStatusColor(order.status) }}>
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-2.5 md:gap-3">
+          <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-neutral-900 dark:bg-neutral-800 flex items-center justify-center shrink-0">
             <span className="text-lg">{serviceEmoji[order.serviceType] || "🖨️"}</span>
           </div>
 
@@ -350,7 +350,7 @@ function OrderTrackingCard({
             </div>
           </div>
 
-          <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
+          <div className="flex gap-1.5 shrink-0 flex-wrap justify-end max-w-[180px] xs:max-w-none">
             {order.fileType && (
               <Button
                 size="sm"
@@ -359,7 +359,7 @@ function OrderTrackingCard({
                 onClick={() => onViewFile(order)}
               >
                 <Eye className="h-3.5 w-3.5" />
-                معاينة
+                <span className="hidden xs:inline">معاينة</span>
               </Button>
             )}
             <OrderReceipt orderId={order.id} />
@@ -370,7 +370,7 @@ function OrderTrackingCard({
               onClick={() => handleDownloadInvoice(order.id, order.reference)}
             >
               <FileDown className="h-3.5 w-3.5" />
-              تحميل الفاتورة
+              <span className="hidden xs:inline">تحميل الفاتورة</span>
             </Button>
             {order.status === 'pending' && (
               <Button
@@ -380,7 +380,7 @@ function OrderTrackingCard({
                 onClick={() => setCancelTarget(order)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                إلغاء
+                <span className="hidden xs:inline">إلغاء</span>
               </Button>
             )}
           </div>

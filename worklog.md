@@ -1413,3 +1413,49 @@ Stage Summary:
 - All metadata (title, description, OG, Twitter) now show "طيف" branding
 - /s/[slug] pages show shop-specific title with "| طيف" suffix and shop logo as icon
 - Files changed: src/app/layout.tsx, src/app/s/[slug]/page.tsx
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix customer version issues + build comprehensive admin shop management
+
+Work Log:
+- Fixed BackToTop position: moved from bottom-20 right-4 z-30 to bottom-24 right-4 z-40 (lg:bottom-6) to avoid overlap with QuickActions
+- Fixed FloatingAssistant position: moved from bottom-20 left-3 z-50 to bottom-24 left-3 z-40 (lg:bottom-5) so it doesn't cover content
+- Fixed QuickActions FAB: added inline style zIndex:9999 on menu, added scroll/escape close handlers, increased click-outside delay to 150ms, moved BackToTop away to prevent overlap
+- Completely replaced intro.tsx with new minimalist design: centered layout, subtle grid pattern, accent glow, phase-based animation timeline, decorative corner lines, no split-screen
+- Improved footer colors: changed background from neutral-900 to #141416/#111113/#0d0d0f gradient, changed section headings to amber-400, updated text colors to neutral-400/80, updated borders to white/[0.06], improved copyright section
+- Fixed shop settings dialog: replaced basic InlineEditShop with comprehensive AdminShopManagement component
+- Built AdminShopManagement with 6 tabs: Basic Info, Plan & Trial, Features, Merchant Admin Control, Appearance, Notes
+- Features tab: 10 toggleable shop features (AI assistant, whatsapp, file upload, tracking, repeat orders, loyalty, calculator, reviews, invoices, bulk orders)
+- Merchant Admin tab: 7 toggleable admin tabs (orders, analytics, customers, expenses, settings, kanban, templates) + 3 permissions (delete orders, export data, edit services)
+- Plan & Trial tab: free/paid plan selection, trial days with date picker, trial status indicator with remaining days, reactivate trial button
+- Appearance tab: 8 theme options with color preview, custom primary color picker
+- Notes tab: owner notes and payment info textareas
+- All data persisted via existing /api/admin/shops/[slug] PUT endpoint
+
+Stage Summary:
+- Files changed: back-to-top.tsx, floating-assistant.tsx, quick-actions.tsx, intro.tsx, app-shell.tsx, page.tsx
+- Files created: admin-shop-management.tsx
+- Admin icon was already removed from customer version (confirmed in mobile-bottom-nav.tsx and app-shell.tsx)
+- Lint passes with no new errors in changed files
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Responsive design improvements
+
+Work Log:
+- Added tablet-specific font size (15.5px) for 641-1023px range in globals.css
+- Added desktop-wide font size (16px) for 1280px+ screens
+- Verified all customer-facing components have proper responsive classes
+- Confirmed app-shell uses: px-3 sm:px-4, h-14 md:h-16, max-w-7xl mx-auto, py-4 md:py-8
+- Confirmed footer uses: grid-cols-1 xs:grid-cols-2 lg:grid-cols-4
+- Confirmed mobile bottom nav uses lg:hidden, desktop nav uses hidden lg:flex
+- Confirmed floating elements use different positions for mobile vs desktop (lg: breakpoints)
+- Verified no new lint errors introduced
+
+Stage Summary:
+- The project already had comprehensive responsive design with Tailwind breakpoints
+- Added refined font-size scaling for phone/tablet/desktop
+- All changed files pass lint without new errors

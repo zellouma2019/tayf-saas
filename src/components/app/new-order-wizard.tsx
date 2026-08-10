@@ -885,6 +885,12 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+      {/* ===== ملخص مضغوط للتابلت (md-lg) ===== */}
+      {step > 0 && selectedService && pricing && (
+        <div className="lg:hidden mb-4">
+          <MobileOrderSummary selectedService={selectedService} pages={pages} copies={copies} pricing={pricing} finalPricing={finalPricing} deliveryMode={deliveryMode} deliveryTimeSlot={deliveryTimeSlot} deliveryEstimate={deliveryEstimate} specOptions={specOptions} currentSpec={currentSpec} custName={custName} notes={notes} appliedOffer={appliedOffer} />
+        </div>
+      )}
       <div>
         {/* رأس المعالج المحسّن */}
         {step > 0 && (
@@ -907,7 +913,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {/* دائرة الخطوة */}
                   <div className="flex flex-col items-center gap-1.5">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
+                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
                         isCompleted
                           ? "bg-emerald-500 text-white"
                           : isActive
@@ -921,9 +927,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         <span>{i + 1}</span>
                       )}
                     </div>
-                    {/* التسمية والمدة — تُخفى على الجوال */}
+                    {/* التسمية والمدة — تُخفى على الجوال، مختصرة على التابلت */}
                     <div className="hidden md:flex flex-col items-center gap-0.5">
-                      <span className={`text-[11px] font-medium transition-colors duration-300 ${
+                      <span className={`text-[10px] md:text-[11px] font-medium transition-colors duration-300 max-w-[60px] lg:max-w-none text-center leading-tight ${
                         isActive ? "text-amber-700 dark:text-amber-400" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
                       }`}>
                         {STEP_LABELS[i]}
@@ -936,7 +942,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   </div>
                   {/* خط الربط بين الخطوات */}
                   {i < 5 && (
-                    <div className="flex-1 mx-2 mt-[-18px] md:mt-[-30px]">
+                    <div className="flex-1 mx-1 md:mx-2 mt-[-18px] md:mt-[-30px]">
                       <div className={`h-0.5 rounded-full transition-all duration-300 ${
                         i < step ? "bg-amber-400" : "bg-muted"
                       }`} />
@@ -964,7 +970,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
         {/* ===== الخطوة 0: رفع الملف والتحليل المحسّن ===== */}
         {step === 0 && (
-          <div className="relative z-0 space-y-6 min-h-[70vh] rounded-2xl p-6 md:p-8 overflow-hidden">
+          <div className="relative z-0 space-y-4 md:space-y-6 min-h-[60vh] md:min-h-[70vh] rounded-2xl p-4 md:p-6 lg:p-8 overflow-hidden">
             {/* طبقة الخلفية: تدرج احترافي يدل على الطباعة بدون صورة */}
             <div className="absolute inset-0 -z-10">
               <div className="w-full h-full" style={{
@@ -1582,7 +1588,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                 <Zap className="h-4 w-4 text-amber-600" />
                 متى تحتاج طلبك؟
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                 {DELIVERY_OPTIONS.map((d) => {
                   const isSelected = deliveryMode === d.id;
                   // حساب الوقت المتوقع لكل خيار مع مراعاة ساعات العمل
@@ -1622,7 +1628,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     <button
                       key={d.id}
                       onClick={() => { if (!isDisabled) { setDeliveryMode(d.id); setDeliveryTimeSlot(""); } }}
-                      className={`relative p-3.5 rounded-2xl border-2 text-right transition-all duration-200 ${
+                      className={`relative p-3 md:p-3.5 rounded-2xl border-2 text-right transition-all duration-200 ${
                         isDisabled
                           ? "border-border bg-muted/40 opacity-50 cursor-not-allowed"
                           : isSelected
@@ -1632,17 +1638,17 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                       disabled={isDisabled}
                     >
                       {d.badge && (
-                        <span className="absolute top-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white">
+                        <span className="absolute top-1.5 left-1.5 md:top-2 md:left-2 text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white">
                           {d.badge}
                         </span>
                       )}
                       {isDisabled && (
-                        <span className="absolute top-2 right-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-400 text-white">
+                        <span className="absolute top-1.5 right-1.5 md:top-2 md:right-2 text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-400 text-white">
                           مغلق
                         </span>
                       )}
-                      <div className="text-2xl mb-1.5">{d.emoji}</div>
-                      <div className="font-bold text-sm leading-tight">{d.label}</div>
+                      <div className="text-xl md:text-2xl mb-1 md:mb-1.5">{d.emoji}</div>
+                      <div className="font-bold text-xs md:text-sm leading-tight">{d.label}</div>
                       {isDisabled ? (
                         <div className="text-[11px] mt-1 text-rose-500 font-medium">غير متاح الآن</div>
                       ) : (
@@ -1778,7 +1784,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         {/* ===== الخطوة 4: معلومات التواصل ===== */}
         {step === 4 && (
           <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div>
                 <Label className="text-sm font-medium">الاسم</Label>
                 <Input
@@ -1827,7 +1833,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   </span>
                 </div>
               </div>
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <Label className="text-sm font-medium">واتساب (إذا كان مختلفاً) - 10 أرقام</Label>
                 <Input
                   type="tel"
@@ -1854,7 +1860,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   </p>
                 )}
               </div>
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <Label className="text-sm font-medium">البريد الإلكتروني (اختياري)</Label>
                 <Input
                   type="email"
@@ -2075,10 +2081,10 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         )}
 
         {/* أزرار التنقل */}
-        <div className="flex items-center justify-between mt-8 pt-4 border-t">
-          <Button variant="outline" onClick={prev} disabled={step === 0}>
+        <div className="flex items-center justify-between mt-6 md:mt-8 pt-4 border-t gap-2">
+          <Button variant="outline" onClick={prev} disabled={step === 0} className="text-xs sm:text-sm">
             <ArrowRight className="h-4 w-4" />
-            السابق
+            <span className="hidden xs:inline">السابق</span>
           </Button>
           <div className="text-xs text-muted-foreground">
             {step + 1} / 6
@@ -2086,18 +2092,20 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           <Button
             onClick={next}
             disabled={!canProceed() || submitting}
-            className="bg-neutral-900 hover:bg-neutral-800 text-white"
+            className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs sm:text-sm"
           >
             {submitting ? (
               <span className="animate-pulse">جارٍ الإرسال...</span>
             ) : step === 5 ? (
               <>
                 <Check className="h-4 w-4" />
-                إنشاء طلب الطباعة
+                <span className="hidden xs:inline">إنشاء طلب الطباعة</span>
+                <span className="xs:hidden">تأكيد</span>
               </>
             ) : (
               <>
-                التالي
+                <span className="hidden xs:inline">التالي</span>
+                <span className="xs:hidden">متابعة</span>
                 <ArrowLeft className="h-4 w-4" />
               </>
             )}
@@ -2105,9 +2113,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         </div>
       </div>
 
-      {/* ===== الشريط الجانبي: ملخص الطلب ===== */}
+      {/* ===== الشريط الجانبي: ملخص الطلب (حاسوب فقط) ===== */}
       {step > 0 && (
-      <aside className="lg:sticky lg:top-24 h-fit">
+      <aside className="hidden lg:block lg:sticky lg:top-24 h-fit">
         <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
           <div className="px-5 py-4 border-b bg-neutral-900 text-white">
             <div className="flex items-center gap-2">
@@ -2398,6 +2406,101 @@ function SummaryRow({ label, value, green }: { label: string; value: string; gre
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
       <span className={`font-medium ${green ? "text-emerald-600" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   MobileOrderSummary — ملخص الطلب المضغوط للتابلت والجوال
+   يظهر فقط على الشاشات الأصغر من lg (حيث لا يوجد الشريط الجانبي)
+   ═══════════════════════════════════════════════════════ */
+function MobileOrderSummary({
+  selectedService,
+  pages,
+  copies,
+  pricing,
+  finalPricing,
+  deliveryMode,
+  deliveryTimeSlot,
+  deliveryEstimate,
+  specOptions,
+  currentSpec,
+  custName,
+  notes,
+  appliedOffer,
+}: {
+  selectedService: { emoji: string; name: string; description: string };
+  pages: number;
+  copies: number;
+  pricing: { total: number; perPage: number } | null;
+  finalPricing: { total: number } | null;
+  deliveryMode: string;
+  deliveryTimeSlot: string;
+  deliveryEstimate: { readyTimeStr: string; readyDateStr: string; timeSlots: { id: string; label: string }[] };
+  specOptions: Record<string, string>;
+  currentSpec: ServiceSpec | null;
+  custName: string;
+  notes: string;
+  appliedOffer: { code: string; discountPercent?: number; freeService?: string } | null;
+}) {
+  const DELIVERY_OPTIONS = [
+    { id: "today", label: "التسليم اليوم" },
+    { id: "tomorrow", label: "التسليم غداً" },
+    { id: "hour", label: "خلال ساعة" },
+    { id: "scheduled", label: "تاريخ محدد" },
+  ];
+
+  return (
+    <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+      <div className="px-4 py-3 border-b bg-neutral-900 text-white flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{selectedService.emoji}</span>
+          <span className="font-bold text-sm">{selectedService.name}</span>
+        </div>
+        <div className="text-left">
+          {appliedOffer && finalPricing && finalPricing.total < (pricing?.total || 0) ? (
+            <div className="text-right">
+              <span className="text-[10px] text-neutral-400 line-through block">{formatDA(pricing?.total || 0)}</span>
+              <span className="text-lg font-bold text-amber-400">{formatDA(finalPricing.total)}</span>
+            </div>
+          ) : (
+            <span className="text-lg font-bold text-amber-400">{formatDA(pricing?.total || 0)}</span>
+          )}
+        </div>
+      </div>
+      <div className="p-3 space-y-2 text-xs">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="text-center p-2 rounded-lg bg-muted/50">
+            <div className="text-muted-foreground text-[10px]">الصفحات</div>
+            <div className="font-bold">{pages}</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-muted/50">
+            <div className="text-muted-foreground text-[10px]">النسخ</div>
+            <div className="font-bold">{copies}</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-muted/50">
+            <div className="text-muted-foreground text-[10px]">التسليم</div>
+            <div className="font-bold text-[11px]">{deliveryEstimate.readyTimeStr}</div>
+          </div>
+        </div>
+        {currentSpec && currentSpec.sections.slice(0, 3).map((section) => {
+          const selId = specOptions[section.optionKey];
+          const opt = section.options.find(o => o.id === selId);
+          if (!opt) return null;
+          return (
+            <div key={section.id} className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{section.title}</span>
+              <span className="font-medium">{opt.label}</span>
+            </div>
+          );
+        })}
+        {custName && (
+          <div className="flex items-center justify-between py-0.5">
+            <span className="text-muted-foreground">العميل</span>
+            <span className="font-medium">{custName}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -403,7 +403,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
   return (
     <>
       {/* ===== الزر العائم ===== */}
-      <div className="fixed bottom-20 left-3 z-50 md:bottom-5 md:left-5 md:z-50 flex flex-col items-start gap-2 no-print">
+      <div className="fixed bottom-24 left-3 z-40 lg:bottom-5 lg:left-5 flex flex-col items-start gap-2 no-print">
         {menuOpen && !chatOpen && (
           <div className="flex flex-col gap-2 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
@@ -467,7 +467,7 @@ export function FloatingAssistant({ onRepeatOrder }: FloatingAssistantProps) {
 
       {/* ===== نافذة المساعد الذكي ===== */}
       {chatOpen && (
-        <div className="fixed bottom-20 left-3 z-50 md:bottom-5 md:left-5 md:z-50 w-[calc(100vw-1.5rem)] sm:w-96 max-w-md no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-24 left-3 z-40 lg:bottom-5 lg:left-5 w-[calc(100vw-1.5rem)] sm:w-96 max-w-md no-print animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-amber-200 dark:border-amber-800/50 overflow-hidden flex flex-col" style={{ height: "min(80vh, 640px)" }}>
             {/* الرأس */}
             <div className="bg-neutral-900 text-white px-4 py-3 flex items-center justify-between">

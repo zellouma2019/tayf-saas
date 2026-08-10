@@ -1,0 +1,596 @@
+     1→"use client";
+     2→
+     3→import { useCallback, useEffect, useState } from "react";
+     4→import {
+     5→  Card, CardContent, CardHeader, CardTitle, CardDescription,
+     6→} from "@/components/ui/card";
+     7→import { Button } from "@/components/ui/button";
+     8→import { Input } from "@/components/ui/input";
+     9→import { Label } from "@/components/ui/label";
+    10→import { Textarea } from "@/components/ui/textarea";
+    11→import { Badge } from "@/components/ui/badge";
+    12→import { Switch } from "@/components/ui/switch";
+    13→import { Separator } from "@/components/ui/separator";
+    14→import {
+    15→  Dialog, DialogContent, DialogTitle, DialogDescription,
+    16→} from "@/components/ui/dialog";
+    17→import {
+    18→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    19→} from "@/components/ui/select";
+    20→import {
+    21→  Save, X, Store, Shield, Palette, Sparkles, Clock, CreditCard,
+    22→  MessageSquare, FileUp, Repeat, Star, Calculator, Receipt, Layers,
+    23→  LayoutDashboard, BarChart3, Users, Wallet, Settings, Kanban,
+    24→  FileText, Trash2, Download, SlidersHorizontal, ToggleLeft, ToggleRight,
+    25→  AlertTriangle, CheckCircle2, Info,
+    26→} from "lucide-react";
+    27→import { toast } from "sonner";
+    28→import { ARAB_COUNTRIES } from "@/lib/countries";
+    29→
+    30→// ===== Feature Definitions =====
+    31→const SHOP_FEATURES = [
+    32→  { key: "aiAssistant", label: "المساعد الذكي", icon: Sparkles, desc: "دردشة AI للإجابة عن أسئلة الزبائن" },
+    33→  { key: "whatsappNotifications", label: "إشعارات واتساب", icon: MessageSquare, desc: "إرسال إشعارات حالة الطلب" },
+    34→  { key: "fileUpload", label: "رفع الملفات", icon: FileUp, desc: "رفع ملفات الطباعة من الزبون" },
+    35→  { key: "orderTracking", label: "تتبّع الطلبات", icon: Clock, desc: "تتبّع حالة الطلب للزبون" },
+    36→  { key: "repeatOrders", label: "إعادة الطلب", icon: Repeat, desc: "إعادة طلب سابق بضغطة" },
+    37→  { key: "loyaltyProgram", label: "برنامج الولاء", icon: Star, desc: "نقاط ومكافآت للعملاء" },
+    38→  { key: "priceCalculator", label: "حاسبة الأسعار", icon: Calculator, desc: "حاسبة أسعار ظاهرة للزبون" },
+    39→  { key: "customerReviews", label: "تقييمات العملاء", icon: Star, desc: "السماح بتقييم الخدمة" },
+    40→  { key: "invoiceGeneration", label: "إنشاء فواتير", icon: Receipt, desc: "فواتير PDF للطلبات" },
+    41→  { key: "bulkOrders", label: "طلبات جماعية", icon: Layers, desc: "طلبات متعددة دفعة واحدة" },
+    42→];
+    43→
+    44→const MERCHANT_ADMIN_TABS = [
+    45→  { key: "tabOrders", label: "الطلبات", icon: FileText, desc: "عرض وإدارة الطلبات" },
+    46→  { key: "tabAnalytics", label: "التحليلات", icon: BarChart3, desc: "إحصائيات وتقارير" },
+    47→  { key: "tabCustomers", label: "العملاء", icon: Users, desc: "قائمة العملاء" },
+    48→  { key: "tabExpenses", label: "المصاريف", icon: Wallet, desc: "تتبع المصاريف" },
+    49→  { key: "tabSettings", label: "الإعدادات", icon: Settings, desc: "تعديل الخدمات والأسعار" },
+    50→  { key: "tabKanban", label: "كانبان", icon: Kanban, desc: "لوحة كانبان للطلبات" },
+    51→  { key: "tabTemplates", label: "النماذج", icon: Layers, desc: "قوالب النماذج الرسمية" },
+    52→];
+    53→
+    54→const MERCHANT_PERMISSIONS = [
+    55→  { key: "canDeleteOrders", label: "حذف الطلبات", icon: Trash2, desc: "السماح بحذف الطلبات نهائياً" },
+    56→  { key: "canExportData", label: "تصدير البيانات", icon: Download, desc: "تصدير التقارير والطلبات" },
+    57→  { key: "canEditServices", label: "تعديل الخدمات", icon: SlidersHorizontal, desc: "تعديل أسعار وخيارات الخدمات" },
+    58→];
+    59→
+    60→const THEME_OPTIONS = [
+    61→  { id: 1, name: "ذهبي كلاسيكي", color: "#D4AF37" },
+    62→  { id: 2, name: "أزرق احترافي", color: "#3B82F6" },
+    63→  { id: 3, name: "أخضر طبيعي", color: "#10B981" },
+    64→  { id: 4, name: "بنفسجي ملكي", color: "#8B5CF6" },
+    65→  { id: 5, name: "وردي عصري", color: "#EC4899" },
+    66→  { id: 6, name: "برتقالي نشط", color: "#F97316" },
+    67→  { id: 7, name: "أحمر جريء", color: "#EF4444" },
+    68→  { id: 8, name: "رمادي أنيق", color: "#6B7280" },
+    69→];
+    70→
+    71→interface ShopData {
+    72→  slug: string; name: string; phone: string | null;
+    73→  ownerName: string | null; ownerPhone: string | null;
+    74→  whatsapp: string | null; email: string | null; address: string | null;
+    75→  country: string | null; isActive: boolean; plan: string;
+    76→  primaryColor: string | null; adminPin: string;
+    77→  themeId: number | null;
+    78→  logoIcon: string | null;
+    79→  trialDays: number | null; trialStartsAt: string | null;
+    80→  features: Record<string, boolean>;
+    81→  ownerNotes: string | null;
+    82→  paymentInfo: string | null;
+    83→}
+    84→
+    85→interface AdminShopManagementProps {
+    86→  open: boolean;
+    87→  onClose: () => void;
+    88→  shop: { slug: string; name: string } | null;
+    89→  onSaved: () => void;
+    90→}
+    91→
+    92→export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopManagementProps) {
+    93→  const [data, setData] = useState<ShopData | null>(null);
+    94→  const [loading, setLoading] = useState(false);
+    95→  const [saving, setSaving] = useState(false);
+    96→  const [tab, setTab] = useState("basic");
+    97→  const [hasChanges, setHasChanges] = useState(false);
+    98→  const [originalData, setOriginalData] = useState<ShopData | null>(null);
+    99→
+   100→  useEffect(() => {
+   101→    if (!open || !shop) return;
+   102→    let cancelled = false;
+   103→    (async () => {
+   104→      setLoading(true);
+   105→      setTab("basic");
+   106→      try {
+   107→        const res = await fetch(`/api/admin/shops/${shop.slug}`);
+   108→        if (res.ok && !cancelled) {
+   109→          const d = await res.json();
+   110→          const s = d.shop;
+   111→          const parsed: ShopData = {
+   112→            slug: s.slug, name: s.name, phone: s.phone,
+   113→            ownerName: s.ownerName, ownerPhone: s.ownerPhone,
+   114→            whatsapp: s.whatsapp, email: s.email, address: s.address,
+   115→            country: s.country, isActive: s.isActive,
+   116→            plan: s.plan || "free", primaryColor: s.primaryColor,
+   117→            adminPin: s.adminPin, themeId: s.themeId || 1,
+   118→            logoIcon: s.logoIcon || "Printer",
+   119→            trialDays: s.trialDays, trialStartsAt: s.trialStartsAt,
+   120→            features: s.features ? (typeof s.features === "string" ? JSON.parse(s.features) : s.features) : {},
+   121→            ownerNotes: s.ownerNotes, paymentInfo: s.paymentInfo,
+   122→          };
+   123→          setData(parsed);
+   124→          setOriginalData(JSON.parse(JSON.stringify(parsed)));
+   125→          setHasChanges(false);
+   126→        } else if (!cancelled) {
+   127→          toast.error("فشل تحميل بيانات المتجر");
+   128→          onClose();
+   129→        }
+   130→      } catch { if (!cancelled) { toast.error("خطأ في الاتصال"); onClose(); } }
+   131→      finally { if (!cancelled) setLoading(false); }
+   132→    })();
+   133→    return () => { cancelled = true; };
+   134→  }, [open, shop, onClose]);
+   135→
+   136→  function setField<K extends keyof ShopData>(key: K, val: ShopData[K]) {
+   137→    setData((prev) => prev ? { ...prev, [key]: val } : prev);
+   138→    setHasChanges(true);
+   139→  }
+   140→
+   141→  function toggleFeature(key: string) {
+   142→    setData((prev) => {
+   143→      if (!prev) return prev;
+   144→      return { ...prev, features: { ...prev.features, [key]: !prev.features[key] } };
+   145→    });
+   146→    setHasChanges(true);
+   147→  }
+   148→
+   149→  async function handleSave() {
+   150→    if (!data) return;
+   151→    setSaving(true);
+   152→    try {
+   153→      const payload: Record<string, unknown> = {
+   154→        name: data.name, phone: data.phone, whatsapp: data.whatsapp,
+   155→        email: data.email, address: data.address, country: data.country,
+   156→        ownerName: data.ownerName, ownerPhone: data.ownerPhone,
+   157→        adminPin: data.adminPin, isActive: data.isActive, plan: data.plan,
+   158→        primaryColor: data.primaryColor, themeId: data.themeId,
+   159→        logoIcon: data.logoIcon, trialDays: data.trialDays,
+   160→        features: data.features, ownerNotes: data.ownerNotes,
+   161→        paymentInfo: data.paymentInfo,
+   162→      };
+   163→      const res = await fetch(`/api/admin/shops/${data.slug}`, {
+   164→        method: "PUT",
+   165→        headers: { "Content-Type": "application/json" },
+   166→        body: JSON.stringify(payload),
+   167→      });
+   168→      if (res.ok) {
+   169→        toast.success("تم حفظ إعدادات المتجر");
+   170→        setOriginalData(JSON.parse(JSON.stringify(data)));
+   171→        setHasChanges(false);
+   172→        onSaved();
+   173→      } else {
+   174→        toast.error("فشل حفظ الإعدادات");
+   175→      }
+   176→    } catch { toast.error("خطأ في الاتصال"); }
+   177→    finally { setSaving(false); }
+   178→  }
+   179→
+   180→  const tabs = [
+   181→    { key: "basic", label: "الأساسيات", icon: Store },
+   182→    { key: "plan", label: "الخطة والتجربة", icon: CreditCard },
+   183→    { key: "features", label: "ميزات المتجر", icon: Sparkles },
+   184→    { key: "merchant", label: "لوحة التحكم", icon: LayoutDashboard },
+   185→    { key: "appearance", label: "المظهر", icon: Palette },
+   186→    { key: "notes", label: "ملاحظات", icon: FileText },
+   187→  ];
+   188→
+   189→  // Trial status
+   190→  const trialStatus = (() => {
+   191→    if (!data?.trialDays || !data?.trialStartsAt) return null;
+   192→    const start = new Date(data.trialStartsAt).getTime();
+   193→    const end = start + data.trialDays * 86400000;
+   194→    const now = Date.now();
+   195→    const remaining = Math.max(0, Math.ceil((end - now) / 86400000));
+   196→    const active = now < end;
+   197→    return { active, remaining, total: data.trialDays, start: data.trialStartsAt, end: new Date(end).toISOString() };
+   198→  })();
+   199→
+   200→  return (
+   201→    <Dialog open={open} onOpenChange={(v) => { if (!v && hasChanges) { /* could warn */ } onClose(); }}>
+   202→      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0" dir="rtl">
+   203→        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50 shrink-0">
+   204→          <div>
+   205→            <DialogTitle className="text-lg font-bold">إدارة المتجر</DialogTitle>
+   206→            <DialogDescription className="text-xs mt-0.5">تحكم شامل بإعدادات وميزات المتجر</DialogDescription>
+   207→          </div>
+   208→          {hasChanges && (
+   209→            <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400">
+   210→              تعديلات غير محفوظة
+   211→            </Badge>
+   212→          )}
+   213→        </div>
+   214→
+   215→        {/* Tabs */}
+   216→        <div className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto no-scrollbar shrink-0">
+   217→          {tabs.map((t) => (
+   218→            <button
+   219→              key={t.key}
+   220→              onClick={() => setTab(t.key)}
+   221→              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+   222→                tab === t.key
+   223→                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+   224→                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+   225→              }`}
+   226→            >
+   227→              <t.icon className="h-3.5 w-3.5" />
+   228→              <span className="hidden sm:inline">{t.label}</span>
+   229→            </button>
+   230→          ))}
+   231→        </div>
+   232→
+   233→        {/* Content */}
+   234→        <div className="flex-1 overflow-y-auto px-6 py-4">
+   235→          {loading ? (
+   236→            <div className="space-y-4">
+   237→              {[1,2,3].map((i) => <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />)}
+   238→            </div>
+   239→          ) : !data ? null : (
+   240→            <>
+   241→              {/* ===== BASIC TAB ===== */}
+   242→              {tab === "basic" && (
+   243→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   244→                  <div className="sm:col-span-2">
+   245→                    <Label>اسم المتجر</Label>
+   246→                    <Input value={data.name} onChange={(e) => setField("name", e.target.value)} className="mt-1" />
+   247→                  </div>
+   248→                  <div>
+   249→                    <Label>المعرف (slug)</Label>
+   250→                    <Input value={data.slug} disabled className="mt-1 bg-muted/50" />
+   251→                    <p className="text-[10px] text-muted-foreground mt-1">لا يمكن تغييره بعد الإنشاء</p>
+   252→                  </div>
+   253→                  <div>
+   254→                    <Label>هاتف المتجر</Label>
+   255→                    <Input value={data.phone || ""} onChange={(e) => setField("phone", e.target.value || null)} className="mt-1" dir="ltr" />
+   256→                  </div>
+   257→                  <div>
+   258→                    <Label>واتساب</Label>
+   259→                    <Input value={data.whatsapp || ""} onChange={(e) => setField("whatsapp", e.target.value || null)} className="mt-1" dir="ltr" />
+   260→                  </div>
+   261→                  <div>
+   262→                    <Label>البريد الإلكتروني</Label>
+   263→                    <Input type="email" value={data.email || ""} onChange={(e) => setField("email", e.target.value || null)} className="mt-1" dir="ltr" />
+   264→                  </div>
+   265→                  <div className="sm:col-span-2">
+   266→                    <Label>العنوان</Label>
+   267→                    <Input value={data.address || ""} onChange={(e) => setField("address", e.target.value || null)} className="mt-1" />
+   268→                  </div>
+   269→                  <div>
+   270→                    <Label>الدولة</Label>
+   271→                    <Select value={data.country || "DZ"} onValueChange={(v) => setField("country", v)}>
+   272→                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+   273→                      <SelectContent>
+   274→                        {ARAB_COUNTRIES.map((c) => <SelectItem key={c.code} value={c.code}>{c.name} ({c.code})</SelectItem>)}
+   275→                      </SelectContent>
+   276→                    </Select>
+   277→                  </div>
+   278→                  <div>
+   279→                    <Label>اسم صاحب المتجر</Label>
+   280→                    <Input value={data.ownerName || ""} onChange={(e) => setField("ownerName", e.target.value || null)} className="mt-1" />
+   281→                  </div>
+   282→                  <div>
+   283→                    <Label>هاتف صاحب المتجر</Label>
+   284→                    <Input value={data.ownerPhone || ""} onChange={(e) => setField("ownerPhone", e.target.value || null)} className="mt-1" dir="ltr" />
+   285→                  </div>
+   286→                  <div>
+   287→                    <Label>رمز PIN الإدارة</Label>
+   288→                    <Input value={data.adminPin} onChange={(e) => setField("adminPin", e.target.value)} className="mt-1" dir="ltr" />
+   289→                  </div>
+   290→                  <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg border border-border/50">
+   291→                    <div>
+   292→                      <div className="font-medium text-sm">حالة المتجر</div>
+   293→                      <div className="text-xs text-muted-foreground">تفعيل أو إيقاف المتجر</div>
+   294→                    </div>
+   295→                    <Switch checked={data.isActive} onCheckedChange={(v) => setField("isActive", v)} />
+   296→                  </div>
+   297→                </div>
+   298→              )}
+   299→
+   300→              {/* ===== PLAN & TRIAL TAB ===== */}
+   301→              {tab === "plan" && (
+   302→                <div className="space-y-6">
+   303→                  {/* Plan selection */}
+   304→                  <div>
+   305→                    <Label className="text-sm font-semibold">الخطة الحالية</Label>
+   306→                    <div className="grid grid-cols-2 gap-3 mt-2">
+   307→                      {[{ value: "free", label: "مجانية", desc: "ميزات أساسية محدودة", color: "border-neutral-300 dark:border-neutral-600" },
+   308→                        { value: "paid", label: "مدفوعة", desc: "جميع الميزات متاحة", color: "border-amber-400" }
+   309→                      ].map((p) => (
+   310→                        <button
+   311→                          key={p.value}
+   312→                          type="button"
+   313→                          onClick={() => setField("plan", p.value)}
+   314→                          className={`p-4 rounded-xl border-2 text-right transition-all ${
+   315→                            data.plan === p.value ? p.color + " bg-amber-50/50 dark:bg-amber-500/5" : "border-border/50 hover:border-border"
+   316→                          }`}
+   317→                        >
+   318→                          <div className="font-bold text-sm">{p.label}</div>
+   319→                          <div className="text-xs text-muted-foreground mt-1">{p.desc}</div>
+   320→                          {data.plan === p.value && <CheckCircle2 className="h-4 w-4 text-amber-500 mt-2" />}
+   321→                        </button>
+   322→                      ))}
+   323→                    </div>
+   324→                  </div>
+   325→
+   326→                  <Separator />
+   327→
+   328→                  {/* Trial period */}
+   329→                  <div>
+   330→                    <Label className="text-sm font-semibold">فترة التجربة</Label>
+   331→                    <p className="text-xs text-muted-foreground mt-1">تحديد مدة تجربة مجانية للتاجر. اتركه فارغاً لبلا حدود.</p>
+   332→                    <div className="grid grid-cols-2 gap-3 mt-3">
+   333→                      <div>
+   334→                        <Label className="text-xs">مدة التجربة (أيام)</Label>
+   335→                        <Input
+   336→                          type="number" min="0" max="365"
+   337→                          value={data.trialDays ?? ""}
+   338→                          onChange={(e) => setField("trialDays", e.target.value ? Number(e.target.value) : null)}
+   339→                          className="mt-1" dir="ltr" placeholder="مثلاً: 14"
+   340→                        />
+   341→                      </div>
+   342→                      <div>
+   343→                        <Label className="text-xs">تاريخ البداية</Label>
+   344→                        <Input
+   345→                          type="date"
+   346→                          value={data.trialStartsAt ? new Date(data.trialStartsAt).toISOString().split("T")[0] : ""}
+   347→                          onChange={(e) => setField("trialStartsAt", e.target.value || null)}
+   348→                          className="mt-1" dir="ltr"
+   349→                        />
+   350→                      </div>
+   351→                    </div>
+   352→
+   353→                    {/* Trial status card */}
+   354→                    {trialStatus && (
+   355→                      <div className={`mt-4 p-4 rounded-xl border ${
+   356→                        trialStatus.active
+   357→                          ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20"
+   358→                          : "bg-rose-50 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20"
+   359→                      }`}>
+   360→                        <div className="flex items-center gap-2 mb-2">
+   361→                          {trialStatus.active ? (
+   362→                            <><Clock className="h-4 w-4 text-emerald-600" /><span className="font-semibold text-sm text-emerald-700 dark:text-emerald-400">التجربة سارية</span></>
+   363→                          ) : (
+   364→                            <><AlertTriangle className="h-4 w-4 text-rose-600" /><span className="font-semibold text-sm text-rose-700 dark:text-rose-400">انتهت فترة التجربة</span></>
+   365→                          )}
+   366→                        </div>
+   367→                        <div className="text-xs text-muted-foreground space-y-1">
+   368→                          <div>المدة الكلية: {trialStatus.total} يوم</div>
+   369→                          {trialStatus.active ? (
+   370→                            <div>المتبقي: <span className="font-bold text-foreground">{trialStatus.remaining} يوم</span></div>
+   371→                          ) : (
+   372→                            <div>انتهت منذ {Math.abs(trialStatus.remaining)} يوم</div>
+   373→                          )}
+   374→                          <div>تاريخ البداية: {new Date(trialStatus.start).toLocaleDateString("ar-DZ")}</div>
+   375→                        </div>
+   376→                        {!trialStatus.active && (
+   377→                          <Button
+   378→                            size="sm"
+   379→                            variant="outline"
+   380→                            className="mt-3 gap-1 text-xs"
+   381→                            onClick={() => {
+   382→                              setField("trialStartsAt", new Date().toISOString());
+   383→                            }}
+   384→                          >
+   385→                            <RefreshCw className="h-3 w-3" /> إعادة تفعيل التجربة
+   386→                          </Button>
+   387→                        )}
+   388→                      </div>
+   389→                    )}
+   390→                  </div>
+   391→                </div>
+   392→              )}
+   393→
+   394→              {/* ===== FEATURES TAB ===== */}
+   395→              {tab === "features" && (
+   396→                <div className="space-y-3">
+   397→                  <div className="flex items-center gap-2 mb-4">
+   398→                    <Info className="h-4 w-4 text-muted-foreground" />
+   399→                    <p className="text-xs text-muted-foreground">تفعيل أو تعطيل ميزات المتجر التي تظهر للزبائن</p>
+   400→                  </div>
+   401→                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+   402→                    {SHOP_FEATURES.map((f) => {
+   403→                      const enabled = !!data.features[f.key];
+   404→                      return (
+   405→                        <div
+   406→                          key={f.key}
+   407→                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+   408→                            enabled
+   409→                              ? "border-amber-300/50 bg-amber-50/50 dark:border-amber-500/20 dark:bg-amber-500/5"
+   410→                              : "border-border/50 hover:border-border"
+   411→                          }`}
+   412→                          onClick={() => toggleFeature(f.key)}
+   413→                        >
+   414→                          <div className="flex items-center gap-3">
+   415→                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+   416→                              enabled ? "bg-amber-100 dark:bg-amber-500/15" : "bg-muted/80"
+   417→                            }`}>
+   418→                              <f.icon className={`h-4 w-4 ${enabled ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+   419→                            </div>
+   420→                            <div>
+   421→                              <div className="text-sm font-medium">{f.label}</div>
+   422→                              <div className="text-[11px] text-muted-foreground">{f.desc}</div>
+   423→                            </div>
+   424→                          </div>
+   425→                          <Switch checked={enabled} onCheckedChange={() => toggleFeature(f.key)} />
+   426→                        </div>
+   427→                      );
+   428→                    })}
+   429→                  </div>
+   430→                </div>
+   431→              )}
+   432→
+   433→              {/* ===== MERCHANT ADMIN TAB ===== */}
+   434→              {tab === "merchant" && (
+   435→                <div className="space-y-6">
+   436→                  {/* Admin tabs visibility */}
+   437→                  <div>
+   438→                    <Label className="text-sm font-semibold">تبويبات لوحة تحكم التاجر</Label>
+   439→                    <p className="text-xs text-muted-foreground mt-1">تحكم في التبويبات التي تظهر للتاجر في لوحة التحكم</p>
+   440→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+   441→                      {MERCHANT_ADMIN_TABS.map((t) => {
+   442→                        const enabled = data.features[t.key] !== false;
+   443→                        return (
+   444→                          <div
+   445→                            key={t.key}
+   446→                            className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+   447→                              enabled ? "border-blue-200 dark:border-blue-500/20 bg-blue-50/50 dark:bg-blue-500/5" : "border-border/50 hover:border-border"
+   448→                            }`}
+   449→                            onClick={() => toggleFeature(t.key)}
+   450→                          >
+   451→                            <div className="flex items-center gap-3">
+   452→                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+   453→                                enabled ? "bg-blue-100 dark:bg-blue-500/15" : "bg-muted/80"
+   454→                              }`}>
+   455→                                <t.icon className={`h-4 w-4 ${enabled ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`} />
+   456→                              </div>
+   457→                              <div>
+   458→                                <div className="text-sm font-medium">{t.label}</div>
+   459→                                <div className="text-[11px] text-muted-foreground">{t.desc}</div>
+   460→                              </div>
+   461→                            </div>
+   462→                            <Switch checked={enabled} onCheckedChange={() => toggleFeature(t.key)} />
+   463→                          </div>
+   464→                        );
+   465→                      })}
+   466→                    </div>
+   467→                  </div>
+   468→
+   469→                  <Separator />
+   470→
+   471→                  {/* Merchant permissions */}
+   472→                  <div>
+   473→                    <Label className="text-sm font-semibold">صلاحيات التاجر</Label>
+   474→                    <p className="text-xs text-muted-foreground mt-1">تحكم في الأفعال التي يمكن للتاجر القيام بها</p>
+   475→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+   476→                      {MERCHANT_PERMISSIONS.map((p) => {
+   477→                        const enabled = data.features[p.key] !== false;
+   478→                        return (
+   479→                          <div
+   480→                            key={p.key}
+   481→                            className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+   482→                              enabled ? "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/5" : "border-border/50 hover:border-border"
+   483→                            }`}
+   484→                            onClick={() => toggleFeature(p.key)}
+   485→                          >
+   486→                            <div className="flex items-center gap-3">
+   487→                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+   488→                                enabled ? "bg-emerald-100 dark:bg-emerald-500/15" : "bg-muted/80"
+   489→                              }`}>
+   490→                                <p.icon className={`h-4 w-4 ${enabled ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
+   491→                              </div>
+   492→                              <div>
+   493→                                <div className="text-sm font-medium">{p.label}</div>
+   494→                                <div className="text-[11px] text-muted-foreground">{p.desc}</div>
+   495→                              </div>
+   496→                            </div>
+   497→                            <Switch checked={enabled} onCheckedChange={() => toggleFeature(p.key)} />
+   498→                          </div>
+   499→                        );
+   500→                      })}
+   501→                    </div>
+   502→                  </div>
+   503→                </div>
+   504→              )}
+   505→
+   506→              {/* ===== APPEARANCE TAB ===== */}
+   507→              {tab === "appearance" && (
+   508→                <div className="space-y-6">
+   509→                  <div>
+   510→                    <Label className="text-sm font-semibold">القالب اللوني</Label>
+   511→                    <div className="grid grid-cols-4 gap-2 mt-3">
+   512→                      {THEME_OPTIONS.map((t) => (
+   513→                        <button
+   514→                          key={t.id}
+   515→                          type="button"
+   516→                          onClick={() => setField("themeId", t.id)}
+   517→                          className={`p-3 rounded-xl border-2 text-center transition-all ${
+   518→                            data.themeId === t.id ? "border-foreground shadow-md" : "border-border/50 hover:border-border"
+   519→                          }`}
+   520→                        >
+   521→                          <div className="w-8 h-8 rounded-full mx-auto mb-1.5" style={{ backgroundColor: t.color }} />
+   522→                          <div className="text-[10px] font-medium truncate">{t.name}</div>
+   523→                        </button>
+   524→                      ))}
+   525→                    </div>
+   526→                  </div>
+   527→
+   528→                  <div>
+   529→                    <Label className="text-sm font-semibold">لون رئيسي مخصص</Label>
+   530→                    <div className="flex items-center gap-3 mt-2">
+   531→                      <input
+   532→                        type="color"
+   533→                        value={data.primaryColor || "#D4AF37"}
+   534→                        onChange={(e) => setField("primaryColor", e.target.value)}
+   535→                        className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+   536→                      />
+   537→                      <Input
+   538→                        value={data.primaryColor || ""}
+   539→                        onChange={(e) => setField("primaryColor", e.target.value || null)}
+   540→                        placeholder="#D4AF37"
+   541→                        className="flex-1" dir="ltr"
+   542→                      />
+   543→                      {data.primaryColor && (
+   544→                        <Button size="sm" variant="ghost" onClick={() => setField("primaryColor", null)}>
+   545→                          <X className="h-3.5 w-3.5" />
+   546→                        </Button>
+   547→                      )}
+   548→                    </div>
+   549→                  </div>
+   550→                </div>
+   551→              )}
+   552→
+   553→              {/* ===== NOTES TAB ===== */}
+   554→              {tab === "notes" && (
+   555→                <div className="space-y-4">
+   556→                  <div>
+   557→                    <Label>ملاحظات المالك عن التاجر</Label>
+   558→                    <Textarea
+   559→                      value={data.ownerNotes || ""}
+   560→                      onChange={(e) => setField("ownerNotes", e.target.value || null)}
+   561→                      className="mt-1 min-h-[120px]"
+   562→                      placeholder="ملاحظات داخلية عن هذا التاجر..."
+   563→                    />
+   564→                  </div>
+   565→                  <div>
+   566→                    <Label>معلومات الدفع</Label>
+   567→                    <Textarea
+   568→                      value={data.paymentInfo || ""}
+   569→                      onChange={(e) => setField("paymentInfo", e.target.value || null)}
+   570→                      className="mt-1 min-h-[120px]"
+   571→                      placeholder="بيانات الدفع أو الاشتراك..."
+   572→                    />
+   573→                  </div>
+   574→                </div>
+   575→              )}
+   576→            </>
+   577→          )}
+   578→        </div>
+   579→
+   580→        {/* Footer */}
+   581→        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border/50 shrink-0">
+   582→          <Button variant="outline" onClick={onClose}>إغلاق</Button>
+   583→          <Button
+   584→            onClick={handleSave}
+   585→            disabled={saving || !hasChanges}
+   586→            className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white"
+   587→          >
+   588→            <Save className="h-4 w-4" />
+   589→            {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
+   590→          </Button>
+   591→        </div>
+   592→      </DialogContent>
+   593→    </Dialog>
+   594→  );
+   595→}
+   596→

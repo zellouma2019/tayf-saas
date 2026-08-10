@@ -1,0 +1,1083 @@
+     1→"use client";
+     2→
+     3→import { useCallback, useEffect, useState } from "react";
+     4→import {
+     5→  Dialog,
+     6→  DialogContent,
+     7→  DialogTitle,
+     8→  DialogDescription,
+     9→} from "@/components/ui/dialog";
+    10→import { Button } from "@/components/ui/button";
+    11→import { Input } from "@/components/ui/input";
+    12→import { Textarea } from "@/components/ui/textarea";
+    13→import { Label } from "@/components/ui/label";
+    14→import { Badge } from "@/components/ui/badge";
+    15→import {
+    16→  Select,
+    17→  SelectContent,
+    18→  SelectItem,
+    19→  SelectTrigger,
+    20→  SelectValue,
+    21→} from "@/components/ui/select";
+    22→import {
+    23→  CheckCircle2,
+    24→  Copy,
+    25→  Download,
+    26→  QrCode,
+    27→  Phone,
+    28→  Clock,
+    29→  Package,
+    30→  RefreshCw,
+    31→  Search,
+    32→  Plus,
+    33→  Loader2,
+    34→  Pencil,
+    35→  XCircle,
+    36→  Timer,
+    37→} from "lucide-react";
+    38→import QRCode from "qrcode";
+    39→import { toast } from "sonner";
+    40→import { downloadInvoicePDF } from "@/lib/pdf-invoice";
+    41→import type { CreatedOrder } from "@/components/app/app-shell";
+    42→import {
+    43→  STATUS_FLOW,
+    44→  STATUS_META,
+    45→  formatDA,
+    46→  PAPER_SIZES,
+    47→  COLORS,
+    48→  PAPER_TYPES,
+    49→  SIDES,
+    50→  BINDINGS,
+    51→  DELIVERY_OPTIONS,
+    52→  PRINT_RANGES,
+    53→  SERVICE_MAP,
+    54→} from "@/lib/print-config";
+    55→
+    56→interface OrderSuccessProps {
+    57→  order: CreatedOrder | null;
+    58→  open: boolean;
+    59→  onClose: () => void;
+    60→  onNavigate: (view: "new" | "track" | "repeat") => void;
+    61→}
+    62→
+    63→/* ───── تفاصيل الطلب الكاملة من API ───── */
+    64→interface FullOrderDetail {
+    65→  id: string;
+    66→  reference: string;
+    67→  serviceType: string;
+    68→  serviceName: string;
+    69→  fileName?: string | null;
+    70→  fileType?: string | null;
+    71→  fileSize?: number | null;
+    72→  options: Record<string, unknown>;
+    73→  customer: Record<string, unknown>;
+    74→  delivery: Record<string, unknown>;
+    75→  pricing?: Record<string, unknown>;
+    76→  pages: number;
+    77→  copies: number;
+    78→  status: string;
+    79→  total: number;
+    80→  estimatedHours: number;
+    81→  editableUntil?: string | null;
+    82→}
+    83→
+    84→/* ───── حالات نموذج التعديل ───── */
+    85→interface EditFormState {
+    86→  color: string;
+    87→  paperSize: string;
+    88→  paperType: string;
+    89→  sides: string;
+    90→  binding: string;
+    91→  pages: number;
+    92→  copies: number;
+    93→  printRange: string;
+    94→  pageRange: string;
+    95→  deliveryMode: string;
+    96→  deliveryTimeSlot: string;
+    97→  customerName: string;
+    98→  customerPhone: string;
+    99→  customerAddress: string;
+   100→  notes: string;
+   101→  deliveryNotes: string;
+   102→  isDelivery: boolean;
+   103→}
+   104→
+   105→const EMPTY_FORM: EditFormState = {
+   106→  color: "",
+   107→  paperSize: "",
+   108→  paperType: "",
+   109→  sides: "",
+   110→  binding: "",
+   111→  pages: 1,
+   112→  copies: 1,
+   113→  printRange: "all",
+   114→  pageRange: "",
+   115→  deliveryMode: "",
+   116→  deliveryTimeSlot: "",
+   117→  customerName: "",
+   118→  customerPhone: "",
+   119→  customerAddress: "",
+   120→  notes: "",
+   121→  deliveryNotes: "",
+   122→  isDelivery: false,
+   123→};
+   124→
+   125→const TIME_SLOTS = [
+   126→  { id: "morning", label: "الصباح (8:00 - 12:00)" },
+   127→  { id: "noon", label: "الظهيرة (12:00 - 16:00)" },
+   128→  { id: "evening", label: "المساء (16:00 - 20:00)" },
+   129→];
+   130→
+   131→function useCountdown(targetDate: string | undefined) {
+   132→  const [secondsLeft, setSecondsLeft] = useState(() =>
+   133→    targetDate ? Math.max(0, Math.round((new Date(targetDate).getTime() - Date.now()) / 1000)) : 0,
+   134→  );
+   135→
+   136→  useEffect(() => {
+   137→    if (!targetDate) return;
+   138→    const target = new Date(targetDate).getTime();
+   139→    const tick = () => {
+   140→      const remaining = Math.max(0, Math.round((target - Date.now()) / 1000));
+   141→      setSecondsLeft(remaining);
+   142→      if (remaining > 0) requestAnimationFrame(() => setTimeout(tick, 500));
+   143→    };
+   144→    requestAnimationFrame(() => setTimeout(tick, 0));
+   145→  }, [targetDate]);
+   146→
+   147→  const minutes = Math.floor(secondsLeft / 60);
+   148→  const seconds = secondsLeft % 60;
+   149→  const isExpired = secondsLeft <= 0;
+   150→  const percentage = targetDate ? Math.max(0, (secondsLeft / 900) * 100) : 0;
+   151→
+   152→  return { secondsLeft, minutes, seconds, isExpired, percentage, formatted: `${minutes}:${seconds.toString().padStart(2, "0")}` };
+   153→}
+   154→
+   155→export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessProps) {
+   156→  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+   157→  const [showQR, setShowQR] = useState(false);
+   158→  const [pdfLoading, setPdfLoading] = useState(false);
+   159→  const [editMode, setEditMode] = useState(false);
+   160→  const [saving, setSaving] = useState(false);
+   161→  const [cancelling, setCancelling] = useState(false);
+   162→  const [editLoading, setEditLoading] = useState(false);
+   163→  const [fullOrder, setFullOrder] = useState<FullOrderDetail | null>(null);
+   164→  const [editForm, setEditForm] = useState<EditFormState>(EMPTY_FORM);
+   165→
+   166→  const countdown = useCountdown(order?.editableUntil);
+   167→
+   168→  /* ───── جلب تفاصيل الطلب الكاملة عند فتح النافذة ───── */
+   169→  useEffect(() => {
+   170→    if (order && open) {
+   171→      fetch(`/api/orders/${order.id}`)
+   172→        .then((res) => res.json())
+   173→        .then((data) => {
+   174→          if (data.error) return;
+   175→          setFullOrder(data);
+   176→        })
+   177→        .catch(() => {});
+   178→    } else {
+   179→      setFullOrder(null);
+   180→    }
+   181→  }, [order, open]);
+   182→
+   183→  /* ───── جلب تفاصيل الطلب عند فتح وضع التعديل ───── */
+   184→  useEffect(() => {
+   185→    if (editMode && order) {
+   186→      setEditLoading(true);
+   187→      fetch(`/api/orders/${order.id}`)
+   188→        .then((res) => res.json())
+   189→        .then((data) => {
+   190→          if (data.error) {
+   191→            toast.error(data.error);
+   192→            setEditMode(false);
+   193→            return;
+   194→          }
+   195→          const d: FullOrderDetail = data;
+   196→          setFullOrder(d);
+   197→          const opts = (d.options || {}) as Record<string, unknown>;
+   198→          const cust = (d.customer || {}) as Record<string, unknown>;
+   199→          const del = (d.delivery || {}) as Record<string, unknown>;
+   200→          setEditForm({
+   201→            color: (opts.color as string) || "",
+   202→            paperSize: (opts.paperSize as string) || "",
+   203→            paperType: (opts.paperType as string) || "",
+   204→            sides: (opts.sides as string) || "",
+   205→            binding: (opts.binding as string) || "",
+   206→            pages: d.pages || 1,
+   207→            copies: d.copies || 1,
+   208→            printRange: (opts.printRange as string) || "all",
+   209→            pageRange: (opts.pageRange as string) || "",
+   210→            deliveryMode: (del.mode as string) || "",
+   211→            deliveryTimeSlot: (del.timeSlot as string) || "",
+   212→            customerName: (cust.name as string) || "",
+   213→            customerPhone: (cust.phone as string) || "",
+   214→            customerAddress: (cust.address as string) || "",
+   215→            notes: (opts.notes as string) || "",
+   216→            deliveryNotes: (del.notes as string) || "",
+   217→            isDelivery: (cust.deliveryMethod as string) === "delivery",
+   218→          });
+   219→        })
+   220→        .catch(() => {
+   221→          toast.error("خطأ في تحميل تفاصيل الطلب");
+   222→          setEditMode(false);
+   223→        })
+   224→        .finally(() => setEditLoading(false));
+   225→    }
+   226→  }, [editMode, order]);
+   227→
+   228→  useEffect(() => {
+   229→    if (order && open) {
+   230→      const qrPayload = JSON.stringify({
+   231→        ref: order.reference,
+   232→        service: order.serviceName,
+   233→        total: order.total,
+   234→        status: order.status,
+   235→        ts: Date.now(),
+   236→      });
+   237→      let active = true;
+   238→      QRCode.toDataURL(qrPayload, {
+   239→        width: 280,
+   240→        margin: 1,
+   241→        color: { dark: "#1a1a1a", light: "#ffffff" },
+   242→        errorCorrectionLevel: "M",
+   243→      })
+   244→        .then((url) => {
+   245→          if (active) {
+   246→            setQrDataUrl(url);
+   247→            setShowQR(false);
+   248→          }
+   249→        })
+   250→        .catch(() => {
+   251→          if (active) setQrDataUrl("");
+   252→        });
+   253→      return () => {
+   254→        active = false;
+   255→      };
+   256→    }
+   257→  }, [order, open]);
+   258→
+   259→  const handleCancel = useCallback(async () => {
+   260→    if (!order) return;
+   261→    if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+   262→    setCancelling(true);
+   263→    try {
+   264→      const res = await fetch(`/api/orders/${order.id}`, {
+   265→        method: "PATCH",
+   266→        headers: { "Content-Type": "application/json" },
+   267→        body: JSON.stringify({ action: "cancel" }),
+   268→      });
+   269→      const data = await res.json();
+   270→      if (data.success) {
+   271→        toast.success("تم إلغاء الطلب");
+   272→        onClose();
+   273→      } else {
+   274→        toast.error(data.error || "فشل الإلغاء");
+   275→      }
+   276→    } catch {
+   277→      toast.error("خطأ في الاتصال");
+   278→    } finally {
+   279→      setCancelling(false);
+   280→    }
+   281→  }, [order, onClose]);
+   282→
+   283→  const handleSaveEdit = useCallback(async () => {
+   284→    if (!order) return;
+   285→    setSaving(true);
+   286→    try {
+   287→      const body: Record<string, unknown> = {
+   288→        action: "edit",
+   289→        copies: editForm.copies,
+   290→        pages: editForm.pages,
+   291→        color: editForm.color,
+   292→        paperSize: editForm.paperSize,
+   293→        paperType: editForm.paperType,
+   294→        sides: editForm.sides,
+   295→        binding: editForm.binding,
+   296→        printRange: editForm.printRange,
+   297→        pageRange: editForm.printRange === "custom" ? editForm.pageRange : undefined,
+   298→        deliveryMode: editForm.deliveryMode,
+   299→        timeSlot: editForm.deliveryTimeSlot,
+   300→        name: editForm.customerName,
+   301→        phone: editForm.customerPhone,
+   302→        address: editForm.customerAddress,
+   303→        notes: editForm.notes,
+   304→        deliveryNotes: editForm.deliveryNotes,
+   305→      };
+   306→      const res = await fetch(`/api/orders/${order.id}`, {
+   307→        method: "PATCH",
+   308→        headers: { "Content-Type": "application/json" },
+   309→        body: JSON.stringify(body),
+   310→      });
+   311→      const data = await res.json();
+   312→      if (data.success) {
+   313→        toast.success("تم حفظ التعديلات ✓");
+   314→        setEditMode(false);
+   315→        setFullOrder(null);
+   316→      } else {
+   317→        toast.error(data.error || "فشل التعديل");
+   318→        if (data.expired) setEditMode(false);
+   319→      }
+   320→    } catch {
+   321→      toast.error("خطأ في الاتصال");
+   322→    } finally {
+   323→      setSaving(false);
+   324→    }
+   325→  }, [order, editForm]);
+   326→
+   327→  if (!order) return null;
+   328→
+   329→  function copyRef() {
+   330→    if (!order) return;
+   331→    navigator.clipboard.writeText(order.reference);
+   332→    toast.success("تم نسخ رقم الطلب");
+   333→  }
+   334→
+   335→  async function downloadInvoice() {
+   336→    if (!order) return;
+   337→    setPdfLoading(true);
+   338→    await downloadInvoicePDF(order.id, order.reference);
+   339→    setPdfLoading(false);
+   340→  }
+   341→
+   342→  const canEdit = !countdown.isExpired && order.editableUntil;
+   343→  const serviceDef = fullOrder ? SERVICE_MAP[fullOrder.serviceType] : null;
+   344→  const showBinding = fullOrder?.serviceType === "document" || fullOrder?.serviceType === "binding" || fullOrder?.serviceType === "copy";
+   345→
+   346→  /* ───── مساعد تحديث حقول النموذج ───── */
+   347→  function setField<K extends keyof EditFormState>(key: K, value: EditFormState[K]) {
+   348→    setEditForm((prev) => ({ ...prev, [key]: value }));
+   349→  }
+   350→
+   351→  return (
+   352→    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+   353→      <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden max-h-[94vh] flex flex-col" dir="rtl" onInteractOutside={(e) => e.preventDefault()}>
+   354→        <DialogTitle className="sr-only">تم استلام الطلب</DialogTitle>
+   355→        <DialogDescription className="sr-only">تأكيد إنشاء طلب الطباعة بنجاح مع تفاصيل التتبع</DialogDescription>
+   356→        <div className="overflow-y-auto custom-scroll">
+   357→          {/* ===== رأس النجاح ===== */}
+   358→          <div className="bg-gradient-to-b from-emerald-50 to-white p-8 text-center">
+   359→            <div className="w-20 h-20 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-4 ring-4 ring-emerald-50">
+   360→              <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+   361→            </div>
+   362→            <h2 className="text-2xl font-bold mb-2">تم استلام طلبك بنجاح</h2>
+   363→            <p className="text-sm text-muted-foreground">
+   364→              طلبك الآن في النظام — سنتواصل معك قريباً لتأكيد التفاصيل
+   365→            </p>
+   366→          </div>
+   367→
+   368→          <div className="p-6 space-y-5">
+   369→            {/* ===== نافذة التعديل ===== */}
+   370→            {canEdit && (
+   371→              <div className={`rounded-2xl border-2 overflow-hidden transition-all duration-300 ${countdown.percentage < 20 ? "border-rose-300 bg-rose-50" : "border-amber-300 bg-amber-50"}`}>
+   372→                <div className="px-4 py-3 flex items-center justify-between">
+   373→                  <div className="flex items-center gap-2">
+   374→                    <Timer className={`h-4 w-4 ${countdown.percentage < 20 ? "text-rose-600" : "text-amber-600"}`} />
+   375→                    <span className="text-xs font-bold">نافذة التعديل</span>
+   376→                  </div>
+   377→                  <div className="flex items-center gap-2">
+   378→                    <span className={`font-mono font-bold text-sm tabular-nums ${countdown.percentage < 20 ? "text-rose-600" : "text-amber-700"}`}>
+   379→                      {countdown.formatted}
+   380→                    </span>
+   381→                    <span className="text-[10px] text-muted-foreground">متبقية</span>
+   382→                  </div>
+   383→                </div>
+   384→                {/* شريط التقدم */}
+   385→                <div className="h-1.5 bg-amber-200/50">
+   386→                  <div
+   387→                    className={`h-full transition-all duration-500 ${countdown.percentage < 20 ? "bg-rose-500" : "bg-amber-500"}`}
+   388→                    style={{ width: `${countdown.percentage}%` }}
+   389→                  />
+   390→                </div>
+   391→                <div className="p-4 space-y-3">
+   392→                  {!editMode ? (
+   393→                    <>
+   394→                      <p className="text-xs text-muted-foreground">
+   395→                        يمكنك تعديل خيارات الطباعة أو إلغاء الطلب خلال هذه الفترة
+   396→                      </p>
+   397→                      <div className="flex gap-2">
+   398→                        <Button
+   399→                          variant="outline"
+   400→                          size="sm"
+   401→                          className="flex-1"
+   402→                          onClick={() => setEditMode(true)}
+   403→                        >
+   404→                          <Pencil className="h-3.5 w-3.5" />
+   405→                          تعديل الخيارات
+   406→                        </Button>
+   407→                        <Button
+   408→                          variant="outline"
+   409→                          size="sm"
+   410→                          className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50"
+   411→                          onClick={handleCancel}
+   412→                          disabled={cancelling}
+   413→                        >
+   414→                          {cancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+   415→                          إلغاء الطلب
+   416→                        </Button>
+   417→                      </div>
+   418→                    </>
+   419→                  ) : editLoading ? (
+   420→                    <div className="flex items-center justify-center gap-2 py-6">
+   421→                      <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
+   422→                      <span className="text-sm text-muted-foreground">جارٍ تحميل تفاصيل الطلب...</span>
+   423→                    </div>
+   424→                  ) : (
+   425→                    /* ===== نموذج التعديل الشامل ===== */
+   426→                    <div className="max-h-[60vh] overflow-y-auto custom-scroll space-y-5 -mx-1 px-1">
+   427→                      {/* ─── معلومات الطباعة ─── */}
+   428→                      <div className="space-y-3">
+   429→                        <h4 className="text-sm font-bold flex items-center gap-1.5 border-b pb-1.5 border-border">
+   430→                          🖨️ معلومات الطباعة
+   431→                        </h4>
+   432→                        <div className="flex items-center gap-2">
+   433→                          <Label className="text-xs font-medium shrink-0 w-20">نوع الخدمة</Label>
+   434→                          <Badge variant="secondary" className="text-xs font-semibold">
+   435→                            {serviceDef?.name || fullOrder?.serviceName || order.serviceName}
+   436→                          </Badge>
+   437→                        </div>
+   438→                        <div className="grid grid-cols-2 gap-3">
+   439→                          <div>
+   440→                            <Label className="text-xs font-medium mb-1 block">حجم الورق</Label>
+   441→                            <Select value={editForm.paperSize} onValueChange={(v) => setField("paperSize", v)}>
+   442→                              <SelectTrigger className="text-sm w-full" size="sm">
+   443→                                <SelectValue placeholder="اختر الحجم" />
+   444→                              </SelectTrigger>
+   445→                              <SelectContent>
+   446→                                {PAPER_SIZES.map((p) => (
+   447→                                  <SelectItem key={p.id} value={p.id}>
+   448→                                    {p.label} ({p.dimensions})
+   449→                                  </SelectItem>
+   450→                                ))}
+   451→                              </SelectContent>
+   452→                            </Select>
+   453→                          </div>
+   454→                          <div>
+   455→                            <Label className="text-xs font-medium mb-1 block">نوع الطباعة</Label>
+   456→                            <Select value={editForm.color} onValueChange={(v) => setField("color", v)}>
+   457→                              <SelectTrigger className="text-sm w-full" size="sm">
+   458→                                <SelectValue placeholder="اختر النوع" />
+   459→                              </SelectTrigger>
+   460→                              <SelectContent>
+   461→                                {COLORS.map((c) => (
+   462→                                  <SelectItem key={c.id} value={c.id}>
+   463→                                    {c.label}
+   464→                                  </SelectItem>
+   465→                                ))}
+   466→                              </SelectContent>
+   467→                            </Select>
+   468→                          </div>
+   469→                          <div>
+   470→                            <Label className="text-xs font-medium mb-1 block">نوع الورق</Label>
+   471→                            <Select value={editForm.paperType} onValueChange={(v) => setField("paperType", v)}>
+   472→                              <SelectTrigger className="text-sm w-full" size="sm">
+   473→                                <SelectValue placeholder="اختر الورق" />
+   474→                              </SelectTrigger>
+   475→                              <SelectContent>
+   476→                                {PAPER_TYPES.map((p) => (
+   477→                                  <SelectItem key={p.id} value={p.id}>
+   478→                                    {p.label}
+   479→                                  </SelectItem>
+   480→                                ))}
+   481→                              </SelectContent>
+   482→                            </Select>
+   483→                          </div>
+   484→                          <div>
+   485→                            <Label className="text-xs font-medium mb-1 block">الوجه</Label>
+   486→                            <Select value={editForm.sides} onValueChange={(v) => setField("sides", v)}>
+   487→                              <SelectTrigger className="text-sm w-full" size="sm">
+   488→                                <SelectValue placeholder="اختر" />
+   489→                              </SelectTrigger>
+   490→                              <SelectContent>
+   491→                                {SIDES.map((s) => (
+   492→                                  <SelectItem key={s.id} value={s.id}>
+   493→                                    {s.label}
+   494→                                  </SelectItem>
+   495→                                ))}
+   496→                              </SelectContent>
+   497→                            </Select>
+   498→                          </div>
+   499→                        </div>
+   500→                        {showBinding && (
+   501→                          <div className="w-full">
+   502→                            <Label className="text-xs font-medium mb-1 block">التجليد</Label>
+   503→                            <Select value={editForm.binding} onValueChange={(v) => setField("binding", v)}>
+   504→                              <SelectTrigger className="text-sm w-full" size="sm">
+   505→                                <SelectValue placeholder="اختر التجليد" />
+   506→                              </SelectTrigger>
+   507→                              <SelectContent>
+   508→                                {BINDINGS.map((b) => (
+   509→                                  <SelectItem key={b.id} value={b.id}>
+   510→                                    {b.label} — {b.description}
+   511→                                  </SelectItem>
+   512→                                ))}
+   513→                              </SelectContent>
+   514→                            </Select>
+   515→                          </div>
+   516→                        )}
+   517→                      </div>
+   518→
+   519→                      {/* ─── الصفحات والنسخ ─── */}
+   520→                      <div className="space-y-3">
+   521→                        <h4 className="text-sm font-bold flex items-center gap-1.5 border-b pb-1.5 border-border">
+   522→                          📄 الصفحات والنسخ
+   523→                        </h4>
+   524→                        <div className="grid grid-cols-2 gap-3">
+   525→                          <div>
+   526→                            <Label className="text-xs font-medium mb-1 block">عدد الصفحات</Label>
+   527→                            <Input
+   528→                              type="number"
+   529→                              value={editForm.pages}
+   530→                              onChange={(e) => setField("pages", Math.max(1, Number(e.target.value)))}
+   531→                              className="text-sm"
+   532→                              min={1}
+   533→                            />
+   534→                          </div>
+   535→                          <div>
+   536→                            <Label className="text-xs font-medium mb-1 block">عدد النسخ</Label>
+   537→                            <Input
+   538→                              type="number"
+   539→                              value={editForm.copies}
+   540→                              onChange={(e) => setField("copies", Math.max(1, Number(e.target.value)))}
+   541→                              className="text-sm"
+   542→                              min={1}
+   543→                            />
+   544→                          </div>
+   545→                        </div>
+   546→                        <div>
+   547→                          <Label className="text-xs font-medium mb-1 block">نطاق الطباعة</Label>
+   548→                          <div className="flex gap-3">
+   549→                            {PRINT_RANGES.map((r) => (
+   550→                              <label key={r.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
+   551→                                <input
+   552→                                  type="radio"
+   553→                                  name="printRange"
+   554→                                  value={r.id}
+   555→                                  checked={editForm.printRange === r.id}
+   556→                                  onChange={() => setField("printRange", r.id)}
+   557→                                  className="accent-amber-600"
+   558→                                />
+   559→                                {r.label}
+   560→                              </label>
+   561→                            ))}
+   562→                          </div>
+   563→                          {editForm.printRange === "custom" && (
+   564→                            <Input
+   565→                              type="text"
+   566→                              value={editForm.pageRange}
+   567→                              onChange={(e) => setField("pageRange", e.target.value)}
+   568→                              placeholder="مثال: 1-5, 8, 10-12"
+   569→                              className="text-sm mt-2"
+   570→                            />
+   571→                          )}
+   572→                        </div>
+   573→                      </div>
+   574→
+   575→                      {/* ─── التسليم ─── */}
+   576→                      <div className="space-y-3">
+   577→                        <h4 className="text-sm font-bold flex items-center gap-1.5 border-b pb-1.5 border-border">
+   578→                          🚚 التسليم
+   579→                        </h4>
+   580→                        <div className="grid grid-cols-2 gap-3">
+   581→                          <div>
+   582→                            <Label className="text-xs font-medium mb-1 block">طريقة التسليم</Label>
+   583→                            <Select value={editForm.deliveryMode} onValueChange={(v) => setField("deliveryMode", v)}>
+   584→                              <SelectTrigger className="text-sm w-full" size="sm">
+   585→                                <SelectValue placeholder="اختر" />
+   586→                              </SelectTrigger>
+   587→                              <SelectContent>
+   588→                                {DELIVERY_OPTIONS.map((d) => (
+   589→                                  <SelectItem key={d.id} value={d.id}>
+   590→                                    {d.emoji} {d.label}
+   591→                                  </SelectItem>
+   592→                                ))}
+   593→                              </SelectContent>
+   594→                            </Select>
+   595→                          </div>
+   596→                          <div>
+   597→                            <Label className="text-xs font-medium mb-1 block">الفترة الزمنية</Label>
+   598→                            <Select value={editForm.deliveryTimeSlot} onValueChange={(v) => setField("deliveryTimeSlot", v)}>
+   599→                              <SelectTrigger className="text-sm w-full" size="sm">
+   600→                                <SelectValue placeholder="اختر" />
+   601→                              </SelectTrigger>
+   602→                              <SelectContent>
+   603→                                {TIME_SLOTS.map((t) => (
+   604→                                  <SelectItem key={t.id} value={t.id}>
+   605→                                    {t.label}
+   606→                                  </SelectItem>
+   607→                                ))}
+   608→                              </SelectContent>
+   609→                            </Select>
+   610→                          </div>
+   611→                        </div>
+   612→                      </div>
+   613→
+   614→                      {/* ─── معلومات العميل ─── */}
+   615→                      <div className="space-y-3">
+   616→                        <h4 className="text-sm font-bold flex items-center gap-1.5 border-b pb-1.5 border-border">
+   617→                          👤 معلومات العميل
+   618→                        </h4>
+   619→                        <div className="grid grid-cols-2 gap-3">
+   620→                          <div>
+   621→                            <Label className="text-xs font-medium mb-1 block">الاسم</Label>
+   622→                            <Input
+   623→                              type="text"
+   624→                              value={editForm.customerName}
+   625→                              onChange={(e) => setField("customerName", e.target.value)}
+   626→                              className="text-sm"
+   627→                              placeholder="اسم العميل"
+   628→                            />
+   629→                          </div>
+   630→                          <div>
+   631→                            <Label className="text-xs font-medium mb-1 block">الهاتف</Label>
+   632→                            <Input
+   633→                              type="tel"
+   634→                              value={editForm.customerPhone}
+   635→                              onChange={(e) => setField("customerPhone", e.target.value)}
+   636→                              className="text-sm"
+   637→                              placeholder="رقم الهاتف"
+   638→                            />
+   639→                          </div>
+   640→                        </div>
+   641→                        {editForm.isDelivery && (
+   642→                          <div>
+   643→                            <Label className="text-xs font-medium mb-1 block">عنوان التسليم</Label>
+   644→                            <Input
+   645→                              type="text"
+   646→                              value={editForm.customerAddress}
+   647→                              onChange={(e) => setField("customerAddress", e.target.value)}
+   648→                              className="text-sm"
+   649→                              placeholder="عنوان التوصيل"
+   650→                            />
+   651→                          </div>
+   652→                        )}
+   653→                      </div>
+   654→
+   655→                      {/* ─── ملاحظات ─── */}
+   656→                      <div className="space-y-3">
+   657→                        <h4 className="text-sm font-bold flex items-center gap-1.5 border-b pb-1.5 border-border">
+   658→                          📝 ملاحظات
+   659→                        </h4>
+   660→                        <div>
+   661→                          <Label className="text-xs font-medium mb-1 block">ملاحظات إضافية</Label>
+   662→                          <Textarea
+   663→                            value={editForm.notes}
+   664→                            onChange={(e) => setField("notes", e.target.value)}
+   665→                            placeholder="ملاحظات على الطباعة..."
+   666→                            rows={2}
+   667→                            className="text-sm"
+   668→                          />
+   669→                        </div>
+   670→                        <div>
+   671→                          <Label className="text-xs font-medium mb-1 block">ملاحظات التسليم</Label>
+   672→                          <Textarea
+   673→                            value={editForm.deliveryNotes}
+   674→                            onChange={(e) => setField("deliveryNotes", e.target.value)}
+   675→                            placeholder="ملاحظات على التسليم..."
+   676→                            rows={2}
+   677→                            className="text-sm"
+   678→                          />
+   679→                        </div>
+   680→                      </div>
+   681→
+   682→                      {/* ─── أزرار الحفظ ─── */}
+   683→                      <div className="flex gap-2 pt-1">
+   684→                        <Button
+   685→                          size="sm"
+   686→                          className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white"
+   687→                          onClick={handleSaveEdit}
+   688→                          disabled={saving}
+   689→                        >
+   690→                          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+   691→                          حفظ التعديلات
+   692→                        </Button>
+   693→                        <Button
+   694→                          variant="outline"
+   695→                          size="sm"
+   696→                          onClick={() => {
+   697→                            setEditMode(false);
+   698→                            setFullOrder(null);
+   699→                          }}
+   700→                        >
+   701→                          إلغاء
+   702→                        </Button>
+   703→                      </div>
+   704→                    </div>
+   705→                  )}
+   706→                </div>
+   707→              </div>
+   708→            )}
+   709→
+   710→            {/* ===== رقم المعاملة + السعر ===== */}
+   711→            <div className="grid grid-cols-2 gap-3">
+   712→              <div className="rounded-xl border bg-card p-4">
+   713→                <div className="text-xs text-muted-foreground mb-1">رقم المعاملة</div>
+   714→                <div className="flex items-center gap-1.5">
+   715→                  <span className="text-xl font-bold text-neutral-900 font-mono tracking-wider">
+   716→                    {order.reference}
+   717→                  </span>
+   718→                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={copyRef}>
+   719→                    <Copy className="h-3 w-3" />
+   720→                  </Button>
+   721→                </div>
+   722→              </div>
+   723→              <div className="rounded-xl border bg-card p-4">
+   724→                <div className="text-xs text-muted-foreground mb-1">السعر التقديري</div>
+   725→                <div className="text-xl font-bold text-amber-700">{formatDA(order.total)}</div>
+   726→              </div>
+   727→            </div>
+   728→
+   729→            {/* ===== تفاصيل الطلب الكاملة ===== */}
+   730→            {fullOrder && (() => {
+   731→              const opts = (fullOrder.options || {}) as Record<string, unknown>;
+   732→              const cust = (fullOrder.customer || {}) as Record<string, unknown>;
+   733→              const del = (fullOrder.delivery || {}) as Record<string, unknown>;
+   734→              const prc = (fullOrder.pricing || {}) as Record<string, unknown>;
+   735→
+   736→              const getLabel = (id: string, list: Array<{ id: string; label: string }>) => {
+   737→                const found = list.find(i => i.id === id);
+   738→                return found ? found.label : id;
+   739→              };
+   740→
+   741→              return (
+   742→                <div className="space-y-3">
+   743→                  {/* معلومات الملف */}
+   744→                  {fullOrder.fileName && (
+   745→                    <div className="rounded-xl border bg-card p-4">
+   746→                      <div className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+   747→                        📎 معلومات الملف
+   748→                      </div>
+   749→                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+   750→                        <div>
+   751→                          <span className="text-muted-foreground">الاسم</span>
+   752→                          <div className="font-semibold truncate">{fullOrder.fileName}</div>
+   753→                        </div>
+   754→                        <div>
+   755→                          <span className="text-muted-foreground">النوع</span>
+   756→                          <div className="font-semibold">{fullOrder.fileType || "—"}{fullOrder.fileType && <Badge variant="secondary" className="text-[10px] mr-1 px-1 py-0">{getLabel(fullOrder.fileType, [{id:"PDF",label:"مستند"},{id:"DOCX",label:"مستند"},{id:"JPG",label:"صورة"},{id:"JPEG",label:"صورة"},{id:"PNG",label:"صورة"},{id:"WEBP",label:"صورة"},{id:"XLSX",label:"جدول"}])}</Badge>}</div>
+   757→                        </div>
+   758→                        <div>
+   759→                          <span className="text-muted-foreground">الحجم</span>
+   760→                          <div className="font-semibold">{fullOrder.fileSize ? `${(fullOrder.fileSize / 1024).toFixed(0)} ك.ب` : "—"}</div>
+   761→                        </div>
+   762→                        <div>
+   763→                          <span className="text-muted-foreground">الصفحات</span>
+   764→                          <div className="font-semibold">{fullOrder.pages}</div>
+   765→                        </div>
+   766→                      </div>
+   767→                    </div>
+   768→                  )}
+   769→
+   770→                  {/* خيارات الطباعة */}
+   771→                  <div className="rounded-xl border bg-card p-4">
+   772→                    <div className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+   773→                      🖨️ إعدادات الطباعة
+   774→                    </div>
+   775→                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+   776→                      <div>
+   777→                        <span className="text-muted-foreground">الخدمة</span>
+   778→                        <div className="font-semibold">{fullOrder.serviceName}</div>
+   779→                      </div>
+   780→                      <div>
+   781→                        <span className="text-muted-foreground">حجم الورق</span>
+   782→                        <div className="font-semibold">{getLabel(opts.paperSize as string, PAPER_SIZES)}</div>
+   783→                      </div>
+   784→                      <div>
+   785→                        <span className="text-muted-foreground">نوع الطباعة</span>
+   786→                        <div className="font-semibold">{getLabel(opts.color as string, COLORS)}</div>
+   787→                      </div>
+   788→                      <div>
+   789→                        <span className="text-muted-foreground">نوع الورق</span>
+   790→                        <div className="font-semibold">{getLabel(opts.paperType as string, PAPER_TYPES)}</div>
+   791→                      </div>
+   792→                      <div>
+   793→                        <span className="text-muted-foreground">الوجه</span>
+   794→                        <div className="font-semibold">{getLabel(opts.sides as string, SIDES)}</div>
+   795→                      </div>
+   796→                      {(showBinding && opts.binding) && (
+   797→                        <div>
+   798→                          <span className="text-muted-foreground">التجليد</span>
+   799→                          <div className="font-semibold">{getLabel(opts.binding as string, BINDINGS)}</div>
+   800→                        </div>
+   801→                      )}
+   802→                      <div>
+   803→                        <span className="text-muted-foreground">نطاق الطباعة</span>
+   804→                        <div className="font-semibold">
+   805→                          {opts.printRange === "custom" ? `مخصص: ${opts.pageRange || "—"}` : getLabel(opts.printRange as string, PRINT_RANGES)}
+   806→                        </div>
+   807→                      </div>
+   808→                      <div>
+   809→                        <span className="text-muted-foreground">النسخ</span>
+   810→                        <div className="font-semibold">{fullOrder.copies}</div>
+   811→                      </div>
+   812→                    </div>
+   813→                    {opts.notes && (
+   814→                      <div className="mt-2 pt-2 border-t border-border">
+   815→                        <span className="text-muted-foreground text-[11px]">ملاحظات: </span>
+   816→                        <span className="text-xs">{opts.notes as string}</span>
+   817→                      </div>
+   818→                    )}
+   819→                  </div>
+   820→
+   821→                  {/* معلومات العميل */}
+   822→                  <div className="rounded-xl border bg-card p-4">
+   823→                    <div className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+   824→                      👤 معلومات العميل
+   825→                    </div>
+   826→                    <div className="grid grid-cols-2 gap-2 text-xs">
+   827→                      <div>
+   828→                        <span className="text-muted-foreground">الاسم</span>
+   829→                        <div className="font-semibold">{(cust.name as string) || "—"}</div>
+   830→                      </div>
+   831→                      <div>
+   832→                        <span className="text-muted-foreground">الهاتف</span>
+   833→                        <div className="font-semibold" dir="ltr">{(cust.phone as string) || "—"}</div>
+   834→                      </div>
+   835→                      {cust.address && (
+   836→                        <div className="col-span-2">
+   837→                          <span className="text-muted-foreground">العنوان</span>
+   838→                          <div className="font-semibold">{cust.address as string}</div>
+   839→                        </div>
+   840→                      )}
+   841→                    </div>
+   842→                  </div>
+   843→
+   844→                  {/* معلومات التسليم */}
+   845→                  <div className="rounded-xl border bg-card p-4">
+   846→                    <div className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+   847→                      🚚 معلومات التسليم
+   848→                    </div>
+   849→                    <div className="grid grid-cols-2 gap-2 text-xs">
+   850→                      <div>
+   851→                        <span className="text-muted-foreground">طريقة التسليم</span>
+   852→                        <div className="font-semibold">{getLabel(del.mode as string, DELIVERY_OPTIONS)}</div>
+   853→                      </div>
+   854→                      {del.timeSlot && (
+   855→                        <div>
+   856→                          <span className="text-muted-foreground">الفترة الزمنية</span>
+   857→                          <div className="font-semibold">{del.timeSlot as string}</div>
+   858→                        </div>
+   859→                      )}
+   860→                      {del.notes && (
+   861→                        <div className="col-span-2">
+   862→                          <span className="text-muted-foreground">ملاحظات التسليم</span>
+   863→                          <div className="font-semibold">{del.notes as string}</div>
+   864→                        </div>
+   865→                      )}
+   866→                    </div>
+   867→                  </div>
+   868→
+   869→                  {/* تفصيل الأسعار */}
+   870→                  {prc && (prc.perPage || prc.pagesCost || prc.copiesCost || prc.deliveryCost) && (
+   871→                    <div className="rounded-xl border bg-card p-4">
+   872→                      <div className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+   873→                        💰 تفصيل الأسعار
+   874→                      </div>
+   875→                      <div className="space-y-1 text-xs">
+   876→                        {prc.perPage != null && (
+   877→                          <div className="flex justify-between">
+   878→                            <span className="text-muted-foreground">سعر الصفحة</span>
+   879→                            <span className="font-semibold">{formatDA(prc.perPage as number)}</span>
+   880→                          </div>
+   881→                        )}
+   882→                        {prc.pagesCost != null && (
+   883→                          <div className="flex justify-between">
+   884→                            <span className="text-muted-foreground">تكلفة الصفحات</span>
+   885→                            <span className="font-semibold">{formatDA(prc.pagesCost as number)}</span>
+   886→                          </div>
+   887→                        )}
+   888→                        {prc.copiesCost != null && (
+   889→                          <div className="flex justify-between">
+   890→                            <span className="text-muted-foreground">تكلفة النسخ</span>
+   891→                            <span className="font-semibold">{formatDA(prc.copiesCost as number)}</span>
+   892→                          </div>
+   893→                        )}
+   894→                        {prc.deliveryCost != null && Number(prc.deliveryCost) > 0 && (
+   895→                          <div className="flex justify-between">
+   896→                            <span className="text-muted-foreground">تكلفة التسليم</span>
+   897→                            <span className="font-semibold">{formatDA(prc.deliveryCost as number)}</span>
+   898→                          </div>
+   899→                        )}
+   900→                        {prc.discount != null && Number(prc.discount) > 0 && (
+   901→                          <div className="flex justify-between text-emerald-600">
+   902→                            <span>الخصم</span>
+   903→                            <span className="font-semibold">-{formatDA(prc.discount as number)}</span>
+   904→                          </div>
+   905→                        )}
+   906→                        <div className="flex justify-between pt-1.5 border-t border-border font-bold text-sm">
+   907→                          <span>المجموع</span>
+   908→                          <span className="text-amber-700">{formatDA(fullOrder.total)}</span>
+   909→                        </div>
+   910→                      </div>
+   911→                    </div>
+   912→                  )}
+   913→                </div>
+   914→              );
+   915→            })()}
+   916→
+   917→            {/* ===== QR + الفاتورة ===== */}
+   918→            <div className="grid grid-cols-2 gap-3">
+   919→              <button
+   920→                onClick={() => setShowQR(!showQR)}
+   921→                className="group flex items-center gap-3 p-4 rounded-xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors text-right"
+   922→              >
+   923→                <div className="w-10 h-10 rounded-lg bg-neutral-900 flex items-center justify-center shrink-0">
+   924→                  <QrCode className="h-5 w-5 text-amber-400" />
+   925→                </div>
+   926→                <div className="min-w-0">
+   927→                  <div className="font-bold text-sm">رمز QR للعملية</div>
+   928→                  <div className="text-xs text-muted-foreground">
+   929→                    {showQR ? "إخفاء الرمز" : "اعرض الرمز للمسح"}
+   930→                  </div>
+   931→                </div>
+   932→              </button>
+   933→              <button
+   934→                onClick={downloadInvoice}
+   935→                disabled={pdfLoading}
+   936→                className="group flex items-center gap-3 p-4 rounded-xl border-2 border-neutral-200 bg-card hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-right disabled:opacity-60"
+   937→              >
+   938→                <div className="w-10 h-10 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
+   939→                  {pdfLoading ? (
+   940→                    <Loader2 className="h-5 w-5 text-neutral-900 animate-spin" />
+   941→                  ) : (
+   942→                    <Download className="h-5 w-5 text-neutral-900" />
+   943→                  )}
+   944→                </div>
+   945→                <div className="min-w-0">
+   946→                  <div className="font-bold text-sm">{pdfLoading ? "جارٍ الإنشاء..." : "تنزيل الفاتورة PDF"}</div>
+   947→                  <div className="text-xs text-muted-foreground">ملف PDF جاهز للطباعة</div>
+   948→                </div>
+   949→              </button>
+   950→            </div>
+   951→
+   952→            {/* ===== عرض QR ===== */}
+   953→            {showQR && qrDataUrl && (
+   954→              <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 text-center animate-in fade-in zoom-in duration-300">
+   955→                <div className="inline-block bg-white p-3 rounded-xl shadow-sm">
+   956→                  <img src={qrDataUrl} alt={`QR ${order.reference}`} className="w-48 h-48 mx-auto" />
+   957→                </div>
+   958→                <p className="text-xs text-muted-foreground mt-3">
+   959→                  اعرض هذا الرمز في المطبعة لاستلام طلبك بسرعة
+   960→                </p>
+   961→                <p className="text-xs font-mono font-bold text-neutral-900 mt-1">{order.reference}</p>
+   962→              </div>
+   963→            )}
+   964→
+   965→            {/* ===== الوقت المتوقع للتسليم ===== */}
+   966→            <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+   967→              <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center shrink-0">
+   968→                <Clock className="h-5 w-5 text-white" />
+   969→              </div>
+   970→              <div className="flex-1">
+   971→                <div className="text-xs text-muted-foreground">الوقت المتوقع للتسليم</div>
+   972→                <div className="font-bold text-amber-700">
+   973→                  {order.estimatedHours} {order.estimatedHours === 1 ? "ساعة" : "ساعة"}
+   974→                </div>
+   975→              </div>
+   976→              <div className="text-xs text-amber-600 text-left">
+   977→                سيصلك إشعار<br />عند الجاهزية
+   978→              </div>
+   979→            </div>
+   980→
+   981→            {/* ===== ملاحظة المكالمة ===== */}
+   982→            <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+   983→              <div className="flex items-center gap-2 mb-1">
+   984→                <Phone className="h-4 w-4 text-amber-600" />
+   985→                <span className="font-bold text-sm">سنتواصل معك قبل بدء الطباعة</span>
+   986→              </div>
+   987→              <p className="text-xs text-muted-foreground leading-relaxed">
+   988→                سنتصل بك على الرقم المُدخل لتأكيد الطلب والتفاصيل النهائية قبل تنفيذ الطباعة.
+   989→                تأكد من توفّرك لاستقبال المكالمة.
+   990→              </p>
+   991→            </div>
+   992→
+   993→            {/* ===== مراحل تنفيذ الطلب ===== */}
+   994→            <div>
+   995→              <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+   996→                <Package className="h-4 w-4 text-amber-600" />
+   997→                مراحل تنفيذ الطلب
+   998→              </h3>
+   999→              <div className="space-y-0">
+  1000→                {STATUS_FLOW.map((s, i) => {
+  1001→                  const meta = STATUS_META[s];
+  1002→                  const isCurrent = s === order.status;
+  1003→                  const isDone = STATUS_FLOW.indexOf(order.status) > i;
+  1004→                  return (
+  1005→                    <div key={s} className="flex gap-3">
+  1006→                      <div className="flex flex-col items-center">
+  1007→                        <div
+  1008→                          className={`w-9 h-9 rounded-full flex items-center justify-center text-base border-2 transition-all ${
+  1009→                            isCurrent
+  1010→                              ? "bg-amber-400 border-amber-400 scale-110 shadow-md"
+  1011→                              : isDone
+  1012→                                ? "bg-emerald-400 border-emerald-400"
+  1013→                                : "bg-card border-muted"
+  1014→                          }`}
+  1015→                        >
+  1016→                          {isDone ? (
+  1017→                            <CheckCircle2 className="h-5 w-5 text-white" />
+  1018→                          ) : (
+  1019→                            <span>{meta.emoji}</span>
+  1020→                          )}
+  1021→                        </div>
+  1022→                        {i < STATUS_FLOW.length - 1 && (
+  1023→                          <div className={`w-0.5 h-8 ${isDone ? "bg-emerald-400" : "bg-muted"}`} />
+  1024→                        )}
+  1025→                      </div>
+  1026→                      <div className="pt-1.5 pb-8">
+  1027→                        <div className={`font-semibold text-sm ${isCurrent ? "text-amber-700" : isDone ? "text-emerald-700" : "text-muted-foreground"}`}>
+  1028→                          {meta.label}
+  1029→                          {isCurrent && (
+  1030→                            <span className="mr-2 text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+  1031→                              الحالة الحالية
+  1032→                            </span>
+  1033→                          )}
+  1034→                        </div>
+  1035→                      </div>
+  1036→                    </div>
+  1037→                  );
+  1038→                })}
+  1039→              </div>
+  1040→            </div>
+  1041→
+  1042→            {/* ===== أزرار الإجراءات ===== */}
+  1043→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+  1044→              <Button
+  1045→                variant="outline"
+  1046→                className="w-full"
+  1047→                onClick={() => {
+  1048→                  onClose();
+  1049→                  onNavigate("repeat");
+  1050→                }}
+  1051→              >
+  1052→                <RefreshCw className="h-4 w-4" />
+  1053→                إعادة طلب
+  1054→              </Button>
+  1055→              <Button
+  1056→                variant="outline"
+  1057→                className="w-full"
+  1058→                onClick={() => {
+  1059→                  onClose();
+  1060→                  onNavigate("track");
+  1061→                }}
+  1062→              >
+  1063→                <Search className="h-4 w-4" />
+  1064→                تتبّع الطلب
+  1065→              </Button>
+  1066→              <Button
+  1067→                className="w-full bg-neutral-900 hover:bg-neutral-800 text-white"
+  1068→                onClick={() => {
+  1069→                  onClose();
+  1070→                  onNavigate("new");
+  1071→                }}
+  1072→              >
+  1073→                <Plus className="h-4 w-4" />
+  1074→                طلب جديد
+  1075→              </Button>
+  1076→            </div>
+  1077→          </div>
+  1078→        </div>
+  1079→      </DialogContent>
+  1080→    </Dialog>
+  1081→  );
+  1082→}
+  1083→

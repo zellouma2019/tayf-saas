@@ -41,7 +41,7 @@ import {
   markAuthenticated, getTimeAgoShort, statusLabelAr, STATUS_COLORS,
   robustCopy,
 } from '@/lib/admin-utils';
-import { formatDA } from '@/lib/print-config';
+import { AdminShopManagement } from '@/components/app/admin-shop-management';
 import { ARAB_COUNTRIES } from '@/lib/countries';
 import type { ShopItem } from '@/lib/admin-types';
 
@@ -1373,7 +1373,7 @@ export default function AdminPage() {
       </div>
 
       <InlineCreateShop open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleShopCreated} />
-      <InlineEditShop open={!!editTarget} onClose={() => setEditTarget(null)} shop={editTarget} onSaved={handleShopSaved} />
+      <AdminShopManagement open={!!editTarget} onClose={() => setEditTarget(null)} shop={editTarget} onSaved={handleShopSaved} />
       <InlineShareShop open={!!shareTarget} onClose={() => setShareTarget(null)} shop={shareTarget} />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>

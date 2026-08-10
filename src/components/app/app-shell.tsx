@@ -285,12 +285,12 @@ export function AppShell() {
                   <div className="divider-gold mx-auto w-full max-w-7xl" />
 
                   {/* المحتوى الرئيسي للتذييل */}
-                  <div className="bg-gradient-to-b from-neutral-900 via-neutral-900 to-neutral-950 dark:from-neutral-950 dark:via-black/60 dark:to-black/80">
+                  <div className="bg-gradient-to-b from-[#141416] via-[#111113] to-[#0d0d0f]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-14">
-                      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
 
                         {/* العمود الأول: العلامة التجارية */}
-                        <div className="xs:col-span-2 lg:col-span-1">
+                        <div className="xs:col-span-2 md:col-span-2 lg:col-span-1">
                           <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
                               <Store className="h-5 w-5 text-white" />
@@ -300,7 +300,7 @@ export function AppShell() {
                               <div className="text-[11px] text-amber-300/80 font-medium">اطبع بسهولة</div>
                             </div>
                           </div>
-                          <p className="text-xs sm:text-sm text-neutral-400/80 leading-relaxed max-w-xs">
+                          <p className="text-xs sm:text-sm text-neutral-300/60 leading-relaxed max-w-xs">
                             خدمة طباعة احترافية وسريعة. اطبع مستنداتك وصورك وبطاقاتك أونلاين وتابع طلبك لحظة بلحظة.
                           </p>
                           <div className="flex items-center gap-2.5 mt-5">
@@ -324,18 +324,18 @@ export function AppShell() {
 
                         {/* العمود الثاني: روابط سريعة */}
                         <div>
-                          <h4 className="text-amber-300 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">روابط سريعة</h4>
+                          <h4 className="text-amber-400 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">روابط سريعة</h4>
                           <ul className="space-y-2.5 text-xs sm:text-sm">
-                            <li><button onClick={() => { setFooterOpen(false); setView("new"); }} className="text-neutral-400 hover:text-white transition-colors">طلب طباعة جديد</button></li>
-                            <li><button onClick={() => setView("track")} className="text-neutral-400 hover:text-white transition-colors">تتبّع طلب</button></li>
-                            <li><button onClick={() => setView("repeat")} className="text-neutral-400 hover:text-white transition-colors">إعادة طلب سابق</button></li>
+                            <li><button onClick={() => { setFooterOpen(false); setView("new"); }} className="text-neutral-400/80 hover:text-amber-300 transition-colors">طلب طباعة جديد</button></li>
+                            <li><button onClick={() => setView("track")} className="text-neutral-400/80 hover:text-amber-300 transition-colors">تتبّع طلب</button></li>
+                            <li><button onClick={() => setView("repeat")} className="text-neutral-400/80 hover:text-amber-300 transition-colors">إعادة طلب سابق</button></li>
                           </ul>
                         </div>
 
                         {/* العمود الثالث: خدماتنا */}
                         <div>
-                          <h4 className="text-amber-300 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">خدماتنا</h4>
-                          <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-400">
+                          <h4 className="text-amber-400 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">خدماتنا</h4>
+                          <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-400/80">
                             <li className="flex items-center gap-2"><Printer className="h-3.5 w-3.5 text-amber-400/50 shrink-0" /> طباعة مستند</li>
                             <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">📄</span> نسخ مستندات</li>
                             <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">🖼️</span> طباعة صور</li>
@@ -347,31 +347,31 @@ export function AppShell() {
 
                         {/* العمود الرابع: تواصل معنا */}
                         <div>
-                          <h4 className="text-amber-300 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">تواصل معنا</h4>
+                          <h4 className="text-amber-400 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">تواصل معنا</h4>
                           <ul className="space-y-3 text-xs sm:text-sm">
                             {shop?.address && (
-                              <li className="flex items-start gap-2 text-neutral-400">
-                                <MapPin className="h-3.5 w-3.5 text-amber-400/50 shrink-0 mt-0.5" />
+                              <li className="flex items-start gap-2 text-neutral-400/80">
+                                <MapPin className="h-3.5 w-3.5 text-amber-500/40 shrink-0 mt-0.5" />
                                 <span>{shop.address}</span>
                               </li>
                             )}
                             {displayPhone && (
-                              <li className="flex items-center gap-2 text-neutral-400">
-                                <Phone className="h-3.5 w-3.5 text-amber-400/50 shrink-0" />
+                              <li className="flex items-center gap-2 text-neutral-400/80">
+                                <Phone className="h-3.5 w-3.5 text-amber-500/40 shrink-0" />
                                 <span dir="ltr">{displayPhone}</span>
                               </li>
                             )}
                             {shop?.email && (
-                              <li className="flex items-center gap-2 text-neutral-400">
-                                <Mail className="h-3.5 w-3.5 text-amber-400/50 shrink-0" />
+                              <li className="flex items-center gap-2 text-neutral-400/80">
+                                <Mail className="h-3.5 w-3.5 text-amber-500/40 shrink-0" />
                                 <span>{shop.email}</span>
                               </li>
                             )}
-                            <li className="flex items-start gap-2 pt-2.5 border-t border-white/8">
-                              <Clock className="h-3.5 w-3.5 text-amber-400/50 shrink-0 mt-0.5" />
-                              <div className="text-neutral-400">
+                            <li className="flex items-start gap-2 pt-2.5 border-t border-white/[0.06]">
+                              <Clock className="h-3.5 w-3.5 text-amber-500/40 shrink-0 mt-0.5" />
+                              <div className="text-neutral-400/80">
                                 <div>السبت - الخميس: 8:00 ص — 7:00 م</div>
-                                <div className="text-neutral-500 text-[11px] mt-0.5">الجمعة: مغلق</div>
+                                <div className="text-neutral-500/60 text-[11px] mt-0.5">الجمعة: مغلق</div>
                               </div>
                             </li>
                           </ul>
@@ -379,11 +379,11 @@ export function AppShell() {
                       </div>
 
                       {/* حقوق النشر */}
-                      <div className="mt-8 sm:mt-10 pt-6 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-neutral-500">
+                      <div className="mt-8 md:mt-10 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-neutral-500/60">
                         <div>© {new Date().getFullYear()} {shop?.name || "المتجر"} — جميع الحقوق محفوظة</div>
                         <div className="flex items-center gap-1">
                           <span>مدعوم بـ</span>
-                          <span className="text-amber-400/70 font-semibold">طيف</span>
+                          <span className="text-amber-400 font-semibold">طيف</span>
                         </div>
                       </div>
                     </div>

@@ -58,7 +58,7 @@ export function QuickActions() {
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handleClickOutside);
       document.addEventListener("touchstart", handleClickOutside);
-    }, 100);
+    }, 150);
     return () => {
       clearTimeout(timer);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -66,18 +66,35 @@ export function QuickActions() {
     };
   }, [open]);
 
+  // Close on scroll
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => setOpen(false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   if (view === "admin") return null;
 
   return (
-    <div ref={containerRef} className="fixed bottom-20 right-3 z-50 md:bottom-6 md:right-6 no-print">
+    <div ref={containerRef} className="fixed bottom-20 right-3 z-50 lg:bottom-6 lg:right-6 no-print">
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute bottom-16 right-0 w-44 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl shadow-black/15 dark:shadow-black/40 border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden"
+            className="absolute bottom-16 right-0 w-48 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/50 border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden"
+            style={{ zIndex: 9999 }}
           >
             <div className="p-1.5">
               {ACTIONS.map((item, index) => (
@@ -85,7 +102,7 @@ export function QuickActions() {
                   key={item.action}
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.15 }}
+                  transition={{ delay: index * 0.04, duration: 0.15 }}
                   onClick={() => handleAction(item.action)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-right transition-colors hover:bg-neutral-100 dark:hover:bg-white/5 active:scale-[0.98] ${index < ACTIONS.length - 1 ? "mb-0.5" : ""}`}
                 >
@@ -108,7 +125,7 @@ export function QuickActions() {
         aria-expanded={open}
       >
         <motion.div
-          animate={{ rotate: open ? 90 : 0 }}
+          animate={{ rotate: open ? 135 : 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           {open ? <X className="h-5.5 w-5.5" /> : <Plus className="h-5.5 w-5.5" />}

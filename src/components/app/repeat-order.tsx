@@ -250,9 +250,9 @@ function RepeatOrderCard({
   return (
     <Card className="hover:shadow-md transition-shadow overflow-hidden">
       <CardContent className="p-0">
-        <div className="p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0">
-            <span className="text-xl">{serviceEmoji[order.serviceType] || "🖨️"}</span>
+        <div className="p-3 md:p-4 flex items-start sm:items-center gap-3 sm:gap-4">
+          <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0">
+            <span className="text-lg md:text-xl">{serviceEmoji[order.serviceType] || "🖨️"}</span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -271,32 +271,35 @@ function RepeatOrderCard({
             <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
               <span>{order.pages} صفحة · {order.copies} نسخة</span>
               {order.fileName && (
-                <span className="flex items-center gap-1 truncate max-w-[150px]">
+                <span className="flex items-center gap-1 truncate max-w-[120px] sm:max-w-[150px]">
                   <FileText className="h-3 w-3" />
                   {order.fileName}
                 </span>
               )}
             </div>
           </div>
-          <div className="text-left shrink-0">
-            <div className="text-xs text-muted-foreground">المجموع</div>
-            <div className="font-bold text-amber-700 dark:text-amber-400">{formatDA(order.total)}</div>
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="text-left">
+              <div className="text-[10px] sm:text-xs text-muted-foreground">المجموع</div>
+              <div className="font-bold text-amber-700 dark:text-amber-400">{formatDA(order.total)}</div>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0 bg-neutral-900 hover:bg-neutral-800 text-white text-xs sm:text-sm"
+              onClick={() => {
+                onRepeat(order, selectedFile);
+                toast.success("تم تحميل الطلب للتعديل", {
+                  description: selectedFile
+                    ? "سيتم استخدام الملف الجديد المحدد"
+                    : "عدّل ما تريد ثم أكّد الطلب الجديد",
+                });
+              }}
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span className="hidden xs:inline">تعديل وإعادة</span>
+              <span className="xs:hidden">إعادة</span>
+            </Button>
           </div>
-          <Button
-            size="sm"
-            className="shrink-0 bg-neutral-900 hover:bg-neutral-800 text-white"
-            onClick={() => {
-              onRepeat(order, selectedFile);
-              toast.success("تم تحميل الطلب للتعديل", {
-                description: selectedFile
-                  ? "سيتم استخدام الملف الجديد المحدد"
-                  : "عدّل ما تريد ثم أكّد الطلب الجديد",
-              });
-            }}
-          >
-            <RotateCcw className="h-4 w-4" />
-            تعديل وإعادة
-          </Button>
         </div>
 
         {/* منطقة رفع ملف جديد (اختياري) */}

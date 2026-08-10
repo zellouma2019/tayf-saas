@@ -816,7 +816,7 @@ export default function UploadStep({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="grid grid-cols-3 gap-2"
+          className="grid grid-cols-2 xs:grid-cols-3 gap-2"
         >
           {/* File Picker */}
           <button

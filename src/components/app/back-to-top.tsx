@@ -31,14 +31,14 @@ export function BackToTop() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed bottom-20 right-4 z-30 md:bottom-6 md:right-6 md:z-50"
+          className="fixed bottom-24 right-4 z-40 lg:bottom-6 lg:right-6"
         >
           <button
             onClick={scrollToTop}
             aria-label="العودة للأعلى"
-            className="btn-press w-11 h-11 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all cursor-pointer"
           >
-            <ArrowUp className="h-5 w-5" />
+            <ArrowUp className="h-4 w-4" />
           </button>
         </motion.div>
       )}
