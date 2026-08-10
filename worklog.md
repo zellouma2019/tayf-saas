@@ -41,3 +41,31 @@ Stage Summary:
 - Env vars are correctly configured on Vercel project `tayf-saas`
 - User needs to: delete `my-project` from Vercel, redeploy `tayf-saas`
 - Database (Turso) confirmed working with 8 shops, 20 orders, 19 customers
+---
+Task ID: 2-a
+Agent: Sub-agent
+Task: Fix critical bugs in admin-shop-management.tsx
+
+Work Log:
+- Rewrote `/home/z/my-project/src/components/app/admin-shop-management.tsx` completely
+- SHOP_FEATURES keys already aligned with FeatureKey from shop-features.ts (25 features: 7 free + 18 paid)
+- MERCHANT_ADMIN_TABS keys already use `_tab_` prefix (7 tabs)
+- MERCHANT_PERMISSIONS keys already use `_perm_` prefix (6 permissions)
+- **Fixed 3 "Toggle All" logic bugs**: Changed `!data.features[f.key] === allOn` (broken due to operator precedence) to `!!data.features[f.key] === allOn` for SHOP_FEATURES; changed `isOn === allOn` (with `isOn = data.features[t.key] !== false`) to `!!data.features[t.key] === allOn` for both MERCHANT_ADMIN_TABS and MERCHANT_PERMISSIONS
+- **Fixed boolean handling**: Changed `data.features[t.key] !== false` to `!!data.features[t.key]` in merchant tab and permissions JSX for consistent boolean handling
+- **Paid/free plan auto-enable**: Verified existing logic was correct — paid enables all, free disables only non-free features while keeping tabs/permissions enabled
+- **Style improvements**:
+  - Added "مجاني" badge (emerald Badge) next to free features
+  - Moved "Toggle All" from bottom plain text to top-right styled pill button with rounded-full, colored border/background per section theme
+  - Added `min-w-0` and `truncate` to text containers to prevent overflow
+  - Added `shrink-0` to icon containers and switch wrappers
+- Lint check passes (0 errors in rewritten file)
+
+Stage Summary:
+- ✅ SHOP_FEATURES keys match shop-features.ts FeatureKey type exactly
+- ✅ MERCHANT_ADMIN_TABS use `_tab_` prefix to avoid FeatureKey conflicts
+- ✅ MERCHANT_PERMISSIONS use `_perm_` prefix to avoid FeatureKey conflicts
+- ✅ All 3 "Toggle All" buttons fixed — no more operator precedence bugs
+- ✅ Consistent boolean handling with `!!` throughout
+- ✅ Plan auto-enable/disable logic preserved and correct
+- ✅ Style: free badges, pill toggle buttons, overflow protection

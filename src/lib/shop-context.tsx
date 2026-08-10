@@ -40,7 +40,9 @@ interface ShopContextValue {
   error: string | null;
   /** ميزات المتجر المحلّلة */
   parsedFeatures: ShopFeatures;
-  /** هل ميزة معينة مفعّلة؟ */
+  /** الميزات الخام (تشمل _tab_ و _perm_ والمفاتيح المخصصة) */
+  rawFeatures: Record<string, boolean>;
+  /** هل ميزة معينة مفعّلة؟ (يدعم كل المفاتيح بما فيها المخصصة) */
   hasFeature: (key: string) => boolean;
   /** هل المتجر خطة مدفوعة؟ */
   isPaid: boolean;
@@ -57,6 +59,7 @@ const ShopContext = createContext<ShopContextValue>({
   loading: true,
   error: null,
   parsedFeatures: {},
+  rawFeatures: {},
   hasFeature: () => false as boolean,
   isPaid: false,
   isTrial: false,
@@ -115,9 +118,18 @@ export function ShopProvider({
   }, [fetchShop]);
 
   const shopPlan = state.shop?.plan || "free";
-  // دعم كل قيم الخطة المدفوعة: paid, pro, premium
   const isPaid = shopPlan === "paid" || shopPlan === "pro" || shopPlan === "premium";
   const parsedFeatures = parseFeatures(state.shop?.features, isPaid ? "paid" : shopPlan);
+
+  // تحليل الميزات الخام (بدون تنظيف — يشمل _tab_ و _perm_)
+  let rawFeatures: Record<string, boolean> = {};
+  if (state.shop?.features) {
+    try {
+      rawFeatures = JSON.parse(state.shop.features) as Record<string, boolean>;
+    } catch {
+      rawFeatures = {};
+    }
+  }
 
   // حساب أيام التجربة المتبقية
   let trialDaysLeft: number | null = null;
@@ -132,13 +144,22 @@ export function ShopProvider({
   }
 
   const hasFeature = (key: string) => {
-    // في الخطة المدفوعة: كل الميزات مفعّلة حتى لو لم تكن معرّفة بعد
+    // المفاتيح المخصصة (_tab_, _perm_) — تحقق من rawFeatures
+    if (key.startsWith("_tab_") || key.startsWith("_perm_")) {
+      if (isPaid) return true;
+      // القيمة الافتراضية: مفعّل (للتوافق مع المتاجر القديمة)
+      if (rawFeatures[key] === false) return false;
+      return true;
+    }
+    // الميزات المجانية مفعّلة دائماً
+    if (isFeatureEnabled(null, key as FeatureKey)) return true;
+    // في الخطة المدفوعة: كل الميزات مفعّلة
     if (isPaid) return true;
     return isFeatureEnabled(parsedFeatures, key as FeatureKey);
   };
 
   return (
-    <ShopContext.Provider value={{ ...state, parsedFeatures, hasFeature, isPaid, isTrial, trialDaysLeft, refreshShop }}>
+    <ShopContext.Provider value={{ ...state, parsedFeatures, rawFeatures, hasFeature, isPaid, isTrial, trialDaysLeft, refreshShop }}>
       {children}
     </ShopContext.Provider>
   );

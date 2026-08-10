@@ -27,45 +27,58 @@ import {
 import { toast } from "sonner";
 import { ARAB_COUNTRIES, COUNTRY_CURRENCIES } from "@/lib/countries";
 
-// ===== Feature Definitions =====
+// ===== Feature Definitions — aligned with shop-features.ts FeatureKey =====
 const SHOP_FEATURES = [
-  { key: "aiAssistant", label: "المساعد الذكي", icon: Sparkles, desc: "دردشة AI للإجابة عن أسئلة الزبائن" },
-  { key: "whatsappNotifications", label: "إشعارات واتساب", icon: MessageSquare, desc: "إرسال إشعارات حالة الطلب" },
-  { key: "fileUpload", label: "رفع الملفات", icon: FileUp, desc: "رفع ملفات الطباعة من الزبون" },
-  { key: "orderTracking", label: "تتبّع الطلبات", icon: Clock, desc: "تتبّع حالة الطلب للزبون" },
-  { key: "repeatOrders", label: "إعادة الطلب", icon: Repeat, desc: "إعادة طلب سابق بضغطة" },
-  { key: "loyaltyProgram", label: "برنامج الولاء", icon: Star, desc: "نقاط ومكافآت للعملاء" },
-  { key: "priceCalculator", label: "حاسبة الأسعار", icon: Calculator, desc: "حاسبة أسعار ظاهرة للزبون" },
-  { key: "customerReviews", label: "تقييمات العملاء", icon: Star, desc: "السماح بتقييم الخدمة" },
-  { key: "invoiceGeneration", label: "إنشاء فواتير", icon: Receipt, desc: "فواتير PDF للطلبات" },
-  { key: "bulkOrders", label: "طلبات جماعية", icon: Layers, desc: "طلبات متعددة دفعة واحدة" },
-  { key: "directPrint", label: "طباعة مباشرة", icon: Printer, desc: "طباعة الطلب مباشرة من لوحة التحكم" },
-  { key: "autoReminder", label: "تذكير تلقائي", icon: Bell, desc: "تذكير الزبائن بالطلبات المنسية" },
-  { key: "customBranding", label: "هوية بصرية", icon: Palette, desc: "تخصيص شعار وألوان المتجر" },
-  { key: "multiBranch", label: "فروع متعددة", icon: MapPin, desc: "إدارة عدة فروع من حساب واحد" },
-  { key: "couponSystem", label: "نظام الكوبونات", icon: BadgePercent, desc: "إنشاء أكواد خصم للزبائن" },
-  { key: "deliveryTracking", label: "تتبّع التوصيل", icon: Truck, desc: "تتبع حالة توصيل الطلب" },
-  { key: "customerSupport", label: "دعم الزبائن", icon: Headphones, desc: "نظام تذاكر دعم للزبائن" },
-  { key: "smartPricing", label: "تسعير ذكي", icon: Zap, desc: "أسعار ديناميكية حسب الكمية" },
+  // Free features
+  { key: "orderCreation", label: "إنشاء الطلبات", icon: FileUp, desc: "إنشاء طلبات طباعة جديدة", isFree: true },
+  { key: "orderTracking", label: "تتبّع الطلبات", icon: Clock, desc: "تتبّع حالة الطلب للزبون", isFree: true },
+  { key: "smartFileAnalysis", label: "تحليل الملفات", icon: Globe, desc: "تحليل ذكي للملفات المرفوعة", isFree: true },
+  { key: "darkMode", label: "الوضع الداكن", icon: Languages, desc: "التبديل بين الوضع الفاتح والداكن", isFree: true },
+  { key: "webNotifications", label: "إشعارات الويب", icon: Bell, desc: "إشعارات المتصفح للطلبات الجديدة", isFree: true },
+  { key: "directTrackingLink", label: "رابط التتبّع", icon: Globe, desc: "رابط فريد لتتبّع كل طلب", isFree: true },
+  { key: "rtlSupport", label: "دعم RTL", icon: Languages, desc: "دعم الكتابة من اليمين لليسار", isFree: true },
+  // Paid features
+  { key: "whatsappNotifications", label: "إشعارات واتساب", icon: MessageSquare, desc: "إرسال إشعارات حالة الطلب عبر واتساب", isFree: false },
+  { key: "advancedAnalytics", label: "تحليلات متقدمة", icon: BarChart3, desc: "رسوم بيانية تفصيلية وتحليل الاتجاهات", isFree: false },
+  { key: "receiptPrinting", label: "طباعة إيصال حراري", icon: Receipt, desc: "طباعة إيصال حراري مباشرة لكل طلب", isFree: false },
+  { key: "exportExcel", label: "تصدير Excel", icon: Download, desc: "تصدير الطلبات والزبائن إلى CSV/Excel", isFree: false },
+  { key: "orderKanban", label: "لوحة كانبان", icon: Kanban, desc: "لوحة كانبان بسحب وإفلات بين الحالات", isFree: false },
+  { key: "customerCrm", label: "إدارة العملاء", icon: Users, desc: "قاعدة بيانات شاملة للعملاء", isFree: false },
+  { key: "expenseTracking", label: "إدارة المصاريف", icon: Wallet, desc: "تتبع المصاريف التشغيلية والأرباح", isFree: false },
+  { key: "formTemplates", label: "قوالب النماذج", icon: Layers, desc: "قوالب جاهزة للنماذج الرسمية", isFree: false },
+  { key: "orderInvoice", label: "فواتير PDF", icon: Receipt, desc: "فاتورة PDF احترافية لكل طلب", isFree: false },
+  { key: "aiAssistant", label: "المساعد الذكي", icon: Sparkles, desc: "مساعد ذكي AI للإجابة عن أسئلة الزبائن", isFree: false },
+  { key: "customTheme", label: "تخصيص السمة", icon: Palette, desc: "تخصيص ألوان ومظهر المتجر", isFree: false },
+  { key: "customLogo", label: "شعار مخصص", icon: Store, desc: "إضافة شعار المتجر في الواجهة والفاتورة", isFree: false },
+  { key: "customDomain", label: "مجال خاص", icon: Globe, desc: "ربط المتجر بمجال خاص", isFree: false },
+  { key: "prioritySupport", label: "أولوية الدعم", icon: Headphones, desc: "دعم فني ذو أولوية مع استجابة سريعة", isFree: false },
+  { key: "bulkActions", label: "إجراءات جماعية", icon: Layers, desc: "تحديد عدة طلبات وتغيير حالتها دفعة واحدة", isFree: false },
+  { key: "customPricing", label: "أسعار مخصصة", icon: Calculator, desc: "تعديل سعر كل خدمة ونوع ورق وتجليد", isFree: false },
+  { key: "serviceToggle", label: "تفعيل/تعطيل الخدمات", icon: SlidersHorizontal, desc: "اختيار الخدمات المتاحة للزبائن", isFree: false },
+  { key: "merchantFileDownload", label: "تنزيل ملفات الطلبات", icon: Download, desc: "تنزيل ملفات الزبائن مباشرة", isFree: false },
+  { key: "discountCodes", label: "أكواد الخصم", icon: BadgePercent, desc: "إنشاء أكواد خصم لجذب العملاء", isFree: false },
+  { key: "directPrinting", label: "الطباعة المباشرة", icon: Printer, desc: "طباعة الطلبات مباشرة على الطابعة", isFree: false },
 ];
 
+// ===== تبويبات وحدة تحكم التاجر =====
 const MERCHANT_ADMIN_TABS = [
-  { key: "tabOrders", label: "الطلبات", icon: FileText, desc: "عرض وإدارة الطلبات" },
-  { key: "tabAnalytics", label: "التحليلات", icon: BarChart3, desc: "إحصائيات وتقارير" },
-  { key: "tabCustomers", label: "العملاء", icon: Users, desc: "قائمة العملاء" },
-  { key: "tabExpenses", label: "المصاريف", icon: Wallet, desc: "تتبع المصاريف" },
-  { key: "tabSettings", label: "الإعدادات", icon: Settings, desc: "تعديل الخدمات والأسعار" },
-  { key: "tabKanban", label: "كانبان", icon: Kanban, desc: "لوحة كانبان للطلبات" },
-  { key: "tabTemplates", label: "النماذج", icon: Layers, desc: "قوالب النماذج الرسمية" },
+  { key: "_tab_orders", label: "الطلبات", icon: FileText, desc: "عرض وإدارة الطلبات" },
+  { key: "_tab_analytics", label: "التحليلات", icon: BarChart3, desc: "إحصائيات وتقارير" },
+  { key: "_tab_customers", label: "العملاء", icon: Users, desc: "قائمة العملاء" },
+  { key: "_tab_expenses", label: "المصاريف", icon: Wallet, desc: "تتبع المصاريف" },
+  { key: "_tab_settings", label: "الإعدادات", icon: Settings, desc: "تعديل الخدمات والأسعار" },
+  { key: "_tab_kanban", label: "كانبان", icon: Kanban, desc: "لوحة كانبان للطلبات" },
+  { key: "_tab_templates", label: "النماذج", icon: Layers, desc: "قوالب النماذج الرسمية" },
 ];
 
+// ===== صلاحيات التاجر =====
 const MERCHANT_PERMISSIONS = [
-  { key: "canDeleteOrders", label: "حذف الطلبات", icon: Trash2, desc: "السماح بحذف الطلبات نهائياً" },
-  { key: "canExportData", label: "تصدير البيانات", icon: Download, desc: "تصدير التقارير والطلبات" },
-  { key: "canEditServices", label: "تعديل الخدمات", icon: SlidersHorizontal, desc: "تعديل أسعار وخيارات الخدمات" },
-  { key: "canChangePin", label: "تغيير كلمة المرور", icon: Shield, desc: "السماح بتغيير PIN الإدارة" },
-  { key: "canManageTeam", label: "إدارة الفريق", icon: Users, desc: "إضافة/حذف أعضاء الفريق" },
-  { key: "canViewReports", label: "عرض التقارير", icon: BarChart3, desc: "الوصول لتقارير الأداء" },
+  { key: "_perm_deleteOrders", label: "حذف الطلبات", icon: Trash2, desc: "السماح بحذف الطلبات نهائياً" },
+  { key: "_perm_exportData", label: "تصدير البيانات", icon: Download, desc: "تصدير التقارير والطلبات" },
+  { key: "_perm_editServices", label: "تعديل الخدمات", icon: SlidersHorizontal, desc: "تعديل أسعار وخيارات الخدمات" },
+  { key: "_perm_changePin", label: "تغيير كلمة المرور", icon: Shield, desc: "السماح بتغيير PIN الإدارة" },
+  { key: "_perm_manageTeam", label: "إدارة الفريق", icon: Users, desc: "إضافة/حذف أعضاء الفريق" },
+  { key: "_perm_viewReports", label: "عرض التقارير", icon: BarChart3, desc: "الوصول لتقارير الأداء" },
 ];
 
 const THEME_OPTIONS = [
@@ -158,7 +171,7 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
           next.customCurrency = country.currencyCode;
         }
       }
-      // عند تغيير الخطة إلى مدفوعة، فعّل كل الميزات
+      // عند تغيير الخطة إلى مدفوعة، فعّل كل الميزات والتبويبات والصلاحيات
       if (key === "plan" && val === "paid") {
         const allFeatures: Record<string, boolean> = {};
         SHOP_FEATURES.forEach((f) => { allFeatures[f.key] = true; });
@@ -168,9 +181,10 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
       }
       // عند تغيير الخطة إلى مجانية، أوقف الميزات المدفوعة فقط
       if (key === "plan" && val === "free") {
-        const paidOnly = ["aiAssistant", "loyaltyProgram", "priceCalculator", "multiBranch", "couponSystem", "customerSupport"];
         const updated = { ...prev.features };
-        paidOnly.forEach((k) => { updated[k] = false; });
+        SHOP_FEATURES.forEach((f) => { if (!f.isFree) updated[f.key] = false; });
+        MERCHANT_ADMIN_TABS.forEach((t) => { updated[t.key] = true; });
+        MERCHANT_PERMISSIONS.forEach((p) => { updated[p.key] = true; });
         next.features = updated;
       }
       return next;
@@ -488,9 +502,23 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
               {/* ===== FEATURES TAB ===== */}
               {tab === "features" && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">تفعيل أو تعطيل ميزات المتجر التي تظهر للزبائن</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">تفعيل أو تعطيل ميزات المتجر التي تظهر للزبائن</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allOn = SHOP_FEATURES.every((f) => !!data.features[f.key]);
+                        SHOP_FEATURES.forEach((f) => {
+                          if (!!data.features[f.key] === allOn) toggleFeature(f.key);
+                        });
+                      }}
+                      className="shrink-0 px-3 py-1 rounded-full text-xs font-medium border border-amber-300/50 bg-amber-50/80 text-amber-700 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/30 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+                    >
+                      {SHOP_FEATURES.every((f) => !!data.features[f.key]) ? "إيقاف الكل" : "تفعيل الكل"}
+                    </button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {SHOP_FEATURES.map((f) => {
@@ -505,18 +533,25 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                           }`}
                           onClick={() => toggleFeature(f.key)}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                               enabled ? "bg-amber-100 dark:bg-amber-500/15" : "bg-muted/80"
                             }`}>
                               <f.icon className={`h-4 w-4 ${enabled ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
                             </div>
-                            <div>
-                              <div className="text-sm font-medium">{f.label}</div>
-                              <div className="text-[11px] text-muted-foreground">{f.desc}</div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 text-sm font-medium">
+                                <span className="truncate">{f.label}</span>
+                                {f.isFree && (
+                                  <Badge variant="secondary" className="shrink-0 text-[9px] px-1.5 py-0 h-4 font-normal bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400 border-0">
+                                    مجاني
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground truncate">{f.desc}</div>
                             </div>
                           </div>
-                          <div onClick={(e) => e.stopPropagation()}>
+                          <div className="shrink-0 mr-2" onClick={(e) => e.stopPropagation()}>
                             <Switch
                               checked={enabled}
                               onCheckedChange={() => toggleFeature(f.key)}
@@ -526,20 +561,6 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                         </div>
                       );
                     })}
-                    <div className="sm:col-span-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const allOn = SHOP_FEATURES.every((f) => data.features[f.key]);
-                          SHOP_FEATURES.forEach((f) => {
-                            if (!data.features[f.key] === allOn) toggleFeature(f.key);
-                          });
-                        }}
-                        className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
-                      >
-                        {SHOP_FEATURES.every((f) => data.features[f.key]) ? "إيقاف الكل" : "تفعيل الكل"}
-                      </button>
-                    </div>
                   </div>
                 </div>
               )}
@@ -549,11 +570,25 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                 <div className="space-y-6">
                   {/* Admin tabs visibility */}
                   <div>
-                    <Label className="text-sm font-semibold">تبويبات لوحة تحكم التاجر</Label>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="text-sm font-semibold">تبويبات لوحة تحكم التاجر</Label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allOn = MERCHANT_ADMIN_TABS.every((t) => !!data.features[t.key]);
+                          MERCHANT_ADMIN_TABS.forEach((t) => {
+                            if (!!data.features[t.key] === allOn) toggleFeature(t.key);
+                          });
+                        }}
+                        className="shrink-0 px-3 py-1 rounded-full text-xs font-medium border border-blue-300/50 bg-blue-50/80 text-blue-700 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      >
+                        {MERCHANT_ADMIN_TABS.every((t) => !!data.features[t.key]) ? "إيقاف الكل" : "تفعيل الكل"}
+                      </button>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">تحكم في التبويبات التي تظهر للتاجر في لوحة التحكم</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                       {MERCHANT_ADMIN_TABS.map((t) => {
-                        const enabled = data.features[t.key] !== false;
+                        const enabled = !!data.features[t.key];
                         return (
                           <div
                             key={t.key}
@@ -562,18 +597,18 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                             }`}
                             onClick={() => toggleFeature(t.key)}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                                 enabled ? "bg-blue-100 dark:bg-blue-500/15" : "bg-muted/80"
                               }`}>
                                 <t.icon className={`h-4 w-4 ${enabled ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`} />
                               </div>
-                              <div>
-                                <div className="text-sm font-medium">{t.label}</div>
-                                <div className="text-[11px] text-muted-foreground">{t.desc}</div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium truncate">{t.label}</div>
+                                <div className="text-[11px] text-muted-foreground truncate">{t.desc}</div>
                               </div>
                             </div>
-                            <div onClick={(e) => e.stopPropagation()}>
+                            <div className="shrink-0 mr-2" onClick={(e) => e.stopPropagation()}>
                               <Switch
                                 checked={enabled}
                                 onCheckedChange={() => toggleFeature(t.key)}
@@ -583,21 +618,6 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                           </div>
                         );
                       })}
-                      <div className="sm:col-span-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const allOn = MERCHANT_ADMIN_TABS.every((t) => data.features[t.key] !== false);
-                            MERCHANT_ADMIN_TABS.forEach((t) => {
-                              const isOn = data.features[t.key] !== false;
-                              if (isOn === allOn) toggleFeature(t.key);
-                            });
-                          }}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          {MERCHANT_ADMIN_TABS.every((t) => data.features[t.key] !== false) ? "إيقاف الكل" : "تفعيل الكل"}
-                        </button>
-                      </div>
                     </div>
                   </div>
 
@@ -605,11 +625,25 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
 
                   {/* Merchant permissions */}
                   <div>
-                    <Label className="text-sm font-semibold">صلاحيات التاجر</Label>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="text-sm font-semibold">صلاحيات التاجر</Label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allOn = MERCHANT_PERMISSIONS.every((p) => !!data.features[p.key]);
+                          MERCHANT_PERMISSIONS.forEach((p) => {
+                            if (!!data.features[p.key] === allOn) toggleFeature(p.key);
+                          });
+                        }}
+                        className="shrink-0 px-3 py-1 rounded-full text-xs font-medium border border-emerald-300/50 bg-emerald-50/80 text-emerald-700 dark:text-emerald-400 dark:bg-emerald-500/10 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                      >
+                        {MERCHANT_PERMISSIONS.every((p) => !!data.features[p.key]) ? "إيقاف الكل" : "تفعيل الكل"}
+                      </button>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">تحكم في الأفعال التي يمكن للتاجر القيام بها</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                       {MERCHANT_PERMISSIONS.map((p) => {
-                        const enabled = data.features[p.key] !== false;
+                        const enabled = !!data.features[p.key];
                         return (
                           <div
                             key={p.key}
@@ -618,18 +652,18 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                             }`}
                             onClick={() => toggleFeature(p.key)}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                                 enabled ? "bg-emerald-100 dark:bg-emerald-500/15" : "bg-muted/80"
                               }`}>
                                 <p.icon className={`h-4 w-4 ${enabled ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
                               </div>
-                              <div>
-                                <div className="text-sm font-medium">{p.label}</div>
-                                <div className="text-[11px] text-muted-foreground">{p.desc}</div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium truncate">{p.label}</div>
+                                <div className="text-[11px] text-muted-foreground truncate">{p.desc}</div>
                               </div>
                             </div>
-                            <div onClick={(e) => e.stopPropagation()}>
+                            <div className="shrink-0 mr-2" onClick={(e) => e.stopPropagation()}>
                               <Switch
                                 checked={enabled}
                                 onCheckedChange={() => toggleFeature(p.key)}
@@ -639,21 +673,6 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                           </div>
                         );
                       })}
-                      <div className="sm:col-span-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const allOn = MERCHANT_PERMISSIONS.every((p) => data.features[p.key] !== false);
-                            MERCHANT_PERMISSIONS.forEach((p) => {
-                              const isOn = data.features[p.key] !== false;
-                              if (isOn === allOn) toggleFeature(p.key);
-                            });
-                          }}
-                          className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
-                        >
-                          {MERCHANT_PERMISSIONS.every((p) => data.features[p.key] !== false) ? "إيقاف الكل" : "تفعيل الكل"}
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>

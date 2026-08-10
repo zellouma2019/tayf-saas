@@ -1,0 +1,1379 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useMemo, useRef, useState } from "react";
+     4→import { useQuery } from "@tanstack/react-query";
+     5→import {
+     6→  Card,
+     7→  CardContent,
+     8→  CardHeader,
+     9→  CardTitle,
+    10→} from "@/components/ui/card";
+    11→import { Button } from "@/components/ui/button";
+    12→import { Input } from "@/components/ui/input";
+    13→import {
+    14→  Select,
+    15→  SelectContent,
+    16→  SelectItem,
+    17→  SelectTrigger,
+    18→  SelectValue,
+    19→} from "@/components/ui/select";
+    20→import {
+    21→  Table,
+    22→  TableBody,
+    23→  TableHead,
+    24→  TableHeader,
+    25→  TableRow,
+    26→} from "@/components/ui/table";
+    27→import {
+    28→  DropdownMenu,
+    29→  DropdownMenuContent,
+    30→  DropdownMenuItem,
+    31→  DropdownMenuTrigger,
+    32→} from "@/components/ui/dropdown-menu";
+    33→import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+    34→import {
+    35→  Package,
+    36→  DollarSign,
+    37→  TrendingUp,
+    38→  Clock,
+    39→  Search,
+    40→  MoreHorizontal,
+    41→  RefreshCw,
+    42→  Inbox,
+    43→  Settings,
+    44→  ListOrdered,
+    45→  ChevronLeft,
+    46→  FileText,
+    47→  Download,
+    48→  BarChart3,
+    49→  Trash2,
+    50→  Table2,
+    51→  Users,
+    52→  Bell,
+    53→  Wallet,
+    54→  Copy,
+    55→  Calendar,
+    56→  ChevronDown,
+    57→  X,
+    58→  SlidersHorizontal,
+    59→} from "lucide-react";
+    60→import { motion, AnimatePresence } from "framer-motion";
+    61→import { toast } from "sonner";
+    62→import {
+    63→  STATUS_META,
+    64→  STATUS_FLOW,
+    65→  formatDA,
+    66→  formatDateTimeAr,
+    67→} from "@/lib/print-config";
+    68→import type { PrintOrderLite } from "@/lib/order-types";
+    69→import { cn } from "@/lib/utils";
+    70→import { useAppStore } from "@/lib/store";
+    71→import { OrderDetailsRow } from "@/components/app/order-details-row";
+    72→import { OrderDetailModal } from "@/components/app/order-detail-modal";
+    73→import { AdminSettings } from "@/components/app/admin-settings";
+    74→import { AdminAnalytics } from "@/components/app/admin-analytics";
+    75→import { AdminCustomers } from "@/components/app/admin-customers";
+    76→import { KanbanBoard } from "@/components/app/kanban-board";
+    77→import { AdminExpenses } from "@/components/app/admin-expenses";
+    78→import { AdminShortcuts } from "@/components/app/admin-shortcuts";
+    79→import {
+    80→  translateOptionKey,
+    81→  translateOptionValue,
+    82→  HIDDEN_OPTION_KEYS,
+    83→} from "@/lib/option-translations";
+    84→
+    85→interface Notification {
+    86→  id: string;
+    87→  type: "new_order" | "status_change" | "stale_order" | "system";
+    88→  title: string;
+    89→  body: string;
+    90→  orderId?: string;
+    91→  read: boolean;
+    92→  createdAt: string;
+    93→}
+    94→
+    95→/// هل الملف من نوع صورة؟
+    96→function isImageFile(fileType: string | null): boolean {
+    97→  if (!fileType) return false;
+    98→  const t = fileType.toUpperCase();
+    99→  return ["JPG", "JPEG", "PNG", "WEBP", "GIF"].includes(t);
+   100→}
+   101→
+   102→/// هل الملف PDF؟
+   103→function isPdfFile(fileType: string | null): boolean {
+   104→  if (!fileType) return false;
+   105→  return fileType.toUpperCase() === "PDF";
+   106→}
+   107→
+   108→/// تنزيل ملف من رابط
+   109→function downloadFile(url: string, fileName: string) {
+   110→  const a = document.createElement("a");
+   111→  a.href = url;
+   112→  a.download = fileName;
+   113→  document.body.appendChild(a);
+   114→  a.click();
+   115→  document.body.removeChild(a);
+   116→}
+   117→
+   118→interface AdminStats {
+   119→  totalOrders: number;
+   120→  totalRevenue: number;
+   121→  totalExpenses: number;
+   122→  profit: number;
+   123→  todayOrders: number;
+   124→  statusCounts: Record<string, number>;
+   125→  serviceCounts: { serviceType: string; count: number; revenue: number }[];
+   126→  recentOrders: PrintOrderLite[];
+   127→}
+   128→
+   129→interface AdminPanelProps {
+   130→  onRefresh: () => void;
+   131→}
+   132→
+   133→const SERVICE_EMOJI: Record<string, string> = {
+   134→  document: "🖨️",
+   135→  photo: "🖼️",
+   136→  binding: "📚",
+   137→  copy: "📄",
+   138→  card: "🪪",
+   139→  poster: "📜",
+   140→};
+   141→
+   142→export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
+   143→  const [stats, setStats] = useState<AdminStats | null>(null);
+   144→  const [orders, setOrders] = useState<PrintOrderLite[]>([]);
+   145→  const [loading, setLoading] = useState(true);
+   146→  const adminCode = useAppStore((s) => s.adminCode);
+   147→  const adminHeaders: Record<string, string> = { "x-admin-code": adminCode };
+   148→
+   149→  const [search, setSearch] = useState("");
+   150→  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+   151→  const [serviceFilters, setServiceFilters] = useState<string[]>([]);
+   152→  const [dateFrom, setDateFrom] = useState("");
+   153→  const [dateTo, setDateTo] = useState("");
+   154→  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+   155→  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+   156→  const [exporting, setExporting] = useState(false);
+   157→  const [deleting, setDeleting] = useState(false);
+   158→  const [batchStatusLoading, setBatchStatusLoading] = useState(false);
+   159→  const [detailOrder, setDetailOrder] = useState<PrintOrderLite | null>(null);
+   160→  const [notifications, setNotifications] = useState<Notification[]>([]);
+   161→  const [showNotif, setShowNotif] = useState(false);
+   162→  const [lastCheck, setLastCheck] = useState(() => new Date().toISOString());
+   163→  const notifRef = useRef<HTMLDivElement>(null);
+   164→  const searchRef = useRef<HTMLInputElement>(null);
+   165→  const [activeTab, setActiveTab] = useState("orders");
+   166→
+   167→  // ===== بيانات الفلاتر المتقدمة =====
+   168→  const ALL_STATUSES = ["pending", "printing", "ready", "delivered", "cancelled"];
+   169→  const STATUS_SHORT: Record<string, string> = {
+   170→    pending: "معلّق", printing: "يطبع", ready: "جاهز",
+   171→    delivered: "تم التسليم", cancelled: "ملغي",
+   172→  };
+   173→  const SERVICE_FILTER_LIST = [
+   174→    { type: "document", label: "مستند", emoji: "📄" },
+   175→    { type: "photo", label: "صور", emoji: "🖼️" },
+   176→    { type: "binding", label: "تجليد", emoji: "📚" },
+   177→    { type: "copy", label: "نسخ", emoji: "📋" },
+   178→    { type: "card", label: "بطاقات", emoji: "🪪" },
+   179→    { type: "poster", label: "ملصقات", emoji: "📜" },
+   180→  ];
+   181→
+   182→  const statusCounts = useMemo(() => {
+   183→    const counts: Record<string, number> = {};
+   184→    ALL_STATUSES.forEach((s) => (counts[s] = 0));
+   185→    orders.forEach((o) => { if (counts[o.status] !== undefined) counts[o.status]++; });
+   186→    return counts;
+   187→  }, [orders]);
+   188→
+   189→  const serviceCounts = useMemo(() => {
+   190→    const counts: Record<string, number> = {};
+   191→    SERVICE_FILTER_LIST.forEach((s) => (counts[s.type] = 0));
+   192→    orders.forEach((o) => { if (counts[o.serviceType] !== undefined) counts[o.serviceType]++; });
+   193→    return counts;
+   194→  }, [orders]);
+   195→
+   196→  const hasActiveFilters = statusFilters.length > 0 || serviceFilters.length > 0 || !!dateFrom || !!dateTo;
+   197→
+   198→  function toggleStatusFilter(status: string) {
+   199→    setStatusFilters((prev) => {
+   200→      const next = prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status];
+   201→      return next.length === ALL_STATUSES.length ? [] : next;
+   202→    });
+   203→  }
+   204→
+   205→  function toggleServiceFilter(type: string) {
+   206→    setServiceFilters((prev) => {
+   207→      const next = prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type];
+   208→      return next.length === SERVICE_FILTER_LIST.length ? [] : next;
+   209→    });
+   210→  }
+   211→
+   212→  function clearAllFilters() {
+   213→    setStatusFilters([]);
+   214→    setServiceFilters([]);
+   215→    setDateFrom("");
+   216→    setDateTo("");
+   217→    setSearch("");
+   218→  }
+   219→
+   220→  // ===== Polling notifications every 30s =====
+   221→  useEffect(() => {
+   222→    async function fetchNotifs() {
+   223→      try {
+   224→        const res = await fetch(`/api/notifications?since=${encodeURIComponent(lastCheck)}`, {
+   225→          headers: adminHeaders,
+   226→        });
+   227→        if (res.ok) {
+   228→          const data = await res.json();
+   229→          setNotifications((prev) => {
+   230→            const ids = new Set(prev.map((n) => n.id));
+   231→            const fresh = (data.notifications as Notification[]).filter((n) => !ids.has(n.id));
+   232→            return [...fresh, ...prev].slice(0, 30);
+   233→          });
+   234→          setLastCheck(new Date().toISOString());
+   235→        }
+   236→      } catch {
+   237→        /* silent */
+   238→      }
+   239→    }
+   240→    fetchNotifs();
+   241→    const interval = setInterval(fetchNotifs, 30_000);
+   242→    return () => clearInterval(interval);
+   243→  }, [lastCheck]);
+   244→
+   245→  // Close notification dropdown on outside click
+   246→  useEffect(() => {
+   247→    function handleClick(e: MouseEvent) {
+   248→      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+   249→        setShowNotif(false);
+   250→      }
+   251→    }
+   252→    document.addEventListener("mousedown", handleClick);
+   253→    return () => document.removeEventListener("mousedown", handleClick);
+   254→  }, []);
+   255→
+   256→  const unreadCount = notifications.filter((n) => !n.read).length;
+   257→
+   258→  async function exportXLSX() {
+   259→    setExporting(true);
+   260→    try {
+   261→      const res = await fetch("/api/orders/export", { method: "POST", headers: adminHeaders });
+   262→      if (!res.ok) throw new Error();
+   263→      const blob = await res.blob();
+   264→      const url = URL.createObjectURL(blob);
+   265→      const a = document.createElement("a");
+   266→      a.href = url;
+   267→      a.download = "تقرير-الطلبات.xlsx";
+   268→      document.body.appendChild(a);
+   269→      a.click();
+   270→      document.body.removeChild(a);
+   271→      URL.revokeObjectURL(url);
+   272→      toast.success("تم تصدير الملف بنجاح", {
+   273→        description: "ملف Excel يحتوي كل الطلبات والإحصائيات",
+   274→      });
+   275→    } catch {
+   276→      toast.error("فشل التصدير", { description: "جاري تجربة مرة أخرى..." });
+   277→    } finally {
+   278→      setExporting(false);
+   279→    }
+   280→  }
+   281→
+   282→  // ===== TanStack Query: إحصائيات مع كاش تلقائي =====
+   283→  const { data: queryStats } = useQuery({
+   284→    queryKey: ["admin-stats"],
+   285→    queryFn: () => fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
+   286→    staleTime: 15 * 1000,
+   287→    refetchInterval: 60 * 1000,
+   288→  });
+   289→
+   290→  // مزامنة بيانات Query مع الحالة المحلية
+   291→  useEffect(() => {
+   292→    if (queryStats) setStats(queryStats);
+   293→  }, [queryStats]);
+   294→
+   295→  function loadAll() {
+   296→    setLoading(true);
+   297→    Promise.all([
+   298→      fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
+   299→      fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
+   300→    ])
+   301→      .then(([s, o]) => {
+   302→        if (s) setStats(s);
+   303→        const rawOrders = Array.isArray(o?.orders) ? o.orders : [];
+   304→        // تأمين بيانات العميل لكل طلب
+   305→        const safeOrders = rawOrders.map((order: Record<string, unknown>) => ({
+   306→          ...order,
+   307→          customer: order.customer && typeof order.customer === "object"
+   308→            ? { name: "", phone: "", deliveryMethod: "pickup", ...order.customer }
+   309→            : { name: "", phone: "", deliveryMethod: "pickup" },
+   310→        }));
+   311→        setOrders(safeOrders);
+   312→      })
+   313→      .catch((err) => {
+   314→        console.error("loadAll error:", err);
+   315→        setOrders([]);
+   316→      })
+   317→      .finally(() => setLoading(false));
+   318→  }
+   319→
+   320→  useEffect(() => {
+   321→    loadAll();
+   322→  }, []);
+   323→
+   324→  // تصفية: حالة + بحث + تاريخ
+   325→  const filteredOrders = useMemo(() => {
+   326→    let list = orders;
+   327→    if (statusFilters.length > 0) {
+   328→      list = list.filter((o) => statusFilters.includes(o.status));
+   329→    }
+   330→    if (serviceFilters.length > 0) {
+   331→      list = list.filter((o) => serviceFilters.includes(o.serviceType));
+   332→    }
+   333→    if (search) {
+   334→      const q = search.toLowerCase();
+   335→      list = list.filter(
+   336→        (x) =>
+   337→          x.reference.toLowerCase().includes(q) ||
+   338→          (x.customer?.name || "").toLowerCase().includes(q) ||
+   339→          (x.customer?.phone || "").includes(q),
+   340→      );
+   341→    }
+   342→    if (dateFrom) {
+   343→      const from = new Date(dateFrom);
+   344→      from.setHours(0, 0, 0, 0);
+   345→      list = list.filter((o) => new Date(o.createdAt) >= from);
+   346→    }
+   347→    if (dateTo) {
+   348→      const to = new Date(dateTo);
+   349→      to.setHours(23, 59, 59, 999);
+   350→      list = list.filter((o) => new Date(o.createdAt) <= to);
+   351→    }
+   352→    return list;
+   353→  }, [orders, statusFilters, serviceFilters, search, dateFrom, dateTo]);
+   354→
+   355→  async function changeStatus(order: PrintOrderLite, status: string) {
+   356→    try {
+   357→      const res = await fetch(`/api/orders/${order.id}`, {
+   358→        method: "PUT",
+   359→        headers: { "Content-Type": "application/json", ...adminHeaders },
+   360→        body: JSON.stringify({ status }),
+   361→      });
+   362→      if (!res.ok) throw new Error("فشل التحديث");
+   363→      toast.success("تم تحديث الحالة", {
+   364→        description: `${order.reference} → ${STATUS_META[status].label}`,
+   365→      });
+   366→      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+   367→      loadAll();
+   368→    } catch (e) {
+   369→      toast.error("خطأ", { description: (e as Error).message });
+   370→    }
+   371→  }
+   372→
+   373→  async function cloneOrder(order: PrintOrderLite) {
+   374→    try {
+   375→      const payload = {
+   376→        serviceType: order.serviceType,
+   377→        fileName: order.fileName,
+   378→        fileType: order.fileType,
+   379→        fileSize: order.fileSize,
+   380→        fileData: order.fileData,
+   381→        smartAnalysis: order.smartAnalysis,
+   382→        options: order.options,
+   383→        customer: order.customer,
+   384→        delivery: order.delivery,
+   385→      };
+   386→      const res = await fetch("/api/orders", {
+   387→        method: "POST",
+   388→        headers: { "Content-Type": "application/json" },
+   389→        body: JSON.stringify(payload),
+   390→      });
+   391→      if (!res.ok) throw new Error("فشل نسخ الطلب");
+   392→      toast.success("تم نسخ الطلب بنجاح");
+   393→      loadAll();
+   394→    } catch (e) {
+   395→      toast.error("خطأ في نسخ الطلب", { description: (e as Error).message });
+   396→    }
+   397→  }
+   398→
+   399→  function toggleSelect(id: string) {
+   400→    setSelectedIds((prev) => {
+   401→      const next = new Set(prev);
+   402→      if (next.has(id)) next.delete(id);
+   403→      else next.add(id);
+   404→      return next;
+   405→    });
+   406→  }
+   407→
+   408→  function toggleSelectAll() {
+   409→    if (selectedIds.size === filteredOrders.length) {
+   410→      setSelectedIds(new Set());
+   411→    } else {
+   412→      setSelectedIds(new Set(filteredOrders.map((o) => o.id)));
+   413→    }
+   414→  }
+   415→
+   416→  async function batchChangeStatus(status: string) {
+   417→    if (selectedIds.size === 0) return;
+   418→    setBatchStatusLoading(true);
+   419→    try {
+   420→      const ids = Array.from(selectedIds);
+   421→      await Promise.all(
+   422→        ids.map((id) =>
+   423→          fetch(`/api/orders/${id}`, {
+   424→            method: "PUT",
+   425→            headers: { "Content-Type": "application/json", ...adminHeaders },
+   426→            body: JSON.stringify({ action: "status", status }),
+   427→          }),
+   428→        ),
+   429→      );
+   430→      toast.success(`تم تغيير حالة ${ids.length} طلب إلى ${STATUS_META[status].label}`);
+   431→      setSelectedIds(new Set());
+   432→      loadAll();
+   433→    } catch (e) {
+   434→      toast.error("خطأ في تغيير الحالة", { description: (e as Error).message });
+   435→    } finally {
+   436→      setBatchStatusLoading(false);
+   437→    }
+   438→  }
+   439→
+   440→  async function deleteSelected() {
+   441→    if (selectedIds.size === 0) return;
+   442→    setDeleting(true);
+   443→    try {
+   444→      const ids = Array.from(selectedIds);
+   445→      await Promise.all(ids.map((id) => fetch(`/api/orders/${id}`, { method: "DELETE", headers: adminHeaders })));
+   446→      toast.success("تم حذف الطلبات المحددة", { description: `${ids.length} طلب` });
+   447→      setSelectedIds(new Set());
+   448→      loadAll();
+   449→    } catch (e) {
+   450→      toast.error("خطأ في الحذف", { description: (e as Error).message });
+   451→    } finally {
+   452→      setDeleting(false);
+   453→    }
+   454→  }
+   455→
+   456→  const statCards = [
+   457→    {
+   458→      title: "إجمالي الطلبات",
+   459→      value: stats?.totalOrders ?? 0,
+   460→      icon: Package,
+   461→      color: "text-blue-600 dark:text-blue-400",
+   462→      bg: "bg-blue-50 dark:bg-blue-950/50",
+   463→      ring: "ring-blue-200 dark:ring-blue-800/40",
+   464→    },
+   465→    {
+   466→      title: "إجمالي الإيرادات",
+   467→      value: formatDA(stats?.totalRevenue ?? 0),
+   468→      icon: DollarSign,
+   469→      color: "text-emerald-600 dark:text-emerald-400",
+   470→      bg: "bg-emerald-50 dark:bg-emerald-950/50",
+   471→      ring: "ring-emerald-200 dark:ring-emerald-800/40",
+   472→    },
+   473→    {
+   474→      title: "طلبات اليوم",
+   475→      value: stats?.todayOrders ?? 0,
+   476→      icon: TrendingUp,
+   477→      color: "text-amber-600 dark:text-amber-400",
+   478→      bg: "bg-amber-50 dark:bg-amber-950/50",
+   479→      ring: "ring-amber-200 dark:ring-amber-800/40",
+   480→    },
+   481→    {
+   482→      title: "قيد الطباعة",
+   483→      value: (stats?.statusCounts?.printing ?? 0) + (stats?.statusCounts?.pending ?? 0),
+   484→      icon: Clock,
+   485→      color: "text-rose-600 dark:text-rose-400",
+   486→      bg: "bg-rose-50 dark:bg-rose-950/50",
+   487→      ring: "ring-rose-200 dark:ring-rose-800/40",
+   488→    },
+   489→    {
+   490→      title: "صافي الربح",
+   491→      value: formatDA(stats?.profit ?? 0),
+   492→      icon: Wallet,
+   493→      color: (stats?.profit ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+   494→      bg: (stats?.profit ?? 0) >= 0 ? "bg-emerald-50 dark:bg-emerald-950/50" : "bg-red-50 dark:bg-red-950/50",
+   495→      ring: (stats?.profit ?? 0) >= 0 ? "ring-emerald-200 dark:ring-emerald-800/40" : "ring-red-200 dark:ring-red-800/40",
+   496→    },
+   497→  ];
+   498→
+   499→  return (
+   500→    <div className="space-y-6">
+   501→      {/* بطاقات الإحصائيات */}
+   502→      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+   503→        {statCards.map((c, i) => (
+   504→          <Card key={i} className="enhanced-card border shadow-sm">
+   505→            <CardContent className="p-3 md:p-5">
+   506→              <div className="flex items-start justify-between">
+   507→                <div className="min-w-0">
+   508→                  <div className="text-base md:text-2xl font-bold tabular-nums truncate">{c.value}</div>
+   509→                  <div className="text-xs md:text-xs text-muted-foreground mt-1">{c.title}</div>
+   510→                </div>
+   511→                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl ${c.bg} ring-1 ${c.ring} flex items-center justify-center shrink-0`}>
+   512→                  <c.icon className={`h-4 w-4 md:h-5 md:w-5 ${c.color}`} />
+   513→                </div>
+   514→              </div>
+   515→            </CardContent>
+   516→          </Card>
+   517→        ))}
+   518→      </div>
+   519→
+   520→      {/* اختصارات لوحة المفاتيح */}
+   521→      <AdminShortcuts
+   522→        onSearchFocus={() => {
+   523→          setActiveTab("orders");
+   524→          setTimeout(() => searchRef.current?.focus(), 100);
+   525→        }}
+   526→        onRefresh={loadAll}
+   527→        activeTab={activeTab}
+   528→        onTabChange={setActiveTab}
+   529→      />
+   530→      <div className="text-[10px] text-muted-foreground/60 px-1 -mt-2 mb-2 hidden md:block">
+   531→        اختصارات: Ctrl+K بحث · 1-6 تبويبات · Ctrl+R تحديث
+   532→      </div>
+   533→
+   534→      {/* التبويبات: الطلبات + الإعدادات */}
+   535→      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+   536→        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 max-w-3xl">
+   537→          <TabsTrigger value="orders" className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+   538→            <ListOrdered className="h-4 w-4" />
+   539→            <span className="hidden sm:inline">الطلبات</span>
+   540→            <span className="sm:hidden">طلبات</span>
+   541→          </TabsTrigger>
+   542→          <TabsTrigger value="kanban" className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+   543→            <Table2 className="h-4 w-4" />
+   544→            <span className="hidden sm:inline">سبورة الطلبات</span>
+   545→            <span className="sm:hidden">سبورة</span>
+   546→          </TabsTrigger>
+   547→          <TabsTrigger value="analytics" className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+   548→            <BarChart3 className="h-4 w-4" />
+   549→            <span className="hidden sm:inline">التحليلات</span>
+   550→            <span className="sm:hidden">تحليلات</span>
+   551→          </TabsTrigger>
+   552→          <TabsTrigger value="customers" className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+   553→            <Users className="h-4 w-4" />
+   554→            <span className="hidden sm:inline">العملاء</span>
+   555→            <span className="sm:hidden">عملاء</span>
+   556→          </TabsTrigger>
+   557→          <TabsTrigger value="expenses" className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+   558→            <Wallet className="h-4 w-4" />
+   559→            <span className="hidden sm:inline">المصاريف</span>
+   560→            <span className="sm:hidden">مصاريف</span>
+   561→          </TabsTrigger>
+   562→          <TabsTrigger value="settings" className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+   563→            <Settings className="h-4 w-4" />
+   564→            <span className="hidden sm:inline">الإعدادات</span>
+   565→            <span className="sm:hidden">إعدادات</span>
+   566→          </TabsTrigger>
+   567→        </TabsList>
+   568→
+   569→        {/* ===== تبويب الطلبات ===== */}
+   570→        <TabsContent value="orders" className="space-y-3 mt-4">
+   571→          {/* صف الملخص */}
+   572→          <div className="flex items-center justify-between gap-2 px-1 text-xs">
+   573→            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+   574→              <span className="flex items-center gap-1.5 text-muted-foreground">
+   575→                <Package className="h-3.5 w-3.5" />
+   576→                عرض
+   577→                <span className="font-bold text-neutral-900 tabular-nums">
+   578→                  {filteredOrders.length}
+   579→                </span>
+   580→                من
+   581→                <span className="font-bold text-neutral-900 tabular-nums">
+   582→                  {orders.length}
+   583→                </span>
+   584→                طلب
+   585→              </span>
+   586→              {hasActiveFilters && (
+   587→                <button
+   588→                  onClick={clearAllFilters}
+   589→                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+   590→                >
+   591→                  <X className="h-3 w-3" />
+   592→                  مسح الفلاتر
+   593→                </button>
+   594→              )}
+   595→            </div>
+   596→            <span className="text-muted-foreground tabular-nums shrink-0 hidden sm:flex items-center gap-1">
+   597→              <Clock className="h-3.5 w-3.5" />
+   598→              {stats?.todayOrders ?? 0} طلب اليوم
+   599→            </span>
+   600→            <button
+   601→              onClick={exportXLSX}
+   602→              disabled={exporting}
+   603→              className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 border border-emerald-200 disabled:border-emerald-100"
+   604→              title="تصدير ملف Excel"
+   605→            >
+   606→              {exporting ? (
+   607→                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+   608→              ) : (
+   609→                <Download className="h-3.5 w-3.5" />
+   610→              )}
+   611→              <span className="hidden sm:inline">تصدير Excel</span>
+   612→            </button>
+   613→          </div>
+   614→
+   615→          {/* شريط البحث والفلاتر المتقدمة */}
+   616→          <div className="space-y-2.5">
+   617→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+   618→              <div className="relative">
+   619→                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   620→                <Input
+   621→                  ref={searchRef}
+   622→                  value={search}
+   623→                  onChange={(e) => setSearch(e.target.value)}
+   624→                  placeholder="ابحث برقم الطلب أو اسم/هاتف العميل..."
+   625→                  className="pr-9 text-sm h-9"
+   626→                />
+   627→              </div>
+   628→              <div className="flex gap-2 items-center">
+   629→                {/* زر الفلاتر المتقدمة */}
+   630→                <Button
+   631→                  variant={showAdvancedFilters ? "default" : "outline"}
+   632→                  onClick={() => setShowAdvancedFilters((v) => !v)}
+   633→                  className={cn(
+   634→                    "h-9 text-xs gap-1.5 flex-1 sm:flex-none",
+   635→                    showAdvancedFilters
+   636→                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+   637→                      : "",
+   638→                  )}
+   639→                >
+   640→                  <SlidersHorizontal className="h-3.5 w-3.5" />
+   641→                  <span>فلاتر متقدمة</span>
+   642→                  <ChevronDown
+   643→                    className={cn(
+   644→                      "h-3.5 w-3.5 transition-transform duration-200",
+   645→                      showAdvancedFilters && "rotate-180",
+   646→                    )}
+   647→                  />
+   648→                </Button>
+   649→                {/* جرس الإشعارات */}
+   650→                <div ref={notifRef} className="relative shrink-0">
+   651→                  <Button
+   652→                    variant="outline"
+   653→                    size="icon"
+   654→                    onClick={() => setShowNotif((v) => !v)}
+   655→                    className="relative h-9 w-9"
+   656→                  >
+   657→                    <Bell className="h-4 w-4" />
+   658→                    {unreadCount > 0 && (
+   659→                      <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none">
+   660→                        {unreadCount > 9 ? "9+" : unreadCount}
+   661→                      </span>
+   662→                    )}
+   663→                  </Button>
+   664→                  {showNotif && (
+   665→                    <div className="absolute top-full left-0 mt-1 z-50 w-72 sm:w-80 rounded-xl border bg-background shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
+   666→                      <div className="flex items-center justify-between px-3 py-2 border-b">
+   667→                        <span className="text-xs font-bold">الإشعارات</span>
+   668→                        {notifications.length > 0 && (
+   669→                          <button
+   670→                            onClick={() => {
+   671→                              setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+   672→                            }}
+   673→                            className="text-[10px] text-muted-foreground hover:text-foreground"
+   674→                          >
+   675→                            تعيين الكل كمقروء
+   676→                          </button>
+   677→                        )}
+   678→                      </div>
+   679→                      <div className="max-h-80 overflow-y-auto">
+   680→                        {notifications.length === 0 ? (
+   681→                          <div className="py-8 text-center text-xs text-muted-foreground">لا توجد إشعارات</div>
+   682→                        ) : (
+   683→                          notifications.map((n) => (
+   684→                            <button
+   685→                              key={n.id}
+   686→                              onClick={() => {
+   687→                                if (n.orderId) {
+   688→                                  const found = orders.find((o) => o.id === n.orderId);
+   689→                                  if (found) setDetailOrder(found);
+   690→                                }
+   691→                                setShowNotif(false);
+   692→                              }}
+   693→                              className={cn(
+   694→                                "w-full text-right px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/50 transition-colors",
+   695→                                !n.read && "bg-rose-50/40",
+   696→                              )}
+   697→                            >
+   698→                              <div className="flex items-start gap-2">
+   699→                                <span className="text-sm mt-0.5 shrink-0">
+   700→                                  {n.type === "new_order" ? "🆕" : n.type === "stale_order" ? "⏰" : "🔔"}
+   701→                                </span>
+   702→                                <div className="min-w-0 flex-1">
+   703→                                  <div className="text-xs font-bold text-foreground">{n.title}</div>
+   704→                                  <div className="text-xs text-muted-foreground mt-0.5 truncate">{n.body}</div>
+   705→                                  <div className="text-[10px] text-muted-foreground/60 mt-0.5">
+   706→                                    {formatDateTimeAr(n.createdAt)}
+   707→                                  </div>
+   708→                                </div>
+   709→                                {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 mt-1.5" />}
+   710→                              </div>
+   711→                            </button>
+   712→                          ))
+   713→                        )}
+   714→                      </div>
+   715→                    </div>
+   716→                  )}
+   717→                </div>
+   718→                <Button variant="outline" size="icon" onClick={loadAll} className="shrink-0 h-9 w-9">
+   719→                  <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+   720→                </Button>
+   721→              </div>
+   722→            </div>
+   723→
+   724→            {/* الفلاتر المتقدمة - قابلة للطي */}
+   725→            <AnimatePresence initial={false}>
+   726→              {showAdvancedFilters && (
+   727→                <motion.div
+   728→                  initial={{ height: 0, opacity: 0 }}
+   729→                  animate={{ height: "auto", opacity: 1 }}
+   730→                  exit={{ height: 0, opacity: 0 }}
+   731→                  transition={{ duration: 0.25, ease: "easeInOut" }}
+   732→                  className="overflow-hidden"
+   733→                >
+   734→                  <div className="bg-muted/30 rounded-xl p-4 space-y-4">
+   735→                    {/* فلاتر الحالة */}
+   736→                    <div>
+   737→                      <div className="text-xs font-semibold text-muted-foreground mb-2">الحالة</div>
+   738→                      <div className="flex flex-wrap gap-1.5">
+   739→                        <button
+   740→                          onClick={() => setStatusFilters([])}
+   741→                          className={cn(
+   742→                            "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+   743→                            statusFilters.length === 0
+   744→                              ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+   745→                              : "bg-background hover:bg-muted border-border text-foreground",
+   746→                          )}
+   747→                        >
+   748→                          الكل
+   749→                          <span
+   750→                            className={cn(
+   751→                              "tabular-nums text-xs px-1.5 rounded-full",
+   752→                              statusFilters.length === 0 ? "bg-white/25" : "bg-muted",
+   753→                            )}
+   754→                          >
+   755→                            {orders.length}
+   756→                          </span>
+   757→                        </button>
+   758→                        {ALL_STATUSES.map((s) => (
+   759→                          <button
+   760→                            key={s}
+   761→                            onClick={() => toggleStatusFilter(s)}
+   762→                            className={cn(
+   763→                              "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+   764→                              statusFilters.includes(s)
+   765→                                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+   766→                                : "bg-background hover:bg-muted border-border text-foreground",
+   767→                            )}
+   768→                          >
+   769→                            {STATUS_META[s].emoji} {STATUS_SHORT[s]}
+   770→                            <span
+   771→                              className={cn(
+   772→                                "tabular-nums text-xs px-1.5 rounded-full",
+   773→                                statusFilters.includes(s) ? "bg-white/25" : "bg-muted",
+   774→                              )}
+   775→                            >
+   776→                              {statusCounts[s] || 0}
+   777→                            </span>
+   778→                          </button>
+   779→                        ))}
+   780→                      </div>
+   781→                    </div>
+   782→
+   783→                    {/* فلاتر نوع الخدمة */}
+   784→                    <div>
+   785→                      <div className="text-xs font-semibold text-muted-foreground mb-2">نوع الخدمة</div>
+   786→                      <div className="flex flex-wrap gap-1.5">
+   787→                        <button
+   788→                          onClick={() => setServiceFilters([])}
+   789→                          className={cn(
+   790→                            "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+   791→                            serviceFilters.length === 0
+   792→                              ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+   793→                              : "bg-background hover:bg-muted border-border text-foreground",
+   794→                          )}
+   795→                        >
+   796→                          الكل
+   797→                        </button>
+   798→                        {SERVICE_FILTER_LIST.map((svc) => (
+   799→                          <button
+   800→                            key={svc.type}
+   801→                            onClick={() => toggleServiceFilter(svc.type)}
+   802→                            className={cn(
+   803→                              "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border cursor-pointer select-none",
+   804→                              serviceFilters.includes(svc.type)
+   805→                                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+   806→                                : "bg-background hover:bg-muted border-border text-foreground",
+   807→                            )}
+   808→                          >
+   809→                            {svc.emoji} {svc.label}
+   810→                          </button>
+   811→                        ))}
+   812→                      </div>
+   813→                    </div>
+   814→
+   815→                    {/* نطاق التاريخ */}
+   816→                    <div>
+   817→                      <div className="text-xs font-semibold text-muted-foreground mb-2">نطاق التاريخ</div>
+   818→                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+   819→                        <div className="relative">
+   820→                          <label className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
+   821→                            <Calendar className="h-3.5 w-3.5" />
+   822→                            <span>من</span>
+   823→                          </label>
+   824→                          <Input
+   825→                            type="date"
+   826→                            value={dateFrom}
+   827→                            onChange={(e) => setDateFrom(e.target.value)}
+   828→                            className="text-sm h-9 pr-16"
+   829→                          />
+   830→                        </div>
+   831→                        <div className="relative">
+   832→                          <label className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground flex items-center gap-1 pointer-events-none">
+   833→                            <Calendar className="h-3.5 w-3.5" />
+   834→                            <span>إلى</span>
+   835→                          </label>
+   836→                          <Input
+   837→                            type="date"
+   838→                            value={dateTo}
+   839→                            onChange={(e) => setDateTo(e.target.value)}
+   840→                            className="text-sm h-9 pr-16"
+   841→                          />
+   842→                        </div>
+   843→                      </div>
+   844→                    </div>
+   845→
+   846→                    {/* مسح الفلاتر */}
+   847→                    {hasActiveFilters && (
+   848→                      <div className="flex justify-end pt-1">
+   849→                        <button
+   850→                          onClick={clearAllFilters}
+   851→                          className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-medium transition-colors"
+   852→                        >
+   853→                          <X className="h-3.5 w-3.5" />
+   854→                          مسح جميع الفلاتر
+   855→                        </button>
+   856→                      </div>
+   857→                    )}
+   858→                  </div>
+   859→                </motion.div>
+   860→              )}
+   861→            </AnimatePresence>
+   862→          </div>
+   863→
+   864→          {/* جدول الطلبات - حاسوب */}
+   865→          <Card className="hidden md:block">
+   866→            <CardHeader className="pb-3">
+   867→              <div className="flex items-center justify-between gap-2">
+   868→                <CardTitle className="text-sm md:text-base">
+   869→                  الطلبات ({filteredOrders.length}) — اضغط على أي طلب لعرض التفاصيل
+   870→                </CardTitle>
+   871→                {selectedIds.size > 0 && (
+   872→                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+   873→                    <span className="text-xs text-muted-foreground">
+   874→                      {selectedIds.size} محدد
+   875→                    </span>
+   876→                    <Button
+   877→                      size="sm"
+   878→                      variant="destructive"
+   879→                      onClick={deleteSelected}
+   880→                      disabled={deleting}
+   881→                      className="h-8 text-xs"
+   882→                    >
+   883→                      <Trash2 className="h-3.5 w-3.5" />
+   884→                      {deleting ? "جارٍ الحذف..." : "حذف المحدد"}
+   885→                    </Button>
+   886→                    <Select onValueChange={batchChangeStatus} disabled={batchStatusLoading}>
+   887→                      <SelectTrigger className="h-8 text-xs w-auto min-w-[140px]">
+   888→                        <SelectValue placeholder={batchStatusLoading ? "جارٍ التغيير..." : "تغيير حالة المحدد"} />
+   889→                      </SelectTrigger>
+   890→                      <SelectContent>
+   891→                        {STATUS_FLOW.map((s) => (
+   892→                          <SelectItem key={s} value={s}>
+   893→                            {STATUS_META[s].emoji} {STATUS_META[s].label}
+   894→                          </SelectItem>
+   895→                        ))}
+   896→                        <SelectItem value="cancelled">إلغاء الطلبات</SelectItem>
+   897→                      </SelectContent>
+   898→                    </Select>
+   899→                    <Button
+   900→                      size="sm"
+   901→                      variant="outline"
+   902→                      onClick={() => setSelectedIds(new Set())}
+   903→                      className="h-8 text-xs"
+   904→                    >
+   905→                      إلغاء التحديد
+   906→                    </Button>
+   907→                  </div>
+   908→                )}
+   909→              </div>
+   910→            </CardHeader>
+   911→            <CardContent className="p-0">
+   912→              {loading ? (
+   913→                <div className="py-16 text-center text-muted-foreground text-sm">
+   914→                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+   915→                  جارٍ التحميل...
+   916→                </div>
+   917→              ) : filteredOrders.length === 0 ? (
+   918→                <div className="py-16 text-center">
+   919→                  <Inbox className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+   920→                  <p className="text-sm text-muted-foreground">لا توجد طلبات</p>
+   921→                </div>
+   922→              ) : (
+   923→                <div className="overflow-x-auto custom-scroll">
+   924→                  <Table>
+   925→                    <TableHeader>
+   926→                      <TableRow className="bg-muted/40">
+   927→                        <TableHead className="w-10 text-center">
+   928→                          <input
+   929→                            type="checkbox"
+   930→                            checked={selectedIds.size === filteredOrders.length && filteredOrders.length > 0}
+   931→                            onChange={toggleSelectAll}
+   932→                            className="w-4 h-4 rounded accent-rose-500 cursor-pointer"
+   933→                          />
+   934→                        </TableHead>
+   935→                        <TableHead className="text-right text-xs">رقم الطلب</TableHead>
+   936→                        <TableHead className="text-right text-xs">الخدمة</TableHead>
+   937→                        <TableHead className="text-right text-xs">العميل</TableHead>
+   938→                        <TableHead className="text-right text-xs hidden md:table-cell">الهاتف</TableHead>
+   939→                        <TableHead className="text-right text-xs hidden lg:table-cell">التفاصيل</TableHead>
+   940→                        <TableHead className="text-right text-xs">المجموع</TableHead>
+   941→                        <TableHead className="text-right text-xs hidden lg:table-cell">الربح</TableHead>
+   942→                        <TableHead className="text-right text-xs">الحالة</TableHead>
+   943→                        <TableHead className="text-right text-xs hidden sm:table-cell">التاريخ</TableHead>
+   944→                        <TableHead className="text-center text-xs w-10"></TableHead>
+   945→                      </TableRow>
+   946→                    </TableHeader>
+   947→                    <TableBody>
+   948→                      {filteredOrders.map((o) => (
+   949→                        <OrderDetailsRow
+   950→                          key={o.id}
+   951→                          order={o}
+   952→                          onStatusChange={changeStatus}
+   953→                          onClone={() => cloneOrder(o)}
+   954→                          selected={selectedIds.has(o.id)}
+   955→                          onToggleSelect={() => toggleSelect(o.id)}
+   956→                          onClick={() => setDetailOrder(o)}
+   957→                        />
+   958→                      ))}
+   959→                    </TableBody>
+   960→                  </Table>
+   961→                </div>
+   962→              )}
+   963→            </CardContent>
+   964→          </Card>
+   965→
+   966→          {/* بطاقات الطلبات - جوال */}
+   967→          <Card className="md:hidden">
+   968→            <CardHeader className="pb-2">
+   969→              <div className="flex items-center justify-between gap-2">
+   970→                <CardTitle className="text-sm">الطلبات ({filteredOrders.length})</CardTitle>
+   971→                {selectedIds.size > 0 ? (
+   972→                  <div className="flex items-center gap-1.5">
+   973→                    <span className="text-xs text-muted-foreground">{selectedIds.size} محدد</span>
+   974→                    <Button
+   975→                      size="sm"
+   976→                      variant="destructive"
+   977→                      onClick={deleteSelected}
+   978→                      disabled={deleting}
+   979→                      className="h-7 text-xs px-2"
+   980→                    >
+   981→                      <Trash2 className="h-3 w-3" />
+   982→                      حذف
+   983→                    </Button>
+   984→                    <Button
+   985→                      size="sm"
+   986→                      variant="outline"
+   987→                      onClick={() => setSelectedIds(new Set())}
+   988→                      className="h-7 text-xs px-2"
+   989→                    >
+   990→                      إلغاء
+   991→                    </Button>
+   992→                  </div>
+   993→                ) : (
+   994→                  filteredOrders.length > 0 && (
+   995→                    <button
+   996→                      onClick={toggleSelectAll}
+   997→                      className="text-xs text-amber-600 font-medium"
+   998→                    >
+   999→                      تحديد الكل
+  1000→                    </button>
+  1001→                  )
+  1002→                )}
+  1003→              </div>
+  1004→            </CardHeader>
+  1005→            <CardContent className="p-3 space-y-2">
+  1006→              {loading ? (
+  1007→                <div className="py-10 text-center text-muted-foreground text-sm">
+  1008→                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+  1009→                  جارٍ التحميل...
+  1010→                </div>
+  1011→              ) : filteredOrders.length === 0 ? (
+  1012→                <div className="py-10 text-center">
+  1013→                  <Inbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+  1014→                  <p className="text-xs text-muted-foreground">لا توجد طلبات</p>
+  1015→                </div>
+  1016→              ) : (
+  1017→                filteredOrders.map((o) => (
+  1018→                  <MobileOrderCard
+  1019→                    key={o.id}
+  1020→                    order={o}
+  1021→                    onStatusChange={changeStatus}
+  1022→                    onClone={() => cloneOrder(o)}
+  1023→                    selected={selectedIds.has(o.id)}
+  1024→                    onToggleSelect={() => toggleSelect(o.id)}
+  1025→                    onClick={() => setDetailOrder(o)}
+  1026→                  />
+  1027→                ))
+  1028→              )}
+  1029→            </CardContent>
+  1030→          </Card>
+  1031→
+  1032→        </TabsContent>
+  1033→
+  1034→        {/* ===== تبويب سبورة الطلبات ===== */}
+  1035→        <TabsContent value="kanban" className="mt-4">
+  1036→          {loading ? (
+  1037→            <div className="py-16 text-center text-muted-foreground text-sm">
+  1038→              <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+  1039→              جارٍ التحميل...
+  1040→            </div>
+  1041→          ) : (
+  1042→            <KanbanBoard orders={orders} onStatusChange={changeStatus} onRefresh={loadAll} />
+  1043→          )}
+  1044→        </TabsContent>
+  1045→
+  1046→        {/* ===== تبويب الإعدادات ===== */}
+  1047→        <TabsContent value="settings" className="mt-4">
+  1048→          <AdminSettings />
+  1049→        </TabsContent>
+  1050→
+  1051→        {/* ===== تبويب التحليلات ===== */}
+  1052→        <TabsContent value="analytics" className="mt-4">
+  1053→          <AdminAnalytics stats={stats} />
+  1054→        </TabsContent>
+  1055→
+  1056→        {/* ===== تبويب العملاء ===== */}
+  1057→        <TabsContent value="customers" className="mt-4">
+  1058→          <AdminCustomers />
+  1059→        </TabsContent>
+  1060→
+  1061→        {/* ===== تبويب المصاريف ===== */}
+  1062→        <TabsContent value="expenses" className="mt-4">
+  1063→          <AdminExpenses />
+  1064→        </TabsContent>
+  1065→      </Tabs>
+  1066→
+  1067→      {/* نافذة تفاصيل الطلب */}
+  1068→      <OrderDetailModal
+  1069→        order={detailOrder}
+  1070→        open={!!detailOrder}
+  1071→        onClose={() => setDetailOrder(null)}
+  1072→        onStatusChange={changeStatus}
+  1073→      />
+  1074→    </div>
+  1075→  );
+  1076→}
+  1077→
+  1078→// ===== بطاقة طلب للجوال =====
+  1079→function MobileOrderCard({
+  1080→  order,
+  1081→  onStatusChange,
+  1082→  onClone,
+  1083→  selected,
+  1084→  onToggleSelect,
+  1085→  onClick,
+  1086→}: {
+  1087→  order: PrintOrderLite;
+  1088→  onStatusChange: (order: PrintOrderLite, status: string) => void;
+  1089→  onClone?: () => void;
+  1090→  selected: boolean;
+  1091→  onToggleSelect: () => void;
+  1092→  onClick?: (order: PrintOrderLite) => void;
+  1093→}) {
+  1094→  const [expanded, setExpanded] = useState(false);
+  1095→  const meta = STATUS_META[order.status];
+  1096→  const serviceEmoji = SERVICE_EMOJI[order.serviceType] || "🖨️";
+  1097→
+  1098→  return (
+  1099→    <div className={`rounded-xl border bg-card overflow-hidden transition-all ${selected ? "border-rose-400 bg-rose-50/30 ring-1 ring-rose-200" : ""}`}>
+  1100→      {/* رأس البطاقة - قابل للنقر */}
+  1101→      <div className="w-full p-3 flex items-start gap-2">
+  1102→        {/* مربع الاختيار */}
+  1103→        <input
+  1104→          type="checkbox"
+  1105→          checked={selected}
+  1106→          onChange={(e) => { e.stopPropagation(); onToggleSelect(); }}
+  1107→          className="w-5 h-5 rounded accent-rose-500 cursor-pointer shrink-0 mt-1"
+  1108→        />
+  1109→        {/* المحتوى القابل للنقر */}
+  1110→      <button
+  1111→        onClick={() => {
+  1112→          if (onClick) onClick(order);
+  1113→          else setExpanded(!expanded);
+  1114→        }}
+  1115→        className="flex-1 text-right hover:bg-muted/30 transition-colors -m-3 p-3"
+  1116→      >
+  1117→        <div className="flex items-start justify-between gap-2 mb-2">
+  1118→          <div className="flex items-center gap-2 min-w-0">
+  1119→            <span className="text-xl shrink-0">{serviceEmoji}</span>
+  1120→            <div className="min-w-0">
+  1121→              <div className="font-mono text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+  1122→                {order.reference}
+  1123→                {order.adminNotes && (
+  1124→                  <span className="inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400" title="يحتوي على ملاحظات">📝</span>
+  1125→                )}
+  1126→                {order.rating && (
+  1127→                  <span className="inline-flex items-center gap-0.5 text-amber-400 text-[10px]" title={`تقييم: ${order.rating}/5`}>
+  1128→                    <span className="text-[9px]">{order.rating}</span>
+  1129→                    <span>⭐</span>
+  1130→                  </span>
+  1131→                )}
+  1132→              </div>
+  1133→              <div className="text-xs text-muted-foreground">{order.serviceName}</div>
+  1134→            </div>
+  1135→          </div>
+  1136→          <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${meta.bg}`}>
+  1137→            {meta.label}
+  1138→          </span>
+  1139→        </div>
+  1140→        <div className="flex items-center justify-between gap-2">
+  1141→          <div className="min-w-0">
+  1142→            <div className="text-sm font-medium truncate">{order.customer?.name || "—"}</div>
+  1143→            <div className="text-xs text-muted-foreground" dir="ltr">{order.customer?.phone || "—"}</div>
+  1144→          </div>
+  1145→          <div className="text-left shrink-0">
+  1146→            <div className="font-bold text-amber-700 text-sm">{formatDA(order.total)}</div>
+  1147→            <div className="text-xs text-muted-foreground">{order.pages}ص × {order.copies}ن</div>
+  1148→          </div>
+  1149→        </div>
+  1150→        <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+  1151→          <span>{formatDateTimeAr(order.createdAt)}</span>
+  1152→          <span className={`flex items-center gap-1 text-amber-600 ${expanded ? "rotate-90" : ""} transition-transform`}>
+  1153→            <ChevronLeft className="h-3 w-3" />
+  1154→            {expanded ? "إخفاء" : "عرض التفاصيل"}
+  1155→          </span>
+  1156→        </div>
+  1157→      </button>
+  1158→      </div>
+  1159→
+  1160→      {/* التفاصيل المنسدلة */}
+  1161→      {expanded && (
+  1162→        <div className="border-t bg-amber-50/40 p-3 space-y-3">
+  1163→          {/* مواصفات الطباعة */}
+  1164→          <div>
+  1165→            <div className="text-xs font-bold text-neutral-700 mb-1.5">مواصفات الطباعة</div>
+  1166→            <div className="grid grid-cols-2 gap-1.5">
+  1167→              {Object.entries(order.options)
+  1168→                .filter(([k, v]) => v !== undefined && v !== null && v !== "" && !HIDDEN_OPTION_KEYS.includes(k))
+  1169→                .map(([k, v]) => (
+  1170→                  <div key={k} className="rounded bg-white border border-amber-100 px-2 py-1">
+  1171→                    <div className="text-xs text-muted-foreground">{translateOptionKey(k)}</div>
+  1172→                    <div className="text-xs font-semibold text-neutral-900">{translateOptionValue(String(v))}</div>
+  1173→                  </div>
+  1174→                ))}
+  1175→            </div>
+  1176→          </div>
+  1177→
+  1178→          {/* الملف + معاينة حقيقية */}
+  1179→          {order.fileName && (
+  1180→            <div>
+  1181→              <div className="text-xs font-bold text-neutral-700 mb-1.5">ملف الزبون</div>
+  1182→              <div className="rounded-lg bg-white border border-amber-100 p-2.5">
+  1183→                <div className="flex items-start gap-2.5">
+  1184→                  {/* معاينة الملف */}
+  1185→                  <div className="shrink-0">
+  1186→                    {isImageFile(order.fileType) && order.filePreview ? (
+  1187→                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm">
+  1188→                        <img
+  1189→                          src={order.filePreview}
+  1190→                          alt={order.fileName}
+  1191→                          className="w-full h-full object-cover"
+  1192→                        />
+  1193→                      </div>
+  1194→                    ) : isPdfFile(order.fileType) && order.fileData ? (
+  1195→                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm bg-white">
+  1196→                        <img
+  1197→                          src={`/api/orders/${order.id}/thumbnail`}
+  1198→                          alt={order.fileName}
+  1199→                          className="w-full h-full object-contain bg-white"
+  1200→                        />
+  1201→                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-0.5">
+  1202→                          <span className="text-[8px] font-bold text-white">PDF</span>
+  1203→                        </div>
+  1204→                      </div>
+  1205→                    ) : order.fileData && order.fileData.startsWith("file_") ? (
+  1206→                      <div className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-amber-200 shadow-sm bg-neutral-50 flex items-center justify-center">
+  1207→                        <div className="text-center">
+  1208→                          <FileText className="h-5 w-5 text-amber-500 mx-auto" />
+  1209→                          <span className="text-[8px] font-bold text-neutral-600 mt-0.5 block">{order.fileType}</span>
+  1210→                        </div>
+  1211→                      </div>
+  1212→                    ) : (
+  1213→                      <div className="w-14 h-16 rounded-lg bg-neutral-900 flex flex-col items-center justify-center text-amber-400">
+  1214→                        <FileText className="h-5 w-5" />
+  1215→                        <span className="text-[9px] font-bold mt-0.5">{order.fileType}</span>
+  1216→                      </div>
+  1217→                    )}
+  1218→                  </div>
+  1219→                  {/* تفاصيل + زر */}
+  1220→                  <div className="flex-1 min-w-0">
+  1221→                    <div className="text-xs font-medium truncate break-all">{order.fileName}</div>
+  1222→                    <div className="flex flex-wrap gap-1 mt-1 text-[10px]">
+  1223→                      {order.fileType && (
+  1224→                        <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-700">
+  1225→                          {order.fileType}
+  1226→                        </span>
+  1227→                      )}
+  1228→                      {order.fileSize ? (
+  1229→                        <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+  1230→                          {Math.round(order.fileSize / 1024)} ك.ب
+  1231→                        </span>
+  1232→                      ) : null}
+  1233→                      {order.fileData && (
+  1234→                        <span className="px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-100 text-emerald-700">
+  1235→                          ✓ متاح
+  1236→                        </span>
+  1237→                      )}
+  1238→                    </div>
+  1239→                    {order.fileData && (
+  1240→                      <Button
+  1241→                        size="sm"
+  1242→                        className="mt-2 h-7 text-xs bg-neutral-900 hover:bg-neutral-800 text-white w-full"
+  1243→                        onClick={() => downloadFile(`/api/orders/${order.id}/file`, order.fileName || "file")}
+  1244→                      >
+  1245→                        <Download className="h-3 w-3" />
+  1246→                        تنزيل الملف الأصلي
+  1247→                      </Button>
+  1248→                    )}
+  1249→                  </div>
+  1250→                </div>
+  1251→              </div>
+  1252→            </div>
+  1253→          )}
+  1254→
+  1255→          {/* معلومات العميل */}
+  1256→          <div>
+  1257→            <div className="text-xs font-bold text-neutral-700 mb-1.5">معلومات العميل</div>
+  1258→            <div className="rounded bg-white border border-amber-100 p-2 space-y-1.5 text-xs">
+  1259→              <div className="flex justify-between gap-2">
+  1260→                <span className="text-muted-foreground">الاسم</span>
+  1261→                <span className="font-medium">{order.customer?.name || "—"}</span>
+  1262→              </div>
+  1263→              <div className="flex justify-between gap-2" dir="ltr">
+  1264→                <span className="text-muted-foreground">الهاتف</span>
+  1265→                <span className="font-medium">{order.customer?.phone || "—"}</span>
+  1266→              </div>
+  1267→              {order.customer?.whatsapp && (
+  1268→                <div className="flex justify-between gap-2" dir="ltr">
+  1269→                  <span className="text-muted-foreground">واتساب</span>
+  1270→                  <span className="font-medium">{order.customer.whatsapp}</span>
+  1271→                </div>
+  1272→              )}
+  1273→              {order.customer?.email && (
+  1274→                <div className="flex justify-between gap-2" dir="ltr">
+  1275→                  <span className="text-muted-foreground">البريد</span>
+  1276→                  <span className="font-medium">{order.customer.email}</span>
+  1277→                </div>
+  1278→              )}
+  1279→              {order.customer?.address && (
+  1280→                <div className="pt-1 border-t border-amber-50">
+  1281→                  <span className="text-muted-foreground">العنوان: </span>
+  1282→                  <span className="font-medium">{order.customer.address}</span>
+  1283→                </div>
+  1284→              )}
+  1285→            </div>
+  1286→          </div>
+  1287→
+  1288→          {/* العميل والتسليم */}
+  1289→          <div className="grid grid-cols-2 gap-2 text-xs">
+  1290→            <div className="rounded bg-white border border-amber-100 p-2">
+  1291→              <div className="text-muted-foreground mb-0.5">الاستلام</div>
+  1292→              <div className="font-medium">{order.customer?.deliveryMethod === "delivery" ? "توصيل" : "من المطبعة"}</div>
+  1293→            </div>
+  1294→            <div className="rounded bg-white border border-amber-100 p-2">
+  1295→              <div className="text-muted-foreground mb-0.5">الوقت المتوقع</div>
+  1296→              <div className="font-medium">{order.estimatedHours} ساعة</div>
+  1297→            </div>
+  1298→          </div>
+  1299→
+  1300→          {/* ملاحظات */}
+  1301→          {order.options.notes && (
+  1302→            <div className="relative">
+  1303→              <div className="flex items-center gap-1.5 mb-1.5">
+  1304→                <span className="text-xs">💬</span>
+  1305→                <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">ملاحظات الزبون</span>
+  1306→              </div>
+  1307→              <div className="relative rounded-lg border border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 p-3">
+  1308→                <div className="absolute top-2 right-2 text-amber-300 dark:text-amber-700 text-2xl leading-none select-none" aria-hidden="true">
+  1309→                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 opacity-40"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+  1310→                </div>
+  1311→                <p className="relative text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed pr-5">{order.options.notes}</p>
+  1312→              </div>
+  1313→            </div>
+  1314→          )}
+  1315→
+  1316→          {/* أزرار */}
+  1317→          <div className="grid grid-cols-3 gap-2 pt-1">
+  1318→            <Button
+  1319→              size="sm"
+  1320→              variant="outline"
+  1321→              className="text-sm h-9"
+  1322→              onClick={() => window.open(`/api/orders/${order.id}/invoice`, "_blank")}
+  1323→            >
+  1324→              <Download className="h-3.5 w-3.5" />
+  1325→              الفاتورة
+  1326→            </Button>
+  1327→            {onClone && (
+  1328→              <Button
+  1329→                size="sm"
+  1330→                variant="outline"
+  1331→                className="text-sm h-9"
+  1332→                onClick={(e) => { e.stopPropagation(); onClone(); }}
+  1333→                title="نسخ الطلب"
+  1334→              >
+  1335→                <Copy className="h-3.5 w-3.5" />
+  1336→                نسخ
+  1337→              </Button>
+  1338→            )}
+  1339→            <ChangeStatusSelect order={order} onChange={onStatusChange} />
+  1340→          </div>
+  1341→        </div>
+  1342→      )}
+  1343→    </div>
+  1344→  );
+  1345→}
+  1346→
+  1347→// قائمة تغيير الحالة للجوال
+  1348→function ChangeStatusSelect({
+  1349→  order,
+  1350→  onChange,
+  1351→}: {
+  1352→  order: PrintOrderLite;
+  1353→  onChange: (order: PrintOrderLite, status: string) => void;
+  1354→}) {
+  1355→  const [open, setOpen] = useState(false);
+  1356→  return (
+  1357→    <DropdownMenu open={open} onOpenChange={setOpen}>
+  1358→      <DropdownMenuTrigger asChild>
+  1359→        <Button size="sm" className="text-sm h-9 bg-neutral-900 hover:bg-neutral-800 text-white">
+  1360→          <MoreHorizontal className="h-3.5 w-3.5" />
+  1361→          تغيير الحالة
+  1362→        </Button>
+  1363→      </DropdownMenuTrigger>
+  1364→      <DropdownMenuContent align="start" className="w-40">
+  1365→        {STATUS_FLOW.filter((s) => s !== order.status).map((s) => (
+  1366→          <DropdownMenuItem key={s} onClick={() => { onChange(order, s); setOpen(false); }}>
+  1367→            <span className="mr-2">{STATUS_META[s].emoji}</span>
+  1368→            {STATUS_META[s].label}
+  1369→          </DropdownMenuItem>
+  1370→        ))}
+  1371→        <DropdownMenuItem onClick={() => { onChange(order, "cancelled"); setOpen(false); }}>
+  1372→          إلغاء الطلب
+  1373→        </DropdownMenuItem>
+  1374→      </DropdownMenuContent>
+  1375→    </DropdownMenu>
+  1376→  );
+  1377→}
+  1378→
+  1379→

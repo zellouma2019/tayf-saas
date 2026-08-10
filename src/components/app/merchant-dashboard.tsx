@@ -666,35 +666,44 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const bulkStatusOptions = useMemo(() => ["pending", "printing", "ready", "delivered"], []);
 
   const sidebarSections: SidebarSection[] = useMemo(() => {
-    const dataSection: SidebarSection = {
-      title: "البيانات",
-      items: [
-        { key: "customers", label: "العملاء", icon: User },
-        { key: "expenses", label: "المصاريف", icon: FileText },
-      ],
-    };
-    if (hasFeature("advancedAnalytics")) {
-      dataSection.items.push({ key: "analytics", label: "التحليلات", icon: BarChart3 });
-    }
-    return [
-      {
-        title: "القائمة",
-        items: [
-          { key: "home", label: "الرئيسية", icon: LayoutGrid },
-          { key: "orders", label: "الطلبات", icon: Package, badge: pendingCount > 0 ? pendingCount : undefined },
-          { key: "settings", label: "إعدادات المتجر", icon: Settings },
-          { key: "advancedSettings", label: "إعدادات متقدمة", icon: SlidersHorizontal },
-        ],
-      },
-      dataSection,
-      {
-        title: "أدوات",
-        items: [
-          { key: "share", label: "مشاركة الرابط", icon: Link2 },
-          { key: "preview", label: "معاينة المتجر", icon: Eye },
-        ],
-      },
+    const mainItems: SidebarSection["items"] = [
+      { key: "home", label: "الرئيسية", icon: LayoutGrid },
     ];
+    if (hasFeature("_tab_orders")) {
+      mainItems.push({ key: "orders", label: "الطلبات", icon: Package, badge: pendingCount > 0 ? pendingCount : undefined });
+    }
+    if (hasFeature("_tab_settings")) {
+      mainItems.push({ key: "settings", label: "إعدادات المتجر", icon: Settings });
+    }
+    if (hasFeature("_tab_settings")) {
+      mainItems.push({ key: "advancedSettings", label: "إعدادات متقدمة", icon: SlidersHorizontal });
+    }
+
+    const dataItems: SidebarSection["items"] = [];
+    if (hasFeature("_tab_customers")) {
+      dataItems.push({ key: "customers", label: "العملاء", icon: User });
+    }
+    if (hasFeature("_tab_expenses")) {
+      dataItems.push({ key: "expenses", label: "المصاريف", icon: FileText });
+    }
+    if (hasFeature("_tab_analytics") && hasFeature("advancedAnalytics")) {
+      dataItems.push({ key: "analytics", label: "التحليلات", icon: BarChart3 });
+    }
+
+    const sections: SidebarSection[] = [
+      { title: "القائمة", items: mainItems },
+    ];
+    if (dataItems.length > 0) {
+      sections.push({ title: "البيانات", items: dataItems });
+    }
+    sections.push({
+      title: "أدوات",
+      items: [
+        { key: "share", label: "مشاركة الرابط", icon: Link2 },
+        { key: "preview", label: "معاينة المتجر", icon: Eye },
+      ],
+    });
+    return sections;
   }, [pendingCount, hasFeature]);
 
   function toggleSelectAll() {
