@@ -170,6 +170,12 @@ export const FOREIGN_CURRENCIES: ForeignCurrency[] = [
   { code: "XAF", symbol: "ف.ج", nameAr: "فرنك أفريقي", nameEn: "CFA Franc", flag: "🌍", decimals: 0, numberFormat: "fr" },
 ];
 
+/// قائمة عملات شاملة لدولة + أجنبية (للخرائط المنسدلة)
+export const COUNTRY_CURRENCIES = FOREIGN_CURRENCIES.map(c => ({
+  code: c.code,
+  label: `${c.flag} ${c.symbol} ${c.nameAr} (${c.code})`,
+}));
+
 export function getForeignCurrency(code: string): ForeignCurrency | undefined {
   return FOREIGN_CURRENCIES.find((c) => c.code === code);
 }

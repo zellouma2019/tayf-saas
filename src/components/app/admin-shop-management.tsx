@@ -25,7 +25,7 @@ import {
   Printer, BadgePercent, Headphones, Truck, Zap, Shield, MapPin, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ARAB_COUNTRIES } from "@/lib/countries";
+import { ARAB_COUNTRIES, COUNTRY_CURRENCIES } from "@/lib/countries";
 
 // ===== Feature Definitions =====
 const SHOP_FEATURES = [
@@ -148,7 +148,33 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
   }, [open, shop, onClose]);
 
   function setField<K extends keyof ShopData>(key: K, val: ShopData[K]) {
-    setData((prev) => prev ? { ...prev, [key]: val } : prev);
+    setData((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, [key]: val };
+      // عند تغيير الدولة، حدّث العملة تلقائياً إن لم يكن هناك عملة مخصصة
+      if (key === "country" && !prev.customCurrency) {
+        const country = ARAB_COUNTRIES.find((c) => c.code === val);
+        if (country) {
+          next.customCurrency = country.currencyCode;
+        }
+      }
+      // عند تغيير الخطة إلى مدفوعة، فعّل كل الميزات
+      if (key === "plan" && val === "paid") {
+        const allFeatures: Record<string, boolean> = {};
+        SHOP_FEATURES.forEach((f) => { allFeatures[f.key] = true; });
+        MERCHANT_ADMIN_TABS.forEach((t) => { allFeatures[t.key] = true; });
+        MERCHANT_PERMISSIONS.forEach((p) => { allFeatures[p.key] = true; });
+        next.features = allFeatures;
+      }
+      // عند تغيير الخطة إلى مجانية، أوقف الميزات المدفوعة فقط
+      if (key === "plan" && val === "free") {
+        const paidOnly = ["aiAssistant", "loyaltyProgram", "priceCalculator", "multiBranch", "couponSystem", "customerSupport"];
+        const updated = { ...prev.features };
+        paidOnly.forEach((k) => { updated[k] = false; });
+        next.features = updated;
+      }
+      return next;
+    });
     setHasChanges(true);
   }
 
@@ -286,7 +312,15 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                     <Select value={data.country || "DZ"} onValueChange={(v) => setField("country", v)}>
                       <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {ARAB_COUNTRIES.map((c) => <SelectItem key={c.code} value={c.code}>{c.name} ({c.code})</SelectItem>)}
+                        {ARAB_COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            <span className="flex items-center gap-2">
+                              <span>{c.flag}</span>
+                              <span>{c.nameAr}</span>
+                              <span className="text-muted-foreground text-xs">({c.code})</span>
+                            </span>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -304,9 +338,36 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                     </Select>
                   </div>
                   <div>
-                    <Label>عملة مخصصة</Label>
-                    <Input value={data.customCurrency || ""} onChange={(e) => setField("customCurrency", e.target.value || null)} className="mt-1" dir="ltr" placeholder="USD, EUR... (اتركه فارغاً)" />
-                    <p className="text-[10px] text-muted-foreground mt-1">تجاوز عملة الدولة الافتراضية</p>
+                    <Label>العملة</Label>
+                    <Select
+                      value={data.customCurrency || ARAB_COUNTRIES.find(c => c.code === data.country)?.currencyCode || "DZD"}
+                      onValueChange={(v) => setField("customCurrency", v)}
+                    >
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {(() => {
+                          const country = ARAB_COUNTRIES.find(c => c.code === data.country);
+                          const countryCurrency = country ? [{ code: country.currencyCode, label: `${country.currencySymbol} ${country.currencyEn} (${country.nameAr})`, isDefault: true }] : [];
+                          const otherCurrencies = COUNTRY_CURRENCIES.filter(c => c.code !== (country?.currencyCode));
+                          return [
+                            ...countryCurrency.map(c => (
+                              <SelectItem key={c.code} value={c.code}>
+                                <span className="flex items-center gap-2">
+                                  <span className="text-xs bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded">افتراضي</span>
+                                  <span>{c.label}</span>
+                                </span>
+                              </SelectItem>
+                            )),
+                            ...otherCurrencies.map(c => (
+                              <SelectItem key={c.code} value={c.code}>
+                                {c.label}
+                              </SelectItem>
+                            )),
+                          ];
+                        })()}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">تتغير تلقائياً مع الدولة — يمكنك اختيار عملة أخرى</p>
                   </div>
                   <div>
                     <Label>اسم صاحب المتجر</Label>
@@ -455,10 +516,30 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                               <div className="text-[11px] text-muted-foreground">{f.desc}</div>
                             </div>
                           </div>
-                          <Switch checked={enabled} onCheckedChange={() => toggleFeature(f.key)} />
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Switch
+                              checked={enabled}
+                              onCheckedChange={() => toggleFeature(f.key)}
+                              className="data-[state=checked]:bg-amber-500 data-[state=unchecked]:bg-muted-foreground/30"
+                            />
+                          </div>
                         </div>
                       );
                     })}
+                    <div className="sm:col-span-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allOn = SHOP_FEATURES.every((f) => data.features[f.key]);
+                          SHOP_FEATURES.forEach((f) => {
+                            if (!data.features[f.key] === allOn) toggleFeature(f.key);
+                          });
+                        }}
+                        className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                      >
+                        {SHOP_FEATURES.every((f) => data.features[f.key]) ? "إيقاف الكل" : "تفعيل الكل"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -492,10 +573,31 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                                 <div className="text-[11px] text-muted-foreground">{t.desc}</div>
                               </div>
                             </div>
-                            <Switch checked={enabled} onCheckedChange={() => toggleFeature(t.key)} />
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <Switch
+                                checked={enabled}
+                                onCheckedChange={() => toggleFeature(t.key)}
+                                className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-muted-foreground/30"
+                              />
+                            </div>
                           </div>
                         );
                       })}
+                      <div className="sm:col-span-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allOn = MERCHANT_ADMIN_TABS.every((t) => data.features[t.key] !== false);
+                            MERCHANT_ADMIN_TABS.forEach((t) => {
+                              const isOn = data.features[t.key] !== false;
+                              if (isOn === allOn) toggleFeature(t.key);
+                            });
+                          }}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {MERCHANT_ADMIN_TABS.every((t) => data.features[t.key] !== false) ? "إيقاف الكل" : "تفعيل الكل"}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -527,10 +629,31 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
                                 <div className="text-[11px] text-muted-foreground">{p.desc}</div>
                               </div>
                             </div>
-                            <Switch checked={enabled} onCheckedChange={() => toggleFeature(p.key)} />
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <Switch
+                                checked={enabled}
+                                onCheckedChange={() => toggleFeature(p.key)}
+                                className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-muted-foreground/30"
+                              />
+                            </div>
                           </div>
                         );
                       })}
+                      <div className="sm:col-span-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allOn = MERCHANT_PERMISSIONS.every((p) => data.features[p.key] !== false);
+                            MERCHANT_PERMISSIONS.forEach((p) => {
+                              const isOn = data.features[p.key] !== false;
+                              if (isOn === allOn) toggleFeature(p.key);
+                            });
+                          }}
+                          className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                        >
+                          {MERCHANT_PERMISSIONS.every((p) => data.features[p.key] !== false) ? "إيقاف الكل" : "تفعيل الكل"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
