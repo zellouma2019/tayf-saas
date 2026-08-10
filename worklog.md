@@ -1345,3 +1345,49 @@ Stage Summary:
 - Header redesigned with glassmorphism, amber gradient logo, proper icon components
 - Footer redesigned with social icons, better hierarchy, responsive grid, branding
 - All changes verified: lint passes (no new errors), dev server compiles clean, curl returns 200
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Complete rewrite of intro.tsx with modern minimal split-screen splash design
+
+Work Log:
+- Completely rewrote src/components/app/intro.tsx with brand new splash screen design
+- Top 55%: gradient background with 3 slowly-rotating semi-transparent geometric rings + scattered small dots
+- Bottom 45%: slides UP from below on enter, contains brand name (accent/bold) + tagline (muted/light) + thin progress line
+- Exit animation: top slides UP + fade, bottom slides DOWN + fade
+- All animations via framer-motion (no CSS keyframes)
+- Logo centered with scale-in animation from 0
+- Dark/light mode support via useTheme()
+- RTL (dir=rtl) preserved
+- Settings fetched from /api/settings, merged with DEFAULT_INTRO defaults
+- Premium minimal feel inspired by Noon/Careem app aesthetics
+- No lint errors in intro.tsx
+
+Stage Summary:
+- intro.tsx fully rewritten with modern minimal split-screen splash design
+- 3 rotating rings (260px/180px/110px) at different speeds (50s/38s/28s) with 5 scattered dots
+- Clean typography: font-extrabold title in accent, font-light tagline in muted
+- Smooth exit: top y:-25% opacity:0, bottom y:30% opacity:0 over 480ms
+---
+Task ID: 12
+Agent: Main Agent
+Task: Fix customer version issues - new intro, remove admin, fix FABs, footer colors, responsive design
+
+Work Log:
+- Analyzed user-uploaded screenshots via VLM to identify exact issues
+- Completely redesigned intro.tsx with split-screen concept (top 55% gradient+geometry, bottom 45% slides up with brand name)
+- Fixed QuickActions FAB: Replaced broken fan-angle menu with clean vertical dropdown list, fixed z-index issues (z-[-1] was hiding items), changed from Plus/X icons, proper z-50, removed md:hidden
+- Fixed FloatingAssistant position: bottom-20 left-3 on mobile, bottom-5 left-5 on desktop, z-50
+- Removed admin button completely from customer version (bottom nav 3 tabs, header nav 3 items, no admin in footer)
+- Improved footer colors: gradient background (neutral-900→950), amber-300 section headings, colored social icon buttons with matching border tints, smaller responsive text
+- Made fully responsive: Mobile bottom nav now lg:hidden (shows on phone+tablet), desktop nav lg:flex (hidden on smaller), header mobile nav lg:hidden, footer uses xs:grid-cols-2 breakpoint, responsive text sizes (xs→sm→md)
+
+Stage Summary:
+- Intro: New minimal split-screen design with rotating geometric rings, dots, and clean typography
+- Admin: Completely removed from all customer-facing navigation and footer
+- QuickActions: Fixed - now shows vertical dropdown menu with proper z-index
+- FloatingAssistant: Repositioned above bottom nav on mobile, z-50
+- Footer: Improved with gradient background, colored social icons, responsive grid
+- Responsive: Three breakpoints - mobile (<lg), tablet (lg-), desktop (lg+)
+- All verified: lint clean (only pre-existing warnings), dev server 200 OK, no runtime errors

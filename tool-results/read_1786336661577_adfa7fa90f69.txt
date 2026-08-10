@@ -1260,3 +1260,89 @@
   1260→7. **Only 1 route file** under `src/app/s/` — the entire customer app is a single-page app driven by Zustand state (`view`).
   1261→8. **RTL throughout:** `dir="rtl"` on root layout html and app-shell container.
   1262→
+  1263→---
+  1264→Task ID: 4
+  1265→Agent: Main Agent
+  1266→Task: Complete redesign of intro.tsx splash screen with cinematic animations
+  1267→
+  1268→Work Log:
+  1269→- Read worklog.md and existing intro.tsx for full context
+  1270→- Analyzed IntroSettings type from /lib/default-settings.ts
+  1271→- Completely rewrote /src/components/app/intro.tsx with premium splash screen design
+  1272→- Implemented multi-stage logo animation: soft glow pulse → spring scale (0.5→1.0) → shimmer sweep
+  1273→- Added expanding circular ripple rings (3 staggered) behind logo that fade out
+  1274→- Implemented character-by-character staggered fade-in for brand name "طيف" with blur-to-clear
+  1275→- Tagline fades in from below with blur-to-clear transition
+  1276→- Redesigned progress bar: thin 2.5px line with gradient fill, glowing leading edge dot with triple box-shadow, and ambient glow trail
+  1277→- Added 4 floating ambient gradient orbs with CSS keyframe animations (performant, no JS overhead)
+  1278→- Added breathing glow animation on logo container pulsing accent color shadow (CSS keyframe)
+  1279→- Background orbs drift slowly with different speeds (18-25s cycles)
+  1280→- Exit animation includes scale-up + blur-out for cinematic departure
+  1281→- Kept same props interface (onFinish callback), IntroSettings type import, API fetch from /api/settings
+  1282→- Kept dark/light mode support via useTheme, configurable duration from settings
+  1283→- Used framer-motion for stage animations, pure CSS keyframes for continuous ambient effects
+  1284→- Fixed JSX comment syntax errors (missing closing `}`)
+  1285→- Fixed useCallback lint error (inline function expression)
+  1286→- Removed unused textColor variable
+  1287→- Verified zero lint errors in intro.tsx
+  1288→
+  1289→Stage Summary:
+  1290→- File: /src/components/app/intro.tsx — completely rewritten (460 lines)
+  1291→- All 14 requirements met, compiles cleanly
+  1292→- Animation timeline: orbs(0s) → glow pulse(0s) → logo spring(0.3s) → ripples(0.4s) → shimmer(1.2s) → brand chars(1.0s) → tagline(1.6s) → progress → exit(duration-600ms)
+  1293→---
+  1294→Task ID: 11
+  1295→Agent: Main Agent
+  1296→Task: Remove admin button, redesign intro, improve dark mode, fix overlapping icons, improve header/footer
+  1297→
+  1298→Work Log:
+  1299→- Researched dark mode design best practices and intro/splash screen designs via web search
+  1300→- Explored all customer-facing components: app-shell, mobile-bottom-nav, floating-assistant, quick-actions, back-to-top, intro
+  1301→- **Removed admin button** from customer version:
+  1302→  - mobile-bottom-nav.tsx: Removed 4th tab (الإدارة), now 3 tabs (جديد, تكرار, تتبّع) with 33.333% width each
+  1303→  - app-shell.tsx: Removed admin nav item from both desktop and mobile header navs, removed admin link from footer
+  1304→- **Redesigned intro/splash screen** (intro.tsx) with cinematic animations:
+  1305→  - Multi-stage logo reveal: radial glow pulse → spring scale (0.5→1.0) → shimmer sweep
+  1306→  - Expanding concentric ripple rings behind logo (3 rings with staggered delays)
+  1307→  - Breathing glow animation on logo container (3s cycle)
+  1308→  - Character-by-character staggered fade-in for brand name "طيف" with blur-to-clear
+  1309→  - Tagline fades in from below with blur(8px)→blur(0px) at 1.6s delay
+  1310→  - Elegant progress bar with gradient fill, glowing leading-edge dot, ambient glow trail
+  1311→  - 4 floating ambient gradient orbs with CSS keyframe drift animations
+  1312→  - Exit animation: scale up 1.05× + blur(8px) + fade out
+  1313→- **Improved dark mode visual design**:
+  1314→  - Updated globals.css .dark variables: background #0c0c0e (warmer), card #17171a (more elevated), muted-foreground #8a8578 (better readability), border 0.06 opacity (subtler), input 0.08 opacity
+  1315→  - Updated QuickActions FAB: Now uses amber gradient instead of neutral-900, consistent in both modes
+  1316→  - Updated BackToTop button: Amber gradient instead of dark/light switch
+  1317→  - Updated QuickActions action buttons: Softer borders and shadows in dark mode
+  1318→- **Fixed FloatingAssistant overlapping bottom nav**:
+  1319→  - Changed position from `bottom-5 left-5 z-[100]` to `bottom-20 left-5 z-30 md:bottom-5 md:z-30`
+  1320→  - Applied same fix to chat window position
+  1321→  - Changed BackToTop from `bottom-6 right-6 z-50` to `bottom-20 right-4 z-30 md:bottom-6 md:right-6 md:z-50`
+  1322→  - Changed QuickActions from `bottom-24 right-4 z-50` to `bottom-20 right-4 z-30`
+  1323→- **Improved header design**:
+  1324→  - Changed from solid `bg-white dark:bg-neutral-950` to translucent `bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl`
+  1325→  - Promo bar: Now uses amber gradient instead of plain neutral-900, with proper icon components (Zap, Clock, Bell) instead of emojis
+  1326→  - Phone link: Styled as pill button with `bg-white/10` and rounded-full
+  1327→  - Desktop nav: Added border, refined styling with `bg-muted/50 dark:bg-white/5`
+  1328→  - Logo container: Now uses amber gradient instead of plain dark, with shadow-amber effects
+  1329→  - Active nav indicator: Uses gradient (from-neutral-800 to-neutral-900) for premium look
+  1330→- **Improved footer design**:
+  1331→  - Toggle button: Uses border-t with muted bg instead of dark neutral-900
+  1332→  - Footer content area: Dark `bg-neutral-950 dark:bg-black/40` background
+  1333→  - Social icons: Styled as hoverable icon buttons with color transitions
+  1334→  - Section headings: Added amber dot indicator for visual hierarchy
+  1335→  - Quick links: Added hover translate-x animation
+  1336→  - Services list: Added icons aligned with text
+  1337→  - Copyright: Now includes "مدعوم بـ طيف" branding
+  1338→  - Responsive: sm:grid-cols-2 lg:grid-cols-4
+  1339→
+  1340→Stage Summary:
+  1341→- Admin button completely removed from customer-facing version (bottom nav, header nav, footer link)
+  1342→- Intro redesigned with cinematic multi-stage animations, ambient orbs, character-by-character reveal
+  1343→- Dark mode improved with warmer surfaces, better contrast, subtler borders
+  1344→- FloatingAssistant, BackToTop, QuickActions positions fixed to avoid overlapping bottom nav
+  1345→- Header redesigned with glassmorphism, amber gradient logo, proper icon components
+  1346→- Footer redesigned with social icons, better hierarchy, responsive grid, branding
+  1347→- All changes verified: lint passes (no new errors), dev server compiles clean, curl returns 200
+  1348→
