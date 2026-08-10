@@ -1055,12 +1055,12 @@ export default function AdminPage() {
                           const maxRev = Math.max(...dailyData.map((x) => x.revenue), 1);
                           const pct = (d.revenue / maxRev) * 100;
                           return (
-                            <div key={d.date} className="flex items-center gap-3">
-                              <span className="text-[11px] text-muted-foreground w-16 shrink-0 tabular-nums">{d.date?.slice(5)}</span>
+                            <div key={d.date} className="flex items-center gap-2 sm:gap-3">
+                              <span className="text-[11px] text-muted-foreground w-14 sm:w-16 shrink-0 tabular-nums">{d.date?.slice(5)}</span>
                               <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
                                 <div className="h-full bg-gradient-to-l from-amber-400 to-amber-600 rounded transition-all duration-700" style={{ width: `${Math.max(pct, 1)}%` }} />
                               </div>
-                              <span className="text-xs font-medium tabular-nums w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
+                              <span className="text-xs font-medium tabular-nums w-16 sm:w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
                               <span className="text-[10px] text-muted-foreground w-8 text-left shrink-0">{d.orders} طلب</span>
                             </div>
                           );

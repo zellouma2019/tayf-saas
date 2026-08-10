@@ -69,3 +69,30 @@ Stage Summary:
 - ✅ Consistent boolean handling with `!!` throughout
 - ✅ Plan auto-enable/disable logic preserved and correct
 - ✅ Style: free badges, pill toggle buttons, overflow protection
+---
+Task ID: 2-b
+Agent: Sub-agent
+Task: Fix responsiveness issues in admin panel and admin shop management dialog
+
+Work Log:
+- Analyzed `/home/z/my-project/src/app/page.tsx` (1394 lines) and `/home/z/my-project/src/components/app/admin-shop-management.tsx` (792 lines) for responsiveness issues
+- Checked DialogContent base component (`src/components/ui/dialog.tsx`) — found it uses `max-w-[calc(100%-2rem)] sm:max-w-lg`
+- **Critical fix**: `max-w-3xl` on admin dialog was a base class, conflicting with base `sm:max-w-lg` — on sm+ screens, `sm:max-w-lg` (512px) would override and cap the dialog smaller than intended (768px). Changed to `sm:max-w-3xl` to properly override
+- **Padding fixes**: Changed `px-6` to `px-4 sm:px-6` on dialog header (line 258), scrollable content area (line 289), and footer (line 778) — saves 16px on mobile screens for more content space
+- **Touch target fix**: Added `min-h-[44px] min-w-[44px]` to tab navigation buttons (line 276) — on mobile, icon-only tabs were ~30×38px, below the 44px minimum touch target
+- **Analytics chart fix**: Made daily revenue chart responsive — date column `w-14 sm:w-16`, revenue column `w-16 sm:w-20`, gap `gap-2 sm:gap-3` (page.tsx line 1058-1064) — on 320px screens, saves 24px for the bar visualization
+
+Verified no new issues introduced:
+- All pre-existing grids already use responsive prefixes (e.g., `grid-cols-2 lg:grid-cols-4`, `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`)
+- Header already responsive with `hidden sm:inline` for button text, `md:hidden` for menu toggle
+- Shop cards use `grid-cols-1` on mobile, card content uses `flex-wrap` for action buttons
+- Dialog tab container already has `overflow-x-auto` and `whitespace-nowrap` for horizontal scroll on mobile
+- Dialog content area has `overflow-y-auto` with `max-h-[90vh]` for vertical scroll
+- Lint check: no new errors introduced (18 pre-existing errors in other files)
+
+Stage Summary:
+- ✅ Dialog max-width fixed: `sm:max-w-3xl` properly overrides base `sm:max-w-lg`
+- ✅ Dialog padding responsive: `px-4 sm:px-6` on header, content, footer
+- ✅ Tab button touch targets: min 44×44px on mobile (icon-only mode)
+- ✅ Analytics chart responsive: narrower fixed widths and gaps on mobile
+- ✅ All existing responsive patterns verified correct (grids, header, shops table)
