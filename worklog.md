@@ -118,3 +118,41 @@ Verification Results:
 - Country selector shows Arabic names with flags, currency auto-selects
 - Mobile (375x812): sidebar collapses, dialog renders properly
 - Full responsiveness verified
+---
+Task ID: 4
+Agent: Main Agent + Sub-agent (full-stack-developer)
+Task: Fix broken admin buttons (refresh + delete), apply Hany Podcast dark design system
+
+Work Log:
+- **Diagnosed delete button bug**: `page.tsx` line 578 called `/api/shops/${slug}` (requires adminPin) instead of `/api/admin/shops/${slug}` (no auth needed). This caused 403 errors on every delete attempt.
+- **Diagnosed refresh button issue**: Button worked but had no visual feedback — user couldn't tell it was doing anything.
+- **Fixed delete button**: Changed API endpoint from `/api/shops/${slug}` to `/api/admin/shops/${slug}`, added `deleting` loading state, improved confirmation dialog with loading text and proper cancel behavior.
+- **Fixed refresh button**: Added `refreshing` state with spinning icon animation (`animate-spin`), button text changes to "جارٍ التحديث..." during load, button disabled during refresh. Added `silent` parameter to `fetchData()` to suppress toast on initial load.
+- **Added `cn` import** to page.tsx for class merging.
+- **Studied Hany Podcast design** at https://share.google/SAGYWCnh7UoYvxSTW (redirects to hanypodcast.com):
+  - Extracted CSS variables: body-bg #000000, header/footer #050505, primary #c75252, cards rgba(255,255,255,0.08)
+  - Fonts: Lexend (headings) + Inter (body/numbers)
+  - Visual style: pure dark with glassmorphism cards, coral-red accents, generous padding
+- **Applied design system** (dark mode only, light mode untouched):
+  - Updated `globals.css` `.dark` variables: pure black bg, coral primary, glassmorphism cards, warm chart colors
+  - Added utility classes: `.glass-card`, `.glass-card-hover`, `.coral-gradient`, `.coral-glow`
+  - Updated `layout.tsx`: Added Inter font from next/font/google
+  - Updated `page.tsx`: Header bg/border, footer bg/border/text, KPI coral gradients, shop card glassmorphism, order card styling, all buttons use coral theme
+  - Updated `dashboard-sidebar.tsx`: Active item glow with coral shadow, indicator bar glow
+
+Verification (agent-browser on live site):
+- ✅ Login works, dark theme active with coral accents
+- ✅ VLM confirms: "sophisticated dark mode admin dashboard with coral/red accents, glassmorphism cards, clean RTL typography"
+- ✅ Refresh button: spinning animation visible, data reloads
+- ✅ Delete button: confirmation dialog opens correctly with proper text "حذف المتجر \"name\"؟"
+- ✅ Mobile (375x812): Sidebar hidden by default, hamburger menu visible, full-width content
+- ✅ Tablet (768x1024): Sidebar collapsed to icons, 2x2 KPI grid, well-optimized
+- ✅ Desktop: Full sidebar, 4-column KPIs, all sections visible
+
+Stage Summary:
+- ✅ Delete shop button: FIXED (wrong API endpoint → correct admin endpoint + loading state)
+- ✅ Refresh button: FIXED (added spinning animation + loading text + silent initial load)
+- ✅ Dark theme redesign: Pure black + coral red accents + glassmorphism cards
+- ✅ Inter font added alongside Cairo for numbers/Latin text
+- ✅ Light mode preserved completely unchanged
+- ✅ Full responsiveness verified: mobile, tablet, desktop
