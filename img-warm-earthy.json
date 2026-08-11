@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "query": "warm earthy tones print shop website with organic shapes and friendly Arabic typography",
+  "count": 5,
+  "ranked": true,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/6b15dcd204c3.jpg",
+      "caption": "A clear abstract painting with earthy tones hangs above a beige sofa. suitable for background image",
+      "source": "Rossetti Art",
+      "original_width": "1344px",
+      "original_height": "768px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/c0e63e9b279b.jpg",
+      "caption": "Eight abstract and nature-themed art prints in earthy tones arranged on a white wall. suitable for background image",
+      "source": "Rossetti Art",
+      "original_width": "1024px",
+      "original_height": "768px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/7f5ece1f8af3.jpg",
+      "caption": "Two framed abstract paintings with green and white wavy textures. suitable for background image",
+      "source": "MontCarta",
+      "original_width": "1200px",
+      "original_height": "1200px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/9c0e659762a9.jpg",
+      "caption": "A large, rectangular floral wall made of colorful roses and orchids stands on a grassy lawn. suitable for background image",
+      "source": "ValarFlowers",
+      "original_width": "1946px",
+      "original_height": "1946px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/c36c7967a0a2.jpg",
+      "caption": "A bright room features a white armchair and a round painting of a sunset over the sea. suitable for background image",
+      "source": "MyPhotoStation",
+      "original_width": "1080px",
+      "original_height": "1080px"
+    }
+  ]
+}

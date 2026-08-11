@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "query": "printing company website with green teal color scheme professional business cards brochures catalog",
+  "count": 5,
+  "ranked": true,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/e14c5a29568d.jpg",
+      "caption": "Three dark business cards for Inti Pallares, Attorney at Law, featuring a logo and a QR code.",
+      "source": "Printfever",
+      "original_width": "1024px",
+      "original_height": "1024px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/f640232aef18.jpg",
+      "caption": "Two business cards for \"The Petite Posy\" on a wooden surface with scattered dried leaves. Text: The Petite Posy, Jill Gisholt, Designer, 781.908.0244, Jill@ThePetitePosy.com, ThePetitePosy.com. suitable for background image",
+      "source": "Vistaprint",
+      "original_width": "2560px",
+      "original_height": "1920px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/1f94f3509a9d.jpg",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "BrandPacks",
+      "original_width": "1440px",
+      "original_height": "960px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/3ad48ce4e70a.jpg",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Template Catalog",
+      "original_width": "2560px",
+      "original_height": "1990px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/82f3a9821f86.jpg",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Image Square Printing",
+      "original_width": "800px",
+      "original_height": "1000px"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "query": "modern print shop website landing page with gradient colors and clean layout",
+  "count": 5,
+  "ranked": true,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/d6ec9d80a473.jpg",
+      "caption": "The image is a collage of 24 effective landing page design examples with text overlays.",
+      "source": "GraphicMama",
+      "original_width": "1652px",
+      "original_height": "928px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/ef5606763a5a.png",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Zarla",
+      "original_width": "1152px",
+      "original_height": "698px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/720c1a319e44.jpg",
+      "caption": "The image contains watermarks and text. Text: COMPANY, HOME, ABOUT US, CONTACT US, SIGN IN, WELCOME, LEARN MORE.",
+      "source": "Dreamstime.com",
+      "original_width": "1600px",
+      "original_height": "1157px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/7d82987e43e1.jpg",
+      "caption": "The image contains watermarks and text. Text: LOGO, Home, About, Contact, Log in, Sing up, LOREM IPSUM, Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam aliquet eu mauris id dapibus. Donec tristique varius dolor, ut viverra diam consectetur sollicitudin., LEARN MORE, dreamstime.com, ID 422351914 © Marina Logvinenko",
+      "source": "Dreamstime.com",
+      "original_width": "1600px",
+      "original_height": "1025px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/64151c6a3a41.png",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Creative Fabrica",
+      "original_width": "1600px",
+      "original_height": "1200px"
+    }
+  ]
+}

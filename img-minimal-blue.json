@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "query": "minimalist clean printing services website with white background and blue accent color",
+  "count": 5,
+  "ranked": true,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/d6b126222d7a.jpg",
+      "caption": "Abstract blue and white wavy background with subtle line textures. suitable for background image",
+      "source": "Canva",
+      "original_width": "1131px",
+      "original_height": "1600px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/4eb63252d8e6.jpg",
+      "caption": "A blue armchair with wooden legs sits in front of blue and white animal-themed wallpaper. suitable for background image",
+      "source": "EazzyWalls",
+      "original_width": "1214px",
+      "original_height": "1214px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/b583663321a1.jpg",
+      "caption": "A stylish interior with a dark blue geometric wallpaper, a wooden cabinet, and gold metal furniture. suitable for background image",
+      "source": "ondecor.com",
+      "original_width": "1780px",
+      "original_height": "1780px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/c9369df7b2fb.jpg",
+      "caption": "A hand holds a sketchbook with blue brushstrokes in front of matching wallpaper. suitable for background image",
+      "source": "Tempaper & Co.",
+      "original_width": "1080px",
+      "original_height": "1080px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/2006e8777127.jpg",
+      "caption": "A wooden bench and stool with a vase and books against a teal chevron patterned wallpaper. suitable for background image",
+      "source": "ondecor.com",
+      "original_width": "1780px",
+      "original_height": "1780px"
+    }
+  ]
+}

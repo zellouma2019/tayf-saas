@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "query": "dark theme print on demand website with neon glow colors vibrant product showcase",
+  "count": 5,
+  "ranked": true,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/27acd646497a.jpg",
+      "caption": "Three iridescent 3D shapes, including two cylinders and a ring, glow with vibrant rainbow colors against a dark background. suitable for background image",
+      "source": "Shopify",
+      "original_width": "1600px",
+      "original_height": "900px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/af5a2f01d7ab.webp",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "DTF Transfers Now",
+      "original_width": "1200px",
+      "original_height": "1200px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/94bb5fe89a93.jpg",
+      "caption": "Two glowing, blurred rounded squares with vibrant gradients on a dark blue background. suitable for background image",
+      "source": "Shopify",
+      "original_width": "1600px",
+      "original_height": "900px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/f8fe277465d0.jpg",
+      "caption": "An infographic titled \"NEON COLORS\" displays seven neon color circles with associated meanings and a \"DesignMantic\" logo.",
+      "source": "DesignMantic",
+      "original_width": "1080px",
+      "original_height": "1080px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/2227ed453c30.png",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Reddit",
+      "original_width": "1227px",
+      "original_height": "833px"
+    }
+  ]
+}

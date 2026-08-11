@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "query": "modern website color palette design system with primary secondary accent colors swatches",
+  "count": 5,
+  "ranked": true,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/6d67e089b3d2.png",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Muzli - Design Inspiration",
+      "original_width": "2578px",
+      "original_height": "1396px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/f918f7ea91e7.jpg",
+      "caption": "The image displays a color palette chart with labels, hex codes, and numbered swatches for UI design.",
+      "source": "Material Design",
+      "original_width": "1064px",
+      "original_height": "962px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/d3d47d8ded46.png",
+      "caption": "A color palette titled \"Tropical punch\" with four color blocks and hex codes. suitable for background image",
+      "source": "Figma",
+      "original_width": "1440px",
+      "original_height": "868px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/81a0ae91686f.png",
+      "caption": "A color palette image titled \"Bubblegum pop\" with four color blocks and their hex codes.",
+      "source": "Figma",
+      "original_width": "1440px",
+      "original_height": "868px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/90a4382c5c3f.png",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Medium",
+      "original_width": "1400px",
+      "original_height": "1331px"
+    }
+  ]
+}
