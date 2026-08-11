@@ -412,6 +412,59 @@ html {
 }
 
 /* ==========================================================================
+   HANY SCHOOL STRUCTURAL UTILITIES
+   ========================================================================== */
+
+/* Stats bar — pill container with gradient and subtle border */
+.hany-stats-bar {
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 24px 20px;
+}
+:root .hany-stats-bar {
+  background: linear-gradient(135deg, #faf8f2, #f5f0e5);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Section heading — extra bold, tight tracking */
+.hany-heading {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* Stat number — black weight, tabular */
+.hany-stat {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Label — uppercase, wide tracking, tiny */
+.hany-label {
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* CTA glow button — multi-layer shadow pulse */
+@keyframes hany-pulse-shadow {
+  0%, 100% { box-shadow: 0 4px 15px rgba(199, 82, 82, 0.3), 0 8px 30px rgba(199, 82, 82, 0.15); }
+  50% { box-shadow: 0 4px 25px rgba(199, 82, 82, 0.45), 0 8px 40px rgba(199, 82, 82, 0.25); }
+}
+.hany-cta {
+  animation: hany-pulse-shadow 2.5s ease-in-out infinite;
+}
+
+/* Grid texture overlay — Hany school hero pattern */
+.hany-grid-bg {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0px, transparent 1px, transparent 28px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0px, transparent 1px, transparent 28px);
+}
+
+/* ==========================================================================
    ANIMATIONS
    ========================================================================== */
 

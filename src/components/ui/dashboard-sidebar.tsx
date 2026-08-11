@@ -124,25 +124,15 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'relative flex w-full items-center gap-3 rounded-lg',
+        'relative flex w-full items-center gap-3 rounded-full',
         collapsed ? 'justify-center px-0 py-2.5' : 'px-4 py-2.5',
         'transition-all duration-200 ease-in-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         isActive
-          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_12px_rgba(199,82,82,0.15)] dark:shadow-[0_0_12px_rgba(199,82,82,0.2)] sidebar-active-glow'
+          ? 'bg-sidebar-primary/15 text-sidebar-primary font-semibold shadow-[0_0_16px_rgba(199,82,82,0.2),0_0_48px_rgba(199,82,82,0.08)]'
           : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
       )}
     >
-      {/* Active indicator bar with glow */}
-      <span
-        className={cn(
-          'absolute right-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-200',
-          isActive
-            ? 'bg-sidebar-primary opacity-100 shadow-[0_0_10px_rgba(199,82,82,0.6)]'
-            : 'bg-transparent opacity-0',
-        )}
-      />
-
       <Icon
         size={20}
         className={cn(

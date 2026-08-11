@@ -474,9 +474,35 @@ export default function UploadStep({
   const [isDragOver, setIsDragOver] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [dragCounter, setDragCounter] = useState(0);
+  const [immediatePreview, setImmediatePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
   const currentFileRef = useRef<File | null>(null);
+
+  // Generate immediate file preview when file is selected
+  const prevPreviewUrlRef = useRef<string | null>(null);
+  const generatePreview = useCallback((file: File) => {
+    // Clean up previous preview
+    if (prevPreviewUrlRef.current) {
+      URL.revokeObjectURL(prevPreviewUrlRef.current);
+      prevPreviewUrlRef.current = null;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
+      const url = URL.createObjectURL(file);
+      prevPreviewUrlRef.current = url;
+      setImmediatePreview(url);
+    } else {
+      setImmediatePreview(null);
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (prevPreviewUrlRef.current) URL.revokeObjectURL(prevPreviewUrlRef.current);
+    };
+  }, []);
 
   // مؤقت زمني — يبدأ مع أول مراحل نشطة
   const analysisStartRef = useRef<number | null>(null);
@@ -521,6 +547,7 @@ export default function UploadStep({
       // The parent's handleFile will handle validation too
     }
     currentFileRef.current = file;
+    generatePreview(file);
     onFileSelected(file);
   }
 
@@ -925,6 +952,69 @@ export default function UploadStep({
         <span className="text-emerald-500">&#128274;</span>
         ملفاتك آمنة — تُعالج محلياً ولا تُرفع لأي خادم خارجي
       </motion.p>
+
+      {/* ═══════════════════════════════════════════════════
+          Immediate File Preview (before analysis)
+          ═══════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {hasFile && (immediatePreview || (analysis && analysis.thumbnailUrl)) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-2xl border border-border bg-card overflow-hidden"
+          >
+            <div className="flex items-center gap-1.5 px-4 py-2.5 bg-muted/30 border-b border-border">
+              <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-bold text-muted-foreground">معاينة الملف</span>
+              {analysis && analysis.pageCount > 1 && (
+                <span className="mr-auto text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full">
+                  {analysis.pageCount} صفحة
+                </span>
+              )}
+            </div>
+            <div className="p-3 flex items-center justify-center">
+              <div className="relative rounded-xl overflow-hidden border border-border shadow-sm max-w-xs w-full">
+                <img
+                  src={immediatePreview || (analysis?.thumbnailUrl || "")}
+                  alt={fileName || "معاينة"}
+                  className="w-full h-auto max-h-56 object-contain bg-white"
+                />
+                {fileType === "PDF" && (
+                  <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/90 text-white text-[10px] font-bold backdrop-blur-sm">
+                    <FileText className="h-3 w-3" /> PDF
+                    {analysis?.pageCount ? ` — ${analysis.pageCount} صفحة` : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {/* For non-image files without thumbnail, show format-specific info */}
+        {hasFile && !immediatePreview && !(analysis && analysis.thumbnailUrl) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-2xl border border-border bg-card p-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl ${fileMeta.bg} flex items-center justify-center shrink-0`}>
+                <FileIcon className={`h-6 w-6 ${fileMeta.color}`} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold truncate">{fileName}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {fileType} — {(fileSize / 1024).toFixed(0)} ك.ب
+                  {analysis?.pageCount ? ` — ${analysis.pageCount} صفحة` : ""}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══════════════════════════════════════════════════
           Multi-Stage Progress

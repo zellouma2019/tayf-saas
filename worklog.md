@@ -192,3 +192,84 @@ Stage Summary:
 - ✅ Inter font applied to numbers and code elements
 - ✅ Colors NOT changed — only structural shapes, transitions, padding
 - ✅ Light mode and dark mode both updated
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: Apply Hany Hussain School structural design patterns to admin panel page.tsx
+
+Work Log:
+- Analyzed Hany Hussain School (school.hanyhussain.com) structural design patterns
+- Read full page.tsx (1407 lines) and identified all elements needing structural updates
+- Applied 7 categories of structural patterns WITHOUT changing any colors:
+
+**1. Buttons (pill-shaped + hover:scale-[0.97]):**
+- Added `rounded-full` to mobile menu button (ghost icon)
+- Added `hover:scale-[0.97]` to: refresh button, logout button, 3 copy buttons in share dialog, delete member button
+- Added `rounded-full font-semibold hover:scale-[0.97]` to AlertDialog delete action
+- Added `rounded-full` to AlertDialog cancel button
+
+**2. Cards (dark:glass-card for glass-like appearance):**
+- Added `dark:glass-card` to: login card, 3 empty state cards (shops/orders/customers), 5 settings cards (platform info, general settings, feature toggles, notifications, maintenance mode), 3 team & security cards (password change, team members, system info)
+
+**3. Inputs (h-11 for generous height):**
+- Added `h-11` to: login password input, 5 create shop inputs, 8 edit shop inputs, 3 search inputs (shops/orders/customers), 5 platform settings inputs, 2 general settings inputs (trial days, max shops, welcome message), 3 password change inputs
+
+**4. Typography:**
+- Revenue chart values: changed `font-medium` to `font-black tabular-nums` for consistency with all other stat numbers
+- Login subtitle: added `font-medium` to body text
+
+**5. Pre-existing patterns verified already correct:**
+- All section headings already use `font-extrabold tracking-tight` ✅
+- All KPI stat numbers already use `font-black tabular-nums` ✅
+- All labels already use `uppercase tracking-wider text-xs` ✅
+- All body text already uses `font-medium` ✅
+- All badges already use `rounded-full` (from base component) ✅
+- All KPI cards already use `rounded-[20px]` ✅
+- Layout already has `px-4 sm:px-6 py-8` ✅
+
+Verification:
+- Lint check: no new errors introduced (only pre-existing setState-in-effect warnings)
+- All changes are structural only — NO color values changed
+- All functionality preserved — no logic changes
+
+Stage Summary:
+- ✅ All buttons pill-shaped (rounded-full) with hover:scale-[0.97]
+- ✅ All cards have dark:glass-card glassmorphism in dark mode
+- ✅ All inputs have h-11 generous height
+- ✅ All stat numbers use font-black tabular-nums
+- ✅ Section headings use font-extrabold tracking-tight
+- ✅ Body text uses font-medium
+- ✅ Labels use uppercase tracking-wider text-xs
+- ✅ Zero color changes — coral/dark palette preserved
+- ✅ Zero functionality changes
+---
+Task ID: 7
+Agent: Main Agent
+Task: Fix 3 customer-facing bugs + apply Hany school structural design project-wide
+
+Work Log:
+- **Bug 1**: Removed floating FAB button (QuickActions) and AI assistant (FloatingAssistant) from customer-facing AppShell
+- **Bug 2**: Rewrote /api/convert/route.ts to work with database-stored files (retrieves from Turso DB, converts in memory with sharp, stores converted file back)
+- **Bug 3a**: Improved AI analysis prompt — includes page count context, format-specific instructions, detailed description requirements, pageCount field in response
+- **Bug 3b**: Added immediate file preview (createObjectURL for images) shown before analysis completes
+- **Bug 3c**: Changed PDF thumbnail threshold from 1MB to 5MB so more PDFs get thumbnails
+- **Design**: Updated base UI components for Hany school patterns:
+  - Button: rounded-full (pill) for all variants/sizes, increased padding
+  - Card: rounded-2xl, glassmorphism dark mode (bg-white/[0.03]), font-extrabold titles
+  - Tabs: rounded-full list and triggers, h-11 list height
+  - Input: h-11 for generous height
+  - Badge: already pill-shaped (rounded-full)
+- **Design**: Added Hany school CSS utilities: .hany-stats-bar, .hany-heading, .hany-stat, .hany-label, .hany-cta, .hany-grid-bg
+- **Design**: Admin page.tsx updated by sub-agent: pill buttons, glassmorphism cards, h-11 inputs, font-black stat numbers
+- Verified: 0 new lint errors in modified files
+
+Stage Summary:
+- ✅ Floating FAB + AI assistant removed from customer page
+- ✅ File conversion now works with DB-stored files
+- ✅ AI analysis includes page count and format-specific context
+- ✅ File preview shown immediately for images, analysis thumbnail for PDFs
+- ✅ PDF thumbnails generated for files up to 5MB (was 1MB)
+- ✅ Hany school structural design applied to ALL base components
+- ✅ Pill buttons (rounded-full), rounded-2xl cards, glassmorphism dark mode
+- ⏳ Browser verification pending

@@ -28,7 +28,6 @@ import { TrackOrder } from "@/components/app/track-order";
 import { AdminPanel } from "@/components/app/admin-panel";
 import { OrderSuccess } from "@/components/app/order-success";
 import { AdminGate } from "@/components/app/admin-gate";
-import { FloatingAssistant } from "@/components/app/floating-assistant";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Intro } from "@/components/app/intro";
 import { LiveClock } from "@/components/app/live-clock";
@@ -36,7 +35,6 @@ import { NotificationBadge } from "@/components/app/notification-badge";
 import { QuickPriceCalculator } from "@/components/app/quick-price-calculator";
 import { BackToTop } from "@/components/app/back-to-top";
 import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
-import { QuickActions } from "@/components/app/quick-actions";
 import { TestimonialsSection } from "@/components/app/testimonials-section";
 import { useAppStore } from "@/lib/store";
 import { useShop } from "@/lib/shop-context";
@@ -397,8 +395,6 @@ export function AppShell() {
           <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v as View); }} />
           <AdminGate open={adminGateOpen} onClose={() => setAdminGateOpen(false)} onSuccess={handleAdminUnlock} />
           <BackToTop />
-          <FloatingAssistant onRepeatOrder={() => setView("repeat")} />
-          <QuickActions />
           <SonnerToaster position="top-center" dir="rtl" />
         </div>
       </LayoutGroup>

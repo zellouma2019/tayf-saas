@@ -108,22 +108,22 @@ function InlineLoginGate({ onUnlock }: { onUnlock: () => void }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
-      <Card className="max-w-sm w-full">
+      <Card className="max-w-sm w-full dark:glass-card">
         <CardContent className="p-6 space-y-4">
           <div className="flex flex-col items-center gap-3">
             <img src="/n.png" alt="طيف" className="w-16 h-16 rounded-2xl object-contain shadow-lg" />
             <div className="text-center">
-              <h1 className="text-xl font-bold">لوحة تحكم المنصة</h1>
-              <p className="text-sm text-muted-foreground">أدخل كلمة المرور للدخول</p>
+              <h1 className="text-2xl font-extrabold tracking-tight">لوحة تحكم المنصة</h1>
+              <p className="text-sm text-muted-foreground font-medium">أدخل كلمة المرور للدخول</p>
             </div>
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="relative">
               <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => { setPassword(e.target.value); setError(false); }} className="pr-9" dir="ltr" />
+              <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => { setPassword(e.target.value); setError(false); }} className="pr-9 h-11" dir="ltr" />
             </div>
             {error && <p className="text-destructive text-xs text-center">كلمة المرور غير صحيحة</p>}
-            <Button type="submit" className="w-full bg-gradient-to-l from-amber-500 to-amber-600 text-white" disabled={loading}>
+            <Button type="submit" className="w-full rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.3),0_0_60px_rgba(245,158,11,0.1)] hover:shadow-[0_0_24px_rgba(245,158,11,0.4),0_0_72px_rgba(245,158,11,0.15)] hover:scale-[0.97]" disabled={loading}>
               {loading ? 'جاري التحقق...' : 'دخول'}
             </Button>
           </form>
@@ -177,26 +177,26 @@ function InlineCreateShop({ open, onClose, onCreated }: { open: boolean; onClose
             <div className="text-center space-y-2">
               <p className="font-bold text-lg">{created.name}</p>
               <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-muted">
-                  <span className="text-muted-foreground">رابط المتجر:</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">رابط المتجر:</span>
                   <button onClick={() => robustCopy(`/s/${created.slug}`, 'تم نسخ الرابط', '')} className="font-mono text-xs text-primary hover:underline">/s/{created.slug}</button>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-muted">
-                  <span className="text-muted-foreground">كلمة المرور:</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">كلمة المرور:</span>
                   <span className="font-mono text-xs font-bold">{created.pin}</span>
                 </div>
               </div>
             </div>
-            <Button onClick={handleClose} className="w-full">تم</Button>
+            <Button onClick={handleClose} className="w-full rounded-full px-6 py-3 hover:scale-[0.97]">تم</Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2"><Label>اسم المتجر *</Label><Input value={name} onChange={(e) => handleName(e.target.value)} placeholder="مثال: مطبعة النور" /></div>
-            <div className="space-y-2"><Label>المعرّف (slug) *</Label><Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="matbaa-alnoor" dir="ltr" /></div>
-            <div className="space-y-2"><Label>كلمة مرور لوحة التحكم (PIN) *</Label><Input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="1234" maxLength={10} dir="ltr" type="text" /></div>
+            <div className="space-y-2"><Label>اسم المتجر *</Label><Input value={name} onChange={(e) => handleName(e.target.value)} placeholder="مثال: مطبعة النور" className="h-11" /></div>
+            <div className="space-y-2"><Label>المعرّف (slug) *</Label><Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="matbaa-alnoor" dir="ltr" className="h-11" /></div>
+            <div className="space-y-2"><Label>كلمة مرور لوحة التحكم (PIN) *</Label><Input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="1234" maxLength={10} dir="ltr" type="text" className="h-11" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label>اسم المالك</Label><Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="اختياري" /></div>
-              <div className="space-y-2"><Label>هاتف المالك</Label><Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="اختياري" dir="ltr" /></div>
+              <div className="space-y-2"><Label>اسم المالك</Label><Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="اختياري" className="h-11" /></div>
+              <div className="space-y-2"><Label>هاتف المالك</Label><Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="اختياري" dir="ltr" className="h-11" /></div>
             </div>
             <div className="space-y-2">
               <Label>الدولة</Label>
@@ -206,8 +206,8 @@ function InlineCreateShop({ open, onClose, onCreated }: { open: boolean; onClose
               </Select>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleClose} className="flex-1">إلغاء</Button>
-              <Button type="submit" disabled={!name || !slug || !pin || submitting} className="flex-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+              <Button type="button" variant="outline" onClick={handleClose} className="flex-1 rounded-full hover:scale-[0.97]">إلغاء</Button>
+              <Button type="submit" disabled={!name || !slug || !pin || submitting} className="flex-1 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
                 {submitting ? 'جاري الإنشاء...' : 'إنشاء'}
               </Button>
             </div>
@@ -303,32 +303,32 @@ function InlineEditShop({ open, onClose, shop, onSaved }: {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
               <Label>اسم المتجر *</Label>
-              <Input value={data.name} onChange={(e) => setField('name', e.target.value)} />
+              <Input value={data.name} onChange={(e) => setField('name', e.target.value)} className="h-11" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>اسم المالك</Label>
-                <Input value={data.ownerName || ''} onChange={(e) => setField('ownerName', e.target.value || null)} />
+                <Input value={data.ownerName || ''} onChange={(e) => setField('ownerName', e.target.value || null)} className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>هاتف المالك</Label>
-                <Input value={data.ownerPhone || ''} onChange={(e) => setField('ownerPhone', e.target.value || null)} dir="ltr" />
+                <Input value={data.ownerPhone || ''} onChange={(e) => setField('ownerPhone', e.target.value || null)} dir="ltr" className="h-11" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>هاتف المتجر</Label>
-                <Input value={data.phone || ''} onChange={(e) => setField('phone', e.target.value || null)} dir="ltr" />
+                <Input value={data.phone || ''} onChange={(e) => setField('phone', e.target.value || null)} dir="ltr" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>واتساب</Label>
-                <Input value={data.whatsapp || ''} onChange={(e) => setField('whatsapp', e.target.value || null)} dir="ltr" />
+                <Input value={data.whatsapp || ''} onChange={(e) => setField('whatsapp', e.target.value || null)} dir="ltr" className="h-11" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>البريد الإلكتروني</Label>
-                <Input value={data.email || ''} onChange={(e) => setField('email', e.target.value || null)} dir="ltr" type="email" />
+                <Input value={data.email || ''} onChange={(e) => setField('email', e.target.value || null)} dir="ltr" type="email" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label>الدولة</Label>
@@ -340,7 +340,7 @@ function InlineEditShop({ open, onClose, shop, onSaved }: {
             </div>
             <div className="space-y-2">
               <Label>العنوان</Label>
-              <Input value={data.address || ''} onChange={(e) => setField('address', e.target.value || null)} />
+              <Input value={data.address || ''} onChange={(e) => setField('address', e.target.value || null)} className="h-11" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -357,20 +357,20 @@ function InlineEditShop({ open, onClose, shop, onSaved }: {
                 <Label>اللون الأساسي</Label>
                 <div className="flex items-center gap-2">
                   <input type="color" value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="h-9 w-12 rounded-md border cursor-pointer" />
-                  <Input value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="flex-1 font-mono text-xs" dir="ltr" />
+                  <Input value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="flex-1 font-mono text-xs h-11" dir="ltr" />
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <Label className="!mb-0">حالة المتجر</Label>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
+              <Label className="!mb-0 font-medium">حالة المتجر</Label>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">{data.isActive ? 'نشط' : 'متوقف'}</span>
                 <Switch checked={data.isActive} onCheckedChange={(v) => setField('isActive', v)} />
               </div>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">إلغاء</Button>
-              <Button type="submit" disabled={saving || !data.name} className="flex-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-full hover:scale-[0.97]">إلغاء</Button>
+              <Button type="submit" disabled={saving || !data.name} className="flex-1 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
                 {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
               </Button>
             </div>
@@ -414,39 +414,39 @@ function InlineShareShop({ open, onClose, shop }: {
         <DialogDescription>روابط وكلمة مرور متجر {shop.name}</DialogDescription>
         <div className="space-y-3 pt-2">
           <div className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">رابط الزبون</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">رابط الزبون</span>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono" dir="ltr">{customerLink}</code>
-              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(customerLink, 'تم النسخ', customerLink)}>
+              <code className="flex-1 text-xs bg-muted px-3 py-2.5 rounded-xl font-mono" dir="ltr">{customerLink}</code>
+              <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:scale-[0.97]" onClick={() => robustCopy(customerLink, 'تم النسخ', customerLink)}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
           <div className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">رابط الإدارة</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">رابط الإدارة</span>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono" dir="ltr">{adminLink}</code>
-              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(adminLink, 'تم النسخ', adminLink)}>
+              <code className="flex-1 text-xs bg-muted px-3 py-2.5 rounded-xl font-mono" dir="ltr">{adminLink}</code>
+              <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:scale-[0.97]" onClick={() => robustCopy(adminLink, 'تم النسخ', adminLink)}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
           <Separator />
           <div className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">كلمة مرور الإدارة (PIN)</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">كلمة مرور الإدارة (PIN)</span>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-lg font-mono font-bold text-amber-700 dark:text-amber-300" dir="ltr">
+              <code className="flex-1 text-sm bg-amber-50 dark:bg-amber-950/30 px-3 py-2.5 rounded-xl font-mono font-bold text-amber-700 dark:text-amber-300" dir="ltr">
                 {pinData.loaded ? (pinData.pin || '—') : '...'}
               </code>
               {pinData.loaded && pinData.pin && (
-                <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(pinData.pin, 'تم نسخ PIN', pinData.pin)}>
+                <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:scale-[0.97]" onClick={() => robustCopy(pinData.pin, 'تم نسخ PIN', pinData.pin)}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
           </div>
         </div>
-        <Button onClick={onClose} className="w-full mt-4">تم</Button>
+        <Button onClick={onClose} className="w-full mt-4 rounded-full px-6 py-3 hover:scale-[0.97]">تم</Button>
       </DialogContent>
     </Dialog>
   );
@@ -779,22 +779,22 @@ export default function AdminPage() {
         <header className="sticky top-0 z-40 dark:bg-[#050505] dark:border-b dark:border-white/[0.06] bg-card/80 backdrop-blur-sm border-b shadow-sm">
           <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="القائمة">
+              <Button variant="ghost" size="icon" className="md:hidden rounded-full" onClick={() => setMobileMenuOpen(true)} aria-label="القائمة">
                 <Menu className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-sm font-bold dark:text-white">{tabTitle[activeTab] || ''}</h1>
+                <h1 className="text-sm font-extrabold tracking-tight dark:text-white">{tabTitle[activeTab] || ''}</h1>
                 <p className="text-[10px] text-muted-foreground">مرحباً، {adminName}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={fetchData} disabled={refreshing} className="gap-1.5 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">{refreshing ? 'جارٍ التحديث...' : 'تحديث'}</span></Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-rose-500 dark:text-[#c75252]"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
+              <Button variant="outline" size="sm" onClick={fetchData} disabled={refreshing} className="gap-1.5 rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">{refreshing ? 'جارٍ التحديث...' : 'تحديث'}</span></Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 rounded-full text-rose-500 dark:text-[#c75252] hover:scale-[0.97]"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
             </div>
           </div>
         </header>
 
-        <main className="px-4 sm:px-6 pt-6 pb-8 w-full flex-1 overflow-y-auto">
+        <main className="px-4 sm:px-6 py-8 w-full max-w-7xl flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {/* ====== DASHBOARD TAB ====== */}
             {activeTab === 'dashboard' && (
@@ -808,15 +808,15 @@ export default function AdminPage() {
                     { label: 'طلبات اليوم', value: todayOrders, icon: TrendingUp, color: 'from-[#c75252] to-[#d46060]', bg: 'bg-sky-50 dark:bg-[rgba(199,82,82,0.12)]', sub: `${uniqueCustomers.length} عميل` },
                   ].map((c, i) => (
                     <motion.div key={c.label} {...fadeIn} transition={{ delay: i * 0.06 }}>
-                      <Card className={`${c.bg} border-0 shadow-sm dark:glass-card dark:glass-card-hover dark:border-white/[0.08]`}>
-                        <CardContent className="p-4">
+                      <Card className={`${c.bg} rounded-[20px] border border-border/30 shadow-none dark:bg-white/[0.04] dark:border-white/[0.08]`}>
+                        <CardContent className="p-5">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-xs text-muted-foreground mb-0.5">{c.label}</p>
-                              <p className="text-xl font-bold tabular-nums dark:text-white">{c.value}</p>
-                              <p className="text-[10px] text-muted-foreground mt-1">{c.sub}</p>
+                              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 font-medium">{c.label}</p>
+                              <p className="text-2xl font-black tabular-nums dark:text-white">{c.value}</p>
+                              <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">{c.sub}</p>
                             </div>
-                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm`}>
+                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm`}>
                               <c.icon className="h-5 w-5 text-white" />
                             </div>
                           </div>
@@ -829,11 +829,11 @@ export default function AdminPage() {
                 {/* 7-Day Chart + Status Distribution */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <Card className="lg:col-span-2 dark:glass-card dark:glass-card-hover">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">إحصائيات 7 أيام</CardTitle><CardDescription>الطلبات اليومية والإيرادات</CardDescription></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">إحصائيات 7 أيام</CardTitle><CardDescription>الطلبات اليومية والإيرادات</CardDescription></CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-muted-foreground mb-2">الطلبات</p>
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">الطلبات</p>
                           <MiniBarChart data={dailyOrdersArr} color="bg-amber-400 dark:bg-[#c75252]" />
                           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
                             <span>{dailyData[0]?.date?.slice(5) || ''}</span>
@@ -841,7 +841,7 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground mb-2">الإيرادات</p>
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">الإيرادات</p>
                           <MiniBarChart data={dailyRevenueArr} color="bg-emerald-400 dark:bg-[#d46060]" />
                           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
                             <span>{dailyData[0]?.date?.slice(5) || ''}</span>
@@ -852,7 +852,7 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
                   <Card className="dark:glass-card dark:glass-card-hover">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">توزيع الحالات</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">توزيع الحالات</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       {Object.entries(statusCounts).length === 0 && <p className="text-xs text-muted-foreground">لا توجد بيانات</p>}
                       {Object.entries(statusCounts).map(([status, count]) => {
@@ -876,24 +876,24 @@ export default function AdminPage() {
                 {/* Top Shops + Recent Activity */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Card className="dark:glass-card dark:glass-card-hover">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">أفضل المتاجر</CardTitle><CardDescription>حسب عدد الطلبات</CardDescription></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">أفضل المتاجر</CardTitle><CardDescription>حسب عدد الطلبات</CardDescription></CardHeader>
                     <CardContent className="space-y-2 max-h-64 overflow-y-auto">
                       {shops.sort((a, b) => (b._count?.orders || 0) - (a._count?.orders || 0)).slice(0, 8).map((shop) => (
-                        <div key={shop.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div key={shop.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-muted/50 transition-colors">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 dark:from-[rgba(199,82,82,0.2)] dark:to-[rgba(199,82,82,0.1)] flex items-center justify-center text-sm">🖨️</div>
                             <div><p className="text-xs font-medium">{shop.name}</p><p className="text-[10px] text-muted-foreground font-mono" dir="ltr">{shop.slug}</p></div>
                           </div>
-                          <div className="text-left"><p className="text-xs font-bold tabular-nums">{shop._count?.orders || 0}</p><p className="text-[10px] text-muted-foreground">طلب</p></div>
+                          <div className="text-left"><p className="text-xs font-black tabular-nums">{shop._count?.orders || 0}</p><p className="text-[10px] text-muted-foreground">طلب</p></div>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
                   <Card className="dark:glass-card dark:glass-card-hover">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">آخر النشاطات</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">آخر النشاطات</CardTitle></CardHeader>
                     <CardContent className="space-y-2 max-h-64 overflow-y-auto">
                       {recentOrders.slice(0, 8).map((order) => (
-                        <div key={order.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div key={order.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-muted/50 transition-colors">
                           <div className="flex items-center gap-2">
                             <div className={`w-1.5 h-8 rounded-full ${order.status === 'delivered' ? 'bg-emerald-500 dark:bg-[#c75252]' : order.status === 'pending' ? 'bg-amber-500 dark:bg-[#d46060]' : order.status === 'printing' ? 'bg-blue-500 dark:bg-[#e07070]' : 'bg-muted-foreground/30 dark:bg-white/20'}`} />
                             <div>
@@ -901,7 +901,7 @@ export default function AdminPage() {
                               <p className="text-[10px] text-muted-foreground">{order.shopName} · {order.customer?.name || '—'}</p>
                             </div>
                           </div>
-                          <div className="text-left"><p className="text-xs font-bold tabular-nums">{formatDA(order.total)}</p><p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p></div>
+                          <div className="text-left"><p className="text-xs font-black tabular-nums">{formatDA(order.total)}</p><p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p></div>
                         </div>
                       ))}
                     </CardContent>
@@ -916,25 +916,25 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="relative max-w-sm flex-1">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="بحث في المتاجر..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+                    <Input placeholder="بحث في المتاجر..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9 h-11" />
                   </div>
-                  <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white dark:hover:from-[#d46060] dark:hover:to-[#b04040]">
+                  <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white dark:hover:from-[#d46060] dark:hover:to-[#b04040] shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
                     <Plus className="h-4 w-4" />إنشاء متجر
                   </Button>
                 </div>
                 {filteredShops.length === 0 ? (
-                  <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-4 py-16"><Store className="h-12 w-12 text-muted-foreground/30" /><h3 className="font-bold">لا توجد متاجر</h3><p className="text-sm text-muted-foreground">أنشئ أول متجر للبدء</p></CardContent></Card>
+                  <Card className="border-dashed dark:glass-card"><CardContent className="flex flex-col items-center gap-4 py-16"><Store className="h-12 w-12 text-muted-foreground/30" /><h3 className="font-extrabold tracking-tight">لا توجد متاجر</h3><p className="text-sm font-medium text-muted-foreground">أنشئ أول متجر للبدء</p></CardContent></Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filteredShops.map((shop, idx) => (
                       <motion.div key={shop.id} {...fadeIn} transition={{ delay: idx * 0.03 }}>
                         <Card className="hover:shadow-md transition-shadow dark:glass-card dark:glass-card-hover">
-                          <CardContent className="p-4 space-y-3">
+                          <CardContent className="p-5 space-y-3">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 dark:from-[rgba(199,82,82,0.2)] dark:to-[rgba(199,82,82,0.1)] flex items-center justify-center text-lg">🖨️</div>
                                 <div>
-                                  <h3 className="font-bold text-sm">{shop.name}</h3>
+                                  <h3 className="font-extrabold text-sm tracking-tight">{shop.name}</h3>
                                   <p className="text-[11px] text-muted-foreground font-mono" dir="ltr">{shop.slug}</p>
                                 </div>
                               </div>
@@ -943,26 +943,26 @@ export default function AdminPage() {
                               </Badge>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50"><ShoppingCart className="h-3 w-3 text-muted-foreground" /><span>{shop._count?.orders || 0} طلب</span></div>
-                              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50"><CalendarDays className="h-3 w-3 text-muted-foreground" /><span>{getTimeAgoShort(shop.createdAt)}</span></div>
+                              <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-muted/50"><ShoppingCart className="h-3 w-3 text-muted-foreground" /><span className="font-medium">{shop._count?.orders || 0} طلب</span></div>
+                              <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-muted/50"><CalendarDays className="h-3 w-3 text-muted-foreground" /><span className="font-medium">{getTimeAgoShort(shop.createdAt)}</span></div>
                             </div>
                             {shop.ownerName && <p className="text-xs text-muted-foreground">👤 {shop.ownerName}{shop.phone ? ` · ${shop.phone}` : ''}</p>}
                             <div className="flex flex-wrap gap-1.5 pt-1">
-                              <Button size="sm" variant="outline" className="gap-1 text-xs dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => window.open(`/s/${shop.slug}`, '_blank')}><Eye className="h-3 w-3" />عرض</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => window.open(`/s/${shop.slug}?admin=1`, '_blank')}><Shield className="h-3 w-3" />إدارة</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => setEditTarget(shop)}><Pencil className="h-3 w-3" />تعديل</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => setShareTarget(shop)}><Share2 className="h-3 w-3" />مشاركة</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => handleCopyPin(shop)}><Key className="h-3 w-3" />PIN</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => window.open(`/s/${shop.slug}`, '_blank')}><Eye className="h-3 w-3" />عرض</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => window.open(`/s/${shop.slug}?admin=1`, '_blank')}><Shield className="h-3 w-3" />إدارة</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => setEditTarget(shop)}><Pencil className="h-3 w-3" />تعديل</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => setShareTarget(shop)}><Share2 className="h-3 w-3" />مشاركة</Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => handleCopyPin(shop)}><Key className="h-3 w-3" />PIN</Button>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className={"gap-1 text-xs dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] " + (shop.isActive ? 'text-amber-600 hover:text-amber-700 dark:text-[#d46060] dark:hover:text-[#e07070]' : 'text-emerald-600 hover:text-emerald-700 dark:text-[#c75252] dark:hover:text-[#d46060]')}
+                                className={"gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97] " + (shop.isActive ? 'text-amber-600 hover:text-amber-700 dark:text-[#d46060] dark:hover:text-[#e07070]' : 'text-emerald-600 hover:text-emerald-700 dark:text-[#c75252] dark:hover:text-[#d46060]')}
                                 onClick={() => handleToggleShop(shop)}
                               >
                                 {shop.isActive ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
                                 {shop.isActive ? 'إيقاف' : 'تفعيل'}
                               </Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs text-rose-500 hover:text-rose-600 dark:text-[#dc2626] dark:border-white/[0.12] dark:hover:bg-white/[0.06]" onClick={() => setDeleteTarget(shop)}><Trash2 className="h-3 w-3" /></Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full text-rose-500 hover:text-rose-600 dark:text-[#dc2626] dark:border-white/[0.12] dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => setDeleteTarget(shop)}><Trash2 className="h-3 w-3" /></Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -980,7 +980,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2 flex-1 flex-wrap">
                     <div className="relative max-w-sm flex-1 min-w-[200px]">
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="بحث بالرقم أو المتجر أو الخدمة..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+                      <Input placeholder="بحث بالرقم أو المتجر أو الخدمة..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9 h-11" />
                     </div>
                     <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
                       <SelectTrigger className="w-[140px]"><SelectValue placeholder="الحالة" /></SelectTrigger>
@@ -997,7 +997,7 @@ export default function AdminPage() {
                   <Badge variant="outline" className="text-xs">{filteredOrders.length} طلب</Badge>
                 </div>
                 {filteredOrders.length === 0 ? (
-                  <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-3 py-16"><ShoppingCart className="h-12 w-12 text-muted-foreground/30" /><p className="text-muted-foreground">لا توجد طلبات</p></CardContent></Card>
+                  <Card className="border-dashed dark:glass-card"><CardContent className="flex flex-col items-center gap-3 py-16"><ShoppingCart className="h-12 w-12 text-muted-foreground/30" /><p className="font-medium text-muted-foreground">لا توجد طلبات</p></CardContent></Card>
                 ) : (
                   <div className="space-y-2">
                     {filteredOrders.map((order: any) => (
@@ -1020,7 +1020,7 @@ export default function AdminPage() {
                               </div>
                             </div>
                             <div className="text-left shrink-0">
-                              <p className="text-sm font-bold tabular-nums dark:text-white">{formatDA(order.total)}</p>
+                              <p className="text-sm font-black tabular-nums dark:text-white">{formatDA(order.total)}</p>
                               <p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p>
                             </div>
                           </div>
@@ -1044,11 +1044,11 @@ export default function AdminPage() {
                     { label: 'المتاجر النشطة', value: `${activeShops}/${shops.length}`, icon: Store, color: 'from-[#c75252] to-[#d46060]' },
                   ].map((c, i) => (
                     <motion.div key={c.label} {...fadeIn} transition={{ delay: i * 0.06 }}>
-                      <Card className="border-0 shadow-sm dark:glass-card dark:glass-card-hover">
-                        <CardContent className="p-4">
+                      <Card className="rounded-[20px] border border-border/30 shadow-none dark:bg-white/[0.04] dark:border-white/[0.08]">
+                        <CardContent className="p-5">
                           <div className="flex items-center justify-between">
-                            <div><p className="text-xs text-muted-foreground mb-1">{c.label}</p><p className="text-lg font-bold tabular-nums dark:text-white">{c.value}</p></div>
-                            <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${c.color} flex items-center justify-center`}><c.icon className="h-4 w-4 text-white" /></div>
+                            <div><p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 font-medium">{c.label}</p><p className="text-xl font-black tabular-nums dark:text-white">{c.value}</p></div>
+                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center`}><c.icon className="h-4 w-4 text-white" /></div>
                           </div>
                         </CardContent>
                       </Card>
@@ -1058,7 +1058,7 @@ export default function AdminPage() {
 
                 {/* 7-Day Revenue Chart */}
                 <Card className="dark:glass-card dark:glass-card-hover">
-                  <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">الإيرادات اليومية — آخر 7 أيام</CardTitle></CardHeader>
+                  <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">الإيرادات اليومية — آخر 7 أيام</CardTitle></CardHeader>
                   <CardContent>
                     {dailyData.length > 0 ? (
                       <div className="space-y-1">
@@ -1068,10 +1068,10 @@ export default function AdminPage() {
                           return (
                             <div key={d.date} className="flex items-center gap-2 sm:gap-3">
                               <span className="text-[11px] text-muted-foreground w-14 sm:w-16 shrink-0 tabular-nums">{d.date?.slice(5)}</span>
-                              <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
-                                <div className="h-full bg-gradient-to-l from-amber-400 to-amber-600 dark:from-[#c75252] dark:to-[#a03030] rounded transition-all duration-700" style={{ width: `${Math.max(pct, 1)}%` }} />
+                              <div className="flex-1 h-7 bg-muted rounded-xl overflow-hidden">
+                                <div className="h-full bg-gradient-to-l from-amber-400 to-amber-600 dark:from-[#c75252] dark:to-[#a03030] rounded-xl transition-all duration-700" style={{ width: `${Math.max(pct, 1)}%` }} />
                               </div>
-                              <span className="text-xs font-medium tabular-nums w-16 sm:w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
+                              <span className="text-xs font-black tabular-nums w-16 sm:w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
                               <span className="text-[10px] text-muted-foreground w-8 text-left shrink-0">{d.orders} طلب</span>
                             </div>
                           );
@@ -1084,7 +1084,7 @@ export default function AdminPage() {
                 {/* Status + Service Distribution */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Card className="dark:glass-card dark:glass-card-hover">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">توزيع حالات الطلبات</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">توزيع حالات الطلبات</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       {Object.entries(statusCounts).sort((a, b) => b[1] - a[1]).map(([status, count]) => {
                         const pct = totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0;
@@ -1099,18 +1099,18 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
                   <Card className="dark:glass-card dark:glass-card-hover">
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">أفضل العملاء</CardTitle><CardDescription>حسب إجمالي الإنفاق</CardDescription></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-base font-extrabold tracking-tight">أفضل العملاء</CardTitle><CardDescription>حسب إجمالي الإنفاق</CardDescription></CardHeader>
                     <CardContent className="space-y-2 max-h-72 overflow-y-auto">
                       {uniqueCustomers.slice(0, 10).map((c, i) => (
-                        <div key={c.phone + i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                        <div key={c.phone + i} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-muted/50">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-muted dark:bg-[rgba(199,82,82,0.2)] flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+                            <span className="w-6 h-6 rounded-full bg-muted dark:bg-[rgba(199,82,82,0.2)] flex items-center justify-center text-[10px] font-black">{i + 1}</span>
                             <div><p className="text-xs font-medium">{c.name}</p><p className="text-[10px] text-muted-foreground" dir="ltr">{c.phone}</p></div>
                           </div>
-                          <div className="text-left"><p className="text-xs font-bold tabular-nums">{formatDA(c.total)}</p><p className="text-[10px] text-muted-foreground">{c.orders} طلب</p></div>
+                          <div className="text-left"><p className="text-xs font-black tabular-nums">{formatDA(c.total)}</p><p className="text-[10px] text-muted-foreground">{c.orders} طلب</p></div>
                         </div>
                       ))}
-                      {uniqueCustomers.length === 0 && <p className="text-xs text-muted-foreground">لا توجد بيانات</p>}
+                      {uniqueCustomers.length === 0 && <p className="text-xs font-medium text-muted-foreground">لا توجد بيانات</p>}
                     </CardContent>
                   </Card>
                 </div>
@@ -1123,12 +1123,12 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="relative max-w-sm flex-1">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="بحث بالاسم أو الهاتف..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+                    <Input placeholder="بحث بالاسم أو الهاتف..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9 h-11" />
                   </div>
                   <Badge variant="outline">{uniqueCustomers.length} عميل فريد</Badge>
                 </div>
                 {uniqueCustomers.length === 0 ? (
-                  <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-3 py-16"><Users className="h-12 w-12 text-muted-foreground/30" /><p className="text-muted-foreground">لا يوجد عملاء</p></CardContent></Card>
+                  <Card className="border-dashed dark:glass-card"><CardContent className="flex flex-col items-center gap-3 py-16"><Users className="h-12 w-12 text-muted-foreground/30" /><p className="font-medium text-muted-foreground">لا يوجد عملاء</p></CardContent></Card>
                 ) : (
                   <div className="space-y-2">
                     {uniqueCustomers
@@ -1138,7 +1138,7 @@ export default function AdminPage() {
                         <CardContent className="p-3 sm:p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-100 to-amber-50 dark:from-[rgba(199,82,82,0.2)] dark:to-[rgba(199,82,82,0.1)] flex items-center justify-center text-sm font-bold text-amber-700 dark:text-[#d46060]">
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-100 to-amber-50 dark:from-[rgba(199,82,82,0.2)] dark:to-[rgba(199,82,82,0.1)] flex items-center justify-center text-sm font-black text-amber-700 dark:text-[#d46060]">
                                 {(c.name || '?')[0]}
                               </div>
                               <div>
@@ -1147,7 +1147,7 @@ export default function AdminPage() {
                               </div>
                             </div>
                             <div className="text-left">
-                              <p className="text-sm font-bold tabular-nums">{formatDA(c.total)}</p>
+                              <p className="text-sm font-black tabular-nums">{formatDA(c.total)}</p>
                               <p className="text-[10px] text-muted-foreground">{c.orders} طلب · {getTimeAgoShort(c.lastOrder)}</p>
                             </div>
                           </div>
@@ -1167,26 +1167,26 @@ export default function AdminPage() {
                 ) : platformSettings ? (
                   <>
                     {/* Platform Info */}
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Globe className="h-4 w-4" />معلومات المنصة</CardTitle></CardHeader>
+                    <Card className="dark:glass-card">
+                      <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><Globe className="h-4 w-4" />معلومات المنصة</CardTitle></CardHeader>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label>اسم المنصة</Label><Input value={platformSettings.platformName} onChange={(e) => setPlatformSettings({ ...platformSettings, platformName: e.target.value })} /></div>
-                          <div className="space-y-2"><Label>الشعار النصي</Label><Input value={platformSettings.platformTagline} onChange={(e) => setPlatformSettings({ ...platformSettings, platformTagline: e.target.value })} /></div>
-                          <div className="space-y-2"><Label>البريد الإلكتروني</Label><Input value={platformSettings.platformEmail} onChange={(e) => setPlatformSettings({ ...platformSettings, platformEmail: e.target.value })} dir="ltr" /></div>
-                          <div className="space-y-2"><Label>الهاتف</Label><Input value={platformSettings.platformPhone} onChange={(e) => setPlatformSettings({ ...platformSettings, platformPhone: e.target.value })} dir="ltr" /></div>
-                          <div className="space-y-2"><Label>واتساب</Label><Input value={platformSettings.platformWhatsapp} onChange={(e) => setPlatformSettings({ ...platformSettings, platformWhatsapp: e.target.value })} dir="ltr" placeholder="213xxxxxxxxx" /></div>
+                          <div className="space-y-2"><Label>اسم المنصة</Label><Input value={platformSettings.platformName} onChange={(e) => setPlatformSettings({ ...platformSettings, platformName: e.target.value })} className="h-11" /></div>
+                          <div className="space-y-2"><Label>الشعار النصي</Label><Input value={platformSettings.platformTagline} onChange={(e) => setPlatformSettings({ ...platformSettings, platformTagline: e.target.value })} className="h-11" /></div>
+                          <div className="space-y-2"><Label>البريد الإلكتروني</Label><Input value={platformSettings.platformEmail} onChange={(e) => setPlatformSettings({ ...platformSettings, platformEmail: e.target.value })} dir="ltr" className="h-11" /></div>
+                          <div className="space-y-2"><Label>الهاتف</Label><Input value={platformSettings.platformPhone} onChange={(e) => setPlatformSettings({ ...platformSettings, platformPhone: e.target.value })} dir="ltr" className="h-11" /></div>
+                          <div className="space-y-2"><Label>واتساب</Label><Input value={platformSettings.platformWhatsapp} onChange={(e) => setPlatformSettings({ ...platformSettings, platformWhatsapp: e.target.value })} dir="ltr" placeholder="213xxxxxxxxx" className="h-11" /></div>
                           <div className="space-y-2"><Label>وصف المنصة</Label><Textarea value={platformSettings.platformDescription} onChange={(e) => setPlatformSettings({ ...platformSettings, platformDescription: e.target.value })} rows={2} /></div>
                         </div>
-                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white">
+                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
                           <Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                         </Button>
                       </CardContent>
                     </Card>
 
                     {/* General Settings */}
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Settings className="h-4 w-4" />الإعدادات العامة</CardTitle></CardHeader>
+                    <Card className="dark:glass-card">
+                      <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><Settings className="h-4 w-4" />الإعدادات العامة</CardTitle></CardHeader>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2"><Label>الدولة الافتراضية</Label>
@@ -1207,17 +1207,17 @@ export default function AdminPage() {
                               <SelectContent><SelectItem value="DZD">دينار جزائري (DZD)</SelectItem><SelectItem value="TND">دينار تونسي (TND)</SelectItem><SelectItem value="MAD">درهم مغربي (MAD)</SelectItem><SelectItem value="SAR">ريال سعودي (SAR)</SelectItem><SelectItem value="AED">درهم إماراتي (AED)</SelectItem><SelectItem value="EGP">جنيه مصري (EGP)</SelectItem></SelectContent>
                             </Select>
                           </div>
-                          <div className="space-y-2"><Label>مدة التجربة (أيام)</Label><Input type="number" value={platformSettings.defaultTrialDays} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultTrialDays: parseInt(e.target.value) || 30 })} /></div>
-                          <div className="space-y-2"><Label>الحد الأقصى للمتاجر</Label><Input type="number" value={platformSettings.maxShops} onChange={(e) => setPlatformSettings({ ...platformSettings, maxShops: parseInt(e.target.value) || 100 })} /></div>
-                          <div className="space-y-2"><Label>رسالة الترحيب الافتراضية</Label><Input value={platformSettings.defaultWelcomeMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultWelcomeMessage: e.target.value })} /></div>
+                          <div className="space-y-2"><Label>مدة التجربة (أيام)</Label><Input type="number" value={platformSettings.defaultTrialDays} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultTrialDays: parseInt(e.target.value) || 30 })} className="h-11" /></div>
+                          <div className="space-y-2"><Label>الحد الأقصى للمتاجر</Label><Input type="number" value={platformSettings.maxShops} onChange={(e) => setPlatformSettings({ ...platformSettings, maxShops: parseInt(e.target.value) || 100 })} className="h-11" /></div>
+                          <div className="space-y-2"><Label>رسالة الترحيب الافتراضية</Label><Input value={platformSettings.defaultWelcomeMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultWelcomeMessage: e.target.value })} className="h-11" /></div>
                         </div>
-                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2"><Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ'}</Button>
+                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 rounded-full hover:scale-[0.97]"><Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ'}</Button>
                       </CardContent>
                     </Card>
 
                     {/* Feature Toggles */}
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Zap className="h-4 w-4" />الميزات الافتراضية للمتاجر الجديدة</CardTitle></CardHeader>
+                    <Card className="dark:glass-card">
+                      <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><Zap className="h-4 w-4" />الميزات الافتراضية للمتاجر الجديدة</CardTitle></CardHeader>
                       <CardContent className="space-y-4">
                         {Object.entries({
                           whatsappNotifications: { label: 'إشعارات واتساب', desc: 'إرسال إشعارات الطلبات عبر واتساب' },
@@ -1227,7 +1227,7 @@ export default function AdminPage() {
                           customerLogin: { label: 'تسجيل العميل', desc: 'تفعيل تسجيل دخول العملاء' },
                           advancedAnalytics: { label: 'التحليلات المتقدمة', desc: 'تفعيل لوحة التحليلات المتقدمة' },
                         }).map(([key, info]) => (
-                          <div key={key} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                          <div key={key} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
                             <div><p className="text-sm font-medium">{info.label}</p><p className="text-xs text-muted-foreground">{info.desc}</p></div>
                             <Switch
                               checked={!!platformSettings.defaultFeatures?.[key]}
@@ -1235,13 +1235,13 @@ export default function AdminPage() {
                             />
                           </div>
                         ))}
-                        <Button onClick={() => saveSettings({ defaultFeatures: platformSettings.defaultFeatures })} disabled={settingsSaving} className="gap-2"><Save className="h-4 w-4" />حفظ</Button>
+                        <Button onClick={() => saveSettings({ defaultFeatures: platformSettings.defaultFeatures })} disabled={settingsSaving} className="gap-2 rounded-full hover:scale-[0.97]"><Save className="h-4 w-4" />حفظ</Button>
                       </CardContent>
                     </Card>
 
                     {/* Notification Settings */}
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Bell className="h-4 w-4" />إعدادات الإشعارات</CardTitle></CardHeader>
+                    <Card className="dark:glass-card">
+                      <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><Bell className="h-4 w-4" />إعدادات الإشعارات</CardTitle></CardHeader>
                       <CardContent className="space-y-4">
                         {Object.entries({
                           newOrderSound: { label: 'صوت الطلب الجديد', desc: 'تشغيل صوت عند وصول طلب جديد' },
@@ -1249,23 +1249,23 @@ export default function AdminPage() {
                           dailySummary: { label: 'الملخص اليومي', desc: 'إرسال ملخص يومي للطلبات والإيرادات' },
                           lowBalanceAlert: { label: 'تنبيه الرصيد المنخفض', desc: 'تنبيه عند انخفاض رصيد المنصة' },
                         }).map(([key, info]) => (
-                          <div key={key} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                          <div key={key} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
                             <div><p className="text-sm font-medium">{info.label}</p><p className="text-xs text-muted-foreground">{info.desc}</p></div>
                             <Switch
-                              checked={!!platformSettings.notifications?.[key]}
+                              checked={!!platformSettings.notifications && !!platformSettings.notifications[key]}
                               onCheckedChange={(v) => setPlatformSettings({ ...platformSettings, notifications: { ...platformSettings.notifications, [key]: v } })}
                             />
                           </div>
                         ))}
-                        <Button onClick={() => saveSettings({ notifications: platformSettings.notifications })} disabled={settingsSaving} className="gap-2"><Save className="h-4 w-4" />حفظ</Button>
+                        <Button onClick={() => saveSettings({ notifications: platformSettings.notifications })} disabled={settingsSaving} className="gap-2 rounded-full hover:scale-[0.97]"><Save className="h-4 w-4" />حفظ</Button>
                       </CardContent>
                     </Card>
 
                     {/* Maintenance Mode */}
-                    <Card className={platformSettings.maintenanceMode ? 'border-destructive' : ''}>
-                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><AlertTriangle className={`h-4 w-4 ${platformSettings.maintenanceMode ? 'text-destructive' : ''}`} />وضع الصيانة</CardTitle></CardHeader>
+                    <Card className={cn(platformSettings.maintenanceMode && 'border-destructive', 'dark:glass-card')}>
+                      <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><AlertTriangle className={`h-4 w-4 ${platformSettings.maintenanceMode ? 'text-destructive' : ''}`} />وضع الصيانة</CardTitle></CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                           <div><p className="text-sm font-medium">تفعيل وضع الصيانة</p><p className="text-xs text-muted-foreground">سيتم إخفاء جميع المتاجر عن العملاء</p></div>
                           <Switch
                             checked={platformSettings.maintenanceMode}
@@ -1279,10 +1279,10 @@ export default function AdminPage() {
                           <div className="space-y-2">
                             <Label>رسالة الصيانة</Label>
                             <Textarea value={platformSettings.maintenanceMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, maintenanceMessage: e.target.value })} rows={2} />
-                            <Button onClick={() => saveSettings({ maintenanceMessage: platformSettings.maintenanceMessage })} disabled={settingsSaving} size="sm" className="gap-1"><Save className="h-3.5 w-3.5" />حفظ الرسالة</Button>
+                            <Button onClick={() => saveSettings({ maintenanceMessage: platformSettings.maintenanceMessage })} disabled={settingsSaving} size="sm" className="gap-1 rounded-full hover:scale-[0.97]"><Save className="h-3.5 w-3.5" />حفظ الرسالة</Button>
                           </div>
                         )}
-                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
                           <div><p className="text-sm font-medium">السماح بإنشاء متاجر جديدة</p><p className="text-xs text-muted-foreground">التحكم في إنشاء المتاجر الجديدة</p></div>
                           <Switch
                             checked={platformSettings.allowNewShops}
@@ -1303,43 +1303,43 @@ export default function AdminPage() {
             {activeTab === 'team' && (
               <motion.div key="team" {...fadeIn} className="space-y-6">
                 {/* Password Change */}
-                <Card>
-                  <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Key className="h-4 w-4" />تغيير كلمة المرور</CardTitle><CardDescription>قم بتغيير كلمة مرور لوحة تحكم المنصة</CardDescription></CardHeader>
+                <Card className="dark:glass-card">
+                  <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><Key className="h-4 w-4" />تغيير كلمة المرور</CardTitle><CardDescription>قم بتغيير كلمة مرور لوحة تحكم المنصة</CardDescription></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2"><Label>كلمة المرور الحالية</Label><Input type="password" value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} dir="ltr" /></div>
-                      <div className="space-y-2"><Label>كلمة المرور الجديدة</Label><Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} dir="ltr" /></div>
-                      <div className="space-y-2"><Label>تأكيد كلمة المرور</Label><Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} dir="ltr" /></div>
+                      <div className="space-y-2"><Label>كلمة المرور الحالية</Label><Input type="password" value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} dir="ltr" className="h-11" /></div>
+                      <div className="space-y-2"><Label>كلمة المرور الجديدة</Label><Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} dir="ltr" className="h-11" /></div>
+                      <div className="space-y-2"><Label>تأكيد كلمة المرور</Label><Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} dir="ltr" className="h-11" /></div>
                     </div>
-                    <Button onClick={changePassword} disabled={passLoading || !newPass} className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white">
+                    <Button onClick={changePassword} disabled={passLoading || !newPass} className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
                       <Lock className="h-4 w-4" />{passLoading ? 'جاري التغيير...' : 'تغيير كلمة المرور'}
                     </Button>
                   </CardContent>
                 </Card>
 
                 {/* Team Members */}
-                <Card>
-                  <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><UsersRound className="h-4 w-4" />أعضاء الفريق</CardTitle><CardDescription>إدارة أعضاء فريق الإدارة</CardDescription></CardHeader>
+                <Card className="dark:glass-card">
+                  <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><UsersRound className="h-4 w-4" />أعضاء الفريق</CardTitle><CardDescription>إدارة أعضاء فريق الإدارة</CardDescription></CardHeader>
                   <CardContent className="space-y-4">
                     {/* Add member form */}
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3 rounded-lg bg-muted/50">
-                      <div className="space-y-1"><Label className="text-xs">الاسم</Label><Input placeholder="اسم العضو" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} className="h-9" /></div>
-                      <div className="space-y-1"><Label className="text-xs">البريد الإلكتروني</Label><Input placeholder="email@example.com" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} dir="ltr" className="h-9" /></div>
-                      <div className="space-y-1"><Label className="text-xs">الدور</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-muted/50">
+                      <div className="space-y-1"><Label className="text-xs uppercase tracking-wider">الاسم</Label><Input placeholder="اسم العضو" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} className="h-11" /></div>
+                      <div className="space-y-1"><Label className="text-xs uppercase tracking-wider">البريد الإلكتروني</Label><Input placeholder="email@example.com" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} dir="ltr" className="h-11" /></div>
+                      <div className="space-y-1"><Label className="text-xs uppercase tracking-wider">الدور</Label>
                         <Select value={newMemberRole} onValueChange={setNewMemberRole}>
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                           <SelectContent><SelectItem value="admin">مدير</SelectItem><SelectItem value="member">عضو</SelectItem><SelectItem value="viewer">مشاهد</SelectItem></SelectContent>
                         </Select>
                       </div>
-                      <div className="flex items-end"><Button onClick={addTeamMember} disabled={!newMemberName || !newMemberEmail} size="sm" className="w-full gap-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white"><Plus className="h-4 w-4" />إضافة</Button></div>
+                      <div className="flex items-end"><Button onClick={addTeamMember} disabled={!newMemberName || !newMemberEmail} size="sm" className="w-full gap-1 rounded-full bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_16px_rgba(245,158,11,0.2),0_0_48px_rgba(245,158,11,0.06)] hover:scale-[0.97]"><Plus className="h-4 w-4" />إضافة</Button></div>
                     </div>
                     {/* Members list */}
                     <div className="space-y-2">
                       {teamMembers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا يوجد أعضاء فريق</p>}
                       {teamMembers.map((member) => (
-                        <div key={member.email} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div key={member.email} className="flex items-center justify-between p-3 rounded-xl border border-border/30">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-100 to-violet-50 dark:from-[rgba(199,82,82,0.2)] dark:to-[rgba(199,82,82,0.1)] flex items-center justify-center text-sm font-bold text-violet-700 dark:text-[#d46060]">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-100 to-violet-50 dark:from-[rgba(199,82,82,0.2)] dark:to-[rgba(199,82,82,0.1)] flex items-center justify-center text-sm font-black text-violet-700 dark:text-[#d46060]">
                               {member.name[0]}
                             </div>
                             <div>
@@ -1349,7 +1349,7 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px]">{member.role === 'admin' ? 'مدير' : member.role === 'member' ? 'عضو' : 'مشاهد'}</Badge>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600" onClick={() => removeTeamMember(member.email)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 rounded-full hover:scale-[0.97]" onClick={() => removeTeamMember(member.email)}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>
                         </div>
                       ))}
@@ -1358,21 +1358,21 @@ export default function AdminPage() {
                 </Card>
 
                 {/* System Info */}
-                <Card>
-                  <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Shield className="h-4 w-4" />معلومات النظام</CardTitle></CardHeader>
+                <Card className="dark:glass-card">
+                  <CardHeader><CardTitle className="text-base font-extrabold tracking-tight flex items-center gap-2"><Shield className="h-4 w-4" />معلومات النظام</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">إجمالي المتاجر</p><p className="text-lg font-bold tabular-nums">{shops.length}</p></div>
-                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">المتاجر النشطة</p><p className="text-lg font-bold tabular-nums text-emerald-600">{activeShops}</p></div>
-                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">إجمالي الطلبات</p><p className="text-lg font-bold tabular-nums">{totalOrders}</p></div>
-                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">العملاء الفريدين</p><p className="text-lg font-bold tabular-nums">{uniqueCustomers.length}</p></div>
+                      <div className="p-3 rounded-xl bg-muted/50"><p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">إجمالي المتاجر</p><p className="text-lg font-black tabular-nums">{shops.length}</p></div>
+                      <div className="p-3 rounded-xl bg-muted/50"><p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">المتاجر النشطة</p><p className="text-lg font-black tabular-nums text-emerald-600">{activeShops}</p></div>
+                      <div className="p-3 rounded-xl bg-muted/50"><p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">إجمالي الطلبات</p><p className="text-lg font-black tabular-nums">{totalOrders}</p></div>
+                      <div className="p-3 rounded-xl bg-muted/50"><p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">العملاء الفريدين</p><p className="text-lg font-black tabular-nums">{uniqueCustomers.length}</p></div>
                     </div>
                     <Separator />
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                       <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><p className="text-sm">المسؤول الحالي</p></div>
                       <span className="text-sm font-medium">{adminName}</span>
                     </div>
-                    <Button variant="outline" onClick={handleLogout} className="w-full gap-2 text-rose-500 mt-2"><LogOut className="h-4 w-4" />تسجيل الخروج</Button>
+                    <Button variant="outline" onClick={handleLogout} className="w-full gap-2 text-rose-500 mt-2 rounded-full hover:scale-[0.97]"><LogOut className="h-4 w-4" />تسجيل الخروج</Button>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -1394,8 +1394,8 @@ export default function AdminPage() {
             <AlertDialogDescription>سيتم حذف المتجر وجميع طلباته وإعداداته نهائياً. هذا الإجراء لا يمكن التراجع عنه.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteShop} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel disabled={deleting} className="rounded-full">إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteShop} disabled={deleting} className="rounded-full font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[0.97]">
               {deleting ? 'جارٍ الحذف...' : 'حذف المتجر'}
             </AlertDialogAction>
           </AlertDialogFooter>

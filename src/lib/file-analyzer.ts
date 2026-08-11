@@ -189,8 +189,8 @@ async function analyzePdf(
   let aspectRatio: string | undefined;
   const insights: string[] = [];
 
-  // ═══ وضع خفيف للملفات الكبيرة (>1MB) — يتجنب العمليات الثقيلة ═══
-  const isLarge = sizeMB > 1;
+  // ═══ وضع خفيف للملفات الكبيرة (>5MB) — يتجنب العمليات الثقيلة ═══
+  const isLarge = sizeMB > 5;
 
   try {
     const lib = await ensurePdfjs();
@@ -272,7 +272,7 @@ async function analyzePdf(
             isPortrait = orientation === "عمودي";
             aspectRatio = getAspectRatioText(Math.round(pdfWidthMM), Math.round(pdfHeightMM));
 
-            // ═══ المعاينة المصغرة — ملفات كبيرة: تخطي (يُحلّ لاحقاً بالـ VLM) ═══
+            // ═══ المعاينة المصغرة — ملفات كبيرة جداً: تخطي ═══
             if (!isLarge) {
               const thumbViewport = page.getViewport({ scale: 0.5 });
               const canvas = document.createElement("canvas");
@@ -281,7 +281,7 @@ async function analyzePdf(
               const context = canvas.getContext("2d");
               if (context) {
                 await page.render({ canvasContext: context, viewport: thumbViewport, canvas } as Parameters<typeof page.render>[0]).promise;
-                thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
+                thumbnailUrl = canvas.toDataURL("image/jpeg", 0.6);
 
                 // تحليل الألوان
                 try {
