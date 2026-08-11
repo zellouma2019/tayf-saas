@@ -142,7 +142,7 @@ export function AppShell() {
       {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
       <LayoutGroup>
         <div className="min-h-screen flex flex-col bg-background" dir="rtl" style={theme.rootVars as React.CSSProperties}>
-          {/* ===== الشريط العلوي الترويجي ===== */
+          {/* Promo Banner */}
           {view !== "new" && (
             <div className="bg-primary text-primary-foreground">
               <div className="max-w-7xl mx-auto px-3 sm:px-4 h-8 sm:h-9 flex items-center justify-between gap-2">
@@ -172,10 +172,10 @@ export function AppShell() {
             </div>
           )}
 
-          {/* ===== الترويسة الرئيسية ===== */}
+          {/* Main Header */}
           <header className="bg-background/80 backdrop-blur-xl border-b border-border/40 sticky top-0 z-40 no-print">
             <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
-              {/* الشعار والاسم */}
+              {/* Logo & Name */}
               <button onClick={() => { setFooterOpen(false); setView("new"); }} className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0 group">
                 <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
                   <Printer className="h-5 w-5 md:h-5.5 md:w-5.5 text-primary-foreground" />
@@ -188,7 +188,7 @@ export function AppShell() {
 
               <LiveClock />
 
-              {/* التنقل - حاسوب */}
+              {/* Desktop Nav */}
               <nav className="hidden md:flex items-center gap-0.5 bg-muted/50 rounded-full p-1 border border-border/30">
                 {navItems.map((item) => (
                   <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold font-heading transition-colors ${view === item.key ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}>
@@ -201,7 +201,7 @@ export function AppShell() {
                 ))}
               </nav>
 
-              {/* التنقل - الجوال فقط */}
+              {/* Mobile Nav Only */}
               <nav className="flex md:hidden items-center gap-0.5 bg-muted/50 rounded-full p-0.5 shrink-0 border border-border/30">
                 {navItems.map((item) => (
                   <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors ${view === item.key ? "text-primary-foreground" : "text-muted-foreground"}`} aria-label={item.label}>
@@ -213,7 +213,7 @@ export function AppShell() {
                 ))}
               </nav>
 
-              {/* أزرار الأدوات */}
+              {/* Tool Buttons */}
               <div className="flex items-center gap-1 shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => setCalcOpen(true)} className="relative h-9 w-9" aria-label="حاسبة الأسعار">
                   <Calculator className="h-4 w-4" />
@@ -224,7 +224,7 @@ export function AppShell() {
             </div>
           </header>
 
-          {/* حاسبة الأسعار */}
+          {/* Price Calculator */}
           <Dialog open={calcOpen} onOpenChange={setCalcOpen}>
             <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
               <DialogHeader>
@@ -234,7 +234,7 @@ export function AppShell() {
             </DialogContent>
           </Dialog>
 
-          {/* ===== المحتوى ===== */}
+          {/* Content */}
           <main className="flex-1 flex flex-col">
             <div className="flex-1 py-4 md:py-8">
               <div className="max-w-7xl mx-auto px-3 sm:px-4 w-full">
@@ -263,10 +263,10 @@ export function AppShell() {
               </div>
             </div>
 
-            {/* ===== التذييل ===== */}
+            {/* Footer */}
             {view !== "admin" && (
               <footer className="mt-auto no-print">
-                {/* زر طي/فتح التذييل */}
+                {/* Footer Toggle Button */}
                 <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs text-muted-foreground hover:text-primary transition-colors border-t border-border/40 bg-muted/20" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
                   <Info className="h-3.5 w-3.5" />
                   <span className="font-semibold font-heading">{footerOpen ? "إخفاء التفاصيل" : `عرض معلومات ${shop?.name || "المتجر"}`}</span>
@@ -276,18 +276,18 @@ export function AppShell() {
                 </button>
 
                 <div className={`footer-collapse${footerOpen ? " footer-expanded" : ""}`}>
-                  {/* قسم آراء العملاء */}
+                  {/* Testimonials Section */}
                   <TestimonialsSection />
 
-                  {/* الفاصل الذهبي */}
+                  {/* Gold Divider */}
                   <div className="divider-gold mx-auto w-full max-w-7xl" />
 
-                  {/* المحتوى الرئيسي للتذييل */}
+                  {/* Footer Main Content */}
                   <div className="bg-foreground/[0.03] dark:bg-foreground/[0.04]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
                       <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
 
-                        {/* العمود الأول: العلامة التجارية */}
+                        {/* Col 1: Brand */}
                         <div className="xs:col-span-2 md:col-span-2 lg:col-span-1">
                           <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -320,7 +320,7 @@ export function AppShell() {
                           </div>
                         </div>
 
-                        {/* العمود الثاني: روابط سريعة */}
+                        {/* Col 2: Quick Links */}
                         <div>
                           <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">روابط سريعة</h4>
                           <ul className="space-y-2.5 text-xs sm:text-sm">
@@ -330,7 +330,7 @@ export function AppShell() {
                           </ul>
                         </div>
 
-                        {/* العمود الثالث: خدماتنا */}
+                        {/* Col 3: Services */}
                         <div>
                           <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">خدماتنا</h4>
                           <ul className="space-y-2.5 text-xs sm:text-sm text-muted-foreground">
@@ -343,7 +343,7 @@ export function AppShell() {
                           </ul>
                         </div>
 
-                        {/* العمود الرابع: تواصل معنا */}
+                        {/* Col 4: Contact */}
                         <div>
                           <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">تواصل معنا</h4>
                           <ul className="space-y-3 text-xs sm:text-sm">
@@ -376,7 +376,7 @@ export function AppShell() {
                         </div>
                       </div>
 
-                      {/* حقوق النشر */}
+                      {/* Copyright */}
                       <div className="mt-8 md:mt-10 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-muted-foreground/60">
                         <div>© {new Date().getFullYear()} {shop?.name || "المتجر"} — جميع الحقوق محفوظة</div>
                         <div className="flex items-center gap-1">
