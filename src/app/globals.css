@@ -76,7 +76,7 @@
    LIGHT THEME (Default when no .dark class) — Warm Cream with Gold Accents
    ========================================================================== */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
   --background: #faf8f2;
   --foreground: #1a1510;
   --card: #ffffff;
@@ -142,7 +142,7 @@
    DARK THEME (when .dark class is on html) — Hany Podcast Inspired: Pure Black + Coral Red
    ========================================================================== */
 .dark {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
   --background: #000000;
   --foreground: rgba(255, 255, 255, 0.95);
   --card: rgba(255, 255, 255, 0.06);
@@ -36297,4 +36297,18 @@ input[type="radio"]:focus-visible {
   html {
     font-size: 16px;
   }
+}
+
+/* ===== Inter font for numbers and Latin text ===== */
+/* Numbers, English text, and code use Inter for a cleaner look */
+td, th, .tabular-nums, [data-slot=\"animated-counter\"],
+.font-num, .font-mono, code, pre, kbd, samp,
+input[type=\"number\"], input[type=\"tel\"], input[type=\"email\"],
+.time, .date, .amount, .price, .stat-value, .metric-value,
+.badge, [data-slot=\"badge\"] {
+
+/* ===== Inter font for numbers and Latin text ===== */
+.tabular-nums, .font-num, .font-mono, code, pre, kbd, samp {
+  font-family: var(--font-inter), var(--font-cairo), system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
