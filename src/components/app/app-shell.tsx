@@ -142,16 +142,16 @@ export function AppShell() {
       {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
       <LayoutGroup>
         <div className="min-h-screen flex flex-col bg-background" dir="rtl" style={theme.rootVars as React.CSSProperties}>
-          {/* ===== الشريط العلوي الترويجي ===== */}
+          {/* ===== الشريط العلوي الترويجي ===== */
           {view !== "new" && (
-            <div className="bg-gradient-to-l from-amber-600/90 via-amber-500/90 to-amber-600/90 text-white">
+            <div className="bg-primary text-primary-foreground">
               <div className="max-w-7xl mx-auto px-3 sm:px-4 h-8 sm:h-9 flex items-center justify-between gap-2">
                 <div className="flex sm:hidden items-center gap-1.5 text-xs min-w-0">
                   <Zap className="h-3 w-3 shrink-0" />
-                  <span className="truncate font-medium">اطلب خلال دقيقة</span>
+                  <span className="truncate font-semibold font-heading">اطلب خلال دقيقة</span>
                 </div>
                 <div className="hidden sm:flex items-center gap-4 md:gap-6 overflow-hidden text-xs">
-                  <span className="flex items-center gap-1.5 whitespace-nowrap font-medium">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap font-semibold">
                     <Zap className="h-3 w-3" /> اطلب خلال دقيقة
                   </span>
                   <span className="hidden md:flex items-center gap-1.5 whitespace-nowrap">
@@ -162,10 +162,10 @@ export function AppShell() {
                   </span>
                 </div>
                 {displayPhone && (
-                  <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="flex items-center gap-1 hover:bg-white/15 transition-colors whitespace-nowrap shrink-0 text-xs rounded-full px-3 py-1 bg-white/10">
+                  <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="flex items-center gap-1 hover:bg-primary-foreground/15 transition-colors whitespace-nowrap shrink-0 text-xs rounded-full px-3 py-1 bg-primary-foreground/10">
                     <Phone className="h-3 w-3 shrink-0" />
-                    <span className="hidden sm:inline font-medium">{displayPhone}</span>
-                    <span className="sm:hidden font-medium">اتصل بنا</span>
+                    <span className="hidden sm:inline font-semibold">{displayPhone}</span>
+                    <span className="sm:hidden font-semibold">اتصل بنا</span>
                   </a>
                 )}
               </div>
@@ -173,15 +173,15 @@ export function AppShell() {
           )}
 
           {/* ===== الترويسة الرئيسية ===== */}
-          <header className="bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl border-b border-border/50 sticky top-0 z-40 no-print">
+          <header className="bg-background/80 backdrop-blur-xl border-b border-border/40 sticky top-0 z-40 no-print">
             <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
               {/* الشعار والاسم */}
               <button onClick={() => { setFooterOpen(false); setView("new"); }} className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0 group">
-                <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20 dark:shadow-amber-500/10 group-hover:shadow-amber-500/30 transition-shadow">
-                  <Printer className="h-5 w-5 md:h-5.5 md:w-5.5 text-white" />
+                <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
+                  <Printer className="h-5 w-5 md:h-5.5 md:w-5.5 text-primary-foreground" />
                 </div>
                 <div className="text-right min-w-0">
-                  <div className="font-bold text-sm md:text-base leading-tight truncate text-foreground">{shop?.name || "المتجر"}</div>
+                  <div className="font-bold font-heading text-sm md:text-base leading-tight truncate text-foreground">{shop?.name || "المتجر"}</div>
                   <div className="text-[11px] text-muted-foreground leading-tight truncate">الطباعة تبدأ قبل وصولك</div>
                 </div>
               </button>
@@ -189,11 +189,11 @@ export function AppShell() {
               <LiveClock />
 
               {/* التنقل - حاسوب */}
-              <nav className="hidden lg:flex items-center gap-0.5 bg-muted/50 dark:bg-white/5 rounded-full p-1 border border-border/30">
+              <nav className="hidden lg:flex items-center gap-0.5 bg-muted/50 rounded-full p-1 border border-border/30">
                 {navItems.map((item) => (
-                  <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${view === item.key ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5"}`}>
+                  <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold font-heading transition-colors ${view === item.key ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}>
                     {view === item.key && (
-                      <motion.div layoutId="nav-active-desktop" className="absolute inset-0 bg-gradient-to-l from-neutral-800 to-neutral-900 dark:from-neutral-700 dark:to-neutral-800 rounded-full shadow-md" style={{ zIndex: -1 }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                      <motion.div layoutId="nav-active-desktop" className="absolute inset-0 bg-primary rounded-full shadow-md" style={{ zIndex: -1 }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
                     )}
                     <item.icon className="h-4 w-4 relative z-10" />
                     <span className="relative z-10">{item.label}</span>
@@ -202,11 +202,11 @@ export function AppShell() {
               </nav>
 
               {/* التنقل - الجوال والتابلت */}
-              <nav className="flex lg:hidden items-center gap-0.5 bg-muted/50 dark:bg-white/5 rounded-full p-0.5 shrink-0 border border-border/30">
+              <nav className="flex lg:hidden items-center gap-0.5 bg-muted/50 rounded-full p-0.5 shrink-0 border border-border/30">
                 {navItems.map((item) => (
-                  <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors ${view === item.key ? "text-white" : "text-muted-foreground"}`} aria-label={item.label}>
+                  <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors ${view === item.key ? "text-primary-foreground" : "text-muted-foreground"}`} aria-label={item.label}>
                     {view === item.key && (
-                      <motion.div layoutId="nav-active-mobile" className="absolute inset-0 bg-gradient-to-l from-neutral-800 to-neutral-900 dark:from-neutral-700 dark:to-neutral-800 rounded-full shadow-sm" style={{ zIndex: -1 }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                      <motion.div layoutId="nav-active-mobile" className="absolute inset-0 bg-primary rounded-full shadow-sm" style={{ zIndex: -1 }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
                     )}
                     <item.icon className="h-4 w-4 relative z-10" />
                   </button>
@@ -267,9 +267,9 @@ export function AppShell() {
             {view !== "admin" && (
               <footer className="mt-auto no-print">
                 {/* زر طي/فتح التذييل */}
-                <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-2 py-3.5 px-4 text-xs text-muted-foreground hover:text-amber-500 dark:hover:text-amber-400 transition-colors border-t border-border/50 bg-muted/30 dark:bg-white/[0.02]" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
+                <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs text-muted-foreground hover:text-primary transition-colors border-t border-border/40 bg-muted/20" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
                   <Info className="h-3.5 w-3.5" />
-                  <span className="font-medium">{footerOpen ? "إخفاء التفاصيل" : `عرض معلومات ${shop?.name || "المتجر"}`}</span>
+                  <span className="font-semibold font-heading">{footerOpen ? "إخفاء التفاصيل" : `عرض معلومات ${shop?.name || "المتجر"}`}</span>
                   <motion.div animate={{ rotate: footerOpen ? 0 : 180 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
                     <ChevronUp className="h-4 w-4" />
                   </motion.div>
@@ -283,38 +283,38 @@ export function AppShell() {
                   <div className="divider-gold mx-auto w-full max-w-7xl" />
 
                   {/* المحتوى الرئيسي للتذييل */}
-                  <div className="bg-gradient-to-b from-[#141416] via-[#111113] to-[#0d0d0f]">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-14">
+                  <div className="bg-foreground/[0.03] dark:bg-foreground/[0.04]">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
                       <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
 
                         {/* العمود الأول: العلامة التجارية */}
                         <div className="xs:col-span-2 md:col-span-2 lg:col-span-1">
                           <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-                              <Store className="h-5 w-5 text-white" />
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <Store className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                              <div className="font-bold text-white text-sm sm:text-base">{shop?.name || "المتجر"}</div>
-                              <div className="text-[11px] text-amber-300/80 font-medium">اطبع بسهولة</div>
+                              <div className="font-bold font-heading text-foreground text-sm sm:text-base">{shop?.name || "المتجر"}</div>
+                              <div className="text-[11px] text-primary font-medium">اطبع بسهولة</div>
                             </div>
                           </div>
-                          <p className="text-xs sm:text-sm text-neutral-300/60 leading-relaxed max-w-xs">
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs">
                             خدمة طباعة احترافية وسريعة. اطبع مستنداتك وصورك وبطاقاتك أونلاين وتابع طلبك لحظة بلحظة.
                           </p>
                           <div className="flex items-center gap-2.5 mt-5">
                             {displayWhatsapp && (
-                              <a href={`https://wa.me/${displayWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 flex items-center justify-center transition-all group">
-                                <MessageCircle className="h-4 w-4 text-emerald-400/80 group-hover:text-emerald-400 transition-colors" />
+                              <a href={`https://wa.me/${displayWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 flex items-center justify-center transition-all group">
+                                <MessageCircle className="h-4 w-4 text-emerald-500/70 group-hover:text-emerald-500 transition-colors" />
                               </a>
                             )}
                             {displayPhone && (
-                              <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="w-9 h-9 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 flex items-center justify-center transition-all group">
-                                <Phone className="h-4 w-4 text-amber-400/80 group-hover:text-amber-400 transition-colors" />
+                              <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="w-9 h-9 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 flex items-center justify-center transition-all group">
+                                <Phone className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
                               </a>
                             )}
                             {shop?.email && (
-                              <a href={`mailto:${shop.email}`} className="w-9 h-9 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/40 flex items-center justify-center transition-all group">
-                                <Mail className="h-4 w-4 text-sky-400/80 group-hover:text-sky-400 transition-colors" />
+                              <a href={`mailto:${shop.email}`} className="w-9 h-9 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/40 flex items-center justify-center transition-all group">
+                                <Mail className="h-4 w-4 text-sky-500/70 group-hover:text-sky-500 transition-colors" />
                               </a>
                             )}
                           </div>
@@ -322,54 +322,54 @@ export function AppShell() {
 
                         {/* العمود الثاني: روابط سريعة */}
                         <div>
-                          <h4 className="text-amber-400 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">روابط سريعة</h4>
+                          <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">روابط سريعة</h4>
                           <ul className="space-y-2.5 text-xs sm:text-sm">
-                            <li><button onClick={() => { setFooterOpen(false); setView("new"); }} className="text-neutral-400/80 hover:text-amber-300 transition-colors">طلب طباعة جديد</button></li>
-                            <li><button onClick={() => setView("track")} className="text-neutral-400/80 hover:text-amber-300 transition-colors">تتبّع طلب</button></li>
-                            <li><button onClick={() => setView("repeat")} className="text-neutral-400/80 hover:text-amber-300 transition-colors">إعادة طلب سابق</button></li>
+                            <li><button onClick={() => { setFooterOpen(false); setView("new"); }} className="text-muted-foreground hover:text-primary transition-colors">طلب طباعة جديد</button></li>
+                            <li><button onClick={() => setView("track")} className="text-muted-foreground hover:text-primary transition-colors">تتبّع طلب</button></li>
+                            <li><button onClick={() => setView("repeat")} className="text-muted-foreground hover:text-primary transition-colors">إعادة طلب سابق</button></li>
                           </ul>
                         </div>
 
                         {/* العمود الثالث: خدماتنا */}
                         <div>
-                          <h4 className="text-amber-400 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">خدماتنا</h4>
-                          <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-400/80">
-                            <li className="flex items-center gap-2"><Printer className="h-3.5 w-3.5 text-amber-400/50 shrink-0" /> طباعة مستند</li>
-                            <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">📄</span> نسخ مستندات</li>
-                            <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">🖼️</span> طباعة صور</li>
-                            <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">📚</span> تجليد</li>
-                            <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">🪪</span> بطاقات</li>
-                            <li className="flex items-center gap-2"><span className="text-amber-400/50 shrink-0">📜</span> ملصقات</li>
+                          <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">خدماتنا</h4>
+                          <ul className="space-y-2.5 text-xs sm:text-sm text-muted-foreground">
+                            <li className="flex items-center gap-2"><Printer className="h-3.5 w-3.5 text-primary/50 shrink-0" /> طباعة مستند</li>
+                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">📄</span> نسخ مستندات</li>
+                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">🖼️</span> طباعة صور</li>
+                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">📚</span> تجليد</li>
+                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">🪪</span> بطاقات</li>
+                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">📜</span> ملصقات</li>
                           </ul>
                         </div>
 
                         {/* العمود الرابع: تواصل معنا */}
                         <div>
-                          <h4 className="text-amber-400 font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider">تواصل معنا</h4>
+                          <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">تواصل معنا</h4>
                           <ul className="space-y-3 text-xs sm:text-sm">
                             {shop?.address && (
-                              <li className="flex items-start gap-2 text-neutral-400/80">
-                                <MapPin className="h-3.5 w-3.5 text-amber-500/40 shrink-0 mt-0.5" />
+                              <li className="flex items-start gap-2 text-muted-foreground">
+                                <MapPin className="h-3.5 w-3.5 text-primary/40 shrink-0 mt-0.5" />
                                 <span>{shop.address}</span>
                               </li>
                             )}
                             {displayPhone && (
-                              <li className="flex items-center gap-2 text-neutral-400/80">
-                                <Phone className="h-3.5 w-3.5 text-amber-500/40 shrink-0" />
+                              <li className="flex items-center gap-2 text-muted-foreground">
+                                <Phone className="h-3.5 w-3.5 text-primary/40 shrink-0" />
                                 <span dir="ltr">{displayPhone}</span>
                               </li>
                             )}
                             {shop?.email && (
-                              <li className="flex items-center gap-2 text-neutral-400/80">
-                                <Mail className="h-3.5 w-3.5 text-amber-500/40 shrink-0" />
+                              <li className="flex items-center gap-2 text-muted-foreground">
+                                <Mail className="h-3.5 w-3.5 text-primary/40 shrink-0" />
                                 <span>{shop.email}</span>
                               </li>
                             )}
-                            <li className="flex items-start gap-2 pt-2.5 border-t border-white/[0.06]">
-                              <Clock className="h-3.5 w-3.5 text-amber-500/40 shrink-0 mt-0.5" />
-                              <div className="text-neutral-400/80">
+                            <li className="flex items-start gap-2 pt-2.5 border-t border-border/30">
+                              <Clock className="h-3.5 w-3.5 text-primary/40 shrink-0 mt-0.5" />
+                              <div className="text-muted-foreground">
                                 <div>السبت - الخميس: 8:00 ص — 7:00 م</div>
-                                <div className="text-neutral-500/60 text-[11px] mt-0.5">الجمعة: مغلق</div>
+                                <div className="text-muted-foreground/60 text-[11px] mt-0.5">الجمعة: مغلق</div>
                               </div>
                             </li>
                           </ul>
@@ -377,11 +377,11 @@ export function AppShell() {
                       </div>
 
                       {/* حقوق النشر */}
-                      <div className="mt-8 md:mt-10 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-neutral-500/60">
+                      <div className="mt-8 md:mt-10 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-muted-foreground/60">
                         <div>© {new Date().getFullYear()} {shop?.name || "المتجر"} — جميع الحقوق محفوظة</div>
                         <div className="flex items-center gap-1">
                           <span>مدعوم بـ</span>
-                          <span className="text-amber-400 font-semibold">طيف</span>
+                          <span className="text-primary font-bold font-heading">طيف</span>
                         </div>
                       </div>
                     </div>

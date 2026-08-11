@@ -67,11 +67,11 @@ export function Intro({ onFinish }: IntroProps) {
   if (!loaded || !settings.enabled) return null;
 
   const bg = isDark
-    ? `radial-gradient(ellipse at 50% 40%, ${accent}08 0%, transparent 60%), #0a0a0b`
-    : `radial-gradient(ellipse at 50% 40%, ${accent}10 0%, transparent 60%), #faf8f3`;
+    ? `radial-gradient(ellipse at 50% 40%, ${accent}10 0%, transparent 60%), #0f1117`
+    : `radial-gradient(ellipse at 50% 40%, ${accent}10 0%, transparent 60%), #faf8f2`;
 
-  const textColor = isDark ? "#e5e5e5" : "#1a1a1a";
-  const mutedColor = isDark ? "#6b6b78" : "#888890";
+  const textColor = isDark ? "rgba(255,255,255,0.92)" : "#1a1510";
+  const mutedColor = isDark ? "rgba(255,255,255,0.5)" : "#7a7060";
 
   return (
     <motion.div

@@ -24,7 +24,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-2xl border-t border-border/60 mobile-nav-safe no-print"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/90 backdrop-blur-2xl border-t border-border/40 mobile-nav-safe no-print"
       role="tablist"
       aria-label="التنقل الرئيسي"
     >
@@ -32,7 +32,7 @@ export function MobileBottomNav() {
         {/* خلفية مؤشر التبويب النشط */}
         <motion.div
           layoutId="mobile-tab-bg"
-          className="absolute bottom-0 h-11 w-1/3 rounded-t-2xl bg-amber-500/10 dark:bg-amber-500/15"
+          className="absolute bottom-0 h-11 w-1/3 rounded-t-2xl bg-primary/10"
           style={{
             right: `${activeIndex * 33.333}%`,
           }}
@@ -52,7 +52,7 @@ export function MobileBottomNav() {
               onClick={() => setView(tab.key)}
               className={`relative flex-1 flex flex-col items-center justify-center py-1.5 gap-0.5 transition-all duration-200 active:scale-90 ${
                 isActive
-                  ? "text-amber-600 dark:text-amber-400"
+                  ? "text-primary"
                   : "text-muted-foreground/70"
               }`}
             >
@@ -69,7 +69,7 @@ export function MobileBottomNav() {
                 {isActive && (
                   <motion.span
                     layoutId="mobile-tab-dot"
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500"
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -87,7 +87,7 @@ export function MobileBottomNav() {
         {/* شريط سفلي مضيء */}
         <motion.div
           layoutId="mobile-bottom-bar"
-          className="absolute bottom-0 h-[3px] bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
+          className="absolute bottom-0 h-[3px] bg-primary rounded-full"
           style={{
             width: "33.333%",
             right: `${activeIndex * 33.333}%`,

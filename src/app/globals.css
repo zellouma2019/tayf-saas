@@ -143,37 +143,37 @@
    ========================================================================== */
 .dark {
   --radius: 0.875rem;
-  --background: #000000;
-  --foreground: rgba(255, 255, 255, 0.95);
-  --card: rgba(255, 255, 255, 0.06);
-  --card-foreground: rgba(255, 255, 255, 0.95);
-  --popover: rgba(255, 255, 255, 0.06);
-  --popover-foreground: rgba(255, 255, 255, 0.95);
-  --primary: #c75252;
-  --primary-foreground: #ffffff;
-  --secondary: rgba(255, 255, 255, 0.04);
-  --secondary-foreground: rgba(255, 255, 255, 0.95);
-  --muted: rgba(255, 255, 255, 0.04);
-  --muted-foreground: rgba(255, 255, 255, 0.6);
-  --accent: rgba(199, 82, 82, 0.12);
-  --accent-foreground: rgba(255, 255, 255, 0.95);
-  --destructive: #dc2626;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #c75252;
-  --chart-1: #c75252;
-  --chart-2: #d46060;
-  --chart-3: #e07070;
-  --chart-4: #b04040;
-  --chart-5: #a03030;
-  --sidebar: #050505;
-  --sidebar-foreground: rgba(255, 255, 255, 0.6);
-  --sidebar-primary: #c75252;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(199, 82, 82, 0.12);
-  --sidebar-accent-foreground: rgba(255, 255, 255, 0.95);
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #c75252;
+  --background: #0f1117;
+  --foreground: rgba(255, 255, 255, 0.92);
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: rgba(255, 255, 255, 0.92);
+  --popover: rgba(255, 255, 255, 0.05);
+  --popover-foreground: rgba(255, 255, 255, 0.92);
+  --primary: #d4a853;
+  --primary-foreground: #1a1510;
+  --secondary: rgba(212, 168, 83, 0.08);
+  --secondary-foreground: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: rgba(255, 255, 255, 0.55);
+  --accent: rgba(212, 168, 83, 0.1);
+  --accent-foreground: rgba(255, 255, 255, 0.92);
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.07);
+  --ring: #d4a853;
+  --chart-1: #d4a853;
+  --chart-2: #e8c060;
+  --chart-3: #b8923a;
+  --chart-4: #f0d58a;
+  --chart-5: #9a7830;
+  --sidebar: #141620;
+  --sidebar-foreground: rgba(255, 255, 255, 0.55);
+  --sidebar-primary: #d4a853;
+  --sidebar-primary-foreground: #1a1510;
+  --sidebar-accent: rgba(212, 168, 83, 0.1);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.92);
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-ring: #d4a853;
 
   /* Dark palette — INVERTED for dark mode (text becomes light, surfaces become dark) */
   --color-dark-50: #1c1c1f;
@@ -188,24 +188,24 @@
   --color-dark-900: #111111;
   --color-dark-950: #0d0d0d;
 
-  /* Colored icon surfaces for dark mode — coral/warm tones */
-  --color-gold-50: rgba(199, 82, 82, 0.15);
-  --color-gold-100: rgba(199, 82, 82, 0.25);
-  --color-gold-200: rgba(199, 82, 82, 0.35);
-  --color-sky-50: rgba(96, 165, 250, 0.12);
-  --color-sky-100: rgba(96, 165, 250, 0.2);
-  --color-emerald-50: rgba(52, 211, 153, 0.12);
-  --color-emerald-100: rgba(52, 211, 153, 0.2);
-  --color-rose-50: rgba(199, 82, 82, 0.12);
-  --color-rose-100: rgba(199, 82, 82, 0.2);
-  --color-amber-50: rgba(251, 191, 36, 0.12);
-  --color-amber-100: rgba(251, 191, 36, 0.2);
-  --color-violet-50: rgba(167, 139, 250, 0.12);
-  --color-violet-100: rgba(167, 139, 250, 0.2);
+  /* Colored icon surfaces for dark mode — warm gold tones */
+  --color-gold-50: rgba(212, 168, 83, 0.12);
+  --color-gold-100: rgba(212, 168, 83, 0.2);
+  --color-gold-200: rgba(212, 168, 83, 0.3);
+  --color-sky-50: rgba(96, 165, 250, 0.1);
+  --color-sky-100: rgba(96, 165, 250, 0.18);
+  --color-emerald-50: rgba(52, 211, 153, 0.1);
+  --color-emerald-100: rgba(52, 211, 153, 0.18);
+  --color-rose-50: rgba(244, 63, 94, 0.1);
+  --color-rose-100: rgba(244, 63, 94, 0.18);
+  --color-amber-50: rgba(251, 191, 36, 0.1);
+  --color-amber-100: rgba(251, 191, 36, 0.18);
+  --color-violet-50: rgba(167, 139, 250, 0.1);
+  --color-violet-100: rgba(167, 139, 250, 0.18);
 
   /* Admin-specific dark theme tokens */
-  --admin-header-bg: #050505;
-  --admin-footer-bg: #0a0a0a;
+  --admin-header-bg: #141620;
+  --admin-footer-bg: #0f1117;
   --admin-footer-text: #747474;
   --admin-card-bg: rgba(255, 255, 255, 0.06);
   --admin-card-hover: rgba(255, 255, 255, 0.1);
@@ -36352,16 +36352,20 @@ input[type="radio"]:focus-visible {
   }
 }
 
-/* ===== Inter font for numbers and Latin text ===== */
-/* Numbers, English text, and code use Inter for a cleaner look */
-td, th, .tabular-nums, [data-slot=\"animated-counter\"],
-.font-num, .font-mono, code, pre, kbd, samp,
-input[type=\"number\"], input[type=\"tel\"], input[type=\"email\"],
-.time, .date, .amount, .price, .stat-value, .metric-value,
-.badge, [data-slot=\"badge\"] {
+/* ===== Typography System — Hany School Inspired ===== */
+/* Headings use Alexandria for a modern, bold Arabic look */
+h1, h2, h3, h4, h5, h6,
+.font-heading, [data-slot="card-title"], [data-slot="dialog-title"] {
+  font-family: var(--font-alexandria), var(--font-cairo), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
 
-/* ===== Inter font for numbers and Latin text ===== */
-.tabular-nums, .font-num, .font-mono, code, pre, kbd, samp {
+/* Inter font for numbers and Latin text */
+td, th, .tabular-nums, [data-slot="animated-counter"],
+.font-num, .font-mono, code, pre, kbd, samp,
+input[type="number"], input[type="tel"], input[type="email"],
+.time, .date, .amount, .price, .stat-value, .metric-value,
+.badge, [data-slot="badge"] {
   font-family: var(--font-inter), var(--font-cairo), system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
