@@ -1265,6 +1265,35 @@ export default function UploadStep({
                 </motion.div>
               )}
 
+              {/* ─── Fallback Preview (no thumbnail) ─── */}
+              {!analysis.thumbnailUrl && (
+                <motion.div
+                  variants={scaleIn}
+                  className="p-4 sm:p-5 border-b border-border bg-muted/20 flex flex-col items-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-3 self-start">
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      معاينة
+                    </span>
+                  </div>
+                  <div className="w-full max-w-xs mx-auto rounded-xl border-2 border-dashed border-border/60 bg-muted/10 p-6 flex flex-col items-center gap-3">
+                    <div className={'w-14 h-14 rounded-2xl flex items-center justify-center ' + fileMeta.bg}>
+                      <fileMeta.icon className={'h-7 w-7 ' + fileMeta.color} />
+                    </div>
+                    <div className="text-center min-w-0 w-full">
+                      <div className="text-sm font-semibold truncate">{analysis.fileName || fileName}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {fileMeta.label} {fileSize > 0 ? "— " + (fileSize / 1024).toFixed(0) + " ك.ب" : ""}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground/70 text-center leading-relaxed">
+                      لا توجد معاينة متاحة لهذا النوع من الملفات
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
               {/* ─── Gauges Row: DPI + Confidence (responsive) ─── */}
               <div className="px-4 sm:px-5 py-3 border-b border-border">
                 {analysis.estimatedDPI != null && (
