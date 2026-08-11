@@ -33,7 +33,7 @@ import { Intro } from "@/components/app/intro";
 import { LiveClock } from "@/components/app/live-clock";
 import { NotificationBadge } from "@/components/app/notification-badge";
 import { QuickPriceCalculator } from "@/components/app/quick-price-calculator";
-import { BackToTop } from "@/components/app/back-to-top";
+import { WhatsAppButton } from "@/components/app/whatsapp-button";
 import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
 import { TestimonialsSection } from "@/components/app/testimonials-section";
 import { useAppStore } from "@/lib/store";
@@ -391,10 +391,10 @@ export function AppShell() {
             )}
           </main>
 
+          <WhatsAppButton />
           <MobileBottomNav />
           <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v as View); }} />
           <AdminGate open={adminGateOpen} onClose={() => setAdminGateOpen(false)} onSuccess={handleAdminUnlock} />
-          <BackToTop />
           <SonnerToaster position="top-center" dir="rtl" />
         </div>
       </LayoutGroup>
