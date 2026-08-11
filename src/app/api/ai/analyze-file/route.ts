@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
 
-// السماح بوقت أطول لمعالجة الملفات الكبيرة بالذكاء الاصطناعي (حتى 60 ثانية)
 export const maxDuration = 60;
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
@@ -10,38 +9,38 @@ function buildAnalysisPrompt(fileType: string, pageCount?: number, textPreview?:
   let contextInfo = '';
   
   if (fileType === 'PDF' && pageCount) {
-    contextInfo = `\n\nمعلومات أساسية عن الملف:\n- نوع الملف: PDF\n- عدد الصفحات الفعلي: ${pageCount} صفحة\n${pageCount > 1 ? `- هذا مستند متعدد الصفحات يحتوي على ${pageCount} صفحة حقيقية` : '- هذا مستند من صفحة واحدة'}\n`;
+    contextInfo = `\n\nمعلومات أساسية عن الملف:\n- نوع الملف: PDF\n- عدد الصفحات الفعلي: ${pageCount} صفحة\n${pageCount > 1 ? `- مستند متعدد الصفحات (${pageCount} صفحة)` : '- مستند من صفحة واحدة'}\n`;
     
     if (textPreview && textPreview.trim().length > 0) {
       const truncated = textPreview.length > 3000 ? textPreview.substring(0, 3000) + '\n...(باقي النص مقطوع)' : textPreview;
-      contextInfo += `\nالنص المستخرج من الملف:\n"""\n${truncated}\n"""\n`;
+      contextInfo += `\nالنص المستخرج:\n"""\n${truncated}\n"""\n`;
     }
   } else if (IMAGE_EXTENSIONS.some(ext => fileType.toLowerCase().includes(ext))) {
-    contextInfo = '\nمعلومات أساسية: هذا ملف صورة (ليس PDF). حلّل محتوى الصورة بدقة.';
+    contextInfo = '\nهذا ملف صورة. حلّل محتوى الصورة بدقة شديدة: الموضوع، الألوان، الدقة، الملاءمة للطباعة.';
   }
 
-  return `أنت خبير متخصص في تحليل الملفات المرفوعة لخدمات الطباعة. مهمتك هي تحليل المحتوى المرفق بدقة تامة وتقديم توصيات احترافية.
+  return `أنت خبير متقدم ومحترف في خدمات الطباعة ومُحلّل ملفات دقيق. مهمتك تحليل الملف المرفوع وتقديم توصيات طباعة مثالية ومفصّلة.
 
 ${contextInfo}
-أجب بـ JSON فقط (بدون markdown، بدون نص إضافي، بدون \\[code\\]) وباللغة العربية.
+أجب بـ JSON فقط (بدون markdown أو \`\`\`) وباللغة العربية.
 
-يجب أن يتضمن الرد الحقول التالية بالضبط:
-- "documentType": نوع المستند/الصورة بالعربية (مثل: سيرة ذاتية، تقرير، فاتورة، بطاقة، ملصق، صورة شخصية، صورة فنية، كتيب، عقد، شهادة، إيصال، استمارة، عرض تقديمي، كتاب، أطروحة، دعوة، بطاقة عمل، أخرى)
-- "description": وصف تفصيلي للمحتوى بالعربية (2-3 جمل على الأقل — صف ما تراه بالضبط: النصوص، الجداول، الصور، الأشكال، التخطيط)
-- "pageCount": العدد الفعلي للصفحات (رقم)${pageCount ? ` — الملف يحتوي فعلاً على ${pageCount} صفحة، استخدم هذا الرقم` : ''}
-- "qualityAssessment": تقييم الجودة - أحد: "جودة ممتازة" أو "جيدة" أو "متوسطة" أو "منخفضة"
-- "qualityReason": سبب تفصيلي لتقييم الجودة بالعربية (جملة واحدة)
-- "suggestedService": الخدمة الأنسب - أحد: "document" أو "photo" أو "binding" أو "copy" أو "card" أو "poster"
+الحقول المطلوبة:
+- "documentType": نوع المستند بالعربية الدقيقة (سيرة ذاتية، تقرير مالي، فاتورة ضريبية، بطاقة أعمال، ملصق إعلاني، صورة شخصية، صورة فنية، كتيب تعريفي، عقد قانوني، شهادة، إيصال، استمارة، عرض تقديمي، كتاب، أطروحة، دعوة زفاف، بطاقة زيارة، جدول بيانات، محضر اجتماع، رسالة رسمية، أخرى)
+- "description": وصف شامل ومفصّل (4-6 جمل — اذكر: نوع المحتوى، وجود جداول/رسوم/صور، التخطيط والتنسيق، الألوان، نوع الخطوط، الغلاف إن وُجد، جودة الصور المدمجة)
+- "pageCount": عدد الصفحات${pageCount ? ` (الملف يحتوي ${pageCount} صفحة — استخدم هذا الرقم)` : ''}
+- "qualityAssessment": "جودة ممتازة" | "جيدة" | "متوسطة" | "منخفضة"
+- "qualityReason": سبب تفصيلي (2-3 جمل — وضوح النصوص، جودة الصور، التنسيق، ملاءمة الملف للطباعة)
+- "suggestedService": "document" | "photo" | "binding" | "copy" | "card" | "poster"
 - "suggestedServiceName": اسم الخدمة بالعربية
 - "suggestedColor": "bw" أو "color"
-- "suggestedPaperSize": "A4" أو "A3" أو "A5" أو "A2" أو "Legal"
-- "suggestedPaperType": نوع الورق المقترح بالعربية (مثل: عادي، مقوّى 250غ، لامع، مصقول، فاخر)
-- "suggestedBinding": نوع التجليد - أحد: "none" أو "spiral" أو "glue" أو "hardcover" أو "staple"
-- "confidence": رقم من 0 إلى 100 يمثل ثقتك في التحليل
-- "insights": مصفوفة تحتوي 3 إلى 5 نصائح تفصيلية وقصيرة بالعربية حول الطباعة المثلى
+- "suggestedPaperSize": "A4" | "A3" | "A5" | "A2" | "Legal"
+- "suggestedPaperType": نوع الورق بالعربية (عادي 80غ، مقوّى 250غ، مقوّى 300غ، لامع 150غ، مصقول، فاخر، ورق صور فوتو)
+- "suggestedBinding": "none" | "spiral" | "glue" | "hardcover" | "staple"
+- "confidence": 0-100
+- "insights": مصفوفة 5-8 نصائح مهنية مفصّلة ومحددة (كل نصيحة فريدة ومفيدة — اذكر أسباباً محددة لكل توصية)
 
-مثال على الرد المتوقع لمستند PDF من 30 صفحة:
-{"documentType":"تقرير مالي","description":"تقرير مالي سنوي يتضمن جداول بيانية متعددة، رسوم بيانية، وملاحظات تفصيلية. يحتوي على غلاف وعناوين فصول","pageCount":30,"qualityAssessment":"جيدة","qualityReason":"التنسيق منظم والجداول واضحة لكن بعض الرسوم البيانية قد تحتاج ألوان","suggestedService":"document","suggestedServiceName":"طباعة مستند (تقرير)","suggestedColor":"color","suggestedPaperSize":"A4","suggestedPaperType":"مقوّى 250غ","suggestedBinding":"spiral","confidence":91,"insights":["تقرير 30 صفحة — ورق مقوّى 250غ يناسب الملفات المهنية","تجليد لولبي مقترح لسهولة التصفح","يحتوي رسوم بيانية — طباعة ملونة أنسب","غلاف أمامي مقترح"]}
+مثال لمستند PDF 30 صفحة:
+{"documentType":"تقرير مالي سنوي","description":"تقرير مالي سنوي يتضمن جدول الأرباح والخسائر في الصفحة الثانية مع أرقام دقيقة، يليه رسوم بيانية دائرية ملونة لنسب الأقسام. الغلاف يحتوي لغو الشركة وعنوان التقرير بالخط العريض. التنسيق منظم مع هوامش متساوية وخطوط واضحة.","pageCount":30,"qualityAssessment":"جيدة","qualityReason":"التنسيق منظم والجداول واضحة والنصوص مقروءة جيداً. الرسوم البيانية الدائرية تحتاج طباعة ملونة لتكون مفهومة.","suggestedService":"document","suggestedServiceName":"طباعة مستند (تقرير مالي)","suggestedColor":"color","suggestedPaperSize":"A4","suggestedPaperType":"مقوّى 250غ","suggestedBinding":"spiral","confidence":93,"insights":["تقرير 30 صفحة — ورق مقوّى 250غ يعطي انطباعاً مهنياً احترافياً","تجليد لولبي يسهّل التصفح السريع للجداول والرسوم البيانية","الرسوم الدائرية تتطلب طباعة ملونة — أبيض وأسود يجعلها غير مفهومة","الغلاف يحتوي لغو — يجب طباعته ملوناً على ورق مصقول","يُنصح بورق أبيض ناصع لتوضوح الأرقام في الجداول","عدد الصفحات كبير — يُفضل فهرس تلقائي في البداية"]}
 
 أجب بـ JSON فقط.`;
 }
@@ -68,17 +67,14 @@ function parseVLMResponse(text: string) {
   if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
   cleaned = cleaned.trim();
 
-  // Strategy 1: Direct parse
   try { return JSON.parse(cleaned); } catch {}
 
-  // Strategy 2: Extract between first { and last }
   const firstBrace = cleaned.indexOf('{');
   const lastBrace = cleaned.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     try { return JSON.parse(cleaned.substring(firstBrace, lastBrace + 1)); } catch {}
   }
 
-  // Strategy 3: Fix common JSON issues
   try {
     const fixed = cleaned.replace(/"}\s*"$/, '}]').replace(/"\s*}$/, '}');
     return JSON.parse(fixed);
@@ -99,14 +95,12 @@ export async function POST(request: NextRequest) {
     const thumbnailDataUrl = (formData.get('thumbnailDataUrl') as string) || '';
 
     let imageDataUrl: string | null = null;
-    let isImage = false;
 
     if (file && isImageFile(file.name || fileName)) {
       const bytes = await file.arrayBuffer();
       const base64 = Buffer.from(bytes).toString('base64');
       const mime = file.type || `image/${(file.name || fileName).split('.').pop()?.toLowerCase()}`;
       imageDataUrl = `data:${mime};base64,${base64}`;
-      isImage = true;
     } else if (thumbnailDataUrl) {
       imageDataUrl = thumbnailDataUrl;
     }
@@ -139,12 +133,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, analysis: null, error: 'فشل في تحليل رد النموذج' });
     }
 
-    // Ensure pageCount from client-side analysis is preserved
     if (pageCount && (!analysis.pageCount || analysis.pageCount === 1)) {
       analysis.pageCount = pageCount;
     }
 
-    // Validate confidence
     if (typeof analysis.confidence !== 'number') analysis.confidence = 50;
     analysis.confidence = Math.min(100, Math.max(0, Math.round(analysis.confidence)));
 

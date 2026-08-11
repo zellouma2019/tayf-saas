@@ -189,7 +189,7 @@ export function AppShell() {
               <LiveClock />
 
               {/* التنقل - حاسوب */}
-              <nav className="hidden lg:flex items-center gap-0.5 bg-muted/50 rounded-full p-1 border border-border/30">
+              <nav className="hidden md:flex items-center gap-0.5 bg-muted/50 rounded-full p-1 border border-border/30">
                 {navItems.map((item) => (
                   <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold font-heading transition-colors ${view === item.key ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}>
                     {view === item.key && (
@@ -201,8 +201,8 @@ export function AppShell() {
                 ))}
               </nav>
 
-              {/* التنقل - الجوال والتابلت */}
-              <nav className="flex lg:hidden items-center gap-0.5 bg-muted/50 rounded-full p-0.5 shrink-0 border border-border/30">
+              {/* التنقل - الجوال فقط */}
+              <nav className="flex md:hidden items-center gap-0.5 bg-muted/50 rounded-full p-0.5 shrink-0 border border-border/30">
                 {navItems.map((item) => (
                   <button key={item.key} onClick={() => handleNavClick(item.key)} className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors ${view === item.key ? "text-primary-foreground" : "text-muted-foreground"}`} aria-label={item.label}>
                     {view === item.key && (

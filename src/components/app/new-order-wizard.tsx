@@ -518,8 +518,9 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     const tUploadStart = performance.now();
 
     try {
-      const CHUNK_THRESHOLD = 900 * 1024; // 900 كيلوبايت
-      const CHUNK_SIZE = 900 * 1024;
+      const CHUNK_THRESHOLD = 4.5 * 1024 * 1024; // 4.5 ميغابايت — أقل من حد البوابة 5MB
+      const CHUNK_SIZE = 4.5 * 1024 * 1024;
+      const MAX_CONCURRENT = 3; // رفع متوازي — 3 أجزاء في نفس الوقت
 
       let storedFileName: string;
 
@@ -553,61 +554,79 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           xhr.send(formData);
         });
       } else {
-        // ملف كبير — رفع مجزأ (لتجاوز حد 1 ميغا في البوابة)
+        // ملف كبير — رفع مجزأ متوازي (لتجاوز حد البوابة)
         const fileId = crypto.randomUUID();
         const totalChunks = Math.ceil(f.size / CHUNK_SIZE);
-        let overallLoaded = 0;
+        let completedChunks = 0;
+        let storedFileNameFromChunk = "";
 
-        for (let i = 0; i < totalChunks; i++) {
-          const start = i * CHUNK_SIZE;
+        const uploadChunk = async (chunkIndex: number) => {
+          const start = chunkIndex * CHUNK_SIZE;
           const end = Math.min(start + CHUNK_SIZE, f.size);
           const blob = f.slice(start, end);
 
           const formData = new FormData();
-          formData.append("chunk", blob, `chunk_${i}`);
+          formData.append("chunk", blob, `chunk_${chunkIndex}`);
           formData.append("fileId", fileId);
-          formData.append("chunkIndex", String(i));
+          formData.append("chunkIndex", String(chunkIndex));
           formData.append("totalChunks", String(totalChunks));
           formData.append("fileName", f.name);
           formData.append("fileSize", String(f.size));
           formData.append("fileExt", ext);
 
-          const result = await new Promise<{ complete: boolean; storedFileName?: string; error?: string }>((resolve, reject) => {
+          return new Promise<{ complete: boolean; storedFileName?: string; error?: string }>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open("POST", "/api/orders/upload-chunk");
-
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                const chunkPct = e.loaded / e.total;
-                const pct = Math.round(((overallLoaded + start + e.loaded) / f.size) * 100);
-                setUploadProgress(Math.min(pct, 99));
-              }
-            };
 
             xhr.onload = () => {
               if (xhr.status === 200) {
                 resolve(JSON.parse(xhr.responseText));
               } else {
-                let msg = `فشل رفع الجزء ${i + 1}/${totalChunks} — رمز الخطأ: ${xhr.status}`;
+                let msg = `فشل رفع الجزء ${chunkIndex + 1}/${totalChunks} — رمز الخطأ: ${xhr.status}`;
                 try { const d = JSON.parse(xhr.responseText); if (d.error) msg = d.error; } catch {}
                 reject(new Error(msg));
               }
             };
 
-            xhr.onerror = () => reject(new Error(`خطأ في الاتصال أثناء رفع الجزء ${i + 1}/${totalChunks}`));
+            xhr.onerror = () => reject(new Error(`خطأ في الاتصال أثناء رفع الجزء ${chunkIndex + 1}/${totalChunks}`));
             xhr.send(formData);
           });
+        };
 
-          overallLoaded = end;
-
-          if (result.complete && result.storedFileName) {
-            storedFileName = result.storedFileName;
+        // رفع متوازي مع حد أقصى
+        const chunkPromises: Promise<void>[] = [];
+        for (let i = 0; i < totalChunks; i++) {
+          const p = uploadChunk(i).then((result) => {
+            completedChunks++;
+            if (result.complete && result.storedFileName) {
+              storedFileNameFromChunk = result.storedFileName;
+            }
+            const pct = Math.round((completedChunks / totalChunks) * 100);
+            setUploadProgress(Math.min(pct, 99));
+          });
+          chunkPromises.push(p);
+          // انتظر إذا وصلنا للحد الأقصى من التوازي
+          if (chunkPromises.length >= MAX_CONCURRENT) {
+            await Promise.race(chunkPromises);
+            // إزالة الأجزاء المكتملة
+            const settled = await Promise.allSettled(chunkPromises.map((pr) => pr.then(() => true, () => false)));
+            const completed = settled.filter((s) => s.status === "fulfilled" && s.value).length;
+            // نحتفظ فقط بالأجزاء التي لم تكتمل بعد
+            const remaining: Promise<void>[] = [];
+            for (let j = 0; j < chunkPromises.length; j++) {
+              if (j >= completed) remaining.push(chunkPromises[j]);
+            }
+            chunkPromises.length = 0;
+            chunkPromises.push(...remaining);
           }
         }
-        // إذا لم نحصل على storedFileName من آخر جزء
-        if (!storedFileName) {
+        // انتظر جميع الأجزاء المتبقية
+        await Promise.all(chunkPromises);
+
+        if (!storedFileNameFromChunk) {
           throw new Error("فشل في تجميع الملف. حاول مرة أخرى.");
         }
+        storedFileName = storedFileNameFromChunk;
       }
 
       setFileDataUrl(storedFileName);

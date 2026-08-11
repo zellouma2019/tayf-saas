@@ -1,0 +1,953 @@
+     1→// محلل الملفات الحقيقي - يحلل محتوى الملف الفعلي而非 معلومات وهمية
+     2→"use client";
+     3→
+     4→import type { ServiceType } from "@/lib/print-config";
+     5→
+     6→// تحميل pdfjs-dist ديناميكياً (client-only) لتجنب أخطاء SSR
+     7→let pdfjsLib: typeof import("pdfjs-dist") | null = null;
+     8→let workerInitialized = false;
+     9→
+    10→async function ensurePdfjs() {
+    11→  if (!pdfjsLib) {
+    12→    pdfjsLib = await import("pdfjs-dist");
+    13→  }
+    14→  if (!workerInitialized) {
+    15→    try {
+    16→      // استخدم النسخة المحلية من worker (أسرع + يعمل دون اتصال + لا يعتمد على CDN)
+    17→      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    18→      workerInitialized = true;
+    19→    } catch {
+    20→      try {
+    21→        pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+    22→      } catch {}
+    23→    }
+    24→  }
+    25→  return pdfjsLib;
+    26→}
+    27→
+    28→export interface RealFileAnalysis {
+    29→  detectedService: ServiceType;
+    30→  detectedServiceName: string;
+    31→  pageCount: number; // حقيقي من الملف
+    32→  fileSizeKB: number;
+    33→  fileSizeMB: number;
+    34→  suggestedColor: string;
+    35→  suggestedPaperSize: string;
+    36→  suggestedPaperType: string;
+    37→  suggestedBinding: string;
+    38→  confidence: number;
+    39→  insights: string[];
+    40→  fileType: string;
+    41→  fileName: string;
+    42→  // معلومات إضافية حقيقية
+    43→  imageDimensions?: { width: number; height: number; megapixels: number };
+    44→  pdfTitle?: string;
+    45→  pdfAuthor?: string;
+    46→  pdfCreator?: string;
+    47→  textPreview?: string; // أول 300 حرف من النص
+    48→  detectedLanguage?: string;
+    49→  // معاينة بصرية
+    50→  thumbnailUrl?: string; // معاينة مصغرة (للصور: الصورة نفسها، للـ PDF: أول صفحة)
+    51→  fileNature?: string; // وصف طبيعة الملف
+    52→  isPortrait?: boolean;
+    53→  dominantColors?: string[]; // ألوان سائدة (للصور)
+    54→  // ===== معلومات تفصيلية جديدة =====
+    55→  // أبعاد الصفحة بالملم
+    56→  pageDimensionsMM?: { width: number; height: number };
+    57→  // حجم الورق القياسي الأقرب
+    58→  closestPaperSize?: string; // "A4", "A3", "A5", "Letter", "مخصص"
+    59→  // DPI المقدّر
+    60→  estimatedDPI?: number;
+    61→  // فئة الدقة
+    62→  dpiCategory?: "منخفضة" | "متوسطة" | "عالية" | "جاهزة للطباعة";
+    63→  // المساحة اللونية
+    64→  colorSpace?: "RGB" | "CMYK" | "تدرج رمادي" | "غير محدد";
+    65→  // هل يحتوي صور؟
+    66→  hasImages?: boolean;
+    67→  // هل يحتوي نصوص؟
+    68→  hasText?: boolean;
+    69→  // نسبة العرض للارتفاع
+    70→  aspectRatio?: string; // "4:3", "16:9", "1:1" ...
+    71→  // اتجاه الصفحة
+    72→  orientation?: "عمودي" | "أفقي" | "مربع";
+    73→  // الحجم المنسّق
+    74→  fileSizeFormatted?: string;
+    75→}
+    76→
+    77→// ===== مقاسات الأوراق القياسية بالملم =====
+    78→const PAPER_SIZES_MM: Record<string, { w: number; h: number }> = {
+    79→  A6: { w: 105, h: 148 },
+    80→  A5: { w: 148, h: 210 },
+    81→  A4: { w: 210, h: 297 },
+    82→  A3: { w: 297, h: 420 },
+    83→  A3_PLUS: { w: 329, h: 483 },
+    84→  A2: { w: 420, h: 594 },
+    85→  A1: { w: 594, h: 841 },
+    86→  A0: { w: 841, h: 1189 },
+    87→  Letter: { w: 216, h: 279 },
+    88→  Legal: { w: 216, h: 356 },
+    89→};
+    90→
+    91→/// إيجاد أقرب حجم ورقي قياسي من الأبعاد بالملم
+    92→function findClosestPaperSize(wMM: number, hMM: number): { name: string; tolerance: number } {
+    93→  let bestName = "مخصص";
+    94→  let bestTolerance = Infinity;
+    95→
+    96→  for (const [name, dims] of Object.entries(PAPER_SIZES_MM)) {
+    97→    // جرب الاتجاهين (عمودي وأفقي)
+    98→    for (const [dw, dh] of [[dims.w, dims.h], [dims.h, dims.w]]) {
+    99→      const diffW = Math.abs(wMM - dw);
+   100→      const diffH = Math.abs(hMM - dh);
+   101→      const tolerance = diffW + diffH;
+   102→      if (tolerance < bestTolerance) {
+   103→        bestTolerance = tolerance;
+   104→        bestName = name;
+   105→      }
+   106→    }
+   107→  }
+   108→
+   109→  // إذا كان الفرق كبيراً، نعتبره مخصص
+   110→  if (bestTolerance > 20) return { name: "مخصص", tolerance: bestTolerance };
+   111→  return { name: bestName, tolerance: bestTolerance };
+   112→}
+   113→
+   114→/// تقدير DPI من أبعاد الصورة وعرض الورقة الهدف (بالمم)
+   115→function estimateDPI(imageWidth: number, imageHeight: number, paperWidthMM: number, paperHeightMM: number): number {
+   116→  // DPI = بكسل / إنش (1 إنش = 25.4 مم)
+   117→  const dpiW = Math.round((imageWidth / paperWidthMM) * 25.4);
+   118→  const dpiH = Math.round((imageHeight / paperHeightMM) * 25.4);
+   119→  return Math.round((dpiW + dpiH) / 2);
+   120→}
+   121→
+   122→/// تصنيف الدقة
+   123→function categorizeDPI(dpi: number): "منخفضة" | "متوسطة" | "عالية" | "جاهزة للطباعة" {
+   124→  if (dpi >= 300) return "جاهزة للطباعة";
+   125→  if (dpi >= 200) return "عالية";
+   126→  if (dpi >= 100) return "متوسطة";
+   127→  return "منخفضة";
+   128→}
+   129→
+   130→/// حساب نسبة العرض للارتفاع كنص
+   131→function getAspectRatioText(w: number, h: number): string {
+   132→  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+   133→  const r = gcd(w, h);
+   134→  return `${w / r}:${h / r}`;
+   135→}
+   136→
+   137→/// تنسيق حجم الملف
+   138→function formatFileSize(kb: number, mb: number): string {
+   139→  if (mb >= 1) return `${mb.toFixed(2)} ميجابايت`;
+   140→  if (kb >= 1) return `${kb} كيلوبايت`;
+   141→  return `${Math.round(kb * 1024)} بايت`;
+   142→}
+   143→
+   144→/// تحليل حقيقي للملف بناءً على محتواه الفعلي
+   145→export async function analyzeFileReal(file: File): Promise<RealFileAnalysis> {
+   146→  const ext = (file.name.split(".").pop() || "").toLowerCase();
+   147→  const sizeBytes = file.size;
+   148→  const sizeKB = Math.round(sizeBytes / 1024);
+   149→  const sizeMB = Math.round((sizeBytes / (1024 * 1024)) * 100) / 100;
+   150→
+   151→  if (ext === "pdf") {
+   152→    return analyzePdf(file, sizeKB, sizeMB);
+   153→  }
+   154→  if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
+   155→    return analyzeImage(file, ext, sizeKB, sizeMB);
+   156→  }
+   157→  if (ext === "docx" || ext === "doc") {
+   158→    return analyzeDocx(file, sizeKB, sizeMB);
+   159→  }
+   160→  if (ext === "xlsx" || ext === "xls") {
+   161→    return analyzeXlsx(file, sizeKB, sizeMB);
+   162→  }
+   163→  // افتراضي
+   164→  return defaultAnalysis(file.name, ext, sizeKB, sizeMB);
+   165→}
+   166→
+   167→/// تحليل PDF حقيقي باستخدام PDF.js
+   168→async function analyzePdf(
+   169→  file: File,
+   170→  sizeKB: number,
+   171→  sizeMB: number,
+   172→): Promise<RealFileAnalysis> {
+   173→  let pageCount = 1;
+   174→  let pdfTitle: string | undefined;
+   175→  let pdfAuthor: string | undefined;
+   176→  let pdfCreator: string | undefined;
+   177→  let textPreview = "";
+   178→  let thumbnailUrl: string | undefined;
+   179→  let fileNature: string | undefined;
+   180→  let isPortrait: boolean | undefined;
+   181→  let pageDimensionsMM: { width: number; height: number } | undefined;
+   182→  let closestPaperSize: string | undefined;
+   183→  let estimatedDPI: number | undefined;
+   184→  let dpiCategory: "منخفضة" | "متوسطة" | "عالية" | "جاهزة للطباعة" | undefined;
+   185→  let hasImages = false;
+   186→  let hasText = false;
+   187→  let colorSpace: "RGB" | "CMYK" | "تدرج رمادي" | "غير محدد" = "غير محدد";
+   188→  let orientation: "عمودي" | "أفقي" | "مربع" = "عمودي";
+   189→  let aspectRatio: string | undefined;
+   190→  const insights: string[] = [];
+   191→
+   192→  // ═══ وضع خفيف للملفات الكبيرة (>5MB) — يتجنب العمليات الثقيلة ═══
+   193→  const isLarge = sizeMB > 5;
+   194→
+   195→  try {
+   196→    const lib = await ensurePdfjs();
+   197→    const arrayBuffer = await file.arrayBuffer();
+   198→    const loadingTask = lib.getDocument({ data: arrayBuffer });
+   199→    const pdf = await loadingTask.promise;
+   200→    pageCount = pdf.numPages; // العدد الحقيقي للصفحات
+   201→
+   202→    // استخراج البيانات الوصفية
+   203→    try {
+   204→      const meta = await pdf.getMetadata();
+   205→      const info = meta?.info as Record<string, unknown> | undefined;
+   206→      if (info) {
+   207→        pdfTitle = (info.Title as string) || undefined;
+   208→        pdfAuthor = (info.Author as string) || undefined;
+   209→        pdfCreator = (info.Creator as string) || undefined;
+   210→      }
+   211→    } catch {}
+   212→
+   213→    // استخراج النص — ملفات كبيرة: أول صفحة فقط | ملفات صغيرة: أول 3 صفحات
+   214→    const pagesToRead = isLarge ? Math.min(1, pageCount) : Math.min(3, pageCount);
+   215→    let fullText = "";
+   216→    let totalTextItems = 0;
+   217→    for (let i = 1; i <= pagesToRead; i++) {
+   218→      try {
+   219→        const page = await pdf.getPage(i);
+   220→
+   221→        let content = await page.getTextContent({ normalizeWhitespace: true });
+   222→        let pageTextParts: string[] = [];
+   223→
+   224→        for (const item of content.items) {
+   225→          if ("str" in item) {
+   226→            totalTextItems++;
+   227→            if (item.str.trim()) {
+   228→              pageTextParts.push(item.str);
+   229→            }
+   230→          }
+   231→        }
+   232→
+   233→        let pageText = pageTextParts.join(" ");
+   234→
+   235→        if (pageText.trim().length === 0) {
+   236→          try {
+   237→            content = await page.getTextContent({
+   238→              normalizeWhitespace: true,
+   239→              disableCombineTextItems: true,
+   240→            });
+   241→            pageTextParts = [];
+   242→            for (const item of content.items) {
+   243→              if ("str" in item) {
+   244→                totalTextItems++;
+   245→                if (item.str.trim()) {
+   246→                  pageTextParts.push(item.str);
+   247→                }
+   248→              }
+   249→            }
+   250→            const altText = pageTextParts.join(" ");
+   251→            if (altText.trim().length > 0) {
+   252→              pageText = altText;
+   253→            }
+   254→          } catch {}
+   255→        }
+   256→
+   257→        fullText += " " + pageText;
+   258→        if (pageText.trim().length > 0) hasText = true;
+   259→
+   260→        // توليد معاينة + أبعاد الصفحة (فقط الصفحة الأولى)
+   261→        if (i === 1) {
+   262→          try {
+   263→            const viewport = page.getViewport({ scale: 1 });
+   264→            const pdfWidthMM = (viewport.width * 25.4) / 72;
+   265→            const pdfHeightMM = (viewport.height * 25.4) / 72;
+   266→            pageDimensionsMM = {
+   267→              width: Math.round(pdfWidthMM * 10) / 10,
+   268→              height: Math.round(pdfHeightMM * 10) / 10,
+   269→            };
+   270→            closestPaperSize = findClosestPaperSize(pdfWidthMM, pdfHeightMM).name;
+   271→            orientation = pdfHeightMM > pdfWidthMM + 1 ? "عمودي" : pdfWidthMM > pdfHeightMM + 1 ? "أفقي" : "مربع";
+   272→            isPortrait = orientation === "عمودي";
+   273→            aspectRatio = getAspectRatioText(Math.round(pdfWidthMM), Math.round(pdfHeightMM));
+   274→
+   275→            // ═══ المعاينة المصغرة — ملفات كبيرة جداً: تخطي ═══
+   276→            if (!isLarge) {
+   277→              const thumbViewport = page.getViewport({ scale: 0.5 });
+   278→              const canvas = document.createElement("canvas");
+   279→              canvas.width = thumbViewport.width;
+   280→              canvas.height = thumbViewport.height;
+   281→              const context = canvas.getContext("2d");
+   282→              if (context) {
+   283→                await page.render({ canvasContext: context, viewport: thumbViewport, canvas } as Parameters<typeof page.render>[0]).promise;
+   284→                thumbnailUrl = canvas.toDataURL("image/jpeg", 0.6);
+   285→
+   286→                // تحليل الألوان
+   287→                try {
+   288→                  const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+   289→                  let colorPixels = 0;
+   290→                  let grayPixels = 0;
+   291→                  const sampleStep = 16;
+   292→                  for (let p = 0; p < imgData.data.length; p += 4 * sampleStep) {
+   293→                    const r = imgData.data[p];
+   294→                    const g = imgData.data[p + 1];
+   295→                    const b = imgData.data[p + 2];
+   296→                    const maxC = Math.max(r, g, b);
+   297→                    const minC = Math.min(r, g, b);
+   298→                    if (maxC - minC > 30) colorPixels++;
+   299→                    else grayPixels++;
+   300→                  }
+   301→                  const total = colorPixels + grayPixels;
+   302→                  if (total > 0) {
+   303→                    colorSpace = colorPixels / total > 0.3 ? "RGB" : "تدرج رمادي";
+   304→                  }
+   305→                } catch {}
+   306→
+   307→                estimatedDPI = Math.round(canvas.width / (pdfWidthMM / 25.4));
+   308→                dpiCategory = categorizeDPI(estimatedDPI);
+   309→              }
+   310→
+   311→              // فحص operators
+   312→              try {
+   313→                const ops = await page.getOperatorList();
+   314→                const textOpNames = new Set([
+   315→                  String(lib.OPS.showText),
+   316→                  String(lib.OPS.showSpacedText),
+   317→                ]);
+   318→                const imageOpNames = new Set([
+   319→                  String(lib.OPS.paintImageXObject),
+   320→                  String(lib.OPS.paintJpegXObject),
+   321→                ]);
+   322→                for (let opIdx = 0; opIdx < ops.fnArray.length; opIdx++) {
+   323→                  const fnName = String(ops.fnArray[opIdx]);
+   324→                  if (textOpNames.has(fnName) && !hasText) hasText = true;
+   325→                  if (imageOpNames.has(fnName)) hasImages = true;
+   326→                  if (hasText && hasImages) break;
+   327→                }
+   328→              } catch {}
+   329→            } else {
+   330→              // ملف كبير: بدون معاينة — التقدير الأساسي فقط
+   331→              estimatedDPI = Math.round(viewport.width / (pdfWidthMM / 25.4));
+   332→              dpiCategory = categorizeDPI(estimatedDPI);
+   333→              insights.push("تم تخطي المعاينة التفصيلية لتسريع التحليل");
+   334→            }
+   335→          } catch {}
+   336→        }
+   337→      } catch {}
+   338→    }
+   339→
+   340→    if (!hasText && totalTextItems > 5) {
+   341→      hasText = true;
+   342→      insights.push("نصوص مكتشفة (ترميز خطوط مخصص — قد لا يتم عرضها بشكل صحيح)");
+   343→    }
+   344→
+   345→    textPreview = fullText.trim().substring(0, 300);
+   346→
+   347→    // اكتشاف اللغة
+   348→    const arabicChars = (fullText.match(/[\u0600-\u06FF]/g) || []).length;
+   349→    const latinChars = (fullText.match(/[a-zA-Z]/g) || []).length;
+   350→    if (arabicChars > latinChars && arabicChars > 20) {
+   351→      insights.push("اللغة المكتشفة: عربية");
+   352→      fileNature = "مستند عربي";
+   353→    } else if (latinChars > 20) {
+   354→      insights.push("اللغة المكتشفة: أجنبية");
+   355→      fileNature = "مستند أجنبي";
+   356→    }
+   357→  } catch (e) {
+   358→    insights.push("تعذّر قراءة تفاصيل PDF — تم استخدام التقدير");
+   359→  }
+   360→
+   361→  // اكتشاف نوع المحتوى من النص الفعلي والعنوان
+   362→  const searchText = `${file.name} ${pdfTitle || ""} ${textPreview}`.toLowerCase();
+   363→  const name = file.name.toLowerCase();
+   364→  let detectedService: ServiceType = "document";
+   365→  let confidence = 70;
+   366→  let suggestedColor = "bw";
+   367→  let suggestedPaperSize = "A4";
+   368→  let suggestedPaperType = "normal";
+   369→  let suggestedBinding = "none";
+   370→  let detectedServiceName = "طباعة مستند";
+   371→
+   372→  // قواعد الاكتشاف من المحتوى الحقيقي
+   373→  if (/cv|resume|سيرة|ذاتية|curriculum/.test(searchText)) {
+   374→    detectedService = "document";
+   375→    detectedServiceName = "طباعة مستند (سيرة ذاتية)";
+   376→    confidence = 95;
+   377→    suggestedPaperType = "cardboard";
+   378→    suggestedColor = "bw";
+   379→    fileNature = "سيرة ذاتية";
+   380→    insights.push("سيرة ذاتية مكتشفة من المحتوى — ورق مقوّى أبيض وأسود");
+   381→  } else if (/report|تقرير|memo|مذكرة|search|بحث|study|دراسة|thesis|message|رسالة/.test(searchText)) {
+   382→    detectedService = "document";
+   383→    detectedServiceName = "طباعة مستند (تقرير/مذكرة)";
+   384→    confidence = 92;
+   385→    suggestedColor = "bw";
+   386→    fileNature = pageCount > 50 ? "بحث/أطروحة" : pageCount > 15 ? "تقرير طويل" : "تقرير/مذكرة";
+   387→    if (pageCount > 15) {
+   388→      suggestedBinding = "spiral";
+   389→      insights.push("مستند طويل — يُنصح بتجليد لولبي");
+   390→    }
+   391→    insights.push("مستند نصي — أبيض وأسود اقتصادي");
+   392→  } else if (/card|بطاقة|invite|دعوة|wedding|زفاف|business card|visite/.test(searchText)) {
+   393→    detectedService = "card";
+   394→    detectedServiceName = "بطاقات";
+   395→    confidence = 90;
+   396→    suggestedColor = "color";
+   397→    suggestedPaperType = "cardboard";
+   398→    fileNature = "بطاقة";
+   399→    insights.push("بطاقة مكتشفة — ورق مقوّى + طباعة ملونة");
+   400→  } else if (/poster|ملصق|affiche|flyer|إعلان|اعلان/.test(searchText)) {
+   401→    detectedService = "poster";
+   402→    detectedServiceName = "ملصقات";
+   403→    confidence = 89;
+   404→    suggestedColor = "color";
+   405→    suggestedPaperSize = "A3";
+   406→    suggestedPaperType = "glossy";
+   407→    fileNature = "ملصق/إعلان";
+   408→    insights.push("ملصق — حجم A3 + ورق لامع + طباعة ملونة");
+   409→  } else if (/invoice|فاتورة|receipt|وصل|quotation|عرض سعر/.test(searchText)) {
+   410→    detectedService = "document";
+   411→    detectedServiceName = "طباعة مستند (فاتورة)";
+   412→    confidence = 88;
+   413→    suggestedColor = "bw";
+   414→    fileNature = "فاتورة/وصل";
+   415→    insights.push("فاتورة/وصل — أبيض وأسود");
+   416→  } else {
+   417→    // اكتشاف عام من عدد الصفحات
+   418→    if (pageCount === 1) {
+   419→      confidence = 75;
+   420→      fileNature = "صفحة واحدة";
+   421→      insights.push("مستند PDF من صفحة واحدة");
+   422→    } else if (pageCount > 50) {
+   423→      confidence = 78;
+   424→      suggestedBinding = "glue";
+   425→      fileNature = "كتاب/بحث طويل";
+   426→      insights.push("مستند طويل جداً — يُنصح بتجليد بالغراء");
+   427→    } else {
+   428→      confidence = 80;
+   429→      fileNature = "مستند متعدد الصفحات";
+   430→      if (pageCount > 15) {
+   431→        suggestedBinding = "spiral";
+   432→        insights.push("مستند متوسط الطول — تجليد لولبي مقترح");
+   433→      }
+   434→    }
+   435→    insights.push("ملف PDF قياسي — الإعدادات الافتراضية");
+   436→  }
+   437→
+   438→  insights.push(`عدد الصفحات الفعلي: ${pageCount} صفحة`);
+   439→  if (pdfTitle) insights.push(`العنوان: ${pdfTitle}`);
+   440→  if (pdfAuthor) insights.push(`المؤلف: ${pdfAuthor}`);
+   441→  if (pageCount > 0 && sizeMB > 0) {
+   442→    insights.push(`متوسط الحجم لكل صفحة: ${Math.round(sizeKB / pageCount)} ك.ب`);
+   443→  }
+   444→
+   445→  return {
+   446→    detectedService,
+   447→    detectedServiceName,
+   448→    pageCount,
+   449→    fileSizeKB: sizeKB,
+   450→    fileSizeMB: sizeMB,
+   451→    suggestedColor,
+   452→    suggestedPaperSize: closestPaperSize && closestPaperSize !== "مخصص" ? closestPaperSize : suggestedPaperSize,
+   453→    suggestedPaperType,
+   454→    suggestedBinding,
+   455→    confidence,
+   456→    insights,
+   457→    fileType: "PDF",
+   458→    fileName: file.name,
+   459→    pdfTitle,
+   460→    pdfAuthor,
+   461→    pdfCreator,
+   462→    textPreview,
+   463→    thumbnailUrl,
+   464→    fileNature,
+   465→    isPortrait,
+   466→    // الحقول التفصيلية الجديدة
+   467→    pageDimensionsMM,
+   468→    closestPaperSize,
+   469→    estimatedDPI,
+   470→    dpiCategory,
+   471→    colorSpace,
+   472→    hasImages,
+   473→    hasText,
+   474→    orientation,
+   475→    aspectRatio,
+   476→    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+   477→  };
+   478→}
+   479→
+   480→/// تحليل صورة حقيقي باستخدام واجهة المتصفح
+   481→async function analyzeImage(
+   482→  file: File,
+   483→  ext: string,
+   484→  sizeKB: number,
+   485→  sizeMB: number,
+   486→): Promise<RealFileAnalysis> {
+   487→  let width = 0;
+   488→  let height = 0;
+   489→  let thumbnailUrl: string | undefined;
+   490→  let dominantColors: string[] = [];
+   491→  let fileNature: string | undefined;
+   492→  let imgColorSpace: "RGB" | "CMYK" | "تدرج رمادي" | "غير محدد" = "غير محدد";
+   493→  const insights: string[] = [];
+   494→
+   495→  try {
+   496→    const url = URL.createObjectURL(file);
+   497→    const img = new Image();
+   498→    img.src = url;
+   499→    await img.decode();
+   500→    width = img.naturalWidth;
+   501→    height = img.naturalHeight;
+   502→
+   503→    // إنشاء معاينة مصغرة + استخراج الألوان السائدة + تحليل المساحة اللونية
+   504→    try {
+   505→      const canvas = document.createElement("canvas");
+   506→      const maxThumb = 300;
+   507→      const scale = Math.min(maxThumb / width, maxThumb / height, 1);
+   508→      canvas.width = Math.max(1, Math.round(width * scale));
+   509→      canvas.height = Math.max(1, Math.round(height * scale));
+   510→      const ctx = canvas.getContext("2d");
+   511→      if (ctx) {
+   512→        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+   513→        thumbnailUrl = canvas.toDataURL("image/jpeg", 0.8);
+   514→
+   515→        // تحليل المساحة اللونية والألوان السائدة
+   516→        const sampleCanvas = document.createElement("canvas");
+   517→        sampleCanvas.width = 20;
+   518→        sampleCanvas.height = 20;
+   519→        const sCtx = sampleCanvas.getContext("2d");
+   520→        if (sCtx) {
+   521→          sCtx.drawImage(img, 0, 0, 20, 20);
+   522→          const data = sCtx.getImageData(0, 0, 20, 20).data;
+   523→          const colorBuckets: Record<string, number> = {};
+   524→          let colorPixels = 0;
+   525→          let grayPixels = 0;
+   526→          for (let i = 0; i < data.length; i += 4) {
+   527→            const r = Math.round(data[i] / 64) * 64;
+   528→            const g = Math.round(data[i + 1] / 64) * 64;
+   529→            const b = Math.round(data[i + 2] / 64) * 64;
+   530→            const key = `${r},${g},${b}`;
+   531→            colorBuckets[key] = (colorBuckets[key] || 0) + 1;
+   532→            // فحص ألوان/رمادي
+   533→            const maxC = Math.max(data[i], data[i + 1], data[i + 2]);
+   534→            const minC = Math.min(data[i], data[i + 1], data[i + 2]);
+   535→            if (maxC - minC > 30) colorPixels++;
+   536→            else grayPixels++;
+   537→          }
+   538→          const sorted = Object.entries(colorBuckets).sort((a, b) => b[1] - a[1]).slice(0, 3);
+   539→          dominantColors = sorted.map(([k]) => {
+   540→            const [r, g, b] = k.split(",").map(Number);
+   541→            const brightness = (r + g + b) / 3;
+   542→            if (brightness > 240) return "فاتح";
+   543→            if (brightness < 16) return "داكن";
+   544→            return `rgb(${r},${g},${b})`;
+   545→          });
+   546→          // تصنيف المساحة اللونية
+   547→          const total = colorPixels + grayPixels;
+   548→          if (total > 0) {
+   549→            imgColorSpace = colorPixels / total > 0.3 ? "RGB" : "تدرج رمادي";
+   550→          }
+   551→        }
+   552→      }
+   553→    } catch {}
+   554→
+   555→    URL.revokeObjectURL(url);
+   556→  } catch {
+   557→    insights.push("تعذّر قراءة أبعاد الصورة");
+   558→  }
+   559→
+   560→  const megapixels = Math.round(((width * height) / 1000000) * 100) / 100;
+   561→  const isPortrait = height > width;
+   562→  const isLandscape = width > height;
+   563→  const isHighRes = megapixels > 8;
+   564→  const orientation: "عمودي" | "أفقي" | "مربع" = isPortrait ? "عمودي" : isLandscape ? "أفقي" : "مربع";
+   565→
+   566→  // تقدير DPI على ورق A4
+   567→  const a4WMM = 210;
+   568→  const a4HMM = 297;
+   569→  const imgDPI = estimateDPI(width, height, a4WMM, a4HMM);
+   570→  const imgDpiCat = categorizeDPI(imgDPI);
+   571→
+   572→  const name = file.name.toLowerCase();
+   573→  let detectedService: ServiceType = "photo";
+   574→  let detectedServiceName = "طباعة صور";
+   575→  let confidence = 90;
+   576→  let suggestedColor = "color";
+   577→  let suggestedPaperSize = "A4";
+   578→  let suggestedPaperType = "glossy";
+   579→  let suggestedBinding = "none";
+   580→
+   581→  // اكتشاف نوع الصورة من الاسم
+   582→  if (/passport|جواز|id|هوية|photo id|صورة شخصية/.test(name)) {
+   583→    detectedServiceName = "طباعة صور (صورة شخصية)";
+   584→    confidence = 93;
+   585→    suggestedPaperSize = "A5";
+   586→    suggestedPaperType = "glossy";
+   587→    fileNature = "صورة شخصية";
+   588→    insights.push("صورة شخصية — حجم A5 + ورق لامع");
+   589→  } else if (/poster|ملصق|affiche/.test(name)) {
+   590→    detectedService = "poster";
+   591→    detectedServiceName = "ملصقات";
+   592→    confidence = 91;
+   593→    suggestedPaperSize = "A3";
+   594→    fileNature = "ملصق";
+   595→    insights.push("ملصق — حجم A3");
+   596→  } else if (/wedding|زفاف|عرس/.test(name)) {
+   597→    fileNature = "صورة زفاف";
+   598→    suggestedPaperType = "premium";
+   599→    insights.push("صورة زفاف — ورق برو فاخر");
+   600→  } else {
+   601→    fileNature = "صورة";
+   602→    insights.push("صورة — طباعة ملونة على ورق لامع");
+   603→  }
+   604→
+   605→  if (isPortrait) insights.push(`اتجاه عمودي (${width}×${height})`);
+   606→  else if (isLandscape) insights.push(`اتجاه أفقي (${width}×${height})`);
+   607→  else insights.push(`مربع (${width}×${height})`);
+   608→
+   609→  if (isHighRes) {
+   610→    insights.push(`دقة عالية ${megapixels} ميجابكسل — جودة طباعة ممتازة`);
+   611→  } else if (megapixels < 1) {
+   612→    insights.push(`دقة منخفضة ${megapixels} ميجابكسل — قد تظهر بكسلية عند الطباعة الكبيرة`);
+   613→    confidence = Math.max(70, confidence - 10);
+   614→  } else {
+   615→    insights.push(`دقة ${megapixels} ميجابكسل`);
+   616→  }
+   617→
+   618→  insights.push(`الدقة على A4: ≈${imgDPI} DPI (${imgDpiCat})`);
+   619→
+   620→  if (dominantColors.length > 0) {
+   621→    insights.push(`ألوان سائدة: ${dominantColors.join("، ")}`);
+   622→  }
+   623→
+   624→  return {
+   625→    detectedService,
+   626→    detectedServiceName,
+   627→    pageCount: 1,
+   628→    fileSizeKB: sizeKB,
+   629→    fileSizeMB: sizeMB,
+   630→    suggestedColor,
+   631→    suggestedPaperSize,
+   632→    suggestedPaperType,
+   633→    suggestedBinding,
+   634→    confidence,
+   635→    insights,
+   636→    fileType: ext.toUpperCase(),
+   637→    fileName: file.name,
+   638→    imageDimensions: { width, height, megapixels },
+   639→    thumbnailUrl,
+   640→    fileNature,
+   641→    isPortrait,
+   642→    dominantColors,
+   643→    // الحقول التفصيلية الجديدة
+   644→    pageDimensionsMM: { width, height: height }, // للصور: البكسل = الأبعاد (يُفترض 72 DPI)
+   645→    estimatedDPI: imgDPI,
+   646→    dpiCategory: imgDpiCat,
+   647→    colorSpace: imgColorSpace,
+   648→    hasImages: true,
+   649→    hasText: false,
+   650→    orientation,
+   651→    aspectRatio: getAspectRatioText(width, height),
+   652→    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+   653→  };
+   654→}
+   655→
+   656→/// تحليل DOCX - يقدّر من الحجم (قراءة DOCX في المتصفح معقدة)
+   657→async function analyzeDocx(
+   658→  file: File,
+   659→  sizeKB: number,
+   660→  sizeMB: number,
+   661→): Promise<RealFileAnalysis> {
+   662→  // تقدير عدد الصفحات من حجم الملف (DOCX ~30KB/صفحة في المتوسط)
+   663→  const pageCount = Math.max(1, Math.min(500, Math.round(sizeKB / 30)));
+   664→
+   665→  const name = file.name.toLowerCase();
+   666→  let detectedService: ServiceType = "document";
+   667→  let detectedServiceName = "طباعة مستند (Word)";
+   668→  let confidence = 82;
+   669→  let suggestedColor = "bw";
+   670→  let suggestedPaperSize = "A4";
+   671→  let suggestedPaperType = "normal";
+   672→  let suggestedBinding = "none";
+   673→  const insights: string[] = [];
+   674→
+   675→  if (/cv|resume|سيرة|ذاتية/.test(name)) {
+   676→    detectedServiceName = "طباعة مستند (سيرة ذاتية Word)";
+   677→    confidence = 88;
+   678→    suggestedPaperType = "cardboard";
+   679→    insights.push("سيرة ذاتية محتملة — ورق مقوّى");
+   680→  } else if (/report|تقرير|مذكرة/.test(name)) {
+   681→    confidence = 85;
+   682→    if (pageCount > 15) suggestedBinding = "spiral";
+   683→    insights.push("تقرير/مذكرة — تجليد لولبي مقترح للمستندات الطويلة");
+   684→  }
+   685→
+   686→  insights.push(`عدد الصفحات المقدّر: ${pageCount} (تقدير من حجم Word)`);
+   687→  insights.push("نصيحة: حوّل إلى PDF لتحليل أدق لعدد الصفحات");
+   688→
+   689→  return {
+   690→    detectedService,
+   691→    detectedServiceName,
+   692→    pageCount,
+   693→    fileSizeKB: sizeKB,
+   694→    fileSizeMB: sizeMB,
+   695→    suggestedColor,
+   696→    suggestedPaperSize,
+   697→    suggestedPaperType,
+   698→    suggestedBinding,
+   699→    confidence,
+   700→    insights,
+   701→    fileType: "DOCX",
+   702→    fileName: file.name,
+   703→  };
+   704→}
+   705→
+   706→/// تحليل ملف Excel حقيقي باستخدام مكتبة xlsx
+   707→async function analyzeXlsx(
+   708→  file: File,
+   709→  sizeKB: number,
+   710→  sizeMB: number,
+   711→): Promise<RealFileAnalysis> {
+   712→  let sheetCount = 1;
+   713→  const insights: string[] = [];
+   714→
+   715→  try {
+   716→    const XLSX = await import("xlsx");
+   717→    const arrayBuffer = await file.arrayBuffer();
+   718→    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+   719→    sheetCount = workbook.SheetNames.length;
+   720→
+   721→    insights.push(`عدد الأوراق: ${sheetCount}`);
+   722→    if (sheetCount <= 10) {
+   723→      insights.push(`أسماء الأوراق: ${workbook.SheetNames.join(", ")}`);
+   724→    } else {
+   725→      insights.push(`أسماء الأوراق: ${workbook.SheetNames.slice(0, 5).join(", ")}... (${sheetCount - 5} أخرى)`);
+   726→    }
+   727→
+   728→    // تحليل ورقة العمل الأولى لتقدير عدد الصفوف والأعمدة
+   729→    try {
+   730→      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+   731→      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+   732→      const rowCount = jsonData.length;
+   733→      const colCount = jsonData.length > 0 ? (jsonData[0] as unknown[]).length : 0;
+   734→      insights.push(`الورقة الأولى: ${rowCount} صف × ${colCount} عمود`);
+   735→    } catch {}
+   736→  } catch (err) {
+   737→    console.warn("[analyzeXlsx] Failed to parse xlsx:", err);
+   738→    insights.push("تعذر التحليل التفصيلي — يتم استخدام القيم الافتراضية");
+   739→  }
+   740→
+   741→  const pageCount = Math.max(1, sheetCount);
+   742→
+   743→  return {
+   744→    detectedService: "spreadsheet" as ServiceType,
+   745→    detectedServiceName: "طباعة جدول بيانات (Excel)",
+   746→    pageCount,
+   747→    fileSizeKB: sizeKB,
+   748→    fileSizeMB: sizeMB,
+   749→    suggestedColor: "bw",
+   750→    suggestedPaperSize: "A4",
+   751→    suggestedPaperType: "normal",
+   752→    suggestedBinding: "none",
+   753→    confidence: 90,
+   754→    insights,
+   755→    fileType: "XLSX",
+   756→    fileName: file.name,
+   757→  };
+   758→}
+   759→
+   760→function defaultAnalysis(
+   761→  fileName: string,
+   762→  ext: string,
+   763→  sizeKB: number,
+   764→  sizeMB: number,
+   765→): RealFileAnalysis {
+   766→  return {
+   767→    detectedService: "document",
+   768→    detectedServiceName: "طباعة مستند",
+   769→    pageCount: 1,
+   770→    fileSizeKB: sizeKB,
+   771→    fileSizeMB: sizeMB,
+   772→    suggestedColor: "bw",
+   773→    suggestedPaperSize: "A4",
+   774→    suggestedPaperType: "normal",
+   775→    suggestedBinding: "none",
+   776→    confidence: 60,
+   777→    insights: [
+   778→      `نوع الملف: ${ext.toUpperCase()}`,
+   779→      `عدد الصفحات المقدّر: 1`,
+   780→      "اختر الخدمة والإعدادات يدوياً",
+   781→    ],
+   782→    fileType: ext.toUpperCase(),
+   783→    fileName,
+   784→  };
+   785→}
+   786→
+   787→/// نتيجة تحليل VLM
+   788→export interface VLMAnalysis {
+   789→  documentType: string;
+   790→  description: string;
+   791→  qualityAssessment: string;
+   792→  qualityReason: string;
+   793→  suggestedService: string;
+   794→  suggestedServiceName: string;
+   795→  suggestedColor: string;
+   796→  suggestedPaperSize: string;
+   797→  suggestedPaperType: string;
+   798→  suggestedBinding: string;
+   799→  confidence: number;
+   800→  insights: string[];
+   801→}
+   802→
+   803→/// تحليل الملف بالذكاء الاصطناعي (VLM) — يُستدعى بعد التحليل الأساسي لتعزيزه
+   804→export async function analyzeFileWithAI(
+   805→  file: File,
+   806→  basicAnalysis: RealFileAnalysis,
+   807→): Promise<{ vlmAnalysis: VLMAnalysis | null; enhancedAnalysis: RealFileAnalysis }> {
+   808→  const ext = (file.name.split(".").pop() || "").toLowerCase();
+   809→  const isImage = ["jpg", "jpeg", "png", "webp"].includes(ext);
+   810→
+   811→  try {
+   812→    const formData = new FormData();
+   813→    formData.append("fileName", file.name);
+   814→    formData.append("fileType", basicAnalysis.fileType);
+   815→
+   816→    // ═══ تحسين: للصور الكبيرة، أرسل نسخة مصغّرة فقط (أسرع بكثير) ═══
+   817→    if (isImage && file.size > 200 * 1024) {
+   818→      try {
+   819→        const thumbnailBlob = await createImageThumbnail(file, 400);
+   820→        if (thumbnailBlob) {
+   821→          formData.append("thumbnailDataUrl", await blobToDataUrl(thumbnailBlob, "image/jpeg"));
+   822→        }
+   823→      } catch {
+   824→        // فشل التصغير — أرسل الملف الأصلي
+   825→        formData.append("file", file);
+   826→      }
+   827→    } else if (basicAnalysis.thumbnailUrl) {
+   828→      formData.append("thumbnailDataUrl", basicAnalysis.thumbnailUrl);
+   829→    } else if (isImage) {
+   830→      formData.append("file", file);
+   831→    }
+   832→
+   833→    // إرسال نص مستخرج من PDF
+   834→    if (basicAnalysis.textPreview) {
+   835→      formData.append("textPreview", basicAnalysis.textPreview);
+   836→    }
+   837→
+   838→    // عدد الصفحات كسياق
+   839→    if (basicAnalysis.pageCount > 0) {
+   840→      formData.append("pageCount", String(basicAnalysis.pageCount));
+   841→    }
+   842→
+   843→    // لا نرسل طلب VLM إذا لم يكن هناك صورة أو معاينة
+   844→    const hasVisual = formData.has("thumbnailDataUrl") || formData.has("file");
+   845→    if (!hasVisual) {
+   846→      return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
+   847→    }
+   848→
+   849→    const res = await fetch("/api/ai/analyze-file", {
+   850→      method: "POST",
+   851→      body: formData,
+   852→    });
+   853→
+   854→    if (!res.ok) {
+   855→      console.warn("[VLM] API returned", res.status);
+   856→      return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
+   857→    }
+   858→
+   859→    const data = await res.json();
+   860→
+   861→    if (!data.success || !data.analysis) {
+   862→      console.warn("[VLM] Analysis failed:", data.error);
+   863→      return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
+   864→    }
+   865→
+   866→    const vlm: VLMAnalysis = data.analysis;
+   867→
+   868→    // دمج نتائج VLM مع التحليل الأساسي
+   869→    const enhanced: RealFileAnalysis = {
+   870→      ...basicAnalysis,
+   871→      detectedService: (vlm.suggestedService as ServiceType) || basicAnalysis.detectedService,
+   872→      detectedServiceName: vlm.suggestedServiceName || basicAnalysis.detectedServiceName,
+   873→      suggestedColor: vlm.suggestedColor || basicAnalysis.suggestedColor,
+   874→      suggestedPaperSize: vlm.suggestedPaperSize || basicAnalysis.suggestedPaperSize,
+   875→      suggestedPaperType: vlm.suggestedPaperType || basicAnalysis.suggestedPaperType,
+   876→      suggestedBinding: vlm.suggestedBinding || basicAnalysis.suggestedBinding,
+   877→      confidence: vlm.confidence || basicAnalysis.confidence,
+   878→      fileNature: vlm.documentType || basicAnalysis.fileNature,
+   879→      insights: [
+   880→        // إضافة بصمة VLM
+   881→        `🤖 تحليل ذكاء اصطناعي: ${vlm.qualityAssessment}`,
+   882→        vlm.qualityReason ? `   ${vlm.qualityReason}` : "",
+   883→        // نصائح VLM
+   884→        ...(vlm.insights || []),
+   885→        // نصائح التحليل الأساسي (التي ليست مكررة)
+   886→        ...basicAnalysis.insights.filter(
+   887→          (ins) => !vlm.insights?.some((vi: string) => ins.includes(vi) || vi.includes(ins)),
+   888→        ),
+   889→      ].filter(Boolean),
+   890→    };
+   891→
+   892→    return { vlmAnalysis: vlm, enhancedAnalysis: enhanced };
+   893→  } catch (err) {
+   894→    console.warn("[VLM] Request failed:", err);
+   895→    // في حالة الفشل، نرجع التحليل الأساسي فقط
+   896→    return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
+   897→  }
+   898→}
+   899→
+   900→/// تحليل نطاق الصفحات (مثل "1-5, 8, 10-12") وإرجاع العدد الفعلي
+   901→export function parsePageRange(range: string, totalPages: number): number {
+   902→  if (!range.trim()) return totalPages;
+   903→  const parts = range.split(",").map((p) => p.trim()).filter(Boolean);
+   904→  const pages = new Set<number>();
+   905→  for (const part of parts) {
+   906→    if (part.includes("-")) {
+   907→      const [start, end] = part.split("-").map((n) => parseInt(n.trim(), 10));
+   908→      if (!isNaN(start) && !isNaN(end)) {
+   909→        const s = Math.max(1, Math.min(start, end));
+   910→        const e = Math.min(totalPages, Math.max(start, end));
+   911→        for (let i = s; i <= e; i++) pages.add(i);
+   912→      }
+   913→    } else {
+   914→      const n = parseInt(part, 10);
+   915→      if (!isNaN(n) && n >= 1 && n <= totalPages) pages.add(n);
+   916→    }
+   917→  }
+   918→  return pages.size > 0 ? pages.size : totalPages;
+   919→}
+   920→
+   921→/// إنشاء نسخة مصغّرة من صورة كـ Blob (لإرسالها للـ VLM بدلاً من الصورة الأصلية)
+   922→async function createImageThumbnail(file: File, maxDim: number): Promise<Blob | null> {
+   923→  return new Promise((resolve) => {
+   924→    const url = URL.createObjectURL(file);
+   925→    const img = new Image();
+   926→    img.onload = () => {
+   927→      URL.revokeObjectURL(url);
+   928→      const scale = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight, 1);
+   929→      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+   930→      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+   931→      const canvas = document.createElement("canvas");
+   932→      canvas.width = w;
+   933→      canvas.height = h;
+   934→      const ctx = canvas.getContext("2d");
+   935→      if (!ctx) { resolve(null); return; }
+   936→      ctx.drawImage(img, 0, 0, w, h);
+   937→      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.75);
+   938→    };
+   939→    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+   940→    img.src = url;
+   941→  });
+   942→}
+   943→
+   944→/// تحويل Blob إلى Data URL
+   945→function blobToDataUrl(blob: Blob, mime: string): Promise<string> {
+   946→  return new Promise((resolve) => {
+   947→    const reader = new FileReader();
+   948→    reader.onload = () => resolve(reader.result as string);
+   949→    reader.onerror = () => resolve("");
+   950→    reader.readAsDataURL(blob);
+   951→  });
+   952→}
+   953→

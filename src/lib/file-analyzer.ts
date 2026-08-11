@@ -190,7 +190,7 @@ async function analyzePdf(
   const insights: string[] = [];
 
   // ═══ وضع خفيف للملفات الكبيرة (>5MB) — يتجنب العمليات الثقيلة ═══
-  const isLarge = sizeMB > 5;
+  const isLarge = sizeMB > 20;
 
   try {
     const lib = await ensurePdfjs();

@@ -1,0 +1,505 @@
+  1205→          Enhanced Analysis Panel
+  1206→          ═══════════════════════════════════════════════════ */}
+  1207→      <AnimatePresence mode="wait">
+  1208→        {hasAnalysis && analysis && serviceType && (
+  1209→          <motion.div
+  1210→            key="analysis-panel"
+  1211→            variants={containerVariants}
+  1212→            initial="hidden"
+  1213→            animate="visible"
+  1214→            className="space-y-4"
+  1215→          >
+  1216→            <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+  1217→              {/* ─── Preview Column (stacked on mobile, side-by-side on desktop) ─── */}
+  1218→              {analysis.thumbnailUrl && (
+  1219→                <motion.div
+  1220→                  variants={scaleIn}
+  1221→                  className="p-4 sm:p-5 border-b border-border bg-muted/20 flex flex-col items-center"
+  1222→                >
+  1223→                  <div className="flex items-center gap-1.5 mb-3 self-start">
+  1224→                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+  1225→                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+  1226→                      معاينة
+  1227→                    </span>
+  1228→                  </div>
+  1229→                  <motion.div
+  1230→                    className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full max-w-xs mx-auto"
+  1231→                    whileHover={{ scale: 1.02 }}
+  1232→                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+  1233→                  >
+  1234→                    <img
+  1235→                      src={analysis.thumbnailUrl}
+  1236→                      alt={analysis.fileName || "معاينة الملف"}
+  1237→                      className="w-full h-auto max-h-64 sm:max-h-72 object-contain"
+  1238→                    />
+  1239→                    {analysis.fileType?.toLowerCase().includes("pdf") && (
+  1240→                      <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/90 text-white text-[11px] font-bold backdrop-blur-sm">
+  1241→                        <Monitor className="h-3 w-3" />
+  1242→                        PDF
+  1243→                      </span>
+  1244→                    )}
+  1245→                  </motion.div>
+  1246→                  {analysis.textPreview && analysis.textPreview.length > 0 && (
+  1247→                    <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed line-clamp-4 text-center max-w-xs mx-auto">
+  1248→                      {analysis.textPreview.length > 150
+  1249→                        ? analysis.textPreview.slice(0, 150) + "..."
+  1250→                        : analysis.textPreview}
+  1251→                    </p>
+  1252→                  )}
+  1253→                  {analysis.imageDimensions && (
+  1254→                    <div className="mt-3 w-full text-center">
+  1255→                      <span className="text-[11px] text-muted-foreground font-medium">
+  1256→                        {analysis.imageDimensions.width} × {analysis.imageDimensions.height} بكسل
+  1257→                      </span>
+  1258→                      {analysis.imageDimensions.megapixels > 0 && (
+  1259→                        <span className="text-[11px] text-muted-foreground mr-2">
+  1260→                          ({analysis.imageDimensions.megapixels.toFixed(1)} ميجابكسل)
+  1261→                        </span>
+  1262→                      )}
+  1263→                    </div>
+  1264→                  )}
+  1265→                </motion.div>
+  1266→              )}
+  1267→
+  1268→              {/* ─── Fallback: file-type card for files without thumbnail ─── */
+  1269→              {!analysis.thumbnailUrl && (
+  1270→                <motion.div
+  1271→                  variants={scaleIn}
+  1272→                  className="p-4 sm:p-5 border-b border-border bg-muted/20 flex flex-col items-center"
+  1273→                >
+  1274→                  <div className="flex items-center gap-1.5 mb-3 self-start">
+  1275→                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+  1276→                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+  1277→                      معاينة
+  1278→                    </span>
+  1279→                  </div>
+  1280→                  <div className="w-24 h-32 rounded-xl bg-muted/50 border-2 border-dashed border-border/60 flex flex-col items-center justify-center gap-2">
+  1281→                    <FileIcon className={`h-10 w-10 ${fileMeta.color} opacity-60`} />
+  1282→                    <span className="text-xs font-semibold text-muted-foreground">{fileType}</span>
+  1283→                    <span className="text-[10px] text-muted-foreground/70">{(fileSize / 1024).toFixed(0)} ك.ب</span>
+  1284→                  </div>
+  1285→                </motion.div>
+  1286→              )}
+  1287→
+  1288→              {/* ─── Gauges Row: DPI + Confidence (responsive) ─── */}
+  1289→              <div className="px-4 sm:px-5 py-3 border-b border-border">
+  1290→                {analysis.estimatedDPI != null && (
+  1291→                  <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 sm:gap-8">
+  1292→                    <CircularGauge
+  1293→                      value={analysis.estimatedDPI}
+  1294→                      max={600}
+  1295→                      size={56}
+  1296→                      strokeWidth={5}
+  1297→                      smSize={72}
+  1298→                      color={
+  1299→                        (analysis.dpiCategory === "جاهزة للطباعة"
+  1300→                          ? "#10b981"
+  1301→                          : analysis.dpiCategory === "عالية"
+  1302→                            ? "#3b82f6"
+  1303→                            : analysis.dpiCategory === "متوسطة"
+  1304→                              ? "#f59e0b"
+  1305→                              : "#ef4444")
+  1306→                      }
+  1307→                      label="DPI"
+  1308→                      tooltipText="DPI (نقاط لكل إنش) — كلما زادت كانت جودة الطباعة أعلى. 300 DPI هو الحد الأدنى للطباعة الاحترافية."
+  1309→                    />
+  1310→                    <CircularGauge
+  1311→                      value={confidencePercent}
+  1312→                      max={100}
+  1313→                      size={56}
+  1314→                      strokeWidth={5}
+  1315→                      smSize={72}
+  1316→                      color="#f59e0b"
+  1317→                      label="الثقة %"
+  1318→                      tooltipText="نسبة ثقة الذكاء الاصطناعي في تحليل الملف واقتراحاته. كلما اقتربت من 100% كانت التوصيات أدق."
+  1319→                    />
+  1320→                  </motion.div>
+  1321→                )}
+  1322→              </div>
+  1323→
+  1324→              {/* ─── Analysis Cards Grid: 1 col mobile, 2 cols desktop ─── */}
+  1325→              <div className="p-4 sm:p-5">
+  1326→                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  1327→                  {/* ─── Card 1: معلومات الملف ─── */}
+  1328→                  <motion.div variants={itemVariants} className="rounded-xl border bg-muted/20 p-3 sm:p-4">
+  1329→                    <div className="flex items-center gap-1.5 mb-3">
+  1330→                      <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center">
+  1331→                        <FileText className="h-3.5 w-3.5 text-amber-600" />
+  1332→                      </div>
+  1333→                      <span className="text-xs font-bold text-foreground">معلومات الملف</span>
+  1334→                    </div>
+  1335→                    <div className="grid grid-cols-2 gap-2">
+  1336→                      <InfoChip
+  1337→                        icon={<FileText className="h-4 w-4" />}
+  1338→                        label="نوع الملف"
+  1339→                        value={analysis.fileType || "غير معروف"}
+  1340→                        tooltipText="صيغة الملف المرفوع."
+  1341→                      />
+  1342→                      <InfoChip
+  1343→                        icon={<Ruler className="h-4 w-4" />}
+  1344→                        label="حجم الملف"
+  1345→                        value={
+  1346→                          analysis.fileSizeFormatted
+  1347→                            ? analysis.fileSizeFormatted
+  1348→                            : analysis.fileSizeMB >= 1
+  1349→                              ? `${analysis.fileSizeMB.toFixed(2)} ميغابايت`
+  1350→                              : `${analysis.fileSizeKB.toFixed(1)} كيلوبايت`
+  1351→                        }
+  1352→                        tooltipText="حجم الملف على القرص."
+  1353→                      />
+  1354→                      <InfoChip
+  1355→                        icon={<BookOpen className="h-4 w-4" />}
+  1356→                        label="عدد الصفحات"
+  1357→                        value={<AnimatedCounter value={analysis.pageCount} suffix=" صفحة" />}
+  1358→                        ltr
+  1359→                        tooltipText="عدد صفحات الملف."
+  1360→                      />
+  1361→                      {analysis.fileNature && (
+  1362→                        <InfoChip
+  1363→                          icon={<Search className="h-4 w-4" />}
+  1364→                          label="طبيعة الملف"
+  1365→                          value={analysis.fileNature}
+  1366→                          tooltipText="وصف تلقائي لمحتوى الملف."
+  1367→                        />
+  1368→                      )}
+  1369→                      {analysis.pageDimensionsMM && (
+  1370→                        <InfoChip
+  1371→                          icon={<ImageIconLucide className="h-4 w-4" />}
+  1372→                          label="أبعاد الصفحة"
+  1373→                          value={`${analysis.pageDimensionsMM.width} × ${analysis.pageDimensionsMM.height} مم`}
+  1374→                          ltr
+  1375→                          tooltipText="الأبعاد الفعلية للصفحة."
+  1376→                        />
+  1377→                      )}
+  1378→                      {analysis.closestPaperSize && (
+  1379→                        <InfoChip
+  1380→                          icon={<ClipboardList className="h-4 w-4" />}
+  1381→                          label="أقرب مقاس"
+  1382→                          value={analysis.closestPaperSize}
+  1383→                          tooltipText="أقرب مقاس ورقي قياسي."
+  1384→                          colorClass={
+  1385→                            analysis.closestPaperSize !== "مخصص"
+  1386→                              ? "text-emerald-500"
+  1387→                              : "text-amber-500"
+  1388→                          }
+  1389→                        />
+  1390→                      )}
+  1391→                      {analysis.orientation && (
+  1392→                        <InfoChip
+  1393→                          icon={
+  1394→                            analysis.orientation === "عمودي" ? (
+  1395→                              <Ruler className="h-4 w-4" />
+  1396→                            ) : analysis.orientation === "أفقي" ? (
+  1397→                              <RefreshCw className="h-4 w-4 rotate-90" />
+  1398→                            ) : (
+  1399→                              <Ratio className="h-4 w-4" />
+  1400→                            )
+  1401→                          }
+  1402→                          label="الاتجاه"
+  1403→                          value={analysis.orientation}
+  1404→                          tooltipText="اتجاه الصفحة."
+  1405→                        />
+  1406→                      )}
+  1407→                      {analysis.aspectRatio && (
+  1408→                        <InfoChip
+  1409→                          icon={<Ratio className="h-4 w-4" />}
+  1410→                          label="النسبة"
+  1411→                          value={analysis.aspectRatio}
+  1412→                          ltr
+  1413→                          tooltipText="نسبة العرض للارتفاع."
+  1414→                        />
+  1415→                      )}
+  1416→                      {analysis.detectedLanguage && (
+  1417→                        <InfoChip
+  1418→                          icon={<Type className="h-4 w-4" />}
+  1419→                          label="اللغة"
+  1420→                          value={analysis.detectedLanguage}
+  1421→                          tooltipText="اللغة المكتشفة."
+  1422→                        />
+  1423→                      )}
+  1424→                      {analysis.pdfAuthor && (
+  1425→                        <InfoChip
+  1426→                          icon={<File className="h-4 w-4" />}
+  1427→                          label="المؤلف"
+  1428→                          value={analysis.pdfAuthor}
+  1429→                          tooltipText="اسم المؤلف."
+  1430→                        />
+  1431→                      )}
+  1432→                    </div>
+  1433→                  </motion.div>
+  1434→
+  1435→                  {/* ─── Card 2: تحليل الطباعة + اقتراحات ─── */}
+  1436→                  <motion.div variants={itemVariants} className="rounded-xl border bg-emerald-50/30 p-3 sm:p-4">
+  1437→                    <div className="flex items-center gap-1.5 mb-3">
+  1438→                      <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center">
+  1439→                        <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+  1440→                      </div>
+  1441→                      <span className="text-xs font-bold text-foreground">تحليل الطباعة</span>
+  1442→                    </div>
+  1443→
+  1444→                    <div className="flex items-center justify-between mb-3 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
+  1445→                      <div className="flex items-center gap-2">
+  1446→                        <Zap className="h-4 w-4 text-amber-500" />
+  1447→                        <span className="text-xs font-semibold text-amber-800">
+  1448→                          {analysis.detectedServiceName}
+  1449→                        </span>
+  1450→                      </div>
+  1451→                      <span className="text-amber-600 text-xs font-bold" dir="ltr">
+  1452→                        <AnimatedCounter value={confidencePercent} suffix="%" />
+  1453→                      </span>
+  1454→                    </div>
+  1455→
+  1456→                    {analysis.suggestedReasons && Object.keys(analysis.suggestedReasons).length > 0 ? (
+  1457→                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+  1458→                        {Object.entries(analysis.suggestedReasons).map(([key, reason], idx) => {
+  1459→                          const optValue = analysis.suggestedOptions?.[key];
+  1460→                          return (
+  1461→                            <motion.div
+  1462→                              key={key}
+  1463→                              initial={{ opacity: 0, x: -8 }}
+  1464→                              animate={{ opacity: 1, x: 0 }}
+  1465→                              transition={{ delay: 0.05 * idx, type: "spring", stiffness: 300, damping: 25 }}
+  1466→                              className="flex items-start gap-2 p-2 rounded-lg bg-emerald-50/50 border border-emerald-100"
+  1467→                            >
+  1468→                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+  1469→                              <div className="flex-1 min-w-0">
+  1470→                                <span className="text-xs font-semibold text-emerald-800">
+  1471→                                  {translateOptionKeyDisplay(key)}{optValue ? `: ${translateOptionValueDisplay(optValue)}` : ""}
+  1472→                                </span>
+  1473→                                {reason && (
+  1474→                                  <p className="text-[11px] text-emerald-600/70 mt-0.5 leading-relaxed">← {reason}</p>
+  1475→                                )}
+  1476→                              </div>
+  1477→                            </motion.div>
+  1478→                          );
+  1479→                        })}
+  1480→                      </div>
+  1481→                    ) : (
+  1482→                      <div className="flex flex-wrap gap-1.5">
+  1483→                        {analysis.suggestedColor && (
+  1484→                          <SuggestionPill
+  1485→                            icon={<Palette className="h-3 w-3" />}
+  1486→                            label={analysis.suggestedColor === "bw" ? "أبيض وأسود" : analysis.suggestedColor === "color" ? "ملون" : analysis.suggestedColor}
+  1487→                          />
+  1488→                        )}
+  1489→                        {analysis.suggestedPaperSize && (
+  1490→                          <SuggestionPill
+  1491→                            icon={<FileText className="h-3 w-3" />}
+  1492→                            label={analysis.suggestedPaperSize}
+  1493→                          />
+  1494→                        )}
+  1495→                        {analysis.suggestedPaperType && (
+  1496→                          <SuggestionPill
+  1497→                            icon={<Type className="h-3 w-3" />}
+  1498→                            label={analysis.suggestedPaperType}
+  1499→                          />
+  1500→                        )}
+  1501→                        {analysis.suggestedBinding && analysis.suggestedBinding !== "none" && (
+  1502→                          <SuggestionPill
+  1503→                            icon={<BookOpen className="h-3 w-3" />}
+  1504→                            label={analysis.suggestedBinding}
+  1505→                          />
+  1506→                        )}
+  1507→                      </div>
+  1508→                    )}
+  1509→
+  1510→                    {/* جودة الطباعة */}
+  1511→                    <div className="mt-3 pt-3 border-t border-emerald-100">
+  1512→                      <div className="flex items-center gap-1.5 mb-2">
+  1513→                        <Target className="h-3 w-3 text-emerald-600" />
+  1514→                        <span className="text-[11px] font-bold text-emerald-700">جودة الطباعة</span>
+  1515→                      </div>
+  1516→                      <div className="grid grid-cols-2 gap-1.5">
+  1517→                        {analysis.estimatedDPI != null && (
+  1518→                          <InfoChip
+  1519→                            icon={<Target className="h-4 w-4" />}
+  1520→                            label="الدقة"
+  1521→                            value={
+  1522→                              <span className="flex items-center gap-1">
+  1523→                                <AnimatedCounter value={analysis.estimatedDPI} suffix=" DPI" />
+  1524→                                {analysis.dpiCategory && (
+  1525→                                  <span
+  1526→                                    className={`text-[9px] px-1 py-0.5 rounded-full font-medium border ${
+  1527→                                      analysis.dpiCategory === "جاهزة للطباعة"
+  1528→                                        ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+  1529→                                        : analysis.dpiCategory === "عالية"
+  1530→                                          ? "bg-amber-50 text-amber-600 border-amber-200"
+  1531→                                          : analysis.dpiCategory === "متوسطة"
+  1532→                                            ? "bg-amber-50 text-amber-600 border-amber-200"
+  1533→                                            : "bg-rose-50 text-rose-600 border-rose-200"
+  1534→                                    }`}
+  1535→                                  >
+  1536→                                    {analysis.dpiCategory}
+  1537→                                  </span>
+  1538→                                )}
+  1539→                              </span>
+  1540→                            }
+  1541→                            ltr
+  1542→                            tooltipText="دقة الملف."
+  1543→                          />
+  1544→                        )}
+  1545→                        {analysis.colorSpace && (
+  1546→                          <InfoChip
+  1547→                            icon={<Palette className="h-4 w-4" />}
+  1548→                            label="المساحة اللونية"
+  1549→                            value={analysis.colorSpace}
+  1550→                            tooltipText="نظام الألوان."
+  1551→                          />
+  1552→                        )}
+  1553→                        <InfoChip
+  1554→                          icon={
+  1555→                            analysis.hasText ? (
+  1556→                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+  1557→                            ) : (
+  1558→                              <XCircle className="h-4 w-4 text-muted-foreground/40" />
+  1559→                            )
+  1560→                          }
+  1561→                          label="نصوص"
+  1562→                          value={analysis.hasText ? "نعم" : "لا"}
+  1563→                          colorClass={analysis.hasText ? "text-emerald-500" : "text-muted-foreground/40"}
+  1564→                        />
+  1565→                        <InfoChip
+  1566→                          icon={
+  1567→                            analysis.hasImages ? (
+  1568→                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+  1569→                            ) : (
+  1570→                              <XCircle className="h-4 w-4 text-muted-foreground/40" />
+  1571→                            )
+  1572→                          }
+  1573→                          label="صور"
+  1574→                          value={analysis.hasImages ? "نعم" : "لا"}
+  1575→                          colorClass={analysis.hasImages ? "text-emerald-500" : "text-muted-foreground/40"}
+  1576→                        />
+  1577→                      </div>
+  1578→
+  1579→                      {analysis.dominantColors && analysis.dominantColors.length > 0 && (
+  1580→                        <motion.div
+  1581→                          variants={itemVariants}
+  1582→                          className="flex items-center gap-2 mt-2 p-2 bg-white/50 rounded-lg border border-emerald-100"
+  1583→                        >
+  1584→                          <Palette className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+  1585→                          <span className="text-[11px] text-muted-foreground shrink-0">ألوان</span>
+  1586→                          <div className="flex items-center gap-1.5 flex-wrap">
+  1587→                            {analysis.dominantColors.map((color, i) => (
+  1588→                              <Tooltip key={i}>
+  1589→                                <TooltipTrigger asChild>
+  1590→                                  <motion.span
+  1591→                                    initial={{ opacity: 0, scale: 0 }}
+  1592→                                    animate={{ opacity: 1, scale: 1 }}
+  1593→                                    transition={{ delay: 0.5 + i * 0.08, type: "spring", stiffness: 400 }}
+  1594→                                    className="inline-block h-4.5 w-4.5 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-125 transition-transform"
+  1595→                                    style={{ backgroundColor: color }}
+  1596→                                  />
+  1597→                                </TooltipTrigger>
+  1598→                                <TooltipContent side="top">
+  1599→                                  <span className="font-mono text-xs">{color}</span>
+  1600→                                </TooltipContent>
+  1601→                              </Tooltip>
+  1602→                            ))}
+  1603→                          </div>
+  1604→                        </motion.div>
+  1605→                      )}
+  1606→                    </div>
+  1607→                  </motion.div>
+  1608→                </div>
+  1609→
+  1610→                {/* ─── Insights Card (full width) ─── */}
+  1611→                {analysis.insights && analysis.insights.length > 0 && (
+  1612→                  <motion.div variants={itemVariants} className="mt-4 rounded-xl border bg-amber-50/30 p-3 sm:p-4">
+  1613→                    <div className="flex items-center gap-1.5 mb-2">
+  1614→                      <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center">
+  1615→                        <Zap className="h-3.5 w-3.5 text-amber-600" />
+  1616→                      </div>
+  1617→                      <span className="text-xs font-bold text-foreground">ملاحظات ذكية</span>
+  1618→                    </div>
+  1619→                    <ul className="space-y-1.5 max-h-36 overflow-y-auto">
+  1620→                      {analysis.insights.slice(0, 5).map((insight, i) => (
+  1621→                        <motion.li
+  1622→                          key={i}
+  1623→                          initial={{ opacity: 0, x: 10 }}
+  1624→                          animate={{ opacity: 1, x: 0 }}
+  1625→                          transition={{ delay: 0.6 + i * 0.1 }}
+  1626→                          className="flex items-start gap-2 text-xs"
+  1627→                        >
+  1628→                          <span className="mt-0.5 shrink-0 text-amber-400">
+  1629→                            <Zap className="h-3 w-3" />
+  1630→                          </span>
+  1631→                          <span className="text-muted-foreground leading-relaxed">{insight}</span>
+  1632→                        </motion.li>
+  1633→                      ))}
+  1634→                    </ul>
+  1635→                  </motion.div>
+  1636→                )}
+  1637→              </div>
+  1638→
+  1639→              {/* ─── Timing Bar ─── */}
+  1640→              {analysisTimings && (analysisTimings.upload != null || analysisTimings.local != null || analysisTimings.ai != null) && (
+  1641→                <div className="border-t border-border bg-muted/30 px-4 sm:px-5 py-2.5">
+  1642→                  <div className="flex items-center justify-center gap-3 sm:gap-5 text-[11px] sm:text-xs text-muted-foreground flex-wrap">
+  1643→                    {analysisTimings.upload != null && (
+  1644→                      <span className="flex items-center gap-1">
+  1645→                        <Upload className="h-3 w-3 text-sky-400" />
+  1646→                        <span className="font-medium text-sky-600">رفع</span>
+  1647→                        <span className="font-mono tabular-nums">{(analysisTimings.upload / 1000).toFixed(1)}s</span>
+  1648→                      </span>
+  1649→                    )}
+  1650→                    {analysisTimings.local != null && (
+  1651→                      <span className="flex items-center gap-1">
+  1652→                        <Monitor className="h-3 w-3 text-orange-400" />
+  1653→                        <span className="font-medium text-orange-600">تحليل محلي</span>
+  1654→                        <span className="font-mono tabular-nums">{(analysisTimings.local / 1000).toFixed(1)}s</span>
+  1655→                      </span>
+  1656→                    )}
+  1657→                    {analysisTimings.ai != null && (
+  1658→                      <span className="flex items-center gap-1">
+  1659→                        <Brain className="h-3 w-3 text-amber-400" />
+  1660→                        <span className="font-medium text-amber-600">تحليل ذكي</span>
+  1661→                        <span className="font-mono tabular-nums">{(analysisTimings.ai / 1000).toFixed(1)}s</span>
+  1662→                      </span>
+  1663→                    )}
+  1664→                    {analysisTimings.total != null && (
+  1665→                      <>
+  1666→                        <span className="w-px h-3.5 bg-border" />
+  1667→                        <span className="flex items-center gap-1">
+  1668→                          <Timer className="h-3 w-3 text-emerald-400" />
+  1669→                          <span className="font-semibold text-emerald-700">المجموع</span>
+  1670→                          <span className="font-mono tabular-nums font-bold text-emerald-700">{(analysisTimings.total / 1000).toFixed(1)}s</span>
+  1671→                        </span>
+  1672→                      </>
+  1673→                    )}
+  1674→                  </div>
+  1675→                </div>
+  1676→              )}
+  1677→            </div>
+  1678→          </motion.div>
+  1679→        )}
+  1680→      </AnimatePresence>
+  1681→
+  1682→      {/* ─── Empty State (before upload) ─── */}
+  1683→      <AnimatePresence>
+  1684→        {!hasAnalysis && !analyzing && analysisPhase === "idle" && (
+  1685→          <motion.div
+  1686→            initial={{ opacity: 0, y: 10 }}
+  1687→            animate={{ opacity: 1, y: 0 }}
+  1688→            exit={{ opacity: 0, y: -10 }}
+  1689→            className="rounded-2xl border-2 border-dashed border-amber-200/60 bg-amber-50/20 p-6 text-center"
+  1690→          >
+  1691→            <motion.div
+  1692→              animate={{ y: [0, -4, 0] }}
+  1693→              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+  1694→              className="w-14 h-14 mx-auto rounded-2xl bg-amber-100/60 flex items-center justify-center mb-3"
+  1695→            >
+  1696→              <Brain className="h-7 w-7 text-amber-500" />
+  1697→            </motion.div>
+  1698→            <div className="font-bold text-sm text-amber-800 mb-1">
+  1699→              التحليل الذكي ينتظر ملفك
+  1700→            </div>
+  1701→            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+  1702→              ارفع ملفك أعلاه وسيقوم النظام بتحليله تلقائياً واقتراح أفضل خيارات الطباعة
+  1703→            </p>
+  1704→          </motion.div>
+  1705→        )}
+  1706→      </AnimatePresence>
+  1707→    </div>
+  1708→  );
+  1709→}

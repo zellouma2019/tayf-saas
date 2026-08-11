@@ -1,0 +1,20 @@
+
+              {/* Fallback preview for files without thumbnail */}
+              {!analysis.thumbnailUrl && (
+                <motion.div
+                  variants={scaleIn}
+                  className="p-4 sm:p-5 border-b border-border bg-muted/20 flex flex-col items-center"
+                >
+                  <div className="flex items-center gap-1.5 mb-3 self-start">
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      معاينة
+                    </span>
+                  </div>
+                  <div className="w-24 h-32 rounded-xl bg-muted/50 border-2 border-dashed border-border/60 flex flex-col items-center justify-center gap-2">
+                    <FileIcon className={`h-10 w-10 ${fileMeta.color} opacity-60`} />
+                    <span className="text-xs font-semibold text-muted-foreground">{fileType}</span>
+                    <span className="text-[10px] text-muted-foreground/70">{(fileSize / 1024).toFixed(0)} ك.ب</span>
+                  </div>
+                </motion.div>
+              )}
