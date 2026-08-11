@@ -129,7 +129,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
         'transition-all duration-200 ease-in-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         isActive
-          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_12px_rgba(212,168,83,0.15)] sidebar-active-glow'
+          ? 'bg-sidebar-accent text-sidebar-primary font-medium shadow-[0_0_12px_rgba(199,82,82,0.15)] dark:shadow-[0_0_12px_rgba(199,82,82,0.2)] sidebar-active-glow'
           : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
       )}
     >
@@ -138,7 +138,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
         className={cn(
           'absolute right-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l-full transition-all duration-200',
           isActive
-            ? 'bg-sidebar-primary opacity-100 shadow-[0_0_10px_rgba(212,168,83,0.6)]'
+            ? 'bg-sidebar-primary opacity-100 shadow-[0_0_10px_rgba(199,82,82,0.6)]'
             : 'bg-transparent opacity-0',
         )}
       />
@@ -164,7 +164,7 @@ function SidebarNavItem({ item, isActive, collapsed, onClick }: SidebarNavItemPr
       )}
 
       {collapsed && item.badge != null && (
-        <span className="absolute -left-0.5 -top-0.5 h-2 w-2 rounded-full bg-sidebar-primary shadow-[0_0_6px_rgba(212,168,83,0.6)]" />
+        <span className="absolute -left-0.5 -top-0.5 h-2 w-2 rounded-full bg-sidebar-primary shadow-[0_0_6px_rgba(199,82,82,0.6)]" />
       )}
     </button>
   );

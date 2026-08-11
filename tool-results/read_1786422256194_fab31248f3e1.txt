@@ -1,0 +1,1407 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→import { useState, useEffect, useCallback, useMemo } from 'react';
+     4→     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→     5→import Image from 'next/image';
+     6→     6→import {
+     7→     7→  ShoppingCart, DollarSign, Store, TrendingUp, TrendingDown,
+     8→     8→  Plus, LogOut, RefreshCw, User, Search, Shield, Trash2, Eye,
+     9→     9→  Lock, Settings, CalendarDays, Menu, LayoutDashboard, BarChart3,
+    10→    10→  Users, UsersRound, Globe, Key, Bell, ToggleLeft, ToggleRight,
+    11→    11→  Mail, Phone, MessageCircle, Palette, Clock, AlertTriangle, CheckCircle2,
+    12→    12→  ChevronDown, ChevronUp, Save, X, Copy, ExternalLink, Pencil, Zap, Share2,
+    13→    13→} from 'lucide-react';
+    14→    14→import { toast } from 'sonner';
+    15→    15→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+    16→    16→import { Button } from '@/components/ui/button';
+    17→    17→import { Badge } from '@/components/ui/badge';
+    18→    18→import { Input } from '@/components/ui/input';
+    19→    19→import { Skeleton } from '@/components/ui/skeleton';
+    20→    20→import { Label } from '@/components/ui/label';
+    21→    21→import { Switch } from '@/components/ui/switch';
+    22→    22→import { Textarea } from '@/components/ui/textarea';
+    23→    23→import {
+    24→    24→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    25→    25→} from '@/components/ui/select';
+    26→    26→import { Separator } from '@/components/ui/separator';
+    27→    27→import {
+    28→    28→  Dialog, DialogContent, DialogTitle, DialogDescription,
+    29→    29→} from '@/components/ui/dialog';
+    30→    30→import {
+    31→    31→  AlertDialog, AlertDialogAction, AlertDialogCancel,
+    32→    32→  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    33→    33→  AlertDialogHeader, AlertDialogTitle,
+    34→    34→} from '@/components/ui/alert-dialog';
+    35→    35→import { ThemeToggle } from '@/components/app/theme-toggle';
+    36→    36→import {
+    37→    37→  DashboardSidebar, type SidebarSection,
+    38→    38→} from '@/components/ui/dashboard-sidebar';
+    39→    39→import {
+    40→    40→  isAuthenticated, verifySession, clearSession, clearVerifyCache,
+    41→    41→  markAuthenticated, getTimeAgoShort, statusLabelAr, STATUS_COLORS,
+    42→    42→  robustCopy,
+    43→    43→} from '@/lib/admin-utils';
+    44→    44→import { AdminShopManagement } from '@/components/app/admin-shop-management';
+    45→    45→import { ARAB_COUNTRIES, formatDA } from '@/lib/countries';
+    46→    46→import type { ShopItem } from '@/lib/admin-types';
+    47→    47→import { cn } from '@/lib/utils';
+    48→    48→
+    49→    49→// ===== Animation =====
+    50→    50→const fadeIn = {
+    51→    51→  initial: { opacity: 0, y: 12 },
+    52→    52→  animate: { opacity: 1, y: 0 },
+    53→    53→  exit: { opacity: 0, y: -8 },
+    54→    54→};
+    55→    55→
+    56→    56→// ===== Types =====
+    57→    57→interface PlatformSettings {
+    58→    58→  platformName: string;
+    59→    59→  platformTagline: string;
+    60→    60→  platformLogo: string;
+    61→    61→  platformEmail: string;
+    62→    62→  platformPhone: string;
+    63→    63→  platformWhatsapp: string;
+    64→    64→  platformDescription: string;
+    65→    65→  maintenanceMode: boolean;
+    66→    66→  maintenanceMessage: string;
+    67→    67→  allowNewShops: boolean;
+    68→    68→  maxShops: number;
+    69→    69→  defaultCountry: string;
+    70→    70→  defaultLanguage: string;
+    71→    71→  defaultCurrency: string;
+    72→    72→  defaultTrialDays: number;
+    73→    73→  defaultWelcomeMessage: string;
+    74→    74→  defaultFeatures: Record<string, boolean>;
+    75→    75→  notifications: Record<string, boolean>;
+    76→    76→  customCss: string;
+    77→    77→}
+    78→    78→
+    79→    79→interface TeamMember {
+    80→    80→  email: string;
+    81→    81→  name: string;
+    82→    82→  role: string;
+    83→    83→  addedAt: string;
+    84→    84→}
+    85→    85→
+    86→    86→// ===== Login Gate =====
+    87→    87→function InlineLoginGate({ onUnlock }: { onUnlock: () => void }) {
+    88→    88→  const [password, setPassword] = useState('');
+    89→    89→  const [error, setError] = useState(false);
+    90→    90→  const [loading, setLoading] = useState(false);
+    91→    91→
+    92→    92→  async function handleSubmit(e: React.FormEvent) {
+    93→    93→    e.preventDefault();
+    94→    94→    if (!password) return;
+    95→    95→    setLoading(true); setError(false);
+    96→    96→    try {
+    97→    97→      const res = await fetch('/api/super-admin/auth', {
+    98→    98→        method: 'POST',
+    99→    99→        headers: { 'Content-Type': 'application/json' },
+   100→   100→        body: JSON.stringify({ password }),
+   101→   101→      });
+   102→   102→      const data = await res.json();
+   103→   103→      if (data.success) { markAuthenticated(data.token, data.ts); onUnlock(); }
+   104→   104→      else setError(true);
+   105→   105→    } catch { setError(true); }
+   106→   106→    finally { setLoading(false); }
+   107→   107→  }
+   108→   108→
+   109→   109→  return (
+   110→   110→    <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
+   111→   111→      <Card className="max-w-sm w-full">
+   112→   112→        <CardContent className="p-6 space-y-4">
+   113→   113→          <div className="flex flex-col items-center gap-3">
+   114→   114→            <img src="/n.png" alt="طيف" className="w-16 h-16 rounded-2xl object-contain shadow-lg" />
+   115→   115→            <div className="text-center">
+   116→   116→              <h1 className="text-xl font-bold">لوحة تحكم المنصة</h1>
+   117→   117→              <p className="text-sm text-muted-foreground">أدخل كلمة المرور للدخول</p>
+   118→   118→            </div>
+   119→   119→          </div>
+   120→   120→          <form onSubmit={handleSubmit} className="space-y-3">
+   121→   121→            <div className="relative">
+   122→   122→              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   123→   123→              <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => { setPassword(e.target.value); setError(false); }} className="pr-9" dir="ltr" />
+   124→   124→            </div>
+   125→   125→            {error && <p className="text-destructive text-xs text-center">كلمة المرور غير صحيحة</p>}
+   126→   126→            <Button type="submit" className="w-full bg-gradient-to-l from-amber-500 to-amber-600 text-white" disabled={loading}>
+   127→   127→              {loading ? 'جاري التحقق...' : 'دخول'}
+   128→   128→            </Button>
+   129→   129→          </form>
+   130→   130→          <div className="flex items-center justify-center gap-2 pt-2"><ThemeToggle /></div>
+   131→   131→        </CardContent>
+   132→   132→      </Card>
+   133→   133→    </div>
+   134→   134→  );
+   135→   135→}
+   136→   136→
+   137→   137→// ===== Create Shop Dialog =====
+   138→   138→function InlineCreateShop({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+   139→   139→  const [name, setName] = useState('');
+   140→   140→  const [slug, setSlug] = useState('');
+   141→   141→  const [pin, setPin] = useState('');
+   142→   142→  const [ownerName, setOwnerName] = useState('');
+   143→   143→  const [ownerPhone, setOwnerPhone] = useState('');
+   144→   144→  const [country, setCountry] = useState('DZ');
+   145→   145→  const [submitting, setSubmitting] = useState(false);
+   146→   146→  const [created, setCreated] = useState<{ name: string; slug: string; pin: string } | null>(null);
+   147→   147→
+   148→   148→  function genSlug(t: string) { return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+   149→   149→  function handleName(v: string) { setName(v); if (!slug || slug === genSlug(name)) setSlug(genSlug(v)); }
+   150→   150→
+   151→   151→  async function handleSubmit(e: React.FormEvent) {
+   152→   152→    e.preventDefault();
+   153→   153→    if (!name || !slug || !pin) return;
+   154→   154→    setSubmitting(true);
+   155→   155→    try {
+   156→   156→      const res = await fetch('/api/shops', {
+   157→   157→        method: 'POST', headers: { 'Content-Type': 'application/json' },
+   158→   158→        body: JSON.stringify({ name, slug, adminPin: pin, ownerName, ownerPhone, country }),
+   159→   159→      });
+   160→   160→      if (res.ok) { setCreated({ name, slug, pin }); onCreated(); }
+   161→   161→      else { const data = await res.json().catch(() => ({})); toast.error(data.error || 'فشل إنشاء المتجر'); }
+   162→   162→    } catch { toast.error('خطأ في الاتصال'); }
+   163→   163→    finally { setSubmitting(false); }
+   164→   164→  }
+   165→   165→
+   166→   166→  function handleClose() {
+   167→   167→    setName(''); setSlug(''); setPin(''); setOwnerName(''); setOwnerPhone('');
+   168→   168→    setCreated(null); onClose();
+   169→   169→  }
+   170→   170→
+   171→   171→  return (
+   172→   172→    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+   173→   173→      <DialogContent className="sm:max-w-md" dir="rtl">
+   174→   174→        <DialogTitle>{created ? 'تم إنشاء المتجر ✓' : 'إنشاء متجر جديد'}</DialogTitle>
+   175→   175→        {created ? (
+   176→   176→          <div className="space-y-4 py-4">
+   177→   177→            <div className="text-center space-y-2">
+   178→   178→              <p className="font-bold text-lg">{created.name}</p>
+   179→   179→              <div className="space-y-2 text-sm">
+   180→   180→                <div className="flex items-center justify-between p-2 rounded-lg bg-muted">
+   181→   181→                  <span className="text-muted-foreground">رابط المتجر:</span>
+   182→   182→                  <button onClick={() => robustCopy(`/s/${created.slug}`, 'تم نسخ الرابط', '')} className="font-mono text-xs text-primary hover:underline">/s/{created.slug}</button>
+   183→   183→                </div>
+   184→   184→                <div className="flex items-center justify-between p-2 rounded-lg bg-muted">
+   185→   185→                  <span className="text-muted-foreground">كلمة المرور:</span>
+   186→   186→                  <span className="font-mono text-xs font-bold">{created.pin}</span>
+   187→   187→                </div>
+   188→   188→              </div>
+   189→   189→            </div>
+   190→   190→            <Button onClick={handleClose} className="w-full">تم</Button>
+   191→   191→          </div>
+   192→   192→        ) : (
+   193→   193→          <form onSubmit={handleSubmit} className="space-y-4">
+   194→   194→            <div className="space-y-2"><Label>اسم المتجر *</Label><Input value={name} onChange={(e) => handleName(e.target.value)} placeholder="مثال: مطبعة النور" /></div>
+   195→   195→            <div className="space-y-2"><Label>المعرّف (slug) *</Label><Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="matbaa-alnoor" dir="ltr" /></div>
+   196→   196→            <div className="space-y-2"><Label>كلمة مرور لوحة التحكم (PIN) *</Label><Input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="1234" maxLength={10} dir="ltr" type="text" /></div>
+   197→   197→            <div className="grid grid-cols-2 gap-3">
+   198→   198→              <div className="space-y-2"><Label>اسم المالك</Label><Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="اختياري" /></div>
+   199→   199→              <div className="space-y-2"><Label>هاتف المالك</Label><Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="اختياري" dir="ltr" /></div>
+   200→   200→            </div>
+   201→   201→            <div className="space-y-2">
+   202→   202→              <Label>الدولة</Label>
+   203→   203→              <Select value={country} onValueChange={setCountry}>
+   204→   204→                <SelectTrigger><SelectValue /></SelectTrigger>
+   205→   205→                <SelectContent>{ARAB_COUNTRIES.map((c) => (<SelectItem key={c.code} value={c.code}>{c.flag} {c.name_ar}</SelectItem>))}</SelectContent>
+   206→   206→              </Select>
+   207→   207→            </div>
+   208→   208→            <div className="flex gap-2 pt-2">
+   209→   209→              <Button type="button" variant="outline" onClick={handleClose} className="flex-1">إلغاء</Button>
+   210→   210→              <Button type="submit" disabled={!name || !slug || !pin || submitting} className="flex-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+   211→   211→                {submitting ? 'جاري الإنشاء...' : 'إنشاء'}
+   212→   212→              </Button>
+   213→   213→            </div>
+   214→   214→          </form>
+   215→   215→        )}
+   216→   216→      </DialogContent>
+   217→   217→    </Dialog>
+   218→   218→  );
+   219→   219→}
+   220→   220→
+   221→   221→// ===== Edit Shop Dialog =====
+   222→   222→interface EditShopData {
+   223→   223→  slug: string; name: string; phone: string | null;
+   224→   224→  ownerName: string | null; ownerPhone: string | null;
+   225→   225→  whatsapp: string | null; email: string | null; address: string | null;
+   226→   226→  country: string | null; isActive: boolean; plan: string;
+   227→   227→  primaryColor: string | null; adminPin: string;
+   228→   228→}
+   229→   229→
+   230→   230→function InlineEditShop({ open, onClose, shop, onSaved }: {
+   231→   231→  open: boolean; onClose: () => void;
+   232→   232→  shop: ShopItem | null; onSaved: () => void;
+   233→   233→}) {
+   234→   234→  const [data, setData] = useState<EditShopData | null>(null);
+   235→   235→  const [loading, setLoading] = useState(false);
+   236→   236→  const [saving, setSaving] = useState(false);
+   237→   237→
+   238→   238→  // جلب بيانات المتجر الكاملة عند الفتح
+   239→   239→  useEffect(() => {
+   240→   240→    if (!open || !shop) return;
+   241→   241→    let cancelled = false;
+   242→   242→    (async () => {
+   243→   243→      setLoading(true);
+   244→   244→      try {
+   245→   245→        const res = await fetch(`/api/admin/shops/${shop.slug}`);
+   246→   246→        if (res.ok && !cancelled) {
+   247→   247→          const d = await res.json();
+   248→   248→          const s = d.shop;
+   249→   249→          setData({
+   250→   250→            slug: s.slug, name: s.name, phone: s.phone,
+   251→   251→            ownerName: s.ownerName, ownerPhone: s.ownerPhone,
+   252→   252→            whatsapp: s.whatsapp, email: s.email, address: s.address,
+   253→   253→            country: s.country, isActive: s.isActive,
+   254→   254→            plan: s.plan || 'free', primaryColor: s.primaryColor,
+   255→   255→            adminPin: s.adminPin,
+   256→   256→          });
+   257→   257→        } else if (!cancelled) {
+   258→   258→          toast.error('فشل تحميل بيانات المتجر');
+   259→   259→          onClose();
+   260→   260→        }
+   261→   261→      } catch { if (!cancelled) { toast.error('خطأ في الاتصال'); onClose(); } }
+   262→   262→      finally { if (!cancelled) setLoading(false); }
+   263→   263→    })();
+   264→   264→    return () => { cancelled = true; };
+   265→   265→  }, [open, shop, onClose]);
+   266→   266→
+   267→   267→  async function handleSave(e: React.FormEvent) {
+   268→   268→    e.preventDefault();
+   269→   269→    if (!data) return;
+   270→   270→    setSaving(true);
+   271→   271→    try {
+   272→   272→      const res = await fetch(`/api/admin/shops/${data.slug}`, {
+   273→   273→        method: 'PUT',
+   274→   274→        headers: { 'Content-Type': 'application/json' },
+   275→   275→        body: JSON.stringify({
+   276→   276→          name: data.name, phone: data.phone, ownerName: data.ownerName,
+   277→   277→          ownerPhone: data.ownerPhone, whatsapp: data.whatsapp,
+   278→   278→          email: data.email, address: data.address, country: data.country,
+   279→   279→          isActive: data.isActive, plan: data.plan,
+   280→   280→          primaryColor: data.primaryColor, adminPin: data.adminPin,
+   281→   281→        }),
+   282→   282→      });
+   283→   283→      if (res.ok) { toast.success('تم تحديث المتجر بنجاح'); onSaved(); onClose(); }
+   284→   284→      else { const d = await res.json().catch(() => ({})); toast.error(d.error || 'فشل التحديث'); }
+   285→   285→    } catch { toast.error('خطأ في الاتصال'); }
+   286→   286→    finally { setSaving(false); }
+   287→   287→  }
+   288→   288→
+   289→   289→  function setField<K extends keyof EditShopData>(key: K, val: EditShopData[K]) {
+   290→   290→    setData((prev) => (prev ? { ...prev, [key]: val } : prev));
+   291→   291→  }
+   292→   292→
+   293→   293→  if (!open) return null;
+   294→   294→
+   295→   295→  return (
+   296→   296→    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+   297→   297→      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
+   298→   298→        <DialogTitle>تعديل المتجر</DialogTitle>
+   299→   299→        <DialogDescription>تعديل بيانات وإعدادات المتجر</DialogDescription>
+   300→   300→        {loading || !data ? (
+   301→   301→          <div className="py-8 flex justify-center"><Skeleton className="h-48 w-full rounded-lg" /></div>
+   302→   302→        ) : (
+   303→   303→          <form onSubmit={handleSave} className="space-y-4">
+   304→   304→            <div className="space-y-2">
+   305→   305→              <Label>اسم المتجر *</Label>
+   306→   306→              <Input value={data.name} onChange={(e) => setField('name', e.target.value)} />
+   307→   307→            </div>
+   308→   308→            <div className="grid grid-cols-2 gap-3">
+   309→   309→              <div className="space-y-2">
+   310→   310→                <Label>اسم المالك</Label>
+   311→   311→                <Input value={data.ownerName || ''} onChange={(e) => setField('ownerName', e.target.value || null)} />
+   312→   312→              </div>
+   313→   313→              <div className="space-y-2">
+   314→   314→                <Label>هاتف المالك</Label>
+   315→   315→                <Input value={data.ownerPhone || ''} onChange={(e) => setField('ownerPhone', e.target.value || null)} dir="ltr" />
+   316→   316→              </div>
+   317→   317→            </div>
+   318→   318→            <div className="grid grid-cols-2 gap-3">
+   319→   319→              <div className="space-y-2">
+   320→   320→                <Label>هاتف المتجر</Label>
+   321→   321→                <Input value={data.phone || ''} onChange={(e) => setField('phone', e.target.value || null)} dir="ltr" />
+   322→   322→              </div>
+   323→   323→              <div className="space-y-2">
+   324→   324→                <Label>واتساب</Label>
+   325→   325→                <Input value={data.whatsapp || ''} onChange={(e) => setField('whatsapp', e.target.value || null)} dir="ltr" />
+   326→   326→              </div>
+   327→   327→            </div>
+   328→   328→            <div className="grid grid-cols-2 gap-3">
+   329→   329→              <div className="space-y-2">
+   330→   330→                <Label>البريد الإلكتروني</Label>
+   331→   331→                <Input value={data.email || ''} onChange={(e) => setField('email', e.target.value || null)} dir="ltr" type="email" />
+   332→   332→              </div>
+   333→   333→              <div className="space-y-2">
+   334→   334→                <Label>الدولة</Label>
+   335→   335→                <Select value={data.country || 'DZ'} onValueChange={(v) => setField('country', v)}>
+   336→   336→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   337→   337→                  <SelectContent>{ARAB_COUNTRIES.map((c) => (<SelectItem key={c.code} value={c.code}>{c.flag} {c.name_ar}</SelectItem>))}</SelectContent>
+   338→   338→                </Select>
+   339→   339→              </div>
+   340→   340→            </div>
+   341→   341→            <div className="space-y-2">
+   342→   342→              <Label>العنوان</Label>
+   343→   343→              <Input value={data.address || ''} onChange={(e) => setField('address', e.target.value || null)} />
+   344→   344→            </div>
+   345→   345→            <div className="grid grid-cols-2 gap-3">
+   346→   346→              <div className="space-y-2">
+   347→   347→                <Label>الخطة</Label>
+   348→   348→                <Select value={data.plan} onValueChange={(v) => setField('plan', v)}>
+   349→   349→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   350→   350→                  <SelectContent>
+   351→   351→                    <SelectItem value="free">مجانية</SelectItem>
+   352→   352→                    <SelectItem value="paid">مدفوعة</SelectItem>
+   353→   353→                  </SelectContent>
+   354→   354→                </Select>
+   355→   355→              </div>
+   356→   356→              <div className="space-y-2">
+   357→   357→                <Label>اللون الأساسي</Label>
+   358→   358→                <div className="flex items-center gap-2">
+   359→   359→                  <input type="color" value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="h-9 w-12 rounded-md border cursor-pointer" />
+   360→   360→                  <Input value={data.primaryColor || '#f59e0b'} onChange={(e) => setField('primaryColor', e.target.value)} className="flex-1 font-mono text-xs" dir="ltr" />
+   361→   361→                </div>
+   362→   362→              </div>
+   363→   363→            </div>
+   364→   364→            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+   365→   365→              <Label className="!mb-0">حالة المتجر</Label>
+   366→   366→              <div className="flex items-center gap-2">
+   367→   367→                <span className="text-xs text-muted-foreground">{data.isActive ? 'نشط' : 'متوقف'}</span>
+   368→   368→                <Switch checked={data.isActive} onCheckedChange={(v) => setField('isActive', v)} />
+   369→   369→              </div>
+   370→   370→            </div>
+   371→   371→            <div className="flex gap-2 pt-2">
+   372→   372→              <Button type="button" variant="outline" onClick={onClose} className="flex-1">إلغاء</Button>
+   373→   373→              <Button type="submit" disabled={saving || !data.name} className="flex-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+   374→   374→                {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+   375→   375→              </Button>
+   376→   376→            </div>
+   377→   377→          </form>
+   378→   378→        )}
+   379→   379→      </DialogContent>
+   380→   380→    </Dialog>
+   381→   381→  );
+   382→   382→}
+   383→   383→
+   384→   384→// ===== Share Shop Dialog =====
+   385→   385→function InlineShareShop({ open, onClose, shop }: {
+   386→   386→  open: boolean; onClose: () => void; shop: ShopItem | null;
+   387→   387→}) {
+   388→   388→  const [pinData, setPinData] = useState<{ pin: string; loaded: boolean }>({ pin: '', loaded: false });
+   389→   389→
+   390→   390→  useEffect(() => {
+   391→   391→    if (!open || !shop) return;
+   392→   392→    let cancelled = false;
+   393→   393→    (async () => {
+   394→   394→      try {
+   395→   395→        const res = await fetch(`/api/admin/shops/${shop.slug}`);
+   396→   396→        if (res.ok && !cancelled) {
+   397→   397→          const d = await res.json();
+   398→   398→          setPinData({ pin: d.shop.adminPin || '', loaded: true });
+   399→   399→        }
+   400→   400→      } catch { /* ignore */ }
+   401→   401→    })();
+   402→   402→    return () => { cancelled = true; };
+   403→   403→  }, [open, shop]);
+   404→   404→
+   405→   405→  if (!open || !shop) return null;
+   406→   406→
+   407→   407→  const customerLink = `/s/${shop.slug}`;
+   408→   408→  const adminLink = `/s/${shop.slug}?admin=1`;
+   409→   409→
+   410→   410→  return (
+   411→   411→    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+   412→   412→      <DialogContent className="sm:max-w-md" dir="rtl">
+   413→   413→        <DialogTitle>مشاركة المتجر</DialogTitle>
+   414→   414→        <DialogDescription>روابط وكلمة مرور متجر {shop.name}</DialogDescription>
+   415→   415→        <div className="space-y-3 pt-2">
+   416→   416→          <div className="space-y-1.5">
+   417→   417→            <span className="text-xs font-medium text-muted-foreground">رابط الزبون</span>
+   418→   418→            <div className="flex items-center gap-2">
+   419→   419→              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono" dir="ltr">{customerLink}</code>
+   420→   420→              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(customerLink, 'تم النسخ', customerLink)}>
+   421→   421→                <Copy className="h-3.5 w-3.5" />
+   422→   422→              </Button>
+   423→   423→            </div>
+   424→   424→          </div>
+   425→   425→          <div className="space-y-1.5">
+   426→   426→            <span className="text-xs font-medium text-muted-foreground">رابط الإدارة</span>
+   427→   427→            <div className="flex items-center gap-2">
+   428→   428→              <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono" dir="ltr">{adminLink}</code>
+   429→   429→              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(adminLink, 'تم النسخ', adminLink)}>
+   430→   430→                <Copy className="h-3.5 w-3.5" />
+   431→   431→              </Button>
+   432→   432→            </div>
+   433→   433→          </div>
+   434→   434→          <Separator />
+   435→   435→          <div className="space-y-1.5">
+   436→   436→            <span className="text-xs font-medium text-muted-foreground">كلمة مرور الإدارة (PIN)</span>
+   437→   437→            <div className="flex items-center gap-2">
+   438→   438→              <code className="flex-1 text-sm bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-lg font-mono font-bold text-amber-700 dark:text-amber-300" dir="ltr">
+   439→   439→                {pinData.loaded ? (pinData.pin || '—') : '...'}
+   440→   440→              </code>
+   441→   441→              {pinData.loaded && pinData.pin && (
+   442→   442→                <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => robustCopy(pinData.pin, 'تم نسخ PIN', pinData.pin)}>
+   443→   443→                  <Copy className="h-3.5 w-3.5" />
+   444→   444→                </Button>
+   445→   445→              )}
+   446→   446→            </div>
+   447→   447→          </div>
+   448→   448→        </div>
+   449→   449→        <Button onClick={onClose} className="w-full mt-4">تم</Button>
+   450→   450→      </DialogContent>
+   451→   451→    </Dialog>
+   452→   452→  );
+   453→   453→}
+   454→   454→
+   455→   455→// ===== Mini Bar Chart (CSS-based, no Recharts) =====
+   456→   456→function MiniBarChart({ data, maxValue, color = 'bg-primary' }: { data: number[]; maxValue?: number; color?: string }) {
+   457→   457→  const max = maxValue || Math.max(...data, 1);
+   458→   458→  return (
+   459→   459→    <div className="flex items-end gap-1 h-12">
+   460→   460→      {data.map((v, i) => (
+   461→   461→        <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+   462→   462→          <div className={`${color} rounded-t-sm w-full transition-all duration-500`} style={{ height: `${Math.max((v / max) * 48, 2)}px` }} />
+   463→   463→        </div>
+   464→   464→      ))}
+   465→   465→    </div>
+   466→   466→  );
+   467→   467→}
+   468→   468→
+   469→   469→// ===== Main Admin Page =====
+   470→   470→export default function AdminPage() {
+   471→   471→  const [authenticated, setAuthenticated] = useState(false);
+   472→   472→  const [loading, setLoading] = useState(true);
+   473→   473→  const [activeTab, setActiveTab] = useState('dashboard');
+   474→   474→  const [shops, setShops] = useState<ShopItem[]>([]);
+   475→   475→  const [totalRevenue, setTotalRevenue] = useState(0);
+   476→   476→  const [todayOrders, setTodayOrders] = useState(0);
+   477→   477→  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+   478→   478→  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+   479→   479→  const [dailyData, setDailyData] = useState<{ date: string; orders: number; revenue: number }[]>([]);
+   480→   480→  const [monthRevenue, setMonthRevenue] = useState(0);
+   481→   481→  const [monthOrders, setMonthOrders] = useState(0);
+   482→   482→  const [totalShops, setTotalShops] = useState(0);
+   483→   483→  const [createOpen, setCreateOpen] = useState(false);
+   484→   484→  const [searchQuery, setSearchQuery] = useState('');
+   485→   485→  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+   486→   486→  const [adminName, setAdminName] = useState('مدير المنصة');
+   487→   487→  const [deleteTarget, setDeleteTarget] = useState<ShopItem | null>(null);
+   488→   488→  const [deleting, setDeleting] = useState(false);
+   489→   489→  const [refreshing, setRefreshing] = useState(false);
+   490→   490→  const [editTarget, setEditTarget] = useState<ShopItem | null>(null);
+   491→   491→  const [shareTarget, setShareTarget] = useState<ShopItem | null>(null);
+   492→   492→  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+   493→   493→  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+   494→   494→
+   495→   495→  // Settings state
+   496→   496→  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+   497→   497→  const [settingsLoading, setSettingsLoading] = useState(false);
+   498→   498→  const [settingsSaving, setSettingsSaving] = useState(false);
+   499→   499→
+   500→   500→  // Team state
+   501→   501→  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+   502→   502→  const [newMemberName, setNewMemberName] = useState('');
+   503→   503→  const [newMemberEmail, setNewMemberEmail] = useState('');
+   504→   504→  const [newMemberRole, setNewMemberRole] = useState('member');
+   505→   505→
+   506→   506→  // Password state
+   507→   507→  const [currentPass, setCurrentPass] = useState('');
+   508→   508→  const [newPass, setNewPass] = useState('');
+   509→   509→  const [confirmPass, setConfirmPass] = useState('');
+   510→   510→  const [passLoading, setPassLoading] = useState(false);
+   511→   511→
+   512→   512→  // Auth check
+   513→   513→  useEffect(() => {
+   514→   514→    (async () => {
+   515→   515→      if (isAuthenticated()) {
+   516→   516→        const { valid, adminName: name } = await verifySession();
+   517→   517→        if (valid) { setAuthenticated(true); if (name) setAdminName(name); }
+   518→   518→      }
+   519→   519→      setLoading(false);
+   520→   520→    })();
+   521→   521→  }, []);
+   522→   522→
+   523→   523→  const handleUnlock = useCallback(() => { setAuthenticated(true); }, []);
+   524→   524→
+   525→   525→  // Fetch main data
+   526→   526→  const fetchData = useCallback(async (silent = false) => {
+   527→   527→    setRefreshing(true);
+   528→   528→    try {
+   529→   529→      const [shopsRes, statsRes, dailyRes] = await Promise.all([
+   530→   530→        fetch('/api/shops'),
+   531→   531→        fetch('/api/admin/global-stats'),
+   532→   532→        fetch('/api/admin/global-daily-stats'),
+   533→   533→      ]);
+   534→   534→      if (shopsRes.ok) { const d = await shopsRes.json(); setShops(d.shops || []); }
+   535→   535→      if (statsRes.ok) {
+   536→   536→        const d = await statsRes.json();
+   537→   537→        setTotalRevenue(d.totalRevenue || 0);
+   538→   538→        setTodayOrders(d.todayOrders || 0);
+   539→   539→        setRecentOrders(d.recentOrders || []);
+   540→   540→        setStatusCounts(d.statusCounts || {});
+   541→   541→      }
+   542→   542→      if (dailyRes.ok) {
+   543→   543→        const d = await dailyRes.json();
+   544→   544→        setDailyData(d.daily || []);
+   545→   545→        setMonthRevenue(d.monthRevenue || 0);
+   546→   546→        setMonthOrders(d.monthOrders || 0);
+   547→   547→        setTotalShops(d.totalShops || 0);
+   548→   548→      }
+   549→   549→      if (!silent) toast.success('تم تحديث البيانات');
+   550→   550→    } catch { if (!silent) toast.error('فشل تحميل البيانات'); }
+   551→   551→    setRefreshing(false);
+   552→   552→  }, []);
+   553→   553→
+   554→   554→  useEffect(() => { if (authenticated) fetchData(true); }, [authenticated, fetchData]);
+   555→   555→
+   556→   556→  // Fetch platform settings
+   557→   557→  const fetchSettings = useCallback(async () => {
+   558→   558→    setSettingsLoading(true);
+   559→   559→    try {
+   560→   560→      const res = await fetch('/api/super-admin/platform-settings');
+   561→   561→      if (res.ok) { const d = await res.json(); setPlatformSettings(d.settings); }
+   562→   562→    } catch { /* ignore */ }
+   563→   563→    setSettingsLoading(false);
+   564→   564→  }, []);
+   565→   565→
+   566→   566→  // Fetch team
+   567→   567→  const fetchTeam = useCallback(async () => {
+   568→   568→    try {
+   569→   569→      const res = await fetch('/api/super-admin/team');
+   570→   570→      if (res.ok) { const d = await res.json(); setTeamMembers(d.members || []); }
+   571→   571→    } catch { /* ignore */ }
+   572→   572→  }, []);
+   573→   573→
+   574→   574→  // Load settings & team when tab changes
+   575→   575→  useEffect(() => {
+   576→   576→    if (!authenticated) return;
+   577→   577→    if (activeTab === 'settings' && !platformSettings) fetchSettings();
+   578→   578→    if (activeTab === 'team') fetchTeam();
+   579→   579→  }, [activeTab, authenticated, platformSettings, fetchSettings, fetchTeam]);
+   580→   580→
+   581→   581→  const handleShopCreated = useCallback(() => { setCreateOpen(false); fetchData(); toast.success('تم إنشاء المتجر بنجاح'); }, [fetchData]);
+   582→   582→  const handleDeleteShop = useCallback(async () => {
+   583→   583→    if (!deleteTarget) return;
+   584→   584→    setDeleting(true);
+   585→   585→    try {
+   586→   586→      const res = await fetch(`/api/admin/shops/${deleteTarget.slug}`, { method: 'DELETE' });
+   587→   587→      if (res.ok) { toast.success('تم حذف المتجر'); fetchData(); setDeleteTarget(null); }
+   588→   588→      else { const d = await res.json().catch(() => ({})); toast.error(d.error || 'فشل حذف المتجر'); }
+   589→   589→    }
+   590→   590→    catch { toast.error('خطأ في الاتصال'); }
+   591→   591→    setDeleting(false);
+   592→   592→  }, [deleteTarget, fetchData]);
+   593→   593→
+   594→   594→  const handleToggleShop = useCallback(async (shop: ShopItem) => {
+   595→   595→    try {
+   596→   596→      const res = await fetch(`/api/admin/shops/${shop.slug}`, {
+   597→   597→        method: 'PUT',
+   598→   598→        headers: { 'Content-Type': 'application/json' },
+   599→   599→        body: JSON.stringify({ isActive: !shop.isActive }),
+   600→   600→      });
+   601→   601→      if (res.ok) {
+   602→   602→        toast.success(shop.isActive ? 'تم إيقاف المتجر' : 'تم تفعيل المتجر');
+   603→   603→        fetchData();
+   604→   604→      } else toast.error('فشل تغيير الحالة');
+   605→   605→    } catch { toast.error('خطأ'); }
+   606→   606→  }, [fetchData]);
+   607→   607→
+   608→   608→  const handleCopyPin = useCallback(async (shop: ShopItem) => {
+   609→   609→    try {
+   610→   610→      const res = await fetch(`/api/admin/shops/${shop.slug}`);
+   611→   611→      if (res.ok) {
+   612→   612→        const d = await res.json();
+   613→   613→        const pin = d.shop?.adminPin;
+   614→   614→        if (pin) { robustCopy(pin, 'تم نسخ PIN', pin); }
+   615→   615→        else toast.error('لا توجد كلمة مرور');
+   616→   616→      } else toast.error('فشل جلب PIN');
+   617→   617→    } catch { toast.error('خطأ في الاتصال'); }
+   618→   618→  }, []);
+   619→   619→
+   620→   620→  const handleShopSaved = useCallback(() => { setEditTarget(null); fetchData(); }, [fetchData]);
+   621→   621→
+   622→   622→  const handleLogout = useCallback(() => { clearSession(); setAuthenticated(false); setShops([]); setRecentOrders([]); }, []);
+   623→   623→
+   624→   624→  // Save platform settings
+   625→   625→  const saveSettings = useCallback(async (partial: Partial<PlatformSettings>) => {
+   626→   626→    if (!platformSettings) return;
+   627→   627→    setSettingsSaving(true);
+   628→   628→    try {
+   629→   629→      const res = await fetch('/api/super-admin/platform-settings', {
+   630→   630→        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+   631→   631→        body: JSON.stringify(partial),
+   632→   632→      });
+   633→   633→      if (res.ok) {
+   634→   634→        const d = await res.json();
+   635→   635→        setPlatformSettings(d.settings);
+   636→   636→        toast.success('تم حفظ الإعدادات');
+   637→   637→      } else toast.error('فشل حفظ الإعدادات');
+   638→   638→    } catch { toast.error('خطأ في الاتصال'); }
+   639→   639→    setSettingsSaving(false);
+   640→   640→  }, [platformSettings]);
+   641→   641→
+   642→   642→  // Add team member
+   643→   643→  const addTeamMember = useCallback(async () => {
+   644→   644→    if (!newMemberName || !newMemberEmail) return;
+   645→   645→    try {
+   646→   646→      const res = await fetch('/api/super-admin/team', {
+   647→   647→        method: 'POST', headers: { 'Content-Type': 'application/json' },
+   648→   648→        body: JSON.stringify({ name: newMemberName, email: newMemberEmail, role: newMemberRole }),
+   649→   649→      });
+   650→   650→      if (res.ok) {
+   651→   651→        const d = await res.json(); setTeamMembers(d.members || []);
+   652→   652→        setNewMemberName(''); setNewMemberEmail(''); setNewMemberRole('member');
+   653→   653→        toast.success('تم إضافة العضو');
+   654→   654→      } else { const d = await res.json().catch(() => ({})); toast.error(d.error || 'فشل الإضافة'); }
+   655→   655→    } catch { toast.error('خطأ'); }
+   656→   656→  }, [newMemberName, newMemberEmail, newMemberRole]);
+   657→   657→
+   658→   658→  // Remove team member
+   659→   659→  const removeTeamMember = useCallback(async (email: string) => {
+   660→   660→    try {
+   661→   661→      const res = await fetch('/api/super-admin/team', {
+   662→   662→        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+   663→   663→        body: JSON.stringify({ email }),
+   664→   664→      });
+   665→   665→      if (res.ok) { const d = await res.json(); setTeamMembers(d.members || []); toast.success('تم حذف العضو'); }
+   666→   666→    } catch { toast.error('خطأ'); }
+   667→   667→  }, []);
+   668→   668→
+   669→   669→  // Change password
+   670→   670→  const changePassword = useCallback(async () => {
+   671→   671→    if (!newPass || newPass.length < 6) { toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+   672→   672→    if (newPass !== confirmPass) { toast.error('كلمة المرور غير متطابقة'); return; }
+   673→   673→    setPassLoading(true);
+   674→   674→    try {
+   675→   675→      const res = await fetch('/api/super-admin/password', {
+   676→   676→        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+   677→   677→        body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
+   678→   678→      });
+   679→   679→      if (res.ok) { toast.success('تم تغيير كلمة المرور'); setCurrentPass(''); setNewPass(''); setConfirmPass(''); clearVerifyCache(); }
+   680→   680→      else { const d = await res.json().catch(() => ({})); toast.error(d.error || 'فشل تغيير كلمة المرور'); }
+   681→   681→    } catch { toast.error('خطأ'); }
+   682→   682→    setPassLoading(false);
+   683→   683→  }, [currentPass, newPass, confirmPass]);
+   684→   684→
+   685→   685→  // Derived data
+   686→   686→  const filteredShops = shops.filter((s) =>
+   687→   687→    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+   688→   688→    s.slug.toLowerCase().includes(searchQuery.toLowerCase())
+   689→   689→  );
+   690→   690→  const filteredOrders = recentOrders.filter((o) => {
+   691→   691→    const matchSearch =
+   692→   692→      (o.reference || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+   693→   693→      (o.shopName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+   694→   694→      (o.serviceName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+   695→   695→      (o.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+   696→   696→      (o.customer?.phone || '').includes(searchQuery);
+   697→   697→    const matchStatus = orderStatusFilter === 'all' || o.status === orderStatusFilter;
+   698→   698→    return matchSearch && matchStatus;
+   699→   699→  });
+   700→   700→  const totalOrders = shops.reduce((sum, s) => sum + (s._count?.orders || 0), 0);
+   701→   701→  const activeShops = shops.filter((s) => s.isActive).length;
+   702→   702→
+   703→   703→  // Unique customers from orders
+   704→   704→  const uniqueCustomers = useMemo(() => {
+   705→   705→    const map = new Map<string, { name: string; phone: string; orders: number; total: number; lastOrder: string }>();
+   706→   706→    for (const o of recentOrders) {
+   707→   707→      const phone = o.customer?.phone || '—';
+   708→   708→      const name = o.customer?.name || '—';
+   709→   709→      const existing = map.get(phone);
+   710→   710→      if (existing) { existing.orders += 1; existing.total += (o.total || 0); if (o.createdAt > existing.lastOrder) existing.lastOrder = o.createdAt; }
+   711→   711→      else map.set(phone, { name, phone, orders: 1, total: o.total || 0, lastOrder: o.createdAt });
+   712→   712→    }
+   713→   713→    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+   714→   714→  }, [recentOrders]);
+   715→   715→
+   716→   716→  const dailyOrdersArr = dailyData.map((d) => d.orders);
+   717→   717→  const dailyRevenueArr = dailyData.map((d) => d.revenue);
+   718→   718→
+   719→   719→  // ===== Sidebar =====
+   720→   720→  const sidebarSections: SidebarSection[] = [
+   721→   721→    {
+   722→   722→      title: 'القائمة',
+   723→   723→      items: [
+   724→   724→        { key: 'dashboard', label: 'الرئيسية', icon: LayoutDashboard },
+   725→   725→        { key: 'shops', label: 'المتاجر', icon: Store, badge: shops.length || undefined },
+   726→   726→        { key: 'orders', label: 'الطلبات', icon: ShoppingCart, badge: recentOrders.length || undefined },
+   727→   727→      ],
+   728→   728→    },
+   729→   729→    {
+   730→   730→      title: 'البيانات',
+   731→   731→      items: [
+   732→   732→        { key: 'analytics', label: 'التحليلات', icon: BarChart3 },
+   733→   733→        { key: 'customers', label: 'العملاء', icon: Users, badge: uniqueCustomers.length || undefined },
+   734→   734→      ],
+   735→   735→    },
+   736→   736→    {
+   737→   737→      title: 'النظام',
+   738→   738→      items: [
+   739→   739→        { key: 'settings', label: 'الإعدادات', icon: Settings },
+   740→   740→        { key: 'team', label: 'الفريق والأمان', icon: UsersRound },
+   741→   741→      ],
+   742→   742→    },
+   743→   743→  ];
+   744→   744→
+   745→   745→  const sidebarLogo = (
+   746→   746→    <div className="flex items-center gap-3 overflow-hidden">
+   747→   747→      <Image src="/n-sm.png" alt="طيف" width={32} height={32} className="w-8 h-8 rounded-lg object-contain shrink-0 shadow-sm" />
+   748→   748→      <span className="font-bold text-sidebar-foreground text-sm truncate">طيف إدارة المنصة</span>
+   749→   749→    </div>
+   750→   750→  );
+   751→   751→
+   752→   752→  const sidebarFooter = (
+   753→   753→    <div className="flex items-center justify-between">
+   754→   754→      <span className="text-xs text-sidebar-foreground/50 truncate">{adminName}</span>
+   755→   755→      <ThemeToggle className="h-8 w-8" />
+   756→   756→    </div>
+   757→   757→  );
+   758→   758→
+   759→   759→  const tabTitle: Record<string, string> = {
+   760→   760→    dashboard: 'الرئيسية', shops: 'المتاجر', orders: 'الطلبات',
+   761→   761→    analytics: 'التحليلات', customers: 'العملاء', settings: 'الإعدادات', team: 'الفريق والأمان',
+   762→   762→  };
+   763→   763→
+   764→   764→  // ===== Render =====
+   765→   765→  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl"><Skeleton className="w-48 h-48 rounded-2xl" /></div>;
+   766→   766→  if (!authenticated) return <InlineLoginGate onUnlock={handleUnlock} />;
+   767→   767→
+   768→   768→  return (
+   769→   769→    <div className="min-h-screen flex bg-background" dir="rtl">
+   770→   770→      <DashboardSidebar
+   771→   771→        sections={sidebarSections} activeKey={activeTab} onNavigate={setActiveTab}
+   772→   772→        logo={sidebarLogo} footer={sidebarFooter}
+   773→   773→        collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+   774→   774→        mobileOpen={mobileMenuOpen} onMobileToggle={() => setMobileMenuOpen((v) => !v)}
+   775→   775→      />
+   776→   776→
+   777→   777→      <div className="flex flex-1 flex-col min-w-0">
+   778→   778→        {/* Header */}
+   779→   779→        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-sm border-b shadow-sm">
+   780→   780→          <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+   781→   781→            <div className="flex items-center gap-3">
+   782→   782→              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="القائمة">
+   783→   783→                <Menu className="h-5 w-5" />
+   784→   784→              </Button>
+   785→   785→              <div>
+   786→   786→                <h1 className="text-sm font-bold">{tabTitle[activeTab] || ''}</h1>
+   787→   787→                <p className="text-[10px] text-muted-foreground">مرحباً، {adminName}</p>
+   788→   788→              </div>
+   789→   789→            </div>
+   790→   790→            <div className="flex items-center gap-2">
+   791→   791→              <Button variant="outline" size="sm" onClick={fetchData} disabled={refreshing} className="gap-1.5"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">{refreshing ? 'جارٍ التحديث...' : 'تحديث'}</span></Button>
+   792→   792→              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-rose-500"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
+   793→   793→            </div>
+   794→   794→          </div>
+   795→   795→        </header>
+   796→   796→
+   797→   797→        <main className="px-4 sm:px-6 pt-6 pb-8 w-full flex-1 overflow-y-auto">
+   798→   798→          <AnimatePresence mode="wait">
+   799→   799→            {/* ====== DASHBOARD TAB ====== */}
+   800→   800→            {activeTab === 'dashboard' && (
+   801→   801→              <motion.div key="dashboard" {...fadeIn} className="space-y-6">
+   802→   802→                {/* KPI Cards */}
+   803→   803→                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+   804→   804→                  {[
+   805→   805→                    { label: 'إجمالي الطلبات', value: totalOrders, icon: ShoppingCart, color: 'from-amber-400 to-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', sub: `${todayOrders} اليوم` },
+   806→   806→                    { label: 'الإيرادات', value: formatDA(totalRevenue), icon: DollarSign, color: 'from-emerald-400 to-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30', sub: `${formatDA(monthRevenue)} هذا الشهر` },
+   807→   807→                    { label: 'المتاجر', value: shops.length, icon: Store, color: 'from-violet-400 to-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30', sub: `${activeShops} نشطة` },
+   808→   808→                    { label: 'طلبات اليوم', value: todayOrders, icon: TrendingUp, color: 'from-sky-400 to-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/30', sub: `${uniqueCustomers.length} عميل` },
+   809→   809→                  ].map((c, i) => (
+   810→   810→                    <motion.div key={c.label} {...fadeIn} transition={{ delay: i * 0.06 }}>
+   811→   811→                      <Card className={`${c.bg} border-0 shadow-sm`}>
+   812→   812→                        <CardContent className="p-4">
+   813→   813→                          <div className="flex items-center justify-between">
+   814→   814→                            <div>
+   815→   815→                              <p className="text-xs text-muted-foreground mb-0.5">{c.label}</p>
+   816→   816→                              <p className="text-xl font-bold tabular-nums">{c.value}</p>
+   817→   817→                              <p className="text-[10px] text-muted-foreground mt-1">{c.sub}</p>
+   818→   818→                            </div>
+   819→   819→                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm`}>
+   820→   820→                              <c.icon className="h-5 w-5 text-white" />
+   821→   821→                            </div>
+   822→   822→                          </div>
+   823→   823→                        </CardContent>
+   824→   824→                      </Card>
+   825→   825→                    </motion.div>
+   826→   826→                  ))}
+   827→   827→                </div>
+   828→   828→
+   829→   829→                {/* 7-Day Chart + Status Distribution */}
+   830→   830→                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   831→   831→                  <Card className="lg:col-span-2">
+   832→   832→                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">إحصائيات 7 أيام</CardTitle><CardDescription>الطلبات اليومية والإيرادات</CardDescription></CardHeader>
+   833→   833→                    <CardContent>
+   834→   834→                      <div className="grid grid-cols-2 gap-4">
+   835→   835→                        <div>
+   836→   836→                          <p className="text-xs text-muted-foreground mb-2">الطلبات</p>
+   837→   837→                          <MiniBarChart data={dailyOrdersArr} color="bg-amber-400" />
+   838→   838→                          <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+   839→   839→                            <span>{dailyData[0]?.date?.slice(5) || ''}</span>
+   840→   840→                            <span>{dailyData[dailyData.length - 1]?.date?.slice(5) || ''}</span>
+   841→   841→                          </div>
+   842→   842→                        </div>
+   843→   843→                        <div>
+   844→   844→                          <p className="text-xs text-muted-foreground mb-2">الإيرادات</p>
+   845→   845→                          <MiniBarChart data={dailyRevenueArr} color="bg-emerald-400" />
+   846→   846→                          <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+   847→   847→                            <span>{dailyData[0]?.date?.slice(5) || ''}</span>
+   848→   848→                            <span>{dailyData[dailyData.length - 1]?.date?.slice(5) || ''}</span>
+   849→   849→                          </div>
+   850→   850→                        </div>
+   851→   851→                      </div>
+   852→   852→                    </CardContent>
+   853→   853→                  </Card>
+   854→   854→                  <Card>
+   855→   855→                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">توزيع الحالات</CardTitle></CardHeader>
+   856→   856→                    <CardContent className="space-y-3">
+   857→   857→                      {Object.entries(statusCounts).length === 0 && <p className="text-xs text-muted-foreground">لا توجد بيانات</p>}
+   858→   858→                      {Object.entries(statusCounts).map(([status, count]) => {
+   859→   859→                        const pct = totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0;
+   860→   860→                        return (
+   861→   861→                          <div key={status} className="space-y-1">
+   862→   862→                            <div className="flex items-center justify-between text-xs">
+   863→   863→                              <span>{statusLabelAr(status)}</span>
+   864→   864→                              <span className="tabular-nums">{count} ({pct}%)</span>
+   865→   865→                            </div>
+   866→   866→                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+   867→   867→                              <div className={`h-full rounded-full ${status === 'delivered' ? 'bg-emerald-500' : status === 'pending' ? 'bg-amber-500' : status === 'printing' ? 'bg-blue-500' : status === 'cancelled' ? 'bg-rose-500' : 'bg-violet-500'}`} style={{ width: `${pct}%` }} />
+   868→   868→                            </div>
+   869→   869→                          </div>
+   870→   870→                        );
+   871→   871→                      })}
+   872→   872→                    </CardContent>
+   873→   873→                  </Card>
+   874→   874→                </div>
+   875→   875→
+   876→   876→                {/* Top Shops + Recent Activity */}
+   877→   877→                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   878→   878→                  <Card>
+   879→   879→                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">أفضل المتاجر</CardTitle><CardDescription>حسب عدد الطلبات</CardDescription></CardHeader>
+   880→   880→                    <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+   881→   881→                      {shops.sort((a, b) => (b._count?.orders || 0) - (a._count?.orders || 0)).slice(0, 8).map((shop) => (
+   882→   882→                        <div key={shop.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+   883→   883→                          <div className="flex items-center gap-2">
+   884→   884→                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20 flex items-center justify-center text-sm">🖨️</div>
+   885→   885→                            <div><p className="text-xs font-medium">{shop.name}</p><p className="text-[10px] text-muted-foreground font-mono" dir="ltr">{shop.slug}</p></div>
+   886→   886→                          </div>
+   887→   887→                          <div className="text-left"><p className="text-xs font-bold tabular-nums">{shop._count?.orders || 0}</p><p className="text-[10px] text-muted-foreground">طلب</p></div>
+   888→   888→                        </div>
+   889→   889→                      ))}
+   890→   890→                    </CardContent>
+   891→   891→                  </Card>
+   892→   892→                  <Card>
+   893→   893→                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">آخر النشاطات</CardTitle></CardHeader>
+   894→   894→                    <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+   895→   895→                      {recentOrders.slice(0, 8).map((order) => (
+   896→   896→                        <div key={order.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+   897→   897→                          <div className="flex items-center gap-2">
+   898→   898→                            <div className={`w-1.5 h-8 rounded-full ${order.status === 'delivered' ? 'bg-emerald-500' : order.status === 'pending' ? 'bg-amber-500' : order.status === 'printing' ? 'bg-blue-500' : 'bg-muted-foreground/30'}`} />
+   899→   899→                            <div>
+   900→   900→                              <p className="text-xs font-medium">{order.serviceName || order.serviceType}</p>
+   901→   901→                              <p className="text-[10px] text-muted-foreground">{order.shopName} · {order.customer?.name || '—'}</p>
+   902→   902→                            </div>
+   903→   903→                          </div>
+   904→   904→                          <div className="text-left"><p className="text-xs font-bold tabular-nums">{formatDA(order.total)}</p><p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p></div>
+   905→   905→                        </div>
+   906→   906→                      ))}
+   907→   907→                    </CardContent>
+   908→   908→                  </Card>
+   909→   909→                </div>
+   910→   910→              </motion.div>
+   911→   911→            )}
+   912→   912→
+   913→   913→            {/* ====== SHOPS TAB ====== */}
+   914→   914→            {activeTab === 'shops' && (
+   915→   915→              <motion.div key="shops" {...fadeIn} className="space-y-4">
+   916→   916→                <div className="flex items-center justify-between flex-wrap gap-2">
+   917→   917→                  <div className="relative max-w-sm flex-1">
+   918→   918→                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   919→   919→                    <Input placeholder="بحث في المتاجر..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+   920→   920→                  </div>
+   921→   921→                  <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+   922→   922→                    <Plus className="h-4 w-4" />إنشاء متجر
+   923→   923→                  </Button>
+   924→   924→                </div>
+   925→   925→                {filteredShops.length === 0 ? (
+   926→   926→                  <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-4 py-16"><Store className="h-12 w-12 text-muted-foreground/30" /><h3 className="font-bold">لا توجد متاجر</h3><p className="text-sm text-muted-foreground">أنشئ أول متجر للبدء</p></CardContent></Card>
+   927→   927→                ) : (
+   928→   928→                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+   929→   929→                    {filteredShops.map((shop, idx) => (
+   930→   930→                      <motion.div key={shop.id} {...fadeIn} transition={{ delay: idx * 0.03 }}>
+   931→   931→                        <Card className="hover:shadow-md transition-shadow">
+   932→   932→                          <CardContent className="p-4 space-y-3">
+   933→   933→                            <div className="flex items-start justify-between">
+   934→   934→                              <div className="flex items-center gap-3">
+   935→   935→                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20 flex items-center justify-center text-lg">🖨️</div>
+   936→   936→                                <div>
+   937→   937→                                  <h3 className="font-bold text-sm">{shop.name}</h3>
+   938→   938→                                  <p className="text-[11px] text-muted-foreground font-mono" dir="ltr">{shop.slug}</p>
+   939→   939→                                </div>
+   940→   940→                              </div>
+   941→   941→                              <Badge variant={shop.isActive ? 'default' : 'secondary'} className={shop.isActive ? 'bg-emerald-500 text-white' : ''}>
+   942→   942→                                {shop.isActive ? 'نشط' : 'متوقف'}
+   943→   943→                              </Badge>
+   944→   944→                            </div>
+   945→   945→                            <div className="grid grid-cols-2 gap-2 text-xs">
+   946→   946→                              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50"><ShoppingCart className="h-3 w-3 text-muted-foreground" /><span>{shop._count?.orders || 0} طلب</span></div>
+   947→   947→                              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-muted/50"><CalendarDays className="h-3 w-3 text-muted-foreground" /><span>{getTimeAgoShort(shop.createdAt)}</span></div>
+   948→   948→                            </div>
+   949→   949→                            {shop.ownerName && <p className="text-xs text-muted-foreground">👤 {shop.ownerName}{shop.phone ? ` · ${shop.phone}` : ''}</p>}
+   950→   950→                            <div className="flex flex-wrap gap-1.5 pt-1">
+   951→   951→                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => window.open(`/s/${shop.slug}`, '_blank')}><Eye className="h-3 w-3" />عرض</Button>
+   952→   952→                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => window.open(`/s/${shop.slug}?admin=1`, '_blank')}><Shield className="h-3 w-3" />إدارة</Button>
+   953→   953→                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setEditTarget(shop)}><Pencil className="h-3 w-3" />تعديل</Button>
+   954→   954→                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => setShareTarget(shop)}><Share2 className="h-3 w-3" />مشاركة</Button>
+   955→   955→                              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => handleCopyPin(shop)}><Key className="h-3 w-3" />PIN</Button>
+   956→   956→                              <Button
+   957→   957→                                size="sm"
+   958→   958→                                variant="outline"
+   959→   959→                                className={"gap-1 text-xs " + (shop.isActive ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700')}
+   960→   960→                                onClick={() => handleToggleShop(shop)}
+   961→   961→                              >
+   962→   962→                                {shop.isActive ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
+   963→   963→                                {shop.isActive ? 'إيقاف' : 'تفعيل'}
+   964→   964→                              </Button>
+   965→   965→                              <Button size="sm" variant="outline" className="gap-1 text-xs text-rose-500 hover:text-rose-600" onClick={() => setDeleteTarget(shop)}><Trash2 className="h-3 w-3" /></Button>
+   966→   966→                            </div>
+   967→   967→                          </CardContent>
+   968→   968→                        </Card>
+   969→   969→                      </motion.div>
+   970→   970→                    ))}
+   971→   971→                  </div>
+   972→   972→                )}
+   973→   973→              </motion.div>
+   974→   974→            )}
+   975→   975→
+   976→   976→            {/* ====== ORDERS TAB ====== */}
+   977→   977→            {activeTab === 'orders' && (
+   978→   978→              <motion.div key="orders" {...fadeIn} className="space-y-4">
+   979→   979→                <div className="flex items-center justify-between flex-wrap gap-2">
+   980→   980→                  <div className="flex items-center gap-2 flex-1 flex-wrap">
+   981→   981→                    <div className="relative max-w-sm flex-1 min-w-[200px]">
+   982→   982→                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   983→   983→                      <Input placeholder="بحث بالرقم أو المتجر أو الخدمة..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+   984→   984→                    </div>
+   985→   985→                    <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+   986→   986→                      <SelectTrigger className="w-[140px]"><SelectValue placeholder="الحالة" /></SelectTrigger>
+   987→   987→                      <SelectContent>
+   988→   988→                        <SelectItem value="all">جميع الحالات</SelectItem>
+   989→   989→                        <SelectItem value="pending">قيد الانتظار</SelectItem>
+   990→   990→                        <SelectItem value="printing">قيد الطباعة</SelectItem>
+   991→   991→                        <SelectItem value="ready">جاهز</SelectItem>
+   992→   992→                        <SelectItem value="delivered">تم التسليم</SelectItem>
+   993→   993→                        <SelectItem value="cancelled">ملغى</SelectItem>
+   994→   994→                      </SelectContent>
+   995→   995→                    </Select>
+   996→   996→                  </div>
+   997→   997→                  <Badge variant="outline" className="text-xs">{filteredOrders.length} طلب</Badge>
+   998→   998→                </div>
+   999→   999→                {filteredOrders.length === 0 ? (
+  1000→  1000→                  <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-3 py-16"><ShoppingCart className="h-12 w-12 text-muted-foreground/30" /><p className="text-muted-foreground">لا توجد طلبات</p></CardContent></Card>
+  1001→  1001→                ) : (
+  1002→  1002→                  <div className="space-y-2">
+  1003→  1003→                    {filteredOrders.map((order: any) => (
+  1004→  1004→                      <Card key={order.id} className="hover:shadow-sm transition-shadow">
+  1005→  1005→                        <CardContent className="p-3 sm:p-4">
+  1006→  1006→                          <div className="flex items-center justify-between gap-2">
+  1007→  1007→                            <div className="flex items-center gap-3 min-w-0">
+  1008→  1008→                              <div className={`w-1 h-10 rounded-full shrink-0 ${order.status === 'delivered' ? 'bg-emerald-500' : order.status === 'pending' ? 'bg-amber-500' : order.status === 'printing' ? 'bg-blue-500' : order.status === 'cancelled' ? 'bg-rose-500' : 'bg-violet-500'}`} />
+  1009→  1009→                              <div className="min-w-0">
+  1010→  1010→                                <div className="flex items-center gap-2 flex-wrap">
+  1011→  1011→                                  <span className="font-mono text-xs text-muted-foreground">{order.reference}</span>
+  1012→  1012→                                  <Badge variant="secondary" className={`${STATUS_COLORS[order.status] || ''} text-white text-[10px] px-1.5 py-0`}>{statusLabelAr(order.status)}</Badge>
+  1013→  1013→                                </div>
+  1014→  1014→                                <p className="text-sm font-medium truncate">{order.serviceName || order.serviceType}</p>
+  1015→  1015→                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+  1016→  1016→                                  <span>{order.customer?.name || '—'}</span>
+  1017→  1017→                                  <span>·</span>
+  1018→  1018→                                  <a href={`/s/${order.shopSlug}?admin=1`} target="_blank" className="text-amber-600 hover:underline">{order.shopName}</a>
+  1019→  1019→                                </div>
+  1020→  1020→                              </div>
+  1021→  1021→                            </div>
+  1022→  1022→                            <div className="text-left shrink-0">
+  1023→  1023→                              <p className="text-sm font-bold tabular-nums">{formatDA(order.total)}</p>
+  1024→  1024→                              <p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p>
+  1025→  1025→                            </div>
+  1026→  1026→                          </div>
+  1027→  1027→                        </CardContent>
+  1028→  1028→                      </Card>
+  1029→  1029→                    ))}
+  1030→  1030→                  </div>
+  1031→  1031→                )}
+  1032→  1032→              </motion.div>
+  1033→  1033→            )}
+  1034→  1034→
+  1035→  1035→            {/* ====== ANALYTICS TAB ====== */}
+  1036→  1036→            {activeTab === 'analytics' && (
+  1037→  1037→              <motion.div key="analytics" {...fadeIn} className="space-y-6">
+  1038→  1038→                {/* Monthly Summary */}
+  1039→  1039→                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  1040→  1040→                  {[
+  1041→  1041→                    { label: 'إيرادات الشهر', value: formatDA(monthRevenue), icon: DollarSign, color: 'from-emerald-400 to-emerald-600' },
+  1042→  1042→                    { label: 'طلبات الشهر', value: monthOrders, icon: ShoppingCart, color: 'from-amber-400 to-amber-600' },
+  1043→  1043→                    { label: 'متوسط قيمة الطلب', value: formatDA(monthOrders > 0 ? Math.round(monthRevenue / monthOrders) : 0), icon: TrendingUp, color: 'from-violet-400 to-violet-600' },
+  1044→  1044→                    { label: 'المتاجر النشطة', value: `${activeShops}/${shops.length}`, icon: Store, color: 'from-sky-400 to-sky-600' },
+  1045→  1045→                  ].map((c, i) => (
+  1046→  1046→                    <motion.div key={c.label} {...fadeIn} transition={{ delay: i * 0.06 }}>
+  1047→  1047→                      <Card className="border-0 shadow-sm">
+  1048→  1048→                        <CardContent className="p-4">
+  1049→  1049→                          <div className="flex items-center justify-between">
+  1050→  1050→                            <div><p className="text-xs text-muted-foreground mb-1">{c.label}</p><p className="text-lg font-bold tabular-nums">{c.value}</p></div>
+  1051→  1051→                            <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${c.color} flex items-center justify-center`}><c.icon className="h-4 w-4 text-white" /></div>
+  1052→  1052→                          </div>
+  1053→  1053→                        </CardContent>
+  1054→  1054→                      </Card>
+  1055→  1055→                    </motion.div>
+  1056→  1056→                  ))}
+  1057→  1057→                </div>
+  1058→  1058→
+  1059→  1059→                {/* 7-Day Revenue Chart */}
+  1060→  1060→                <Card>
+  1061→  1061→                  <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">الإيرادات اليومية — آخر 7 أيام</CardTitle></CardHeader>
+  1062→  1062→                  <CardContent>
+  1063→  1063→                    {dailyData.length > 0 ? (
+  1064→  1064→                      <div className="space-y-1">
+  1065→  1065→                        {dailyData.map((d) => {
+  1066→  1066→                          const maxRev = Math.max(...dailyData.map((x) => x.revenue), 1);
+  1067→  1067→                          const pct = (d.revenue / maxRev) * 100;
+  1068→  1068→                          return (
+  1069→  1069→                            <div key={d.date} className="flex items-center gap-2 sm:gap-3">
+  1070→  1070→                              <span className="text-[11px] text-muted-foreground w-14 sm:w-16 shrink-0 tabular-nums">{d.date?.slice(5)}</span>
+  1071→  1071→                              <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
+  1072→  1072→                                <div className="h-full bg-gradient-to-l from-amber-400 to-amber-600 rounded transition-all duration-700" style={{ width: `${Math.max(pct, 1)}%` }} />
+  1073→  1073→                              </div>
+  1074→  1074→                              <span className="text-xs font-medium tabular-nums w-16 sm:w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
+  1075→  1075→                              <span className="text-[10px] text-muted-foreground w-8 text-left shrink-0">{d.orders} طلب</span>
+  1076→  1076→                            </div>
+  1077→  1077→                          );
+  1078→  1078→                        })}
+  1079→  1079→                      </div>
+  1080→  1080→                    ) : <p className="text-sm text-muted-foreground">لا توجد بيانات</p>}
+  1081→  1081→                  </CardContent>
+  1082→  1082→                </Card>
+  1083→  1083→
+  1084→  1084→                {/* Status + Service Distribution */}
+  1085→  1085→                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  1086→  1086→                  <Card>
+  1087→  1087→                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">توزيع حالات الطلبات</CardTitle></CardHeader>
+  1088→  1088→                    <CardContent className="space-y-3">
+  1089→  1089→                      {Object.entries(statusCounts).sort((a, b) => b[1] - a[1]).map(([status, count]) => {
+  1090→  1090→                        const pct = totalOrders > 0 ? Math.round((count / totalOrders) * 100) : 0;
+  1091→  1091→                        const colors: Record<string, string> = { pending: 'bg-amber-500', printing: 'bg-blue-500', ready: 'bg-violet-500', delivered: 'bg-emerald-500', cancelled: 'bg-rose-500' };
+  1092→  1092→                        return (
+  1093→  1093→                          <div key={status} className="space-y-1">
+  1094→  1094→                            <div className="flex items-center justify-between text-xs"><span>{statusLabelAr(status)}</span><span className="tabular-nums font-medium">{count} ({pct}%)</span></div>
+  1095→  1095→                            <div className="h-2 bg-muted rounded-full overflow-hidden"><div className={`h-full rounded-full ${colors[status] || 'bg-muted-foreground'}`} style={{ width: `${pct}%` }} /></div>
+  1096→  1096→                          </div>
+  1097→  1097→                        );
+  1098→  1098→                      })}
+  1099→  1099→                    </CardContent>
+  1100→  1100→                  </Card>
+  1101→  1101→                  <Card>
+  1102→  1102→                    <CardHeader className="pb-2"><CardTitle className="text-sm font-bold">أفضل العملاء</CardTitle><CardDescription>حسب إجمالي الإنفاق</CardDescription></CardHeader>
+  1103→  1103→                    <CardContent className="space-y-2 max-h-72 overflow-y-auto">
+  1104→  1104→                      {uniqueCustomers.slice(0, 10).map((c, i) => (
+  1105→  1105→                        <div key={c.phone + i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+  1106→  1106→                          <div className="flex items-center gap-2">
+  1107→  1107→                            <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+  1108→  1108→                            <div><p className="text-xs font-medium">{c.name}</p><p className="text-[10px] text-muted-foreground" dir="ltr">{c.phone}</p></div>
+  1109→  1109→                          </div>
+  1110→  1110→                          <div className="text-left"><p className="text-xs font-bold tabular-nums">{formatDA(c.total)}</p><p className="text-[10px] text-muted-foreground">{c.orders} طلب</p></div>
+  1111→  1111→                        </div>
+  1112→  1112→                      ))}
+  1113→  1113→                      {uniqueCustomers.length === 0 && <p className="text-xs text-muted-foreground">لا توجد بيانات</p>}
+  1114→  1114→                    </CardContent>
+  1115→  1115→                  </Card>
+  1116→  1116→                </div>
+  1117→  1117→              </motion.div>
+  1118→  1118→            )}
+  1119→  1119→
+  1120→  1120→            {/* ====== CUSTOMERS TAB ====== */}
+  1121→  1121→            {activeTab === 'customers' && (
+  1122→  1122→              <motion.div key="customers" {...fadeIn} className="space-y-4">
+  1123→  1123→                <div className="flex items-center justify-between flex-wrap gap-2">
+  1124→  1124→                  <div className="relative max-w-sm flex-1">
+  1125→  1125→                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+  1126→  1126→                    <Input placeholder="بحث بالاسم أو الهاتف..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9" />
+  1127→  1127→                  </div>
+  1128→  1128→                  <Badge variant="outline">{uniqueCustomers.length} عميل فريد</Badge>
+  1129→  1129→                </div>
+  1130→  1130→                {uniqueCustomers.length === 0 ? (
+  1131→  1131→                  <Card className="border-dashed"><CardContent className="flex flex-col items-center gap-3 py-16"><Users className="h-12 w-12 text-muted-foreground/30" /><p className="text-muted-foreground">لا يوجد عملاء</p></CardContent></Card>
+  1132→  1132→                ) : (
+  1133→  1133→                  <div className="space-y-2">
+  1134→  1134→                    {uniqueCustomers
+  1135→  1135→                      .filter((c) => (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (c.phone || '').includes(searchQuery))
+  1136→  1136→                      .map((c, i) => (
+  1137→  1137→                      <Card key={c.phone + i} className="hover:shadow-sm transition-shadow">
+  1138→  1138→                        <CardContent className="p-3 sm:p-4">
+  1139→  1139→                          <div className="flex items-center justify-between gap-3">
+  1140→  1140→                            <div className="flex items-center gap-3">
+  1141→  1141→                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20 flex items-center justify-center text-sm font-bold text-amber-700 dark:text-amber-300">
+  1142→  1142→                                {(c.name || '?')[0]}
+  1143→  1143→                              </div>
+  1144→  1144→                              <div>
+  1145→  1145→                                <p className="text-sm font-medium">{c.name}</p>
+  1146→  1146→                                <p className="text-xs text-muted-foreground" dir="ltr">{c.phone}</p>
+  1147→  1147→                              </div>
+  1148→  1148→                            </div>
+  1149→  1149→                            <div className="text-left">
+  1150→  1150→                              <p className="text-sm font-bold tabular-nums">{formatDA(c.total)}</p>
+  1151→  1151→                              <p className="text-[10px] text-muted-foreground">{c.orders} طلب · {getTimeAgoShort(c.lastOrder)}</p>
+  1152→  1152→                            </div>
+  1153→  1153→                          </div>
+  1154→  1154→                        </CardContent>
+  1155→  1155→                      </Card>
+  1156→  1156→                    ))}
+  1157→  1157→                  </div>
+  1158→  1158→                )}
+  1159→  1159→              </motion.div>
+  1160→  1160→            )}
+  1161→  1161→
+  1162→  1162→            {/* ====== SETTINGS TAB ====== */}
+  1163→  1163→            {activeTab === 'settings' && (
+  1164→  1164→              <motion.div key="settings" {...fadeIn} className="space-y-6">
+  1165→  1165→                {settingsLoading && !platformSettings ? (
+  1166→  1166→                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)}</div>
+  1167→  1167→                ) : platformSettings ? (
+  1168→  1168→                  <>
+  1169→  1169→                    {/* Platform Info */}
+  1170→  1170→                    <Card>
+  1171→  1171→                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Globe className="h-4 w-4" />معلومات المنصة</CardTitle></CardHeader>
+  1172→  1172→                      <CardContent className="space-y-4">
+  1173→  1173→                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  1174→  1174→                          <div className="space-y-2"><Label>اسم المنصة</Label><Input value={platformSettings.platformName} onChange={(e) => setPlatformSettings({ ...platformSettings, platformName: e.target.value })} /></div>
+  1175→  1175→                          <div className="space-y-2"><Label>الشعار النصي</Label><Input value={platformSettings.platformTagline} onChange={(e) => setPlatformSettings({ ...platformSettings, platformTagline: e.target.value })} /></div>
+  1176→  1176→                          <div className="space-y-2"><Label>البريد الإلكتروني</Label><Input value={platformSettings.platformEmail} onChange={(e) => setPlatformSettings({ ...platformSettings, platformEmail: e.target.value })} dir="ltr" /></div>
+  1177→  1177→                          <div className="space-y-2"><Label>الهاتف</Label><Input value={platformSettings.platformPhone} onChange={(e) => setPlatformSettings({ ...platformSettings, platformPhone: e.target.value })} dir="ltr" /></div>
+  1178→  1178→                          <div className="space-y-2"><Label>واتساب</Label><Input value={platformSettings.platformWhatsapp} onChange={(e) => setPlatformSettings({ ...platformSettings, platformWhatsapp: e.target.value })} dir="ltr" placeholder="213xxxxxxxxx" /></div>
+  1179→  1179→                          <div className="space-y-2"><Label>وصف المنصة</Label><Textarea value={platformSettings.platformDescription} onChange={(e) => setPlatformSettings({ ...platformSettings, platformDescription: e.target.value })} rows={2} /></div>
+  1180→  1180→                        </div>
+  1181→  1181→                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+  1182→  1182→                          <Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+  1183→  1183→                        </Button>
+  1184→  1184→                      </CardContent>
+  1185→  1185→                    </Card>
+  1186→  1186→
+  1187→  1187→                    {/* General Settings */}
+  1188→  1188→                    <Card>
+  1189→  1189→                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Settings className="h-4 w-4" />الإعدادات العامة</CardTitle></CardHeader>
+  1190→  1190→                      <CardContent className="space-y-4">
+  1191→  1191→                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  1192→  1192→                          <div className="space-y-2"><Label>الدولة الافتراضية</Label>
+  1193→  1193→                            <Select value={platformSettings.defaultCountry} onValueChange={(v) => setPlatformSettings({ ...platformSettings, defaultCountry: v })}>
+  1194→  1194→                              <SelectTrigger><SelectValue /></SelectTrigger>
+  1195→  1195→                              <SelectContent>{ARAB_COUNTRIES.map((c) => (<SelectItem key={c.code} value={c.code}>{c.flag} {c.name_ar}</SelectItem>))}</SelectContent>
+  1196→  1196→                            </Select>
+  1197→  1197→                          </div>
+  1198→  1198→                          <div className="space-y-2"><Label>اللغة الافتراضية</Label>
+  1199→  1199→                            <Select value={platformSettings.defaultLanguage} onValueChange={(v) => setPlatformSettings({ ...platformSettings, defaultLanguage: v })}>
+  1200→  1200→                              <SelectTrigger><SelectValue /></SelectTrigger>
+  1201→  1201→                              <SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="fr">الفرنسية</SelectItem><SelectItem value="en">الإنجليزية</SelectItem></SelectContent>
+  1202→  1202→                            </Select>
+  1203→  1203→                          </div>
+  1204→  1204→                          <div className="space-y-2"><Label>العملة الافتراضية</Label>
+  1205→  1205→                            <Select value={platformSettings.defaultCurrency} onValueChange={(v) => setPlatformSettings({ ...platformSettings, defaultCurrency: v })}>
+  1206→  1206→                              <SelectTrigger><SelectValue /></SelectTrigger>
+  1207→  1207→                              <SelectContent><SelectItem value="DZD">دينار جزائري (DZD)</SelectItem><SelectItem value="TND">دينار تونسي (TND)</SelectItem><SelectItem value="MAD">درهم مغربي (MAD)</SelectItem><SelectItem value="SAR">ريال سعودي (SAR)</SelectItem><SelectItem value="AED">درهم إماراتي (AED)</SelectItem><SelectItem value="EGP">جنيه مصري (EGP)</SelectItem></SelectContent>
+  1208→  1208→                            </Select>
+  1209→  1209→                          </div>
+  1210→  1210→                          <div className="space-y-2"><Label>مدة التجربة (أيام)</Label><Input type="number" value={platformSettings.defaultTrialDays} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultTrialDays: parseInt(e.target.value) || 30 })} /></div>
+  1211→  1211→                          <div className="space-y-2"><Label>الحد الأقصى للمتاجر</Label><Input type="number" value={platformSettings.maxShops} onChange={(e) => setPlatformSettings({ ...platformSettings, maxShops: parseInt(e.target.value) || 100 })} /></div>
+  1212→  1212→                          <div className="space-y-2"><Label>رسالة الترحيب الافتراضية</Label><Input value={platformSettings.defaultWelcomeMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultWelcomeMessage: e.target.value })} /></div>
+  1213→  1213→                        </div>
+  1214→  1214→                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2"><Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ'}</Button>
+  1215→  1215→                      </CardContent>
+  1216→  1216→                    </Card>
+  1217→  1217→
+  1218→  1218→                    {/* Feature Toggles */}
+  1219→  1219→                    <Card>
+  1220→  1220→                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Zap className="h-4 w-4" />الميزات الافتراضية للمتاجر الجديدة</CardTitle></CardHeader>
+  1221→  1221→                      <CardContent className="space-y-4">
+  1222→  1222→                        {Object.entries({
+  1223→  1223→                          whatsappNotifications: { label: 'إشعارات واتساب', desc: 'إرسال إشعارات الطلبات عبر واتساب' },
+  1224→  1224→                          orderTracking: { label: 'تتبع الطلبات', desc: 'السماح للعملاء بتتبع حالة طلباتهم' },
+  1225→  1225→                          darkMode: { label: 'الوضع الداكن', desc: 'تفعيل المظهر الداكن للمتجر' },
+  1226→  1226→                          repeatOrders: { label: 'إعادة الطلب', desc: 'السماح للعملاء بإعادة طلب سابق' },
+  1227→  1227→                          customerLogin: { label: 'تسجيل العميل', desc: 'تفعيل تسجيل دخول العملاء' },
+  1228→  1228→                          advancedAnalytics: { label: 'التحليلات المتقدمة', desc: 'تفعيل لوحة التحليلات المتقدمة' },
+  1229→  1229→                        }).map(([key, info]) => (
+  1230→  1230→                          <div key={key} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+  1231→  1231→                            <div><p className="text-sm font-medium">{info.label}</p><p className="text-xs text-muted-foreground">{info.desc}</p></div>
+  1232→  1232→                            <Switch
+  1233→  1233→                              checked={!!platformSettings.defaultFeatures?.[key]}
+  1234→  1234→                              onCheckedChange={(v) => setPlatformSettings({ ...platformSettings, defaultFeatures: { ...platformSettings.defaultFeatures, [key]: v } })}
+  1235→  1235→                            />
+  1236→  1236→                          </div>
+  1237→  1237→                        ))}
+  1238→  1238→                        <Button onClick={() => saveSettings({ defaultFeatures: platformSettings.defaultFeatures })} disabled={settingsSaving} className="gap-2"><Save className="h-4 w-4" />حفظ</Button>
+  1239→  1239→                      </CardContent>
+  1240→  1240→                    </Card>
+  1241→  1241→
+  1242→  1242→                    {/* Notification Settings */}
+  1243→  1243→                    <Card>
+  1244→  1244→                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Bell className="h-4 w-4" />إعدادات الإشعارات</CardTitle></CardHeader>
+  1245→  1245→                      <CardContent className="space-y-4">
+  1246→  1246→                        {Object.entries({
+  1247→  1247→                          newOrderSound: { label: 'صوت الطلب الجديد', desc: 'تشغيل صوت عند وصول طلب جديد' },
+  1248→  1248→                          orderStatusChange: { label: 'تغيير حالة الطلب', desc: 'إشعار عند تغيير حالة أي طلب' },
+  1249→  1249→                          dailySummary: { label: 'الملخص اليومي', desc: 'إرسال ملخص يومي للطلبات والإيرادات' },
+  1250→  1250→                          lowBalanceAlert: { label: 'تنبيه الرصيد المنخفض', desc: 'تنبيه عند انخفاض رصيد المنصة' },
+  1251→  1251→                        }).map(([key, info]) => (
+  1252→  1252→                          <div key={key} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+  1253→  1253→                            <div><p className="text-sm font-medium">{info.label}</p><p className="text-xs text-muted-foreground">{info.desc}</p></div>
+  1254→  1254→                            <Switch
+  1255→  1255→                              checked={!!platformSettings.notifications?.[key]}
+  1256→  1256→                              onCheckedChange={(v) => setPlatformSettings({ ...platformSettings, notifications: { ...platformSettings.notifications, [key]: v } })}
+  1257→  1257→                            />
+  1258→  1258→                          </div>
+  1259→  1259→                        ))}
+  1260→  1260→                        <Button onClick={() => saveSettings({ notifications: platformSettings.notifications })} disabled={settingsSaving} className="gap-2"><Save className="h-4 w-4" />حفظ</Button>
+  1261→  1261→                      </CardContent>
+  1262→  1262→                    </Card>
+  1263→  1263→
+  1264→  1264→                    {/* Maintenance Mode */}
+  1265→  1265→                    <Card className={platformSettings.maintenanceMode ? 'border-destructive' : ''}>
+  1266→  1266→                      <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><AlertTriangle className={`h-4 w-4 ${platformSettings.maintenanceMode ? 'text-destructive' : ''}`} />وضع الصيانة</CardTitle></CardHeader>
+  1267→  1267→                      <CardContent className="space-y-4">
+  1268→  1268→                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+  1269→  1269→                          <div><p className="text-sm font-medium">تفعيل وضع الصيانة</p><p className="text-xs text-muted-foreground">سيتم إخفاء جميع المتاجر عن العملاء</p></div>
+  1270→  1270→                          <Switch
+  1271→  1271→                            checked={platformSettings.maintenanceMode}
+  1272→  1272→                            onCheckedChange={(v) => {
+  1273→  1273→                              setPlatformSettings({ ...platformSettings, maintenanceMode: v });
+  1274→  1274→                              saveSettings({ maintenanceMode: v });
+  1275→  1275→                            }}
+  1276→  1276→                          />
+  1277→  1277→                        </div>
+  1278→  1278→                        {platformSettings.maintenanceMode && (
+  1279→  1279→                          <div className="space-y-2">
+  1280→  1280→                            <Label>رسالة الصيانة</Label>
+  1281→  1281→                            <Textarea value={platformSettings.maintenanceMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, maintenanceMessage: e.target.value })} rows={2} />
+  1282→  1282→                            <Button onClick={() => saveSettings({ maintenanceMessage: platformSettings.maintenanceMessage })} disabled={settingsSaving} size="sm" className="gap-1"><Save className="h-3.5 w-3.5" />حفظ الرسالة</Button>
+  1283→  1283→                          </div>
+  1284→  1284→                        )}
+  1285→  1285→                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+  1286→  1286→                          <div><p className="text-sm font-medium">السماح بإنشاء متاجر جديدة</p><p className="text-xs text-muted-foreground">التحكم في إنشاء المتاجر الجديدة</p></div>
+  1287→  1287→                          <Switch
+  1288→  1288→                            checked={platformSettings.allowNewShops}
+  1289→  1289→                            onCheckedChange={(v) => {
+  1290→  1290→                              setPlatformSettings({ ...platformSettings, allowNewShops: v });
+  1291→  1291→                              saveSettings({ allowNewShops: v });
+  1292→  1292→                            }}
+  1293→  1293→                          />
+  1294→  1294→                        </div>
+  1295→  1295→                      </CardContent>
+  1296→  1296→                    </Card>
+  1297→  1297→                  </>
+  1298→  1298→                ) : null}
+  1299→  1299→              </motion.div>
+  1300→  1300→            )}
+  1301→  1301→
+  1302→  1302→            {/* ====== TEAM & SECURITY TAB ====== */}
+  1303→  1303→            {activeTab === 'team' && (
+  1304→  1304→              <motion.div key="team" {...fadeIn} className="space-y-6">
+  1305→  1305→                {/* Password Change */}
+  1306→  1306→                <Card>
+  1307→  1307→                  <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Key className="h-4 w-4" />تغيير كلمة المرور</CardTitle><CardDescription>قم بتغيير كلمة مرور لوحة تحكم المنصة</CardDescription></CardHeader>
+  1308→  1308→                  <CardContent className="space-y-4">
+  1309→  1309→                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  1310→  1310→                      <div className="space-y-2"><Label>كلمة المرور الحالية</Label><Input type="password" value={currentPass} onChange={(e) => setCurrentPass(e.target.value)} dir="ltr" /></div>
+  1311→  1311→                      <div className="space-y-2"><Label>كلمة المرور الجديدة</Label><Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} dir="ltr" /></div>
+  1312→  1312→                      <div className="space-y-2"><Label>تأكيد كلمة المرور</Label><Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} dir="ltr" /></div>
+  1313→  1313→                    </div>
+  1314→  1314→                    <Button onClick={changePassword} disabled={passLoading || !newPass} className="gap-2 bg-gradient-to-l from-amber-500 to-amber-600 text-white">
+  1315→  1315→                      <Lock className="h-4 w-4" />{passLoading ? 'جاري التغيير...' : 'تغيير كلمة المرور'}
+  1316→  1316→                    </Button>
+  1317→  1317→                  </CardContent>
+  1318→  1318→                </Card>
+  1319→  1319→
+  1320→  1320→                {/* Team Members */}
+  1321→  1321→                <Card>
+  1322→  1322→                  <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><UsersRound className="h-4 w-4" />أعضاء الفريق</CardTitle><CardDescription>إدارة أعضاء فريق الإدارة</CardDescription></CardHeader>
+  1323→  1323→                  <CardContent className="space-y-4">
+  1324→  1324→                    {/* Add member form */}
+  1325→  1325→                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3 rounded-lg bg-muted/50">
+  1326→  1326→                      <div className="space-y-1"><Label className="text-xs">الاسم</Label><Input placeholder="اسم العضو" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} className="h-9" /></div>
+  1327→  1327→                      <div className="space-y-1"><Label className="text-xs">البريد الإلكتروني</Label><Input placeholder="email@example.com" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} dir="ltr" className="h-9" /></div>
+  1328→  1328→                      <div className="space-y-1"><Label className="text-xs">الدور</Label>
+  1329→  1329→                        <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+  1330→  1330→                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+  1331→  1331→                          <SelectContent><SelectItem value="admin">مدير</SelectItem><SelectItem value="member">عضو</SelectItem><SelectItem value="viewer">مشاهد</SelectItem></SelectContent>
+  1332→  1332→                        </Select>
+  1333→  1333→                      </div>
+  1334→  1334→                      <div className="flex items-end"><Button onClick={addTeamMember} disabled={!newMemberName || !newMemberEmail} size="sm" className="w-full gap-1 bg-gradient-to-l from-amber-500 to-amber-600 text-white"><Plus className="h-4 w-4" />إضافة</Button></div>
+  1335→  1335→                    </div>
+  1336→  1336→                    {/* Members list */}
+  1337→  1337→                    <div className="space-y-2">
+  1338→  1338→                      {teamMembers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا يوجد أعضاء فريق</p>}
+  1339→  1339→                      {teamMembers.map((member) => (
+  1340→  1340→                        <div key={member.email} className="flex items-center justify-between p-3 rounded-lg border">
+  1341→  1341→                          <div className="flex items-center gap-3">
+  1342→  1342→                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-100 to-violet-50 dark:from-violet-900/30 dark:to-violet-800/20 flex items-center justify-center text-sm font-bold text-violet-700 dark:text-violet-300">
+  1343→  1343→                              {member.name[0]}
+  1344→  1344→                            </div>
+  1345→  1345→                            <div>
+  1346→  1346→                              <p className="text-sm font-medium">{member.name}</p>
+  1347→  1347→                              <p className="text-xs text-muted-foreground" dir="ltr">{member.email}</p>
+  1348→  1348→                            </div>
+  1349→  1349→                          </div>
+  1350→  1350→                          <div className="flex items-center gap-2">
+  1351→  1351→                            <Badge variant="outline" className="text-[10px]">{member.role === 'admin' ? 'مدير' : member.role === 'member' ? 'عضو' : 'مشاهد'}</Badge>
+  1352→  1352→                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600" onClick={() => removeTeamMember(member.email)}><Trash2 className="h-3.5 w-3.5" /></Button>
+  1353→  1353→                          </div>
+  1354→  1354→                        </div>
+  1355→  1355→                      ))}
+  1356→  1356→                    </div>
+  1357→  1357→                  </CardContent>
+  1358→  1358→                </Card>
+  1359→  1359→
+  1360→  1360→                {/* System Info */}
+  1361→  1361→                <Card>
+  1362→  1362→                  <CardHeader><CardTitle className="text-sm font-bold flex items-center gap-2"><Shield className="h-4 w-4" />معلومات النظام</CardTitle></CardHeader>
+  1363→  1363→                  <CardContent className="space-y-3">
+  1364→  1364→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  1365→  1365→                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">إجمالي المتاجر</p><p className="text-lg font-bold tabular-nums">{shops.length}</p></div>
+  1366→  1366→                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">المتاجر النشطة</p><p className="text-lg font-bold tabular-nums text-emerald-600">{activeShops}</p></div>
+  1367→  1367→                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">إجمالي الطلبات</p><p className="text-lg font-bold tabular-nums">{totalOrders}</p></div>
+  1368→  1368→                      <div className="p-3 rounded-lg bg-muted/50"><p className="text-xs text-muted-foreground">العملاء الفريدين</p><p className="text-lg font-bold tabular-nums">{uniqueCustomers.length}</p></div>
+  1369→  1369→                    </div>
+  1370→  1370→                    <Separator />
+  1371→  1371→                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+  1372→  1372→                      <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><p className="text-sm">المسؤول الحالي</p></div>
+  1373→  1373→                      <span className="text-sm font-medium">{adminName}</span>
+  1374→  1374→                    </div>
+  1375→  1375→                    <Button variant="outline" onClick={handleLogout} className="w-full gap-2 text-rose-500 mt-2"><LogOut className="h-4 w-4" />تسجيل الخروج</Button>
+  1376→  1376→                  </CardContent>
+  1377→  1377→                </Card>
+  1378→  1378→              </motion.div>
+  1379→  1379→            )}
+  1380→  1380→          </AnimatePresence>
+  1381→  1381→        </main>
+  1382→  1382→
+  1383→  1383→        <footer className="mt-auto border-t py-4 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} طيف — منصة إدارة المطابع</footer>
+  1384→  1384→      </div>
+  1385→  1385→
+  1386→  1386→      <InlineCreateShop open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleShopCreated} />
+  1387→  1387→      <AdminShopManagement open={!!editTarget} onClose={() => setEditTarget(null)} shop={editTarget} onSaved={handleShopSaved} />
+  1388→  1388→      <InlineShareShop open={!!shareTarget} onClose={() => setShareTarget(null)} shop={shareTarget} />
+  1389→  1389→
+  1390→  1390→      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+  1391→  1391→        <AlertDialogContent dir="rtl">
+  1392→  1392→          <AlertDialogHeader>
+  1393→  1393→            <AlertDialogTitle>حذف المتجر &quot;{deleteTarget?.name}&quot;؟</AlertDialogTitle>
+  1394→  1394→            <AlertDialogDescription>سيتم حذف المتجر وجميع طلباته وإعداداته نهائياً. هذا الإجراء لا يمكن التراجع عنه.</AlertDialogDescription>
+  1395→  1395→          </AlertDialogHeader>
+  1396→  1396→          <AlertDialogFooter>
+  1397→  1397→            <AlertDialogCancel disabled={deleting}>إلغاء</AlertDialogCancel>
+  1398→  1398→            <AlertDialogAction onClick={handleDeleteShop} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+  1399→  1399→              {deleting ? 'جارٍ الحذف...' : 'حذف المتجر'}
+  1400→  1400→            </AlertDialogAction>
+  1401→  1401→          </AlertDialogFooter>
+  1402→  1402→        </AlertDialogContent>
+  1403→  1403→      </AlertDialog>
+  1404→  1404→    </div>
+  1405→  1405→  );
+  1406→  1406→}
+  1407→  1407→

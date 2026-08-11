@@ -1055,12 +1055,12 @@
   1055→                          const maxRev = Math.max(...dailyData.map((x) => x.revenue), 1);
   1056→                          const pct = (d.revenue / maxRev) * 100;
   1057→                          return (
-  1058→                            <div key={d.date} className="flex items-center gap-3">
-  1059→                              <span className="text-[11px] text-muted-foreground w-16 shrink-0 tabular-nums">{d.date?.slice(5)}</span>
+  1058→                            <div key={d.date} className="flex items-center gap-2 sm:gap-3">
+  1059→                              <span className="text-[11px] text-muted-foreground w-14 sm:w-16 shrink-0 tabular-nums">{d.date?.slice(5)}</span>
   1060→                              <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
   1061→                                <div className="h-full bg-gradient-to-l from-amber-400 to-amber-600 rounded transition-all duration-700" style={{ width: `${Math.max(pct, 1)}%` }} />
   1062→                              </div>
-  1063→                              <span className="text-xs font-medium tabular-nums w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
+  1063→                              <span className="text-xs font-medium tabular-nums w-16 sm:w-20 text-left shrink-0">{formatDA(d.revenue)}</span>
   1064→                              <span className="text-[10px] text-muted-foreground w-8 text-left shrink-0">{d.orders} طلب</span>
   1065→                            </div>
   1066→                          );

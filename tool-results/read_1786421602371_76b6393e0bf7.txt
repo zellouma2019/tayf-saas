@@ -1,0 +1,915 @@
+    47→import type { ShopStat } from "@/lib/admin-types";
+    48→
+    49→// ===== زر نسخ مع تأكيد بصري =====
+    50→export function CopyButton({ text, label, className }: { text: string; label: string; className?: string }) {
+    51→  const [copied, setCopied] = useState(false);
+    52→  async function handleCopy() {
+    53→    await robustCopy(text, `تم نسخ ${label}`, "");
+    54→    setCopied(true);
+    55→    setTimeout(() => setCopied(false), 2000);
+    56→  }
+    57→  return (
+    58→    <button
+    59→      className={
+    60→        "shrink-0 border rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 " +
+    61→        (copied
+    62→          ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+    63→          : "border-border text-foreground/80 hover:bg-accent" +
+    64→            (className ? " " + className : ""))
+    65→      }
+    66→      onClick={handleCopy}
+    67→    >
+    68→      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+    69→      {copied ? "تم!" : label}
+    70→    </button>
+    71→  );
+    72→}
+    73→
+    74→// ===== بطاقة متجر في نظرة عامة =====
+    75→export function ShopOverviewCard({ shop, rank, totalShops, onRefresh }: {
+    76→  shop: ShopStat;
+    77→  rank?: number;
+    78→  totalShops?: number;
+    79→  onRefresh: () => void;
+    80→}) {
+    81→  const performanceScore = useMemo(() => {
+    82→    const orderScore = Math.min((shop.orders || 0) / 10, 1) * 40;
+    83→    const revenueScore = Math.min((shop.revenue || 0) / 10000, 1) * 40;
+    84→    const todayScore = Math.min((shop.todayOrders || 0) / 5, 1) * 20;
+    85→    return Math.round(orderScore + revenueScore + todayScore);
+    86→  }, [shop]);
+    87→
+    88→  return (
+    89→    <Card className={cn(
+    90→      "border shadow-sm transition-all duration-300 overflow-hidden group relative card-hover-interactive card-glow-hover",
+    91→      shop.isActive 
+    92→        ? "stat-card-emerald border-r-4 border-r-emerald-400"
+    93→        : "stat-card-rose border-r-4 border-r-rose-400"
+    94→    )}>
+    95→      {/* Performance rank badge */}
+    96→      {rank !== undefined && totalShops && totalShops > 1 && (
+    97→        <div className={cn(
+    98→          "absolute top-2 left-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm",
+    99→          rank === 1 && "bg-amber-400 text-amber-900 badge-bounce subtle-float pulse-ring-badge",
+   100→          rank === 2 && "bg-slate-300 text-slate-700",
+   101→          rank === 3 && "bg-orange-300 text-orange-800",
+   102→          rank > 3 && "bg-muted text-muted-foreground"
+   103→        )}>
+   104→          {rank}
+   105→        </div>
+   106→      )}
+   107→      {/* Performance score indicator */}
+   108→      <div className="absolute top-2 left-12 z-10">
+   109→        <div className={cn(
+   110→          "text-[9px] font-bold px-2 py-0.5 rounded-full transition-all",
+   111→          performanceScore >= 70 ? "badge-glow-emerald bg-emerald-500/10 text-emerald-600" :
+   112→          performanceScore >= 40 ? "badge-glow-amber bg-amber-500/10 text-amber-600" :
+   113→          "bg-muted text-muted-foreground"
+   114→        )}>
+   115→          {performanceScore}%
+   116→        </div>
+   117→      </div>
+   118→      <div className="h-1 bg-gradient-to-l from-gold-400 via-gold-500 to-primary" />
+   119→      <CardHeader className="pb-2 px-5 pt-4">
+   120→        <div className="flex items-center justify-between">
+   121→          <div className="flex items-center gap-3 min-w-0">
+   122→            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+   123→              <Store className="h-5 w-5 text-primary" />
+   124→            </div>
+   125→            <div className="min-w-0">
+   126→              <CardTitle className="text-sm truncate text-foreground">{shop.name}</CardTitle>
+   127→              <div className="text-xs text-muted-foreground/70 truncate">
+   128→                {shop.ownerName || "—"} · {shop.ownerPhone || shop.phone || "—"}
+   129→              </div>
+   130→            </div>
+   131→          </div>
+   132→          <div className="flex items-center gap-1.5 shrink-0">
+   133→            {/* شارة الصحة */}
+   134→            {shop.orders > 0 ? (
+   135→              <span className="badge-success badge-success-pulse text-[10px] px-1.5 py-0.5">نشط</span>
+   136→            ) : !shop.isActive ? (
+   137→              <span className="badge-error text-[10px] px-1.5 py-0.5">غير نشط</span>
+   138→            ) : (
+   139→              <span className="badge-warning text-[10px] px-1.5 py-0.5">بطيء</span>
+   140→            )}
+   141→            <span className={`text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium ${
+   142→              shop.isActive
+   143→                ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+   144→                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
+   145→            }`}>
+   146→              {shop.isActive ? "نشط" : "متوقف"}
+   147→            </span>
+   148→            {shop.plan === "pro" || shop.plan === "paid" ? (
+   149→              <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-primary/10 text-primary flex items-center gap-1">
+   150→                <Crown className="h-3 w-3" /> مميز
+   151→              </span>
+   152→            ) : (
+   153→              <span className="text-xs px-2.5 py-1 rounded-lg shrink-0 font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600">
+   154→                مجاني
+   155→              </span>
+   156→            )}
+   157→          </div>
+   158→        </div>
+   159→      </CardHeader>
+   160→      <CardContent className="px-5 pb-5 space-y-4">
+   161→        <div className="grid grid-cols-3 gap-2.5 text-center stagger-grid-8">
+   162→          <div className="stat-card-violet glow-card-violet rounded-xl p-3 transition-colors">
+   163→            <div className="text-lg font-bold text-foreground count-animate number-highlight-violet">{shop.orders}</div>
+   164→            <div className="text-xs text-muted-foreground/70">طلبات</div>
+   165→          </div>
+   166→          <div className="stat-card-emerald glow-card-emerald rounded-xl p-3 transition-colors">
+   167→            <div className="text-lg font-bold text-emerald-600 count-animate number-highlight-emerald">{formatDA(shop.revenue)}</div>
+   168→            <div className="text-xs text-muted-foreground/70">إيرادات</div>
+   169→          </div>
+   170→          <div className="stat-card-amber glow-card-amber rounded-xl p-3 transition-colors">
+   171→            <div className="text-lg font-bold text-amber-600 count-animate number-highlight-amber">{shop.todayOrders}</div>
+   172→            <div className="text-xs text-muted-foreground/70">اليوم</div>
+   173→          </div>
+   174→        </div>
+   175→
+   176→        {(shop.recentOrders?.length ?? 0) > 0 && (
+   177→          <div className="space-y-1.5">
+   178→            <div className="text-xs font-semibold text-muted-foreground">آخر الطلبات:</div>
+   179→            {(shop.recentOrders ?? []).slice(0, 3).map((o, i) => (
+   180→              <div key={o.id} className={cn(
+   181→                "flex items-center justify-between text-xs rounded-lg px-3 py-2.5 anim-smooth-in",
+   182→                o.status === 'delivered' && 'stat-card-emerald',
+   183→                o.status === 'printing' && 'stat-card-sky',
+   184→                o.status === 'ready' && 'stat-card-violet',
+   185→                o.status === 'pending' && 'stat-card-amber',
+   186→                o.status === 'cancelled' && 'stat-card-rose',
+   187→                (!o.status || !['delivered','printing','ready','pending','cancelled'].includes(o.status)) && 'bg-muted/60'
+   188→              )} style={{ animationDelay: `${i * 80}ms` }}>
+   189→                <div className="flex items-center gap-2 min-w-0">
+   190→                  <span className="font-mono font-bold text-foreground/80 inline-code">{o.reference}</span>
+   191→                  <span className="text-muted-foreground/70 truncate">{o.customer.name}</span>
+   192→                </div>
+   193→                <div className="flex items-center gap-2 shrink-0">
+   194→                  <span className="font-bold text-foreground">{formatDA(o.total)}</span>
+   195→                  <span className={cn(
+   196→                    "px-2 py-0.5 rounded-lg text-xs",
+   197→                    o.status === 'delivered' && 'label-gradient-emerald',
+   198→                    o.status === 'printing' && 'label-gradient-sky',
+   199→                    o.status === 'ready' && 'label-gradient-violet',
+   200→                    o.status === 'pending' && 'label-gradient-amber',
+   201→                    o.status === 'cancelled' && 'label-gradient-rose',
+   202→                    (!o.status || !['delivered','printing','ready','pending','cancelled'].includes(o.status)) && STATUS_COLORS[o.status] || ''
+   203→                  )}>
+   204→                    {STATUS_META[o.status]?.label || o.status}
+   205→                  </span>
+   206→                </div>
+   207→              </div>
+   208→            ))}
+   209→          </div>
+   210→        )}
+   211→
+   212→        <div className="flex flex-wrap gap-2 pt-1">
+   213→          <CopyButton text={`${window.location.origin}/s/${shop.slug}`} label="رابط الزبون" />
+   214→          <CopyButton text={`${window.location.origin}/s/${shop.slug}?admin=1`} label="رابط الإدارة" />
+   215→          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce gradient-border-hover" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
+   216→            <ExternalLink className="h-3.5 w-3.5" /> فتح الإدارة
+   217→          </button>
+   218→          <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce gradient-border-hover" onClick={() => openInNewTab(`/s/${shop.slug}?preview=1`)}>
+   219→            <Eye className="h-3.5 w-3.5" /> معاينة زبون
+   220→          </button>
+   221→        </div>
+   222→      </CardContent>
+   223→    </Card>
+   224→  );
+   225→}
+   226→
+   227→// ===== حساب حالة التجربة =====
+   228→function getTrialInfo(shop: ShopStat): { label: string; color: string; daysLeft: number | null } {
+   229→  if (!shop.trialDays || !shop.trialStartsAt) {
+   230→    return { label: "بلا حدود", color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600", daysLeft: null };
+   231→  }
+   232→  const start = new Date(shop.trialStartsAt);
+   233→  const end = new Date(start.getTime() + shop.trialDays * 86400000);
+   234→  const now = new Date();
+   235→  const daysLeft = Math.ceil((end.getTime() - now.getTime()) / 86400000);
+   236→  if (daysLeft <= 0) {
+   237→    return { label: "انتهت", color: "bg-rose-50 dark:bg-rose-950/30 text-rose-600", daysLeft: 0 };
+   238→  }
+   239→  if (daysLeft <= 3) {
+   240→    return { label: `${daysLeft} يوم متبقي`, color: "bg-amber-50 dark:bg-amber-950/30 text-amber-600", daysLeft };
+   241→  }
+   242→  return { label: `${daysLeft} يوم متبقي`, color: "bg-primary/10 text-primary", daysLeft };
+   243→}
+   244→
+   245→// ===== بطاقة إدارة متجر =====
+   246→export function ShopManageCard({ shop, onCopyLink, onCopyAdminLink, onRefresh }: {
+   247→  shop: ShopStat;
+   248→  onCopyLink: (slug: string) => void;
+   249→  onCopyAdminLink: (slug: string) => void;
+   250→  onRefresh: () => void;
+   251→}) {
+   252→  const [toggling, setToggling] = useState(false);
+   253→  const [deleting, setDeleting] = useState(false);
+   254→  const [editOpen, setEditOpen] = useState(false);
+   255→  const trial = getTrialInfo(shop);
+   256→  const parsedFeatures = parseFeatures(shop.features, shop.plan);
+   257→  const enabledCount = countEnabledFeatures(parsedFeatures);
+   258→  const isPaid = shop.plan === "paid";
+   259→
+   260→  async function toggleActive() {
+   261→    setToggling(true);
+   262→    try {
+   263→      const res = await adminFetch(`/api/admin/shops/${shop.slug}`, {
+   264→        method: "PUT",
+   265→        headers: { "Content-Type": "application/json" },
+   266→        body: JSON.stringify({ isActive: !shop.isActive }),
+   267→      });
+   268→      if (!res.ok) throw new Error("فشل");
+   269→      toast.success(shop.isActive ? `تم تعطيل "${shop.name}"` : `تم تفعيل "${shop.name}"`);
+   270→      onRefresh();
+   271→    } catch {
+   272→      toast.error("فشل التحديث");
+   273→    } finally {
+   274→      setToggling(false);
+   275→    }
+   276→  }
+   277→
+   278→  async function deleteShop() {
+   279→    setDeleting(true);
+   280→    try {
+   281→      const res = await adminFetch(`/api/admin/shops/${shop.slug}`, { method: "DELETE" });
+   282→      if (!res.ok) throw new Error("فشل");
+   283→      toast.success(`تم حذف "${shop.name}"`);
+   284→      onRefresh();
+   285→    } catch {
+   286→      toast.error("فشل الحذف");
+   287→    } finally {
+   288→      setDeleting(false);
+   289→    }
+   290→  }
+   291→
+   292→  async function quickTrial(days: number) {
+   293→    try {
+   294→      const all: ShopFeatures = {};
+   295→      FEATURES.forEach((f) => { all[f.key] = true; });
+   296→      const today = new Date().toISOString();
+   297→      const res = await adminFetch(`/api/admin/shops/${shop.slug}`, {
+   298→        method: "PUT",
+   299→        headers: { "Content-Type": "application/json" },
+   300→        body: JSON.stringify({ plan: "free", trialDays: days, trialStartsAt: today, features: all }),
+   301→      });
+   302→      if (!res.ok) throw new Error("فشل");
+   303→      toast.success(`تم تفعيل تجربة ${days} يوم لـ "${shop.name}" ✅`);
+   304→      onRefresh();
+   305→    } catch {
+   306→      toast.error("فشل تفعيل التجربة");
+   307→    }
+   308→  }
+   309→
+   310→  return (
+   311→    <>
+   312→    <Card className={cn("bg-card border border-border shadow-sm hover:shadow-md transition-all overflow-hidden card-hover-glow card-entrance list-item-hover", shop.isActive ? "border-r-4 border-r-emerald-400" : "border-r-4 border-r-rose-400")}>
+   313→      {/* شريط لون المتجر في الأعلى مع مؤشر الحالة */}
+   314→      <div
+   315→        className={cn("h-1.5 status-bar")}
+   316→        style={{ background: shop.primaryColor ? `linear-gradient(to left, ${shop.primaryColor}, ${shop.primaryColor}cc)` : "linear-gradient(to left, #d4a853, #a88850)", "--status-color": shop.isActive ? "#10b981" : "#f43f5e" } as React.CSSProperties}
+   317→      />
+   318→      <CardContent className="p-0">
+   319→        <div className="flex flex-col gap-4 p-5">
+   320→          {/* السطر الأول: اسم المتجر + الحالة + التجربة */}
+   321→          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   322→            <div className="flex items-center gap-3 min-w-0">
+   323→              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 relative">
+   324→                <Store className="h-5 w-5 text-primary" />
+   325→                {/* مؤشر الحالة المرئي */}
+   326→                <span className={cn("absolute -top-0.5 -left-0.5 w-3 h-3 rounded-full border-2 border-card", shop.isActive ? "bg-emerald-500" : "bg-rose-500")} />
+   327→              </div>
+   328→              <div className="min-w-0">
+   329→                <div className="font-bold text-sm truncate text-foreground">{getCountry(shop.country)?.flag} {shop.name}</div>
+   330→                <div className="text-xs text-muted-foreground/70 truncate flex items-center gap-1.5">
+   331→                  {shop.ownerName && <span>{shop.ownerName} · </span>}
+   332→                  <span>{shop.orders} طلب</span>
+   333→                  <span className="text-border">·</span>
+   334→                  <span>{formatDA(shop.revenue, shop.country)}</span>
+   335→                  {/* شارة الإيرادات */}
+   336→                  {shop.revenue > 0 && (
+   337→                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
+   338→                      {formatDA(shop.revenue, shop.country)}
+   339→                    </span>
+   340→                  )}
+   341→                </div>
+   342→              </div>
+   343→            </div>
+   344→            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+   345→              <span className={cn("inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-medium",
+   346→                shop.isActive
+   347→                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+   348→                  : "bg-rose-50 dark:bg-rose-950/30 text-rose-600"
+   349→              )}>
+   350→                <span className={cn("w-1.5 h-1.5 rounded-full", shop.isActive ? "bg-emerald-500" : "bg-rose-500")} />
+   351→                {shop.isActive ? "نشط" : "متوقف"}
+   352→              </span>
+   353→              <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
+   354→                isPaid
+   355→                  ? "bg-primary/10 text-primary"
+   356→                  : "bg-muted/50 text-muted-foreground"
+   357→              }`}>
+   358→                {isPaid ? "✦ مدفوع" : "مجاني"}
+   359→              </span>
+   360→              <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${trial.color}`}>
+   361→                <Timer className="h-3 w-3 inline-block ml-0.5 -mt-px" />
+   362→                {trial.label}
+   363→              </span>
+   364→              <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
+   365→                shop.paymentInfo
+   366→                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600"
+   367→                  : "bg-muted/50 text-muted-foreground/70"
+   368→              }`}>
+   369→                {shop.paymentInfo ? "✓ مدفوع" : "غير مدفوع"}
+   370→              </span>
+   371→            </div>
+   372→          </div>
+   373→
+   374→          {/* إحصائيات سريعة */}
+   375→          <div className="grid grid-cols-3 gap-2 text-center">
+   376→            <div className="bg-muted/50 rounded-lg p-2">
+   377→              <div className="text-sm font-bold text-foreground">{shop.orders}</div>
+   378→              <div className="text-[10px] text-muted-foreground/70">إجمالي الطلبات</div>
+   379→            </div>
+   380→            <div className="bg-emerald-50/60 dark:bg-emerald-950/20 rounded-lg p-2">
+   381→              <div className="text-sm font-bold text-emerald-600">{formatDA(shop.revenue, shop.country)}</div>
+   382→              <div className="text-[10px] text-muted-foreground/70">الإيرادات</div>
+   383→            </div>
+   384→            <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-lg p-2">
+   385→              <div className="text-sm font-bold text-amber-600">{shop.todayOrders}</div>
+   386→              <div className="text-[10px] text-muted-foreground/70">طلبات اليوم</div>
+   387→            </div>
+   388→          </div>
+   389→
+   390→          {/* السطر الثاني: أزرار الإدارة + عدد الميزات */}
+   391→          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+   392→            <div className="flex items-center gap-1.5 flex-wrap">
+   393→              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => setEditOpen(true)}>
+   394→                <Pencil className="h-3.5 w-3.5" /> إعدادات
+   395→              </button>
+   396→              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={toggleActive} disabled={toggling}>
+   397→                {shop.isActive ? <><EyeOff className="h-3.5 w-3.5" /> تعطيل</> : <><Eye className="h-3.5 w-3.5" /> تفعيل</>}
+   398→              </button>
+   399→              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => onCopyLink(shop.slug)}>
+   400→                <Copy className="h-3.5 w-3.5" /> رابط الزبون
+   401→              </button>
+   402→              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" onClick={() => onCopyAdminLink(shop.slug)}>
+   403→                <Copy className="h-3.5 w-3.5" /> رابط الإدارة
+   404→              </button>
+   405→              {/* قائمة التجربة السريعة */}
+   406→              <DropdownMenu>
+   407→                <DropdownMenuTrigger asChild>
+   408→                  <button className="border border-amber-200 dark:border-amber-800/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5">
+   409→                    <Hourglass className="h-3.5 w-3.5" /> تفعيل تجربة
+   410→                  </button>
+   411→                </DropdownMenuTrigger>
+   412→                <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-border">
+   413→                  <DropdownMenuItem className="rounded-lg cursor-pointer text-xs" onClick={() => quickTrial(7)}>
+   414→                    <Timer className="h-3.5 w-3.5 ml-2 text-sky-500" /> تجربة 7 أيام
+   415→                  </DropdownMenuItem>
+   416→                  <DropdownMenuItem className="rounded-lg cursor-pointer text-xs" onClick={() => quickTrial(15)}>
+   417→                    <Timer className="h-3.5 w-3.5 ml-2 text-primary/60" /> تجربة 15 يوم
+   418→                  </DropdownMenuItem>
+   419→                  <DropdownMenuItem className="rounded-lg cursor-pointer text-xs" onClick={() => quickTrial(30)}>
+   420→                    <Timer className="h-3.5 w-3.5 ml-2 text-amber-500" /> تجربة 30 يوم
+   421→                  </DropdownMenuItem>
+   422→                </DropdownMenuContent>
+   423→              </DropdownMenu>
+   424→              <button className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce" onClick={() => openInNewTab(`/s/${shop.slug}?admin=1`)}>
+   425→                <ExternalLink className="h-3.5 w-3.5" /> فتح الإدارة
+   426→              </button>
+   427→              <button className="border border-primary/20 text-primary hover:bg-primary/10 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ripple-btn micro-bounce neon-border-violet" onClick={() => openInNewTab(`/s/${shop.slug}`)}>
+   428→                <Eye className="h-3.5 w-3.5" /> معاينة
+   429→              </button>
+   430→              <AlertDialog>
+   431→                <AlertDialogTrigger asChild>
+   432→                  <button className="bg-red-50 text-red-600 hover:bg-red-100 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5" disabled={deleting}>
+   433→                    <Trash2 className="h-3.5 w-3.5" /> {deleting ? "جارٍ الحذف..." : "حذف"}
+   434→                  </button>
+   435→                </AlertDialogTrigger>
+   436→                <AlertDialogContent dir="rtl" className="rounded-xl shadow-2xl">
+   437→                  <AlertDialogHeader>
+   438→                    <AlertDialogTitle>حذف متجر &quot;{shop.name}&quot;؟</AlertDialogTitle>
+   439→                    <AlertDialogDescription>
+   440→                      سيتم حذف المتجر وجميع طلباته نهائياً. هذا الإجراء لا يمكن التراجع عنه.
+   441→                    </AlertDialogDescription>
+   442→                  </AlertDialogHeader>
+   443→                  <AlertDialogFooter>
+   444→                    <AlertDialogCancel className="rounded-lg">إلغاء</AlertDialogCancel>
+   445→                    <AlertDialogAction onClick={deleteShop} className="bg-red-600 hover:bg-red-700 rounded-lg">تأكيد الحذف</AlertDialogAction>
+   446→                  </AlertDialogFooter>
+   447→                </AlertDialogContent>
+   448→              </AlertDialog>
+   449→            </div>
+   450→            <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
+   451→              <ToggleLeft className="h-3 w-3 inline-block ml-0.5 -mt-px" />
+   452→              {enabledCount}/{TOTAL_FEATURES} ميزة
+   453→            </span>
+   454→          </div>
+   455→        </div>
+   456→      </CardContent>
+   457→    </Card>
+   458→
+   459→    <EditShopDialog
+   460→      shop={shop}
+   461→      open={editOpen}
+   462→      onClose={() => setEditOpen(false)}
+   463→      onSaved={onRefresh}
+   464→    />
+   465→    </>
+   466→  );
+   467→}
+   468→
+   469→// ===== نافذة تعديل متجر =====
+   470→function EditShopDialog({ shop, open, onClose, onSaved }: {
+   471→  shop: ShopStat;
+   472→  open: boolean;
+   473→  onClose: () => void;
+   474→  onSaved: () => void;
+   475→}) {
+   476→  const [saving, setSaving] = useState(false);
+   477→  const [plan, setPlan] = useState(shop.plan || "free");
+   478→  const [features, setFeatures] = useState<ShopFeatures>(() => parseFeatures(shop.features, shop.plan));
+   479→  const [paymentInfo, setPaymentInfo] = useState(shop.paymentInfo || "");
+   480→  const [ownerNotes, setOwnerNotes] = useState(shop.ownerNotes || "");
+   481→  const [form, setForm] = useState({
+   482→    name: shop.name,
+   483→    phone: shop.phone || "",
+   484→    whatsapp: shop.whatsapp || "",
+   485→    email: shop.email || "",
+   486→    address: shop.address || "",
+   487→    ownerName: shop.ownerName || "",
+   488→    ownerPhone: shop.ownerPhone || "",
+   489→    adminPin: shop.adminPin || "",
+   490→    primaryColor: shop.primaryColor || "",
+   491→    trialDays: shop.trialDays ?? "",
+   492→    trialStartsAt: shop.trialStartsAt ? shop.trialStartsAt.slice(0, 10) : "",
+   493→  });
+   494→
+   495→  function updateField(key: string, value: string) {
+   496→    setForm((prev) => ({ ...prev, [key]: value }));
+   497→  }
+   498→
+   499→  const enabledCount = countEnabledFeatures(features);
+   500→  const isPaidPlan = plan === "paid" || plan === "pro" || plan === "premium";
+   501→
+   502→  // ===== حالة التجربة / الخطة =====
+   503→  const trialStatus = useMemo(() => {
+   504→    if (isPaidPlan) return { type: "paid" as const, label: "مدفوع - دائم", daysLeft: 0 };
+   505→    const days = Number(form.trialDays);
+   506→    const start = form.trialStartsAt;
+   507→    if (!days || !start) return { type: "free" as const, label: "مجاني", daysLeft: 0 };
+   508→    const now = new Date();
+   509→    const startDate = new Date(start);
+   510→    const endDate = new Date(startDate.getTime() + days * 86400000);
+   511→    const diffMs = endDate.getTime() - now.getTime();
+   512→    const daysLeft = Math.ceil(diffMs / 86400000);
+   513→    if (daysLeft > 0) return { type: "trial" as const, label: `تجربة - ${daysLeft} يوم متبقي`, daysLeft };
+   514→    return { type: "expired" as const, label: "انتهت التجربة", daysLeft: 0 };
+   515→  }, [plan, form.trialDays, form.trialStartsAt]);
+   516→
+   517→  const STATUS_BADGE_STYLE: Record<string, string> = {
+   518→    paid: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
+   519→    trial: "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
+   520→    expired: "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
+   521→    free: "bg-muted/50 text-muted-foreground border-border",
+   522→  };
+   523→
+   524→  function toggleFeature(key: FeatureKey) {
+   525→    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+   526→  }
+   527→
+   528→  function enableAllForGroup(groupFeatures: typeof FEATURES) {
+   529→    const updated = { ...features };
+   530→    groupFeatures.forEach((f) => { updated[f.key] = true; });
+   531→    setFeatures(updated);
+   532→  }
+   533→
+   534→  function disableAllForGroup(groupFeatures: typeof FEATURES) {
+   535→    const updated = { ...features };
+   536→    groupFeatures.forEach((f) => { updated[f.key] = false; });
+   537→    setFeatures(updated);
+   538→  }
+   539→
+   540→  function enableAllFeatures() {
+   541→    const all: ShopFeatures = {};
+   542→    FEATURES.forEach((f) => { all[f.key] = true; });
+   543→    setFeatures(all);
+   544→  }
+   545→
+   546→  function disableAllFeatures() {
+   547→    const all: ShopFeatures = {};
+   548→    FEATURES.forEach((f) => { all[f.key] = false; });
+   549→    setFeatures(all);
+   550→    setPlan("free");
+   551→  }
+   552→
+   553→  function quickAction(mode: "permanent" | "trial7" | "trial15" | "trial30") {
+   554→    enableAllFeatures();
+   555→    if (mode === "permanent") {
+   556→      setPlan("paid");
+   557→      setForm((prev) => ({ ...prev, trialDays: "", trialStartsAt: "" }));
+   558→    } else {
+   559→      setPlan("free");
+   560→      const days = mode === "trial7" ? 7 : mode === "trial15" ? 15 : 30;
+   561→      const today = new Date().toISOString();
+   562→      setForm((prev) => ({ ...prev, trialDays: String(days), trialStartsAt: today }));
+   563→    }
+   564→  }
+   565→
+   566→  async function handleSave(e: React.FormEvent) {
+   567→    e.preventDefault();
+   568→    setSaving(true);
+   569→    try {
+   570→      const payload: Record<string, unknown> = {
+   571→        name: form.name,
+   572→        phone: form.phone || null,
+   573→        whatsapp: form.whatsapp || null,
+   574→        email: form.email || null,
+   575→        address: form.address || null,
+   576→        ownerName: form.ownerName || null,
+   577→        ownerPhone: form.ownerPhone || null,
+   578→        adminPin: form.adminPin,
+   579→        primaryColor: form.primaryColor || null,
+   580→        trialDays: form.trialDays ? Number(form.trialDays) : "",
+   581→        trialStartsAt: form.trialStartsAt || null,
+   582→        plan,
+   583→        features,
+   584→        paymentInfo: paymentInfo || null,
+   585→        ownerNotes: ownerNotes || null,
+   586→      };
+   587→
+   588→      const res = await adminFetch(`/api/admin/shops/${shop.slug}`, {
+   589→        method: "PUT",
+   590→        headers: { "Content-Type": "application/json" },
+   591→        body: JSON.stringify(payload),
+   592→      });
+   593→      if (!res.ok) {
+   594→        const d = await res.json();
+   595→        throw new Error(d.error || "فشل التحديث");
+   596→      }
+   597→      toast.success(`تم تحديث "${form.name}"`);
+   598→      onSaved();
+   599→      onClose();
+   600→    } catch (err) {
+   601→      toast.error("فشل التحديث", { description: (err as Error).message });
+   602→    } finally {
+   603→      setSaving(false);
+   604→    }
+   605→  }
+   606→
+   607→  return (
+   608→    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+   609→      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-4 sm:p-6" dir="rtl" aria-describedby={undefined}>
+   610→        <DialogTitle className="flex items-center justify-between">
+   611→          <span className="text-foreground">إعدادات متجر &quot;{shop.name}&quot;</span>
+   612→          <Badge variant="outline" className={`text-xs font-semibold rounded-lg ${STATUS_BADGE_STYLE[trialStatus.type]}`}>
+   613→            {trialStatus.type === "paid" && <Infinity className="h-3 w-3 ml-1 inline" />}
+   614→            {trialStatus.type === "trial" && <Timer className="h-3 w-3 ml-1 inline" />}
+   615→            {trialStatus.type === "expired" && <XCircle className="h-3 w-3 ml-1 inline" />}
+   616→            {trialStatus.label}
+   617→          </Badge>
+   618→        </DialogTitle>
+   619→
+   620→        <form onSubmit={handleSave} className="space-y-6 mt-2">
+   621→          {/* معلومات المتجر */}
+   622→          <div className="space-y-4">
+   623→            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-primary pr-3">
+   624→              <Store className="h-4 w-4 text-primary" /> معلومات المتجر
+   625→            </h4>
+   626→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   627→              <div className="sm:col-span-2">
+   628→                <Label className="text-foreground/60">اسم المتجر</Label>
+   629→                <Input value={form.name} onChange={(e) => updateField("name", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" required />
+   630→              </div>
+   631→              <div>
+   632→                <Label className="text-foreground/60">هاتف المتجر</Label>
+   633→                <Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" dir="ltr" placeholder="0XXX..." />
+   634→              </div>
+   635→              <div>
+   636→                <Label className="text-foreground/60">واتساب</Label>
+   637→                <Input value={form.whatsapp} onChange={(e) => updateField("whatsapp", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" dir="ltr" placeholder="0XXX..." />
+   638→              </div>
+   639→              <div>
+   640→                <Label className="text-foreground/60">البريد الإلكتروني</Label>
+   641→                <Input value={form.email} onChange={(e) => updateField("email", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" dir="ltr" type="email" />
+   642→              </div>
+   643→              <div>
+   644→                <Label className="text-foreground/60">العنوان</Label>
+   645→                <Input value={form.address} onChange={(e) => updateField("address", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" />
+   646→              </div>
+   647→            </div>
+   648→          </div>
+   649→
+   650→          {/* معلومات صاحب المتجر */}
+   651→          <div className="space-y-4">
+   652→            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-emerald-400 pr-3">
+   653→              <Users className="h-4 w-4 text-emerald-500" /> بيانات العميل (صاحب المتجر)
+   654→            </h4>
+   655→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   656→              <div>
+   657→                <Label className="text-foreground/60">اسم العميل</Label>
+   658→                <Input value={form.ownerName} onChange={(e) => updateField("ownerName", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" />
+   659→              </div>
+   660→              <div>
+   661→                <Label className="text-foreground/60">هاتف العميل</Label>
+   662→                <Input value={form.ownerPhone} onChange={(e) => updateField("ownerPhone", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" dir="ltr" placeholder="0XXX..." />
+   663→              </div>
+   664→            </div>
+   665→          </div>
+   666→
+   667→          {/* الأمان */}
+   668→          <div className="space-y-4">
+   669→            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-rose-400 pr-3">
+   670→              <Lock className="h-4 w-4 text-rose-500" /> الأمان
+   671→            </h4>
+   672→            <div>
+   673→              <Label className="text-foreground/60">كلمة مرور الإدارة</Label>
+   674→              <Input value={form.adminPin} onChange={(e) => updateField("adminPin", e.target.value)} className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring" dir="ltr" required />
+   675→              <p className="text-xs text-muted-foreground/70 mt-1.5">أرسل هذه الكلمة للعميل مع رابط الإدارة</p>
+   676→            </div>
+   677→          </div>
+   678→
+   679→          {/* المظهر */}
+   680→          <div className="space-y-4">
+   681→            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-primary pr-3">
+   682→              <Settings className="h-4 w-4 text-primary/60" /> المظهر
+   683→            </h4>
+   684→            <div>
+   685→              <Label className="text-foreground/60">اللون الرئيسي</Label>
+   686→              <div className="flex gap-3 mt-1.5">
+   687→                <Input value={form.primaryColor} onChange={(e) => updateField("primaryColor", e.target.value)} className="flex-1 rounded-lg border-border focus:ring-ring focus:border-ring" dir="ltr" placeholder="#d4a853" />
+   688→                {form.primaryColor && (
+   689→                  <div className="w-10 h-10 rounded-lg border border-border shrink-0 shadow-sm" style={{ backgroundColor: form.primaryColor }} />
+   690→                )}
+   691→              </div>
+   692→            </div>
+   693→          </div>
+   694→
+   695→          {/* فترة التجربة + إجراءات سريعة */}
+   696→          <div className="space-y-4">
+   697→            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-primary pr-3">
+   698→              <CalendarDays className="h-4 w-4 text-primary" /> فترة التجربة والمدة
+   699→            </h4>
+   700→
+   701→            {/* إجراءات سريعة */}
+   702→            <div className="space-y-3 bg-muted/40 rounded-xl p-4 border border-border">
+   703→              <div className="flex items-center gap-2 mb-3">
+   704→                <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+   705→                  <Zap className="h-3.5 w-3.5 text-primary" />
+   706→                </div>
+   707→                <span className="text-sm font-bold text-foreground/80">إجراءات سريعة</span>
+   708→              </div>
+   709→              <div className="grid grid-cols-2 gap-2.5">
+   710→                <button
+   711→                  type="button"
+   712→                  className="text-xs h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors inline-flex items-center justify-center gap-1.5"
+   713→                  onClick={() => quickAction("permanent")}
+   714→                >
+   715→                  <Infinity className="h-3.5 w-3.5 ml-1.5" />
+   716→                  مدفوع (دائم)
+   717→                </button>
+   718→                <button
+   719→                  type="button"
+   720→                  className="text-xs h-10 rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition-colors inline-flex items-center justify-center gap-1.5"
+   721→                  onClick={() => quickAction("trial7")}
+   722→                >
+   723→                  <Timer className="h-3.5 w-3.5 ml-1.5" />
+   724→                  تجربة 7 أيام
+   725→                </button>
+   726→                <button
+   727→                  type="button"
+   728→                  className="text-xs h-10 rounded-lg bg-primary/100 hover:bg-primary/90 text-white shadow-sm transition-colors inline-flex items-center justify-center gap-1.5"
+   729→                  onClick={() => quickAction("trial15")}
+   730→                >
+   731→                  <Timer className="h-3.5 w-3.5 ml-1.5" />
+   732→                  تجربة 15 يوم
+   733→                </button>
+   734→                <button
+   735→                  type="button"
+   736→                  className="text-xs h-10 rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors inline-flex items-center justify-center gap-1.5"
+   737→                  onClick={() => quickAction("trial30")}
+   738→                >
+   739→                  <Timer className="h-3.5 w-3.5 ml-1.5" />
+   740→                  تجربة 30 يوم
+   741→                </button>
+   742→              </div>
+   743→              <button
+   744→                type="button"
+   745→                className="w-full text-xs h-9 rounded-lg bg-muted hover:bg-accent text-foreground/60 border border-border transition-colors inline-flex items-center justify-center gap-1.5 mt-1"
+   746→                onClick={disableAllFeatures}
+   747→              >
+   748→                <XCircle className="h-3.5 w-3.5 ml-1" />
+   749→                إغلاق كل الميزات (مجاني فقط)
+   750→              </button>
+   751→            </div>
+   752→
+   753→            {/* حقول التجربة اليدوية */}
+   754→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   755→              <div>
+   756→                <Label className="text-foreground/60">مدة التجربة (أيام)</Label>
+   757→                <Input
+   758→                  type="number"
+   759→                  min="0"
+   760→                  value={form.trialDays}
+   761→                  onChange={(e) => updateField("trialDays", e.target.value)}
+   762→                  className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring"
+   763→                  dir="ltr"
+   764→                  placeholder="اتركه فارغاً = بلا حدود"
+   765→                />
+   766→              </div>
+   767→              <div>
+   768→                <Label className="text-foreground/60">تاريخ البداية</Label>
+   769→                <Input
+   770→                  type="date"
+   771→                  value={form.trialStartsAt}
+   772→                  onChange={(e) => updateField("trialStartsAt", e.target.value)}
+   773→                  className="mt-1.5 rounded-lg border-border focus:ring-ring focus:border-ring"
+   774→                  dir="ltr"
+   775→                />
+   776→                <p className="text-xs text-muted-foreground/70 mt-1.5">
+   777→                  {form.trialStartsAt ? "" : "سيُحدد تلقائياً عند الحفظ"}
+   778→                </p>
+   779→              </div>
+   780→            </div>
+   781→            {form.trialDays && trialStatus.type === "trial" && (
+   782→              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-700 dark:text-amber-400">
+   783→                ⏰ متبقي <strong>{trialStatus.daysLeft} يوم</strong> على انتهاء فترة التجربة
+   784→              </div>
+   785→            )}
+   786→            {trialStatus.type === "expired" && (
+   787→              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/40 rounded-lg p-4 text-xs text-rose-700 dark:text-rose-400">
+   788→                ⛔ انتهت فترة التجربة — المتجر لا يستطيع استخدام الميزات المدفوعة
+   789→              </div>
+   790→            )}
+   791→          </div>
+   792→
+   793→          <Separator className="bg-muted" />
+   794→
+   795→          {/* الخطة */}
+   796→          <div className="space-y-4">
+   797→            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-primary pr-3">
+   798→              <CreditCard className="h-4 w-4 text-primary" /> الخطة
+   799→            </h4>
+   800→            <div>
+   801→              <Label className="text-foreground/60">نوع الخطة</Label>
+   802→              <Select value={plan} onValueChange={(v) => {
+   803→                setPlan(v);
+   804→                if (v === "paid") {
+   805→                  const all: ShopFeatures = {};
+   806→                  FEATURES.forEach((f) => { all[f.key] = true; });
+   807→                  setFeatures(all);
+   808→                }
+   809→              }}>
+   810→                <SelectTrigger className="mt-1.5 rounded-lg border-border">
+   811→                  <SelectValue />
+   812→                </SelectTrigger>
+   813→                <SelectContent>
+   814→                  <SelectItem value="free">مجاني</SelectItem>
+   815→                  <SelectItem value="paid">مدفوع</SelectItem>
+   816→                </SelectContent>
+   817→              </Select>
+   818→            </div>
+   819→            {isPaidPlan && (
+   820→              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-xs text-primary/80">
+   821→                ✅ الخطة المدفوعة: جميع الميزات مفعّلة تلقائياً. يمكنك تعطيل ميزة معينة يدوياً إذا أردت.
+   822→              </div>
+   823→            )}
+   824→            <div>
+   825→              <Label className="text-foreground/60">معلومات الدفع</Label>
+   826→              <Textarea
+   827→                value={paymentInfo}
+   828→                onChange={(e) => setPaymentInfo(e.target.value)}
+   829→                className="mt-1.5 text-xs rounded-lg border-border focus:ring-ring focus:border-ring"
+   830→                rows={3}
+   831→                placeholder="طريقة الدفع، المبلغ، التاريخ..."
+   832→              />
+   833→            </div>
+   834→            <div>
+   835→              <Label className="text-foreground/60">ملاحظات المالك</Label>
+   836→              <Textarea
+   837→                value={ownerNotes}
+   838→                onChange={(e) => setOwnerNotes(e.target.value)}
+   839→                className="mt-1.5 text-xs rounded-lg border-border focus:ring-ring focus:border-ring"
+   840→                rows={3}
+   841→                placeholder="ملاحظات خاصة عن هذا المتجر..."
+   842→              />
+   843→            </div>
+   844→          </div>
+   845→
+   846→          <Separator className="bg-muted" />
+   847→
+   848→          {/* إدارة الميزات */}
+   849→          <div className="space-y-4">
+   850→            <div className="flex items-center justify-between">
+   851→              <h4 className="text-sm font-bold flex items-center gap-2 text-foreground/80 border-r-2 border-primary pr-3">
+   852→                <ToggleLeft className="h-4 w-4 text-primary" /> إدارة الميزات
+   853→              </h4>
+   854→              <Badge variant="outline" className="text-xs rounded-lg border-border text-muted-foreground">
+   855→                {enabledCount}/{TOTAL_FEATURES} مفعّلة
+   856→              </Badge>
+   857→            </div>
+   858→
+   859→            {isPaidPlan && (
+   860→              <div className="text-xs text-primary/80 bg-primary/10 border border-primary/20 rounded-lg p-3">
+   861→                ✨ الخطة المدفوعة — جميع الميزات مفعّلة افتراضياً. يمكنك تعطيل ميزة معينة يدوياً.
+   862→              </div>
+   863→            )}
+   864→            {!isPaidPlan && (
+   865→              <div className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-lg p-3">
+   866→                ✅ الميزات المجانية (7) مفتوحة تلقائياً لكل متجر. يمكنك تفعيل ميزات مدفوعة يدوياً.
+   867→              </div>
+   868→            )}
+   869→
+   870→            {(() => {
+   871→              const freeFeatures = FEATURES.filter((f) => f.isFree);
+   872→              const paidFeatures = FEATURES.filter((f) => !f.isFree);
+   873→
+   874→              return (
+   875→                <>
+   876→                  {/* ===== الميزات المجانية — دائماً مفعّلة ===== */}
+   877→                  <div>
+   878→                    <div className="flex items-center gap-2 mb-3">
+   879→                      <div className="w-1.5 h-5 rounded-full bg-emerald-400" />
+   880→                      <span className="text-xs font-bold text-emerald-700">مجانية — دائماً مفعّلة ({freeFeatures.length})</span>
+   881→                    </div>
+   882→                    <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg border border-emerald-100 bg-emerald-50/30 p-2.5">
+   883→                      {freeFeatures.map((f) => (
+   884→                        <div key={f.key} className="flex items-start gap-3 py-1 px-2 rounded-lg">
+   885→                          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+   886→                            <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+   887→                          </div>
+   888→                          <div className="min-w-0 flex-1">
+   889→                            <div className="text-xs font-medium text-foreground/80 flex items-center gap-2">
+   890→                              {f.label}
+   891→                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-600 font-medium">مجاني</span>
+   892→                            </div>
+   893→                            <div className="text-[11px] text-muted-foreground/70 leading-relaxed">{f.description}</div>
+   894→                          </div>
+   895→                        </div>
+   896→                      ))}
+   897→                    </div>
+   898→                  </div>
+   899→
+   900→                  {/* ===== الميزات المدفوعة — قابلة للتبديل ===== */}
+   901→                  <div>
+   902→                    <div className="flex items-center justify-between mb-3">
+   903→                      <div className="flex items-center gap-2">
+   904→                        <div className="w-1.5 h-5 rounded-full bg-primary" />
+   905→                        <span className="text-xs font-bold text-primary/80">مدفوعة ({paidFeatures.length})</span>
+   906→                        <span className="text-[10px] text-primary/60">— قابلة للتبديل</span>
+   907→                      </div>
+   908→                      <div className="flex gap-1">
+   909→                        <button type="button" className="text-[11px] h-6 px-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition-colors" onClick={() => enableAllForGroup(paidFeatures)}>
+   910→                          تفعيل الكل
+   911→                        </button>
+   912→                        <button type="button" className="text-[11px] h-6 px-2 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors" onClick={() => disableAllForGroup(paidFeatures)}>
+   913→                          تعطيل الكل
+   914→                        </button>
+   915→                      </div>
+   916→                    </div>
+   917→                    <div className="space-y-0.5 max-h-72 overflow-y-auto rounded-lg border border-border bg-primary/10 p-2.5">
+   918→                      {paidFeatures.map((f) => (
+   919→                        <label key={f.key} className="flex items-start gap-3 cursor-pointer py-1 px-2 rounded-lg hover:bg-accent/50 transition-colors">
+   920→                          <Checkbox
+   921→                            checked={features[f.key] === true}
+   922→                            onCheckedChange={() => toggleFeature(f.key)}
+   923→                            className="mt-0.5 data-[state=checked]:bg-primary/100 data-[state=checked]:border-primary"
+   924→                          />
+   925→                          <div className="min-w-0 flex-1">
+   926→                            <div className="text-xs font-medium text-foreground/80 flex items-center gap-2">
+   927→                              {f.label}
+   928→                              <span className={cn(
+   929→                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
+   930→                                features[f.key]
+   931→                                  ? "bg-primary/15 text-primary"
+   932→                                  : "bg-muted text-muted-foreground/70"
+   933→                              )}>
+   934→                                {features[f.key] ? "مفعّل" : "مدفوع"}
+   935→                              </span>
+   936→                            </div>
+   937→                            <div className="text-[11px] text-muted-foreground/70 leading-relaxed">{f.description}</div>
+   938→                          </div>
+   939→                        </label>
+   940→                      ))}
+   941→                    </div>
+   942→                  </div>
+   943→                </>
+   944→              );
+   945→            })()}
+   946→          </div>
+   947→
+   948→          {/* أزرار الحفظ */}
+   949→          <div className="flex gap-3 pt-3">
+   950→            <button type="submit" className="flex-1 bg-primary/100 hover:bg-primary/90 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors" disabled={saving}>
+   951→              {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+   952→            </button>
+   953→            <button type="button" onClick={onClose} className="border border-border text-foreground/80 hover:bg-accent rounded-lg px-4 py-2 text-sm font-medium transition-colors">
+   954→              إلغاء
+   955→            </button>
+   956→          </div>
+   957→        </form>
+   958→      </DialogContent>
+   959→    </Dialog>
+   960→  );
+   961→}

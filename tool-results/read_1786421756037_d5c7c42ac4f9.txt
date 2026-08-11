@@ -1,0 +1,1251 @@
+     1→"use client";
+     2→
+     3→import { Store, Package, DollarSign, TrendingUp, Clock, BarChart3, Activity, UserCheck, ShoppingBag, ArrowUpRight, Sparkles, Users, CalendarDays, Zap, ArrowDownRight, Globe, Crown, Wallet, BarChart2, Flame, ArrowUpLeft, ArrowDownLeft, Settings, Star, FileText, Printer, PackageSearch, ClipboardList, Timer, RefreshCw, Download } from "lucide-react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Badge } from "@/components/ui/badge";
+     6→import {
+     7→  Popover, PopoverContent, PopoverTrigger,
+     8→} from "@/components/ui/popover";
+     9→
+    10→import {
+    11→  STATUS_META, STATUS_FLOW, formatDA,
+    12→} from "@/lib/print-config";
+    13→import {
+    14→  PieChart, Pie, Cell,
+    15→  BarChart, Bar, XAxis, YAxis, Tooltip,
+    16→  ResponsiveContainer,
+    17→} from "recharts";
+    18→import { formatNumber, STATUS_COLORS, getTimeAgo } from "@/lib/admin-utils";
+    19→import type { GlobalStats } from "@/lib/admin-types";
+    20→import { ShopOverviewCard } from "@/components/app/admin-shop-card";
+    21→import { AnimatedCounter } from "@/components/ui/animated-counter";
+    22→import { cn } from "@/lib/utils";
+    23→import { ActivityFeed } from "@/components/app/activity-feed";
+    24→import { QuickStatsOverview } from "@/components/app/quick-stats-overview";
+    25→import { PerformanceScoreWidget } from "@/components/app/performance-score-widget";
+    26→import { StaleOrdersWidget } from "@/components/app/stale-orders-widget";
+    27→import { AuditTrail } from "@/components/app/audit-trail";
+    28→import { OrdersHeatmap } from "@/components/app/orders-heatmap";
+    29→import { DailyTargetRing } from "@/components/app/daily-target-ring";
+    30→import { WeeklyReportChart } from "@/components/app/weekly-report-chart";
+    31→import { ShopActivityFeed } from "@/components/app/shop-activity-feed";
+    32→import { RevenueForecastWidget } from "@/components/app/revenue-forecast-widget";
+    33→import { QuickStatsRow } from "@/components/app/quick-stats-row";
+    34→import { ProductionEfficiencyDashboard } from "@/components/app/production-efficiency-dashboard";
+    35→import { MetricComparisonGrid } from "@/components/app/metric-comparison-grid";
+    36→import { LiveActivityFeed } from "@/components/app/live-activity-feed";
+    37→import { DailyGoalTracker } from "@/components/app/daily-goal-tracker";
+    38→import { OrderStatusTimeline } from "@/components/app/order-status-timeline";
+    39→import { StaffActivityWidget } from "@/components/app/staff-activity-widget";
+    40→import { TopServicesWidget } from "@/components/app/top-services-widget";
+    41→import { CustomerStatsWidget } from "@/components/app/customer-stats-widget";
+    42→import { RevenueTrendMini } from "@/components/app/revenue-trend-mini";
+    43→import { QuickInsightsWidget } from "@/components/app/quick-insights-widget";
+    44→import { DailyPerformanceBar } from "@/components/app/daily-performance-bar";
+    45→import type { ShopStat } from "@/lib/admin-types";
+    46→
+    47→// ===== Sparkline Mini Chart =====
+    48→function SparklineMini({ values, color, height = 24 }: { values: number[]; color: string; height?: number }) {
+    49→  const w = 60;
+    50→  const h = height;
+    51→  const gradId = `spark-${color.replace(/[^a-z0-9]/gi, '')}-${Math.random().toString(36).slice(2, 6)}`;
+    52→  const min = Math.min(...values);
+    53→  const max = Math.max(...values);
+    54→  const range = max - min || 1;
+    55→  const pts = values.map((v, i) => {
+    56→    const x = (i / (values.length - 1)) * w;
+    57→    const y = h - ((v - min) / range) * (h - 2) - 1;
+    58→    return `${x},${y}`;
+    59→  });
+    60→  const polyStr = pts.join(' ');
+    61→  const fillStr = `0,${h} ${polyStr} ${w},${h}`;
+    62→  return (
+    63→    <svg width={w} height={h} className="block mt-2 opacity-80" aria-hidden="true">
+    64→      <defs>
+    65→        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+    66→          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+    67→          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+    68→        </linearGradient>
+    69→      </defs>
+    70→      <polygon points={fillStr} fill={`url(#${gradId})`} />
+    71→      <polyline points={polyStr} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    72→    </svg>
+    73→  );
+    74→}
+    75→
+    76→// ===== Weekly Revenue Mini Bar Chart =====
+    77→function WeeklyRevenueChart({ stats }: { stats: GlobalStats | null }) {
+    78→  if (!stats) return null;
+    79→  const recentOrders = stats.recentOrders || [];
+    80→  const today = new Date();
+    81→  const days = Array.from({ length: 7 }, (_, i) => {
+    82→    const d = new Date(today);
+    83→    d.setDate(d.getDate() - (6 - i));
+    84→    return d;
+    85→  });
+    86→  const dayLabels = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    87→  const dailyRevenue = days.map(d => {
+    88→    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+    89→    const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+    90→    return recentOrders
+    91→      .filter(o => { const t = new Date(o.createdAt); return t >= dayStart && t <= dayEnd; })
+    92→      .reduce((s, o) => s + (o.total || 0), 0);
+    93→  });
+    94→  const maxRev = Math.max(...dailyRevenue, 1);
+    95→  const totalWeek = dailyRevenue.reduce((s, v) => s + v, 0);
+    96→  if (totalWeek === 0) return null;
+    97→  return (
+    98→    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow card-glow-hover">
+    99→      <CardHeader className="pb-3">
+   100→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0 section-title-underline">
+   101→          <CalendarDays className="h-4 w-4 text-gold-500" />
+   102→          إيرادات الأسبوع
+   103→          <span className="text-xs text-muted-foreground font-normal mr-auto tabular-nums">{formatDA(totalWeek)}</span>
+   104→        </CardTitle>
+   105→      </CardHeader>
+   106→      <CardContent>
+   107→        <div className="flex items-end gap-2 h-28">
+   108→          {dailyRevenue.map((rev, i) => {
+   109→            const height = Math.max(8, (rev / maxRev) * 100);
+   110→            const isToday = i === 6;
+   111→            return (
+   112→              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+   113→                <span className="text-[9px] text-muted-foreground tabular-nums">{rev > 0 ? (rev >= 1000 ? `${(rev / 1000).toFixed(1)}k` : String(rev)) : ''}</span>
+   114→                <div className="w-full flex justify-center">
+   115→                  <div
+   116→                    className={cn(
+   117→                      "rounded-t-lg transition-all duration-700 ease-out w-full max-w-[30px] cursor-default",
+   118→                      isToday
+   119→                        ? "bg-gradient-to-t from-gold-500 to-gold-300 shadow-sm shadow-gold-500/20 hover:shadow-gold-500/40"
+   120→                        : "bg-gradient-to-t from-primary/25 to-primary/15 hover:from-primary/35 hover:to-primary/25"
+   121→                    )}
+   122→                    style={{ height: `${height}%` }}
+   123→                  />
+   124→                </div>
+   125→                <span className={cn("text-[9px]", isToday ? "font-bold text-gold-600 dark:text-gold-400" : "text-muted-foreground")}>{dayLabels[i].slice(0, 3)}</span>
+   126→              </div>
+   127→            );
+   128→          })}
+   129→        </div>
+   130→      </CardContent>
+   131→    </Card>
+   132→  );
+   133→}
+   134→
+   135→// ===== Peak Hours Chart =====
+   136→function PeakHoursChart({ stats }: { stats: GlobalStats | null }) {
+   137→  if (!stats) return null;
+   138→  const recentOrders = stats.recentOrders || [];
+   139→  const hourlyBuckets = Array.from({ length: 24 }, (_, h) => ({
+   140→    hour: h,
+   141→    count: 0,
+   142→    revenue: 0,
+   143→  }));
+   144→  recentOrders.forEach(o => {
+   145→    const hour = new Date(o.createdAt).getHours();
+   146→    hourlyBuckets[hour].count++;
+   147→    hourlyBuckets[hour].revenue += o.total || 0;
+   148→  });
+   149→  const maxCount = Math.max(...hourlyBuckets.map(b => b.count), 1);
+   150→  const hasData = hourlyBuckets.some(b => b.count > 0);
+   151→  if (!hasData) return null;
+   152→
+   153→  const peakHour = hourlyBuckets.reduce((max, b) => b.count > max.count ? b : max, hourlyBuckets[0]);
+   154→  const hourLabels = ['12ص', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12م', '1م', '2م', '3م', '4م', '5م', '6م', '7م', '8م', '9م', '10م', '11م'];
+   155→
+   156→  return (
+   157→    <Card className="bg-card rounded-xl border border-border shadow-sm card-elevated card-glow-hover">
+   158→      <CardHeader className="pb-3">
+   159→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0 section-title-underline">
+   160→          <Clock className="h-4 w-4 text-violet-500" />
+   161→          ذروة الطلب
+   162→          <span className="text-xs text-muted-foreground font-normal mr-auto">
+   163→            الأكثر: {hourLabels[peakHour.hour]} ({peakHour.count} طلب)
+   164→          </span>
+   165→        </CardTitle>
+   166→      </CardHeader>
+   167→      <CardContent>
+   168→        <div className="flex items-end gap-[2px] h-20">
+   169→          {hourlyBuckets.map((b, i) => {
+   170→            const height = Math.max(4, (b.count / maxCount) * 100);
+   171→            const isPeak = i === peakHour.hour;
+   172→            const isNow = i === new Date().getHours();
+   173→            return (
+   174→              <div key={i} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+   175→                {isPeak && (
+   176→                  <div className="absolute -top-4 text-[8px] font-bold text-violet-500 tabular-nums">
+   177→                    🔥
+   178→                  </div>
+   179→                )}
+   180→                <div className="w-full flex justify-center">
+   181→                  <div
+   182→                    className={cn(
+   183→                      "rounded-sm transition-all duration-500 w-full max-w-[14px] cursor-default",
+   184→                      isPeak
+   185→                        ? "bg-gradient-to-t from-violet-500 to-violet-300 shadow-sm shadow-violet-500/20"
+   186→                        : isNow
+   187→                          ? "bg-gradient-to-t from-gold-500 to-gold-300 shadow-sm shadow-gold-500/20"
+   188→                          : "bg-gradient-to-t from-primary/20 to-primary/10"
+   189→                    )}
+   190→                    style={{ height: `${height}%` }}
+   191→                  />
+   192→                </div>
+   193→              </div>
+   194→            );
+   195→          })}
+   196→        </div>
+   197→        <div className="flex justify-between mt-1 text-[8px] text-muted-foreground/50">
+   198→          <span>12ص</span>
+   199→          <span>12م</span>
+   200→        </div>
+   201→      </CardContent>
+   202→    </Card>
+   203→  );
+   204→}
+   205→
+   206→// ===== مكون بطاقة المقياس الواحد (للإيرادات) =====
+   207→function RevenueMetricCard({ icon: Icon, label, value, change, bgColor, textColor }: {
+   208→  icon: React.ComponentType<{ className?: string }>;
+   209→  label: string;
+   210→  value: string;
+   211→  change: number;
+   212→  bgColor: string;
+   213→  textColor: string;
+   214→}) {
+   215→  const isPositive = change > 0;
+   216→  const isNeutral = change === 0;
+   217→  return (
+   218→    <div className="metric-card bg-card rounded-xl border border-border shadow-sm p-4 sm:p-5 card-hover-lift card-glow card-glow-hover group focus-glow-card">
+   219→      <div className="flex items-start justify-between mb-3">
+   220→        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", bgColor)}>
+   221→          <Icon className={cn("h-5 w-5", textColor)} />
+   222→        </div>
+   223→        <span className={cn(
+   224→          "text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5",
+   225→          isPositive && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+   226→          !isPositive && !isNeutral && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+   227→          isNeutral && "bg-muted text-muted-foreground"
+   228→        )}>
+   229→          {isPositive ? <ArrowUpLeft className="h-3 w-3" /> : !isNeutral ? <ArrowDownLeft className="h-3 w-3" /> : null}
+   230→          {isNeutral ? "\u2014" : `${Math.abs(change)}%`}
+   231→        </span>
+   232→      </div>
+   233→      <div className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mb-1 neon-text-violet">{value}</div>
+   234→      <div className="text-xs text-muted-foreground">{label}</div>
+   235→    </div>
+   236→  );
+   237→}
+   238→
+   239→// ===== بطاقة إحصائيات الإيرادات مع مخطط شريطي صغير =====
+   240→function RevenueAnalyticsWidget({ stats }: { stats: GlobalStats | null }) {
+   241→  if (!stats) return null;
+   242→  const recentOrders = stats.recentOrders || [];
+   243→  const today = new Date();
+   244→
+   245→  // حساب إيرادات آخر 7 أيام
+   246→  const days = Array.from({ length: 7 }, (_, i) => {
+   247→    const d = new Date(today);
+   248→    d.setDate(d.getDate() - (6 - i));
+   249→    return d;
+   250→  });
+   251→  const dayLabels = ['سبت', 'أحد', 'اثن', 'ثلا', 'أرب', 'خمي', 'جمع'];
+   252→  const dailyRevenue = days.map(d => {
+   253→    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+   254→    const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+   255→    return recentOrders
+   256→      .filter(o => { const t = new Date(o.createdAt); return t >= dayStart && t <= dayEnd; })
+   257→      .reduce((s, o) => s + (o.total || 0), 0);
+   258→  });
+   259→  const maxDailyRev = Math.max(...dailyRevenue, 1);
+   260→  const totalRevenue = stats.totalRevenue ?? 0;
+   261→  const totalOrders = stats.totalOrders ?? 0;
+   262→  const avgOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+   263→  const peakDailyRev = Math.max(...dailyRevenue);
+   264→
+   265→  // حساب نسب التغير (مقارنة آخر 3 أيام بأول 3 أيام)
+   266→  const last3 = dailyRevenue.slice(4).reduce((s, v) => s + v, 0);
+   267→  const first3 = dailyRevenue.slice(0, 3).reduce((s, v) => s + v, 0);
+   268→  const revChange = first3 > 0 ? Math.round(((last3 - first3) / first3) * 100) : 0;
+   269→
+   270→  // نسبة متوسط الطلب
+   271→  const avgAll = dailyRevenue.reduce((s, v) => s + v, 0) / Math.max(dailyRevenue.filter(v => v > 0).length, 1);
+   272→  const avgChange = avgAll > 0 ? Math.round(((avgOrder - avgAll) / avgAll) * 100) : 0;
+   273→
+   274→  const hasData = totalRevenue > 0 || dailyRevenue.some(v => v > 0);
+   275→  if (!hasData) return null;
+   276→
+   277→  return (
+   278→    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow overflow-hidden">
+   279→      <CardHeader className="pb-3">
+   280→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   281→          <BarChart2 className="h-4 w-4 text-gold-500" />
+   282→          إحصائيات الإيرادات
+   283→          <span className="text-[10px] text-muted-foreground font-normal mr-auto">آخر 7 أيام</span>
+   284→        </CardTitle>
+   285→      </CardHeader>
+   286→      <CardContent className="space-y-5">
+   287→        {/* صف المقاييس الثلاثة */}
+   288→        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+   289→          <RevenueMetricCard icon={Wallet} label="إجمالي الإيرادات" value={formatDA(totalRevenue)} change={revChange} bgColor="bg-primary/10" textColor="text-primary" />
+   290→          <RevenueMetricCard icon={ShoppingBag} label="متوسط الطلب" value={formatDA(avgOrder)} change={avgChange} bgColor="bg-gold-500/10" textColor="text-gold-600 dark:text-gold-400" />
+   291→          <RevenueMetricCard icon={Flame} label="أعلى إيراد يومي" value={formatDA(peakDailyRev)} change={0} bgColor="bg-amber-500/10" textColor="text-amber-600 dark:text-amber-400" />
+   292→        </div>
+   293→
+   294→        {/* مخطط شريطي صغير (CSS فقط) */}
+   295→        <div className="flex items-end gap-1.5 sm:gap-2 h-20 px-1">
+   296→          {dailyRevenue.map((rev, i) => {
+   297→            const height = Math.max(6, (rev / maxDailyRev) * 100);
+   298→            const isToday = i === 6;
+   299→            const isPeak = rev === peakDailyRev && rev > 0;
+   300→            return (
+   301→              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+   302→                <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-foreground bg-popover border border-border rounded-md px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm z-10 tabular-nums pointer-events-none">
+   303→                  {rev > 0 ? formatDA(rev) : '0'}
+   304→                </div>
+   305→                <div className="w-full flex justify-center flex-1 items-end">
+   306→                  <div
+   307→                    className={cn(
+   308→                      "rounded-t-md transition-all duration-700 ease-out w-full max-w-[36px] cursor-default",
+   309→                      isToday
+   310→                        ? "bg-gradient-to-t from-gold-500 to-gold-300 dark:from-gold-600 dark:to-gold-400 shadow-sm shadow-gold-500/25"
+   311→                        : isPeak
+   312→                          ? "bg-gradient-to-t from-emerald-500 to-emerald-300 dark:from-emerald-600 dark:to-emerald-400 shadow-sm shadow-emerald-500/20"
+   313→                          : "bg-gradient-to-t from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/15 hover:from-primary/30 hover:to-primary/20"
+   314→                    )}
+   315→                    style={{ height: `${height}%` }}
+   316→                  />
+   317→                </div>
+   318→                <span className={cn("text-[9px] tabular-nums leading-none", isToday ? "font-bold text-gold-600 dark:text-gold-400" : "text-muted-foreground/60")}>
+   319→                  {dayLabels[i]}
+   320→                </span>
+   321→              </div>
+   322→            );
+   323→          })}
+   324→        </div>
+   325→      </CardContent>
+   326→    </Card>
+   327→  );
+   328→}
+   329→
+   330→// ===== لوحة الإجراءات السريعة =====
+   331→function QuickActionsPanel({ onOpenCreate, onRefresh, onExport, onSwitchToSettings }: {
+   332→  onOpenCreate: () => void;
+   333→  onRefresh?: () => void;
+   334→  onExport?: () => void;
+   335→  onSwitchToSettings?: () => void;
+   336→}) {
+   337→  const actions = [
+   338→    {
+   339→      label: "إنشاء متجر جديد",
+   340→      icon: Store,
+   341→      color: "bg-primary/10 text-primary",
+   342→      hoverColor: "hover:bg-primary/15",
+   343→      onClick: onOpenCreate,
+   344→    },
+   345→    {
+   346→      label: "تصدير التقرير",
+   347→      icon: ArrowDownRight,
+   348→      color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+   349→      hoverColor: "hover:bg-emerald-500/15",
+   350→      onClick: onExport,
+   351→    },
+   352→    {
+   353→      label: "تحديث البيانات",
+   354→      icon: Zap,
+   355→      color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+   356→      hoverColor: "hover:bg-amber-500/15",
+   357→      onClick: onRefresh,
+   358→    },
+   359→    {
+   360→      label: "إعدادات المنصة",
+   361→      icon: Settings,
+   362→      color: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+   363→      hoverColor: "hover:bg-sky-500/15",
+   364→      onClick: onSwitchToSettings,
+   365→    },
+   366→  ];
+   367→
+   368→  return (
+   369→    <Card className="bg-card rounded-xl border border-border shadow-sm card-glow">
+   370→      <CardHeader className="pb-3">
+   371→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   372→          <Zap className="h-4 w-4 text-amber-500" />
+   373→          إجراءات سريعة
+   374→        </CardTitle>
+   375→      </CardHeader>
+   376→      <CardContent>
+   377→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   378→          {actions.map((action) => {
+   379→            const Icon = action.icon;
+   380→            return (
+   381→              <button
+   382→                key={action.label}
+   383→                onClick={action.onClick}
+   384→                disabled={!action.onClick}
+   385→                className={cn(
+   386→                  "group flex flex-col items-center gap-3 rounded-xl border border-border bg-background p-4 sm:p-5",
+   387→                  "card-hover-lift btn-3d transition-all duration-200",
+   388→                  "hover:border-primary/30 dark:hover:border-primary/40",
+   389→                  "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+   390→                )}
+   391→              >
+   392→                <div className={cn(
+   393→                  "w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110",
+   394→                  action.color,
+   395→                  action.hoverColor
+   396→                )}>
+   397→                  <Icon className="h-5 w-5" />
+   398→                </div>
+   399→                <span className="text-xs font-semibold text-foreground text-center leading-relaxed">{action.label}</span>
+   400→              </button>
+   401→            );
+   402→          })}
+   403→        </div>
+   404→      </CardContent>
+   405→    </Card>
+   406→  );
+   407→}
+   408→
+   409→export function OverviewTab({ stats, lastUpdated, onOpenCreate, adminName, onRefresh, onExport, onSwitchToSettings }: {
+   410→  stats: GlobalStats;
+   411→  lastUpdated: string;
+   412→  onOpenCreate: () => void;
+   413→  adminName?: string;
+   414→  onRefresh?: () => void;
+   415→  onExport?: () => void;
+   416→  onSwitchToSettings?: () => void;
+   417→}) {
+   418→  const s = stats ?? {} as GlobalStats;
+   419→  const safeStats: GlobalStats = {
+   420→    totalOrders: s.totalOrders ?? 0,
+   421→    totalRevenue: s.totalRevenue ?? 0,
+   422→    todayOrders: s.todayOrders ?? 0,
+   423→    shopCount: s.shopCount ?? 0,
+   424→    activeShopCount: s.activeShopCount ?? 0,
+   425→    statusCounts: s.statusCounts ?? {},
+   426→    shopStats: s.shopStats ?? [],
+   427→    recentOrders: s.recentOrders ?? [],
+   428→  };
+   429→  return (
+   430→    <div className="space-y-6 stagger-grid widget-fade-in">
+   431→      {/* شريط الترحيب */}
+   432→      <div className="aurora-bg rounded-2xl overflow-hidden fade-in-up" style={{ background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(212, 168, 83, 0.4))', backdropFilter: 'blur(16px)' }}>
+   433→        <div className="dot-pattern-gold absolute inset-0 opacity-10 pointer-events-none" />
+   434→        <div className="absolute -left-10 -top-10 w-32 h-32 rounded-full bg-white/[0.07] morph-blob pointer-events-none" />
+   435→        <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-white/[0.04] morph-blob pointer-events-none" style={{ animationDelay: '-2s' }} />
+   436→        <div className="absolute left-1/3 top-1/4 w-12 h-12 rounded-full bg-white/[0.04] morph-blob pointer-events-none" style={{ animationDelay: '-4s' }} />
+   437→        <div className="relative z-10 p-5 sm:p-7 md:p-8 text-white">
+   438→          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   439→            <div>
+   440→              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2 text-shadow-sm"><span className="online-dot" /><span className="gradient-primary text-gradient-animated">مرحباً بك {adminName || "في طيف"}</span> <Sparkles className="h-5 w-5 text-white/80" /></h2>
+   441→              <p className="text-white/80 text-sm max-w-lg">منصة إدارة المطبع — أنشئ متاجرك الأول وابدأ في استقبال طلبات الطباعة أونلاين</p>
+   442→            </div>
+   443→            {safeStats.totalOrders > 0 && (
+   444→              <div className="flex gap-4 sm:gap-6">
+   445→                <div className="text-center">
+   446→                  <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.todayOrders} formatFn={formatNumber} /></div>
+   447→                  <div className="text-[11px] text-white/60">طلبات اليوم</div>
+   448→                  <span className={cn("comparison-badge mt-1.5 inline-block text-[10px] px-2 py-0.5 rounded-full font-medium", safeStats.todayOrders > 0 ? "comparison-up" : "comparison-neutral")}>
+   449→                    {safeStats.todayOrders > 0 ? "نشاط جيد" : "لا طلبات"}
+   450→                  </span>
+   451→                </div>
+   452→                <div className="text-center">
+   453→                  <div className="text-2xl font-bold tabular-nums number-pop"><AnimatedCounter value={safeStats.totalRevenue} formatFn={formatDA} /></div>
+   454→                  <div className="text-[11px] text-white/60">إجمالي الإيرادات</div>
+   455→                </div>
+   456→              </div>
+   457→            )}
+   458→          </div>
+   459→        </div>
+   460→      </div>
+   461→
+   462→      {lastUpdated && (
+   463→        <div className="flex items-center justify-end gap-1.5 text-[11px] text-muted-foreground -mt-3">
+   464→          <Clock className="h-3 w-3" />
+   465→          <span>آخر تحديث: {lastUpdated}</span>
+   466→        </div>
+   467→      )}
+   468→
+   469→      {/* شريط أداء اليوم */}
+   470→      <DailyPerformanceBar orders={safeStats.recentOrders || []} />
+   471→
+   472→      {/* إجراءات سريعة دائمة */}
+   473→      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children fade-in-up">
+   474→        <button onClick={onOpenCreate} className="quick-action-btn group" dir="rtl">
+   475→          <div className="icon-wrapper">
+   476→            <Store className="h-5 w-5 text-primary" />
+   477→          </div>
+   478→          <p className="text-xs font-semibold text-foreground mb-0.5">إنشاء متجر</p>
+   479→          <p className="text-[10px] text-muted-foreground">أضف متجر جديد</p>
+   480→        </button>
+   481→        <button onClick={onRefresh} className="quick-action-btn group" dir="rtl">
+   482→          <div className="icon-wrapper">
+   483→            <RefreshCw className="h-5 w-5 text-emerald-500" />
+   484→          </div>
+   485→          <p className="text-xs font-semibold text-foreground mb-0.5">تحديث البيانات</p>
+   486→          <p className="text-[10px] text-muted-foreground">جلب أحدث الطلبات</p>
+   487→        </button>
+   488→        <button onClick={onExport} className="quick-action-btn group" dir="rtl">
+   489→          <div className="icon-wrapper">
+   490→            <Download className="h-5 w-5 text-violet-500" />
+   491→          </div>
+   492→          <p className="text-xs font-semibold text-foreground mb-0.5">تصدير التقرير</p>
+   493→          <p className="text-[10px] text-muted-foreground">تحميل CSV</p>
+   494→        </button>
+   495→        <button onClick={onSwitchToSettings} className="quick-action-btn group" dir="rtl">
+   496→          <div className="icon-wrapper">
+   497→            <Settings className="h-5 w-5 text-amber-500" />
+   498→          </div>
+   499→          <p className="text-xs font-semibold text-foreground mb-0.5">إعدادات المنصة</p>
+   500→          <p className="text-[10px] text-muted-foreground">تخصيص الهوية</p>
+   501→        </button>
+   502→      </div>
+   503→
+   504→      {/* بطاقات الإحصائيات */}
+   505→      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children page-enter">
+   506→        <div className="stat-tile stat-mesh-card card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-primary hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5">
+   507→          <div className="flex items-start justify-between">
+   508→            <div className="min-w-0">
+   509→              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalOrders ?? 0} formatFn={formatNumber} /></div>
+   510→              <div className="text-xs text-muted-foreground mt-1">إجمالي الطلبات</div>
+   511→            </div>
+   512→            <div className="icon-container-gold metric-icon-box group-hover:scale-110 transition-transform shrink-0"><Package className="h-5 w-5" /></div>
+   513→          </div>
+   514→          <SparklineMini values={[20, 23, 25, 28, 31, 35, 38]} color="#d4a853" />
+   515→          {(safeStats.todayOrders ?? 0) > 0 && <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-500 dark:text-emerald-400"><ArrowUpRight className="h-3 w-3" /><span>{formatNumber(safeStats.todayOrders)} اليوم</span></div>}
+   516→        </div>
+   517→        <div className="stat-tile stat-mesh-card emerald card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+   518→          <div className="flex items-start justify-between">
+   519→            <div className="min-w-0">
+   520→              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.totalRevenue ?? 0} formatFn={formatDA} /></div>
+   521→              <div className="text-xs text-muted-foreground mt-1">إجمالي الإيرادات</div>
+   522→            </div>
+   523→            <div className="icon-container-emerald metric-icon-box group-hover:scale-110 transition-transform shrink-0"><DollarSign className="h-5 w-5" /></div>
+   524→          </div>
+   525→          <SparklineMini values={[17200, 17800, 17400, 17900, 17100, 17600, 18000]} color="#10b981" />
+   526→        </div>
+   527→        <div className="stat-tile stat-mesh-card amber card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-amber-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+   528→          <div className="flex items-start justify-between">
+   529→            <div className="min-w-0">
+   530→              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number"><AnimatedCounter value={safeStats.todayOrders ?? 0} formatFn={formatNumber} /></div>
+   531→              <div className="text-xs text-muted-foreground mt-1">طلبات اليوم</div>
+   532→            </div>
+   533→            <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-amber-500/15 metric-icon-box"><TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
+   534→          </div>
+   535→          <SparklineMini values={[0, 1, 0, 0, 3, 0, 2]} color="#f59e0b" />
+   536→        </div>
+   537→        <div className="stat-tile stat-mesh-card violet card-glow card-hover-glow metric-glow group card-rotate-3d border-l-[3px] border-l-violet-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+   538→          <div className="flex items-start justify-between">
+   539→            <div className="min-w-0">
+   540→              <div className="text-2xl font-bold text-foreground tabular-nums metric-large-number">
+   541→                <AnimatedCounter value={safeStats.activeShopCount ?? 0} formatFn={formatNumber} />
+   542→                <span className="text-muted-foreground/40 text-lg font-normal">/<AnimatedCounter value={safeStats.shopCount ?? 0} formatFn={formatNumber} /></span>
+   543→              </div>
+   544→              <div className="text-xs text-muted-foreground mt-1">متجر نشط</div>
+   545→            </div>
+   546→            <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-sky-500/15 metric-icon-box"><Store className="h-5 w-5 text-sky-600 dark:text-sky-400" /></div>
+   547→          </div>
+   548→          <SparklineMini values={[3, 3, 4, 4, 4, 5, 5]} color="#0ea5e9" />
+   549→        </div>
+   550→      </div>
+   551→
+   552→      {/* إحصائيات الإيرادات مع مخطط شريطي صغير */}
+   553→      <RevenueAnalyticsWidget stats={safeStats} />
+   554→
+   555→      {/* التقرير الأسبوعي */}
+   556→      <WeeklyReportChart stats={safeStats} />
+   557→
+   558→      {/* سجل الإجراءات (Audit Trail) */}
+   559→      <AuditTrail />
+   560→
+   561→      {/* إجراءات سريعة */}
+   562→      {(safeStats.shopStats.length ?? 0) > 0 && (
+   563→        <QuickActionsPanel onOpenCreate={onOpenCreate} onRefresh={onRefresh} onExport={onExport} onSwitchToSettings={onSwitchToSettings} />
+   564→      )}
+   565→
+   566→      {/* توزيع الحالات */}
+   567→      <Card className="bg-muted/50 rounded-xl border border-border shadow-sm">
+   568→        <CardHeader className="pb-3">
+   569→          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   570→            <BarChart3 className="h-4 w-4 text-primary" />
+   571→            <span className="text-gradient-section">توزيع حالات الطلبات</span>
+   572→          </CardTitle>
+   573→        </CardHeader>
+   574→        <CardContent>
+   575→          {(() => {
+   576→            const totalOrders = safeStats.totalOrders ?? 0;
+   577→            if (totalOrders === 0) {
+   578→              return (
+   579→                <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+   580→                  <div className="empty-state-icon"><Clock className="h-8 w-8 text-primary/30 empty-bounce" /></div>
+   581→                  <p className="text-sm font-medium">لا توجد طلبات بعد لعرض التوزيع</p>
+   582→                  <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا بمجرد وصول أول طلب</p>
+   583→                </div>
+   584→              );
+   585→            }
+   586→            const allStatuses = [...STATUS_FLOW, "confirmed", "cancelled"];
+   587→            const statusEntries = allStatuses.map((s) => ({
+   588→              key: s,
+   589→              emoji: s === "cancelled" ? "❌" : STATUS_META[s].emoji,
+   590→              label: s === "cancelled" ? "ملغي" : STATUS_META[s].label,
+   591→              count: safeStats.statusCounts?.[s] ?? 0,
+   592→            }));
+   593→            return (
+   594→              <div className="w-full flex gap-4">
+   595→                {statusEntries.map((entry) => {
+   596→                  const pct = totalOrders > 0 ? (entry.count / totalOrders) * 100 : 0;
+   597→                  return (
+   598→                    <div key={entry.key} className="flex-1 min-w-0">
+   599→                      <div className="flex items-center gap-1.5 mb-1.5">
+   600→                        <span className="text-sm">{entry.emoji}</span>
+   601→                        <span className="text-xs text-foreground/60 truncate">{entry.label}</span>
+   602→                        <span className="text-xs font-bold text-foreground tabular-nums mr-auto">{entry.count}</span>
+   603→                      </div>
+   604→                      <div className="w-full h-2 rounded-full bg-border overflow-hidden">
+   605→                        <div
+   606→                          className={`h-full rounded-full transition-all duration-500 ${
+   607→                            entry.key === "pending" ? "bg-amber-400" :
+   608→                            entry.key === "confirmed" ? "bg-blue-400" :
+   609→                            entry.key === "printing" ? "bg-violet-400" :
+   610→                            entry.key === "ready" ? "bg-emerald-400" :
+   611→                            entry.key === "delivered" ? "bg-green-400" :
+   612→                            "bg-rose-400"
+   613→                          }`}
+   614→                          style={{ width: `${pct}%` }}
+   615→                        />
+   616→                      </div>
+   617→                      <div className="text-[10px] text-muted-foreground mt-1 text-left" dir="ltr">{pct.toFixed(1)}%</div>
+   618→                    </div>
+   619→                  );
+   620→                })}
+   621→              </div>
+   622→            );
+   623→          })()}
+   624→        </CardContent>
+   625→      </Card>
+   626→
+   627→      {/* رسوم بيانية تحليلية */}
+   628→      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 chart-fade-in">
+   629→        <PieChartCard stats={safeStats} />
+   630→        <RevenueBarChart stats={stats} />
+   631→      </div>
+   632→
+   633→      {/* مخطط إيرادات الأسبوع + ذروة الطلب */}
+   634→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 chart-fade-in">
+   635→        <WeeklyRevenueChart stats={stats} />
+   636→        <PeakHoursChart stats={stats} />
+   637→      </div>
+   638→
+   639→      {/* خريطة كثافة الطلبات */}
+   640→      <OrdersHeatmap />
+   641→
+   642→      {/* أفضل الزبائن */}
+   643→      {(() => {
+   644→        const customerMap = new Map<string, { name: string; count: number; total: number }>();
+   645→        (safeStats.recentOrders || []).forEach((order) => {
+   646→          const name = order.customer?.name || "—";
+   647→          const existing = customerMap.get(name);
+   648→          if (existing) {
+   649→            existing.count += 1;
+   650→            existing.total += order.total || 0;
+   651→          } else {
+   652→            customerMap.set(name, { name, count: 1, total: order.total || 0 });
+   653→          }
+   654→        });
+   655→        const topCustomers = Array.from(customerMap.values())
+   656→          .sort((a, b) => b.count - a.count)
+   657→          .slice(0, 5);
+   658→        return (
+   659→          <Card className="bg-card rounded-xl border border-border shadow-sm card-glow card-tilt-3d">
+   660→            <CardHeader className="pb-3">
+   661→              <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   662→                <Crown className="h-4 w-4 text-gold-500" />
+   663→                <span className="text-gradient-section">أفضل الزبائن</span>
+   664→              </CardTitle>
+   665→            </CardHeader>
+   666→            <CardContent className="p-0">
+   667→              {topCustomers.length === 0 ? (
+   668→                <div className="py-10 flex flex-col items-center text-muted-foreground">
+   669→                  <Users className="h-8 w-8 text-muted-foreground/20 mb-2" />
+   670→                  <p className="text-sm font-medium">لا يوجد زبائن بعد</p>
+   671→                  <p className="text-xs text-muted-foreground/60 mt-1">ستظهر هنا أفضل الزبائن بناءً على عدد الطلبات</p>
+   672→                </div>
+   673→              ) : (
+   674→                <div className="divide-y divide-border">
+   675→                  {topCustomers.map((customer, index) => (
+   676→                    <div key={customer.name} className="flex items-center justify-between px-4 sm:px-5 py-3 table-row-hover">
+   677→                      <div className="flex items-center gap-3 min-w-0">
+   678→                        <span className={cn(
+   679→                          "inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-bold shrink-0 shadow-sm",
+   680→                          index === 0 ? "rank-1" : index === 1 ? "rank-2" : index === 2 ? "rank-3" : "rank-default"
+   681→                        )}>
+   682→                          {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+   683→                        </span>
+   684→                        <span className="text-sm font-medium text-foreground truncate">{customer.name}</span>
+   685→                      </div>
+   686→                      <div className="flex items-center gap-3 shrink-0">
+   687→                        <span className="text-xs px-2 py-0.5 rounded-lg bg-primary/10 text-primary font-semibold tabular-nums status-pill">{customer.count} طلب</span>
+   688→                        <span className="text-sm font-bold text-foreground/80 tabular-nums">{formatDA(customer.total)}</span>
+   689→                      </div>
+   690→                    </div>
+   691→                  ))}
+   692→                </div>
+   693→              )}
+   694→            </CardContent>
+   695→          </Card>
+   696→        );
+   697→      })()}
+   698→
+   699→      {/* ملخص المتاجر — sorted by revenue for ranking */}
+   700→      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+   701→        {[...safeStats.shopStats]
+   702→          .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+   703→          .map((shop, idx) => (
+   704→          <ShopQuickStatsPopover key={shop.id} shop={shop} rank={idx + 1} totalShops={safeStats.shopStats.length} />
+   705→        ))}
+   706→      </div>
+   707→
+   708→      {/* النشاطات الأخيرة عبر المتاجر */}
+   709→      {safeStats.recentOrders.length > 0 && (
+   710→        <Card className="widget card-gradient-top fade-in-up" dir="rtl">
+   711→          <CardHeader className="pb-2">
+   712→            <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   713→              <Activity className="h-4 w-4 text-primary" />
+   714→              <span className="text-gradient-section">آخر النشاطات</span>
+   715→              <Badge variant="secondary" className="text-[10px] px-1.5 mr-auto">
+   716→                {safeStats.recentOrders.length} نشاط
+   717→              </Badge>
+   718→            </CardTitle>
+   719→          </CardHeader>
+   720→          <CardContent className="pt-0">
+   721→            <ShopActivityFeed
+   722→              shopName="المنصة"
+   723→              orders={safeStats.recentOrders.slice(0, 8)}
+   724→              limit={8}
+   725→            />
+   726→          </CardContent>
+   727→        </Card>
+   728→      )}
+   729→
+   730→      {/* بطاقات الإجراءات السريعة */}
+   731→      {(safeStats.shopStats.length ?? 0) === 0 && (
+   732→        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 fade-in-up fade-in-up-delay-1">
+   733→          <button onClick={onOpenCreate} className="group bg-card rounded-xl border border-border shadow-sm p-5 text-right hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-glow-subtle">
+   734→            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><Store className="h-5 w-5 text-primary" /></div>
+   735→            <h3 className="text-sm font-bold text-foreground mb-1">إنشاء متجرك الأول</h3>
+   736→            <p className="text-xs text-muted-foreground leading-relaxed">ابدأ بتسجيل مطبعتك وشارك الرابط مع زبائنك</p>
+   737→          </button>
+   738→          <div className="bg-card rounded-xl border border-border shadow-sm p-5 text-right border-glow-subtle">
+   739→            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><UserCheck className="h-5 w-5 text-primary" /></div>
+   740→            <h3 className="text-sm font-bold text-foreground mb-1">إدارة الفريق</h3>
+   741→            <p className="text-xs text-muted-foreground leading-relaxed">أضف أعضاء الفريق وحدد صلاحياتهم من صفحة الأمان</p>
+   742→          </div>
+   743→          <div className="bg-card rounded-xl border border-border shadow-sm p-5 text-right border-glow-subtle">
+   744→            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><ShoppingBag className="h-5 w-5 text-primary" /></div>
+   745→            <h3 className="text-sm font-bold text-foreground mb-1">تخصيص الإعدادات</h3>
+   746→            <p className="text-xs text-muted-foreground leading-relaxed">عيّن الخدمات والأسعار الافتراضية لكل متجر جديد</p>
+   747→          </div>
+   748→        </div>
+   749→      )}
+   750→
+   751→      {/* إحصائيات سريعة مع SVG Progress Rings */}
+   752→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+   753→        <QuickStatsOverview
+   754→          totalOrders={safeStats.totalOrders ?? 0}
+   755→          completedOrders={(safeStats.statusCounts?.delivered ?? 0) + (safeStats.statusCounts?.completed ?? 0)}
+   756→          pendingOrders={safeStats.statusCounts?.pending ?? 0}
+   757→          totalRevenue={safeStats.totalRevenue ?? 0}
+   758→          className="fade-in-up fade-in-up-delay-1"
+   759→        />
+   760→        <DailyTargetRing
+   761→          currentRevenue={(() => {
+   762→            const today = new Date();
+   763→            return (safeStats.recentOrders || []).filter(o => {
+   764→              const d = new Date(o.createdAt);
+   765→              return d.toDateString() === today.toDateString();
+   766→            }).reduce((s, o) => s + (o.total || 0), 0);
+   767→          })()}
+   768→          targetRevenue={5000}
+   769→          yesterdayTrend={12}
+   770→        />
+   771→      </div>
+   772→
+   773→      {/* صف الإحصائيات السريعة */}
+   774→      <QuickStatsRow
+   775→        stats={[
+   776→          { label: "إجمالي الطلبات", value: safeStats.totalOrders, icon: <Package className="h-4 w-4" />, color: "text-violet-600", bg: "bg-violet-100 dark:bg-violet-900/30" },
+   777→          { label: "الإيرادات", value: formatDA(safeStats.totalRevenue), icon: <DollarSign className="h-4 w-4" />, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
+   778→          { label: "طلبات اليوم", value: safeStats.todayOrders, icon: <Zap className="h-4 w-4" />, trend: "+5%", color: "text-amber-600", bg: "bg-amber-100 dark:bg-amber-900/30" },
+   779→          { label: "المتاجر النشطة", value: safeStats.activeShopCount, icon: <Store className="h-4 w-4" />, color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-900/30" },
+   780→          { label: "بانتظار", value: safeStats.statusCounts?.pending ?? 0, icon: <Clock className="h-4 w-4" />, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30" },
+   781→          { label: "جاهز للتسليم", value: safeStats.statusCounts?.ready ?? 0, icon: <PackageSearch className="h-4 w-4" />, color: "text-teal-600", bg: "bg-teal-100 dark:bg-teal-900/30" },
+   782→        ]}
+   783→      />
+   784→
+   785→      {/* توقعات الإيرادات */}
+   786→      <RevenueForecastWidget
+   787→        currentMonthRevenue={safeStats.totalRevenue ?? 0}
+   788→        daysRemaining={Math.max(0, 30 - new Date().getDate())}
+   789→        dailyAverage={safeStats.todayOrders > 0 ? Math.round((safeStats.totalRevenue ?? 0) / Math.max(1, new Date().getDate())) : 0}
+   790→      />
+   791→
+   792→      {/* مقارنة المقاييس */}
+   793→      <MetricComparisonGrid
+   794→        metrics={[
+   795→          { label: "إجمالي الطلبات", current: safeStats.totalOrders, previous: 32, icon: <Package className="h-4 w-4 text-violet-600" /> },
+   796→          { label: "الإيرادات (د.ج)", current: safeStats.totalRevenue, previous: 15000, icon: <DollarSign className="h-4 w-4 text-emerald-600" />, format: "currency" },
+   797→          { label: "طلبات اليوم", current: safeStats.todayOrders, previous: 3, icon: <Zap className="h-4 w-4 text-amber-600" /> },
+   798→          { label: "المتاجر النشطة", current: safeStats.activeShopCount, previous: 4, icon: <Store className="h-4 w-4 text-blue-600" /> },
+   799→        ]}
+   800→      />
+   801→
+   802→      {/* هدف اليوم */}
+   803→      <DailyGoalTracker target={10} current={safeStats.todayOrders} streak={5} />
+   804→
+   805→      {/* اتجاه الإيرادات + رؤى سريعة */}
+   806→      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+   807→        <RevenueTrendMini orders={safeStats.recentOrders || []} days={14} />
+   808→        <QuickInsightsWidget orders={safeStats.recentOrders || []} shops={safeStats.shopStats || []} />
+   809→      </div>
+   810→
+   811→      {/* النشاط المباشر */}
+   812→      <LiveActivityFeed
+   813→        items={(safeStats.recentOrders || []).slice(0, 6).map((o, i) => ({
+   814→          id: o.id,
+   815→          type: (o.status === "pending" ? "order_new" : o.status === "confirmed" ? "order_confirmed" : o.status === "printing" ? "order_printing" : o.status === "ready" ? "order_ready" : "order_delivered"),
+   816→          message: `طلب ${o.reference} — ${o.customer?.name || "زبون"}`,
+   817→          time: getTimeAgo(o.createdAt),
+   818→          shopName: o.shopName,
+   819→        }))}
+   820→      />
+   821→
+   822→      {/* أداء المتاجر */}
+   823→      <PerformanceScoreWidget stats={stats} className="fade-in-up fade-in-up-delay-2 card-glow" />
+   824→
+   825→      {/* تنبيه الطلبات المتأخرة */}
+   826→      <StaleOrdersWidget stats={stats} onRefresh={() => {}} />
+   827→
+   828→      {/* أشهر الخدمات */}
+   829→      <ServicePopularityWidget stats={safeStats} />
+   830→
+   831→      {/* مسار حالة الطلب */}
+   832→      <OrderStatusTimeline currentStatus="printing" />
+   833→
+   834→      {/* نشاط فريق العمل */}
+   835→      <StaffActivityWidget />
+   836→
+   837→      {/* أفضل الخدمات */}
+   838→      <TopServicesWidget />
+   839→
+   840→      {/* إحصائيات العملاء */}
+   841→      <CustomerStatsWidget />
+   842→
+   843→      {/* لوحة كفاءة الإنتاج */}
+   844→      <ProductionEfficiencyDashboard
+   845→        jobsCompleted={(safeStats.statusCounts?.delivered ?? 0) + (safeStats.statusCounts?.ready ?? 0)}
+   846→        jobsPending={safeStats.statusCounts?.pending ?? 0}
+   847→        avgTime={45}
+   848→        efficiency={72}
+   849→        machineStatus="online"
+   850→        shift="morning"
+   851→      />
+   852→
+   853→      {/* ترتيب المتاجر حسب الأداء */}
+   854→      {safeStats.shopStats && safeStats.shopStats.length > 1 && <ShopRankingWidget shops={safeStats.shopStats} />}
+   855→
+   856→      {/* آخر الطلبات + النشاط */}
+   857→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 chart-fade-in">
+   858→        <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
+   859→          <CardHeader className="pb-3">
+   860→            <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   861→              <Activity className="h-4 w-4 text-primary" />
+   862→              <span className="text-gradient-section">النشاطات الأخيرة</span>
+   863→            </CardTitle>
+   864→          </CardHeader>
+   865→          <CardContent className="p-0">
+   866→            <div className="px-4 py-2">
+   867→              <ActivityFeed orders={(safeStats.recentOrders || []) as any[]} />
+   868→            </div>
+   869→          </CardContent>
+   870→        </Card>
+   871→
+   872→        <Card className="bg-card rounded-xl border border-border shadow-sm lg:col-span-2">
+   873→          <CardHeader className="pb-3">
+   874→            <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   875→              <Clock className="h-4 w-4 text-primary" />
+   876→              <span className="text-gradient-section">آخر الطلبات عبر المتاجر</span>
+   877→            </CardTitle>
+   878→          </CardHeader>
+   879→          <CardContent className="p-0">
+   880→            <div className="divide-y divide-border">
+   881→              {(safeStats.recentOrders || []).slice(0, 10).map((order, idx) => (
+   882→                <div key={order.id} className={cn(
+   883→                  "flex items-center justify-between px-4 sm:px-5 py-3.5 gap-3 table-row-hover table-row-accent feed-item hover:border-l-2 hover:border-l-primary hover:bg-primary/[0.03] transition-colors border-l-2 border-l-transparent",
+   884→                  idx % 2 === 0 ? "table-row-even" : "table-row-odd"
+   885→                )}>
+   886→                  <div className="flex items-center gap-3 min-w-0">
+   887→                    <div className="min-w-0">
+   888→                      <div className="flex items-center gap-2">
+   889→                        <span className="font-mono text-xs font-bold text-foreground">{order.reference}</span>
+   890→                        <span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">{order.shopName || "—"}</span>
+   891→                      </div>
+   892→                      <div className="text-xs text-muted-foreground truncate mt-0.5">{order.customer?.name || "—"} · {order.serviceName || "—"}</div>
+   893→                    </div>
+   894→                  </div>
+   895→                  <div className="flex items-center gap-3 shrink-0">
+   896→                    <span className="text-sm font-bold text-foreground">{formatDA(order.total)}</span>
+   897→                    <span className={cn("text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1", STATUS_COLORS[order.status] || "")}>
+   898→                      <span className={cn("status-dot", `status-dot-${order.status}`)} />
+   899→                      {STATUS_META[order.status]?.label || order.status}
+   900→                    </span>
+   901→                  </div>
+   902→                </div>
+   903→              ))}
+   904→              {!(safeStats.recentOrders?.length) && (
+   905→                <div className="empty-state py-14">
+   906→                  <div className="empty-state-icon">
+   907→                    <Package className="h-8 w-8 text-muted-foreground/25 empty-bounce" />
+   908→                  </div>
+   909→                  <p className="text-sm font-medium text-muted-foreground">لا توجد طلبات بعد</p>
+   910→                  <p className="text-[11px] text-muted-foreground/50 mt-1">ستظهر هنا آخر الطلبات من جميع المتاجر</p>
+   911→                </div>
+   912→              )}
+   913→            </div>
+   914→          </CardContent>
+   915→        </Card>
+   916→      </div>
+   917→    </div>
+   918→  );
+   919→}
+   920→
+   921→
+   922→
+   923→// ===== مخطط دائري =====
+   924→function PieChartCard({ stats }: { stats: GlobalStats | null }) {
+   925→  if (!stats) return null;
+   926→  const total = stats.totalOrders ?? 0;
+   927→  if (total === 0) {
+   928→    return (
+   929→      <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
+   930→        <CardHeader className="pb-2">
+   931→          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   932→            <Activity className="h-4 w-4 text-primary" />
+   933→            توزيع حالات الطلبات - مخطط دائري
+   934→          </CardTitle>
+   935→        </CardHeader>
+   936→        <CardContent dir="rtl">
+   937→          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+   938→            <Clock className="h-10 w-10 text-muted-foreground/20 mb-3" />
+   939→            <p className="text-sm">لا توجد طلبات بعد لعرض المخطط</p>
+   940→          </div>
+   941→        </CardContent>
+   942→      </Card>
+   943→    );
+   944→  }
+   945→  const PIE_COLORS: Record<string, string> = { pending: "#F59E0B", confirmed: "#3B82F6", printing: "#8B5CF6", ready: "#10B981", delivered: "#22C55E", cancelled: "#EF4444" };
+   946→  const allStatuses = [...STATUS_FLOW, "confirmed", "cancelled"];
+   947→  const pieData = allStatuses.map((s) => ({ name: STATUS_META[s]?.label ?? "ملغي", value: stats.statusCounts?.[s] ?? 0, key: s })).filter((d) => d.value > 0);
+   948→  return (
+   949→    <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
+   950→      <CardHeader className="pb-2">
+   951→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   952→          <Activity className="h-4 w-4 text-primary" />
+   953→          توزيع حالات الطلبات - مخطط دائري
+   954→        </CardTitle>
+   955→      </CardHeader>
+   956→      <CardContent dir="rtl">
+   957→        <ResponsiveContainer width="100%" height={220}>
+   958→          <PieChart>
+   959→            <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value" stroke="none">
+   960→              {pieData.map((entry) => (<Cell key={entry.key} fill={PIE_COLORS[entry.key] ?? "#94A3B8"} />))}
+   961→            </Pie>
+   962→            <Tooltip
+   963→              contentStyle={{ backgroundColor: "var(--popover)", border: "1px solid var(--border)", borderRadius: "10px", fontSize: "13px", direction: "rtl", fontFamily: "inherit", color: "var(--popover-foreground)" }}
+   964→              formatter={(value: number, name: string) => [`${formatNumber(value)} طلب`, name]}
+   965→            />
+   966→          </PieChart>
+   967→        </ResponsiveContainer>
+   968→        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-1">
+   969→          {pieData.map((entry) => {
+   970→            const pct = total > 0 ? ((entry.value / total) * 100).toFixed(1) : "0.0";
+   971→            return (
+   972→              <div key={entry.key} className="flex items-center gap-1.5 text-xs text-foreground/60">
+   973→                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[entry.key] ?? "#94A3B8" }} />
+   974→                <span>{entry.name}</span>
+   975→                <span className="font-semibold text-foreground tabular-nums">{formatNumber(entry.value)} ({pct}%)</span>
+   976→              </div>
+   977→            );
+   978→          })}
+   979→        </div>
+   980→      </CardContent>
+   981→    </Card>
+   982→  );
+   983→}
+   984→
+   985→// ===== مخطط أعمدة =====
+   986→function RevenueBarChart({ stats }: { stats: GlobalStats | null }) {
+   987→  if (!stats) return null;
+   988→  const shops = stats.shopStats ?? [];
+   989→  if (shops.length === 0) {
+   990→    return (
+   991→      <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
+   992→        <CardHeader className="pb-2">
+   993→          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+   994→            <TrendingUp className="h-4 w-4 text-primary" />
+   995→            مقارنة إيرادات المتاجر
+   996→          </CardTitle>
+   997→        </CardHeader>
+   998→        <CardContent dir="rtl">
+   999→          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+  1000→            <Store className="h-10 w-10 text-muted-foreground/20 mb-3" />
+  1001→            <p className="text-sm">لا توجد متاجر بعد لعرض المقارنة</p>
+  1002→          </div>
+  1003→        </CardContent>
+  1004→      </Card>
+  1005→    );
+  1006→  }
+  1007→  const barData = shops.slice().sort((a, b) => b.revenue - a.revenue).slice(0, 10).map((s) => ({ name: s.name, revenue: s.revenue }));
+  1008→  return (
+  1009→    <Card className="bg-card rounded-xl border border-border shadow-sm chart-container">
+  1010→      <CardHeader className="pb-2">
+  1011→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+  1012→          <TrendingUp className="h-4 w-4 text-primary" />
+  1013→          مقارنة إيرادات المتاجر
+  1014→        </CardTitle>
+  1015→      </CardHeader>
+  1016→      <CardContent dir="rtl">
+  1017→        <ResponsiveContainer width="100%" height={Math.max(220, barData.length * 36 + 40)}>
+  1018→          <BarChart data={barData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+  1019→            <XAxis type="number" tick={{ fontSize: 11, fill: "#64748b" }} tickFormatter={(v: number) => formatDA(v)} axisLine={false} tickLine={false} />
+  1020→            <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#334155" }} width={100} axisLine={false} tickLine={false} />
+  1021→            <Tooltip
+  1022→              contentStyle={{ backgroundColor: "var(--popover)", border: "1px solid var(--border)", borderRadius: "10px", fontSize: "13px", direction: "rtl", fontFamily: "inherit", color: "var(--popover-foreground)" }}
+  1023→              formatter={(value: number) => [formatDA(value), "الإيرادات"]}
+  1024→              labelFormatter={(label: string) => `المتجر: ${label}`}
+  1025→            />
+  1026→            <Bar dataKey="revenue" fill="#d4a853" radius={[0, 6, 6, 0]} barSize={22} />
+  1027→          </BarChart>
+  1028→        </ResponsiveContainer>
+  1029→      </CardContent>
+  1030→    </Card>
+  1031→  );
+  1032→}
+  1033→
+  1034→// ===== أشهر الخدمات المطلوبة =====
+  1035→function ServicePopularityWidget({ stats }: { stats: GlobalStats | null }) {
+  1036→  if (!stats) return null;
+  1037→  const recentOrders = stats.recentOrders || [];
+  1038→  const serviceMap = new Map<string, { name: string; count: number; revenue: number }>();
+  1039→
+  1040→  recentOrders.forEach((o) => {
+  1041→    const name = o.serviceName || "أخرى";
+  1042→    const existing = serviceMap.get(name);
+  1043→    if (existing) {
+  1044→      existing.count += 1;
+  1045→      existing.revenue += o.total || 0;
+  1046→    } else {
+  1047→      serviceMap.set(name, { name, count: 1, revenue: o.total || 0 });
+  1048→    }
+  1049→  });
+  1050→
+  1051→  const topServices = Array.from(serviceMap.values())
+  1052→    .sort((a, b) => b.count - a.count)
+  1053→    .slice(0, 6);
+  1054→
+  1055→  if (topServices.length === 0) return null;
+  1056→
+  1057→  const maxCount = topServices[0].count;
+  1058→  const SERVICE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  1059→    "طباعة مستند": FileText,
+  1060→    "طباعة صور": Printer,
+  1061→  };
+  1062→
+  1063→  return (
+  1064→    <Card className="bg-card rounded-xl border border-border shadow-sm card-gradient-top fade-in-up">
+  1065→      <CardHeader className="pb-3">
+  1066→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+  1067→          <Star className="h-4 w-4 text-gold-500" />
+  1068→          أشهر الخدمات المطلوبة
+  1069→          <span className="text-[10px] text-muted-foreground font-normal mr-auto">آخر {recentOrders.length} طلب</span>
+  1070→        </CardTitle>
+  1071→      </CardHeader>
+  1072→      <CardContent>
+  1073→        <div className="space-y-3">
+  1074→          {topServices.map((service, index) => {
+  1075→            const Icon = SERVICE_ICONS[service.name] || FileText;
+  1076→            const pct = maxCount > 0 ? Math.round((service.count / maxCount) * 100) : 0;
+  1077→            return (
+  1078→              <div key={service.name} className="group flex items-center gap-3">
+  1079→                <div className={cn(
+  1080→                  "flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-transform group-hover:scale-110",
+  1081→                  index === 0 ? "bg-gold-500/15 text-gold-500 border border-gold-500/20" :
+  1082→                  "bg-muted text-muted-foreground border border-border"
+  1083→                )}>
+  1084→                  <Icon className="h-4 w-4" />
+  1085→                </div>
+  1086→                <div className="flex-1 min-w-0">
+  1087→                  <div className="flex items-center justify-between mb-1">
+  1088→                    <span className="text-sm font-medium text-foreground truncate">{service.name}</span>
+  1089→                    <div className="flex items-center gap-2 shrink-0">
+  1090→                      <span className="chip chip-gold text-[10px] py-0 px-1.5">{service.count} طلب</span>
+  1091→                      <span className="text-xs font-bold text-foreground tabular-nums">{formatDA(service.revenue)}</span>
+  1092→                    </div>
+  1093→                  </div>
+  1094→                  <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+  1095→                    <div
+  1096→                      className={cn(
+  1097→                        "h-full rounded-full transition-all duration-700 ease-out",
+  1098→                        index === 0 ? "bg-gradient-to-l from-gold-400 to-gold-500" :
+  1099→                        "bg-gradient-to-l from-primary/40 to-primary/25"
+  1100→                      )}
+  1101→                      style={{ width: `${pct}%` }}
+  1102→                    />
+  1103→                  </div>
+  1104→                </div>
+  1105→              </div>
+  1106→            );
+  1107→          })}
+  1108→        </div>
+  1109→      </CardContent>
+  1110→    </Card>
+  1111→  );
+  1112→}
+  1113→
+  1114→// ===== ترتيب المتاجر حسب الأداء =====
+  1115→const MEDAL_STYLES = [
+  1116→  { emoji: "🥇", label: "الأول", ring: "ring-amber-400/40", bg: "bg-amber-50 dark:bg-amber-950/20" },
+  1117→  { emoji: "🥈", label: "الثاني", ring: "ring-slate-400/40", bg: "bg-slate-50 dark:bg-slate-800/30" },
+  1118→  { emoji: "🥉", label: "الثالث", ring: "ring-orange-400/40", bg: "bg-orange-50 dark:bg-orange-950/20" },
+  1119→];
+  1120→
+  1121→function ShopRankingWidget({ shops }: { shops: GlobalStats["shopStats"] }) {
+  1122→  // ترتيب حسب عدد الطلبات (ثم الإيرادات كـ tiebreaker)
+  1123→  const ranked = [...shops]
+  1124→    .sort((a, b) => (b.orders ?? 0) - (a.orders ?? 0) || (b.revenue ?? 0) - (a.revenue ?? 0))
+  1125→    .slice(0, 5);
+  1126→
+  1127→  if (ranked.length < 2) return null;
+  1128→
+  1129→  return (
+  1130→    <Card className="bg-card rounded-xl border border-border shadow-sm fade-in-up">
+  1131→      <CardHeader className="pb-3">
+  1132→        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground/80 before:content-[''] before:inline-block before:w-1.5 before:h-1.5 before:rounded-full before:bg-primary/50 before:shrink-0">
+  1133→          <Crown className="h-4 w-4 text-amber-500" />
+  1134→          ترتيب المتاجر حسب الأداء
+  1135→        </CardTitle>
+  1136→      </CardHeader>
+  1137→      <CardContent className="p-0">
+  1138→        <div className="divide-y divide-border stagger-list">
+  1139→          {ranked.map((shop, idx) => {
+  1140→            const medal = MEDAL_STYLES[idx];
+  1141→            const maxOrders = ranked[0].orders ?? 1;
+  1142→            const pct = Math.round(((shop.orders ?? 0) / maxOrders) * 100);
+  1143→            return (
+  1144→              <div key={shop.id} className={cn(
+  1145→                "flex items-center gap-3 px-4 sm:px-5 py-3.5 table-row-hover transition-colors",
+  1146→                idx === 0 && medal?.bg
+  1147→              )}>
+  1148→                <div className={cn(
+  1149→                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold",
+  1150→                  medal?.ring && `ring-2 ${medal.ring}`,
+  1151→                  idx === 0 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" :
+  1152→                  idx === 1 ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" :
+  1153→                  idx === 2 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400" :
+  1154→                  "bg-muted text-muted-foreground"
+  1155→                )}>
+  1156→                  {medal?.emoji || idx + 1}
+  1157→                </div>
+  1158→                <div className="flex-1 min-w-0">
+  1159→                  <div className="flex items-center gap-2 mb-1">
+  1160→                    <span className="text-sm font-medium text-foreground truncate">{shop.name}</span>
+  1161→                    {shop.isActive && (
+  1162→                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+  1163→                    )}
+  1164→                  </div>
+  1165→                  <div className="flex items-center gap-3">
+  1166→                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+  1167→                      <div
+  1168→                        className={cn(
+  1169→                          "h-full rounded-full transition-all duration-700",
+  1170→                          idx === 0 ? "bg-amber-500" : idx === 1 ? "bg-slate-400" : "bg-muted-foreground/30"
+  1171→                        )}
+  1172→                        style={{ width: `${pct}%` }}
+  1173→                      />
+  1174→                    </div>
+  1175→                    <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+  1176→                      {shop.orders ?? 0} طلب
+  1177→                    </span>
+  1178→                  </div>
+  1179→                </div>
+  1180→                {(shop.revenue ?? 0) > 0 && (
+  1181→                  <div className="text-left shrink-0">
+  1182→                    <div className="text-sm font-bold text-foreground tabular-nums">{formatDA(shop.revenue ?? 0)}</div>
+  1183→                    <div className="text-[10px] text-muted-foreground">إيرادات</div>
+  1184→                  </div>
+  1185→                )}
+  1186→              </div>
+  1187→            );
+  1188→          })}
+  1189→        </div>
+  1190→      </CardContent>
+  1191→    </Card>
+  1192→  );
+  1193→}
+  1194→
+  1195→// ===== Shop Quick Stats Popover =====
+  1196→function ShopQuickStatsPopover({ shop, rank, totalShops }: { shop: ShopStat; rank?: number; totalShops?: number }) {
+  1197→  const pendingCount = (shop.recentOrders || []).filter(o => o.status === "pending").length;
+  1198→  const lastOrder = (shop.recentOrders || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+  1199→
+  1200→  return (
+  1201→    <Popover>
+  1202→      <PopoverTrigger asChild>
+  1203→        <div className="cursor-pointer hover:-translate-y-[2px] hover:shadow-lg transition-all duration-200 rounded-xl">
+  1204→          <ShopOverviewCard shop={shop} rank={rank} totalShops={totalShops} onRefresh={() => {}} />
+  1205→        </div>
+  1206→      </PopoverTrigger>
+  1207→      <PopoverContent
+  1208→        side="top"
+  1209→        align="center"
+  1210→        className="w-64 p-4 space-y-3 tooltip-premium border-border/80 dark:border-border/60"
+  1211→        dir="rtl"
+  1212→      >
+  1213→        <div className="flex items-center gap-2 mb-1">
+  1214→          <Store className="h-4 w-4 text-primary" />
+  1215→          <span className="text-sm font-bold text-foreground">{shop.name}</span>
+  1216→        </div>
+  1217→        <div className="grid grid-cols-2 gap-2">
+  1218→          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+  1219→            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+  1220→              <PackageSearch className="h-3 w-3" />
+  1221→              <span>طلبات اليوم</span>
+  1222→            </div>
+  1223→            <div className="text-lg font-bold tabular-nums text-foreground">{shop.todayOrders}</div>
+  1224→          </div>
+  1225→          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+  1226→            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+  1227→              <Wallet className="h-3 w-3" />
+  1228→              <span>إيرادات اليوم</span>
+  1229→            </div>
+  1230→            <div className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{formatDA(shop.revenue)}</div>
+  1231→          </div>
+  1232→          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+  1233→            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+  1234→              <ClipboardList className="h-3 w-3" />
+  1235→              <span>معلّقة</span>
+  1236→            </div>
+  1237→            <div className="text-lg font-bold tabular-nums text-amber-600 dark:text-amber-400">{pendingCount}</div>
+  1238→          </div>
+  1239→          <div className="kpi-badge rounded-lg bg-background border border-border p-2.5 text-center">
+  1240→            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-1">
+  1241→              <Timer className="h-3 w-3" />
+  1242→              <span>آخر طلب</span>
+  1243→            </div>
+  1244→            <div className="text-[11px] font-medium text-foreground tabular-nums truncate">{lastOrder ? getTimeAgo(lastOrder.createdAt) : "—"}</div>
+  1245→          </div>
+  1246→        </div>
+  1247→      </PopoverContent>
+  1248→    </Popover>
+  1249→  );
+  1250→}// Force rebuild v4.8.1
+  1251→

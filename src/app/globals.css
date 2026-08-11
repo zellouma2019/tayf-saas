@@ -139,41 +139,41 @@
 }
 
 /* ==========================================================================
-   DARK THEME (when .dark class is on html) — Premium Dark with Gold Accents
+   DARK THEME (when .dark class is on html) — Hany Podcast Inspired: Pure Black + Coral Red
    ========================================================================== */
 .dark {
   --radius: 0.75rem;
-  --background: #0c0c0e;
-  --foreground: #eae6de;
-  --card: #17171a;
-  --card-foreground: #eae6de;
-  --popover: #17171a;
-  --popover-foreground: #eae6de;
-  --primary: #d4a853;
-  --primary-foreground: #0c0c0e;
-  --secondary: #1e1e22;
-  --secondary-foreground: #eae6de;
-  --muted: #1c1c20;
-  --muted-foreground: #8a8578;
-  --accent: #251e12;
-  --accent-foreground: #eae6de;
-  --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.06);
+  --background: #000000;
+  --foreground: rgba(255, 255, 255, 0.95);
+  --card: rgba(255, 255, 255, 0.06);
+  --card-foreground: rgba(255, 255, 255, 0.95);
+  --popover: rgba(255, 255, 255, 0.06);
+  --popover-foreground: rgba(255, 255, 255, 0.95);
+  --primary: #c75252;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.04);
+  --secondary-foreground: rgba(255, 255, 255, 0.95);
+  --muted: rgba(255, 255, 255, 0.04);
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  --accent: rgba(199, 82, 82, 0.12);
+  --accent-foreground: rgba(255, 255, 255, 0.95);
+  --destructive: #dc2626;
+  --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.08);
-  --ring: #d4a853;
-  --chart-1: #d4a853;
-  --chart-2: #e8c060;
-  --chart-3: #b8923a;
-  --chart-4: #f0d58a;
-  --chart-5: #9a7830;
-  --sidebar: #0e0e10;
-  --sidebar-foreground: #a8a29e;
-  --sidebar-primary: #d4a853;
-  --sidebar-primary-foreground: #0a0a0b;
-  --sidebar-accent: #1a1814;
-  --sidebar-accent-foreground: #e8e4dc;
+  --ring: #c75252;
+  --chart-1: #c75252;
+  --chart-2: #d46060;
+  --chart-3: #e07070;
+  --chart-4: #b04040;
+  --chart-5: #a03030;
+  --sidebar: #050505;
+  --sidebar-foreground: rgba(255, 255, 255, 0.6);
+  --sidebar-primary: #c75252;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(199, 82, 82, 0.12);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.95);
   --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #d4a853;
+  --sidebar-ring: #c75252;
 
   /* Dark palette — INVERTED for dark mode (text becomes light, surfaces become dark) */
   --color-dark-50: #1c1c1f;
@@ -188,20 +188,28 @@
   --color-dark-900: #111111;
   --color-dark-950: #0d0d0d;
 
-  /* Colored icon surfaces for dark mode */
-  --color-gold-50: #29200f;
-  --color-gold-100: #362a15;
-  --color-gold-200: #4a3a1e;
-  --color-sky-50: #0c1a2e;
-  --color-sky-100: #122240;
-  --color-emerald-50: #07201a;
-  --color-emerald-100: #0a2e22;
-  --color-rose-50: #2a0f0f;
-  --color-rose-100: #3a1515;
-  --color-amber-50: #2a1c0a;
-  --color-amber-100: #3a2810;
-  --color-violet-50: #1a0f2e;
-  --color-violet-100: #251840;
+  /* Colored icon surfaces for dark mode — coral/warm tones */
+  --color-gold-50: rgba(199, 82, 82, 0.15);
+  --color-gold-100: rgba(199, 82, 82, 0.25);
+  --color-gold-200: rgba(199, 82, 82, 0.35);
+  --color-sky-50: rgba(96, 165, 250, 0.12);
+  --color-sky-100: rgba(96, 165, 250, 0.2);
+  --color-emerald-50: rgba(52, 211, 153, 0.12);
+  --color-emerald-100: rgba(52, 211, 153, 0.2);
+  --color-rose-50: rgba(199, 82, 82, 0.12);
+  --color-rose-100: rgba(199, 82, 82, 0.2);
+  --color-amber-50: rgba(251, 191, 36, 0.12);
+  --color-amber-100: rgba(251, 191, 36, 0.2);
+  --color-violet-50: rgba(167, 139, 250, 0.12);
+  --color-violet-100: rgba(167, 139, 250, 0.2);
+
+  /* Admin-specific dark theme tokens */
+  --admin-header-bg: #050505;
+  --admin-footer-bg: #0a0a0a;
+  --admin-footer-text: #747474;
+  --admin-card-bg: rgba(255, 255, 255, 0.06);
+  --admin-card-hover: rgba(255, 255, 255, 0.1);
+  --admin-card-border: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
@@ -305,10 +313,11 @@ html {
   background: rgba(0, 0, 0, 0.2);
 }
 .dark *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(199, 82, 82, 0.3);
+  border-radius: 999px;
 }
 .dark *::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(199, 82, 82, 0.5);
 }
 
 /* ==========================================================================
@@ -343,13 +352,63 @@ html {
   border: 1px solid var(--border);
 }
 .dark .premium-card {
-  background: linear-gradient(145deg, #141416 0%, #1a1a1e 100%);
-  border: 1px solid rgba(212, 168, 83, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
 }
 
 .premium-card-hover:hover {
   border-color: rgba(212, 168, 83, 0.2);
   box-shadow: 0 4px 24px rgba(212, 168, 83, 0.08);
+}
+.dark .premium-card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   GLASSMORPHISM CARD UTILITIES (Dark Mode Admin)
+   ========================================================================== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   CORAL ACCENT UTILITIES (Dark Mode Admin)
+   ========================================================================== */
+.coral-gradient {
+  background: linear-gradient(135deg, #e07070 0%, #c75252 50%, #a03030 100%);
+}
+
+.coral-gradient-text {
+  background: linear-gradient(135deg, #e07070 0%, #c75252 50%, #a03030 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.coral-glow {
+  box-shadow: 0 0 20px rgba(199, 82, 82, 0.15), 0 0 60px rgba(199, 82, 82, 0.05);
+}
+
+.coral-glow-sm {
+  box-shadow: 0 0 8px rgba(199, 82, 82, 0.2);
 }
 
 /* ==========================================================================
@@ -522,9 +581,13 @@ html {
   inherits: false;
 }
 
-/* Active nav glow — Gold */
+/* Active nav glow — Gold (light mode) */
 .nav-active-glow {
   text-shadow: 0 0 8px rgba(212, 168, 83, 0.5), 0 0 16px rgba(212, 168, 83, 0.2);
+}
+/* Active nav glow — Coral (dark mode) */
+.dark .nav-active-glow {
+  text-shadow: 0 0 8px rgba(199, 82, 82, 0.5), 0 0 16px rgba(199, 82, 82, 0.2);
 }
 
 /* Confetti animation for celebration */
