@@ -156,3 +156,39 @@ Stage Summary:
 - ✅ Inter font added alongside Cairo for numbers/Latin text
 - ✅ Light mode preserved completely unchanged
 - ✅ Full responsiveness verified: mobile, tablet, desktop
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Apply Hany Podcast structural patterns across ALL base UI components project-wide
+
+Work Log:
+- Analyzed Hany Podcast design for structural patterns (not colors): border-radius, padding, font treatment, transitions
+- Updated 10 base shadcn/ui components to match the structural patterns:
+  - **Card**: rounded-2xl, border-border/50, py-5, hover:shadow-md transition, tighter gap (5 vs 6), px-5 content, CardTitle font-bold + tracking-tight
+  - **Button**: rounded-xl default, rounded-lg sm, rounded-xl lg/icon, h-10 default (was 9), font-semibold, active:scale-[0.97] press effect, cursor-pointer
+  - **Badge**: rounded-full (pill-shaped), border-border/30, text-[11px], font-semibold
+  - **Input**: rounded-xl, h-10 (was 9), px-4, focus ring on primary color, hover:border-border
+  - **Textarea**: rounded-xl, px-4, py-3, focus ring on primary color
+  - **Dialog**: rounded-2xl, border-border/50, shadow-xl, overlay backdrop-blur-sm, close button rounded-full
+  - **Tabs**: TabsList rounded-xl with backdrop-blur-sm, gap-0.5, h-10; TabsTrigger rounded-lg, px-3.5
+  - **Select**: rounded-xl trigger, rounded-xl content, rounded-lg items, border-border/50
+  - **Switch**: h-6 w-11 (larger), smoother thumb transition
+  - **AlertDialog**: rounded-2xl, backdrop-blur-sm overlay, font-bold title, leading-relaxed description
+  - **DropdownMenu**: rounded-xl content/items, border-border/50, transition-colors duration-150
+  - **Popover**: rounded-xl, border-border/50, shadow-xl
+- Updated globals.css: --radius from 0.75rem to 0.875rem in both light and dark themes
+- Added Inter font rule for .tabular-nums, code, numbers — clean modern look for Latin/numbers
+
+Verification (agent-browser + VLM on live site):
+- ✅ Dashboard: VLM confirms "significantly rounded corners (16-20px)", "rounded buttons (12-16px)", "pill badges", "significantly cleaner/modern"
+- ✅ Shops tab: VLM confirms "cards, buttons, and badges all feature rounded corners creating consistent pattern"
+- ✅ Mobile (375x812): Structural patterns applied, sidebar hidden by default
+- ✅ No lint errors in modified files
+
+Stage Summary:
+- ✅ All base UI components updated with consistent rounded structural pattern
+- ✅ Pattern cascades to ALL pages/tabs/dialogs using these components
+- ✅ Inter font applied to numbers and code elements
+- ✅ Colors NOT changed — only structural shapes, transitions, padding
+- ✅ Light mode and dark mode both updated
