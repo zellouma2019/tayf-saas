@@ -49,7 +49,7 @@ export function WhatsAppButton() {
         aria-label="اطلب عبر واتساب"
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
-        className="group relative w-13 h-13 sm:w-14 sm:h-14 bg-[#25D366] hover:bg-[#1EBE5A] rounded-2xl flex items-center justify-center shadow-lg shadow-[#25D366]/25 hover:shadow-xl hover:shadow-[#25D366]/35 transition-colors duration-200 cursor-pointer"
+        className="group relative w-12 h-12 sm:w-14 sm:h-14 bg-[#25D366] hover:bg-[#1EBE5A] rounded-2xl flex items-center justify-center shadow-lg shadow-[#25D366]/25 hover:shadow-xl hover:shadow-[#25D366]/35 transition-colors duration-200 cursor-pointer"
       >
         {/* Glow ring */}
         <div className="absolute inset-0 rounded-2xl bg-[#25D366]/20 animate-pulse" />
