@@ -367,3 +367,34 @@ Stage Summary:
 - ❌ Vercel not deploying latest code (stuck on old build, chunk hashes unchanged)
 - ⚠️ QuickActions/FloatingAssistant buttons still visible on live site due to Vercel build issue (NOT a code issue)
 - ⚠️ User needs to: check Vercel dashboard for build errors, manually trigger redeploy, or verify GitHub integration
+---
+Task ID: 11
+Agent: Main Agent
+Task: Fix Vercel build failure and deploy all pending changes
+
+Work Log:
+- User reported Vercel not deploying + uploaded 3 screenshots showing build errors
+- VLM analysis of screenshots revealed: (a) Build status "Error Latest" on Vercel, (b) SWC parsing error in app-shell.tsx line 146, (c) Font module resolution errors for Alexandria
+- Root cause found: JSX comment on line 145 was `{/* ===== الشريط العلوي الترويجي ===== */` — MISSING the closing `}` brace. Should be `{/* ... */}` but was `{/* ... */`
+- This caused Turbopack SWC parser to fail with "Expected a semicolon" at line 146 since it tried to parse `{view !== "new" && (` as part of the unclosed JSX expression
+- Also replaced all 16 remaining Arabic JSX comments with English equivalents to prevent future Turbopack parser issues
+- Verified fix with local `next build` — 0 errors, successful build
+- Deleted 5 unused component files (quick-actions.tsx, floating-assistant.tsx, etc.)
+- Removed ~16KB dead CSS for quick-actions components
+- Pushed commit fc3e0fd — Vercel auto-deployed successfully
+- Verified on live site via agent-browser:
+  - CSS chunk hashes changed (fe3d046f2c541908.css vs old 8336016bba8f4b95.css) confirming new build
+  - QuickActions FAB (amber + button) — GONE ✅
+  - FloatingAssistant (sparkles button) — GONE ✅
+  - WhatsApp button (green) — properly visible ✅
+  - Admin dashboard — working ✅
+  - Customer page mobile/desktop — clean, no FABs ✅
+  - VLM verification confirmed: clean professional layout, no bugs
+
+Stage Summary:
+- ✅ Vercel build failure FIXED (missing } in JSX comment)
+- ✅ All 4 pending commits now deployed successfully
+- ✅ Floating buttons (QuickActions, FloatingAssistant) removed from live site
+- ✅ File preview fallback deployed
+- ✅ All 6 original bugs fixed + deployed
+- ⚠️ Arabic text in JSX comments causes Turbopack SWC parser failures — use English only in JSX comments
