@@ -273,3 +273,32 @@ Stage Summary:
 - ✅ Hany school structural design applied to ALL base components
 - ✅ Pill buttons (rounded-full), rounded-2xl cards, glassmorphism dark mode
 - ⏳ Browser verification pending
+
+---
+Task ID: 8
+Agent: Main Agent
+Task: Customer UI overhaul - fonts, colors, footer, floating buttons
+
+Work Log:
+- Removed BackToTop floating button (right side) from app-shell.tsx
+- Added improved WhatsAppButton (left side) with Framer Motion animations, tooltip, rounded-2xl shape
+- Replaced Geist/Geist_Mono fonts with Alexandria (headings) + Cairo (body) + Inter (numbers) in layout.tsx
+- Fixed globals.css: removed duplicate broken typography rule, added proper heading font rule
+- Fixed dark mode colors: background from #000000 to #0f1117 (softer), primary from coral #c75252 to gold #d4a853
+- Updated all dark mode chart colors to gold palette
+- Changed sidebar dark bg from #050505 to #141620
+- Improved footer: replaced hardcoded dark bg with theme-aware bg-foreground/[0.03], all text uses CSS variables
+- Improved header: bg-background/80 instead of hardcoded white/dark, primary-colored logo and nav pills
+- Improved mobile bottom nav: uses primary color instead of hardcoded amber
+- Fixed intro.tsx colors: bg matches theme system, text uses proper foreground/muted colors
+- Added font-heading class usage throughout app-shell headings
+
+Stage Summary:
+- ✅ BackToTop removed from customer pages
+- ✅ WhatsApp button added on left side (green, rounded-2xl, with animation)
+- ✅ Alexandria font for headings, Cairo for body, Inter for numbers
+- ✅ Dark mode uses softer #0f1117 background with warm gold primary
+- ✅ Footer uses theme-aware colors (works in both light and dark mode)
+- ✅ Header uses theme-aware colors and primary for active nav
+- ✅ All hardcoded amber colors replaced with CSS variable references
+- ✅ Old QuickActions and FloatingAssistant still on Vercel cache but not in code
