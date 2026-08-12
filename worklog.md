@@ -420,3 +420,49 @@ Stage Summary:
 - ✅ WhatsAppButton replaced with FloatingActions in app-shell.tsx
 - ✅ Lint passes cleanly
 - ✅ All spec requirements met (animations, positioning, RTL tooltips, keyboard/click-outside close)
+---
+Task ID: 12
+Agent: Main Agent
+Task: Compact footer, 3-option FAB, UploadThing CDN, improved AI analysis
+
+Work Log:
+- **Footer shrink (customer version):**
+  - Reduced padding: py-8/10 → py-5/6, px-4/6 → px-4/5
+  - Reduced max-width: max-w-7xl → max-w-5xl
+  - Reduced gaps: gap-8/10 → gap-5/6
+  - Reduced text sizes: text-xs/sm → text-[11px]/xs, text-sm → text-[11px]
+  - Reduced icon sizes: h-4 w-4 → h-3 w-3, w-9 h-9 → w-7 h-7
+  - Reduced toggle button: py-3 → py-2, text-xs → text-[11px]
+  - Reduced copyright: mt-8/10 → mt-5, pt-6 → pt-4, text-[11px]/xs → text-[10px]/[11px]
+  - Testimonials section: py-8/12 → py-5/7, card p-5/6 → p-3.5/4, smaller quotes, smaller avatars
+- **3-option Floating FAB:**
+  - Created floating-actions.tsx replacing WhatsAppButton
+  - 3 actions: New Order (primary), Track Order (emerald-500), WhatsApp (emerald-600)
+  - Main FAB: 52px, primary color, Plus rotates to ×, idle pulse
+  - Actions: 44px touch targets, staggered spring animations, RTL tooltips
+  - Position: fixed bottom-20 left-3, closes on Escape/click-outside
+- **UploadThing CDN integration:**
+  - Replaced entire chunked Turso DB upload (~120 lines of XHR code) with UploadThing
+  - Files now upload DIRECTLY from browser to UploadThing CDN (no Vercel server involvement)
+  - Stored as `__cdn__:https://...` prefix (file-resolver.ts already supports this)
+  - Uses useUploadThing hook from @/lib/uploadthing
+  - Progress tracking via onUploadProgress callback
+  - UploadThing infrastructure was already in place (core.ts, route.ts, uploadthing.ts)
+- **Improved AI analysis:**
+  - Increased VLM thumbnail size from 400px to 800px for better accuracy
+  - Enhanced prompt: description 4-6 → 5-8 sentences, qualityReason 2-3 → 3-4 sentences
+  - More detailed example with specific formatting details
+  - Insights count increased: 5-8 → 6-10 tips
+  - Added suggestedServiceName format example
+- **Improved file preview:**
+  - Immediate preview: max-h-56 → max-h-72/80, max-w-xs → max-w-sm/md
+  - Analysis panel preview: max-h-64/72 → max-h-80/96, max-w-xs → max-w-sm
+
+Stage Summary:
+- ✅ Footer ~40% more compact (reduced padding, text, icons, gaps)
+- ✅ 3-option FAB replacing single WhatsApp button
+- ✅ UploadThing CDN for fast uploads (browser → CDN, bypasses Vercel)
+- ✅ VLM analysis more accurate (800px thumbnail, enhanced prompt)
+- ✅ File previews 40-60% larger and clearer
+- ✅ Pushed to GitHub (commit b674027), Vercel auto-deploying
+- ⚠️ User must add UPLOADTHING_TOKEN to Vercel env vars (token already hardcoded as fallback in route.ts)
