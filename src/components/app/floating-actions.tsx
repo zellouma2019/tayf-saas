@@ -5,13 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, MessageCircle } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { useShop } from "@/lib/shop-context";
+import { getTheme } from "@/lib/themes";
 
 interface ActionItem {
   label: string;
   icon: React.ElementType;
   color: string;
-  borderAccent: string;
-  shadowColor: string;
   onClick: () => void;
 }
 
@@ -19,11 +18,11 @@ export function FloatingActions() {
   const view = useAppStore((s) => s.view);
   const setView = useAppStore((s) => s.setView);
   const { shop } = useShop();
+  const theme = getTheme(shop?.themeId || 1);
 
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close on click outside
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
       setIsOpen(false);
@@ -39,7 +38,6 @@ export function FloatingActions() {
     };
   }, [isOpen, handleClickOutside]);
 
-  // Close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -50,10 +48,9 @@ export function FloatingActions() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  // Hide in admin view (after all hooks)
   if (view === "admin") return null;
 
-  const whatsappNumber = shop?.whatsapp || shop?.phone || "0560000000";
+  const whatsappNumber = shop?.whatsapp || shop?.phone || "";
   const whatsappUrl =
     `https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=` +
     encodeURIComponent("مرحبا، أريد طلب طباعة.");
@@ -62,9 +59,7 @@ export function FloatingActions() {
     {
       label: "طلب جديد",
       icon: Plus,
-      color: "bg-primary text-primary-foreground",
-      borderAccent: "border-l-primary",
-      shadowColor: "shadow-primary/20",
+      color: theme.fab.bg,
       onClick: () => {
         setView("new");
         setIsOpen(false);
@@ -73,9 +68,7 @@ export function FloatingActions() {
     {
       label: "تتبّع طلب",
       icon: Search,
-      color: "bg-emerald-500 text-white",
-      borderAccent: "border-l-emerald-500",
-      shadowColor: "shadow-emerald-500/20",
+      color: "#059669",
       onClick: () => {
         setView("track");
         setIsOpen(false);
@@ -84,9 +77,7 @@ export function FloatingActions() {
     {
       label: "واتساب",
       icon: MessageCircle,
-      color: "bg-emerald-600 text-white",
-      borderAccent: "border-l-emerald-600",
-      shadowColor: "shadow-emerald-600/20",
+      color: "#25D366",
       onClick: () => {
         window.open(whatsappUrl, "_blank", "noopener,noreferrer");
         setIsOpen(false);
@@ -99,8 +90,8 @@ export function FloatingActions() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-20 left-3 z-[60] md:bottom-6 md:left-6 no-print"
-      style={{ overflow: "visible" }}
+      className="fixed bottom-24 left-3 z-[9999] md:bottom-6 md:left-6"
+      style={{ position: "fixed", zIndex: 9999 }}
     >
       <AnimatePresence>
         {isOpen && (
@@ -109,8 +100,7 @@ export function FloatingActions() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-16 left-0 flex flex-col-reverse items-start gap-3 mb-1 pointer-events-auto"
-            style={{ zIndex: 61 }}
+            className="absolute bottom-16 left-0 flex flex-col-reverse items-start gap-3 mb-1"
           >
             {actions.map((action, index) => (
               <motion.div
@@ -122,10 +112,10 @@ export function FloatingActions() {
                   ...springTransition,
                   delay: index * 0.05,
                 }}
-                className="flex items-center gap-3 pointer-events-auto"
+                className="flex items-center gap-3"
               >
-                {/* Tooltip label (right side in RTL) */}
-                <div className="relative pointer-events-none">
+                {/* Tooltip label */}
+                <div className="pointer-events-none">
                   <motion.div
                     initial={{ opacity: 0, x: 8, scale: 0.9 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -134,7 +124,6 @@ export function FloatingActions() {
                     className="bg-foreground text-background text-xs font-semibold px-3.5 py-2 rounded-xl shadow-lg whitespace-nowrap"
                   >
                     {action.label}
-                    {/* Pointer arrow pointing left toward the icon (RTL) */}
                     <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 rotate-45 w-3 h-3 bg-foreground shadow-sm" />
                   </motion.div>
                 </div>
@@ -144,14 +133,8 @@ export function FloatingActions() {
                   onClick={action.onClick}
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
-                  className={`
-                    w-11 h-11 rounded-full flex items-center justify-center
-                    border-l-[3px] ${action.borderAccent}
-                    ${action.color}
-                    shadow-lg ${action.shadowColor}
-                    backdrop-blur-sm
-                    cursor-pointer pointer-events-auto
-                  `}
+                  className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm cursor-pointer border border-white/10"
+                  style={{ backgroundColor: action.color, color: "#fff" }}
                   aria-label={action.label}
                 >
                   <action.icon className="w-5 h-5" strokeWidth={2.2} />
@@ -169,23 +152,18 @@ export function FloatingActions() {
         whileTap={{ scale: 0.92 }}
         animate={{ rotate: isOpen ? 45 : 0 }}
         transition={springTransition}
-        className="
-          relative w-[52px] h-[52px] rounded-full
-          bg-primary text-primary-foreground
-          shadow-lg shadow-primary/25
-          hover:shadow-xl hover:shadow-primary/35
-          flex items-center justify-center
-          cursor-pointer
-          border border-primary-foreground/10
-        "
+        className="relative w-[52px] h-[52px] rounded-full shadow-lg flex items-center justify-center cursor-pointer border border-white/10"
+        style={{
+          backgroundColor: theme.fab.bg,
+          color: theme.fab.icon,
+          boxShadow: `0 4px 14px ${theme.fab.bg}40`,
+        }}
         aria-label={isOpen ? "إغلاق القائمة" : "خيارات سريعة"}
         aria-expanded={isOpen}
       >
-        {/* Idle pulse ring */}
         {!isOpen && (
-          <span className="absolute inset-0 rounded-full animate-ping bg-primary/20" />
+          <span className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: theme.fab.bg + "20" }} />
         )}
-
         <Plus className="w-6 h-6 relative z-10" strokeWidth={2.5} />
       </motion.button>
     </div>
