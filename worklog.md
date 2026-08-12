@@ -466,3 +466,26 @@ Stage Summary:
 - ✅ File previews 40-60% larger and clearer
 - ✅ Pushed to GitHub (commit b674027), Vercel auto-deploying
 - ⚠️ User must add UPLOADTHING_TOKEN to Vercel env vars (token already hardcoded as fallback in route.ts)
+---
+Task ID: 1
+Agent: main
+Task: Fix footer size, floating button clipping, and intro clipping issues
+
+Work Log:
+- Analyzed uploaded screenshot to understand visual issues
+- Identified root cause of floating button clipping: CSS rule `[dir=rtl]>div` applied overflow-x:hidden to FloatingActions container, causing CSS spec to force overflow-y to auto (not visible), clipping panel items above FAB
+- Removed `[dir=rtl] > div, [dir=rtl] > div > div` from the overflow-x-hidden CSS rule, keeping only `#__next, main`
+- Removed `overflow-x-hidden` class from ShopApp wrapper div in shop-page.tsx
+- Added explicit `overflow-visible` class and `style={{ overflow: 'visible' }}` to FloatingActions container
+- Replaced large 4-column footer (with testimonials, services, links, contact info) with a compact single-row footer showing: shop name/address, contact icons, working hours, and copyright
+- Removed TestimonialsSection import and footerOpen state from app-shell
+- Removed unused imports (ChevronUp, Info, TestimonialsSection)
+- Fixed leftover setFooterOpen(false) reference in header button
+- Pushed all changes to GitHub (commit 562b66f)
+
+Stage Summary:
+- Footer is now a compact single-row bar instead of a large multi-section area
+- Floating action button panel items should now be fully visible when opened (no longer clipped by overflow)
+- Intro splash screen should no longer be clipped by parent container overflow
+- Dev server OOM prevents local verification; changes pushed to GitHub for Vercel deployment
+- User should verify on https://tayf-saas.vercel.app/s/alsalem

@@ -1,0 +1,2002 @@
+     1→@import "tailwindcss";
+     2→@import "tw-animate-css";
+     3→
+     4→@custom-variant dark (&:is(.dark *));
+     5→@custom-variant xs (&:where(@media (min-width: 400px)));
+     6→
+     7→@theme {
+     8→  --color-background: var(--background);
+     9→  --color-foreground: var(--foreground);
+    10→  --font-sans: var(--font-cairo);
+    11→  --font-cairo: var(--font-cairo);
+    12→  --font-alexandria: var(--font-alexandria);
+    13→  --font-mono: var(--font-inter);
+    14→  --color-sidebar-ring: var(--sidebar-ring);
+    15→  --color-sidebar-border: var(--sidebar-border);
+    16→  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    17→  --color-sidebar-accent: var(--sidebar-accent);
+    18→  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    19→  --color-sidebar-primary: var(--sidebar-primary);
+    20→  --color-sidebar-foreground: var(--sidebar-foreground);
+    21→  --color-sidebar: var(--sidebar);
+    22→  --color-chart-5: var(--chart-5);
+    23→  --color-chart-4: var(--chart-4);
+    24→  --color-chart-3: var(--chart-3);
+    25→  --color-chart-2: var(--chart-2);
+    26→  --color-chart-1: var(--chart-1);
+    27→  --color-ring: var(--ring);
+    28→  --color-input: var(--input);
+    29→  --color-border: var(--border);
+    30→  --color-destructive: var(--destructive);
+    31→  --color-accent-foreground: var(--accent-foreground);
+    32→  --color-accent: var(--accent);
+    33→  --color-muted-foreground: var(--muted-foreground);
+    34→  --color-muted: var(--muted);
+    35→  --color-secondary-foreground: var(--secondary-foreground);
+    36→  --color-secondary: var(--secondary);
+    37→  --color-primary-foreground: var(--primary-foreground);
+    38→  --color-primary: var(--primary);
+    39→  --color-popover-foreground: var(--popover-foreground);
+    40→  --color-popover: var(--popover);
+    41→  --color-card-foreground: var(--card-foreground);
+    42→  --color-card: var(--card);
+    43→  --radius-sm: calc(var(--radius) - 4px);
+    44→  --radius-md: calc(var(--radius) - 2px);
+    45→  --radius-lg: var(--radius);
+    46→  --radius-xl: calc(var(--radius) + 4px);
+    47→  /* Tayf Gold Palette — default (light mode) values */
+    48→  --color-gold-50: #fefcf3;
+    49→  --color-gold-100: #fdf6e3;
+    50→  --color-gold-200: #f8e8b8;
+    51→  --color-gold-300: #f0d58a;
+    52→  --color-gold-400: #e8c060;
+    53→  --color-gold-500: #d4a853;
+    54→  --color-gold-600: #b8923a;
+    55→  --color-gold-700: #9a7830;
+    56→  --color-gold-800: #7a5e28;
+    57→  --color-gold-900: #5c4420;
+    58→  --color-gold-950: #3a2a14;
+    59→  /* Tayf Dark Palette — default (light mode) values.
+    60→     These are overridden in :root (light) and .dark below.
+    61→     Using @theme (not inline) so utilities reference var() and respect overrides. */
+    62→  --color-dark-50: #f5f5f5;
+    63→  --color-dark-100: #e0e0e0;
+    64→  --color-dark-200: #b0b0b0;
+    65→  --color-dark-300: #808080;
+    66→  --color-dark-400: #606060;
+    67→  --color-dark-500: #454545;
+    68→  --color-dark-600: #353535;
+    69→  --color-dark-700: #252525;
+    70→  --color-dark-800: #1a1a1a;
+    71→  --color-dark-900: #111111;
+    72→  --color-dark-950: #0d0d0d;
+    73→}
+    74→
+    75→/* ==========================================================================
+    76→   LIGHT THEME (Default when no .dark class) — Warm Cream with Gold Accents
+    77→   ========================================================================== */
+    78→:root {
+    79→  --radius: 0.875rem;
+    80→  --background: #faf8f2;
+    81→  --foreground: #1a1510;
+    82→  --card: #ffffff;
+    83→  --card-foreground: #1a1510;
+    84→  --popover: #ffffff;
+    85→  --popover-foreground: #1a1510;
+    86→  --primary: #b8923a;
+    87→  --primary-foreground: #ffffff;
+    88→  --secondary: #f5f0e5;
+    89→  --secondary-foreground: #3a3020;
+    90→  --muted: #ede8dc;
+    91→  --muted-foreground: #7a7060;
+    92→  --accent: #fdf6e3;
+    93→  --accent-foreground: #3a3020;
+    94→  --destructive: #dc2626;
+    95→  --border: rgba(0, 0, 0, 0.08);
+    96→  --input: rgba(0, 0, 0, 0.08);
+    97→  --ring: #b8923a;
+    98→  --chart-1: #b8923a;
+    99→  --chart-2: #d4a853;
+   100→  --chart-3: #9a7830;
+   101→  --chart-4: #e8c060;
+   102→  --chart-5: #7a5e28;
+   103→  --sidebar: #f5f0e5;
+   104→  --sidebar-foreground: #4a4030;
+   105→  --sidebar-primary: #b8923a;
+   106→  --sidebar-primary-foreground: #ffffff;
+   107→  --sidebar-accent: #ede8dc;
+   108→  --sidebar-accent-foreground: #3a3020;
+   109→  --sidebar-border: rgba(184, 146, 58, 0.15);
+   110→  --sidebar-ring: #b8923a;
+   111→
+   112→  /* Dark palette — normal grays for light mode */
+   113→  --color-dark-50: #f5f5f5;
+   114→  --color-dark-100: #e0e0e0;
+   115→  --color-dark-200: #b0b0b0;
+   116→  --color-dark-300: #808080;
+   117→  --color-dark-400: #606060;
+   118→  --color-dark-500: #454545;
+   119→  --color-dark-600: #353535;
+   120→  --color-dark-700: #252525;
+   121→  --color-dark-800: #1a1a1a;
+   122→  --color-dark-900: #111111;
+   123→  --color-dark-950: #0d0d0d;
+   124→
+   125→  /* Colored icon surfaces for light mode */
+   126→  --color-gold-50: #fefcf3;
+   127→  --color-gold-100: #fdf6e3;
+   128→  --color-gold-200: #f8e8b8;
+   129→  --color-sky-50: #f0f9ff;
+   130→  --color-sky-100: #e0f2fe;
+   131→  --color-emerald-50: #ecfdf5;
+   132→  --color-emerald-100: #d1fae5;
+   133→  --color-rose-50: #fff1f2;
+   134→  --color-rose-100: #ffe4e6;
+   135→  --color-amber-50: #fffbeb;
+   136→  --color-amber-100: #fef3c7;
+   137→  --color-violet-50: #f5f3ff;
+   138→  --color-violet-100: #ede9fe;
+   139→}
+   140→
+   141→/* ==========================================================================
+   142→   DARK THEME (when .dark class is on html) — Hany Podcast Inspired: Pure Black + Coral Red
+   143→   ========================================================================== */
+   144→.dark {
+   145→  --radius: 0.875rem;
+   146→  --background: #0f1117;
+   147→  --foreground: rgba(255, 255, 255, 0.92);
+   148→  --card: rgba(255, 255, 255, 0.05);
+   149→  --card-foreground: rgba(255, 255, 255, 0.92);
+   150→  --popover: rgba(255, 255, 255, 0.05);
+   151→  --popover-foreground: rgba(255, 255, 255, 0.92);
+   152→  --primary: #d4a853;
+   153→  --primary-foreground: #1a1510;
+   154→  --secondary: rgba(212, 168, 83, 0.08);
+   155→  --secondary-foreground: rgba(255, 255, 255, 0.92);
+   156→  --muted: rgba(255, 255, 255, 0.06);
+   157→  --muted-foreground: rgba(255, 255, 255, 0.55);
+   158→  --accent: rgba(212, 168, 83, 0.1);
+   159→  --accent-foreground: rgba(255, 255, 255, 0.92);
+   160→  --destructive: #ef4444;
+   161→  --border: rgba(255, 255, 255, 0.07);
+   162→  --input: rgba(255, 255, 255, 0.07);
+   163→  --ring: #d4a853;
+   164→  --chart-1: #d4a853;
+   165→  --chart-2: #e8c060;
+   166→  --chart-3: #b8923a;
+   167→  --chart-4: #f0d58a;
+   168→  --chart-5: #9a7830;
+   169→  --sidebar: #141620;
+   170→  --sidebar-foreground: rgba(255, 255, 255, 0.55);
+   171→  --sidebar-primary: #d4a853;
+   172→  --sidebar-primary-foreground: #1a1510;
+   173→  --sidebar-accent: rgba(212, 168, 83, 0.1);
+   174→  --sidebar-accent-foreground: rgba(255, 255, 255, 0.92);
+   175→  --sidebar-border: rgba(255, 255, 255, 0.07);
+   176→  --sidebar-ring: #d4a853;
+   177→
+   178→  /* Dark palette — INVERTED for dark mode (text becomes light, surfaces become dark) */
+   179→  --color-dark-50: #1c1c1f;
+   180→  --color-dark-100: #27272a;
+   181→  --color-dark-200: #3f3f46;
+   182→  --color-dark-300: #52525b;
+   183→  --color-dark-400: #71717a;
+   184→  --color-dark-500: #a1a1aa;
+   185→  --color-dark-600: #b4b4bc;
+   186→  --color-dark-700: #c8c8d0;
+   187→  --color-dark-800: #dcdce4;
+   188→  --color-dark-900: #111111;
+   189→  --color-dark-950: #0d0d0d;
+   190→
+   191→  /* Colored icon surfaces for dark mode — warm gold tones */
+   192→  --color-gold-50: rgba(212, 168, 83, 0.12);
+   193→  --color-gold-100: rgba(212, 168, 83, 0.2);
+   194→  --color-gold-200: rgba(212, 168, 83, 0.3);
+   195→  --color-sky-50: rgba(96, 165, 250, 0.1);
+   196→  --color-sky-100: rgba(96, 165, 250, 0.18);
+   197→  --color-emerald-50: rgba(52, 211, 153, 0.1);
+   198→  --color-emerald-100: rgba(52, 211, 153, 0.18);
+   199→  --color-rose-50: rgba(244, 63, 94, 0.1);
+   200→  --color-rose-100: rgba(244, 63, 94, 0.18);
+   201→  --color-amber-50: rgba(251, 191, 36, 0.1);
+   202→  --color-amber-100: rgba(251, 191, 36, 0.18);
+   203→  --color-violet-50: rgba(167, 139, 250, 0.1);
+   204→  --color-violet-100: rgba(167, 139, 250, 0.18);
+   205→
+   206→  /* Admin-specific dark theme tokens */
+   207→  --admin-header-bg: #141620;
+   208→  --admin-footer-bg: #0f1117;
+   209→  --admin-footer-text: #747474;
+   210→  --admin-card-bg: rgba(255, 255, 255, 0.06);
+   211→  --admin-card-hover: rgba(255, 255, 255, 0.1);
+   212→  --admin-card-border: rgba(255, 255, 255, 0.08);
+   213→}
+   214→
+   215→@layer base {
+   216→  * {
+   217→    @apply border-border outline-ring/50;
+   218→  }
+   219→  html,
+   220→  body {
+   221→    @apply bg-background text-foreground overflow-x-hidden;
+   222→    font-feature-settings: "kern", "liga", "calt";
+   223→  }
+   224→  *, *::before, *::after {
+   225→    box-sizing: border-box;
+   226→  }
+   227→  /* منع التمرير الأفقي على جميع المستويات */
+   228→  #__next, main, [dir="rtl"] > div, [dir="rtl"] > div > div {
+   229→    overflow-x: hidden;
+   230→  }
+   231→  .font-amiri {
+   232→    font-family: var(--font-amiri), serif;
+   233→  }
+   234→  .font-cairo {
+   235→    font-family: var(--font-cairo), sans-serif;
+   236→  }
+   237→  /* مساحة آمنة للشريط السفلي على الأجهزة ذات النوتش (iPhone X+) */
+   238→  .safe-area-pb {
+   239→    padding-bottom: env(safe-area-inset-bottom, 0px);
+   240→  }
+   241→  .safe-area-pt {
+   242→    padding-top: env(safe-area-inset-top, 0px);
+   243→  }
+   244→  /* إخفاء العناصر عند الطباعة */
+   245→  .no-print {
+   246→    @media print {
+   247→      display: none !important;
+   248→    }
+   249→  }
+   250→}
+   251→
+   252→/* ===== ضبط حجم الخطوط على الهاتف ===== */
+   253→@media (max-width: 640px) {
+   254→  html {
+   255→    font-size: 15px;
+   256→  }
+   257→  .text-xs {
+   258→    font-size: 0.8rem;
+   259→    line-height: 1.4;
+   260→  }
+   261→}
+   262→
+   263→/* Tablet responsive adjustments */
+   264→@media (min-width: 641px) and (max-width: 1023px) {
+   265→  html {
+   266→    font-size: 15.5px;
+   267→  }
+   268→}
+   269→
+   270→/* Desktop wide screens */
+   271→@media (min-width: 1280px) {
+   272→  html {
+   273→    font-size: 16px;
+   274→  }
+   275→}
+   276→
+   277→/* Smooth scrolling */
+   278→html {
+   279→  scroll-behavior: smooth;
+   280→}
+   281→
+   282→/* ==========================================================================
+   283→   SCROLLBAR — Gold-themed
+   284→   ========================================================================== */
+   285→.custom-scroll::-webkit-scrollbar {
+   286→  width: 6px;
+   287→  height: 6px;
+   288→}
+   289→.custom-scroll::-webkit-scrollbar-track {
+   290→  background: transparent;
+   291→}
+   292→.custom-scroll::-webkit-scrollbar-thumb {
+   293→  background: rgba(212, 168, 83, 0.25);
+   294→  border-radius: 999px;
+   295→}
+   296→.custom-scroll::-webkit-scrollbar-thumb:hover {
+   297→  background: rgba(212, 168, 83, 0.45);
+   298→}
+   299→
+   300→/* Global scrollbar — light mode defaults */
+   301→:root *::-webkit-scrollbar {
+   302→  width: 6px;
+   303→  height: 6px;
+   304→}
+   305→:root *::-webkit-scrollbar-track {
+   306→  background: transparent;
+   307→}
+   308→:root *::-webkit-scrollbar-thumb {
+   309→  background: rgba(0, 0, 0, 0.12);
+   310→  border-radius: 999px;
+   311→}
+   312→:root *::-webkit-scrollbar-thumb:hover {
+   313→  background: rgba(0, 0, 0, 0.2);
+   314→}
+   315→.dark *::-webkit-scrollbar-thumb {
+   316→  background: rgba(199, 82, 82, 0.3);
+   317→  border-radius: 999px;
+   318→}
+   319→.dark *::-webkit-scrollbar-thumb:hover {
+   320→  background: rgba(199, 82, 82, 0.5);
+   321→}
+   322→
+   323→/* ==========================================================================
+   324→   GOLD GRADIENT UTILITIES
+   325→   ========================================================================== */
+   326→.gold-gradient {
+   327→  background: linear-gradient(135deg, #f0d58a 0%, #d4a853 50%, #a88850 100%);
+   328→}
+   329→
+   330→.gold-gradient-text {
+   331→  background: linear-gradient(135deg, #ffe098 0%, #d4a853 50%, #a88850 100%);
+   332→  -webkit-background-clip: text;
+   333→  background-clip: text;
+   334→  -webkit-text-fill-color: transparent;
+   335→}
+   336→
+   337→.gold-border-gradient {
+   338→  border-image: linear-gradient(135deg, #f0d58a, #d4a853, #a88850) 1;
+   339→}
+   340→
+   341→.gold-glow {
+   342→  box-shadow: 0 0 20px rgba(212, 168, 83, 0.15), 0 0 60px rgba(212, 168, 83, 0.05);
+   343→}
+   344→
+   345→.gold-glow-sm {
+   346→  box-shadow: 0 0 8px rgba(212, 168, 83, 0.2);
+   347→}
+   348→
+   349→/* Premium card surface */
+   350→.premium-card {
+   351→  background: var(--card);
+   352→  border: 1px solid var(--border);
+   353→}
+   354→.dark .premium-card {
+   355→  background: rgba(255, 255, 255, 0.06);
+   356→  backdrop-filter: blur(10px);
+   357→  -webkit-backdrop-filter: blur(10px);
+   358→  border: 1px solid rgba(255, 255, 255, 0.08);
+   359→  border-radius: 12px;
+   360→}
+   361→
+   362→.premium-card-hover:hover {
+   363→  border-color: rgba(212, 168, 83, 0.2);
+   364→  box-shadow: 0 4px 24px rgba(212, 168, 83, 0.08);
+   365→}
+   366→.dark .premium-card-hover:hover {
+   367→  border-color: rgba(255, 255, 255, 0.12);
+   368→  background: rgba(255, 255, 255, 0.1);
+   369→  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+   370→  transform: translateY(-2px);
+   371→}
+   372→
+   373→/* ==========================================================================
+   374→   GLASSMORPHISM CARD UTILITIES (Dark Mode Admin)
+   375→   ========================================================================== */
+   376→.glass-card {
+   377→  background: rgba(255, 255, 255, 0.06);
+   378→  backdrop-filter: blur(10px);
+   379→  -webkit-backdrop-filter: blur(10px);
+   380→  border: 1px solid rgba(255, 255, 255, 0.08);
+   381→  border-radius: 12px;
+   382→  transition: all 0.3s ease;
+   383→}
+   384→
+   385→.glass-card-hover:hover {
+   386→  background: rgba(255, 255, 255, 0.1);
+   387→  border-color: rgba(255, 255, 255, 0.12);
+   388→  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+   389→  transform: translateY(-2px);
+   390→}
+   391→
+   392→/* ==========================================================================
+   393→   CORAL ACCENT UTILITIES (Dark Mode Admin)
+   394→   ========================================================================== */
+   395→.coral-gradient {
+   396→  background: linear-gradient(135deg, #e07070 0%, #c75252 50%, #a03030 100%);
+   397→}
+   398→
+   399→.coral-gradient-text {
+   400→  background: linear-gradient(135deg, #e07070 0%, #c75252 50%, #a03030 100%);
+   401→  -webkit-background-clip: text;
+   402→  background-clip: text;
+   403→  -webkit-text-fill-color: transparent;
+   404→}
+   405→
+   406→.coral-glow {
+   407→  box-shadow: 0 0 20px rgba(199, 82, 82, 0.15), 0 0 60px rgba(199, 82, 82, 0.05);
+   408→}
+   409→
+   410→.coral-glow-sm {
+   411→  box-shadow: 0 0 8px rgba(199, 82, 82, 0.2);
+   412→}
+   413→
+   414→/* ==========================================================================
+   415→   HANY SCHOOL STRUCTURAL UTILITIES
+   416→   ========================================================================== */
+   417→
+   418→/* Stats bar — pill container with gradient and subtle border */
+   419→.hany-stats-bar {
+   420→  border-radius: 20px;
+   421→  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+   422→  border: 1px solid rgba(255,255,255,0.06);
+   423→  padding: 24px 20px;
+   424→}
+   425→:root .hany-stats-bar {
+   426→  background: linear-gradient(135deg, #faf8f2, #f5f0e5);
+   427→  border: 1px solid rgba(0, 0, 0, 0.06);
+   428→}
+   429→
+   430→/* Section heading — extra bold, tight tracking */
+   431→.hany-heading {
+   432→  font-weight: 800;
+   433→  letter-spacing: -0.02em;
+   434→  line-height: 1.2;
+   435→}
+   436→
+   437→/* Stat number — black weight, tabular */
+   438→.hany-stat {
+   439→  font-weight: 900;
+   440→  font-variant-numeric: tabular-nums;
+   441→}
+   442→
+   443→/* Label — uppercase, wide tracking, tiny */
+   444→.hany-label {
+   445→  font-size: 11px;
+   446→  font-weight: 400;
+   447→  text-transform: uppercase;
+   448→  letter-spacing: 0.1em;
+   449→}
+   450→
+   451→/* CTA glow button — multi-layer shadow pulse */
+   452→@keyframes hany-pulse-shadow {
+   453→  0%, 100% { box-shadow: 0 4px 15px rgba(199, 82, 82, 0.3), 0 8px 30px rgba(199, 82, 82, 0.15); }
+   454→  50% { box-shadow: 0 4px 25px rgba(199, 82, 82, 0.45), 0 8px 40px rgba(199, 82, 82, 0.25); }
+   455→}
+   456→.hany-cta {
+   457→  animation: hany-pulse-shadow 2.5s ease-in-out infinite;
+   458→}
+   459→
+   460→/* Grid texture overlay — Hany school hero pattern */
+   461→.hany-grid-bg {
+   462→  background-image:
+   463→    repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0px, transparent 1px, transparent 28px),
+   464→    repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0px, transparent 1px, transparent 28px);
+   465→}
+   466→
+   467→/* ==========================================================================
+   468→   ANIMATIONS
+   469→   ========================================================================== */
+   470→
+   471→/* أنيميشن النبض للعاجل */
+   472→@keyframes pulse-urgent {
+   473→  0%, 100% { opacity: 1; }
+   474→  50% { opacity: 0.6; }
+   475→}
+   476→.urgent-pulse {
+   477→  animation: pulse-urgent 1.5s ease-in-out infinite;
+   478→}
+   479→
+   480→/* Upload Drop Zone Animations */
+   481→@keyframes border-dance {
+   482→  0% { border-color: #f0d58a; }
+   483→  25% { border-color: #d4a853; }
+   484→  50% { border-color: #b8923a; }
+   485→  75% { border-color: #d4a853; }
+   486→  100% { border-color: #f0d58a; }
+   487→}
+   488→.animate-border-dance {
+   489→  animation: border-dance 3s ease-in-out infinite;
+   490→}
+   491→
+   492→@keyframes upload-icon-pulse {
+   493→  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 168, 83, 0.3); }
+   494→  50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(212, 168, 83, 0); }
+   495→}
+   496→.animate-upload-pulse {
+   497→  animation: upload-icon-pulse 2.5s ease-in-out infinite;
+   498→}
+   499→
+   500→@keyframes success-bounce {
+   501→  0% { transform: scale(0); opacity: 0; }
+   502→  50% { transform: scale(1.2); }
+   503→  70% { transform: scale(0.9); }
+   504→  100% { transform: scale(1); opacity: 1; }
+   505→}
+   506→.animate-success-bounce {
+   507→  animation: success-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+   508→}
+   509→
+   510→@keyframes shimmer {
+   511→  0% { background-position: -200% 0; }
+   512→  100% { background-position: 200% 0; }
+   513→}
+   514→.animate-shimmer {
+   515→  background: linear-gradient(90deg, transparent 25%, rgba(212, 168, 83, 0.3) 50%, transparent 75%);
+   516→  background-size: 200% 100%;
+   517→  animation: shimmer 1.5s infinite;
+   518→}
+   519→
+   520→/* Card hover lift animation */
+   521→@keyframes card-lift {
+   522→  0%, 100% { transform: translateY(0); }
+   523→  50% { transform: translateY(-2px); }
+   524→}
+   525→.animate-card-lift:hover {
+   526→  animation: card-lift 0.3s ease-in-out;
+   527→}
+   528→
+   529→@keyframes pulse-slow {
+   530→  0%, 100% { opacity: 1; }
+   531→  50% { opacity: 0.75; }
+   532→}
+   533→.animate-pulse-slow {
+   534→  animation: pulse-slow 3s ease-in-out infinite;
+   535→}
+   536→
+   537→/* Introduce progress bar animation */
+   538→@keyframes introProgress {
+   539→  0% { width: 0%; }
+   540→  100% { width: 100%; }
+   541→}
+   542→.animate-intro-progress {
+   543→  animation: introProgress 3s ease-out forwards;
+   544→}
+   545→
+   546→/* تذييل متحرك */
+   547→.footer-collapse {
+   548→  max-height: 0;
+   549→  overflow: hidden;
+   550→  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+   551→}
+   552→@media (min-width: 768px) {
+   553→  .footer-collapse {
+   554→    max-height: none !important;
+   555→    overflow: visible;
+   556→  }
+   557→}
+   558→
+   559→/* أنيميشن العوم والتوهّج */
+   560→@keyframes float {
+   561→  0%, 100% { transform: translateY(0px); }
+   562→  50% { transform: translateY(-6px); }
+   563→}
+   564→.animate-float {
+   565→  animation: float 3s ease-in-out infinite;
+   566→}
+   567→
+   568→@keyframes fadeIn {
+   569→  0% { opacity: 0; transform: translateY(4px); }
+   570→  100% { opacity: 1; transform: translateY(0); }
+   571→}
+   572→.animate-fade-in {
+   573→  animation: fadeIn 1.2s ease-out;
+   574→}
+   575→
+   576→@keyframes glow-pulse {
+   577→  0%, 100% { box-shadow: 0 0 8px rgba(212, 168, 83, 0.2); }
+   578→  50% { box-shadow: 0 0 20px rgba(212, 168, 83, 0.4); }
+   579→}
+   580→.animate-glow-pulse {
+   581→  animation: glow-pulse 2s ease-in-out infinite;
+   582→}
+   583→
+   584→@keyframes slide-up {
+   585→  from { opacity: 0; transform: translateY(8px); }
+   586→  to { opacity: 1; transform: translateY(0); }
+   587→}
+   588→.animate-slide-up {
+   589→  animation: slide-up 0.4s ease-out forwards;
+   590→}
+   591→
+   592→@keyframes glow-pulse-gold {
+   593→  0%, 100% { box-shadow: 0 0 5px rgba(212, 168, 83, 0.3); }
+   594→  50% { box-shadow: 0 0 15px rgba(212, 168, 83, 0.6); }
+   595→}
+   596→.animate-glow-pulse-amber {
+   597→  animation: glow-pulse-gold 2s ease-in-out infinite;
+   598→}
+   599→
+   600→@keyframes gradient-border-spin {
+   601→  0% { --border-angle: 0deg; }
+   602→  100% { --border-angle: 360deg; }
+   603→}
+   604→
+   605→/* Gradient border animation wrapper — Gold themed */
+   606→.gradient-border-animated {
+   607→  position: relative;
+   608→  border-radius: 1rem;
+   609→  overflow: hidden;
+   610→}
+   611→.gradient-border-animated::before {
+   612→  content: '';
+   613→  position: absolute;
+   614→  inset: 0;
+   615→  padding: 2px;
+   616→  border-radius: inherit;
+   617→  background: conic-gradient(
+   618→    from var(--border-angle, 0deg),
+   619→    #f0d58a,
+   620→    #d4a853,
+   621→    #a88850,
+   622→    #d4a853,
+   623→    #f0d58a
+   624→  );
+   625→  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+   626→  -webkit-mask-composite: xor;
+   627→  mask-composite: exclude;
+   628→  animation: gradient-border-spin 4s linear infinite;
+   629→  pointer-events: none;
+   630→}
+   631→@property --border-angle {
+   632→  syntax: '<angle>';
+   633→  initial-value: 0deg;
+   634→  inherits: false;
+   635→}
+   636→
+   637→/* Active nav glow — Gold (light mode) */
+   638→.nav-active-glow {
+   639→  text-shadow: 0 0 8px rgba(212, 168, 83, 0.5), 0 0 16px rgba(212, 168, 83, 0.2);
+   640→}
+   641→/* Active nav glow — Coral (dark mode) */
+   642→.dark .nav-active-glow {
+   643→  text-shadow: 0 0 8px rgba(199, 82, 82, 0.5), 0 0 16px rgba(199, 82, 82, 0.2);
+   644→}
+   645→
+   646→/* Confetti animation for celebration */
+   647→@keyframes confetti {
+   648→  0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+   649→  100% { opacity: 0; transform: translateY(-120px) rotate(720deg) scale(0.3); }
+   650→}
+   651→@media (prefers-reduced-motion: no-preference) {
+   652→  .animate-confetti {
+   653→    animation: confetti 1.8s ease-out forwards;
+   654→  }
+   655→}
+   656→
+   657→/* Slide-up bar animation */
+   658→@keyframes slide-up-bar {
+   659→  from { opacity: 0; transform: translateY(100%); }
+   660→  to { opacity: 1; transform: translateY(0); }
+   661→}
+   662→@media (prefers-reduced-motion: no-preference) {
+   663→  .animate-slide-up-bar {
+   664→    animation: slide-up-bar 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+   665→  }
+   666→}
+   667→
+   668→/* Typing dots indicator */
+   669→@keyframes typing-dots {
+   670→  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+   671→  30% { opacity: 1; transform: translateY(-4px); }
+   672→}
+   673→@media (prefers-reduced-motion: no-preference) {
+   674→  .typing-dot {
+   675→    animation: typing-dots 1.4s ease-in-out infinite;
+   676→  }
+   677→  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+   678→  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+   679→}
+   680→
+   681→/* Pulse glow effect for icons — Gold */
+   682→@keyframes pulse-glow {
+   683→  0%, 100% { box-shadow: 0 0 8px rgba(212, 168, 83, 0.3), 0 0 0 0 rgba(212, 168, 83, 0.4); }
+   684→  50% { box-shadow: 0 0 20px rgba(212, 168, 83, 0.6), 0 0 0 12px rgba(212, 168, 83, 0); }
+   685→}
+   686→@media (prefers-reduced-motion: no-preference) {
+   687→  .animate-pulse-glow {
+   688→    animation: pulse-glow 2s ease-in-out infinite;
+   689→  }
+   690→}
+   691→
+   692→/* Shimmer text effect — Gold */
+   693→@keyframes text-shimmer {
+   694→  0% { background-position: -200% center; }
+   695→  100% { background-position: 200% center; }
+   696→}
+   697→@media (prefers-reduced-motion: no-preference) {
+   698→  .animate-text-shimmer {
+   699→    background: linear-gradient(90deg, currentColor 0%, #d4a853 25%, currentColor 50%, #f0d58a 75%, currentColor 100%);
+   700→    background-size: 200% auto;
+   701→    -webkit-background-clip: text;
+   702→    background-clip: text;
+   703→    -webkit-text-fill-color: transparent;
+   704→    animation: text-shimmer 3s linear infinite;
+   705→  }
+   706→}
+   707→
+   708→/* Float with subtle rotation */
+   709→@keyframes float-gentle {
+   710→  0%, 100% { transform: translateY(0) rotate(0deg); }
+   711→  25% { transform: translateY(-4px) rotate(0.5deg); }
+   712→  75% { transform: translateY(-2px) rotate(-0.5deg); }
+   713→}
+   714→@media (prefers-reduced-motion: no-preference) {
+   715→  .animate-float-gentle {
+   716→    animation: float-gentle 4s ease-in-out infinite;
+   717→  }
+   718→}
+   719→
+   720→/* Confetti scattered dots */
+   721→@keyframes confetti-scatter {
+   722→  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+   723→  100% { opacity: 0; transform: translate(var(--x, 40px), var(--y, -80px)) rotate(var(--r, 360deg)); }
+   724→}
+   725→@media (prefers-reduced-motion: no-preference) {
+   726→  .confetti-dot {
+   727→    animation: confetti-scatter var(--dur, 1.5s) ease-out forwards;
+   728→    animation-delay: var(--delay, 0s);
+   729→  }
+   730→}
+   731→
+   732→/* ==========================================================================
+   733→   PRINT STYLES
+   734→   ========================================================================== */
+   735→@media print {
+   736→  body * {
+   737→    visibility: hidden !important;
+   738→  }
+   739→  #print-content,
+   740→  #print-content *,
+   741→  #direct-print-area,
+   742→  #direct-print-area * {
+   743→    visibility: visible !important;
+   744→  }
+   745→  #print-content,
+   746→  #direct-print-area {
+   747→    position: absolute !important;
+   748→    left: 0 !important;
+   749→    top: 0 !important;
+   750→    width: 100% !important;
+   751→    margin: 0 !important;
+   752→    padding: 0 !important;
+   753→  }
+   754→  /* إخفاء عناصر واجهة المستخدم أثناء الطباعة */
+   755→  .print-hide {
+   756→    display: none !important;
+   757→  }
+   758→
+   759→  .print-job-ticket {
+   760→    background: white !important;
+   761→    color: #000 !important;
+   762→    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+   763→    font-size: 12pt !important;
+   764→    line-height: 1.5 !important;
+   765→    padding: 16px !important;
+   766→    direction: rtl !important;
+   767→  }
+   768→
+   769→  .pjt-header {
+   770→    display: flex !important;
+   771→    align-items: center !important;
+   772→    gap: 12px !important;
+   773→    margin-bottom: 12px !important;
+   774→  }
+   775→  .pjt-logo {
+   776→    width: 48px !important;
+   777→    height: 48px !important;
+   778→    object-fit: contain !important;
+   779→  }
+   780→  .pjt-shop-info {
+   781→    flex: 1 !important;
+   782→  }
+   783→  .pjt-shop-name {
+   784→    font-size: 18pt !important;
+   785→    font-weight: 700 !important;
+   786→    margin: 0 !important;
+   787→    color: #000 !important;
+   788→  }
+   789→  .pjt-shop-phone,
+   790→  .pjt-shop-address {
+   791→    font-size: 9pt !important;
+   792→    color: #444 !important;
+   793→    margin: 1px 0 !important;
+   794→  }
+   795→
+   796→  .pjt-divider {
+   797→    border: none !important;
+   798→    border-top: 1.5px dashed #999 !important;
+   799→    margin: 10px 0 !important;
+   800→  }
+   801→
+   802→  .pjt-ref-row {
+   803→    display: flex !important;
+   804→    justify-content: space-between !important;
+   805→    align-items: center !important;
+   806→  }
+   807→  .pjt-ref-box {
+   808→    text-align: right !important;
+   809→  }
+   810→  .pjt-ref-label {
+   811→    font-size: 9pt !important;
+   812→    color: #666 !important;
+   813→  }
+   814→  .pjt-ref-value {
+   815→    font-size: 16pt !important;
+   816→    font-weight: 800 !important;
+   817→    font-family: monospace !important;
+   818→    letter-spacing: 1px !important;
+   819→    color: #000 !important;
+   820→  }
+   821→  .pjt-status-badge {
+   822→    font-size: 10pt !important;
+   823→    padding: 3px 12px !important;
+   824→    border: 1.5px solid #999 !important;
+   825→    border-radius: 20px !important;
+   826→    font-weight: 600 !important;
+   827→  }
+   828→
+   829→  .pjt-section {
+   830→    margin: 10px 0 !important;
+   831→  }
+   832→  .pjt-section-title {
+   833→    font-size: 11pt !important;
+   834→    font-weight: 700 !important;
+   835→    color: #000 !important;
+   836→    margin: 0 0 6px 0 !important;
+   837→    border-right: 3px solid #b8923a !important;
+   838→    padding-right: 8px !important;
+   839→  }
+   840→
+   841→  .pjt-grid-2 {
+   842→    display: grid !important;
+   843→    grid-template-columns: 1fr 1fr !important;
+   844→    gap: 4px 16px !important;
+   845→  }
+   846→  .pjt-grid-3 {
+   847→    display: grid !important;
+   848→    grid-template-columns: 1fr 1fr 1fr !important;
+   849→    gap: 4px 12px !important;
+   850→  }
+   851→  .pjt-grid-4 {
+   852→    display: grid !important;
+   853→    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+   854→    gap: 4px 12px !important;
+   855→    margin-bottom: 8px !important;
+   856→  }
+   857→  .pjt-field-full {
+   858→    grid-column: 1 / -1 !important;
+   859→  }
+   860→
+   861→  .pjt-field {
+   862→    display: flex !important;
+   863→    justify-content: space-between !important;
+   864→    align-items: baseline !important;
+   865→    padding: 2px 0 !important;
+   866→  }
+   867→  .pjt-field-label {
+   868→    font-size: 9pt !important;
+   869→    color: #666 !important;
+   870→  }
+   871→  .pjt-field-value {
+   872→    font-size: 10pt !important;
+   873→    font-weight: 600 !important;
+   874→    color: #000 !important;
+   875→  }
+   876→
+   877→  .pjt-file-row {
+   878→    display: flex !important;
+   879→    justify-content: space-between !important;
+   880→    align-items: center !important;
+   881→  }
+   882→  .pjt-file-name {
+   883→    font-size: 10pt !important;
+   884→    font-weight: 600 !important;
+   885→    color: #000 !important;
+   886→  }
+   887→  .pjt-file-meta {
+   888→    font-size: 9pt !important;
+   889→    color: #666 !important;
+   890→  }
+   891→
+   892→  .pjt-pricing-breakdown {
+   893→    margin: 6px 0 !important;
+   894→    padding: 6px 8px !important;
+   895→    border: 1px solid #ddd !important;
+   896→    border-radius: 6px !important;
+   897→    background: #fafafa !important;
+   898→  }
+   899→  .pjt-price-row {
+   900→    display: flex !important;
+   901→    justify-content: space-between !important;
+   902→    font-size: 9pt !important;
+   903→    color: #444 !important;
+   904→    padding: 1px 0 !important;
+   905→  }
+   906→  .pjt-price-saving {
+   907→    color: #16a34a !important;
+   908→  }
+   909→  .pjt-total-row {
+   910→    display: flex !important;
+   911→    justify-content: space-between !important;
+   912→    font-size: 14pt !important;
+   913→    font-weight: 800 !important;
+   914→    color: #000 !important;
+   915→    padding: 6px 0 0 0 !important;
+   916→    border-top: 2px solid #000 !important;
+   917→    margin-top: 6px !important;
+   918→  }
+   919→
+   920→  .pjt-footer {
+   921→    display: flex !important;
+   922→    justify-content: space-between !important;
+   923→    font-size: 8pt !important;
+   924→    color: #999 !important;
+   925→    margin-top: 4px !important;
+   926→  }
+   927→
+   928→  /* ===== Direct Print Area styles (للطباعة المباشرة من معاينة الملف) ===== */
+   929→  .direct-print-area {
+   930→    background: white !important;
+   931→    color: #000 !important;
+   932→    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+   933→    font-size: 11pt !important;
+   934→    line-height: 1.5 !important;
+   935→    padding: 14px !important;
+   936→    direction: rtl !important;
+   937→  }
+   938→  .dpa-header {
+   939→    display: flex !important;
+   940→    flex-direction: column !important;
+   941→    align-items: flex-start !important;
+   942→    margin-bottom: 8px !important;
+   943→  }
+   944→  .dpa-shop-name {
+   945→    font-size: 16pt !important;
+   946→    font-weight: 800 !important;
+   947→    color: #000 !important;
+   948→    margin: 0 !important;
+   949→  }
+   950→  .dpa-shop-phone,
+   951→  .dpa-shop-address {
+   952→    font-size: 9pt !important;
+   953→    color: #444 !important;
+   954→    margin: 1px 0 !important;
+   955→  }
+   956→  .dpa-divider {
+   957→    border: none !important;
+   958→    border-top: 1.5px dashed #999 !important;
+   959→    margin: 8px 0 !important;
+   960→  }
+   961→  .dpa-ref-row {
+   962→    display: flex !important;
+   963→    align-items: center !important;
+   964→    gap: 12px !important;
+   965→  }
+   966→  .dpa-ref-label {
+   967→    font-size: 9pt !important;
+   968→    color: #666 !important;
+   969→  }
+   970→  .dpa-ref-value {
+   971→    font-size: 15pt !important;
+   972→    font-weight: 800 !important;
+   973→    font-family: monospace !important;
+   974→    color: #000 !important;
+   975→  }
+   976→  .dpa-status {
+   977→    margin-right: auto !important;
+   978→    font-size: 10pt !important;
+   979→    padding: 2px 10px !important;
+   980→    border: 1.5px solid #999 !important;
+   981→    border-radius: 20px !important;
+   982→    font-weight: 600 !important;
+   983→  }
+   984→  .dpa-section {
+   985→    margin: 8px 0 !important;
+   986→  }
+   987→  .dpa-section-title {
+   988→    font-size: 11pt !important;
+   989→    font-weight: 700 !important;
+   990→    color: #000 !important;
+   991→    margin: 0 0 6px 0 !important;
+   992→    border-right: 3px solid #b8923a !important;
+   993→    padding-right: 8px !important;
+   994→  }
+   995→  .dpa-file-section {
+   996→    margin: 8px 0 !important;
+   997→    text-align: center !important;
+   998→  }
+   999→  .dpa-image {
+  1000→    max-width: 100% !important;
+  1001→    max-height: 70vh !important;
+  1002→    object-fit: contain !important;
+  1003→    border: 1px solid #ddd !important;
+  1004→    border-radius: 6px !important;
+  1005→  }
+  1006→  .dpa-grid {
+  1007→    display: grid !important;
+  1008→    grid-template-columns: 1fr 1fr !important;
+  1009→    gap: 4px 16px !important;
+  1010→  }
+  1011→  .dpa-field {
+  1012→    display: flex !important;
+  1013→    justify-content: space-between !important;
+  1014→    align-items: baseline !important;
+  1015→    padding: 2px 0 !important;
+  1016→  }
+  1017→  .dpa-field-label {
+  1018→    font-size: 9pt !important;
+  1019→    color: #666 !important;
+  1020→  }
+  1021→  .dpa-field-value {
+  1022→    font-size: 10pt !important;
+  1023→    font-weight: 600 !important;
+  1024→    color: #000 !important;
+  1025→  }
+  1026→  .dpa-footer {
+  1027→    display: flex !important;
+  1028→    justify-content: space-between !important;
+  1029→    font-size: 8pt !important;
+  1030→    color: #999 !important;
+  1031→    margin-top: 6px !important;
+  1032→  }
+  1033→
+  1034→  @page {
+  1035→    size: A4;
+  1036→    margin: 12mm;
+  1037→  }
+  1038→}
+  1039→
+  1040→/* Screen-only: hide print tickets from normal view */
+  1041→.print-job-ticket,
+  1042→.direct-print-area {
+  1043→  display: none !important;
+  1044→}
+  1045→
+  1046→@media print {
+  1047→  .print-job-ticket,
+  1048→  .direct-print-area {
+  1049→    display: block !important;
+  1050→  }
+  1051→}/* ============================================ */
+  1052→/* CSS v7.7 — Round 81                           */
+  1053→/* ~480+ new lines                                 */
+  1054→/* ============================================ */
+  1055→
+  1056→/* ===== Order Aging Widget ===== */
+  1057→.aging-widget {
+  1058→  background: var(--card);
+  1059→  border: 1px solid var(--border);
+  1060→  border-radius: 1rem;
+  1061→  padding: 1.25rem;
+  1062→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1063→}
+  1064→.aging-widget-header {
+  1065→  display: flex;
+  1066→  align-items: center;
+  1067→  gap: 0.5rem;
+  1068→  margin-bottom: 1rem;
+  1069→  font-size: 0.875rem;
+  1070→  font-weight: 600;
+  1071→  color: var(--foreground);
+  1072→  opacity: 0.8;
+  1073→}
+  1074→.aging-row {
+  1075→  display: flex;
+  1076→  align-items: center;
+  1077→  gap: 0.75rem;
+  1078→  padding: 0.625rem 0;
+  1079→  border-bottom: 1px solid var(--border);
+  1080→}
+  1081→.aging-row:last-child {
+  1082→  border-bottom: none;
+  1083→}
+  1084→.aging-dot {
+  1085→  width: 8px;
+  1086→  height: 8px;
+  1087→  border-radius: 50%;
+  1088→  flex-shrink: 0;
+  1089→}
+  1090→.aging-label {
+  1091→  font-size: 0.75rem;
+  1092→  color: var(--foreground);
+  1093→  opacity: 0.7;
+  1094→  min-width: 60px;
+  1095→}
+  1096→.aging-bar-track {
+  1097→  flex: 1;
+  1098→  height: 6px;
+  1099→  border-radius: 999px;
+  1100→  background: var(--muted);
+  1101→  overflow: hidden;
+  1102→}
+  1103→.aging-bar-fill {
+  1104→  height: 100%;
+  1105→  border-radius: 999px;
+  1106→  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  1107→}
+  1108→.aging-count {
+  1109→  font-size: 0.75rem;
+  1110→  font-weight: 700;
+  1111→  color: var(--foreground);
+  1112→  min-width: 28px;
+  1113→  text-align: center;
+  1114→  font-variant-numeric: tabular-nums;
+  1115→}
+  1116→.aging-time {
+  1117→  font-size: 0.65rem;
+  1118→  color: var(--muted-foreground);
+  1119→  min-width: 55px;
+  1120→  text-align: left;
+  1121→  direction: ltr;
+  1122→}
+  1123→@keyframes agingSlideIn {
+  1124→  from { opacity: 0; transform: translateX(-12px); }
+  1125→  to { opacity: 1; transform: translateX(0); }
+  1126→}
+  1127→.aging-row {
+  1128→  animation: agingSlideIn 0.4s ease-out backwards;
+  1129→}
+  1130→.aging-row:nth-child(1) { animation-delay: 0ms; }
+  1131→.aging-row:nth-child(2) { animation-delay: 60ms; }
+  1132→.aging-row:nth-child(3) { animation-delay: 120ms; }
+  1133→.aging-row:nth-child(4) { animation-delay: 180ms; }
+  1134→.aging-row:nth-child(5) { animation-delay: 240ms; }
+  1135→
+  1136→/* ===== Weekly Trend Widget ===== */
+  1137→.weekly-trend-widget {
+  1138→  background: var(--card);
+  1139→  border: 1px solid var(--border);
+  1140→  border-radius: 1rem;
+  1141→  padding: 1.25rem;
+  1142→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1143→}
+  1144→.weekly-trend-header {
+  1145→  display: flex;
+  1146→  align-items: center;
+  1147→  justify-content: space-between;
+  1148→  margin-bottom: 1rem;
+  1149→}
+  1150→.weekly-trend-title {
+  1151→  font-size: 0.875rem;
+  1152→  font-weight: 600;
+  1153→  color: var(--foreground);
+  1154→  opacity: 0.8;
+  1155→  display: flex;
+  1156→  align-items: center;
+  1157→  gap: 0.5rem;
+  1158→}
+  1159→.weekly-trend-badge {
+  1160→  font-size: 0.65rem;
+  1161→  padding: 2px 8px;
+  1162→  border-radius: 999px;
+  1163→  font-weight: 600;
+  1164→}
+  1165→.weekly-trend-badge-up {
+  1166→  background: rgba(16,185,129,0.12);
+  1167→  color: #10b981;
+  1168→}
+  1169→.weekly-trend-badge-down {
+  1170→  background: rgba(244,63,94,0.12);
+  1171→  color: #f43f5e;
+  1172→}
+  1173→.weekly-bars-container {
+  1174→  display: flex;
+  1175→  align-items: flex-end;
+  1176→  gap: 6px;
+  1177→  height: 100px;
+  1178→  padding-top: 0.5rem;
+  1179→}
+  1180→.weekly-bar-group {
+  1181→  flex: 1;
+  1182→  display: flex;
+  1183→  flex-direction: column;
+  1184→  align-items: center;
+  1185→  gap: 4px;
+  1186→}
+  1187→.weekly-bar-pair {
+  1188→  display: flex;
+  1189→  align-items: flex-end;
+  1190→  gap: 2px;
+  1191→  height: 80px;
+  1192→}
+  1193→.weekly-bar {
+  1194→  width: 14px;
+  1195→  border-radius: 4px 4px 2px 2px;
+  1196→  transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+  1197→  min-height: 2px;
+  1198→  position: relative;
+  1199→}
+  1200→.weekly-bar-current {
+  1201→  background: linear-gradient(to top, #8b5cf6, #a78bfa);
+  1202→}
+  1203→.weekly-bar-previous {
+  1204→  background: var(--muted);
+  1205→  opacity: 0.5;
+  1206→}
+  1207→.weekly-bar-label {
+  1208→  font-size: 0.6rem;
+  1209→  color: var(--muted-foreground);
+  1210→  font-weight: 500;
+  1211→}
+  1212→.weekly-legend {
+  1213→  display: flex;
+  1214→  align-items: center;
+  1215→  gap: 1rem;
+  1216→  margin-top: 0.75rem;
+  1217→  padding-top: 0.75rem;
+  1218→  border-top: 1px solid var(--border);
+  1219→}
+  1220→.weekly-legend-item {
+  1221→  display: flex;
+  1222→  align-items: center;
+  1223→  gap: 0.375rem;
+  1224→  font-size: 0.65rem;
+  1225→  color: var(--muted-foreground);
+  1226→}
+  1227→.weekly-legend-dot {
+  1228→  width: 8px;
+  1229→  height: 8px;
+  1230→  border-radius: 3px;
+  1231→}
+  1232→@keyframes weeklyBarGrow {
+  1233→  from { height: 2px !important; }
+  1234→}
+  1235→.weekly-bar {
+  1236→  animation: weeklyBarGrow 0.6s cubic-bezier(0.4,0,0.2,1) backwards;
+  1237→}
+  1238→.weekly-bar-group:nth-child(1) .weekly-bar { animation-delay: 0ms; }
+  1239→.weekly-bar-group:nth-child(2) .weekly-bar { animation-delay: 60ms; }
+  1240→.weekly-bar-group:nth-child(3) .weekly-bar { animation-delay: 120ms; }
+  1241→.weekly-bar-group:nth-child(4) .weekly-bar { animation-delay: 180ms; }
+  1242→.weekly-bar-group:nth-child(5) .weekly-bar { animation-delay: 240ms; }
+  1243→.weekly-bar-group:nth-child(6) .weekly-bar { animation-delay: 300ms; }
+  1244→.weekly-bar-group:nth-child(7) .weekly-bar { animation-delay: 360ms; }
+  1245→
+  1246→/* ===== Customer Loyalty Badges ===== */
+  1247→.loyalty-widget {
+  1248→  background: var(--card);
+  1249→  border: 1px solid var(--border);
+  1250→  border-radius: 1rem;
+  1251→  padding: 1.25rem;
+  1252→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1253→}
+  1254→.loyalty-widget-header {
+  1255→  display: flex;
+  1256→  align-items: center;
+  1257→  gap: 0.5rem;
+  1258→  margin-bottom: 1rem;
+  1259→  font-size: 0.875rem;
+  1260→  font-weight: 600;
+  1261→  color: var(--foreground);
+  1262→  opacity: 0.8;
+  1263→}
+  1264→.loyalty-customer-row {
+  1265→  display: flex;
+  1266→  align-items: center;
+  1267→  gap: 0.75rem;
+  1268→  padding: 0.5rem 0;
+  1269→  border-bottom: 1px solid var(--border);
+  1270→  transition: background-color 0.2s;
+  1271→}
+  1272→.loyalty-customer-row:last-child {
+  1273→  border-bottom: none;
+  1274→}
+  1275→.loyalty-customer-row:hover {
+  1276→  background: var(--accent);
+  1277→  border-radius: 0.5rem;
+  1278→  margin: 0 -0.5rem;
+  1279→  padding: 0.5rem;
+  1280→}
+  1281→.loyalty-badge {
+  1282→  width: 32px;
+  1283→  height: 32px;
+  1284→  border-radius: 50%;
+  1285→  display: flex;
+  1286→  align-items: center;
+  1287→  justify-content: center;
+  1288→  font-size: 0.875rem;
+  1289→  flex-shrink: 0;
+  1290→  font-weight: 700;
+  1291→}
+  1292→.loyalty-badge-bronze {
+  1293→  background: linear-gradient(135deg, #cd7f32, #a0522d);
+  1294→  color: white;
+  1295→  box-shadow: 0 2px 8px rgba(205,127,50,0.3);
+  1296→}
+  1297→.loyalty-badge-silver {
+  1298→  background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+  1299→  color: white;
+  1300→  box-shadow: 0 2px 8px rgba(192,192,192,0.3);
+  1301→}
+  1302→.loyalty-badge-gold {
+  1303→  background: linear-gradient(135deg, #ffd700, #daa520);
+  1304→  color: #78350f;
+  1305→  box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+  1306→}
+  1307→.loyalty-badge-platinum {
+  1308→  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  1309→  color: white;
+  1310→  box-shadow: 0 2px 8px rgba(6,182,212,0.4);
+  1311→}
+  1312→.loyalty-badge-diamond {
+  1313→  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  1314→  color: white;
+  1315→  box-shadow: 0 2px 8px rgba(139,92,246,0.4);
+  1316→}
+  1317→.loyalty-info {
+  1318→  flex: 1;
+  1319→  min-width: 0;
+  1320→}
+  1321→.loyalty-name {
+  1322→  font-size: 0.8125rem;
+  1323→  font-weight: 600;
+  1324→  color: var(--foreground);
+  1325→  white-space: nowrap;
+  1326→  overflow: hidden;
+  1327→  text-overflow: ellipsis;
+  1328→}
+  1329→.loyalty-tier-label {
+  1330→  font-size: 0.625rem;
+  1331→  color: var(--muted-foreground);
+  1332→  margin-top: 1px;
+  1333→}
+  1334→.loyalty-stats {
+  1335→  text-align: left;
+  1336→  flex-shrink: 0;
+  1337→}
+  1338→.loyalty-amount {
+  1339→  font-size: 0.8125rem;
+  1340→  font-weight: 700;
+  1341→  color: var(--foreground);
+  1342→}
+  1343→.loyalty-orders-count {
+  1344→  font-size: 0.625rem;
+  1345→  color: var(--muted-foreground);
+  1346→}
+  1347→@keyframes loyaltyFadeIn {
+  1348→  from { opacity: 0; transform: translateY(8px); }
+  1349→  to { opacity: 1; transform: translateY(0); }
+  1350→}
+  1351→.loyalty-customer-row {
+  1352→  animation: loyaltyFadeIn 0.35s ease-out backwards;
+  1353→}
+  1354→.loyalty-customer-row:nth-child(1) { animation-delay: 0ms; }
+  1355→.loyalty-customer-row:nth-child(2) { animation-delay: 50ms; }
+  1356→.loyalty-customer-row:nth-child(3) { animation-delay: 100ms; }
+  1357→.loyalty-customer-row:nth-child(4) { animation-delay: 150ms; }
+  1358→.loyalty-customer-row:nth-child(5) { animation-delay: 200ms; }
+  1359→
+  1360→/* ===== Quick Status Button ===== */
+  1361→.quick-advance-btn {
+  1362→  display: inline-flex;
+  1363→  align-items: center;
+  1364→  gap: 0.25rem;
+  1365→  padding: 3px 10px;
+  1366→  border-radius: 8px;
+  1367→  font-size: 0.6875rem;
+  1368→  font-weight: 600;
+  1369→  border: 1px solid var(--border);
+  1370→  background: var(--background);
+  1371→  color: var(--foreground);
+  1372→  cursor: pointer;
+  1373→  transition: all 0.2s;
+  1374→  white-space: nowrap;
+  1375→}
+  1376→.quick-advance-btn:hover {
+  1377→  background: var(--accent);
+  1378→  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  1379→  transform: translateY(-1px);
+  1380→}
+  1381→.quick-advance-btn:active {
+  1382→  transform: translateY(0);
+  1383→}
+  1384→.quick-advance-btn svg {
+  1385→  width: 12px;
+  1386→  height: 12px;
+  1387→}
+  1388→@keyframes quickAdvancePulse {
+  1389→  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+  1390→  50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  1391→}
+  1392→.quick-advance-btn-pending {
+  1393→  border-color: rgba(245,158,11,0.3);
+  1394→  color: #b45309;
+  1395→}
+  1396→.quick-advance-btn-pending:hover {
+  1397→  background: rgba(245,158,11,0.08);
+  1398→}
+  1399→.quick-advance-btn-printing {
+  1400→  border-color: rgba(59,130,246,0.3);
+  1401→  color: #2563eb;
+  1402→}
+  1403→.quick-advance-btn-printing:hover {
+  1404→  background: rgba(59,130,246,0.08);
+  1405→}
+  1406→.quick-advance-btn-ready {
+  1407→  border-color: rgba(16,185,129,0.3);
+  1408→  color: #059669;
+  1409→  animation: quickAdvancePulse 2s infinite;
+  1410→}
+  1411→.quick-advance-btn-ready:hover {
+  1412→  background: rgba(16,185,129,0.08);
+  1413→}
+  1414→
+  1415→/* ===== Shop Health Grid ===== */
+  1416→.health-grid-widget {
+  1417→  background: var(--card);
+  1418→  border: 1px solid var(--border);
+  1419→  border-radius: 1rem;
+  1420→  padding: 1.25rem;
+  1421→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1422→}
+  1423→.health-grid-header {
+  1424→  display: flex;
+  1425→  align-items: center;
+  1426→  gap: 0.5rem;
+  1427→  margin-bottom: 1rem;
+  1428→  font-size: 0.875rem;
+  1429→  font-weight: 600;
+  1430→  color: var(--foreground);
+  1431→  opacity: 0.8;
+  1432→}
+  1433→.health-grid {
+  1434→  display: grid;
+  1435→  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  1436→  gap: 0.75rem;
+  1437→}
+  1438→.health-grid-item {
+  1439→  background: var(--background);
+  1440→  border: 1px solid var(--border);
+  1441→  border-radius: 0.75rem;
+  1442→  padding: 0.75rem;
+  1443→  text-align: center;
+  1444→  transition: all 0.25s;
+  1445→  cursor: default;
+  1446→}
+  1447→.health-grid-item:hover {
+  1448→  transform: translateY(-2px);
+  1449→  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  1450→  border-color: var(--primary);
+  1451→}
+  1452→.health-grid-icon {
+  1453→  width: 36px;
+  1454→  height: 36px;
+  1455→  border-radius: 50%;
+  1456→  margin: 0 auto 0.5rem;
+  1457→  display: flex;
+  1458→  align-items: center;
+  1459→  justify-content: center;
+  1460→  font-size: 1rem;
+  1461→}
+  1462→.health-grid-name {
+  1463→  font-size: 0.75rem;
+  1464→  font-weight: 600;
+  1465→  color: var(--foreground);
+  1466→  white-space: nowrap;
+  1467→  overflow: hidden;
+  1468→  text-overflow: ellipsis;
+  1469→}
+  1470→.health-grid-stat {
+  1471→  font-size: 0.625rem;
+  1472→  color: var(--muted-foreground);
+  1473→  margin-top: 2px;
+  1474→}
+  1475→.health-grid-bar {
+  1476→  height: 4px;
+  1477→  border-radius: 999px;
+  1478→  background: var(--muted);
+  1479→  margin-top: 0.5rem;
+  1480→  overflow: hidden;
+  1481→}
+  1482→.health-grid-bar-fill {
+  1483→  height: 100%;
+  1484→  border-radius: 999px;
+  1485→  transition: width 0.5s ease;
+  1486→}
+  1487→@keyframes healthGridFadeIn {
+  1488→  from { opacity: 0; transform: scale(0.9); }
+  1489→  to { opacity: 1; transform: scale(1); }
+  1490→}
+  1491→.health-grid-item {
+  1492→  animation: healthGridFadeIn 0.4s ease-out backwards;
+  1493→}
+  1494→.health-grid-item:nth-child(1) { animation-delay: 0ms; }
+  1495→.health-grid-item:nth-child(2) { animation-delay: 80ms; }
+  1496→.health-grid-item:nth-child(3) { animation-delay: 160ms; }
+  1497→.health-grid-item:nth-child(4) { animation-delay: 240ms; }
+  1498→.health-grid-item:nth-child(5) { animation-delay: 320ms; }
+  1499→.health-grid-item:nth-child(6) { animation-delay: 400ms; }
+  1500→
+  1501→/* ===== Glass Card v11 ===== */
+  1502→.glass-card-v11 {
+  1503→  background: rgba(255,255,255,0.65);
+  1504→  backdrop-filter: blur(16px) saturate(180%);
+  1505→  border: 1px solid rgba(255,255,255,0.3);
+  1506→  border-radius: 1rem;
+  1507→  box-shadow: 0 4px 16px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5);
+  1508→}
+  1509→.dark .glass-card-v11 {
+  1510→  background: rgba(15,15,25,0.65);
+  1511→  border: 1px solid rgba(255,255,255,0.08);
+  1512→  box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  1513→}
+  1514→.glass-card-v11:hover {
+  1515→  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  1516→  transform: translateY(-2px);
+  1517→  transition: all 0.3s ease;
+  1518→}
+  1519→
+  1520→/* ===== Neon Glow Teal ===== */
+  1521→.neon-glow-teal {
+  1522→  box-shadow: 0 0 15px rgba(20,184,166,0.3), 0 0 30px rgba(20,184,166,0.1);
+  1523→}
+  1524→.dark .neon-glow-teal {
+  1525→  box-shadow: 0 0 15px rgba(20,184,166,0.4), 0 0 30px rgba(20,184,166,0.15);
+  1526→}
+  1527→
+  1528→/* ===== Neon Glow Indigo ===== */
+  1529→.neon-glow-indigo {
+  1530→  box-shadow: 0 0 15px rgba(99,102,241,0.3), 0 0 30px rgba(99,102,241,0.1);
+  1531→}
+  1532→.dark .neon-glow-indigo {
+  1533→  box-shadow: 0 0 15px rgba(99,102,241,0.4), 0 0 30px rgba(99,102,241,0.15);
+  1534→}
+  1535→
+  1536→/* ===== Gradient Text Teal ===== */
+  1537→.gradient-text-teal {
+  1538→  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+  1539→  -webkit-background-clip: text;
+  1540→  -webkit-text-fill-color: transparent;
+  1541→  background-clip: text;
+  1542→}
+  1543→
+  1544→/* ===== Gradient Text Indigo ===== */
+  1545→.gradient-text-indigo {
+  1546→  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  1547→  -webkit-background-clip: text;
+  1548→  -webkit-text-fill-color: transparent;
+  1549→  background-clip: text;
+  1550→}
+  1551→
+  1552→/* ===== Hover Glow Teal ===== */
+  1553→.hover-glow-teal:hover {
+  1554→  box-shadow: 0 0 20px rgba(20,184,166,0.25);
+  1555→}
+  1556→
+  1557→/* ===== Hover Glow Indigo ===== */
+  1558→.hover-glow-indigo:hover {
+  1559→  box-shadow: 0 0 20px rgba(99,102,241,0.25);
+  1560→}
+  1561→
+  1562→/* ===== Shimmer v8 ===== */
+  1563→.shimmer-v8 {
+  1564→  position: relative;
+  1565→  overflow: hidden;
+  1566→}
+  1567→.shimmer-v8::after {
+  1568→  content: '';
+  1569→  position: absolute;
+  1570→  top: 0;
+  1571→  right: -100%;
+  1572→  width: 60%;
+  1573→  height: 100%;
+  1574→  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  1575→  animation: shimmerSlideV8 3s infinite ease-in-out;
+  1576→}
+  1577→@keyframes shimmerSlideV8 {
+  1578→  0% { right: -100%; }
+  1579→  100% { right: 200%; }
+  1580→}
+  1581→
+  1582→/* ===== Skeleton v10 ===== */
+  1583→.skeleton-v10 {
+  1584→  background: linear-gradient(90deg, var(--muted) 25%, rgba(128,128,128,0.08) 50%, var(--muted) 75%);
+  1585→  background-size: 200% 100%;
+  1586→  animation: skeletonPulseV10 1.5s ease-in-out infinite;
+  1587→  border-radius: 0.5rem;
+  1588→}
+  1589→@keyframes skeletonPulseV10 {
+  1590→  0% { background-position: 200% 0; }
+  1591→  100% { background-position: -200% 0; }
+  1592→}
+  1593→
+  1594→/* ===== Hover Underline 5 ===== */
+  1595→.hover-underline-5 {
+  1596→  position: relative;
+  1597→}
+  1598→.hover-underline-5::after {
+  1599→  content: '';
+  1600→  position: absolute;
+  1601→  bottom: -2px;
+  1602→  right: 0;
+  1603→  width: 0;
+  1604→  height: 2px;
+  1605→  background: linear-gradient(to left, #14b8a6, #06b6d4);
+  1606→  border-radius: 999px;
+  1607→  transition: width 0.3s ease;
+  1608→}
+  1609→.hover-underline-5:hover::after {
+  1610→  width: 100%;
+  1611→}
+  1612→
+  1613→/* ===== Tag Chip Teal ===== */
+  1614→.tag-chip-teal {
+  1615→  display: inline-flex;
+  1616→  align-items: center;
+  1617→  gap: 0.25rem;
+  1618→  padding: 2px 10px;
+  1619→  border-radius: 999px;
+  1620→  font-size: 0.6875rem;
+  1621→  font-weight: 600;
+  1622→  background: rgba(20,184,166,0.1);
+  1623→  color: #0d9488;
+  1624→  border: 1px solid rgba(20,184,166,0.2);
+  1625→}
+  1626→.dark .tag-chip-teal {
+  1627→  background: rgba(20,184,166,0.15);
+  1628→  color: #2dd4bf;
+  1629→  border-color: rgba(20,184,166,0.25);
+  1630→}
+  1631→.tag-chip-teal:hover {
+  1632→  box-shadow: 0 0 12px rgba(20,184,166,0.2);
+  1633→}
+  1634→
+  1635→/* ===== Tag Chip Indigo ===== */
+  1636→.tag-chip-indigo {
+  1637→  display: inline-flex;
+  1638→  align-items: center;
+  1639→  gap: 0.25rem;
+  1640→  padding: 2px 10px;
+  1641→  border-radius: 999px;
+  1642→  font-size: 0.6875rem;
+  1643→  font-weight: 600;
+  1644→  background: rgba(99,102,241,0.1);
+  1645→  color: #4f46e5;
+  1646→  border: 1px solid rgba(99,102,241,0.2);
+  1647→}
+  1648→.dark .tag-chip-indigo {
+  1649→  background: rgba(99,102,241,0.15);
+  1650→  color: #a5b4fc;
+  1651→  border-color: rgba(99,102,241,0.25);
+  1652→}
+  1653→.tag-chip-indigo:hover {
+  1654→  box-shadow: 0 0 12px rgba(99,102,241,0.2);
+  1655→}
+  1656→
+  1657→/* ===== Pulse Soft v5 ===== */
+  1658→.pulse-soft-v5 {
+  1659→  animation: pulseSoftV5 3s ease-in-out infinite;
+  1660→}
+  1661→@keyframes pulseSoftV5 {
+  1662→  0%, 100% { opacity: 1; }
+  1663→  50% { opacity: 0.7; }
+  1664→}
+  1665→
+  1666→/* ===== Scrollbar v7 ===== */
+  1667→.scrollbar-v7::-webkit-scrollbar {
+  1668→  width: 6px;
+  1669→  height: 6px;
+  1670→}
+  1671→.scrollbar-v7::-webkit-scrollbar-track {
+  1672→  background: transparent;
+  1673→}
+  1674→.scrollbar-v7::-webkit-scrollbar-thumb {
+  1675→  background: linear-gradient(to bottom, #6366f1, #8b5cf6);
+  1676→  border-radius: 999px;
+  1677→}
+  1678→.scrollbar-v7::-webkit-scrollbar-thumb:hover {
+  1679→  background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+  1680→}
+  1681→
+  1682→/* ===== Focus Ring v6 ===== */
+  1683→.focus-ring-v6:focus-visible {
+  1684→  outline: 2px solid #6366f1;
+  1685→  outline-offset: 2px;
+  1686→  border-radius: 8px;
+  1687→}
+  1688→
+  1689→/* ===== Hover Scale Bounce v4 ===== */
+  1690→.hover-scale-bounce-v4 {
+  1691→  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  1692→}
+  1693→.hover-scale-bounce-v4:hover {
+  1694→  transform: scale(1.03);
+  1695→}
+  1696→.hover-scale-bounce-v4:active {
+  1697→  transform: scale(0.97);
+  1698→}
+  1699→
+  1700→/* ===== Breathe Border v4 ===== */
+  1701→.breathe-border-v4 {
+  1702→  animation: breatheBorderV4 4s ease-in-out infinite;
+  1703→}
+  1704→@keyframes breatheBorderV4 {
+  1705→  0%, 100% { border-color: var(--border); }
+  1706→  33% { border-color: rgba(99,102,241,0.3); }
+  1707→  66% { border-color: rgba(20,184,166,0.3); }
+  1708→}
+  1709→
+  1710→/* ===== Card Shine v4 ===== */
+  1711→.card-shine-v4 {
+  1712→  position: relative;
+  1713→  overflow: hidden;
+  1714→}
+  1715→.card-shine-v4::before {
+  1716→  content: '';
+  1717→  position: absolute;
+  1718→  top: -50%;
+  1719→  right: -50%;
+  1720→  width: 200%;
+  1721→  height: 200%;
+  1722→  background: linear-gradient(
+  1723→    45deg,
+  1724→    transparent 40%,
+  1725→    rgba(255,255,255,0.06) 45%,
+  1726→    rgba(255,255,255,0.12) 50%,
+  1727→    rgba(255,255,255,0.06) 55%,
+  1728→    transparent 60%
+  1729→  );
+  1730→  transform: translateX(-100%);
+  1731→  transition: none;
+  1732→  pointer-events: none;
+  1733→}
+  1734→.card-shine-v4:hover::before {
+  1735→  transform: translateX(100%);
+  1736→  transition: transform 0.6s ease;
+  1737→}
+  1738→
+  1739→/* ===== Hover Lift 6 ===== */
+  1740→.hover-lift-6 {
+  1741→  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  1742→}
+  1743→.hover-lift-6:hover {
+  1744→  transform: translateY(-3px);
+  1745→  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  1746→}
+  1747→
+  1748→/* ===== Gradient Border Animated v4 ===== */
+  1749→.gradient-border-animated-v4 {
+  1750→  position: relative;
+  1751→  border: none !important;
+  1752→  background: var(--card) !important;
+  1753→}
+  1754→.gradient-border-animated-v4::before {
+  1755→  content: '';
+  1756→  position: absolute;
+  1757→  inset: 0;
+  1758→  border-radius: inherit;
+  1759→  padding: 1px;
+  1760→  background: linear-gradient(
+  1761→    90deg,
+  1762→    #6366f1, #14b8a6, #f59e0b, #f43f5e, #6366f1
+  1763→  );
+  1764→  background-size: 300% 100%;
+  1765→  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  1766→  -webkit-mask-composite: xor;
+  1767→  mask-composite: exclude;
+  1768→  animation: gradientBorderRotateV4 4s linear infinite;
+  1769→}
+  1770→@keyframes gradientBorderRotateV4 {
+  1771→  0% { background-position: 0% 50%; }
+  1772→  100% { background-position: 300% 50%; }
+  1773→}
+  1774→
+  1775→/* ===== Stagger Grid 30 ===== */
+  1776→.stagger-grid-30 > * {
+  1777→  animation: staggerFadeIn30 0.4s ease-out backwards;
+  1778→}
+  1779→.stagger-grid-30 > *:nth-child(1) { animation-delay: 0ms; }
+  1780→.stagger-grid-30 > *:nth-child(2) { animation-delay: 30ms; }
+  1781→.stagger-grid-30 > *:nth-child(3) { animation-delay: 60ms; }
+  1782→.stagger-grid-30 > *:nth-child(4) { animation-delay: 90ms; }
+  1783→.stagger-grid-30 > *:nth-child(5) { animation-delay: 120ms; }
+  1784→.stagger-grid-30 > *:nth-child(6) { animation-delay: 150ms; }
+  1785→.stagger-grid-30 > *:nth-child(7) { animation-delay: 180ms; }
+  1786→.stagger-grid-30 > *:nth-child(8) { animation-delay: 210ms; }
+  1787→@keyframes staggerFadeIn30 {
+  1788→  from { opacity: 0; transform: translateY(10px); }
+  1789→  to { opacity: 1; transform: translateY(0); }
+  1790→}
+  1791→
+  1792→/* ===== Badge Bounce In v4 ===== */
+  1793→.badge-bounce-in-v4 {
+  1794→  animation: badgeBounceV4 0.4s cubic-bezier(0.68,-0.55,0.265,1.55) backwards;
+  1795→}
+  1796→@keyframes badgeBounceV4 {
+  1797→  0% { opacity: 0; transform: scale(0.3) rotate(-12deg); }
+  1798→  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  1799→}
+  1800→
+  1801→/* ===== Row Hover Glow v5 ===== */
+  1802→.row-hover-glow-v5 {
+  1803→  transition: background-color 0.2s, box-shadow 0.2s;
+  1804→}
+  1805→.row-hover-glow-v5:hover {
+  1806→  box-shadow: inset 0 0 20px rgba(99,102,241,0.04);
+  1807→}
+  1808→
+  1809→/* ===== Separator Gradient v4 ===== */
+  1810→.separator-gradient-v4 {
+  1811→  height: 1px;
+  1812→  background: linear-gradient(to left, transparent, var(--border), rgba(99,102,241,0.2), var(--border), transparent);
+  1813→  border: none;
+  1814→}
+  1815→
+  1816→/* ===== Stat Mini Card v2 ===== */
+  1817→.stat-mini-card-v2 {
+  1818→  background: var(--card);
+  1819→  border: 1px solid var(--border);
+  1820→  border-radius: 0.75rem;
+  1821→  padding: 0.75rem 1rem;
+  1822→  display: flex;
+  1823→  align-items: center;
+  1824→  gap: 0.75rem;
+  1825→  transition: all 0.2s;
+  1826→}
+  1827→.stat-mini-card-v2:hover {
+  1828→  border-color: var(--primary);
+  1829→  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  1830→}
+  1831→.stat-mini-card-v2-icon {
+  1832→  width: 36px;
+  1833→  height: 36px;
+  1834→  border-radius: 10px;
+  1835→  display: flex;
+  1836→  align-items: center;
+  1837→  justify-content: center;
+  1838→  flex-shrink: 0;
+  1839→}
+  1840→.stat-mini-card-v2-value {
+  1841→  font-size: 1.125rem;
+  1842→  font-weight: 700;
+  1843→  color: var(--foreground);
+  1844→  line-height: 1.2;
+  1845→  font-variant-numeric: tabular-nums;
+  1846→}
+  1847→.stat-mini-card-v2-label {
+  1848→  font-size: 0.6875rem;
+  1849→  color: var(--muted-foreground);
+  1850→}
+  1851→
+  1852→/* ===== Text Glow Teal ===== */
+  1853→.text-glow-teal {
+  1854→  text-shadow: 0 0 12px rgba(20,184,166,0.4);
+  1855→}
+  1856→.dark .text-glow-teal {
+  1857→  text-shadow: 0 0 16px rgba(20,184,166,0.5);
+  1858→}
+  1859→
+  1860→/* ===== Text Glow Indigo ===== */
+  1861→.text-glow-indigo {
+  1862→  text-shadow: 0 0 12px rgba(99,102,241,0.4);
+  1863→}
+  1864→.dark .text-glow-indigo {
+  1865→  text-shadow: 0 0 16px rgba(99,102,241,0.5);
+  1866→}
+  1867→
+  1868→/* ===== Line Clamp 5 ===== */
+  1869→.line-clamp-5 {
+  1870→  display: -webkit-box;
+  1871→  -webkit-line-clamp: 5;
+  1872→  -webkit-box-orient: vertical;
+  1873→  overflow: hidden;
+  1874→}
+  1875→
+  1876→/* ===== Dot Grid v3 ===== */
+  1877→.bg-dot-grid-v3 {
+  1878→  background-image: radial-gradient(circle, rgba(128,128,128,0.12) 1px, transparent 1px);
+  1879→  background-size: 24px 24px;
+  1880→}
+  1881→
+  1882→/* ===== Responsive ===== */
+  1883→@media (max-width: 640px) {
+  1884→  .aging-widget, .weekly-trend-widget, .loyalty-widget, .health-grid-widget {
+  1885→    padding: 1rem;
+  1886→    border-radius: 0.75rem;
+  1887→  }
+  1888→  .weekly-bars-container {
+  1889→    height: 70px;
+  1890→  }
+  1891→  .weekly-bar {
+  1892→    width: 10px;
+  1893→  }
+  1894→  .weekly-bar-pair {
+  1895→    height: 55px;
+  1896→  }
+  1897→  .health-grid {
+  1898→    grid-template-columns: repeat(2, 1fr);
+  1899→  }
+  1900→  .aging-time {
+  1901→    display: none;
+  1902→  }
+  1903→}
+  1904→
+  1905→@media (max-width: 380px) {
+  1906→  .health-grid {
+  1907→    grid-template-columns: 1fr;
+  1908→  }
+  1909→}
+  1910→
+  1911→/* ===== Reduced Motion ===== */
+  1912→@media (prefers-reduced-motion: reduce) {
+  1913→  .aging-row,
+  1914→  .weekly-bar,
+  1915→  .loyalty-customer-row,
+  1916→  .health-grid-item,
+  1917→  .stagger-grid-30 > * {
+  1918→    animation: none !important;
+  1919→  }
+  1920→  .quick-advance-btn-ready {
+  1921→    animation: none !important;
+  1922→  }
+  1923→  .breathe-border-v4 {
+  1924→    animation: none !important;
+  1925→  }
+  1926→  .gradient-border-animated-v4::before {
+  1927→    animation: none !important;
+  1928→  }
+  1929→  .shimmer-v8::after {
+  1930→    animation: none !important;
+  1931→  }
+  1932→  .pulse-soft-v5 {
+  1933→    animation: none !important;
+  1934→  }
+  1935→}/* ============================================ */
+  1936→/* CSS v7.8 — Round 82                           */
+  1937→/* ~500 new lines                                  */
+  1938→/* ============================================ */
+  1939→
+  1940→/* ===== Service Distribution Widget ===== */
+  1941→.service-dist-widget {
+  1942→  background: var(--card);
+  1943→  border: 1px solid var(--border);
+  1944→  border-radius: 1rem;
+  1945→  padding: 1.25rem;
+  1946→  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  1947→}
+  1948→.service-dist-header {
+  1949→  display: flex;
+  1950→  align-items: center;
+  1951→  gap: 0.5rem;
+  1952→  margin-bottom: 1rem;
+  1953→  font-size: 0.875rem;
+  1954→  font-weight: 600;
+  1955→  color: var(--foreground);
+  1956→  opacity: 0.8;
+  1957→}
+  1958→.service-dist-row {
+  1959→  display: flex;
+  1960→  align-items: center;
+  1961→  gap: 0.625rem;
+  1962→  padding: 0.5rem 0;
+  1963→}
+  1964→.service-dist-emoji {
+  1965→  font-size: 1rem;
+  1966→  width: 24px;
+  1967→  text-align: center;
+  1968→  flex-shrink: 0;
+  1969→}
+  1970→.service-dist-name {
+  1971→  font-size: 0.75rem;
+  1972→  color: var(--foreground);
+  1973→  min-width: 65px;
+  1974→  flex-shrink: 0;
+  1975→}
+  1976→.service-dist-bar-track {
+  1977→  flex: 1;
+  1978→  height: 8px;
+  1979→  border-radius: 999px;
+  1980→  background: var(--muted);
+  1981→  overflow: hidden;
+  1982→}
+  1983→.service-dist-bar-fill {
+  1984→  height: 100%;
+  1985→  border-radius: 999px;
+  1986→  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  1987→  min-width: 4px;
+  1988→}
+  1989→.service-dist-count {
+  1990→  font-size: 0.6875rem;
+  1991→  font-weight: 700;
+  1992→  color: var(--foreground);
+  1993→  min-width: 24px;
+  1994→  text-align: center;
+  1995→  font-variant-numeric: tabular-nums;
+  1996→}
+  1997→.service-dist-pct {
+  1998→  font-size: 0.625rem;
+  1999→  color: var(--muted-foreground);
+  2000→  min-width: 32px;
+
+[showing lines 1-2000 of 35934; use offset=2001 with limit to continue reading]
