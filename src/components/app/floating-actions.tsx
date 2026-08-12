@@ -97,7 +97,11 @@ export function FloatingActions() {
   const springTransition = { type: "spring" as const, stiffness: 350, damping: 25 };
 
   return (
-    <div ref={containerRef} className="fixed bottom-20 left-3 z-50 md:bottom-6 md:left-6 no-print" style={{ overflow: 'visible' }}>
+    <div
+      ref={containerRef}
+      className="fixed bottom-20 left-3 z-[60] md:bottom-6 md:left-6 no-print"
+      style={{ overflow: "visible" }}
+    >
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -105,7 +109,8 @@ export function FloatingActions() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-16 left-0 flex flex-col-reverse items-start gap-3 mb-1"
+            className="absolute bottom-16 left-0 flex flex-col-reverse items-start gap-3 mb-1 pointer-events-auto"
+            style={{ zIndex: 61 }}
           >
             {actions.map((action, index) => (
               <motion.div
@@ -117,10 +122,10 @@ export function FloatingActions() {
                   ...springTransition,
                   delay: index * 0.05,
                 }}
-                className="flex items-center gap-3"
+                className="flex items-center gap-3 pointer-events-auto"
               >
                 {/* Tooltip label (right side in RTL) */}
-                <div className="relative">
+                <div className="relative pointer-events-none">
                   <motion.div
                     initial={{ opacity: 0, x: 8, scale: 0.9 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -145,7 +150,7 @@ export function FloatingActions() {
                     ${action.color}
                     shadow-lg ${action.shadowColor}
                     backdrop-blur-sm
-                    cursor-pointer
+                    cursor-pointer pointer-events-auto
                   `}
                   aria-label={action.label}
                 >

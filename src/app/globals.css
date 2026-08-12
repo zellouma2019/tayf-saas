@@ -218,14 +218,14 @@
   }
   html,
   body {
-    @apply bg-background text-foreground overflow-x-hidden;
+    @apply bg-background text-foreground;
     font-feature-settings: "kern", "liga", "calt";
   }
   *, *::before, *::after {
     box-sizing: border-box;
   }
-  /* منع التمرير الأفقي — لا نستهدف العناصر fixed لتفادي قصّ المحتوى العائم */
-  #__next, main {
+  /* منع التمرير الأفقي — نستهدف main فقط */
+  main {
     overflow-x: hidden;
   }
   .font-amiri {
@@ -543,10 +543,10 @@ html {
   animation: introProgress 3s ease-out forwards;
 }
 
-/* تذييل متحرك */
+/* تذييل متحرك — لا نستخدم overflow: hidden لتجنب القص */
 .footer-collapse {
   max-height: 0;
-  overflow: hidden;
+  overflow: clip;
   transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (min-width: 768px) {
@@ -34551,11 +34551,9 @@ input[type="password"].v23-input:focus {
 }
 
 /* ===== منع التمرير الأفقي على جميع الصفحات ===== */
-html, body {
-  overflow-x: hidden !important;
-}
-
-/* تأكد من أن جميع العناصر لا تتجاوز عرض الشاشة */
+/* ملاحظة: لا نضع overflow-x: hidden على html/body لأن CSS spec يجبر
+   overflow-y على auto عند وجود overflow-x غير visible، مما يسبب
+   قصّ العناصر الثابتة (position: fixed) مثل الزر العائم والمقدمة */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -34672,7 +34670,7 @@ html, body {
 
 /* ===== تذييل قابل للطي (جوال + حاسوب) ===== */
 .footer-collapse {
-  overflow: hidden;
+  overflow: clip;
   max-height: 0;
   transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
