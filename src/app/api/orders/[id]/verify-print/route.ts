@@ -178,9 +178,28 @@ export async function GET(
 
     let imageDataUrl: string | null = null;
 
-    if (order.fileData.startsWith("data:") && (isImg || isPdf)) {
+    // دعم ملفات CDN: جلب البيانات عن بعد للتحقق
+    let resolvedData = order.fileData;
+    if (resolvedData?.startsWith("__cdn__:")) {
+      try {
+        const cdnUrl = resolvedData.replace("__cdn__:", "");
+        const fetchRes = await fetch(cdnUrl);
+        if (fetchRes.ok) {
+          const contentType = fetchRes.headers.get("content-type") || "";
+          if (contentType.startsWith("image/")) {
+            const arrayBuf = await fetchRes.arrayBuffer();
+            const base64 = Buffer.from(arrayBuf).toString("base64");
+            resolvedData = `data:${contentType};base64,${base64}`;
+          }
+        }
+      } catch {
+        // فشل جلب CDN — نتابع بدون معاينة
+      }
+    }
+
+    if (resolvedData?.startsWith("data:") && (isImg || isPdf)) {
       if (isImg) {
-        imageDataUrl = order.fileData;
+        imageDataUrl = resolvedData;
       } else if (pdfThumbnail) {
         imageDataUrl = pdfThumbnail;
       }

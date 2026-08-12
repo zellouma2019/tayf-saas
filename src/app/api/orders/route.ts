@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
     const newId = `o_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
     const now = new Date().toISOString();
 
-    await tursoExecute(
+    const result = await tursoExecute(
       `INSERT INTO "PrintOrder" (
         id, reference, "serviceType", "serviceName",
         "fileName", "fileType", "fileSize", "fileData", "smartAnalysis",
@@ -398,6 +398,11 @@ export async function POST(req: NextRequest) {
         now, now, shopId || null,
       ]
     );
+
+    if (!result || result.rowsAffected === 0) {
+      console.error('[orders/POST] INSERT failed — no rows affected');
+      return NextResponse.json({ error: "فشل إنشاء الطلب في قاعدة البيانات" }, { status: 500 });
+    }
 
     return NextResponse.json({
       id: newId, reference, serviceType, serviceName: service.name,

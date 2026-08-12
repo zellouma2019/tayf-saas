@@ -12,6 +12,8 @@ import {
   MessageCircle,
   RotateCcw,
   Search,
+  ChevronUp,
+  Info,
   Store,
   Calculator,
   Zap,
@@ -33,6 +35,7 @@ import { NotificationBadge } from "@/components/app/notification-badge";
 import { QuickPriceCalculator } from "@/components/app/quick-price-calculator";
 import { FloatingActions } from "@/components/app/floating-actions";
 import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
+import { TestimonialsSection } from "@/components/app/testimonials-section";
 import { useAppStore } from "@/lib/store";
 import { useShop } from "@/lib/shop-context";
 import { getTheme } from "@/lib/themes";
@@ -54,6 +57,7 @@ type View = "new" | "repeat" | "track" | "admin";
 export { type CreatedOrder };
 
 export function AppShell() {
+  const [footerOpen, setFooterOpen] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -96,6 +100,7 @@ export function AppShell() {
 
   const handleNavClick = useCallback(
     (key: View) => {
+      if (key === "new") setFooterOpen(false);
       setView(key);
     },
     [setView],
@@ -171,7 +176,7 @@ export function AppShell() {
           <header className="bg-background/80 backdrop-blur-xl border-b border-border/40 sticky top-0 z-40 no-print">
             <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
               {/* Logo & Name */}
-              <button onClick={() => setView("new")} className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0 group">
+              <button onClick={() => { setFooterOpen(false); setView("new"); }} className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0 group">
                 <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
                   <Printer className="h-5 w-5 md:h-5.5 md:w-5.5 text-primary-foreground" />
                 </div>
@@ -258,58 +263,112 @@ export function AppShell() {
               </div>
             </div>
 
-            {/* Footer — مُصغّر */}
+            {/* Footer */}
             {view !== "admin" && (
-              <footer className="mt-auto no-print border-t border-border/30 bg-muted/10">
-                <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-3.5">
-                  {/* صف واحد: معلومات المتجر + أيقونات التواصل + حقوق النشر */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                    {/* يسار: اسم المتجر + عنوان مختصر */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                        <Store className="h-3 w-3 text-primary" />
-                      </div>
-                      <div className="text-right min-w-0">
-                        <div className="font-bold font-heading text-foreground text-[11px] leading-tight truncate">{shop?.name || "المتجر"}</div>
-                        {shop?.address && (
-                          <div className="text-[9px] text-muted-foreground/70 truncate flex items-center gap-1">
-                            <MapPin className="h-2.5 w-2.5 shrink-0" />
-                            {shop.address}
+              <footer className="mt-auto no-print">
+                {/* Footer Toggle Button */}
+                <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-1.5 py-2 px-4 text-[11px] text-muted-foreground hover:text-primary transition-colors border-t border-border/30 bg-muted/15" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
+                  <Info className="h-3 w-3" />
+                  <span className="font-semibold font-heading">{footerOpen ? "إخفاء التفاصيل" : `معلومات ${shop?.name || "المتجر"}`}</span>
+                  <motion.div animate={{ rotate: footerOpen ? 0 : 180 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </motion.div>
+                </button>
+
+                <div className={`footer-collapse${footerOpen ? " footer-expanded" : ""}`}>
+                  <div className="bg-foreground/[0.03] dark:bg-foreground/[0.04]">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-5 py-4 sm:py-5">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+
+                        {/* Col 1: Brand */}
+                        <div className="col-span-2 lg:col-span-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Store className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="font-bold font-heading text-foreground text-xs">{shop?.name || "المتجر"}</div>
+                              <div className="text-[10px] text-primary font-medium">اطبع بسهولة</div>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                          <p className="text-[10px] text-muted-foreground leading-relaxed max-w-[180px]">
+                            خدمة طباعة احترافية وسريعة. اطبع مستنداتك أونلاين.
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-2.5">
+                            {displayWhatsapp && (
+                              <a href={`https://wa.me/${displayWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex items-center justify-center transition-all group">
+                                <MessageCircle className="h-3 w-3 text-emerald-500/70 group-hover:text-emerald-500 transition-colors" />
+                              </a>
+                            )}
+                            {displayPhone && (
+                              <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="w-6 h-6 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/20 flex items-center justify-center transition-all group">
+                                <Phone className="h-3 w-3 text-primary/70 group-hover:text-primary transition-colors" />
+                              </a>
+                            )}
+                            {shop?.email && (
+                              <a href={`mailto:${shop.email}`} className="w-6 h-6 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 flex items-center justify-center transition-all group">
+                                <Mail className="h-3 w-3 text-sky-500/70 group-hover:text-sky-500 transition-colors" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
 
-                    {/* وسط: أيقونات تواصل */}
-                    <div className="flex items-center gap-1.5">
-                      {displayPhone && (
-                        <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="w-7 h-7 rounded-lg bg-primary/8 hover:bg-primary/15 border border-primary/15 flex items-center justify-center transition-colors" aria-label="اتصل بنا">
-                          <Phone className="h-3 w-3 text-primary/60" />
-                        </a>
-                      )}
-                      {displayWhatsapp && (
-                        <a href={`https://wa.me/${displayWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-lg bg-emerald-500/8 hover:bg-emerald-500/15 border border-emerald-500/15 flex items-center justify-center transition-colors" aria-label="واتساب">
-                          <MessageCircle className="h-3 w-3 text-emerald-500/60" />
-                        </a>
-                      )}
-                      {shop?.email && (
-                        <a href={`mailto:${shop.email}`} className="w-7 h-7 rounded-lg bg-sky-500/8 hover:bg-sky-500/15 border border-sky-500/15 flex items-center justify-center transition-colors" aria-label="بريد إلكتروني">
-                          <Mail className="h-3 w-3 text-sky-500/60" />
-                        </a>
-                      )}
-                      <span className="text-muted-foreground/30 mx-0.5">|</span>
-                      <div className="flex items-center gap-1 text-[9px] text-muted-foreground/60">
-                        <Clock className="h-2.5 w-2.5" />
-                        <span>س-خ 8ص-7م</span>
-                      </div>
-                    </div>
+                        {/* Col 2: Quick Links */}
+                        <div>
+                          <h4 className="font-heading font-bold text-[11px] mb-2 uppercase tracking-wider text-foreground">روابط سريعة</h4>
+                          <ul className="space-y-1.5 text-[11px]">
+                            <li><button onClick={() => { setFooterOpen(false); setView("new"); }} className="text-muted-foreground hover:text-primary transition-colors">طلب طباعة جديد</button></li>
+                            <li><button onClick={() => setView("track")} className="text-muted-foreground hover:text-primary transition-colors">تتبّع طلب</button></li>
+                            <li><button onClick={() => setView("repeat")} className="text-muted-foreground hover:text-primary transition-colors">إعادة طلب سابق</button></li>
+                          </ul>
+                        </div>
 
-                    {/* يمين: حقوق النشر */}
-                    <div className="text-[9px] text-muted-foreground/50 flex items-center gap-1 shrink-0">
-                      <span>مدعوم بـ</span>
-                      <span className="text-primary font-bold font-heading">طيف</span>
-                      <span className="text-muted-foreground/30 mx-0.5">·</span>
-                      <span>© {new Date().getFullYear()}</span>
+                        {/* Col 3: Services */}
+                        <div>
+                          <h4 className="font-heading font-bold text-[11px] mb-2 uppercase tracking-wider text-foreground">خدماتنا</h4>
+                          <ul className="space-y-1 text-[11px] text-muted-foreground">
+                            <li className="flex items-center gap-1.5"><Printer className="h-2.5 w-2.5 text-primary/50 shrink-0" /> طباعة مستند</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">📄</span> نسخ مستندات</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">🖼️</span> طباعة صور</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">📚</span> تجليد</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">🪪</span> بطاقات</li>
+                          </ul>
+                        </div>
+
+                        {/* Col 4: Contact */}
+                        <div>
+                          <h4 className="font-heading font-bold text-[11px] mb-2 uppercase tracking-wider text-foreground">تواصل معنا</h4>
+                          <ul className="space-y-1.5 text-[11px]">
+                            {shop?.address && (
+                              <li className="flex items-start gap-1 text-muted-foreground">
+                                <MapPin className="h-2.5 w-2.5 text-primary/40 shrink-0 mt-0.5" />
+                                <span className="line-clamp-1">{shop.address}</span>
+                              </li>
+                            )}
+                            {displayPhone && (
+                              <li className="flex items-center gap-1 text-muted-foreground">
+                                <Phone className="h-2.5 w-2.5 text-primary/40 shrink-0" />
+                                <span dir="ltr">{displayPhone}</span>
+                              </li>
+                            )}
+                            <li className="flex items-start gap-1 pt-1.5 border-t border-border/30">
+                              <Clock className="h-2.5 w-2.5 text-primary/40 shrink-0 mt-0.5" />
+                              <div className="text-muted-foreground">
+                                <div>السبت - الخميس: 8ص — 7م</div>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Copyright */}
+                      <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between gap-1.5 text-[10px] text-muted-foreground/60">
+                        <div>© {new Date().getFullYear()} {shop?.name || "المتجر"}</div>
+                        <div className="flex items-center gap-1">
+                          <span>مدعوم بـ</span>
+                          <span className="text-primary font-bold font-heading">طيف</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -319,7 +378,7 @@ export function AppShell() {
 
           <FloatingActions />
           <MobileBottomNav />
-          <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => setView(v as View)} />
+          <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v as View); }} />
           <AdminGate open={adminGateOpen} onClose={() => setAdminGateOpen(false)} onSuccess={handleAdminUnlock} />
           <SonnerToaster position="top-center" dir="rtl" />
         </div>
