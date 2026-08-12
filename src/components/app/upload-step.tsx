@@ -974,12 +974,12 @@ export default function UploadStep({
                 </span>
               )}
             </div>
-            <div className="p-3 flex items-center justify-center">
-              <div className="relative rounded-xl overflow-hidden border border-border shadow-sm max-w-xs w-full">
+            <div className="p-4 flex items-center justify-center">
+              <div className="relative rounded-xl overflow-hidden border border-border shadow-sm max-w-sm sm:max-w-md w-full">
                 <img
                   src={immediatePreview || (analysis?.thumbnailUrl || "")}
                   alt={fileName || "معاينة"}
-                  className="w-full h-auto max-h-56 object-contain bg-white"
+                  className="w-full h-auto max-h-72 sm:max-h-80 object-contain bg-white"
                 />
                 {fileType === "PDF" && (
                   <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/90 text-white text-[10px] font-bold backdrop-blur-sm">
@@ -1227,14 +1227,14 @@ export default function UploadStep({
                     </span>
                   </div>
                   <motion.div
-                    className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full max-w-xs mx-auto"
+                    className="relative rounded-xl overflow-hidden border border-border bg-white shadow-sm w-full max-w-sm mx-auto"
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     <img
                       src={analysis.thumbnailUrl}
                       alt={analysis.fileName || "معاينة الملف"}
-                      className="w-full h-auto max-h-64 sm:max-h-72 object-contain"
+                      className="w-full h-auto max-h-80 sm:max-h-96 object-contain"
                     />
                     {analysis.fileType?.toLowerCase().includes("pdf") && (
                       <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/90 text-white text-[11px] font-bold backdrop-blur-sm">

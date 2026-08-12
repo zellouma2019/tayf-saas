@@ -1,0 +1,1937 @@
+   590→
+   591→            xhr.onerror = () => reject(new Error(`خطأ في الاتصال أثناء رفع الجزء ${chunkIndex + 1}/${totalChunks}`));
+   592→            xhr.send(formData);
+   593→          });
+   594→        };
+   595→
+   596→        // رفع متوازي مع حد أقصى
+   597→        const chunkPromises: Promise<void>[] = [];
+   598→        for (let i = 0; i < totalChunks; i++) {
+   599→          const p = uploadChunk(i).then((result) => {
+   600→            completedChunks++;
+   601→            if (result.complete && result.storedFileName) {
+   602→              storedFileNameFromChunk = result.storedFileName;
+   603→            }
+   604→            const pct = Math.round((completedChunks / totalChunks) * 100);
+   605→            setUploadProgress(Math.min(pct, 99));
+   606→          });
+   607→          chunkPromises.push(p);
+   608→          // انتظر إذا وصلنا للحد الأقصى من التوازي
+   609→          if (chunkPromises.length >= MAX_CONCURRENT) {
+   610→            await Promise.race(chunkPromises);
+   611→            // إزالة الأجزاء المكتملة
+   612→            const settled = await Promise.allSettled(chunkPromises.map((pr) => pr.then(() => true, () => false)));
+   613→            const completed = settled.filter((s) => s.status === "fulfilled" && s.value).length;
+   614→            // نحتفظ فقط بالأجزاء التي لم تكتمل بعد
+   615→            const remaining: Promise<void>[] = [];
+   616→            for (let j = 0; j < chunkPromises.length; j++) {
+   617→              if (j >= completed) remaining.push(chunkPromises[j]);
+   618→            }
+   619→            chunkPromises.length = 0;
+   620→            chunkPromises.push(...remaining);
+   621→          }
+   622→        }
+   623→        // انتظر جميع الأجزاء المتبقية
+   624→        await Promise.all(chunkPromises);
+   625→
+   626→        if (!storedFileNameFromChunk) {
+   627→          throw new Error("فشل في تجميع الملف. حاول مرة أخرى.");
+   628→        }
+   629→        storedFileName = storedFileNameFromChunk;
+   630→      }
+   631→
+   632→      setFileDataUrl(storedFileName);
+   633→      setUploadProgress(100);
+   634→      setUploadStatus("done");
+   635→      setAnalysisTimings((prev) => ({ ...prev, upload: Math.round(performance.now() - tUploadStart) }));
+   636→    } catch (uploadErr) {
+   637→      setAnalysisPhase("error");
+   638→      setUploadError((uploadErr as Error).message || "فشل رفع الملف");
+   639→      setUploadStatus("error");
+   640→      return;
+   641→    }
+   642→
+   643→    // ─── المرحلة 2: التحليل المحلي ───
+   644→    setAnalyzing(true);
+   645→    setAnalysis(null);
+   646→    setAnalysisPhase("local-analysis");
+   647→    const tLocalStart = performance.now();
+   648→
+   649→    try {
+   650→      const basicResult = await analyzeFileReal(f);
+   651→      setAnalysisTimings((prev) => ({ ...prev, local: Math.round(performance.now() - tLocalStart) }));
+   652→
+   653→      // عرض النتيجة الأساسية فوراً
+   654→      setAnalysis(basicResult);
+   655→      setTotalPages(basicResult.pageCount);
+   656→      setPages(basicResult.pageCount);
+   657→      setPrintRange("all");
+   658→      setPageRange("");
+   659→      setServiceType(basicResult.detectedService);
+   660→
+   661→      // تطبيق التوصيات الأساسية
+   662→      const spec = dynamicSpecs[basicResult.detectedService] || STATIC_SERVICE_SPECS[basicResult.detectedService];
+   663→      const defaults: Record<string, string> = {};
+   664→      if (spec) {
+   665→        spec.sections.forEach((section) => {
+   666→          // تطبيق توصيات التحليل الأساسي (color, paperSize, paperType, binding, photoSize)
+   667→          if (section.optionKey === "color" && basicResult.suggestedColor) {
+   668→            const valid = section.options.find((o) => o.id === basicResult.suggestedColor);
+   669→            if (valid) { defaults.color = basicResult.suggestedColor; return; }
+   670→          } else if (section.optionKey === "paperSize" && basicResult.suggestedPaperSize) {
+   671→            const valid = section.options.find((o) => o.id === basicResult.suggestedPaperSize);
+   672→            if (valid) { defaults.paperSize = basicResult.suggestedPaperSize; return; }
+   673→          } else if (section.optionKey === "paperType" && basicResult.suggestedPaperType) {
+   674→            const valid = section.options.find((o) => o.id === basicResult.suggestedPaperType);
+   675→            if (valid) { defaults.paperType = basicResult.suggestedPaperType; return; }
+   676→          } else if (section.optionKey === "binding" && basicResult.suggestedBinding) {
+   677→            const valid = section.options.find((o) => o.id === basicResult.suggestedBinding);
+   678→            if (valid) { defaults.binding = basicResult.suggestedBinding; return; }
+   679→          } else if (section.optionKey === "photoSize" && basicResult.suggestedPhotoSize) {
+   680→            // خدمة "photo" تستخدم photoSize لا paperSize — كانت مفقودة سابقاً
+   681→            const valid = section.options.find((o) => o.id === basicResult.suggestedPhotoSize);
+   682→            if (valid) { defaults.photoSize = basicResult.suggestedPhotoSize; return; }
+   683→          }
+   684→          // القيمة الافتراضية: أول خيار
+   685→          if (section.options.length > 0) {
+   686→            defaults[section.optionKey] = section.options[0].id;
+   687→          }
+   688→        });
+   689→      }
+   690→      setSpecOptions(defaults);
+   691→
+   692→      toast.success("اكتمل التحليل الأساسي", {
+   693→        description: `${basicResult.detectedServiceName} · ${basicResult.pageCount} صفحة`,
+   694→      });
+   695→
+   696→      // ─── المرحلة 3: التحليل الذكي بالـ VLM ───
+   697→      setAnalysisPhase("ai-analysis");
+   698→      const tAiStart = performance.now();
+   699→
+   700→      analyzeFileWithAI(f, basicResult).then(({ vlmAnalysis, enhancedAnalysis }) => {
+   701→        setAnalysisTimings((prev) => ({ ...prev, ai: Math.round(performance.now() - tAiStart) }));
+   702→        if (vlmAnalysis) {
+   703→          setAnalysis(enhancedAnalysis);
+   704→          setServiceType(enhancedAnalysis.detectedService as ServiceType);
+   705→          setTotalPages(enhancedAnalysis.pageCount);
+   706→          setPages(enhancedAnalysis.pageCount);
+   707→
+   708→          const updatedSpec = dynamicSpecs[enhancedAnalysis.detectedService] || STATIC_SERVICE_SPECS[enhancedAnalysis.detectedService as ServiceType];
+   709→          const updatedDefaults: Record<string, string> = {};
+   710→          const aiOptions = enhancedAnalysis.suggestedOptions || {};
+   711→          if (updatedSpec) {
+   712→            updatedSpec.sections.forEach((section) => {
+   713→              // 1. تحقق أولاً من suggestedOptions المباشر (من VLM)
+   714→              const aiValue = aiOptions[section.optionKey];
+   715→              if (aiValue) {
+   716→                // تحقق أن القيمة موجودة فعلاً في خيارات هذا القسم
+   717→                const validOption = section.options.find((o) => o.id === aiValue);
+   718→                if (validOption) {
+   719→                  updatedDefaults[section.optionKey] = aiValue;
+   720→                  return; // تم تطبيق اقتراح VLM
+   721→                }
+   722→              }
+   723→              // 2. التوافق مع الحقول القديمة (suggestedColor, suggestedPaperSize, إلخ)
+   724→              if (section.optionKey === "color" && enhancedAnalysis.suggestedColor) {
+   725→                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedColor);
+   726→                if (valid) { updatedDefaults.color = enhancedAnalysis.suggestedColor; return; }
+   727→              } else if (section.optionKey === "paperSize" && enhancedAnalysis.suggestedPaperSize) {
+   728→                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedPaperSize);
+   729→                if (valid) { updatedDefaults.paperSize = enhancedAnalysis.suggestedPaperSize; return; }
+   730→              } else if (section.optionKey === "paperType" && enhancedAnalysis.suggestedPaperType) {
+   731→                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedPaperType);
+   732→                if (valid) { updatedDefaults.paperType = enhancedAnalysis.suggestedPaperType; return; }
+   733→              } else if (section.optionKey === "binding" && enhancedAnalysis.suggestedBinding) {
+   734→                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedBinding);
+   735→                if (valid) { updatedDefaults.binding = enhancedAnalysis.suggestedBinding; return; }
+   736→              } else if (section.optionKey === "photoSize" && enhancedAnalysis.suggestedPhotoSize) {
+   737→                const valid = section.options.find((o) => o.id === enhancedAnalysis.suggestedPhotoSize);
+   738→                if (valid) { updatedDefaults.photoSize = enhancedAnalysis.suggestedPhotoSize; return; }
+   739→              }
+   740→              // 3. القيمة الافتراضية: أول خيار في القسم
+   741→              if (section.options.length > 0) {
+   742→                updatedDefaults[section.optionKey] = section.options[0].id;
+   743→              }
+   744→            });
+   745→          }
+   746→          setSpecOptions(updatedDefaults);
+   747→
+   748→          toast.success("🤖 تم التحليل الذكي", {
+   749→            description: `${vlmAnalysis.documentType} · ${vlmAnalysis.qualityAssessment} · دقة ${vlmAnalysis.confidence}%`,
+   750→          });
+   751→        }
+   752→        setAnalysisPhase("done");
+   753→        setAnalysisTimings((prev) => ({ ...prev, total: Math.round(performance.now() - tTotalStart) }));
+   754→      }).catch(() => {
+   755→        // VLM فشل — التحليل الأساسي كافٍ
+   756→        setAnalysisPhase("done");
+   757→        setAnalysisTimings((prev) => ({ ...prev, total: Math.round(performance.now() - tTotalStart) }));
+   758→      });
+   759→    } catch (err) {
+   760→      setAnalysisPhase("error");
+   761→      setUploadError((err as Error).message || "تعذّر تحليل الملف. تأكد أن الملف غير تالف.");
+   762→      toast.error("تعذّر تحليل الملف", { description: (err as Error).message });
+   763→    } finally {
+   764→      setAnalyzing(false);
+   765→    }
+   766→  }
+   767→
+   768→  // مزامنة ref لاستخدامه في useEffect (التعبئة المسبقة)
+   769→  processFileRef.current = processFile;
+   770→
+   771→  async function handleSubmit() {
+   772→    if (!serviceType || !pricing || !finalPricing) return;
+   773→    setSubmitting(true);
+   774→    try {
+   775→      const res = await fetch("/api/orders", {
+   776→        method: "POST",
+   777→        headers: { "Content-Type": "application/json" },
+   778→        body: JSON.stringify({
+   779→          serviceType,
+   780→          fileName: fileName || null,
+   781→          fileType: fileType || null,
+   782→          fileSize: fileSize || null,
+   783→          fileData: fileDataUrl || null,
+   784→          smartAnalysis: analysis
+   785→            ? {
+   786→                detectedService: analysis.detectedService,
+   787→                detectedServiceName: analysis.detectedServiceName,
+   788→                pageCount: analysis.pageCount,
+   789→                suggestedColor: analysis.suggestedColor,
+   790→                suggestedPaperSize: analysis.suggestedPaperSize,
+   791→                suggestedPaperType: analysis.suggestedPaperType,
+   792→                suggestedBinding: analysis.suggestedBinding,
+   793→                confidence: analysis.confidence,
+   794→                insights: analysis.insights,
+   795→              }
+   796→            : null,
+   797→          options: {
+   798→            pages,
+   799→            copies,
+   800→            notes,
+   801→            printRange,
+   802→            pageRange: printRange === "custom" ? pageRange : undefined,
+   803→            totalPages,
+   804→            appliedOffer: appliedOffer
+   805→              ? {
+   806→                  code: appliedOffer.code,
+   807→                  title: appliedOffer.title,
+   808→                  type: appliedOffer.type,
+   809→                  discountPercent: appliedOffer.discountPercent,
+   810→                  freeService: appliedOffer.freeService,
+   811→                  freeProduct: appliedOffer.freeProduct,
+   812→                }
+   813→              : null,
+   814→            ...specOptions, // كل الخيارات المخصصة (color, paperType, lamination, etc.)
+   815→          },
+   816→          customer: {
+   817→            name: custName,
+   818→            phone: custPhone,
+   819→            whatsapp: custWhatsapp,
+   820→            email: custEmail,
+   821→            deliveryMethod: custDelivery,
+   822→            address: custAddress,
+   823→          },
+   824→          delivery: { mode: deliveryMode, date: deliveryDate, timeSlot: deliveryTimeSlot, notes: deliveryNotes || undefined },
+   825→          // السعر النهائي بعد تطبيق العرض
+   826→          finalTotal: finalPricing.total,
+   827→          appliedOfferCode: appliedOffer?.code || null,
+   828→        }),
+   829→      });
+   830→      if (!res.ok) throw new Error("فشل إرسال الطلب");
+   831→      const order = await res.json();
+   832→      toast.success("تم استلام طلبك بنجاح! 🎉");
+   833→      onCreated({
+   834→        id: order.id,
+   835→        reference: order.reference,
+   836→        serviceName: order.serviceName,
+   837→        total: finalPricing.total,
+   838→        status: order.status,
+   839→        estimatedHours: order.estimatedHours,
+   840→        editableUntil: order.editableUntil,
+   841→      });
+   842→      // إعادة التعيين
+   843→      setStep(0);
+   844→      setServiceType(null);
+   845→      setFileName("");
+   846→      setAnalysis(null);
+   847→      setAnalysisPhase("idle");
+   848→      setUploadError("");
+   849→      setUploadStatus("idle");
+   850→      setTotalPages(10);
+   851→      setPages(10);
+   852→      setPrintRange("all");
+   853→      setPageRange("");
+   854→      setCopies(1);
+   855→      setNotes("");
+   856→      setSpecOptions({});
+   857→      setAppliedOffer(null);
+   858→      setOffer(null);
+   859→      setOfferShown(false);
+   860→      setCustName("");
+   861→      setCustPhone("");
+   862→      setCustWhatsapp("");
+   863→      setCustEmail("");
+   864→      setCustAddress("");
+   865→      setDeliveryNotes("");
+   866→      setConvertTarget("");
+   867→      setConverting(false);
+   868→      setConvertedFileType("");
+   869→      setPreviewUrl("");
+   870→    } catch (e) {
+   871→      toast.error("خطأ في إرسال الطلب", { description: (e as Error).message });
+   872→    } finally {
+   873→      setSubmitting(false);
+   874→    }
+   875→  }
+   876→
+   877→  function next() {
+   878→    if (!canProceed()) {
+   879→      toast.error("يرجى إكمال البيانات المطلوبة");
+   880→      return;
+   881→    }
+   882→    if (step < 5) setStep(step + 1);
+   883→    else setConfirmOpen(true);
+   884→  }
+   885→
+   886→  function prev() {
+   887→    if (step > 0) setStep(step - 1);
+   888→  }
+   889→
+   890→  // عند اختيار خدمة يدوياً، عيّن الإعدادات الافتراضية للخدمة
+   891→  function handleServiceSelect(type: string) {
+   892→    setServiceType(type as ServiceType);
+   893→    const spec = dynamicSpecs[type] || STATIC_SERVICE_SPECS[type as ServiceType];
+   894→    const defaults: Record<string, string> = {};
+   895→    if (spec) {
+   896→      spec.sections.forEach((section) => {
+   897→        if (section.options.length > 0) {
+   898→          defaults[section.optionKey] = section.options[0].id;
+   899→        }
+   900→      });
+   901→    }
+   902→    setSpecOptions(defaults);
+   903→  }
+   904→
+   905→  return (
+   906→    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+   907→      {/* ===== ملخص مضغوط للتابلت (md-lg) ===== */}
+   908→      {step > 0 && selectedService && pricing && (
+   909→        <div className="lg:hidden mb-4">
+   910→          <MobileOrderSummary selectedService={selectedService} pages={pages} copies={copies} pricing={pricing} finalPricing={finalPricing} deliveryMode={deliveryMode} deliveryTimeSlot={deliveryTimeSlot} deliveryEstimate={deliveryEstimate} specOptions={specOptions} currentSpec={currentSpec} custName={custName} notes={notes} appliedOffer={appliedOffer} />
+   911→        </div>
+   912→      )}
+   913→      <div>
+   914→        {/* رأس المعالج المحسّن */}
+   915→        {step > 0 && (
+   916→        <div className="mb-6">
+   917→          {/* شريط التقدم العلوي */}
+   918→          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden mb-4">
+   919→            <div
+   920→              className="h-full rounded-full bg-gradient-to-l from-amber-400 to-amber-500 transition-all duration-500 ease-out"
+   921→              style={{ width: `${((step + 1) / 6) * 100}%` }}
+   922→            />
+   923→          </div>
+   924→
+   925→          {/* مؤشر الخطوات: أرقام + تسميات + خطوط ربط */}
+   926→          <div className="flex items-center justify-between mb-4">
+   927→            {[0, 1, 2, 3, 4, 5].map((i) => {
+   928→              const isCompleted = i < step;
+   929→              const isActive = i === step;
+   930→              return (
+   931→                <div key={i} className="flex items-center flex-1 last:flex-none">
+   932→                  {/* دائرة الخطوة */}
+   933→                  <div className="flex flex-col items-center gap-1.5">
+   934→                    <div
+   935→                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
+   936→                        isCompleted
+   937→                          ? "bg-emerald-500 text-white"
+   938→                          : isActive
+   939→                            ? "bg-amber-500 text-white ring-4 ring-amber-500/20 shadow-lg shadow-amber-500/25"
+   940→                            : "bg-muted text-muted-foreground"
+   941→                      }`}
+   942→                    >
+   943→                      {isCompleted ? (
+   944→                        <CheckCircle2 className="h-5 w-5" />
+   945→                      ) : (
+   946→                        <span>{i + 1}</span>
+   947→                      )}
+   948→                    </div>
+   949→                    {/* التسمية والمدة — تُخفى على الجوال، مختصرة على التابلت */}
+   950→                    <div className="hidden md:flex flex-col items-center gap-0.5">
+   951→                      <span className={`text-[10px] md:text-[11px] font-medium transition-colors duration-300 max-w-[60px] lg:max-w-none text-center leading-tight ${
+   952→                        isActive ? "text-amber-700 dark:text-amber-400" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+   953→                      }`}>
+   954→                        {STEP_LABELS[i]}
+   955→                      </span>
+   956→                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+   957→                        <Clock className="h-2.5 w-2.5" />
+   958→                        {STEP_DURATIONS[i]}
+   959→                      </span>
+   960→                    </div>
+   961→                  </div>
+   962→                  {/* خط الربط بين الخطوات */}
+   963→                  {i < 5 && (
+   964→                    <div className="flex-1 mx-1 md:mx-2 mt-[-18px] md:mt-[-30px]">
+   965→                      <div className={`h-0.5 rounded-full transition-all duration-300 ${
+   966→                        i < step ? "bg-amber-400" : "bg-muted"
+   967→                      }`} />
+   968→                    </div>
+   969→                  )}
+   970→                </div>
+   971→              );
+   972→            })}
+   973→          </div>
+   974→
+   975→          {/* عنوان الخطوة الحالية */}
+   976→          <div className="flex items-center justify-between mb-1">
+   977→            <h2 className="text-xl md:text-2xl font-bold">{STEP_LABELS[step]}</h2>
+   978→            <span className="text-xs text-muted-foreground flex items-center gap-1">
+   979→              <Sparkles className="h-3 w-3 text-amber-500" />
+   980→              المجموع ≈ دقيقة واحدة
+   981→            </span>
+   982→          </div>
+   983→        </div>
+   984→        )}
+   985→          <span className="text-xs md:hidden font-medium text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+   986→            <Clock className="h-3 w-3" />
+   987→            {STEP_DURATIONS[step]} · الخطوة {step + 1} من 6
+   988→          </span>
+   989→
+   990→        {/* ===== الخطوة 0: رفع الملف والتحليل المحسّن ===== */}
+   991→        {step === 0 && (
+   992→          <div className="relative z-0 space-y-4 md:space-y-6 min-h-[60vh] md:min-h-[70vh] rounded-2xl p-4 md:p-6 lg:p-8 overflow-hidden">
+   993→            {/* طبقة الخلفية: تدرج احترافي يدل على الطباعة بدون صورة */}
+   994→            <div className="absolute inset-0 -z-10">
+   995→              <div className="w-full h-full" style={{
+   996→                background: `
+   997→                  radial-gradient(ellipse at 20% 50%, rgba(245,158,11,0.08) 0%, transparent 50%),
+   998→                  radial-gradient(ellipse at 80% 20%, rgba(217,119,6,0.06) 0%, transparent 40%),
+   999→                  radial-gradient(ellipse at 60% 80%, rgba(180,83,9,0.05) 0%, transparent 45%),
+  1000→                  linear-gradient(135deg, #fefce8 0%, #fff7ed 50%, #fef3c7 100%)
+  1001→                `,
+  1002→              }} />
+  1003→              <div className="absolute inset-0 bg-white/50 dark:bg-black/70" />
+  1004→            </div>
+  1005→            {/* نمط الشبكة الدقيق (ورق/طباعة) */}
+  1006→            <div className="absolute inset-0 -z-[9] opacity-[0.08]" style={{
+  1007→              backgroundImage: `
+  1008→                linear-gradient(rgba(180,140,80,.15) 1px, transparent 1px),
+  1009→                linear-gradient(90deg, rgba(180,140,80,.15) 1px, transparent 1px)
+  1010→              `,
+  1011→              backgroundSize: '24px 24px',
+  1012→            }} />
+  1013→            {/* نقاط CMYK ملونة */}
+  1014→            <div className="absolute inset-0 -z-[8] opacity-[0.05] pointer-events-none" style={{
+  1015→              backgroundImage: `
+  1016→                radial-gradient(circle, rgba(245,158,11,0.6) 1.5px, transparent 1.5px),
+  1017→                radial-gradient(circle, rgba(59,130,246,0.5) 1px, transparent 1px),
+  1018→                radial-gradient(circle, rgba(239,68,68,0.4) 1px, transparent 1px)
+  1019→              `,
+  1020→              backgroundSize: '48px 48px',
+  1021→              backgroundPosition: '0 0, 16px 16px, 32px 32px',
+  1022→            }} />
+  1023→            {/* خطوط زخرفية ذهبية */}
+  1024→            <div className="absolute top-0 left-0 right-0 h-1 -z-[6]" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
+  1025→            <div className="absolute bottom-0 left-0 right-0 h-1 -z-[6]" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent)' }} />
+  1026→            <div className="absolute top-6 right-0 w-0.5 h-24 -z-[6] opacity-40" style={{ background: 'linear-gradient(180deg, transparent, rgba(245,158,11,0.5), transparent)' }} />
+  1027→            <div className="absolute top-6 left-0 w-0.5 h-16 -z-[6] opacity-30" style={{ background: 'linear-gradient(180deg, transparent, rgba(245,158,11,0.3), transparent)' }} />
+  1028→
+  1029→            {step > 0 && <ServiceStatusBanner />}
+  1030→            <UploadStep
+  1031→              fileName={fileName}
+  1032→              fileType={fileType}
+  1033→              fileSize={fileSize}
+  1034→              analysisPhase={analysisPhase}
+  1035→              uploadProgress={uploadProgress}
+  1036→              analysis={analysis}
+  1037→              analyzing={analyzing}
+  1038→              serviceType={serviceType}
+  1039→              errorMessage={uploadError}
+  1040→              analysisTimings={analysisTimings}
+  1041→              onFileSelected={processFile}
+  1042→            />
+  1043→            {/* اختيار يدوي للخدمة — مخفي حسب طلب التبسيط */}
+  1044→
+  1045→            {/* ===== تحويل التنسيق (بعد اكتمال التحليل) ===== */}
+  1046→            {analysisPhase === "done" && fileDataUrl && (
+  1047→              <div className="rounded-2xl border bg-card overflow-hidden">
+  1048→                <div className="px-5 py-3.5 border-b bg-gradient-to-l from-violet-50 to-purple-50">
+  1049→                  <div className="flex items-center gap-2">
+  1050→                    <RefreshCw className="h-4 w-4 text-amber-600" />
+  1051→                    <h3 className="font-bold text-sm">تحويل التنسيق</h3>
+  1052→                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">اختياري</span>
+  1053→                  </div>
+  1054→                  <p className="text-xs text-muted-foreground mt-1">غيّر صيغة الملف إذا كنت تحتاج تنسيقاً مختلفاً</p>
+  1055→                </div>
+  1056→                <div className="p-4 space-y-3">
+  1057→                  <div className="flex flex-col sm:flex-row gap-3">
+  1058→                    <div className="flex-1">
+  1059→                      <Label className="text-xs font-medium mb-1.5 block">الصيغة الحالية</Label>
+  1060→                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border text-sm font-bold">
+  1061→                        <FileText className="h-4 w-4 text-muted-foreground" />
+  1062→                        {convertedFileType || fileType}
+  1063→                      </div>
+  1064→                    </div>
+  1065→                    <div className="flex items-end">
+  1066→                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+  1067→                        <ArrowLeft className="h-4 w-4 text-amber-600" />
+  1068→                      </div>
+  1069→                    </div>
+  1070→                    <div className="flex-1">
+  1071→                      <Label className="text-xs font-medium mb-1.5 block">حوّل إلى</Label>
+  1072→                      <select
+  1073→                        value={convertTarget}
+  1074→                        onChange={(e) => setConvertTarget(e.target.value)}
+  1075→                        className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none"
+  1076→                      >
+  1077→                        <option value="">اختر التنسيق...</option>
+  1078→                        {fileType === "PDF" && (
+  1079→                          <>
+  1080→                            <option value="JPG">JPG (صورة)</option>
+  1081→                            <option value="PNG">PNG (صورة عالية الجودة)</option>
+  1082→                          </>
+  1083→                        )}
+  1084→                        {(fileType === "JPG" || fileType === "JPEG" || fileType === "PNG" || fileType === "WEBP") && (
+  1085→                          <>
+  1086→                            <option value="PDF">PDF (مستند)</option>
+  1087→                            {fileType !== "PNG" && <option value="PNG">PNG (عالية الجودة)</option>}
+  1088→                            {(fileType === "PNG" || fileType === "WEBP") && <option value="JPG">JPG (أصغر حجماً)</option>}
+  1089→                          </>
+  1090→                        )}
+  1091→                        {fileType === "DOCX" && (
+  1092→                          <option value="PDF">PDF (مستند)</option>
+  1093→                        )}
+  1094→                        {fileType === "XLSX" && (
+  1095→                          <option value="PDF">PDF (مستند)</option>
+  1096→                        )}
+  1097→                      </select>
+  1098→                    </div>
+  1099→                  </div>
+  1100→                  {convertTarget && (
+  1101→                    <Button
+  1102→                      onClick={async () => {
+  1103→                        if (!convertTarget || !fileDataUrl) return;
+  1104→                        setConverting(true);
+  1105→                        try {
+  1106→                          const res = await fetch("/api/convert", {
+  1107→                            method: "POST",
+  1108→                            headers: { "Content-Type": "application/json" },
+  1109→                            body: JSON.stringify({ storedFileName: fileDataUrl, targetFormat: convertTarget }),
+  1110→                          });
+  1111→                          const data = await res.json();
+  1112→                          if (data.success) {
+  1113→                            setFileDataUrl(data.newStoredFileName);
+  1114→                            setFileType(convertTarget);
+  1115→                            setConvertedFileType(convertTarget);
+  1116→                            if (data.pageCount) {
+  1117→                              setTotalPages(data.pageCount);
+  1118→                              setPages(data.pageCount);
+  1119→                            }
+  1120→                            setConvertTarget("");
+  1121→                            toast.success("تم تحويل التنسيق بنجاح ✓", {
+  1122→                              description: `الصيغة الجديدة: ${data.newFileType}`,
+  1123→                            });
+  1124→                          } else {
+  1125→                            toast.error("فشل التحويل", { description: data.error || "تنسيق غير مدعوم" });
+  1126→                          }
+  1127→                        } catch {
+  1128→                          toast.error("خطأ في التحويل", { description: "تحقق من اتصالك بالإنترنت" });
+  1129→                        } finally {
+  1130→                          setConverting(false);
+  1131→                        }
+  1132→                      }}
+  1133→                      disabled={converting}
+  1134→                      className="bg-amber-600 hover:bg-amber-700 text-white"
+  1135→                    >
+  1136→                      {converting ? (
+  1137→                        <>
+  1138→                          <Loader2 className="h-4 w-4 animate-spin" />
+  1139→                          جارٍ التحويل...
+  1140→                        </>
+  1141→                      ) : (
+  1142→                        <>
+  1143→                          <RefreshCw className="h-4 w-4" />
+  1144→                          تحويل إلى {convertTarget}
+  1145→                        </>
+  1146→                      )}
+  1147→                    </Button>
+  1148→                  )}
+  1149→                  {convertedFileType && (
+  1150→                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+  1151→                      <Check className="h-4 w-4 shrink-0" />
+  1152→                      تم التحويل إلى {convertedFileType} بنجاح
+  1153→                    </div>
+  1154→                  )}
+  1155→                </div>
+  1156→              </div>
+  1157→            )}
+  1158→          </div>
+  1159→        )}
+  1160→
+  1161→        {/* ===== الخطوة 1: إعدادات الطباعة ===== */}
+  1162→        {step === 1 && selectedService && (
+  1163→          <div className="space-y-6">
+  1164→            <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+  1165→              {/* صورة مصغّرة حقيقية للملف إن وُجدت */}
+  1166→              {analysis?.thumbnailUrl ? (
+  1167→                <div className="shrink-0 w-14 h-16 md:w-16 md:h-18 rounded-lg overflow-hidden border-2 border-amber-200 bg-white shadow-sm">
+  1168→                  <img src={analysis.thumbnailUrl} alt="معاينة الملف" className="w-full h-full object-cover" />
+  1169→                </div>
+  1170→              ) : (
+  1171→                <div className="text-2xl md:text-3xl">{selectedService.emoji}</div>
+  1172→              )}
+  1173→              <div className="flex-1 min-w-0">
+  1174→                <div className="font-bold text-sm">{selectedService.name}</div>
+  1175→                <div className="text-xs text-muted-foreground">{selectedService.description}</div>
+  1176→              </div>
+  1177→              <div className="text-left shrink-0">
+  1178→                <div className="text-xs text-muted-foreground">السعر التقديري</div>
+  1179→                <div className="font-bold text-amber-700">{pricing ? formatDA(pricing.total) : formatDA(selectedService.basePricePerPage)}</div>
+  1180→              </div>
+  1181→            </div>
+  1182→
+  1183→            {analysis && (
+  1184→              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex items-start gap-2">
+  1185→                <Zap className="h-4 w-4 shrink-0 mt-0.5" />
+  1186→                <span>الإعدادات الحالية مُطبّقة من التحليل الحقيقي للملف — يمكنك تعديلها بحرية</span>
+  1187→              </div>
+  1188→            )}
+  1189→
+  1190→            {/* ===== خيار نطاق الطباعة (فقط للخدمات متعددة الصفحات) ===== */}
+  1191→            {fileName && currentSpec?.hasPrintRange && (
+  1192→              <Section title="نطاق الطباعة" hint="هل تريد طباعة الملف كاملاً أم صفحات معينة؟">
+  1193→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  1194→                  {PRINT_RANGES.map((r) => (
+  1195→                    <OptionCard
+  1196→                      key={r.id}
+  1197→                      selected={printRange === r.id}
+  1198→                      onClick={() => setPrintRange(r.id as "all" | "custom")}
+  1199→                      emoji={r.emoji}
+  1200→                      label={r.label}
+  1201→                      description={r.description}
+  1202→                    />
+  1203→                  ))}
+  1204→                </div>
+  1205→                {printRange === "custom" && (
+  1206→                  <div className="mt-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+  1207→                    <Label className="text-sm font-medium">أدخل أرقام الصفحات</Label>
+  1208→                    <Input
+  1209→                      value={pageRange}
+  1210→                      onChange={(e) => setPageRange(e.target.value)}
+  1211→                      placeholder="مثال: 1-5, 8, 10-12"
+  1212→                      className="mt-1.5 font-mono"
+  1213→                      dir="ltr"
+  1214→                    />
+  1215→                    <p className="text-xs text-muted-foreground mt-1.5">
+  1216→                      استخدم شرطة (-) للنطاق وفاصلة (,) للفصل. إجمالي صفحات الملف: {totalPages}
+  1217→                    </p>
+  1218→                    {pageRange.trim() && (
+  1219→                      <div className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+  1220→                        ✓ سيتم طباعة <strong>{pages}</strong> صفحة من أصل {totalPages}
+  1221→                      </div>
+  1222→                    )}
+  1223→                  </div>
+  1224→                )}
+  1225→                {printRange === "all" && totalPages > 0 && (
+  1226→                  <div className="mt-2 text-xs text-muted-foreground">
+  1227→                    📄 سيتم طباعة جميع صفحات الملف ({totalPages} صفحة)
+  1228→                  </div>
+  1229→                )}
+  1230→              </Section>
+  1231→            )}
+  1232→
+  1233→            {/* عدد الصفحات (فقط للخدمات متعددة الصفحات) */}
+  1234→            {currentSpec?.hasPageCount && (
+  1235→            <Section title="عدد الصفحات" hint={printRange === "custom" ? "محسوب من النطاق المحدد" : "عدد صفحات الملف المراد طباعته"}>
+  1236→              <div className="flex items-center gap-3">
+  1237→                <Button variant="outline" size="icon" onClick={() => setPages(Math.max(1, pages - 1))} disabled={printRange === "custom"}>−</Button>
+  1238→                <Input
+  1239→                  type="number"
+  1240→                  value={pages}
+  1241→                  onChange={(e) => setPages(Math.max(1, Number(e.target.value) || 1))}
+  1242→                  className="w-24 text-center font-bold"
+  1243→                  disabled={printRange === "custom"}
+  1244→                />
+  1245→                <Button variant="outline" size="icon" onClick={() => setPages(pages + 1)} disabled={printRange === "custom"}>+</Button>
+  1246→                <span className="text-sm text-muted-foreground">{currentSpec?.unit || "صفحة"}</span>
+  1247→                {printRange === "custom" && (
+  1248→                  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+  1249→                    من نطاق محدد
+  1250→                  </span>
+  1251→                )}
+  1252→              </div>
+  1253→            </Section>
+  1254→            )}
+  1255→
+  1256→            {/* ===== أقسام المواصفات المخصصة لكل خدمة ===== */}
+  1257→            {currentSpec && currentSpec.sections.map((section, sectionIdx) => {
+  1258→              const selectedId = specOptions[section.optionKey];
+  1259→              const isSelectedOpt = section.options.find((o) => o.id === selectedId);
+  1260→              const isExtra = sectionIdx >= 3; // الأقسام بعد الثالث قابلة للطي
+  1261→              const priceImpact = isSelectedOpt
+  1262→                ? (() => {
+  1263→                    if (isSelectedOpt.price && isSelectedOpt.price > 0) return `+${formatDA(isSelectedOpt.price)}/نسخة`;
+  1264→                    if (isSelectedOpt.pricePerPage && isSelectedOpt.pricePerPage > 0) return `+${formatDA(isSelectedOpt.pricePerPage)}/صفحة`;
+  1265→                    if (isSelectedOpt.multiplier && isSelectedOpt.multiplier !== 1) return `×${isSelectedOpt.multiplier}`;
+  1266→                    return undefined;
+  1267→                  })()
+  1268→                : undefined;
+  1269→              const cols = section.options.length === 2 ? "grid-cols-2" :
+  1270→                           section.options.length === 3 ? "grid-cols-3" :
+  1271→                           section.options.length === 4 ? "grid-cols-2 md:grid-cols-4" :
+  1272→                           section.options.length === 5 ? "grid-cols-2 md:grid-cols-5" :
+  1273→                           "grid-cols-2 md:grid-cols-3";
+  1274→              return (
+  1275→                <Section
+  1276→                  key={section.id}
+  1277→                  title={section.title}
+  1278→                  hint={section.hint}
+  1279→                  collapsible={isExtra}
+  1280→                  defaultOpen={sectionIdx < 5}
+  1281→                  badge={isExtra && isSelectedOpt && priceImpact ? priceImpact : undefined}
+  1282→                  priceImpact={isExtra && priceImpact ? priceImpact : undefined}
+  1283→                >
+  1284→                  <div className={`grid gap-3 ${cols}`}>
+  1285→                    {section.options.map((opt) => {
+  1286→                      const price = opt.price !== undefined && opt.price !== 0
+  1287→                        ? `+${formatDA(opt.price)}`
+  1288→                        : opt.pricePerPage !== undefined && opt.pricePerPage !== 0
+  1289→                          ? opt.pricePerPage > 0
+  1290→                            ? `+${formatDA(opt.pricePerPage)}/صفحة`
+  1291→                            : `${formatDA(Math.abs(opt.pricePerPage))} خصم/صفحة`
+  1292→                          : undefined;
+  1293→                      return (
+  1294→                        <OptionCard
+  1295→                          key={opt.id}
+  1296→                          selected={selectedId === opt.id}
+  1297→                          onClick={() => setSpecOption(section.optionKey, opt.id)}
+  1298→                          emoji={opt.emoji}
+  1299→                          label={opt.label}
+  1300→                          description={opt.description}
+  1301→                          price={price}
+  1302→                          note={opt.note}
+  1303→                        />
+  1304→                      );
+  1305→                    })}
+  1306→                  </div>
+  1307→                </Section>
+  1308→              );
+  1309→            })}
+  1310→
+  1311→            <Section title="عدد النسخ" hint="خصم من 10 نسخ">
+  1312→              <div className="flex items-center gap-3 flex-wrap">
+  1313→                <Button variant="outline" size="icon" onClick={() => setCopies(Math.max(1, copies - 1))}>−</Button>
+  1314→                <Input
+  1315→                  type="number"
+  1316→                  value={copies}
+  1317→                  onChange={(e) => setCopies(Math.max(1, Number(e.target.value) || 1))}
+  1318→                  className="w-24 text-center font-bold"
+  1319→                />
+  1320→                <Button variant="outline" size="icon" onClick={() => setCopies(copies + 1)}>+</Button>
+  1321→                <span className="text-sm text-muted-foreground">نسخة</span>
+  1322→                {copies >= 10 && (
+  1323→                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+  1324→                    خصم {copies >= 50 ? "15%" : "10%"}
+  1325→                  </span>
+  1326→                )}
+  1327→              </div>
+  1328→            </Section>
+  1329→
+  1330→            <Section title="ملاحظات إضافية" hint="اختياري">
+  1331→              <Textarea
+  1332→                value={notes}
+  1333→                onChange={(e) => setNotes(e.target.value)}
+  1334→                placeholder="أي تفاصيل إضافية تريد إخبارنا بها..."
+  1335→                rows={3}
+  1336→              />
+  1337→            </Section>
+  1338→          </div>
+  1339→        )}
+  1340→
+  1341→        {/* ===== الخطوة 2: معاينة الطباعة ===== */}
+  1342→        {step === 2 && (
+  1343→          <div className="space-y-5">
+  1344→            <div className="rounded-2xl border bg-card overflow-hidden">
+  1345→              <div className="px-5 py-4 border-b bg-gradient-to-l from-amber-50 to-orange-50">
+  1346→                <div className="flex items-center gap-2">
+  1347→                  <Eye className="h-5 w-5 text-amber-600" />
+  1348→                  <h3 className="font-bold text-sm">معاينة حية للطباعة</h3>
+  1349→                </div>
+  1350→                <p className="text-xs text-muted-foreground mt-1">تحقق من شكل الملف النهائي قبل التأكيد</p>
+  1351→              </div>
+  1352→              <div className="p-5">
+  1353→                {fileDataUrl && (fileType === "PDF" || convertedFileType === "PDF") ? (
+  1354→                  <div className="rounded-xl border overflow-hidden bg-white">
+  1355→                    <iframe
+  1356→                      src={`/api/file-preview?file=${encodeURIComponent(fileDataUrl)}&scale=3`}
+  1357→                      className="w-full h-[700px] md:h-[900px] border-0"
+  1358→                      title="معاينة الملف"
+  1359→                    />
+  1360→                  </div>
+  1361→                ) : fileDataUrl && ["JPG", "JPEG", "PNG", "WEBP"].includes(fileType) ? (
+  1362→                  <div className="rounded-xl border overflow-hidden bg-white p-2 flex items-center justify-center">
+  1363→                    <img
+  1364→                      src={`/api/file-preview?file=${encodeURIComponent(fileDataUrl)}&scale=3`}
+  1365→                      alt="معاينة الصورة"
+  1366→                      className="max-w-full max-h-[800px] md:max-h-[900px] object-contain"
+  1367→                    />
+  1368→                  </div>
+  1369→                ) : analysis?.thumbnailUrl ? (
+  1370→                  <div className="rounded-xl border overflow-hidden bg-white p-2 flex items-center justify-center">
+  1371→                    <img
+  1372→                      src={analysis.thumbnailUrl}
+  1373→                      alt="معاينة الملف"
+  1374→                      className="max-w-full max-h-[700px] md:max-h-[800px] object-contain rounded-lg"
+  1375→                    />
+  1376→                  </div>
+  1377→                ) : (
+  1378→                  <div className="flex flex-col items-center justify-center py-12 text-center">
+  1379→                    {analysis?.thumbnailUrl ? (
+  1380→                      <div className="relative w-28 h-36 rounded-2xl overflow-hidden border-2 border-amber-200 bg-white shadow-md">
+  1381→                        <img
+  1382→                          src={analysis.thumbnailUrl}
+  1383→                          alt="معاينة الملف"
+  1384→                          className="w-full h-full object-cover"
+  1385→                        />
+  1386→                      </div>
+  1387→                    ) : (
+  1388→                      <div className="inline-flex flex-col items-center justify-center w-28 h-36 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-dashed border-slate-300 shadow-sm">
+  1389→                        <FileText className="h-10 w-10 text-slate-400 mb-1" />
+  1390→                        <span className="text-lg font-extrabold text-slate-500 tracking-tight">{fileType}</span>
+  1391→                      </div>
+  1392→                    )}
+  1393→                    <div className="text-sm font-bold mt-4 mb-1">الملف: {fileName}</div>
+  1394→                    <div className="text-xs text-muted-foreground flex items-center gap-3">
+  1395→                      <span>{fileType}</span>
+  1396→                      <span>•</span>
+  1397→                      <span>{totalPages} صفحة</span>
+  1398→                      {fileSize > 0 && <><span>•</span><span>{(fileSize / 1024).toFixed(0)} ك.ب</span></>}
+  1399→                    </div>
+  1400→                    {analysis?.fileNature && (
+  1401→                      <div className="text-xs text-muted-foreground mt-1">{analysis.fileNature}</div>
+  1402→                    )}
+  1403→                    <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 max-w-sm">
+  1404→                      ⚠️ معاينة مباشرة غير متاحة لهذا التنسيق. سيتم مراجعة الملف من قبل المطبعة قبل الطباعة.
+  1405→                    </div>
+  1406→                  </div>
+  1407→                )}
+  1408→                {/* ===== معاينة محاكاة الطباعة ===== */}
+  1409→                {selectedService && (() => {
+  1410→                  const getOptionLabel = (key: string, fallback: string) => {
+  1411→                    for (const section of currentSpec.sections) {
+  1412→                      if (section.optionKey === key) {
+  1413→                        const selectedId = specOptions[key];
+  1414→                        if (selectedId) {
+  1415→                          const opt = section.options.find(o => o.id === selectedId);
+  1416→                          if (opt) return opt.label;
+  1417→                        }
+  1418→                      }
+  1419→                    }
+  1420→                    return fallback;
+  1421→                  };
+  1422→                  const paperSize = specOptions.paperSize || analysis?.suggestedPaperSize || "A4";
+  1423→                  const paperLabel = getOptionLabel("paperSize", paperSize);
+  1424→                  const colorVal = specOptions.color || analysis?.suggestedColor || "color";
+  1425→                  const colorLabel = getOptionLabel("color", colorVal === "bw" ? "أبيض وأسود" : "ملون");
+  1426→                  const isBW = colorVal === "bw";
+  1427→                  const paperTypeLabel = getOptionLabel("paperType", analysis?.suggestedPaperType || "عادي");
+  1428→                  const sidesLabel = getOptionLabel("sides", "وجه واحد");
+  1429→                  const hasBinding = currentSpec.sections.some(s => s.optionKey === "binding");
+  1430→                  const bindingLabel = hasBinding ? getOptionLabel("binding", "بدون") : null;
+  1431→                  // حساب نسبة الورق
+  1432→                  const paperAspectMap: Record<string, { w: number; h: number; label: string }> = {
+  1433→                    "A3": { w: 297, h: 420, label: "A3" },
+  1434→                    "A4": { w: 210, h: 297, label: "A4" },
+  1435→                    "A5": { w: 148, h: 210, label: "A5" },
+  1436→                    "B4": { w: 257, h: 364, label: "B4" },
+  1437→                    "B5": { w: 182, h: 257, label: "B5" },
+  1438→                    "letter": { w: 216, h: 279, label: "Letter" },
+  1439→                    "legal": { w: 216, h: 356, label: "Legal" },
+  1440→                  };
+  1441→                  const paperInfo = paperAspectMap[paperSize] || paperAspectMap["A4"];
+  1442→                  // صورة أو A4 عمودي = عمودي، وإلا أفقي
+  1443→                  const isLandscape = analysis?.orientation === "أفقي" || paperSize === "A3" || paperSize === "legal";
+  1444→                  const previewMaxW = 320;
+  1445→                  const previewMaxH = 440;
+  1446→                  const rawRatio = isLandscape
+  1447→                    ? paperInfo.h / paperInfo.w
+  1448→                    : paperInfo.w / paperInfo.h;
+  1449→                  let paperW: number;
+  1450→                  let paperH: number;
+  1451→                  if (rawRatio * previewMaxH > previewMaxW) {
+  1452→                    paperH = previewMaxW / rawRatio;
+  1453→                    paperW = previewMaxW;
+  1454→                  } else {
+  1455→                    paperW = rawRatio * previewMaxH;
+  1456→                    paperH = previewMaxH;
+  1457→                  }
+  1458→                  if (isLandscape) { const t = paperW; paperW = paperH; paperH = t; }
+  1459→                  return (
+  1460→                    <div className="mt-6 space-y-4">
+  1461→                      {/* شريط المعلومات */}
+  1462→                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+  1463→                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+  1464→                          <div className="text-muted-foreground">الصفحات</div>
+  1465→                          <div className="font-bold">{pages}</div>
+  1466→                        </div>
+  1467→                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+  1468→                          <div className="text-muted-foreground">النسخ</div>
+  1469→                          <div className="font-bold">{copies}</div>
+  1470→                        </div>
+  1471→                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+  1472→                          <div className="text-muted-foreground">التنسيق</div>
+  1473→                          <div className="font-bold">{convertedFileType || fileType}</div>
+  1474→                        </div>
+  1475→                        <div className="p-2.5 rounded-lg bg-muted/50 text-center">
+  1476→                          <div className="text-muted-foreground">الحجم</div>
+  1477→                          <div className="font-bold">{(fileSize / 1024).toFixed(0)} ك.ب</div>
+  1478→                        </div>
+  1479→                      </div>
+  1480→
+  1481→                      {/* محاكاة الورقة المطبوعة */}
+  1482→                      <div className="flex items-center justify-center p-6 bg-gradient-to-b from-slate-100 to-slate-200 rounded-2xl border">
+  1483→                        <div
+  1484→                          className="relative bg-white shadow-2xl border border-slate-200"
+  1485→                          style={{
+  1486→                            width: `${paperW}px`,
+  1487→                            height: `${paperH}px`,
+  1488→                            borderRadius: '4px',
+  1489→                          }}
+  1490→                        >
+  1491→                          {/* هوامش الورقة */}
+  1492→                          <div
+  1493→                            className="absolute inset-3 border border-dashed border-slate-200/60 pointer-events-none"
+  1494→                            style={{ borderRadius: '2px' }}
+  1495→                          />
+  1496→                          {/* مؤشر الهامش */}
+  1497→                          <div className="absolute top-0 left-0 right-0 h-2.5 bg-slate-50/40" />
+  1498→                          <div className="absolute bottom-0 left-0 right-0 h-2.5 bg-slate-50/40" />
+  1499→                          <div className="absolute top-0 bottom-0 right-0 w-2.5 bg-slate-50/40" />
+  1500→                          <div className="absolute top-0 bottom-0 left-0 w-2.5 bg-slate-50/40" />
+  1501→
+  1502→                          {/* محتوى المعاينة داخل الورقة */}
+  1503→                          <div className="absolute inset-4 flex items-center justify-center overflow-hidden">
+  1504→                            {fileDataUrl && (fileType === "PDF" || convertedFileType === "PDF") ? (
+  1505→                              <div className="w-full h-full rounded border bg-slate-50 flex items-center justify-center">
+  1506→                                <div className="text-center">
+  1507→                                  <FileText className="h-8 w-8 text-red-400 mx-auto mb-1" />
+  1508→                                  <span className="text-[10px] font-bold text-slate-500">PDF</span>
+  1509→                                </div>
+  1510→                              </div>
+  1511→                            ) : fileDataUrl && ["JPG", "JPEG", "PNG", "WEBP"].includes(fileType) ? (
+  1512→                              <img
+  1513→                                src={`/api/file-preview?file=${encodeURIComponent(fileDataUrl)}&scale=2`}
+  1514→                                alt="معاينة"
+  1515→                                className="max-w-full max-h-full object-contain"
+  1516→                              />
+  1517→                            ) : analysis?.thumbnailUrl ? (
+  1518→                              <img
+  1519→                                src={analysis.thumbnailUrl}
+  1520→                                alt="معاينة الملف"
+  1521→                                className="max-w-full max-h-full object-contain"
+  1522→                              />
+  1523→                            ) : (
+  1524→                              <div className="text-center">
+  1525→                                <FileText className="h-6 w-6 text-slate-300 mx-auto mb-1" />
+  1526→                                <span className="text-[9px] text-slate-400 font-bold">{fileType}</span>
+  1527→                              </div>
+  1528→                            )}
+  1529→                          </div>
+  1530→
+  1531→                          {/* شارة الحجم */}
+  1532→                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-slate-700 text-white text-[9px] font-bold rounded shadow-sm whitespace-nowrap">
+  1533→                            {paperInfo.label}
+  1534→                          </div>
+  1535→                        </div>
+  1536→                      </div>
+  1537→
+  1538→                      {/* إعدادات الطباعة - شارات محدّثة في الوقت الفعلي */}
+  1539→                      <div>
+  1540→                        <p className="text-xs font-semibold text-muted-foreground mb-2">إعدادات الطباعة المحددة</p>
+  1541→                        <div className="flex flex-wrap gap-2">
+  1542→                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+  1543→                            <span>📐</span>{paperLabel}
+  1544→                          </span>
+  1545→                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${isBW ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-gradient-to-l from-rose-50 to-violet-50 text-rose-700 border-rose-200'}`}>
+  1546→                            <span>{isBW ? '⬛' : '🎨'}</span>{colorLabel}
+  1547→                          </span>
+  1548→                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+  1549→                            <span>📄</span>{paperTypeLabel}
+  1550→                          </span>
+  1551→                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+  1552→                            <span>📑</span>{sidesLabel}
+  1553→                          </span>
+  1554→                          {bindingLabel && (
+  1555→                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+  1556→                              <span>📚</span>{bindingLabel}
+  1557→                            </span>
+  1558→                          )}
+  1559→                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
+  1560→                            <span>📊</span>{pages} × {copies}
+  1561→                          </span>
+  1562→                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${isLandscape ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-teal-50 text-teal-700 border-teal-200'}`}>
+  1563→                            <span>{isLandscape ? '↔️' : '↕️'}</span>{isLandscape ? 'أفقي' : 'عمودي'}
+  1564→                          </span>
+  1565→                        </div>
+  1566→                      </div>
+  1567→                    </div>
+  1568→                  );
+  1569→                })()}
+  1570→              </div>
+  1571→            </div>
+  1572→          </div>
+  1573→        )}
+  1574→
+  1575→        {/* ===== الخطوة 3: وقت التسليم ===== */}
+  1576→        {step === 3 && (
+  1577→          <div className="space-y-5">
+  1578→            {/* شريط حالة اليوم والتقدم */}
+  1579→            <div className="rounded-2xl bg-gradient-to-l from-amber-50 to-orange-50 border border-amber-200 p-4">
+  1580→              <div className="flex items-center justify-between mb-2">
+  1581→                <div className="flex items-center gap-2">
+  1582→                  <div className={`w-2.5 h-2.5 rounded-full ${deliveryEstimate.isWorkingHours ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+  1583→                  <span className="text-xs font-medium text-amber-900">
+  1584→                    {deliveryEstimate.isWorkingHours ? "مفتوح الآن" : "مغلق — يبدأ من 8 صباحاً"}
+  1585→                  </span>
+  1586→                </div>
+  1587→                <div className="flex items-center gap-1.5 text-xs text-amber-800">
+  1588→                  <Timer className="h-3.5 w-3.5" />
+  1589→                  <span>الآن {deliveryEstimate.currentStr}</span>
+  1590→                </div>
+  1591→              </div>
+  1592→              <div className="relative h-2 rounded-full bg-amber-200/60 overflow-hidden">
+  1593→                <div
+  1594→                  className="absolute inset-y-0 right-0 bg-gradient-to-l from-amber-500 to-amber-400 rounded-full transition-all duration-700"
+  1595→                  style={{ width: `${deliveryEstimate.dayProgress}%` }}
+  1596→                />
+  1597→              </div>
+  1598→              <div className="flex justify-between mt-1.5">
+  1599→                <span className="text-[10px] text-amber-700">{deliveryEstimate.workStart}</span>
+  1600→                <span className="text-[10px] text-amber-700">{deliveryEstimate.workEnd}</span>
+  1601→              </div>
+  1602→            </div>
+  1603→
+  1604→            {/* خيارات سرعة التسليم */}
+  1605→            <div>
+  1606→              <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+  1607→                <Zap className="h-4 w-4 text-amber-600" />
+  1608→                متى تحتاج طلبك؟
+  1609→              </h3>
+  1610→              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+  1611→                {DELIVERY_OPTIONS.map((d) => {
+  1612→                  const isSelected = deliveryMode === d.id;
+  1613→                  // حساب الوقت المتوقع لكل خيار مع مراعاة ساعات العمل
+  1614→                  const optHours = estimateDeliveryHours(d.id, pages, copies);
+  1615→                  // استخدام deliveryEstimate.readyTimeStr للوضع المحدد حالياً،
+  1616→                  // وللخيارات الأخرى نستخدم حساب تقريبي مع مراعاة ساعات العمل
+  1617→                  let readyStr: string;
+  1618→                  if (isSelected) {
+  1619→                    readyStr = deliveryEstimate.readyTimeStr;
+  1620→                  } else {
+  1621→                    // حساب تقريبي مع مراعاة ساعات العمل
+  1622→                    const _now = new Date();
+  1623→                    const _h = _now.getHours();
+  1624→                    const _WORK_S = 8; const _WORK_E = 19;
+  1625→                    let _eff = new Date(_now);
+  1626→                    if (_h >= _WORK_E || _h < _WORK_S) {
+  1627→                      _eff.setHours(_WORK_S, 0, 0, 0);
+  1628→                      if (_h >= _WORK_E) _eff.setDate(_eff.getDate() + 1);
+  1629→                    }
+  1630→                    let _tmp = new Date(_eff);
+  1631→                    let _rem = optHours * 60;
+  1632→                    while (_rem > 0) {
+  1633→                      const _eod = new Date(_tmp); _eod.setHours(_WORK_E, 0, 0, 0);
+  1634→                      const _mte = Math.max(0, (_eod.getTime() - _tmp.getTime()) / 60000);
+  1635→                      if (_rem <= _mte) { _tmp = new Date(_tmp.getTime() + _rem * 60000); _rem = 0; }
+  1636→                      else { _rem -= _mte; _tmp.setDate(_tmp.getDate() + 1); _tmp.setHours(_WORK_S, 0, 0, 0); }
+  1637→                    }
+  1638→                    const _rh = _tmp.getHours(); const _rm = _tmp.getMinutes().toString().padStart(2, "0");
+  1639→                    readyStr = _rh === 0 ? `12:${_rm} ص` : _rh < 12 ? `${_rh}:${_rm} ص` : _rh === 12 ? `12:${_rm} م` : `${_rh - 12}:${_rm} م`;
+  1640→                  }
+  1641→
+  1642→                  // تعطيل "اليوم" و"خلال ساعة" خارج ساعات العمل
+  1643→                  const isDisabled = (d.id === "today" && !deliveryEstimate.isTodayDeliveryPossible)
+  1644→                    || (d.id === "hour" && !deliveryEstimate.isHourDeliveryPossible);
+  1645→
+  1646→                  return (
+  1647→                    <button
+  1648→                      key={d.id}
+  1649→                      onClick={() => { if (!isDisabled) { setDeliveryMode(d.id); setDeliveryTimeSlot(""); } }}
+  1650→                      className={`relative p-3 md:p-3.5 rounded-2xl border-2 text-right transition-all duration-200 ${
+  1651→                        isDisabled
+  1652→                          ? "border-border bg-muted/40 opacity-50 cursor-not-allowed"
+  1653→                          : isSelected
+  1654→                          ? "border-amber-500 bg-amber-50 shadow-md shadow-amber-200/50 scale-[1.02]"
+  1655→                          : "border-border bg-card hover:border-amber-300 hover:shadow-sm"
+  1656→                      }`}
+  1657→                      disabled={isDisabled}
+  1658→                    >
+  1659→                      {d.badge && (
+  1660→                        <span className="absolute top-1.5 left-1.5 md:top-2 md:left-2 text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white">
+  1661→                          {d.badge}
+  1662→                        </span>
+  1663→                      )}
+  1664→                      {isDisabled && (
+  1665→                        <span className="absolute top-1.5 right-1.5 md:top-2 md:right-2 text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-400 text-white">
+  1666→                          مغلق
+  1667→                        </span>
+  1668→                      )}
+  1669→                      <div className="text-xl md:text-2xl mb-1 md:mb-1.5">{d.emoji}</div>
+  1670→                      <div className="font-bold text-xs md:text-sm leading-tight">{d.label}</div>
+  1671→                      {isDisabled ? (
+  1672→                        <div className="text-[11px] mt-1 text-rose-500 font-medium">غير متاح الآن</div>
+  1673→                      ) : (
+  1674→                        <div className={`text-[11px] mt-1 font-semibold ${isSelected ? "text-amber-700" : "text-muted-foreground"}`}>
+  1675→                          ≈ {readyStr}
+  1676→                        </div>
+  1677→                      )}
+  1678→                      {d.surcharge > 0 && !isDisabled && (
+  1679→                        <div className="text-[11px] text-rose-600 font-bold mt-0.5">+{formatDA(d.surcharge)}</div>
+  1680→                      )}
+  1681→                    </button>
+  1682→                  );
+  1683→                })}
+  1684→              </div>
+  1685→              {!deliveryEstimate.isWorkingHours && (deliveryMode === "today" || deliveryMode === "hour") && (
+  1686→                <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
+  1687→                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  1688→                  <span>المطبعة مغلقة حالياً — اختر <strong>غداً</strong> أو <strong>تاريخ محدد</strong> للتسليم</span>
+  1689→                </div>
+  1690→              )}
+  1691→            </div>
+  1692→
+  1693→            {/* الفترات الزمنية (لليوم وغداً) */}
+  1694→            {(deliveryMode === "today" || deliveryMode === "tomorrow" || deliveryMode === "hour") && (
+  1695→              <div>
+  1696→                <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+  1697→                  <CalendarDays className="h-4 w-4 text-amber-600" />
+  1698→                  اختر الفترة الزمنية المفضلة
+  1699→                </h3>
+  1700→                <div className="grid grid-cols-3 gap-2.5">
+  1701→                  {deliveryEstimate.timeSlots.map((slot) => {
+  1702→                    const SlotIcon = slot.icon;
+  1703→                    const isSelected = deliveryTimeSlot === slot.id;
+  1704→                    return (
+  1705→                      <button
+  1706→                        key={slot.id}
+  1707→                        onClick={() => setDeliveryTimeSlot(slot.id)}
+  1708→                        className={`p-3.5 rounded-xl border-2 text-center transition-all duration-200 ${
+  1709→                          isSelected
+  1710→                            ? "border-amber-500 bg-amber-50 shadow-sm"
+  1711→                            : slot.available
+  1712→                            ? "border-border bg-card hover:border-amber-300"
+  1713→                            : "border-border bg-muted/50 opacity-50 cursor-not-allowed"
+  1714→                        }`}
+  1715→                        disabled={!slot.available}
+  1716→                      >
+  1717→                        <SlotIcon className={`h-5 w-5 mx-auto mb-1.5 ${isSelected ? "text-amber-600" : "text-muted-foreground"}`} />
+  1718→                        <div className={`text-xs font-bold ${isSelected ? "text-amber-800" : ""}`}>{slot.label}</div>
+  1719→                        <div className="text-[10px] text-muted-foreground mt-0.5">{slot.time}</div>
+  1720→                      </button>
+  1721→                    );
+  1722→                  })}
+  1723→                </div>
+  1724→              </div>
+  1725→            )}
+  1726→
+  1727→            {/* اختيار تاريخ محدد */}
+  1728→            {deliveryMode === "scheduled" && (
+  1729→              <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200">
+  1730→                <Label className="text-sm font-medium flex items-center gap-2">
+  1731→                  <CalendarDays className="h-4 w-4 text-amber-600" />
+  1732→                  اختر تاريخ التسليم
+  1733→                </Label>
+  1734→                <Input
+  1735→                  type="date"
+  1736→                  value={deliveryDate}
+  1737→                  min={new Date().toISOString().split("T")[0]}
+  1738→                  onChange={(e) => setDeliveryDate(e.target.value)}
+  1739→                  className="mt-2 max-w-xs"
+  1740→                />
+  1741→              </div>
+  1742→            )}
+  1743→
+  1744→            {/* ملخص التسليم المتوقع */}
+  1745→            <div className={`rounded-xl border p-4 flex items-start gap-3 ${
+  1746→              deliveryMode === "hour"
+  1747→                ? "bg-rose-50 border-rose-200"
+  1748→                : "bg-emerald-50 border-emerald-200"
+  1749→            }`}>
+  1750→              <div className={`mt-0.5 p-2 rounded-lg ${
+  1751→                deliveryMode === "hour" ? "bg-rose-100" : "bg-emerald-100"
+  1752→              }`}>
+  1753→                {deliveryMode === "hour" ? (
+  1754→                  <Zap className={`h-4 w-4 ${deliveryMode === "hour" ? "text-rose-600" : "text-emerald-600"}`} />
+  1755→                ) : (
+  1756→                  <Clock className={`h-4 w-4 text-emerald-600`} />
+  1757→                )}
+  1758→              </div>
+  1759→              <div className="flex-1 min-w-0">
+  1760→                <div className="text-sm font-bold text-neutral-900">
+  1761→                  {deliveryMode === "hour" && "تسليم عاجل"}
+  1762→                  {deliveryMode === "today" && "تسليم اليوم"}
+  1763→                  {deliveryMode === "tomorrow" && "تسليم غداً"}
+  1764→                  {deliveryMode === "scheduled" && "تسليم في تاريخ محدد"}
+  1765→                </div>
+  1766→                <div className="text-xs text-neutral-600 mt-1">
+  1767→                  {deliveryMode === "scheduled" && deliveryDate ? (
+  1768→                    <>الاستلام: <strong>{deliveryDate}</strong></>
+  1769→                  ) : (
+  1770→                    <>
+  1771→                      التوقيت المقدّر: <strong className="text-base">{deliveryEstimate.readyTimeStr}</strong>{" "}
+  1772→                      — {deliveryEstimate.readyDateStr}
+  1773→                      <span className="text-muted-foreground"> ({estimatedHours} ساعة عمل)</span>
+  1774→                    </>
+  1775→                  )}
+  1776→                </div>
+  1777→                {deliveryTimeSlot && (
+  1778→                  <div className="text-xs text-amber-700 font-medium mt-1">
+  1779→                    الفترة المفضلة: {deliveryEstimate.timeSlots.find(s => s.id === deliveryTimeSlot)?.label}
+  1780→                  </div>
+  1781→                )}
+  1782→              </div>
+  1783→            </div>
+  1784→
+  1785→            {/* ملاحظات حول التسليم */}
+  1786→            <div>
+  1787→              <Label className="text-sm font-medium flex items-center gap-2">
+  1788→                <FileText className="h-4 w-4 text-amber-600" />
+  1789→                ملاحظات حول التسليم
+  1790→              </Label>
+  1791→              <Textarea
+  1792→                value={deliveryNotes}
+  1793→                onChange={(e) => setDeliveryNotes(e.target.value)}
+  1794→                placeholder="مثال: اتصل بي قبل التسليم بنصف ساعة، أو التسليم عند الباب...
+  1795→(اختياري)"
+  1796→                rows={3}
+  1797→                className="mt-1.5"
+  1798→              />
+  1799→            </div>
+  1800→          </div>
+  1801→        )}
+  1802→
+  1803→        {/* ===== الخطوة 4: معلومات التواصل ===== */}
+  1804→        {step === 4 && (
+  1805→          <div className="space-y-5">
+  1806→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+  1807→              <div>
+  1808→                <Label className="text-sm font-medium">الاسم</Label>
+  1809→                <Input
+  1810→                  value={custName}
+  1811→                  onChange={(e) => setCustName(e.target.value)}
+  1812→                  placeholder="الاسم الكامل"
+  1813→                  className="mt-1.5"
+  1814→                />
+  1815→              </div>
+  1816→              <div>
+  1817→                <Label className="text-sm font-medium">رقم الهاتف * (10 أرقام بالضبط)</Label>
+  1818→                <Input
+  1819→                  type="tel"
+  1820→                  value={custPhone}
+  1821→                  onChange={(e) => {
+  1822→                    // فلتر: أرقام فقط، حد أقصى 10 أرقام
+  1823→                    const cleaned = e.target.value.replace(/\D/g, "").substring(0, 10);
+  1824→                    setCustPhone(cleaned);
+  1825→                  }}
+  1826→                  onBlur={() => setPhoneTouched(true)}
+  1827→                  placeholder="0560123456"
+  1828→                  maxLength={10}
+  1829→                  className={`mt-1.5 font-mono tracking-wider ${
+  1830→                    phoneTouched && custPhone && !isValidAlgerianPhone(custPhone)
+  1831→                      ? "border-destructive bg-destructive/5"
+  1832→                      : phoneTouched && isValidAlgerianPhone(custPhone)
+  1833→                        ? "border-emerald-400 bg-emerald-50/30"
+  1834→                        : ""
+  1835→                  }`}
+  1836→                  dir="ltr"
+  1837→                />
+  1838→                <div className="flex items-center justify-between mt-1">
+  1839→                  {phoneTouched && custPhone && !isValidAlgerianPhone(custPhone) ? (
+  1840→                    <p className="text-xs text-destructive flex items-center gap-1">
+  1841→                      <span>✗</span> {getPhoneErrorMessage(custPhone)}
+  1842→                    </p>
+  1843→                  ) : phoneTouched && isValidAlgerianPhone(custPhone) ? (
+  1844→                    <p className="text-xs text-emerald-600 flex items-center gap-1">
+  1845→                      <span>✓</span> رقم صحيح
+  1846→                    </p>
+  1847→                  ) : (
+  1848→                    <p className="text-xs text-muted-foreground">05 أو 06 أو 07 (موبايل) أو 03 (فاكس)</p>
+  1849→                  )}
+  1850→                  <span className={`text-xs tabular-nums ${custPhone.length === 10 ? "text-emerald-600 font-bold" : "text-muted-foreground"}`}>
+  1851→                    {custPhone.length}/10
+  1852→                  </span>
+  1853→                </div>
+  1854→              </div>
+  1855→              <div className="sm:col-span-2">
+  1856→                <Label className="text-sm font-medium">واتساب (إذا كان مختلفاً) - 10 أرقام</Label>
+  1857→                <Input
+  1858→                  type="tel"
+  1859→                  value={custWhatsapp}
+  1860→                  onChange={(e) => {
+  1861→                    const cleaned = e.target.value.replace(/\D/g, "").substring(0, 10);
+  1862→                    setCustWhatsapp(cleaned);
+  1863→                  }}
+  1864→                  onBlur={() => setWhatsappTouched(true)}
+  1865→                  placeholder="اتركه فارغاً إذا كان نفس رقم الهاتف"
+  1866→                  maxLength={10}
+  1867→                  className={`mt-1.5 font-mono tracking-wider ${
+  1868→                    whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp)
+  1869→                      ? "border-destructive bg-destructive/5"
+  1870→                      : whatsappTouched && custWhatsapp && isValidAlgerianPhone(custWhatsapp)
+  1871→                        ? "border-emerald-400 bg-emerald-50/30"
+  1872→                        : ""
+  1873→                  }`}
+  1874→                  dir="ltr"
+  1875→                />
+  1876→                {whatsappTouched && custWhatsapp && !isValidAlgerianPhone(custWhatsapp) && (
+  1877→                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+  1878→                    <span>✗</span> {getPhoneErrorMessage(custWhatsapp)}
+  1879→                  </p>
+  1880→                )}
+  1881→              </div>
+  1882→              <div className="sm:col-span-2">
+  1883→                <Label className="text-sm font-medium">البريد الإلكتروني (اختياري)</Label>
+  1884→                <Input
+  1885→                  type="email"
+  1886→                  value={custEmail}
+  1887→                  onChange={(e) => setCustEmail(e.target.value)}
+  1888→                  placeholder="name@example.com"
+  1889→                  className="mt-1.5"
+  1890→                  dir="ltr"
+  1891→                />
+  1892→              </div>
+  1893→            </div>
+  1894→
+  1895→            <Section title="طريقة الاستلام" hint="كيف تريد استلام طلبك؟">
+  1896→              <div className="grid grid-cols-2 gap-3">
+  1897→                <OptionCard
+  1898→                  selected={custDelivery === "pickup"}
+  1899→                  onClick={() => setCustDelivery("pickup")}
+  1900→                  emoji="🏪"
+  1901→                  label="استلام من المطبعة"
+  1902→                  description="شارع ديدوش مراد"
+  1903→                  price="مجاني"
+  1904→                />
+  1905→                <OptionCard
+  1906→                  selected={custDelivery === "delivery"}
+  1907→                  onClick={() => setCustDelivery("delivery")}
+  1908→                  emoji="🛵"
+  1909→                  label="توصيل للعنوان"
+  1910→                  description="ضمن الجزائر العاصمة"
+  1911→                  price="+200 دج"
+  1912→                />
+  1913→              </div>
+  1914→            </Section>
+  1915→
+  1916→            {custDelivery === "delivery" && (
+  1917→              <div>
+  1918→                <Label className="text-sm font-medium">عنوان التوصيل *</Label>
+  1919→                <Textarea
+  1920→                  value={custAddress}
+  1921→                  onChange={(e) => setCustAddress(e.target.value)}
+  1922→                  placeholder="الولاية، البلدية، الحي، الشارع..."
+  1923→                  rows={3}
+  1924→                  className="mt-1.5"
+  1925→                />
+  1926→              </div>
+  1927→            )}
+  1928→          </div>
+  1929→        )}
+  1930→
+  1931→        {/* ===== الخطوة 5: مراجعة الطلب ===== */}
+  1932→        {step === 5 && selectedService && pricing && (
+  1933→          <div className="space-y-4">
+  1934→            <div className="rounded-2xl border bg-card overflow-hidden">
+  1935→              <div className="px-5 py-5 bg-neutral-900 text-white flex items-center justify-between">
+  1936→                <div className="flex items-center gap-3">
+  1937→                  <span className="text-3xl">{selectedService.emoji}</span>
+  1938→                  <div>
+  1939→                    <div className="font-bold">{selectedService.name}</div>
+  1940→                    <div className="text-xs text-neutral-300">{selectedService.description}</div>
+  1941→                  </div>
+  1942→                </div>
+  1943→                <div className="text-left">
+  1944→                  <div className="text-xs text-neutral-300">المجموع</div>
+  1945→                  {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
+  1946→                    <div>
+  1947→                      <div className="text-xs text-neutral-400 line-through">{formatDA(pricing.total)}</div>
+  1948→                      <div className="text-2xl font-bold text-amber-400">{formatDA(finalPricing.total)}</div>
+  1949→                      <div className="text-xs text-emerald-400 font-medium">
+  1950→                        {finalPricing.appliedOfferNote}
+  1951→                      </div>
+  1952→                    </div>
+  1953→                  ) : (
+  1954→                    <div className="text-2xl font-bold text-amber-400">{formatDA(pricing.total)}</div>
+  1955→                  )}
+  1956→                </div>
+  1957→              </div>
+  1958→              <div className="p-5">
+  1959→                <h4 className="font-bold text-sm mb-3">تفاصيل الطلب</h4>
+  1960→
+  1961→                {/* ===== معاينة الملف المرفوع ===== */}
+  1962→                {fileName && (
+  1963→                  <div className="mb-4 flex gap-3 p-3 rounded-xl bg-amber-50/50 border border-amber-100">
+  1964→                    {/* صورة المعاينة */}
+  1965→                    {analysis?.thumbnailUrl ? (
+  1966→                      <div className="shrink-0 relative">
+  1967→                        <div className="w-20 h-24 rounded-lg overflow-hidden border-2 border-amber-200 bg-white shadow-sm">
+  1968→                          
+  1969→                          <img
+  1970→                            src={analysis.thumbnailUrl}
+  1971→                            alt="معاينة الملف"
+  1972→                            className="w-full h-full object-cover"
+  1973→                          />
+  1974→                        </div>
+  1975→                        {analysis.fileType === "PDF" && (
+  1976→                          <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
+  1977→                            PDF
+  1978→                          </div>
+  1979→                        )}
+  1980→                      </div>
+  1981→                    ) : (
+  1982→                      <div className="shrink-0 w-16 h-20 rounded-lg bg-neutral-900 flex items-center justify-center text-2xl">
+  1983→                        {analysis?.fileType === "PDF" ? "📄" : analysis?.fileType === "DOCX" ? "📝" : selectedService.emoji}
+  1984→                      </div>
+  1985→                    )}
+  1986→                    {/* معلومات الملف */}
+  1987→                    <div className="flex-1 min-w-0 space-y-1">
+  1988→                      <div className="text-xs font-bold text-neutral-900 break-all">{fileName}</div>
+  1989→                      {analysis?.fileNature && (
+  1990→                        <div className="inline-block text-xs font-medium text-amber-800 bg-white border border-amber-200 rounded-full px-2 py-0.5">
+  1991→                          {analysis.fileNature}
+  1992→                        </div>
+  1993→                      )}
+  1994→                      <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+  1995→                        {analysis?.fileType && (
+  1996→                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+  1997→                            {analysis.fileType}
+  1998→                          </span>
+  1999→                        )}
+  2000→                        {analysis?.fileSizeKB && (
+  2001→                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+  2002→                            📦 {analysis.fileSizeKB} ك.ب
+  2003→                          </span>
+  2004→                        )}
+  2005→                        {analysis?.pageCount && analysis.pageCount > 0 && (
+  2006→                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+  2007→                            📄 {analysis.pageCount} صفحة
+  2008→                          </span>
+  2009→                        )}
+  2010→                        {analysis?.imageDimensions && (
+  2011→                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+  2012→                            📐 {analysis.imageDimensions.width}×{analysis.imageDimensions.height}
+  2013→                          </span>
+  2014→                        )}
+  2015→                        {analysis?.isPortrait !== undefined && (
+  2016→                          <span className="px-1.5 py-0.5 rounded bg-white border border-amber-100">
+  2017→                            {analysis.isPortrait ? "↕ عمودي" : "↔ أفقي"}
+  2018→                          </span>
+  2019→                        )}
+  2020→                      </div>
+  2021→                      {analysis?.confidence && (
+  2022→                        <div className="text-xs text-emerald-600 flex items-center gap-1">
+  2023→                          <span>✓</span> تحليل ذكي بدقة {analysis.confidence}%
+  2024→                        </div>
+  2025→                      )}
+  2026→                    </div>
+  2027→                  </div>
+  2028→                )}
+  2029→
+  2030→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
+  2031→                  {currentSpec?.hasPrintRange && (
+  2032→                    <ReviewRow label="نطاق الطباعة" value={printRange === "all" ? "الملف كامل" : `صفحات: ${pageRange || "—"}`} />
+  2033→                  )}
+  2034→                  {currentSpec?.hasPageCount && (
+  2035→                    <ReviewRow label="عدد الصفحات" value={`${pages} ${currentSpec?.unit || "صفحة"}`} />
+  2036→                  )}
+  2037→                  <ReviewRow label="عدد النسخ" value={`${copies} ${currentSpec?.unit === "بطاقة" ? "بطاقة" : currentSpec?.unit === "صورة" ? "صورة" : currentSpec?.unit === "ملصق" ? "ملصق" : "نسخة"}`} />
+  2038→                  {/* عرض كل خيارات المواصفات المختارة ديناميكياً */}
+  2039→                  {currentSpec && currentSpec.sections.map((section) => {
+  2040→                    const selId = specOptions[section.optionKey];
+  2041→                    const opt = section.options.find((o) => o.id === selId);
+  2042→                    if (!opt) return null;
+  2043→                    return (
+  2044→                      <ReviewRow
+  2045→                        key={section.id}
+  2046→                        label={section.title}
+  2047→                        value={`${opt.emoji || ""} ${opt.label}`.trim()}
+  2048→                      />
+  2049→                    );
+  2050→                  })}
+  2051→                  <ReviewRow
+  2052→                    label="التسليم"
+  2053→                    value={DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label || deliveryMode}
+  2054→                  />
+  2055→                  {deliveryNotes && (
+  2056→                    <div className="mt-2 rounded-xl bg-amber-50/80 border border-amber-200 p-3">
+  2057→                      <div className="flex items-center gap-2 mb-1.5">
+  2058→                        <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center">
+  2059→                          <Clock className="h-3 w-3 text-amber-600" />
+  2060→                        </div>
+  2061→                        <span className="text-xs font-bold text-amber-800">ملاحظات التسليم</span>
+  2062→                      </div>
+  2063→                      <p className="text-xs text-amber-700 leading-relaxed pr-7">{deliveryNotes}</p>
+  2064→                    </div>
+  2065→                  )}
+  2066→                  {notes && (
+  2067→                    <div className="mt-2 rounded-xl bg-amber-50/80 border border-amber-200 p-3">
+  2068→                      <div className="flex items-center gap-2 mb-1.5">
+  2069→                        <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center">
+  2070→                          <FileText className="h-3 w-3 text-amber-600" />
+  2071→                        </div>
+  2072→                        <span className="text-xs font-bold text-amber-800">ملاحظات إضافية</span>
+  2073→                      </div>
+  2074→                      <p className="text-xs text-amber-700 leading-relaxed pr-7">{notes}</p>
+  2075→                    </div>
+  2076→                  )}
+  2077→                  <ReviewRow label="العميل" value={custName} />
+  2078→                </div>
+  2079→
+  2080→                <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+  2081→                  ℹ️ سيتم تأكيد السعر النهائي بعد مراجعة الملف
+  2082→                </div>
+  2083→
+  2084→                <div className="mt-3 p-4 rounded-lg bg-neutral-50 border border-neutral-200">
+  2085→                  <div className="font-bold text-sm mb-1 flex items-center gap-2">
+  2086→                    <PhoneIcon className="h-4 w-4 text-amber-600" />
+  2087→                    سنتواصل معك قبل بدء الطباعة
+  2088→                  </div>
+  2089→                  <p className="text-xs text-muted-foreground leading-relaxed">
+  2090→                    سنتصل بك على الرقم أدناه لتأكيد الطلب والتفاصيل النهائية قبل تنفيذ الطباعة.
+  2091→                    تأكد من توفّرك لاستقبال المكالمة.
+  2092→                  </p>
+  2093→                  <div className="mt-2 flex items-center gap-2 text-sm font-bold text-neutral-900" dir="ltr">
+  2094→                    📞 {custPhone}
+  2095→                  </div>
+  2096→                </div>
+  2097→              </div>
+  2098→            </div>
+  2099→          </div>
+  2100→        )}
+  2101→
+  2102→        {/* أزرار التنقل */}
+  2103→        <div className="flex items-center justify-between mt-6 md:mt-8 pt-4 border-t gap-2">
+  2104→          <Button variant="outline" onClick={prev} disabled={step === 0} className="text-xs sm:text-sm">
+  2105→            <ArrowRight className="h-4 w-4" />
+  2106→            <span className="hidden xs:inline">السابق</span>
+  2107→          </Button>
+  2108→          <div className="text-xs text-muted-foreground">
+  2109→            {step + 1} / 6
+  2110→          </div>
+  2111→          <Button
+  2112→            onClick={next}
+  2113→            disabled={!canProceed() || submitting}
+  2114→            className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs sm:text-sm"
+  2115→          >
+  2116→            {submitting ? (
+  2117→              <span className="animate-pulse">جارٍ الإرسال...</span>
+  2118→            ) : step === 5 ? (
+  2119→              <>
+  2120→                <Check className="h-4 w-4" />
+  2121→                <span className="hidden xs:inline">إنشاء طلب الطباعة</span>
+  2122→                <span className="xs:hidden">تأكيد</span>
+  2123→              </>
+  2124→            ) : (
+  2125→              <>
+  2126→                <span className="hidden xs:inline">التالي</span>
+  2127→                <span className="xs:hidden">متابعة</span>
+  2128→                <ArrowLeft className="h-4 w-4" />
+  2129→              </>
+  2130→            )}
+  2131→          </Button>
+  2132→        </div>
+  2133→      </div>
+  2134→
+  2135→      {/* ===== الشريط الجانبي: ملخص الطلب (حاسوب فقط) ===== */}
+  2136→      {step > 0 && (
+  2137→      <aside className="hidden lg:block lg:sticky lg:top-24 h-fit">
+  2138→        <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+  2139→          <div className="px-5 py-4 border-b bg-neutral-900 text-white">
+  2140→            <div className="flex items-center gap-2">
+  2141→              <span className="text-lg">🧾</span>
+  2142→              <span className="font-bold text-sm">طلبك</span>
+  2143→            </div>
+  2144→          </div>
+  2145→          <div className="p-5 space-y-4">
+  2146→            {selectedService ? (
+  2147→              <>
+  2148→                <div className="flex items-center gap-3">
+  2149→                  <span className="text-2xl">{selectedService.emoji}</span>
+  2150→                  <div>
+  2151→                    <div className="font-semibold text-sm">{selectedService.name}</div>
+  2152→                    <div className="text-xs text-muted-foreground">
+  2153→                      {selectedService.description}
+  2154→                    </div>
+  2155→                  </div>
+  2156→                </div>
+  2157→                <div className="border-t pt-3 space-y-2 text-xs">
+  2158→                  {step >= 1 && (
+  2159→                    <>
+  2160→                      {fileName && (
+  2161→                        <SummaryRow label="النطاق" value={printRange === "all" ? "كامل" : "صفحات محددة"} />
+  2162→                      )}
+  2163→                      <SummaryRow label="الصفحات" value={`${pages}`} />
+  2164→                      <SummaryRow label="النسخ" value={`${copies}`} />
+  2165→                      {currentSpec && currentSpec.sections.slice(0, 3).map((section) => {
+  2166→                        const selId = specOptions[section.optionKey];
+  2167→                        const opt = section.options.find((o) => o.id === selId);
+  2168→                        if (!opt) return null;
+  2169→                        return (
+  2170→                          <SummaryRow key={section.id} label={section.title} value={opt.label} />
+  2171→                        );
+  2172→                      })}
+  2173→                    </>
+  2174→                  )}
+  2175→                  {step >= 3 && (
+  2176→                    <SummaryRow
+  2177→                      label="التسليم"
+  2178→                      value={
+  2179→                        deliveryTimeSlot
+  2180→                          ? `${DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label} — ${deliveryEstimate.timeSlots.find(s => s.id === deliveryTimeSlot)?.label}`
+  2181→                          : DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label
+  2182→                      }
+  2183→                    />
+  2184→                  )}
+  2185→                  {step >= 4 && custName && (
+  2186→                    <SummaryRow label="العميل" value={custName} />
+  2187→                  )}
+  2188→                  {step >= 1 && notes && (
+  2189→                    <SummaryRow label="ملاحظات" value={notes.length > 30 ? notes.slice(0, 30) + "..." : notes} />
+  2190→                  )}
+  2191→                </div>
+  2192→              </>
+  2193→            ) : (
+  2194→              <div className="text-center py-6 text-xs text-muted-foreground">
+  2195→                <div className="text-3xl mb-2">🖨️</div>
+  2196→                اختر خدمة لتبدأ بناء طلبك
+  2197→              </div>
+  2198→            )}
+  2199→
+  2200→            {pricing && (
+  2201→              <div className="border-t pt-3 space-y-2">
+  2202→                <div className="text-xs text-muted-foreground">سعر شفاف — لا مفاجآت</div>
+  2203→                <SummaryRow label="سعر الصفحة" value={formatDA(pricing.perPage)} />
+  2204→                {pricing.sidesSaving > 0 && (
+  2205→                  <SummaryRow label="توفير الوجهين" value={`−${formatDA(pricing.sidesSaving)}`} green />
+  2206→                )}
+  2207→                {pricing.finishingCost > 0 && (
+  2208→                  <SummaryRow label="التشطيب/التجليد" value={formatDA(pricing.finishingCost)} />
+  2209→                )}
+  2210→                {pricing.deliveryCost > 0 && (
+  2211→                  <SummaryRow label="التوصيل العاجل" value={formatDA(pricing.deliveryCost)} />
+  2212→                )}
+  2213→                {pricing.discount > 0 && (
+  2214→                  <SummaryRow label="خصم الكمية" value={`−${formatDA(pricing.discount)}`} green />
+  2215→                )}
+  2216→                {appliedOffer && finalPricing && finalPricing.total < pricing.total && (
+  2217→                  <SummaryRow
+  2218→                    label={`عرض خاص (${appliedOffer.code})`}
+  2219→                    value={`−${formatDA(pricing.total - finalPricing.total)}`}
+  2220→                    green
+  2221→                  />
+  2222→                )}
+  2223→                <div className="flex items-center justify-between pt-2 border-t">
+  2224→                  <span className="font-bold text-sm">المجموع</span>
+  2225→                  {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
+  2226→                    <div className="text-left">
+  2227→                      <span className="text-xs text-muted-foreground line-through block">{formatDA(pricing.total)}</span>
+  2228→                      <span className="text-2xl font-bold text-amber-700">
+  2229→                        {formatDA(finalPricing.total)}
+  2230→                      </span>
+  2231→                    </div>
+  2232→                  ) : (
+  2233→                    <span className="text-2xl font-bold text-amber-700">
+  2234→                      {formatDA(pricing.total)}
+  2235→                    </span>
+  2236→                  )}
+  2237→                </div>
+  2238→              </div>
+  2239→            )}
+  2240→          </div>
+  2241→        </div>
+  2242→
+  2243→      </aside>
+  2244→      )}
+  2245→
+  2246→      {/* نافذة العرض المفاجئ */}
+  2247→      <OfferPopup
+  2248→        offer={offer}
+  2249→        open={offerPopupOpen}
+  2250→        onClose={() => setOfferPopupOpen(false)}
+  2251→        onAccept={(o) => {
+  2252→          setAppliedOffer(o);
+  2253→          setOfferPopupOpen(false);
+  2254→          const saving = o.discountPercent
+  2255→            ? `${o.discountPercent}% خصم`
+  2256→            : o.freeService || "مكافأة مجانية";
+  2257→          toast.success("تم تطبيق العرض على طلبك! 🎉", {
+  2258→            description: `${saving} · الكود: ${o.code}`,
+  2259→          });
+  2260→        }}
+  2261→      />
+  2262→
+  2263→      {/* نافذة تأكيد الطلب */}
+  2264→      <OrderConfirmDialog
+  2265→        open={confirmOpen}
+  2266→        onOpenChange={setConfirmOpen}
+  2267→        onConfirm={() => {
+  2268→          setConfirmOpen(false);
+  2269→          handleSubmit();
+  2270→        }}
+  2271→        orderSummary={{
+  2272→          serviceName: STATIC_SERVICES.find((s) => s.type === serviceType)?.name || serviceType || "",
+  2273→          serviceType: serviceType || "",
+  2274→          copies,
+  2275→          pages: totalPages,
+  2276→          total: finalPricing?.total || 0,
+  2277→          customerName: custName,
+  2278→          customerPhone: custPhone,
+  2279→          deliveryMode: DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label || deliveryMode,
+  2280→          fileName: fileName || undefined,
+  2281→        }}
+  2282→        loading={submitting}
+  2283→      />
+  2284→    </div>
+  2285→  );
+  2286→}
+  2287→
+  2288→function Section({
+  2289→  title,
+  2290→  hint,
+  2291→  children,
+  2292→  collapsible,
+  2293→  defaultOpen = true,
+  2294→  badge,
+  2295→  priceImpact,
+  2296→}: {
+  2297→  title: string;
+  2298→  hint?: string;
+  2299→  children: React.ReactNode;
+  2300→  collapsible?: boolean;
+  2301→  defaultOpen?: boolean;
+  2302→  badge?: string;
+  2303→  priceImpact?: string;
+  2304→}) {
+  2305→  const [open, setOpen] = useState(defaultOpen);
+  2306→  const contentId = `section-${title.replace(/\s/g, "-")}`;
+  2307→
+  2308→  if (!collapsible) {
+  2309→    return (
+  2310→      <div>
+  2311→        <div className="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+  2312→          <Label className="text-base font-semibold">{title}</Label>
+  2313→          <div className="flex items-center gap-2">
+  2314→            {badge && (
+  2315→              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200">
+  2316→                {badge}
+  2317→              </span>
+  2318→            )}
+  2319→            {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+  2320→          </div>
+  2321→        </div>
+  2322→        {children}
+  2323→      </div>
+  2324→    );
+  2325→  }
+  2326→
+  2327→  return (
+  2328→    <div className="border border-border rounded-xl overflow-hidden">
+  2329→      <button
+  2330→        type="button"
+  2331→        onClick={() => setOpen(!open)}
+  2332→        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+  2333→        aria-expanded={open}
+  2334→        aria-controls={contentId}
+  2335→      >
+  2336→        <div className="flex items-center gap-2">
+  2337→          <Label className="text-sm font-semibold cursor-pointer">{title}</Label>
+  2338→          {badge && (
+  2339→            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200">
+  2340→              {badge}
+  2341→            </span>
+  2342→          )}
+  2343→          {hint && <span className="text-xs text-muted-foreground hidden sm:inline">— {hint}</span>}
+  2344→        </div>
+  2345→        <div className="flex items-center gap-2">
+  2346→          {priceImpact && (
+  2347→            <span className="text-xs font-bold text-emerald-600">{priceImpact}</span>
+  2348→          )}
+  2349→          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+  2350→        </div>
+  2351→      </button>
+  2352→      {open && (
+  2353→        <div id={contentId} className="px-4 pb-4 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+  2354→          {children}
+  2355→        </div>
+  2356→      )}
+  2357→    </div>
+  2358→  );
+  2359→}
+  2360→
+  2361→function AnalysisChip({ label, value }: { label: string; value: string }) {
+  2362→  return (
+  2363→    <div className="rounded-lg bg-white border border-emerald-200 p-2 text-center">
+  2364→      <div className="text-xs text-muted-foreground">{label}</div>
+  2365→      <div className="text-xs font-bold text-emerald-700 truncate">{value}</div>
+  2366→    </div>
+  2367→  );
+  2368→}
+  2369→
+  2370→function OptionCard({
+  2371→  selected,
+  2372→  onClick,
+  2373→  emoji,
+  2374→  label,
+  2375→  description,
+  2376→  price,
+  2377→  note,
+  2378→}: {
+  2379→  selected: boolean;
+  2380→  onClick: () => void;
+  2381→  emoji?: string;
+  2382→  label: string;
+  2383→  description?: string;
+  2384→  price?: string;
+  2385→  note?: string;
+  2386→}) {
+  2387→  return (
+  2388→    <button
+  2389→      onClick={onClick}
+  2390→      className={`relative p-4 rounded-xl border-2 text-right transition-all ${
+  2391→        selected
+  2392→          ? "border-amber-400 bg-amber-50 shadow-sm"
+  2393→          : "border-border bg-card hover:border-amber-300"
+  2394→      }`}
+  2395→    >
+  2396→      {selected && (
+  2397→        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center">
+  2398→          <Check className="h-3 w-3 text-white" />
+  2399→        </span>
+  2400→      )}
+  2401→      {emoji && <div className="text-2xl mb-1">{emoji}</div>}
+  2402→      <div className="font-semibold text-sm">{label}</div>
+  2403→      {description && <div className="text-xs text-muted-foreground mt-0.5">{description}</div>}
+  2404→      {price && (
+  2405→        <div className={`text-xs font-bold mt-1 ${selected ? "text-amber-700" : "text-muted-foreground"}`}>
+  2406→          {price}
+  2407→        </div>
+  2408→      )}
+  2409→      {note && <div className="text-xs text-amber-700 mt-1">{note}</div>}
+  2410→    </button>
+  2411→  );
+  2412→}
+  2413→
+  2414→function ReviewRow({ label, value }: { label: string; value: string }) {
+  2415→  return (
+  2416→    <div className="flex items-start justify-between gap-3 text-sm">
+  2417→      <span className="text-muted-foreground shrink-0">{label}</span>
+  2418→      <span className="font-medium text-left break-all">{value}</span>
+  2419→    </div>
+  2420→  );
+  2421→}
+  2422→
+  2423→function SummaryRow({ label, value, green }: { label: string; value: string; green?: boolean }) {
+  2424→  return (
+  2425→    <div className="flex items-center justify-between">
+  2426→      <span className="text-muted-foreground">{label}</span>
+  2427→      <span className={`font-medium ${green ? "text-emerald-600" : ""}`}>{value}</span>
+  2428→    </div>
+  2429→  );
+  2430→}
+  2431→
+  2432→/* ═══════════════════════════════════════════════════════
+  2433→   MobileOrderSummary — ملخص الطلب المضغوط للتابلت والجوال
+  2434→   يظهر فقط على الشاشات الأصغر من lg (حيث لا يوجد الشريط الجانبي)
+  2435→   ═══════════════════════════════════════════════════════ */
+  2436→function MobileOrderSummary({
+  2437→  selectedService,
+  2438→  pages,
+  2439→  copies,
+  2440→  pricing,
+  2441→  finalPricing,
+  2442→  deliveryMode,
+  2443→  deliveryTimeSlot,
+  2444→  deliveryEstimate,
+  2445→  specOptions,
+  2446→  currentSpec,
+  2447→  custName,
+  2448→  notes,
+  2449→  appliedOffer,
+  2450→}: {
+  2451→  selectedService: { emoji: string; name: string; description: string };
+  2452→  pages: number;
+  2453→  copies: number;
+  2454→  pricing: { total: number; perPage: number } | null;
+  2455→  finalPricing: { total: number } | null;
+  2456→  deliveryMode: string;
+  2457→  deliveryTimeSlot: string;
+  2458→  deliveryEstimate: { readyTimeStr: string; readyDateStr: string; timeSlots: { id: string; label: string }[] };
+  2459→  specOptions: Record<string, string>;
+  2460→  currentSpec: ServiceSpec | null;
+  2461→  custName: string;
+  2462→  notes: string;
+  2463→  appliedOffer: { code: string; discountPercent?: number; freeService?: string } | null;
+  2464→}) {
+  2465→  const DELIVERY_OPTIONS = [
+  2466→    { id: "today", label: "التسليم اليوم" },
+  2467→    { id: "tomorrow", label: "التسليم غداً" },
+  2468→    { id: "hour", label: "خلال ساعة" },
+  2469→    { id: "scheduled", label: "تاريخ محدد" },
+  2470→  ];
+  2471→
+  2472→  return (
+  2473→    <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+  2474→      <div className="px-4 py-3 border-b bg-neutral-900 text-white flex items-center justify-between">
+  2475→        <div className="flex items-center gap-2">
+  2476→          <span className="text-lg">{selectedService.emoji}</span>
+  2477→          <span className="font-bold text-sm">{selectedService.name}</span>
+  2478→        </div>
+  2479→        <div className="text-left">
+  2480→          {appliedOffer && finalPricing && finalPricing.total < (pricing?.total || 0) ? (
+  2481→            <div className="text-right">
+  2482→              <span className="text-[10px] text-neutral-400 line-through block">{formatDA(pricing?.total || 0)}</span>
+  2483→              <span className="text-lg font-bold text-amber-400">{formatDA(finalPricing.total)}</span>
+  2484→            </div>
+  2485→          ) : (
+  2486→            <span className="text-lg font-bold text-amber-400">{formatDA(pricing?.total || 0)}</span>
+  2487→          )}
+  2488→        </div>
+  2489→      </div>
+  2490→      <div className="p-3 space-y-2 text-xs">
+  2491→        <div className="grid grid-cols-3 gap-2">
+  2492→          <div className="text-center p-2 rounded-lg bg-muted/50">
+  2493→            <div className="text-muted-foreground text-[10px]">الصفحات</div>
+  2494→            <div className="font-bold">{pages}</div>
+  2495→          </div>
+  2496→          <div className="text-center p-2 rounded-lg bg-muted/50">
+  2497→            <div className="text-muted-foreground text-[10px]">النسخ</div>
+  2498→            <div className="font-bold">{copies}</div>
+  2499→          </div>
+  2500→          <div className="text-center p-2 rounded-lg bg-muted/50">
+  2501→            <div className="text-muted-foreground text-[10px]">التسليم</div>
+  2502→            <div className="font-bold text-[11px]">{deliveryEstimate.readyTimeStr}</div>
+  2503→          </div>
+  2504→        </div>
+  2505→        {currentSpec && currentSpec.sections.slice(0, 3).map((section) => {
+  2506→          const selId = specOptions[section.optionKey];
+  2507→          const opt = section.options.find(o => o.id === selId);
+  2508→          if (!opt) return null;
+  2509→          return (
+  2510→            <div key={section.id} className="flex items-center justify-between py-0.5">
+  2511→              <span className="text-muted-foreground">{section.title}</span>
+  2512→              <span className="font-medium">{opt.label}</span>
+  2513→            </div>
+  2514→          );
+  2515→        })}
+  2516→        {custName && (
+  2517→          <div className="flex items-center justify-between py-0.5">
+  2518→            <span className="text-muted-foreground">العميل</span>
+  2519→            <span className="font-medium">{custName}</span>
+  2520→          </div>
+  2521→        )}
+  2522→      </div>
+  2523→    </div>
+  2524→  );
+  2525→}
+  2526→

@@ -33,7 +33,7 @@ import { Intro } from "@/components/app/intro";
 import { LiveClock } from "@/components/app/live-clock";
 import { NotificationBadge } from "@/components/app/notification-badge";
 import { QuickPriceCalculator } from "@/components/app/quick-price-calculator";
-import { WhatsAppButton } from "@/components/app/whatsapp-button";
+import { FloatingActions } from "@/components/app/floating-actions";
 import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
 import { TestimonialsSection } from "@/components/app/testimonials-section";
 import { useAppStore } from "@/lib/store";
@@ -267,54 +267,54 @@ export function AppShell() {
             {view !== "admin" && (
               <footer className="mt-auto no-print">
                 {/* Footer Toggle Button */}
-                <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs text-muted-foreground hover:text-primary transition-colors border-t border-border/40 bg-muted/20" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
-                  <Info className="h-3.5 w-3.5" />
-                  <span className="font-semibold font-heading">{footerOpen ? "إخفاء التفاصيل" : `عرض معلومات ${shop?.name || "المتجر"}`}</span>
+                <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-1.5 py-2 px-4 text-[11px] text-muted-foreground hover:text-primary transition-colors border-t border-border/30 bg-muted/15" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
+                  <Info className="h-3 w-3" />
+                  <span className="font-semibold font-heading">{footerOpen ? "إخفاء التفاصيل" : `معلومات ${shop?.name || "المتجر"}`}</span>
                   <motion.div animate={{ rotate: footerOpen ? 0 : 180 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp className="h-3.5 w-3.5" />
                   </motion.div>
                 </button>
 
                 <div className={`footer-collapse${footerOpen ? " footer-expanded" : ""}`}>
-                  {/* Testimonials Section */}
+                  {/* Testimonials Section - compact */}
                   <TestimonialsSection />
 
                   {/* Gold Divider */}
-                  <div className="divider-gold mx-auto w-full max-w-7xl" />
+                  <div className="divider-gold mx-auto w-full max-w-5xl" />
 
-                  {/* Footer Main Content */}
+                  {/* Footer Main Content - compact */}
                   <div className="bg-foreground/[0.03] dark:bg-foreground/[0.04]">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-5 py-5 sm:py-6">
+                      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
 
                         {/* Col 1: Brand */}
-                        <div className="xs:col-span-2 md:col-span-2 lg:col-span-1">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                              <Store className="h-5 w-5 text-primary" />
+                        <div className="col-span-2 lg:col-span-1">
+                          <div className="flex items-center gap-2.5 mb-3">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Store className="h-4 w-4 text-primary" />
                             </div>
                             <div>
-                              <div className="font-bold font-heading text-foreground text-sm sm:text-base">{shop?.name || "المتجر"}</div>
-                              <div className="text-[11px] text-primary font-medium">اطبع بسهولة</div>
+                              <div className="font-bold font-heading text-foreground text-xs sm:text-sm">{shop?.name || "المتجر"}</div>
+                              <div className="text-[10px] text-primary font-medium">اطبع بسهولة</div>
                             </div>
                           </div>
-                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs">
-                            خدمة طباعة احترافية وسريعة. اطبع مستنداتك وصورك وبطاقاتك أونلاين وتابع طلبك لحظة بلحظة.
+                          <p className="text-[11px] text-muted-foreground leading-relaxed max-w-[200px]">
+                            خدمة طباعة احترافية وسريعة. اطبع مستنداتك أونلاين.
                           </p>
-                          <div className="flex items-center gap-2.5 mt-5">
+                          <div className="flex items-center gap-2 mt-3.5">
                             {displayWhatsapp && (
-                              <a href={`https://wa.me/${displayWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 flex items-center justify-center transition-all group">
-                                <MessageCircle className="h-4 w-4 text-emerald-500/70 group-hover:text-emerald-500 transition-colors" />
+                              <a href={`https://wa.me/${displayWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 flex items-center justify-center transition-all group">
+                                <MessageCircle className="h-3.5 w-3.5 text-emerald-500/70 group-hover:text-emerald-500 transition-colors" />
                               </a>
                             )}
                             {displayPhone && (
-                              <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="w-9 h-9 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 flex items-center justify-center transition-all group">
-                                <Phone className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
+                              <a href={`tel:${displayPhone.replace(/\s/g, "")}`} className="w-7 h-7 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 flex items-center justify-center transition-all group">
+                                <Phone className="h-3.5 w-3.5 text-primary/70 group-hover:text-primary transition-colors" />
                               </a>
                             )}
                             {shop?.email && (
-                              <a href={`mailto:${shop.email}`} className="w-9 h-9 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/40 flex items-center justify-center transition-all group">
-                                <Mail className="h-4 w-4 text-sky-500/70 group-hover:text-sky-500 transition-colors" />
+                              <a href={`mailto:${shop.email}`} className="w-7 h-7 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/40 flex items-center justify-center transition-all group">
+                                <Mail className="h-3.5 w-3.5 text-sky-500/70 group-hover:text-sky-500 transition-colors" />
                               </a>
                             )}
                           </div>
@@ -322,8 +322,8 @@ export function AppShell() {
 
                         {/* Col 2: Quick Links */}
                         <div>
-                          <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">روابط سريعة</h4>
-                          <ul className="space-y-2.5 text-xs sm:text-sm">
+                          <h4 className="font-heading font-bold text-[11px] sm:text-xs mb-2.5 uppercase tracking-wider text-foreground">روابط سريعة</h4>
+                          <ul className="space-y-2 text-[11px] sm:text-xs">
                             <li><button onClick={() => { setFooterOpen(false); setView("new"); }} className="text-muted-foreground hover:text-primary transition-colors">طلب طباعة جديد</button></li>
                             <li><button onClick={() => setView("track")} className="text-muted-foreground hover:text-primary transition-colors">تتبّع طلب</button></li>
                             <li><button onClick={() => setView("repeat")} className="text-muted-foreground hover:text-primary transition-colors">إعادة طلب سابق</button></li>
@@ -332,44 +332,44 @@ export function AppShell() {
 
                         {/* Col 3: Services */}
                         <div>
-                          <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">خدماتنا</h4>
-                          <ul className="space-y-2.5 text-xs sm:text-sm text-muted-foreground">
-                            <li className="flex items-center gap-2"><Printer className="h-3.5 w-3.5 text-primary/50 shrink-0" /> طباعة مستند</li>
-                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">📄</span> نسخ مستندات</li>
-                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">🖼️</span> طباعة صور</li>
-                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">📚</span> تجليد</li>
-                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">🪪</span> بطاقات</li>
-                            <li className="flex items-center gap-2"><span className="text-primary/50 shrink-0">📜</span> ملصقات</li>
+                          <h4 className="font-heading font-bold text-[11px] sm:text-xs mb-2.5 uppercase tracking-wider text-foreground">خدماتنا</h4>
+                          <ul className="space-y-1.5 text-[11px] sm:text-xs text-muted-foreground">
+                            <li className="flex items-center gap-1.5"><Printer className="h-3 w-3 text-primary/50 shrink-0" /> طباعة مستند</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">📄</span> نسخ مستندات</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">🖼️</span> طباعة صور</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">📚</span> تجليد</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">🪪</span> بطاقات</li>
+                            <li className="flex items-center gap-1.5"><span className="text-primary/50 shrink-0">📜</span> ملصقات</li>
                           </ul>
                         </div>
 
                         {/* Col 4: Contact */}
                         <div>
-                          <h4 className="font-heading font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-foreground">تواصل معنا</h4>
-                          <ul className="space-y-3 text-xs sm:text-sm">
+                          <h4 className="font-heading font-bold text-[11px] sm:text-xs mb-2.5 uppercase tracking-wider text-foreground">تواصل معنا</h4>
+                          <ul className="space-y-2 text-[11px] sm:text-xs">
                             {shop?.address && (
-                              <li className="flex items-start gap-2 text-muted-foreground">
-                                <MapPin className="h-3.5 w-3.5 text-primary/40 shrink-0 mt-0.5" />
-                                <span>{shop.address}</span>
+                              <li className="flex items-start gap-1.5 text-muted-foreground">
+                                <MapPin className="h-3 w-3 text-primary/40 shrink-0 mt-0.5" />
+                                <span className="line-clamp-1">{shop.address}</span>
                               </li>
                             )}
                             {displayPhone && (
-                              <li className="flex items-center gap-2 text-muted-foreground">
-                                <Phone className="h-3.5 w-3.5 text-primary/40 shrink-0" />
+                              <li className="flex items-center gap-1.5 text-muted-foreground">
+                                <Phone className="h-3 w-3 text-primary/40 shrink-0" />
                                 <span dir="ltr">{displayPhone}</span>
                               </li>
                             )}
                             {shop?.email && (
-                              <li className="flex items-center gap-2 text-muted-foreground">
-                                <Mail className="h-3.5 w-3.5 text-primary/40 shrink-0" />
+                              <li className="flex items-center gap-1.5 text-muted-foreground">
+                                <Mail className="h-3 w-3 text-primary/40 shrink-0" />
                                 <span>{shop.email}</span>
                               </li>
                             )}
-                            <li className="flex items-start gap-2 pt-2.5 border-t border-border/30">
-                              <Clock className="h-3.5 w-3.5 text-primary/40 shrink-0 mt-0.5" />
+                            <li className="flex items-start gap-1.5 pt-2 border-t border-border/30">
+                              <Clock className="h-3 w-3 text-primary/40 shrink-0 mt-0.5" />
                               <div className="text-muted-foreground">
-                                <div>السبت - الخميس: 8:00 ص — 7:00 م</div>
-                                <div className="text-muted-foreground/60 text-[11px] mt-0.5">الجمعة: مغلق</div>
+                                <div>السبت - الخميس: 8 ص — 7 م</div>
+                                <div className="text-muted-foreground/60 text-[10px] mt-0.5">الجمعة: مغلق</div>
                               </div>
                             </li>
                           </ul>
@@ -377,7 +377,7 @@ export function AppShell() {
                       </div>
 
                       {/* Copyright */}
-                      <div className="mt-8 md:mt-10 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs text-muted-foreground/60">
+                      <div className="mt-5 pt-4 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[10px] sm:text-[11px] text-muted-foreground/60">
                         <div>© {new Date().getFullYear()} {shop?.name || "المتجر"} — جميع الحقوق محفوظة</div>
                         <div className="flex items-center gap-1">
                           <span>مدعوم بـ</span>
@@ -391,7 +391,7 @@ export function AppShell() {
             )}
           </main>
 
-          <WhatsAppButton />
+          <FloatingActions />
           <MobileBottomNav />
           <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v as View); }} />
           <AdminGate open={adminGateOpen} onClose={() => setAdminGateOpen(false)} onSuccess={handleAdminUnlock} />

@@ -87,15 +87,15 @@ function TestimonialCard({
 
   return (
     <div
-      className={`bg-gradient-to-br ${gradientClass} border border-border/60 ${borderAccent} border-l-4 rounded-2xl p-5 md:p-6 relative overflow-hidden min-w-0 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-border/80`}
+      className={`bg-gradient-to-br ${gradientClass} border border-border/60 ${borderAccent} border-l-4 rounded-xl p-3.5 md:p-4 relative overflow-hidden min-w-0 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 hover:border-border/80`}
     >
       {/* علامة اقتباس */}
-      <span className="absolute top-3 right-4 text-6xl leading-none select-none opacity-[0.06] dark:opacity-[0.10] font-serif text-amber-500">
+      <span className="absolute top-2 right-3 text-5xl leading-none select-none opacity-[0.06] dark:opacity-[0.10] font-serif text-amber-500">
         &ldquo;
       </span>
 
       {/* التقييم + اسم الخدمة */}
-      <div className="mb-3 flex items-center gap-3 relative z-10">
+      <div className="mb-2 flex items-center gap-2.5 relative z-10">
         <StarRating rating={review.rating} />
         <span className="text-xs text-muted-foreground">
           {SERVICE_EMOJI[review.serviceType] || "📄"} {review.serviceName}
@@ -103,24 +103,24 @@ function TestimonialCard({
       </div>
 
       {/* نص التعليق */}
-      <p className="text-sm leading-relaxed text-foreground/85 relative z-10 min-h-[3.5rem]">
+      <p className="text-[13px] leading-relaxed text-foreground/85 relative z-10 min-h-[2.5rem]">
         {review.review}
       </p>
 
       {/* علامة اقتباس نهاية */}
-      <span className="absolute bottom-4 left-4 text-6xl leading-none select-none opacity-[0.06] dark:opacity-[0.10] font-serif text-amber-500 rotate-180">
+      <span className="absolute bottom-3 left-3 text-5xl leading-none select-none opacity-[0.06] dark:opacity-[0.10] font-serif text-amber-500 rotate-180">
         &ldquo;
       </span>
 
       {/* فاصل + تاريخ */}
-      <div className="relative z-10 my-4 border-t border-border/40" />
+      <div className="relative z-10 my-2.5 border-t border-border/40" />
       <div className="flex items-center gap-2 relative z-10">
         <div
-          className={`w-10 h-10 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white shrink-0 shadow-sm`}
+          className={`w-7 h-7 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white shrink-0 shadow-sm`}
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="h-3.5 w-3.5" />
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-[11px] text-muted-foreground">
           {formatReviewDate(review.ratedAt)}
         </div>
       </div>
@@ -131,12 +131,12 @@ function TestimonialCard({
 /** حالة فارغة — لا توجد آراء بعد */
 function EmptyReviews() {
   return (
-    <div className="py-12 text-center">
-      <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
-        <Printer className="h-8 w-8 text-amber-700 dark:text-amber-400" />
+    <div className="py-8 text-center">
+      <div className="w-12 h-12 mx-auto rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3">
+        <Printer className="h-6 w-6 text-amber-700 dark:text-amber-400" />
       </div>
-      <h3 className="text-lg font-bold mb-1">لا توجد آراء بعد</h3>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto">
+      <h3 className="text-sm font-bold mb-1">لا توجد آراء بعد</h3>
+      <p className="text-xs text-muted-foreground max-w-md mx-auto">
         كن أول من يُقيّم تجربته معنا! بعد استلام طلبك يمكنك ترك تقييمك في صفحة التتبع.
       </p>
     </div>
@@ -238,15 +238,15 @@ export function TestimonialsSection() {
   // حالة التحميل
   if (loading) {
     return (
-      <section className="py-8 md:py-12 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
+      <section className="py-5 md:py-7 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-xl md:text-2xl font-bold">آراء عملائنا</h2>
-            <div className="mt-2 mx-auto w-12 h-1 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
+          <div className="text-center mb-5">
+            <h2 className="text-base md:text-lg font-bold">آراء عملائنا</h2>
+            <div className="mt-1.5 mx-auto w-10 h-0.5 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-52 rounded-2xl bg-muted animate-pulse" />
+              <div key={i} className="h-40 rounded-xl bg-muted animate-pulse" />
             ))}
           </div>
         </div>
@@ -257,11 +257,11 @@ export function TestimonialsSection() {
   // لا توجد آراء
   if (reviews.length === 0) {
     return (
-      <section className="py-8 md:py-12 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
+      <section className="py-5 md:py-7 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-4">
-          <div className="text-center mb-6">
-            <h2 className="text-xl md:text-2xl font-bold">آراء عملائنا</h2>
-            <div className="mt-2 mx-auto w-12 h-1 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
+          <div className="text-center mb-4">
+            <h2 className="text-base md:text-lg font-bold">آراء عملائنا</h2>
+            <div className="mt-1.5 mx-auto w-10 h-0.5 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
           </div>
           <EmptyReviews />
         </div>
@@ -271,12 +271,12 @@ export function TestimonialsSection() {
 
   // الكاروسيل
   return (
-    <section className="py-8 md:py-12 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
+    <section className="py-5 md:py-7 bg-gradient-to-b from-muted/40 to-muted/20 no-print">
       <div className="max-w-7xl mx-auto px-3 sm:px-4">
         {/* العنوان + عدد الآراء */}
-        <div className="mb-8 text-center">
-          <h2 className="text-xl md:text-2xl font-bold">آراء عملائنا</h2>
-          <div className="mt-2 mx-auto w-12 h-1 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
+        <div className="mb-5 text-center">
+          <h2 className="text-base md:text-lg font-bold">آراء عملائنا</h2>
+          <div className="mt-1.5 mx-auto w-10 h-0.5 rounded-full bg-gradient-to-l from-amber-400 to-amber-500" />
           <p className="text-sm text-muted-foreground mt-2">
             {reviews.length} تقييم حقيقي من عملائنا
           </p>
@@ -375,7 +375,7 @@ export function TestimonialsSection() {
         </div>
 
         {/* مؤشرات النقاط */}
-        <div className="flex items-center justify-center gap-2 mt-5">
+        <div className="flex items-center justify-center gap-1.5 mt-3">
           {reviews.map((_, i) => (
             <button
               key={i}
@@ -406,7 +406,7 @@ export function TestimonialsSection() {
         {/* شريط التقدم */}
         {reviews.length > 1 && (
           <div className="flex justify-center mt-3">
-            <div className="w-24 h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+            <div className="w-20 h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
               <motion.div
                 key={activeIndex}
                 className="h-full bg-amber-400 rounded-full origin-right"

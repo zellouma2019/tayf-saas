@@ -813,15 +813,15 @@ export async function analyzeFileWithAI(
     formData.append("fileName", file.name);
     formData.append("fileType", basicAnalysis.fileType);
 
-    // ═══ تحسين: للصور الكبيرة، أرسل نسخة مصغّرة فقط (أسرع بكثير) ═══
+    // For images larger than 200KB, send a larger thumbnail (800px for better VLM accuracy)
     if (isImage && file.size > 200 * 1024) {
       try {
-        const thumbnailBlob = await createImageThumbnail(file, 400);
+        const thumbnailBlob = await createImageThumbnail(file, 800);
         if (thumbnailBlob) {
           formData.append("thumbnailDataUrl", await blobToDataUrl(thumbnailBlob, "image/jpeg"));
         }
       } catch {
-        // فشل التصغير — أرسل الملف الأصلي
+        // Thumbnail creation failed — send original file
         formData.append("file", file);
       }
     } else if (basicAnalysis.thumbnailUrl) {

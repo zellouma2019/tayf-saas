@@ -398,3 +398,25 @@ Stage Summary:
 - ✅ File preview fallback deployed
 - ✅ All 6 original bugs fixed + deployed
 - ⚠️ Arabic text in JSX comments causes Turbopack SWC parser failures — use English only in JSX comments
+---
+Task ID: 3
+Agent: Sub-agent
+Task: Create 3-option floating actions FAB
+
+Work Log:
+- Created `/home/z/my-project/src/components/app/floating-actions.tsx` with a main FAB button that expands to 3 action items
+- 3 actions: "طلب جديد" (New Order, Plus icon, primary color → setView("new")), "تتبّع طلب" (Track Order, Search icon, emerald-500 → setView("track")), "واتساب" (WhatsApp, MessageCircle icon, emerald-600 → opens wa.me link)
+- Main FAB: 52px (w-[52px] h-[52px]), primary bg, Plus icon rotates to × (45deg) when open, idle pulse animation, shadow
+- Action items: 44px (w-11 h-11), staggered spring animation (stiffness: 350, damping: 25), border-l-3px accent, tooltip labels with pointer arrow on right side (RTL)
+- Position: fixed bottom-20 left-3 z-50 md:bottom-6 md:left-6 (matches old WhatsApp button)
+- Hidden when view === "admin"
+- Closes on click outside (mousedown listener) and Escape key
+- All hooks placed before early return to satisfy react-hooks/rules-of-hooks
+- Updated `app-shell.tsx`: replaced WhatsAppButton import/usage with FloatingActions
+- Lint check: 0 errors
+
+Stage Summary:
+- ✅ floating-actions.tsx created with 3-option expandable FAB
+- ✅ WhatsAppButton replaced with FloatingActions in app-shell.tsx
+- ✅ Lint passes cleanly
+- ✅ All spec requirements met (animations, positioning, RTL tooltips, keyboard/click-outside close)
