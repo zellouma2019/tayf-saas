@@ -224,8 +224,8 @@
   *, *::before, *::after {
     box-sizing: border-box;
   }
-  /* منع التمرير الأفقي على جميع المستويات */
-  #__next, main, [dir="rtl"] > div, [dir="rtl"] > div > div {
+  /* منع التمرير الأفقي — لا نستهدف العناصر fixed لتفادي قصّ المحتوى العائم */
+  #__next, main {
     overflow-x: hidden;
   }
   .font-amiri {

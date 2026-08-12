@@ -183,7 +183,7 @@ function ShopAppInner({ slug }: { slug: string }) {
 function ShopApp({ slug }: { slug: string }) {
   return (
     <Suspense fallback={<ShopLoader />}>
-      <div className="min-h-screen safe-bottom overflow-x-hidden">
+      <div className="min-h-screen safe-bottom">
         <ShopAppInner slug={slug} />
       </div>
     </Suspense>

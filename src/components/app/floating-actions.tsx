@@ -97,7 +97,7 @@ export function FloatingActions() {
   const springTransition = { type: "spring" as const, stiffness: 350, damping: 25 };
 
   return (
-    <div ref={containerRef} className="fixed bottom-20 left-3 z-50 md:bottom-6 md:left-6 no-print">
+    <div ref={containerRef} className="fixed bottom-20 left-3 z-50 md:bottom-6 md:left-6 no-print overflow-visible" style={{ overflow: 'visible' }}>
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -105,7 +105,7 @@ export function FloatingActions() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-16 left-0 flex flex-col-reverse items-start gap-3 mb-1"
+            className="absolute bottom-16 left-0 flex flex-col-reverse items-start gap-3 mb-1 pointer-events-auto"
           >
             {actions.map((action, index) => (
               <motion.div
