@@ -489,3 +489,27 @@ Stage Summary:
 - Intro splash screen should no longer be clipped by parent container overflow
 - Dev server OOM prevents local verification; changes pushed to GitHub for Vercel deployment
 - User should verify on https://tayf-saas.vercel.app/s/alsalem
+---
+Task ID: 2
+Agent: main
+Task: Restore working version from b674027 + fix bugs
+
+Work Log:
+- Analyzed uploaded file: it was the INITIAL skeleton, NOT the working version
+- Used git diff to compare b674027 with HEAD — found only 4 files changed
+- Key finding: upload-step.tsx, intro.tsx, and ALL API routes are IDENTICAL since b674027
+- The user's reported issues (upload, analysis, orders, invoice, print) were NOT caused by recent changes
+- Restored 4 files from b674027: app-shell, floating-actions, globals.css, shop-page
+- Applied targeted fixes on top of restored base:
+  1. Footer: starts collapsed, compact content, no testimonials
+  2. Overflow: removed [dir=rtl]>div CSS rule, added overflow:visible to FAB
+  3. Fixed CRITICAL bug: order POST now checks rowsAffected after INSERT
+  4. Fixed verify-print: added CDN file support for AI verification
+- Deep analysis found 10 issues in the codebase (see report)
+
+Stage Summary:
+- Restored to b674027 base + targeted fixes
+- Fixed 2 real bugs (order creation silent failure, CDN verify-print)
+- Pushed to GitHub (commit ec4606f)
+- Remaining issues: Vercel deployment may still show stale code
+- User should verify at https://tayf-saas.vercel.app/s/alsalem
