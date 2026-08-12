@@ -513,3 +513,31 @@ Stage Summary:
 - Pushed to GitHub (commit ec4606f)
 - Remaining issues: Vercel deployment may still show stale code
 - User should verify at https://tayf-saas.vercel.app/s/alsalem
+---
+Task ID: 1-8
+Agent: main
+Task: Fix customer shop version - clipping issues, footer, floating button, intro, file analysis, order flow
+
+Work Log:
+- Extracted and analyzed uploaded old project (workspace tar) — only contained landing page, not customer shop
+- Identified ROOT CAUSE of all clipping issues: `overflow-x: hidden` on `html, body` in globals.css (CSS spec forces `overflow-y: auto` which clips `position: fixed` children)
+- Found duplicate `overflow-x: hidden !important` rule at line 34554 (customer styles section)
+- Removed `overflow-x: hidden` from html/body in @layer base (line 221)
+- Removed duplicate `overflow-x: hidden !important` from html/body (line 34554-34556)
+- Changed `#__next, main` overflow rule to only target `main`
+- Changed `.footer-collapse` from `overflow: hidden` to `overflow: clip` (doesn't create new scroll container)
+- Replaced 4-column collapsible footer with compact always-visible footer (shop name, address, contact icons, working hours, copyright)
+- Removed unused imports: TestimonialsSection, ChevronUp, Info, footerOpen state
+- Fixed floating actions: z-index to z-[60], added pointer-events-auto, explicit overflow:visible
+- Verified file analysis flow uses REAL AI analysis (pdf.js + VLM via z-ai-web-dev-sdk)
+- Verified order creation API, invoice download, file print routes are correct
+- Pushed to GitHub, deployed to Vercel
+- Browser-tested live site: intro renders fully, FAB menu opens correctly, footer visible, no clipping
+
+Stage Summary:
+- ROOT CAUSE FIXED: overflow-x:hidden on html/body was clipping all position:fixed elements
+- Compact footer deployed (single row, always visible, no toggle)
+- Floating action button menu opens and displays correctly (verified via VLM)
+- Intro animation renders without clipping
+- File analysis is real (pdf.js + VLM), not mock
+- All changes committed and pushed to GitHub/Vercel
