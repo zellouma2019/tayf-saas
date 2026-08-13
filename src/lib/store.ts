@@ -1,6 +1,16 @@
 import { create } from "zustand";
 import type { PrintOrderLite } from "@/lib/order-types";
-import type { CreatedOrder } from "@/components/app/app-shell";
+
+// نوع مؤقت - سيتم تحديثه مع النسخة الجديدة
+export interface CreatedOrder {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  phone: string;
+  totalPrice: number;
+  status: string;
+  createdAt: string;
+}
 
 type View = "new" | "repeat" | "track" | "history" | "admin" | "loyalty";
 
