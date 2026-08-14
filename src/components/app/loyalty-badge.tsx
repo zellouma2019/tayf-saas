@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Shield, TrendingUp, Crown, Star, Award, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { shopApi } from "@/lib/shop-api";
 
 interface LoyaltyData {
   phone: string;
@@ -117,7 +118,7 @@ export function LoyaltyBadge({ phone, compact = false }: LoyaltyBadgeProps) {
 
     const fetchPromise = resetPromise.then(async () => {
       try {
-        const r = await fetch(`/api/loyalty/check?phone=${encodeURIComponent(clean)}`, { signal: controller.signal });
+        const r = await shopApi(`/api/loyalty/check?phone=${encodeURIComponent(clean)}`, { signal: controller.signal });
         if (!r.ok) throw new Error("خطأ في البحث");
         const d = await r.json();
         if (!cancelled) setData(d);

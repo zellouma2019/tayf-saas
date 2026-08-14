@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronRight, ChevronLeft, MessageSquare, Printer } from "lucide-react";
+import { shopApi } from "@/lib/shop-api";
 
 interface Review {
   rating: number;
@@ -157,7 +158,7 @@ export function TestimonialsSection() {
   useEffect(() => {
     async function fetchReviews() {
       try {
-        const res = await fetch("/api/reviews");
+        const res = await shopApi("/api/reviews");
         if (res.ok) {
           const data = await res.json();
           setReviews(Array.isArray(data.reviews) ? data.reviews : []);

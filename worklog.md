@@ -69,3 +69,162 @@ Stage Summary:
 - لوحة تحكم الأدمن تعمل 100% على الموقع الحي
 - لوحة التاجر تحتاج إعادة نشر Vercel (cache issue)
 - الكود نظيف: لا أخطاء استيراد، lint يمر (17 خطأ فقط من set-state-in-effect)
+
+---
+Task ID: 3
+Agent: Main
+Task: فحص شامل لنسخة الزبون الجديدة (new-customer/) قبل التكامل
+
+Work Log:
+- اكتشاف مجلد new-customer/ يحتوي النسخة الكاملة للزبون
+- فحص شامل لجميع الملفات (30 مكون app، 18 مكون UI، 31 API route، 17 lib file)
+- مقارنة هيكلية مع المشروع الأصلي
+- تحليل Prisma Schema — 6 نماذج في الزبون vs 11 في الأصلي
+- تحليل API routes — الزبون يستخدم Prisma مباشرة، الأصلي يستخدم turso-lite
+- مقارنة store.ts — الأصلي يدعم shopId وView أوسع
+
+المشاكل المكتشفة:
+
+🔴 حرجة:
+1. `mobile-bottom-nav.tsx` يستورد `View` من store.ts لكن النوع غير مصدّر (type not exported)
+2. `notification-badge.tsx` يستدعي `POST /api/notifications/${id}/read` — هذا المسار غير موجود
+3. Schema غير متوافق: لا يوجد FileUpload/FileChunk في نسخة الزبون
+
+🟡 عالية:
+4. لا يوجد دعم multi-tenancy (shopId) في أي ملف
+5. Setting: الزبون يستخدم @unique على key، الأصلي يستخدم @@unique([shopId, key])
+6. Customer: الزبون يستخدم @unique على phone، الأصلي يستخدم @@unique([shopId, phone])
+7. FormTemplate: بنية مختلفة تماماً (code/name/description/schema vs title/fields/sortOrder)
+8. بيانات متجر مُجمّدة: رقم هاتف، عنوان، واتساب، اسم المتجر مضمنين في الكود
+9. CreatedOrder معرّفة في app-shell.tsx بدلاً من ملف types مستقل
+
+🟢 متوسطة:
+10. duplicate formatDA في loyalty-badge.tsx و loyalty-checker.tsx
+11. تناقض بين واجهة Notification في admin-panel.tsx و notification-badge.tsx
+12. service-showcase.tsx موجود لكن معطّل (مُعلّق في new-order-wizard.tsx)
+13. ignoreBuildErrors: true و reactStrictMode: false في next.config.ts
+
+الملفات الجديدة في نسخة الزبون (تحتاج نقل):
+- intro.tsx (شاشة ترحيب متحركة)
+- service-status-banner.tsx (حالة قائمة الطباعة)
+- quick-price-calculator.tsx (حاسبة أسعار سريعة)
+- loyalty-checker.tsx (فحص البرنامج الولائي)
+- loyalty-badge.tsx (شارة البرنامج الولائي)
+- testimonials-section.tsx (شهادات العملاء)
+- offer-popup.tsx (نافذة عروض ترويجية)
+- order-confirm-dialog.tsx (تأكيد قبل الإرسال)
+- mobile-sidebar.tsx (قائمة جانبية للجوال)
+- mobile-bottom-nav.tsx (شريط تنقل سفلي للجوال)
+- back-to-top.tsx (زر العودة للأعلى)
+- floating-assistant.tsx (مساعد ذكي AI)
+- upload-step.tsx (خطوة رفع الملفات)
+- new-order-wizard.tsx (معالج طلب جديد 6 خطوات)
+- admin-panel.tsx (لوحة إدارة متكاملة)
+- app-shell.tsx (الغلاف الرئيسي للعميل)
+- track-order.tsx (تتبع الطلبات)
+- repeat-order.tsx (إعادة طلب)
+- order-success.tsx (شاشة نجاح الطلب)
+- order-detail-modal.tsx (تفاصيل الطلب)
+- admin-gate.tsx (بوابة كلمة مرور الإدارة)
+- admin-settings.tsx (إعدادات الإدارة)
+- admin-analytics.tsx (تحليلات الإدارة)
+- admin-customers.tsx (عملاء الإدارة)
+- admin-expenses.tsx (مصاريف الإدارة)
+- live-clock.tsx (ساعة حية)
+- notification-badge.tsx (إشعارات)
+- skeleton-cards.tsx, empty-state.tsx, skeleton-cards.tsx
+
+خطة التكامل المقترحة (خطوة بخطوة):
+الخطوة 1: نقل مكونات واجهة الزبون الجديدة إلى المشروع الأصلي
+الخطوة 2: تكييف store.ts ليدعم SPA state + multi-tenancy
+الخطوة 3: نقل API routes مع إضافة shopId scoping
+الخطوة 4: نقل ملفات lib المختلفة
+الخطوة 5: تكييف app-shell.tsx ليستقبل shopId/shopSlug ويستخدم بيانات المتجر الديناميكية
+الخطوة 6: ربط shop-page.tsx بـ AppShell الجديدة بدلاً من CustomerPlaceholder
+الخطوة 7: إصلاح المشاكل المكتشفة
+الخطوة 8: اختبار شامل
+
+Stage Summary:
+- الفحص الشامل مكتمل — 13 مشكلة مُوثّقة (3 حرجة، 6 عالية، 4 متوسطة)
+- نسخة الزبون SPA كاملة تحتوي ~30 مكون جديد
+- التحدي الأكبر: تحويل SPA أحادي المتجر إلى multi-tenant SaaS
+- API routes تحتاج تحويل من Prisma إلى turso-lite + إضافة shopId
+- جاهز لبدء التكامل خطوة بخطوة
+
+---
+Task ID: 3-a
+Agent: FileCopier
+Task: نقل مكونات واجهة الزبون إلى المشروع الأصلي
+
+Work Log:
+- مقارنة الملفات المتداخلة بين المشروع الأصلي ونسخة الزبون:
+  - ملفات متطابقة (تم تخطيها): loyalty-badge.tsx, order-confirm-dialog.tsx, admin-customers.tsx, admin-settings.tsx, admin-expenses.tsx, admin-panel.tsx
+  - ملفات مختلفة (لم تُنقل حسب التعليمات): testimonials-section.tsx, admin-analytics.tsx, order-detail-modal.tsx
+- نقل 19 ملف مكون جديد من new-customer/src/components/app/ إلى src/components/app/:
+  1. intro.tsx
+  2. service-status-banner.tsx
+  3. quick-price-calculator.tsx
+  4. loyalty-checker.tsx
+  5. offer-popup.tsx
+  6. mobile-sidebar.tsx
+  7. mobile-bottom-nav.tsx
+  8. back-to-top.tsx
+  9. floating-assistant.tsx
+  10. upload-step.tsx
+  11. new-order-wizard.tsx
+  12. track-order.tsx
+  13. repeat-order.tsx
+  14. order-success.tsx
+  15. admin-gate.tsx
+  16. live-clock.tsx
+  17. notification-badge.tsx
+  18. skeleton-cards.tsx (استبدال stub)
+  19. empty-state.tsx (استبدال stub)
+- نقل أصول public/: hero-bg.jpg, print-bg.jpg, upload-bg.jpg, shop-logo.png, manifest.json
+- إنشاء مجلد public/icons/ ونقل icon-192.png و icon-512.png
+- لم يُنقل app-shell.tsx (سيتم تكييفه في خطوة لاحقة)
+
+Stage Summary:
+- 19 ملف تم نقله إلى src/components/app/
+- 7 أصول عامة تم نقلها إلى public/
+- 3 ملفات متداخلة تم تخطيها لمحتواها المختلف (ستحتاج تكييف لاحق)
+- المكونات جاهزة لخطوة التكييف التالية
+
+---
+Task ID: 3-c
+Agent: CodeModifier
+Task: استبدال fetch بـ shopApi في جميع مكونات واجهة الزبون
+
+Work Log:
+- قراءة shop-api.ts لفهم واجهة shopApi (تُلحق shopId تلقائياً من zustand store)
+- فحص 19 ملف مكون للبحث عن استدعاءات fetch — 17 ملف يحتاج تعديل، 2 لا يحتوي fetch
+- استبدال جميع استدعاءات fetch بـ shopApi مع إضافة الاستيراد المناسب
+- ملفات تم تعديلها (47 استدعاء fetch تم استبدالها):
+  1. new-order-wizard.tsx: 3 استدعاءات (settings, orders POST, convert)
+  2. track-order.tsx: 1 استدعاء (track)
+  3. repeat-order.tsx: 1 استدعاء (orders/by-phone)
+  4. admin-panel.tsx: 9 استدعاءات (notifications, orders/export, admin/stats×2, orders, orders status/clone/batch/delete)
+  5. notification-badge.tsx: 4 استدعاءات (notifications GET×2, notifications/${id}/read×2)
+  6. service-status-banner.tsx: 1 استدعاء (stats/overview)
+  7. loyalty-checker.tsx: 1 استدعاء (loyalty/check)
+  8. loyalty-badge.tsx: 1 استدعاء (loyalty/check)
+  9. admin-settings.tsx: 3 استدعاءات (settings GET/PUT/DELETE)
+  10. admin-customers.tsx: 4 استدعاءات (customers GET/POST/PUT/DELETE)
+  11. admin-expenses.tsx: 5 استدعاءات (expenses GET×2, POST/PUT/DELETE)
+  12. order-success.tsx: 4 استدعاءات (orders GET×2, PATCH×2)
+  13. order-detail-modal.tsx: 5 استدعاءات (orders/audit, orders PUT, loyalty/apply-discount, orders/file, loyalty/check)
+  14. order-notes.tsx: 2 استدعاءات (orders/${id}/notes GET/PUT)
+  15. testimonials-section.tsx: 1 استدعاء (reviews)
+  16. intro.tsx: 1 استدعاء (settings)
+  17. app-shell.tsx: 2 استدعاءات (settings×2)
+- ملفات لم يتم تعديلها (لا تحتوي fetch):
+  - order-timeline.tsx
+  - mobile-sidebar.tsx
+- تم التحقق: لا يوجد أي استدعاء fetch( متبقي في الملفات المحدّثة
+- تم التحقق: لا يوجد أي استدعاء /api/ai/* تم استبداله بالخطأ
+
+Stage Summary:
+- 47 استدعاء fetch تم استبدالها بـ shopApi عبر 17 ملف
+- shopApi يُلحق shopId تلقائياً من zustand store لجميع طلبات API
+- URLs التي تحتوي بالفعل على query params تُعالج بشكل صحيح (يستخدم & بدلاً من ?)
+- لا تغييرات على أي كود آخر — فقط استبدال fetch → shopApi وإضافة الاستيراد

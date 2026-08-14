@@ -4,12 +4,12 @@ import { Suspense, useEffect, Component, type ReactNode, type ErrorInfo } from "
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ShopProvider, useShop } from "@/lib/shop-context";
-// AppShell تم حذفها مؤقتاً - سيتم استبدالها بالنسخة الجديدة
+import { AppShell } from "@/components/app/app-shell";
 import { useAppStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Store, AlertTriangle, RotateCcw } from "lucide-react";
+import { Store, AlertTriangle, RotateCcw } from "lucide-react";
 
 const MerchantDashboard = dynamic(
   () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
@@ -177,31 +177,17 @@ function ShopAppInner({ slug }: { slug: string }) {
     );
   }
 
-  return <CustomerPlaceholder />;
-}
-
-function CustomerPlaceholder() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
-      <Card className="max-w-md w-full text-center">
-        <CardContent className="py-12 px-6">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Store className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-xl font-bold mb-2 text-foreground">المتجر قيد التطوير</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            نسخة الزبون الجديدة قيد الإعداد وستكون متاحة قريباً
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => window.location.href = "/"}
-            className="gap-2"
-          >
-            العودة للرئيسية
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <AppShell
+      shopId={shop.id}
+      shopSlug={shop.slug}
+      shopName={shop.name}
+      shopPhone={shop.phone || undefined}
+      shopWhatsapp={shop.whatsapp || undefined}
+      shopEmail={shop.email || undefined}
+      shopAddress={shop.address || undefined}
+      shopLogo={shop.logoUrl || undefined}
+    />
   );
 }
 

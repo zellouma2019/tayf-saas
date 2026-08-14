@@ -1,18 +1,17 @@
 import { create } from "zustand";
 import type { PrintOrderLite } from "@/lib/order-types";
 
-// نوع مؤقت - سيتم تحديثه مع النسخة الجديدة
+export type View = "new" | "repeat" | "track" | "history" | "admin" | "loyalty";
+
 export interface CreatedOrder {
   id: string;
-  orderNumber: string;
-  customerName: string;
-  phone: string;
-  totalPrice: number;
+  reference: string;
+  serviceName: string;
+  total: number;
   status: string;
-  createdAt: string;
+  estimatedHours: number;
+  editableUntil?: string;
 }
-
-type View = "new" | "repeat" | "track" | "history" | "admin" | "loyalty";
 
 interface AppState {
   // التنقل
@@ -30,6 +29,10 @@ interface AppState {
   // تكرار طلب
   prefillOrder: PrintOrderLite | null;
   setPrefillOrder: (o: PrintOrderLite | null) => void;
+
+  // ملف جديد اختياري عند تكرار الطلب
+  pendingFile: File | null;
+  setPendingFile: (f: File | null) => void;
 
   // الإدارة
   adminUnlocked: boolean;
@@ -50,6 +53,10 @@ interface AppState {
   // المقدمة
   showIntro: boolean;
   setShowIntro: (v: boolean) => void;
+
+  // فتح المساعد الذكي من خارج المكون
+  assistantOpen: boolean;
+  setAssistantOpen: (v: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -64,6 +71,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   prefillOrder: null,
   setPrefillOrder: (o) => set({ prefillOrder: o }),
+
+  pendingFile: null,
+  setPendingFile: (f) => set({ pendingFile: f }),
 
   adminUnlocked: false,
   setAdminUnlocked: (v) => set({ adminUnlocked: v }),
@@ -80,4 +90,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   showIntro: true,
   setShowIntro: (v) => set({ showIntro: v }),
+
+  assistantOpen: false,
+  setAssistantOpen: (v) => set({ assistantOpen: v }),
 }));

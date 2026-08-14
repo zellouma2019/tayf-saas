@@ -81,6 +81,7 @@ import {
   translateOptionValue,
   HIDDEN_OPTION_KEYS,
 } from "@/lib/option-translations";
+import { shopApi } from "@/lib/shop-api";
 
 interface Notification {
   id: string;
@@ -221,7 +222,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   useEffect(() => {
     async function fetchNotifs() {
       try {
-        const res = await fetch(`/api/notifications?since=${encodeURIComponent(lastCheck)}`, {
+        const res = await shopApi(`/api/notifications?since=${encodeURIComponent(lastCheck)}`, {
           headers: adminHeaders,
         });
         if (res.ok) {
@@ -258,7 +259,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   async function exportXLSX() {
     setExporting(true);
     try {
-      const res = await fetch("/api/orders/export", { method: "POST", headers: adminHeaders });
+      const res = await shopApi("/api/orders/export", { method: "POST", headers: adminHeaders });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -282,7 +283,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   // ===== TanStack Query: إحصائيات مع كاش تلقائي =====
   const { data: queryStats } = useQuery({
     queryKey: ["admin-stats"],
-    queryFn: () => fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
+    queryFn: () => shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()),
     staleTime: 15 * 1000,
     refetchInterval: 60 * 1000,
   });
@@ -295,8 +296,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
   function loadAll() {
     setLoading(true);
     Promise.all([
-      fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
-      fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
+      shopApi("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
+      shopApi("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
     ])
       .then(([s, o]) => {
         if (s) setStats(s);
@@ -354,7 +355,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
 
   async function changeStatus(order: PrintOrderLite, status: string) {
     try {
-      const res = await fetch(`/api/orders/${order.id}`, {
+      const res = await shopApi(`/api/orders/${order.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...adminHeaders },
         body: JSON.stringify({ status }),
@@ -383,7 +384,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         customer: order.customer,
         delivery: order.delivery,
       };
-      const res = await fetch("/api/orders", {
+      const res = await shopApi("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -420,7 +421,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       const ids = Array.from(selectedIds);
       await Promise.all(
         ids.map((id) =>
-          fetch(`/api/orders/${id}`, {
+          shopApi(`/api/orders/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", ...adminHeaders },
             body: JSON.stringify({ action: "status", status }),
@@ -442,7 +443,7 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     setDeleting(true);
     try {
       const ids = Array.from(selectedIds);
-      await Promise.all(ids.map((id) => fetch(`/api/orders/${id}`, { method: "DELETE", headers: adminHeaders })));
+      await Promise.all(ids.map((id) => shopApi(`/api/orders/${id}`, { method: "DELETE", headers: adminHeaders })));
       toast.success("تم حذف الطلبات المحددة", { description: `${ids.length} طلب` });
       setSelectedIds(new Set());
       loadAll();

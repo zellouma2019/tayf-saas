@@ -40,6 +40,7 @@ import {
 import { toast } from "sonner";
 import { useAppStore } from "@/lib/store";
 import { formatDA, formatDateAr } from "@/lib/print-config";
+import { shopApi } from "@/lib/shop-api";
 
 const CATEGORIES = [
   { value: "paper", label: "ورق", emoji: "📄" },
@@ -119,14 +120,14 @@ export function AdminExpenses() {
       limit: String(limit),
     });
     if (categoryFilter) params.set("category", categoryFilter);
-    const res = await fetch(`/api/expenses?${params}`, { headers });
+    const res = await shopApi(`/api/expenses?${params}`, { headers });
     if (!res.ok) throw new Error("فشل تحميل المصاريف");
     return res.json();
   }, [page, categoryFilter, headers]);
 
   const fetchMonthTotal = useCallback(async (): Promise<number> => {
     const from = monthStartStr();
-    const res = await fetch(`/api/expenses?from=${from}&limit=1`, { headers });
+    const res = await shopApi(`/api/expenses?from=${from}&limit=1`, { headers });
     if (!res.ok) return 0;
     const data = await res.json();
     return data.totalAmount || 0;
@@ -163,7 +164,7 @@ export function AdminExpenses() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/expenses", {
+      const res = await shopApi("/api/expenses", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -208,7 +209,7 @@ export function AdminExpenses() {
     }
     setSavingId(id);
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
+      const res = await shopApi(`/api/expenses/${id}`, {
         method: "PUT",
         headers,
         body: JSON.stringify({
@@ -237,7 +238,7 @@ export function AdminExpenses() {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
+      const res = await shopApi(`/api/expenses/${id}`, {
         method: "DELETE",
         headers,
       });
