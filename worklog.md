@@ -228,3 +228,75 @@ Stage Summary:
 - shopApi يُلحق shopId تلقائياً من zustand store لجميع طلبات API
 - URLs التي تحتوي بالفعل على query params تُعالج بشكل صحيح (يستخدم & بدلاً من ?)
 - لا تغييرات على أي كود آخر — فقط استبدال fetch → shopApi وإضافة الاستيراد
+
+---
+Task ID: 3-d
+Agent: Main
+Task: تكييف store.ts + إنشاء app-shell.tsx متعدد المستأجرين + ربط shop-page.tsx
+
+Work Log:
+- تحديث store.ts:
+  - تصدير نوع View (كان مخفياً)
+  - تحديث واجهة CreatedOrder لتطابق نسخة الزبون (reference, serviceName, total...)
+  - إضافة حقول pendingFile و setPendingFile و assistantOpen و setAssistantOpen
+- إنشاء app-shell.tsx مكيّف من نسخة الزبون:
+  - إضافة واجهة AppShellProps مع 8 حقول (shopId, shopSlug, shopName, shopPhone...)
+  - استبدال جميع البيانات المُجمّدة (هاتف، عنوان، واتساب، شعار) ببيانات ديناميكية من props
+  - استخدام formatPhone() و whatsappLink() كـ helpers
+  - شريط تواصل دينامي — يخفي العناصر الفارغة (لا هاتف، لا عنوان...)
+  - دعم fall-back من /api/settings إذا لم تُمرر props
+  - عام حقوق دينامي (new Date().getFullYear())
+- تحديث shop-page.tsx:
+  - استيراد AppShell بدلاً من CustomerPlaceholder
+  - تمرير بيانات المتجر من useShop() كـ props لـ AppShell
+  - حذف مكون CustomerPlaceholder بالكامل
+  - إزالة استيراد Loader2 غير المستخدم
+- إصلاح استيرادات CreatedOrder في order-success.tsx و new-order-wizard.tsx
+  - من @/components/app/app-shell إلى @/lib/store
+
+Stage Summary:
+- store.ts الآن يدعم كل حالة SPA + multi-tenancy
+- app-shell.tsx (533 سطر) يعمل كواجهة زبون متعددة المستأجرين
+- shop-page.tsx يعرض AppShell مع بيانات المتجر الديناميكية عند ?admin!=1
+- تم إصلاح 3 أخطاء استيراد (View غير مصدّر، CreatedOrder من مكان خاطئ)
+
+---
+Task ID: 3-e
+Agent: Main
+Task: رفع على GitHub واختبار على Vercel
+
+Work Log:
+- إضافة ورفع commit 0a86b24 إلى GitHub:
+  - 36 ملف تغيّر، 9762 سطر جديد
+  - 19 مكون جديد، 7 أصول عامة، تحديثات store و shop-page
+- فحص lint: 1263 مشكلة (19 خطأ this-alias مسبق، 1244 تحذير set-state-in-effect مسبق)
+  - لا أخطاء جديدة من التكامل
+- التحقق من التبعيات: qrcode, recharts, react-markdown, @dnd-kit/* — كلها موجودة
+- اختبار على الموقع الحي (tayf-saas.vercel.app):
+  - ✅ لوحة تحكم الأدمن تعمل 100% (دخول، تبويبات، بيانات)
+  - ✅ الأصول الجديدة مُنشرتة (shop-logo.png, icons/)
+  - ❌ مسار /s/[slug] يُرجع 404 مخزن مؤقتاً (Vercel CDN age: 143589 ثانية)
+
+مشكلة Vercel CDN:
+- x-vercel-cache: HIT, x-matched-path: /404
+- الكود صحيح ومُدفع (commit 0a86b24) ونُشر بواسطة Vercel
+- لكن المسار الديناميكي /s/[slug] لا يزال مخزناً كـ 404 من نشر سابق
+- الحل: إعادة نشر (Redeploy) من لوحة تحكم Vercل
+- VERCEL_TOKEN غير متاح لاستخدام الـ API
+
+المرحلة الحالية — ما تم إنجازه:
+1. ✅ فحص شامل لنسخة الزبون (30 مكون، 31 API، 17 lib)
+2. ✅ نقل 19 مكون جديد + 7 أصول عامة
+3. ✅ تكييف store.ts (View export, pendingFile, assistantOpen)
+4. ✅ إنشاء app-shell.tsx متعدد المستأجرين (533 سطر)
+5. ✅ ربط shop-page.tsx بـ AppShell (حذف CustomerPlaceholder)
+6. ✅ تحويل 47 fetch → shopApi لتمرير shopId تلقائياً
+7. ✅ رفع على GitHub (commit 0a86b24)
+8. ⏳ اختبار واجهة الزبون — محظور بـ Vercel CDN cache
+
+ما تبقى لخطوات لاحقة:
+- إعادة نشر Vercel (يدوياً من لوحة التحكم)
+- إنشاء API endpoint لـ notifications/${id}/read (مفقود)
+- اختبار شامل لواجهة الزبون بعد إزالة الـ cache
+- تكييف المكونات المختلفة (testimonials-section, admin-analytics, order-detail-modal)
+- فحص وتحسين تجربة الجوال
