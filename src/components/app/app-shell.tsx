@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
@@ -9,6 +9,7 @@ import {
   ArrowLeftToLine,
   Sparkles,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { RepeatOrder } from "@/components/app/repeat-order";
@@ -24,6 +25,7 @@ import type { CreatedOrder } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 
 const NewOrderWizard = dynamic(() => import("@/components/app/new-order-wizard").then(m => ({ default: m.NewOrderWizard })), { loading: () => <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" /></div> });
+const QuickPriceCalculator = dynamic(() => import("@/components/app/quick-price-calculator").then(m => ({ default: m.QuickPriceCalculator })));
 const FloatingAssistant = dynamic(() => import("@/components/app/floating-assistant").then(m => ({ default: m.FloatingAssistant })), { ssr: false });
 
 /* ------------------------------------------------------------------
@@ -53,6 +55,7 @@ export function AppShell({
   shopLogo,
 }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
   const {
     view,
     setView,
@@ -141,12 +144,22 @@ export function AppShell({
         </div>
       </header>
 
+      {/* Calculator dialog */}
+      <Dialog open={calcOpen} onOpenChange={setCalcOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>حاسبة الأسعار السريعة</DialogTitle>
+          </DialogHeader>
+          <QuickPriceCalculator />
+        </DialogContent>
+      </Dialog>
+
       {/* Mobile sidebar */}
       <MobileSidebar
         open={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}
         onNavClick={handleNavClick}
-        onCalcOpen={() => {}}
+        onCalcOpen={() => setCalcOpen(true)}
       />
 
       {/* ===== Main Content ===== */}
