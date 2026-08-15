@@ -400,3 +400,92 @@ Stage Summary:
 - Fixed 3 files: page.tsx, button.tsx, globals.css
 - All buttons now use static positioning with opacity feedback instead of transform-based effects
 - Navigation buttons use semantic `<a>` tags instead of JavaScript window.open
+
+---
+Task ID: 5
+Agent: Main
+Task: إعادة تصميم واجهة الزبون لتطابق التصميم الأصلي
+
+Work Log:
+- فحص شامل لملفات: app-shell.tsx (442 سطر), mobile-bottom-nav.tsx (97 سطر), new-order-wizard.tsx (2404 سطر), upload-step.tsx (1599 سطر)
+- إعادة كتابة كاملة لـ app-shell.tsx:
+  - إزالة شريط المعلومات العلوي ذي التدرج البرتقالي بالكامل
+  - تبسيط الهيدر: تأثير زجاجي (backdrop-blur)، شعار أسود دائري + اسم المتجر + وصف، أيقونات الرئيسية + الجرس + القائمة
+  - إزالة التنقل المكتبى بالكامل
+  - إزالة الفوتر المعقد بالكامل (شهادات العملاء، روابط، خدمات، معلومات التواصل، وسائل التواصل الاجتماعي)
+  - خلفية دافئة #FFFBEB
+  - محتوى بعرض max-w-md mx-auto (جوال أولاً)
+  - إضافة زر عائم (FAB) أصفر مع أيقونة Sparkles ونقطة إشعار حمراء
+  - الحفاظ على: MobileBottomNav, RepeatOrder, TrackOrder, FloatingAssistant, NotificationBadge, MobileSidebar, BackToTop, Intro, OrderSuccess
+  - الحفاظ على AppShellProps والمتجر متعدد المستأجرين
+  - الحفاظ على view switching (new/repeat/track)
+- إعادة كتابة mobile-bottom-nav.tsx:
+  - 4 عناصر: جديد (دائرة صفراء مفعّلة), تكرار, تتبّع, حسابي
+  - تصميم بسيط ونظيف مطابق للتصميم الأصلي
+  - نص عربي RTL
+- تحديث new-order-wizard.tsx:
+  - إزالة خلفية الشبكة والنقاط CMYK من خطوة الرفع
+  - تغيير ألوان شريط التقدم إلى أصفر (#FACC15)
+  - تغيير ألوان دوائر الخطوات إلى أصفر
+  - إزالة الشريط الجانبي (sidebar) بالكامل
+  - تحويل أزرار التنقل: زر "التالي" أصفر مدور، زر "السابق" بسيط
+  - تحديث الاستيراد CreatedOrder من @/lib/store بدلاً من app-shell
+- تحديث upload-step.tsx:
+  - منطقة الرفع: حدود متقطعة صفراء، أيقونة كاميرا/رفع، نص "اختر ملف من جهازك" + "أو اسحب ملف هنا مباشرة"
+  - حقل الرابط: مدور (rounded-full)، حدود صفراء
+  - 3 بطاقات المصدر: الملفات من جهازك (برتقالي), التقط صورة (أخضر), اختر من المعرض (عنبري)
+  - رقاقات صيغ الملفات: JPEG (teal), JPG (أخضر), DOCX (أزرق), PDF (أحمر), WEBP (أصفر), PNG (بنفسجي)
+  - ملاحظة الأمان: 🔒 "معلومات آمنة – تعامل محفوظ ولن يتم إفشاء خصوصيتك"
+  - بطاقة الميزة الذكية: حدود متقطعة صفراء مع أيقونة Brain
+- تشغيل lint: 0 أخطاء جديدة من التعديلات (8 أخطاء سابقة set-state-in-effect من ملفات أخرى)
+
+Stage Summary:
+- 4 ملفات معدّلة: app-shell.tsx, mobile-bottom-nav.tsx, new-order-wizard.tsx, upload-step.tsx
+- التصميم يطابق الآن التصميم الأصلي: خلفية دافئة، ألوان صفراء/ذهبية، هيدر زجاجي بسيط، لا فوتر معقد
+- جميع الوظائف محفوظة: multi-shop, view switching, order creation, repeat order, track order
+- زر عائم جديد (FAB) أصفر مع إشعار أحمر
+- شريط تنقل سفلي جديد: 4 عناصر مع حالة نشطة صفراء
+
+
+---
+Task ID: 5
+Agent: Main
+Task: Rebuild customer UI to match user's original design screenshots
+
+Work Log:
+- Analyzed 3 user screenshots showing the original customer-facing design
+- Identified that current app-shell.tsx was completely different from original:
+  - Had amber gradient top bar (should not exist)
+  - Had complex desktop navigation (original is mobile-first)
+  - Had huge footer with testimonials, links, services, contact, social media (should not exist)
+  - Had dark theme as default (original is light cream)
+  - Had shadcn/ui dashboard-like layout (original is simple and clean)
+- Rebuilt app-shell.tsx (442 → 214 lines):
+  - Light cream background bg-[#FFFBEB]
+  - Simple glass header with backdrop-blur
+  - Black circle logo + shop name + tagline
+  - Home + Bell + Menu icons in header
+  - max-w-md centered mobile-first layout
+  - Yellow floating action button with Sparkles icon
+  - No complex footer, no top info bar, no desktop nav
+- Updated mobile-bottom-nav.tsx (97 → 113 lines):
+  - 4 tabs: جديد (yellow active circle), تكرار, تتبّع, حسابي
+  - Clean white background with yellow-100 border
+  - Profile tab with circle border
+- Updated new-order-wizard.tsx:
+  - Yellow-400 step navigation buttons
+  - Yellow-100/yellow-400 progress indicators
+  - Yellow-300 border-t on step navigation area
+- Updated upload-step.tsx:
+  - Yellow dashed border upload area with camera icon
+  - Rounded source option cards (file, camera, clipboard)
+  - Colored file format chips (JPEG teal, JPG emerald, DOCX blue, PDF red, WEBP yellow, PNG violet)
+  - Security note with lock icon
+  - AI feature card with dashed yellow border
+- Verified via agent-browser: cream background, yellow accents, upload area, format chips, bottom nav, floating button all visible
+
+Stage Summary:
+- Customer UI completely redesigned to match user's original screenshots
+- Design philosophy: simple, clean, mobile-first, yellow/gold primary on cream background
+- Architecture preserved: multi-shop props, view switching, order creation flow all intact
+- 4 files modified: app-shell.tsx, mobile-bottom-nav.tsx, new-order-wizard.tsx, upload-step.tsx

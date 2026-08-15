@@ -209,9 +209,9 @@ const FILE_TYPE_META: Record<string, { icon: typeof FileText; color: string; bg:
   PDF: { icon: FileText, color: "text-red-500", bg: "bg-red-50 border-red-200", label: "PDF" },
   DOCX: { icon: FileSpreadsheet, color: "text-blue-500", bg: "bg-blue-50 border-blue-200", label: "DOCX" },
   JPG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 border-emerald-200", label: "JPG" },
-  JPEG: { icon: ImageIcon, color: "text-emerald-500", bg: "bg-emerald-50 border-emerald-200", label: "JPEG" },
+  JPEG: { icon: ImageIcon, color: "text-teal-500", bg: "bg-teal-50 border-teal-200", label: "JPEG" },
   PNG: { icon: ImageIcon, color: "text-violet-500", bg: "bg-violet-50 border-violet-200", label: "PNG" },
-  WEBP: { icon: ImageIcon, color: "text-amber-500", bg: "bg-amber-50 border-amber-200", label: "WEBP" },
+  WEBP: { icon: ImageIcon, color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", label: "WEBP" },
 };
 
 const PHASE_CONFIG: Record<
@@ -616,21 +616,6 @@ export default function UploadStep({
 
   return (
     <div className="space-y-5">
-      {/* ─── Section Header ─── */}
-      <div>
-        <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <h3 className="text-base font-semibold mb-1">ارفع ملفك هنا</h3>
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Brain className="h-3.5 w-3.5 text-amber-600" />
-            نظام ذكي سيحلل ملفك فعلياً ويستخرج كل المعلومات الحقيقية
-          </p>
-        </motion.div>
-      </div>
-
       {/* ─── Dropzone (hidden during processing) ─── */}
       {!isProcessing && (
       <motion.div
@@ -652,9 +637,9 @@ export default function UploadStep({
           }
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className={`
-            relative cursor-pointer rounded-2xl border-2 border-dashed p-6 md:p-8 text-center
+            relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center
             transition-colors duration-200
-            ${isDragOver ? "bg-amber-50 border-amber-400" : "bg-amber-50/40 border-amber-300 hover:bg-amber-50"}
+            ${isDragOver ? "bg-yellow-50 border-yellow-400" : "bg-white border-yellow-300 hover:bg-yellow-50/50"}
           `}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -695,11 +680,11 @@ export default function UploadStep({
                 className="relative z-10"
               >
                 <motion.div
-                  className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3"
+                  className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-3 bg-yellow-400"
                   style={{
                     background: isDone
                       ? "linear-gradient(135deg, #10b981, #34d399)"
-                      : "linear-gradient(135deg, #f59e0b, #fbbf24)",
+                      : "linear-gradient(135deg, #facc15, #fde047)",
                   }}
                   animate={isProcessing ? { rotate: [0, 5, -5, 0] } : {}}
                   transition={isProcessing ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
@@ -749,20 +734,16 @@ export default function UploadStep({
                   )}
                 </motion.div>
                 {isDragOver ? (
-                  <div className="font-bold text-sm text-amber-700">
+                  <div className="font-bold text-sm text-yellow-700">
                     أفلت الملف هنا الآن
                   </div>
                 ) : (
                   <>
-                    <div className="font-semibold text-sm">
-                      {isMobile
-                        ? "اختر ملفاً من جهازك"
-                        : "اسحب وأفلت ملفك هنا"}
+                    <div className="font-semibold text-sm text-neutral-900">
+                      اختر ملف من جهازك
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {isMobile
-                        ? "أو التقط صورة مباشرة"
-                        : "أو انقر للاختيار من جهازك"}
+                    <div className="text-xs text-neutral-500 mt-1">
+                      أو اسحب ملف هنا مباشرة
                     </div>
                   </>
                 )}
@@ -786,9 +767,9 @@ export default function UploadStep({
               type="text"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="أدخل رابطاً لملف أو صورة هنا"
+              placeholder="أدخل رابط لملف موجود لديك"
               dir="ltr"
-              className="w-full h-11 pr-10 pl-4 rounded-xl border border-border bg-card text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 transition-all"
+              className="w-full h-11 pr-10 pl-4 rounded-full border border-yellow-200 bg-white text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-300 transition-all"
             />
             {urlInput.trim() && (
               <button
@@ -802,15 +783,13 @@ export default function UploadStep({
               </button>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground/60 mt-1.5 text-center">
-            {isMobile
-              ? "يمكنك لصق رابط مباشرة بالضغط مطولاً"
-              : "يمكنك لصق رابط مباشرة باستخدام Ctrl+V"}
+          <p className="text-[11px] text-neutral-400 mt-1.5 text-center">
+            يمكنك لصق رابط مباشرة
           </p>
         </motion.div>
       )}
 
-      {/* ─── Device-Specific Quick Actions ─── */}
+      {/* ─── 3 Source Option Cards ─── */}
       {!hasFile && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -818,30 +797,25 @@ export default function UploadStep({
           transition={{ delay: 0.15 }}
           className="grid grid-cols-3 gap-2"
         >
-          {/* File Picker */}
+          {/* الملفات من جهازك */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
+            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-yellow-100 hover:border-yellow-300 transition-all active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
-              {isMobile ? (
-                <Smartphone className="h-4.5 w-4.5 text-amber-600" />
-              ) : (
-                <File className="h-4.5 w-4.5 text-amber-600" />
-              )}
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+              <Copy className="h-5 w-5 text-orange-500" />
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
-              {isMobile ? "اختر من المعرض" : "اختر ملف"}
+            <span className="text-[11px] font-medium text-neutral-600 leading-tight text-center">
+              الملفات من جهازك
             </span>
           </button>
 
-          {/* Camera (mobile only) / Drag hint (desktop) */}
+          {/* التقط صورة (mobile only) */}
           {isMobile ? (
             <button
               type="button"
               onClick={() => {
-                // Trigger camera by accepting image/* on a new input
                 const cameraInput = document.createElement("input");
                 cameraInput.type = "file";
                 cameraInput.accept = "image/*";
@@ -852,43 +826,56 @@ export default function UploadStep({
                 };
                 cameraInput.click();
               }}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-yellow-100 hover:border-yellow-300 transition-all active:scale-[0.97]"
             >
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <Camera className="h-4.5 w-4.5 text-emerald-600" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <Camera className="h-5 w-5 text-emerald-500" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
+              <span className="text-[11px] font-medium text-neutral-600 leading-tight text-center">
                 التقط صورة
               </span>
             </button>
           ) : (
-            <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-dashed border-border bg-muted/20">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
-                <Upload className="h-4.5 w-4.5 text-amber-500" />
+            <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-dashed border-yellow-200">
+              <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-yellow-500" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground/60 leading-tight text-center">
+              <span className="text-[11px] font-medium text-neutral-400 leading-tight text-center">
                 اسحب ملف هنا
               </span>
             </div>
           )}
 
-          {/* Paste / Clipboard */}
+          {/* اختر من المعرض / الصق */}
           <button
             type="button"
             onClick={() => {
-              navigator.clipboard.readText().then((text) => {
-                if (text) setUrlInput(text);
-              }).catch(() => {
-                // Clipboard API might be blocked — ignore
-              });
+              if (isMobile) {
+                const galleryInput = document.createElement("input");
+                galleryInput.type = "file";
+                galleryInput.accept = "image/*";
+                galleryInput.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) processFile(file);
+                };
+                galleryInput.click();
+              } else {
+                navigator.clipboard.readText().then((text) => {
+                  if (text) setUrlInput(text);
+                }).catch(() => {});
+              }
             }}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-amber-200 transition-all active:scale-[0.97]"
+            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-yellow-100 hover:border-yellow-300 transition-all active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center">
-              <Copy className="h-4.5 w-4.5 text-orange-500" />
+            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              {isMobile ? (
+                <Smartphone className="h-5 w-5 text-amber-500" />
+              ) : (
+                <Copy className="h-5 w-5 text-amber-500" />
+              )}
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
-              {isMobile ? "الصق من الحافظة" : "الصق (Ctrl+V)"}
+            <span className="text-[11px] font-medium text-neutral-600 leading-tight text-center">
+              {isMobile ? "اختر من المعرض" : "الصق من الحافظة"}
             </span>
           </button>
         </motion.div>
@@ -920,11 +907,33 @@ export default function UploadStep({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5"
+        className="text-xs text-center text-neutral-500 flex items-center justify-center gap-1.5"
       >
-        <span className="text-emerald-500">&#128274;</span>
-        ملفاتك آمنة — تُعالج محلياً ولا تُرفع لأي خادم خارجي
+        <span className="text-emerald-500">🔒</span>
+        معلومات آمنة – تعامل محفوظ ولن يتم إفشاء خصوصيتك
       </motion.p>
+
+      {/* ─── AI Feature Card ─── */}
+      {!hasFile && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-2xl border-2 border-dashed border-yellow-300 bg-white p-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center shrink-0">
+              <Brain className="h-5 w-5 text-yellow-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900">تحليل ذكي بالذكاء الاصطناعي</h3>
+              <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
+                نظامنا الذكي يحلل ملفاتك تلقائياً ويستخرج كل المعلومات اللازمة للطباعة
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ═══════════════════════════════════════════════════
           Multi-Stage Progress
