@@ -489,3 +489,36 @@ Stage Summary:
 - Design philosophy: simple, clean, mobile-first, yellow/gold primary on cream background
 - Architecture preserved: multi-shop props, view switching, order creation flow all intact
 - 4 files modified: app-shell.tsx, mobile-bottom-nav.tsx, new-order-wizard.tsx, upload-step.tsx
+
+---
+Task ID: 6
+Agent: Main
+Task: إصلاح حجم الهيدر/الفوتر، لون الحاسبة الأسود، خطوط نسخة الزبون، واستعادة حاسبة الأسعار
+
+Work Log:
+- تحليل لقطة الشاشة باستخدام VLM: زر عائم يغطي المحتوى، حاسبة بلون أسود، خطوط غير متسقة
+- تصغير الهيدر: h-14 → h-12، شعار w-9 → w-8، أزرار h-9 → h-8
+- تصغير شريط التنقل السفلي: h-16 → h-14، أيقونات w-10 → w-9، نص 10px → 9px
+- إعادة positioning الزر العائم: bottom-20 → bottom-16 (يتناسب مع الشريط المصغر)، w-12 → w-10
+- زيادة padding المحتوى: pb-20 → pb-24 لمنع تداخل الزر العائم
+- إزالة كل dark: classes من الحاسبة (quick-price-calculator.tsx):
+  - بطاقة النتيجة: from-neutral-900 to-neutral-800 → from-white to-amber-50/80
+  - أزرار الخيارات: bg-background hover:bg-muted/50 → bg-white hover:bg-amber-50/50
+  - شريط التقدم: bg-gray-200 → bg-amber-100
+  - حقول الإدخال: border-input bg-background → border-amber-200 bg-white مع amber focus ring
+  - ألوان الخصم: gray-300 → amber-200
+- إضافة نظام خطوط نسخة الزبون (.customer-shell) في globals.css:
+  - النص العادي: Cairo (var(--font-cairo))
+  - العناوين: Alexandria (var(--font-alexandria))
+  - الأرقام/الأسعار: Inter (var(--font-inter))
+- إضافة customer-shell class إلى div الرئيسي في app-shell.tsx
+- استعادة حاسبة الأسعار كـ Dialog مع QuickPriceCalculator
+- ربط زر الحاسبة في MobileSidebar بفتح الـ Dialog (كان onCalcOpen={() => {}})
+- إزالة dark: classes من MobileSidebar
+- رفع commitين إلى GitHub: 8447274, a337539
+
+Stage Summary:
+- تم تصغير الهيدر والفوتر والزر العائم بنسبة 15-20%
+- الحاسبة تستخدم الآن ألوان دافئة (amber/yellow) فقط بدون أسود
+- خطوط المشروع (Alexandria/Cairo/Inter) تُطبق تلقائياً على نسخة الزبون عبر CSS
+- حاسبة الأسعار تعمل الآن من القائمة الجانبية
