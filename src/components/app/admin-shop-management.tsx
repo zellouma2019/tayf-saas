@@ -254,7 +254,7 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && hasChanges) { /* could warn */ } onClose(); }}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0" dir="rtl">
+      <DialogContent className="sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0" dir="rtl">
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border/50 shrink-0">
           <div>
             <DialogTitle className="text-lg font-bold">إدارة المتجر</DialogTitle>
@@ -268,18 +268,18 @@ export function AdminShopManagement({ open, onClose, shop, onSaved }: AdminShopM
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-4 pt-3 pb-0 overflow-x-auto no-scrollbar shrink-0">
+        <div className="flex gap-1 px-4 sm:px-6 pt-3 pb-0 overflow-x-auto no-scrollbar shrink-0">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-3 py-2 min-h-[44px] min-w-[44px] rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 min-h-[48px] min-w-[48px] rounded-xl text-sm font-medium whitespace-nowrap transition-all cursor-pointer active:scale-[0.97] ${
                 tab === t.key
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
               }`}
             >
-              <t.icon className="h-3.5 w-3.5" />
+              <t.icon className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">{t.label}</span>
             </button>
           ))}
