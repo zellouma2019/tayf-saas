@@ -317,3 +317,29 @@ Stage Summary:
 - Root cause: customer-loyalty-badge.tsx was deleted with customer files but merchant-dashboard.tsx still referenced it
 - Fix: Created stub component at src/components/app/customer-loyalty-badge.tsx
 - Vercel should now build successfully
+---
+Task ID: 2
+Agent: main
+Task: Replace customer version + fix shop creation
+
+Work Log:
+- Analyzed uploaded tar file (complete single-shop customer version with 167 files)
+- Identified 29 customer-facing component files to replace
+- Copied 29 components from uploaded version (app-shell, new-order-wizard, track-order, etc.)
+- Copied 15 lib files from uploaded version (store, order-types, default-settings, etc.)
+- Adapted app-shell.tsx for multi-shop: added AppShellProps, removed admin panel (handled by shop-page.tsx), dynamic shop data from props
+- Updated store.ts: added shopId, showAdminLink, exported View type and CreatedOrder interface
+- Fixed admin-create-shop.tsx: full country selector with flags/names/currencies (Gulf countries first, default SA)
+- Added trial period selection (7/15/30 days or unlimited)
+- Added feature toggles (WhatsApp notifications, AI file analysis, loyalty, payment, delivery, reviews, forms)
+- Updated shops API route to auto-create settings on shop creation
+- Verified all 72 component imports and all lib imports resolve correctly
+- No module-not-found errors in lint
+
+Stage Summary:
+- Customer version completely replaced with uploaded version
+- Multi-shop architecture preserved (shop-page.tsx routes between customer/merchant)
+- Shop creation now has: country with currency, trial period, feature toggles
+- Default country: Saudi Arabia (SA) for Gulf/Middle East focus
+- Pushed to GitHub: commit af22693
+- Pending: update admin/merchant dashboards to match new customer features
