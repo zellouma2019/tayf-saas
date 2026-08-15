@@ -135,7 +135,7 @@ const NAMOOTHAJ_9: TemplateDefinition = {
             label: "رقم الهاتف",
             type: "tel",
             required: true,
-            placeholder: "0XXXXXXXX",
+            placeholder: "05XXXXXXXX",
             width: "half",
           },
           {

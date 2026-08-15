@@ -15,7 +15,6 @@ import {
 } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { EmptyState } from "@/components/app/empty-state";
-import { shopApi } from "@/lib/shop-api";
 
 function isPdfFile(fileType: string | null): boolean {
   if (!fileType) return false;
@@ -76,7 +75,7 @@ export function TrackOrder() {
   const performSearch = useCallback((q: string) => {
     if (!q.trim()) return;
     setLoading(true);
-    shopApi(`/api/track?q=${encodeURIComponent(q)}`)
+    fetch(`/api/track?q=${encodeURIComponent(q)}`)
       .then((r) => r.json())
       .then((d) => {
         setOrders(d.orders || []);

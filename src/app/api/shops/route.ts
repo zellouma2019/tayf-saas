@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         ownerName: s.ownerName ? String(s.ownerName) : null,
         ownerPhone: s.ownerPhone ? String(s.ownerPhone) : null,
         isActive: Boolean(s.isActive),
-        country: String(s.country || "DZ"),
+        country: String(s.country || "SA"),
         language: String(s.language || "ar"),
         themeId: toNum(s.themeId),
         createdAt: String(s.createdAt),
@@ -46,15 +46,18 @@ export async function POST(req: NextRequest) {
   const rl = withRateLimit(req, "shops");
   if (!rl.ok) return rl.response;
   try {
-    // POST لم يتم تحويله لأنه يستخدم ensureDb + getNextThemeId
-    // الـ POST نادر الاستخدام (الإدارة فقط) — لا يؤثر على الأداء
     const { db } = await import("@/lib/db");
     const { ensureDb } = await import("@/lib/db");
     const { getNextThemeId } = await import("@/lib/themes");
     await ensureDb();
 
     const body = await req.json();
-    const { name, slug, adminPin, ownerName, ownerPhone, phone, whatsapp, email, address, trialDays, country, language, features, logoIcon, primaryColor, plan, customCurrency, themeId } = body;
+    const {
+      name, slug, adminPin, ownerName, ownerPhone,
+      phone, whatsapp, email, address, trialDays,
+      country, language, features, logoIcon,
+      primaryColor, plan, customCurrency, themeId,
+    } = body;
 
     if (!name || !slug || !adminPin) {
       return NextResponse.json({ error: "الاسم والمعرّف وكلمة المرور مطلوبة" }, { status: 400 });
@@ -66,10 +69,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "هذا المعرّف مستخدم بالفعل" }, { status: 409 });
     }
 
+    // معالجة فترة التجربة: 0 أو null = بدون حدود
+    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    const trialDaysNum = trialDays && Number(trialDays) > 0 ? Number(trialDays) : null;
+
     const shop = await db.shop.create({
       data: {
         name,
-        slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""),
+        slug: cleanSlug,
         adminPin: String(adminPin),
         themeId: themeId || getNextThemeId(),
         ownerName: ownerName || null,
@@ -78,17 +85,76 @@ export async function POST(req: NextRequest) {
         whatsapp: whatsapp || null,
         email: email || null,
         address: address || null,
-        country: country || "DZ",
+        country: country || "SA", // الافتراضي: السعودية (السوق المستهدف)
         language: language || "ar",
         customCurrency: customCurrency || null,
         logoIcon: logoIcon || "Printer",
         primaryColor: primaryColor || null,
         plan: plan || "free",
         features: features && typeof features === "object" ? JSON.stringify(features) : null,
-        trialDays: trialDays ? Number(trialDays) : null,
-        trialStartsAt: trialDays ? new Date() : null,
+        trialDays: trialDaysNum,
+        trialStartsAt: trialDaysNum ? new Date() : null,
       },
     });
+
+    // إنشاء الإعدادات الافتراضية للمتجر الجديد (تهيئة "مجلد" المتجر)
+    try {
+      const { DEFAULT_SETTINGS } = await import("@/lib/default-settings");
+      const shopId = shop.id;
+
+      // إنشاء إعدادات الخدمات
+      await db.setting.create({
+        data: {
+          key: "services",
+          value: JSON.stringify(DEFAULT_SETTINGS.services),
+          shopId,
+        },
+      });
+
+      // إنشاء إعدادات التوصيل
+      await db.setting.create({
+        data: {
+          key: "deliveryOptions",
+          value: JSON.stringify(DEFAULT_SETTINGS.deliveryOptions),
+          shopId,
+        },
+      });
+
+      // إنشاء الإعدادات العامة مع بيانات المتجر
+      const generalSettings = {
+        ...DEFAULT_SETTINGS.general,
+        shopName: name,
+        phoneNumber: phone || DEFAULT_SETTINGS.general.phoneNumber,
+        whatsappNumber: whatsapp || DEFAULT_SETTINGS.general.whatsappNumber,
+        email: email || DEFAULT_SETTINGS.general.email,
+        address: address || DEFAULT_SETTINGS.general.address,
+        adminCode: String(adminPin),
+      };
+      await db.setting.create({
+        data: {
+          key: "general",
+          value: JSON.stringify(generalSettings),
+          shopId,
+        },
+      });
+
+      // إنشاء إعدادات الشاشة الترحيبية
+      await db.setting.create({
+        data: {
+          key: "intro",
+          value: JSON.stringify({
+            ...DEFAULT_SETTINGS.intro,
+            title: name,
+          }),
+          shopId,
+        },
+      });
+
+      console.log(`[shops/POST] Initialized settings for shop ${cleanSlug} (${shopId})`);
+    } catch (settingsErr) {
+      // لا نوقف الإنشاء إذا فشلت تهيئة الإعدادات
+      console.error(`[shops/POST] Failed to initialize settings for ${cleanSlug}:`, settingsErr);
+    }
 
     return NextResponse.json(shop, { status: 201 });
   } catch (e) {

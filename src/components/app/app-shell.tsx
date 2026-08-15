@@ -17,6 +17,7 @@ import {
   Calculator,
   Menu,
   Home,
+  ArrowLeftToLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -24,7 +25,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { RepeatOrder } from "@/components/app/repeat-order";
 import { TrackOrder } from "@/components/app/track-order";
 import { OrderSuccess } from "@/components/app/order-success";
-import { AdminGate } from "@/components/app/admin-gate";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { LiveClock } from "@/components/app/live-clock";
 import { NotificationBadge } from "@/components/app/notification-badge";
@@ -36,10 +36,8 @@ import { TestimonialsSection } from "@/components/app/testimonials-section";
 import { useAppStore, type View } from "@/lib/store";
 import type { CreatedOrder } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
-import { shopApi } from "@/lib/shop-api";
 
 const NewOrderWizard = dynamic(() => import("@/components/app/new-order-wizard").then(m => ({ default: m.NewOrderWizard })), { loading: () => <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" /></div> });
-const AdminPanel = dynamic(() => import("@/components/app/admin-panel").then(m => ({ default: m.AdminPanel })), { ssr: false });
 const QuickPriceCalculator = dynamic(() => import("@/components/app/quick-price-calculator").then(m => ({ default: m.QuickPriceCalculator })));
 const FloatingAssistant = dynamic(() => import("@/components/app/floating-assistant").then(m => ({ default: m.FloatingAssistant })), { ssr: false });
 
@@ -55,43 +53,14 @@ export interface AppShellProps {
   shopEmail?: string;
   shopAddress?: string;
   shopLogo?: string;
+  shopCountry?: string;
+  shopCurrency?: string;
 }
 
-/* ------------------------------------------------------------------
- *  Helpers
- * ------------------------------------------------------------------ */
-
-/** تنسيق رقم هاتف للعرض (مثال: 0560000000 → 0560 00 00 00) */
-function formatPhone(raw: string | undefined): string {
-  if (!raw) return "";
-  const d = raw.replace(/[^\d+]/g, "");
-  // إذا بدأ بـ + أعد الأرقام فقط
-  const digits = d.replace(/^\+/, "");
-  if (digits.length >= 10) {
-    // 0560000000 → 0560 00 00 00
-    return `${digits.slice(0, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
-  }
-  return raw;
-}
-
-/** بناء رابط واتساب */
-function whatsappLink(number: string | undefined, fallback: string): string {
-  const digits = number?.replace(/[^\d]/g, "") || "";
-  if (!digits) return fallback;
-  // إضافة رمز الدولة إذا لم يكن موجوداً (الافتراضي: الجزائر +213)
-  const full = digits.startsWith("0")
-    ? `213${digits.slice(1)}`
-    : digits;
-  return `https://wa.me/${full}`;
-}
-
-/* ------------------------------------------------------------------
- *  Component
- * ------------------------------------------------------------------ */
 export function AppShell({
   shopId,
   shopSlug,
-  shopName: propsShopName,
+  shopName: propShopName,
   shopPhone,
   shopWhatsapp,
   shopEmail,
@@ -101,10 +70,8 @@ export function AppShell({
   const [footerOpen, setFooterOpen] = useState(true);
   const [calcOpen, setCalcOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [resolvedShopName, setResolvedShopName] = useState(propsShopName || "");
-  const [resolvedShopLogo, setResolvedShopLogo] = useState(shopLogo || "");
+  const [shopName, setShopName] = useState(propShopName || "مطبعة الذكي");
   const [isShopOpen, setIsShopOpen] = useState(false);
-
   const {
     view,
     setView,
@@ -114,27 +81,17 @@ export function AppShell({
     setPrefillOrder,
     pendingFile,
     setPendingFile,
-    adminUnlocked,
-    setAdminUnlocked,
-    adminGateOpen,
-    setAdminGateOpen,
-    adminCode,
-    setAdminCode,
     refreshKey,
     incrementRefresh,
     showIntro,
     setShowIntro,
+    showAdminLink,
   } = useAppStore();
 
-  // تحديث الاسم والشعار عند تغيّر الـ props
   useEffect(() => {
-    if (propsShopName) setResolvedShopName(propsShopName);
-  }, [propsShopName]);
-  useEffect(() => {
-    if (shopLogo !== undefined) setResolvedShopLogo(shopLogo);
-  }, [shopLogo]);
+    if (propShopName) setShopName(propShopName);
+  }, [propShopName]);
 
-  // استدعاء ساعة العمل (حساب محلي عام — يمكن تحسينه لاحقاً من settings)
   useEffect(() => {
     const checkOpen = () => {
       const now = new Date();
@@ -146,29 +103,6 @@ export function AppShell({
     const timer = setInterval(checkOpen, 60000);
     return () => clearInterval(timer);
   }, []);
-
-  // جلب رمز الإدارة فقط من settings (الاسم والشعار يأتون من props)
-  useEffect(() => {
-    shopApi("/api/settings")
-      .then((r) => r.json())
-      .then((d) => {
-        const general = d.general;
-        if (general?.adminCode) setAdminCode(general.adminCode);
-        // تحديث بيانات المتجر إذا توفرت من الـ settings كـ fallback
-        if (!propsShopName && general?.shopName) setResolvedShopName(general.shopName);
-        if (shopLogo === undefined && general?.shopLogo !== undefined) setResolvedShopLogo(general.shopLogo);
-      })
-      .catch(() => {});
-  }, [refreshKey, propsShopName, shopLogo, setAdminCode]);
-
-  // قيم العرض الفعلي (props أولاً، ثم الـ state)
-  const displayName = propsShopName || resolvedShopName || "المتجر";
-  const displayLogo = shopLogo || resolvedShopLogo;
-  const displayPhone = formatPhone(shopPhone);
-  const rawPhone = shopPhone?.replace(/[^\d+]/g, "") || "";
-  const displayAddress = shopAddress || "";
-  const displayEmail = shopEmail || "";
-  const waLink = whatsappLink(shopWhatsapp, "#");
 
   const handleCreated = useCallback((order: CreatedOrder) => {
     setCreatedOrder(order);
@@ -187,10 +121,6 @@ export function AppShell({
 
   const handleNavClick = useCallback(
     (key: View) => {
-      if (key === "admin" && !adminUnlocked) {
-        setAdminGateOpen(true);
-        return;
-      }
       if (key === "new") {
         setFooterOpen(false);
       } else {
@@ -198,26 +128,18 @@ export function AppShell({
       }
       setView(key);
     },
-    [adminUnlocked, setAdminGateOpen, setView],
+    [setView],
   );
-
-  const handleAdminUnlock = useCallback(() => {
-    setAdminUnlocked(true);
-    setAdminGateOpen(false);
-    setView("admin");
-    shopApi("/api/settings")
-      .then((r) => r.json())
-      .then((data) => {
-        const general = data.general;
-        if (general?.adminCode) setAdminCode(general.adminCode);
-      })
-      .catch(() => {});
-  }, [setAdminUnlocked, setAdminGateOpen, setView, setAdminCode]);
 
   const handleCloseOrderSuccess = useCallback(() => {
     setCreatedOrder(null);
     incrementRefresh();
   }, [setCreatedOrder, incrementRefresh]);
+
+  const displayPhone = shopPhone || "0560 00 00 00";
+  const displayAddress = shopAddress || "شارع ديدوش مراد، الجزائر العاصمة";
+  const displayEmail = shopEmail || "contact@tayf.saas";
+  const displayWhatsapp = shopWhatsapp || displayPhone;
 
   const navItems: { key: View; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "new", label: "طلب جديد", shortLabel: "جديد", icon: Plus },
@@ -253,18 +175,14 @@ export function AppShell({
               إشعار عند الجاهزية
             </span>
           </div>
-          {rawPhone ? (
-            <a
-              href={`tel:${rawPhone}`}
-              className="flex items-center gap-1 hover:bg-white/20 transition-colors whitespace-nowrap shrink-0 text-xs rounded-full px-2 py-0.5"
-            >
-              <Phone className="h-3 w-3 shrink-0" />
-              <span className="hidden sm:inline">{displayPhone}</span>
-              <span className="sm:hidden">اتصل بنا</span>
-            </a>
-          ) : (
-            <span className="text-xs opacity-70">متجر</span>
-          )}
+          <a
+            href={`tel:${displayPhone.replace(/\s/g, "")}`}
+            className="flex items-center gap-1 hover:bg-white/20 transition-colors whitespace-nowrap shrink-0 text-xs rounded-full px-2 py-0.5"
+          >
+            <Phone className="h-3 w-3 shrink-0" />
+            <span className="hidden sm:inline">{displayPhone}</span>
+            <span className="sm:hidden">اتصل بنا</span>
+          </a>
         </div>
       </div>
       )}
@@ -278,14 +196,14 @@ export function AppShell({
             className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0"
           >
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0 overflow-hidden">
-              {displayLogo ? (
-                <img src={displayLogo} alt={displayName} className="w-full h-full object-contain p-0.5" />
+              {shopLogo ? (
+                <img src={shopLogo} alt="" className="w-full h-full object-contain p-0.5" />
               ) : (
-                <span className="text-white font-bold text-lg">{displayName.charAt(0)}</span>
+                <img src="/shop-logo.png" alt="" className="w-full h-full object-contain p-0.5" />
               )}
             </div>
             <div className="text-right min-w-0">
-              <div className="font-bold text-sm md:text-base leading-tight truncate">{displayName}</div>
+              <div className="font-bold text-sm md:text-base leading-tight truncate">{shopName}</div>
               <div className="text-[10px] md:text-xs text-muted-foreground leading-tight truncate">
                 <span>الطباعة تبدأ قبل وصولك</span>
               </div>
@@ -384,21 +302,15 @@ export function AppShell({
                   <TrackOrder key={refreshKey} />
                 </motion.div>
               )}
-              {view === "admin" && (
-                <motion.div key="view-admin" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25, ease: "easeInOut" }}>
-                  <AdminPanel key={refreshKey} onRefresh={incrementRefresh} />
-                </motion.div>
-              )}
             </AnimatePresence>
           </div>
         </div>
 
-        {/* Footer (hidden in admin) */}
-        {view !== "admin" && (
+        {/* Footer */}
         <footer className="bg-gradient-to-b from-amber-50 via-orange-50/80 to-amber-50/60 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 text-neutral-700 dark:text-neutral-300 mt-auto no-print border-t border-amber-200/60 dark:border-amber-500/10">
           <button onClick={() => setFooterOpen(!footerOpen)} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors border-b border-amber-200/40 dark:border-amber-500/10 active:bg-amber-100/50 dark:active:bg-neutral-800/50" aria-expanded={footerOpen} aria-label={footerOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}>
             <Info className="h-3.5 w-3.5" />
-            <span className="font-medium">{footerOpen ? "إخفاء التفاصيل" : "عرض معلومات المتجر"}</span>
+            <span className="font-medium">{footerOpen ? "إخفاء التفاصيل" : "عرض معلومات المطبعة"}</span>
             <motion.div animate={{ rotate: footerOpen ? 0 : 180 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
               <ChevronUp className="h-4 w-4" />
             </motion.div>
@@ -412,14 +324,14 @@ export function AppShell({
                 <div className="md:col-span-1">
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center overflow-hidden">
-                      {displayLogo ? (
-                        <img src={displayLogo} alt={displayName} className="w-full h-full object-contain p-0.5" />
+                      {shopLogo ? (
+                        <img src={shopLogo} alt="" className="w-full h-full object-contain p-0.5" />
                       ) : (
-                        <span className="text-white font-bold text-sm">{displayName.charAt(0)}</span>
+                        <img src="/shop-logo.png" alt="" className="w-full h-full object-contain p-0.5" />
                       )}
                     </div>
                     <div>
-                      <div className="font-bold text-neutral-900 dark:text-white">{displayName}</div>
+                      <div className="font-bold text-neutral-900 dark:text-white">{shopName}</div>
                       <div className="text-xs text-neutral-500 dark:text-neutral-400">اطبع بسهولة</div>
                     </div>
                   </div>
@@ -466,23 +378,10 @@ export function AppShell({
                 <div>
                   <h4 className="text-neutral-900 dark:text-white font-semibold text-sm mb-3">تواصل معنا</h4>
                   <ul className="space-y-3 text-xs">
-                    {displayAddress && (
-                      <li className="flex items-start gap-2"><MapPin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" /><span>{displayAddress}</span></li>
-                    )}
-                    {rawPhone && (
-                      <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-400" /><span>{displayPhone}</span></li>
-                    )}
-                    {shopWhatsapp && (
-                      <li className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-amber-400" />
-                        <a href={waLink} target="_blank" rel="noopener noreferrer" className="hover:text-amber-600 transition-colors">
-                          واتساب
-                        </a>
-                      </li>
-                    )}
-                    {displayEmail && (
-                      <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-400" /><span>{displayEmail}</span></li>
-                    )}
+                    <li className="flex items-start gap-2"><MapPin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" /><span>{displayAddress}</span></li>
+                    <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-400" /><span>{displayPhone}</span></li>
+                    <li className="flex items-center gap-2"><MessageCircle className="h-4 w-4 text-amber-400" /><a href={`https://wa.me/${displayWhatsapp.replace(/[^0-9+]/g, "")}`} target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors">واتساب</a></li>
+                    <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-400" /><span>{displayEmail}</span></li>
                     <li className="flex items-start gap-2 pt-2 border-t border-amber-200/40 dark:border-neutral-700">
                       <Clock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                       <div>
@@ -508,19 +407,28 @@ export function AppShell({
               </div>
 
               <div className="mt-8 pt-6 border-t border-amber-200/40 dark:border-amber-500/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-neutral-400 dark:text-neutral-500">
-                <span>© {new Date().getFullYear()} {displayName} — جميع الحقوق محفوظة</span>
-                <span className="flex items-center gap-1">صُمّم <span className="animate-heart-pulse inline-block">❤️</span> بطيف SaaS</span>
+                <span>© 2026 {shopName} — جميع الحقوق محفوظة</span>
+                <span className="flex items-center gap-1">صُمّم <span className="animate-heart-pulse inline-block">❤️</span> بواسطة Tayf SaaS</span>
               </div>
             </div>
           </div>
         </footer>
-        )}
       </main>
 
       <MobileBottomNav />
 
-      <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v); }} />
-      <AdminGate open={adminGateOpen} onClose={() => setAdminGateOpen(false)} onSuccess={handleAdminUnlock} />
+      <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v as View); }} />
+
+      {showAdminLink && shopSlug && (
+        <a
+          href={`/s/${shopSlug}?admin=1`}
+          className="fixed bottom-20 left-3 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full bg-neutral-900 text-white text-xs font-medium shadow-lg hover:bg-neutral-800 transition-colors no-print"
+          title="لوحة التحكم"
+        >
+          <ArrowLeftToLine className="h-3.5 w-3.5" />
+          <span>لوحة التحكم</span>
+        </a>
+      )}
 
       <BackToTop />
       <FloatingAssistant onRepeatOrder={() => setView("repeat")} />

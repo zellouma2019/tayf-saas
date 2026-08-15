@@ -17,7 +17,6 @@ import type { PrintOrderLite } from "@/lib/order-types";
 import { EmptyState } from "@/components/app/empty-state";
 import { OrderCardSkeleton } from "@/components/app/skeleton-cards";
 import { LoyaltyChecker } from "@/components/app/loyalty-checker";
-import { shopApi } from "@/lib/shop-api";
 
 const ACCEPTED_TYPES = [
   "application/pdf",
@@ -52,7 +51,7 @@ export function RepeatOrder({ onRepeat }: RepeatOrderProps) {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await shopApi(
+      const res = await fetch(
         `/api/orders/by-phone?phone=${encodeURIComponent(clean)}`
       );
       const d = await res.json();

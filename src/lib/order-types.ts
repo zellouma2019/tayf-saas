@@ -24,6 +24,8 @@ export interface PrintOrderCustomer {
 export interface PrintOrderDelivery {
   mode: string;
   date: string;
+  timeSlot?: string;
+  notes?: string;
 }
 
 export interface PrintOrderOptions {
@@ -82,11 +84,13 @@ export interface PrintOrderLite {
   cost: number;
   tags: string[];
   adminNotes: string | null;
-  statusNotes: string | null;
   createdAt: string;
   updatedAt: string;
   readyAt: string | null;
   deliveredAt: string | null;
   startedPrintingAt: string | null;
   completedPrintingAt: string | null;
+  rating: number | null;
+  review: string | null;
+  ratedAt: string | null;
 }

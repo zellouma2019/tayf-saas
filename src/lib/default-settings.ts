@@ -20,6 +20,8 @@ export interface AppSettings {
   services: typeof SPEC_LIST;
   deliveryOptions: typeof DELIVERY_OPTIONS;
   general: {
+    shopName: string;
+    shopLogo: string; // رابط صورة الشعار أو إيموجي
     quantityDiscount10: number; // خصم 10 نسخ %
     quantityDiscount50: number; // خصم 50 نسخ %
     sidesDiscount: number; // خصم الوجهين %
@@ -31,13 +33,6 @@ export interface AppSettings {
     workHours: string;
     adminCode: string;
     autoDeleteDays: number;
-    // Customization options
-    businessName: string; // اسم الأعمال البديل (يظهر بدلاً من اسم المتجر)
-    tagline: string; // شعار نصي مخصص (يظهر أسفل اسم المتجر)
-    whatsappButtonNumber: string; // رقم واتساب منفصل لزر واتساب العائم
-    enableOrderTracking: boolean; // تفعيل تتبع الطلبات للعملاء
-    welcomeMessage: string; // رسالة ترحيب مخصصة
-    minOrderAmount: number; // الحد الأدنى للطلب بعملة المتجر
   };
   intro: IntroSettings;
 }
@@ -46,33 +41,28 @@ export const DEFAULT_SETTINGS: AppSettings = {
   services: SPEC_LIST,
   deliveryOptions: DELIVERY_OPTIONS,
   general: {
+    shopName: "مطبعة الذكي",
+    shopLogo: "",
     quantityDiscount10: 10,
     quantityDiscount50: 15,
     sidesDiscount: 50,
     minOrder: 10,
     whatsappNumber: "0560000000",
     phoneNumber: "0560000000",
-    email: "",
-    address: "",
+    email: "contact@matbaa-dhaki.dz",
+    address: "شارع ديدوش مراد، الجزائر العاصمة، الجزائر",
     workHours: "السبت - الخميس: 8:00 ص — 7:00 م",
     adminCode: "2514",
     autoDeleteDays: 10,
-    // Customization options
-    businessName: "",
-    tagline: "",
-    whatsappButtonNumber: "",
-    enableOrderTracking: true,
-    welcomeMessage: "",
-    minOrderAmount: 0,
   },
   intro: {
     enabled: true,
-    title: "طيف",
+    title: "مطبعة الذكي",
     subtitle: "اطبع بسهولة — أسرع من واتساب",
     emoji: "🖨️",
     bgIcon: "Printer",
     duration: 4200,
-    footerText: "صُمّم بحب ❤️",
+    footerText: "🇩🇿 صُمّم بحب في الجزائر",
     bgColor: "#1a1a1a",
     accentColor: "#D4AF37",
     showProgress: true,

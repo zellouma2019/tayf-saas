@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
   DndContext,
   closestCorners,
@@ -28,33 +28,42 @@ import {
   XCircle,
   AlertTriangle,
   Timer,
-  ChevronDown,
-  ChevronUp,
+  MessageSquare,
+  Inbox,
 } from "lucide-react";
-import { OrderTags } from "./order-tags";
-import { formatDA, formatDateTimeAr } from "@/lib/print-config";
+import { formatDA } from "@/lib/print-config";
 import type { PrintOrderLite } from "@/lib/order-types";
-import { cn } from "@/lib/utils";
 
-// حساب عمر الطلب مباشرة في الملف (لمنع Turbopack من حذفه)
-function _timeAgo(dateStr: string): string {
-  const diffMin = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-  if (diffMin < 1) return "الآن";
-  if (diffMin < 60) return `منذ ${diffMin} دقيقة`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `منذ ${diffHr} ساعة`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `منذ ${diffDay} يوم`;
-  return formatDateTimeAr(dateStr);
+function timeAgo(date: Date | string): string {
+  const now = Date.now();
+  const then = new Date(date).getTime();
+  const diff = now - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "الآن";
+  if (mins < 60) return `منذ ${mins} د`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `منذ ${hours} س`;
+  const days = Math.floor(hours / 24);
+  return `منذ ${days} ي`;
 }
 
 const COLUMNS = [
-  { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40", dot: "bg-amber-400" },
-  { key: "printing", label: "جارٍ الطباعة", icon: Loader2, color: "bg-gold-500/10 dark:bg-gold-500/5 text-gold-400 border-gold-500/20", dot: "bg-gold-300" },
-  { key: "ready", label: "جاهز", icon: Package, color: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40", dot: "bg-emerald-400" },
-  { key: "delivered", label: "تم التسليم", icon: CheckCircle2, color: "bg-neutral-50 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700/50", dot: "bg-neutral-400" },
-  { key: "cancelled", label: "ملغى", icon: XCircle, color: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/40", dot: "bg-rose-400" },
+  { key: "pending", label: "بانتظار", icon: Clock, color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-400" },
+  { key: "printing", label: "جارٍ الطباعة", icon: Loader2, color: "bg-sky-50 text-sky-700 border-sky-200", dot: "bg-sky-400" },
+  { key: "ready", label: "جاهز", icon: Package, color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
+  { key: "delivered", label: "تم التسليم", icon: CheckCircle2, color: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-500" },
+  { key: "cancelled", label: "ملغى", icon: XCircle, color: "bg-rose-50 text-rose-600 border-rose-200", dot: "bg-rose-500" },
 ] as const;
+
+/** Map service type to existing CSS border class */
+const SERVICE_BORDER_CLASS: Record<string, string> = {
+  document: "service-border-document",
+  photo: "service-border-photo",
+  binding: "service-border-binding",
+  copy: "service-border-copy",
+  card: "service-border-card",
+  poster: "service-border-poster",
+};
 
 const SERVICE_EMOJI: Record<string, string> = {
   document: "🖨️",
@@ -69,35 +78,6 @@ interface KanbanBoardProps {
   orders: PrintOrderLite[];
   onStatusChange: (order: PrintOrderLite, newStatus: string) => void;
   onRefresh: () => void;
-}
-
-/** WIP limit indicator */
-function WipIndicator({ count, limit }: { count: number; limit: number }) {
-  if (!limit) return null;
-  const pct = count / limit;
-  const color = pct >= 1 ? "text-rose-500" : pct >= 0.75 ? "text-amber-500" : "text-emerald-500";
-  return (
-    <span className={cn("text-[9px] tabular-nums font-medium", color)}>
-      {count}/{limit}
-    </span>
-  );
-}
-
-/** Sparkline mini chart for revenue */
-function MiniSparkline({ values }: { values: number[] }) {
-  if (values.length < 2) return null;
-  const max = Math.max(...values, 1);
-  return (
-    <div className="sparkline">
-      {values.map((v, i) => (
-        <div
-          key={i}
-          className={cn("sparkline-bar", i === values.length - 1 ? "bg-gold-400" : "bg-primary/25")}
-          style={{ height: `${Math.max(15, (v / max) * 100)}%` }}
-        />
-      ))}
-    </div>
-  );
 }
 
 /** بطاقة طلب قابلة للسحب */
@@ -126,56 +106,65 @@ function SortableOrderCard({
     order.status !== "cancelled" &&
     Date.now() - new Date(order.createdAt).getTime() > 24 * 60 * 60 * 1000;
 
+  const hasPriority = !!order.adminNotes && order.adminNotes.trim().length > 0;
+  const serviceBorderClass = SERVICE_BORDER_CLASS[order.serviceType] || "";
+  const statusDot = COLUMNS.find((c) => c.key === order.status)?.dot || "bg-neutral-400";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-card rounded-xl border p-3 mb-2 transition-all duration-200 list-item-draggable ${
+      className={`bg-card rounded-lg border p-3 sm:p-4 mb-2 card-hover-lift ${serviceBorderClass} ${
         isDragging
-          ? "shadow-xl ring-2 ring-primary/30 z-50 opacity-90 scale-[1.02]"
-          : "hover:shadow-md hover:border-primary/20"
-      } ${isStale ? "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20" : ""}`}
+          ? "shadow-lg ring-2 ring-primary/30 z-50 opacity-90"
+          : ""
+      } ${isStale ? "border-amber-300 bg-amber-50/30" : ""}`}
     >
-      <div className="flex items-start gap-2">
-        {/* مقبض السحب */}
+      <div className="flex items-start gap-2 sm:gap-3">
+        {/* مقبض السحب — touch target 44px */}
         <button
           {...attributes}
           {...listeners}
-          className="mt-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
+          className="mt-0.5 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md active:bg-muted/50"
           aria-label="اسحب"
         >
-          <GripVertical className="h-3.5 w-3.5" />
+          <GripVertical className="h-4 w-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <span className="text-xs font-bold font-mono text-neutral-900 dark:text-neutral-100">
-              {order.reference}
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-muted text-muted-foreground shrink-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {/* Status dot */}
+              <span className={`inline-block h-2 w-2 rounded-full shrink-0 ${statusDot}`} />
+              <span className="text-xs font-bold font-mono text-neutral-900 truncate">
+                {order.reference}
+              </span>
+            </div>
+            <span className="text-[10px] px-2 py-1 rounded-full font-medium bg-muted text-muted-foreground shrink-0">
               {SERVICE_EMOJI[order.serviceType] || ""} {order.serviceName}
             </span>
           </div>
           <div className="text-xs text-muted-foreground truncate mb-1">
             {order.customer?.name || "—"}
           </div>
-          {/* Tags row */}
-          <div className="mb-1">
-            <OrderTags orderId={order.id} size="sm" />
-          </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gradient-gold">
+            <span className="text-xs font-bold text-amber-700">
               {formatDA(order.total)}
             </span>
             <div className="flex items-center gap-1.5">
+              {hasPriority && (
+                <span className="min-h-[44px] min-w-[44px] flex items-center justify-center" title="يوجد ملاحظات إدارية">
+                  <MessageSquare className="h-3 w-3 text-amber-500" />
+                </span>
+              )}
               {isStale && <AlertTriangle className="h-3 w-3 text-amber-500" />}
               <span className="text-[10px] text-muted-foreground">
                 {order.copies}ن · {order.pages}ص
               </span>
             </div>
           </div>
-          <div className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
+          <div className="text-[10px] text-muted-foreground/60 mt-1.5 flex items-center gap-1">
             <Timer className="h-2.5 w-2.5" />
-            {_timeAgo(order.createdAt)}
+            {timeAgo(order.createdAt)}
           </div>
         </div>
       </div>
@@ -189,8 +178,8 @@ function CancelDropZone({ isOver }: { isOver: boolean }) {
     <div
       className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed transition-colors text-xs font-medium ${
         isOver
-          ? "border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 scale-[1.02]"
-          : "border-rose-200 dark:border-rose-800 text-rose-400 dark:text-rose-500"
+          ? "border-rose-400 bg-rose-50 text-rose-600 scale-[1.02]"
+          : "border-rose-200 text-rose-400"
       }`}
     >
       <XCircle className="h-4 w-4" />
@@ -205,16 +194,6 @@ export function KanbanBoard({
   onRefresh,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
-
-  const toggleCollapse = useCallback((colKey: string) => {
-    setCollapsedColumns((prev) => {
-      const next = new Set(prev);
-      if (next.has(colKey)) next.delete(colKey);
-      else next.add(colKey);
-      return next;
-    });
-  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -291,6 +270,8 @@ export function KanbanBoard({
     id: "cancel-drop-zone",
   });
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   return (
     <DndContext
       sensors={sensors}
@@ -298,69 +279,90 @@ export function KanbanBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-3 min-h-[400px] overflow-x-auto pb-2 sm:overflow-visible sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:gap-3 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0">
-        {columnOrders.map((col) => {
-          const isCollapsed = collapsedColumns.has(col.key);
-          return (
-          <div key={col.key} className={cn("flex flex-col min-w-[200px] sm:min-w-0 sm:flex-1 transition-all duration-300", isCollapsed ? "opacity-60" : "")}>
-            {/* رأس العمود */}
+      {/* Mobile horizontal scroll wrapper */}
+      <div className="relative">
+        {/* Gradient fade indicators on mobile */}
+        <div className="pointer-events-none absolute inset-y-0 start-0 z-20 w-6 bg-gradient-to-l from-transparent to-background sm:hidden" />
+        <div className="pointer-events-none absolute inset-y-0 end-0 z-20 w-6 bg-gradient-to-r from-transparent to-background sm:hidden" />
+
+        <div
+          ref={scrollContainerRef}
+          className="
+            flex gap-3 min-h-[400px]
+            overflow-x-auto overflow-y-hidden
+            -webkit-overflow-scrolling: touch
+            snap-x snap-mandatory
+            scroll-smooth
+            sm:grid sm:grid-cols-3 sm:overflow-x-visible lg:grid-cols-5
+            px-2 sm:px-0
+          "
+          dir="rtl"
+        >
+          {columnOrders.map((col) => (
             <div
-              className={cn("kanban-column-header flex flex-col", col.color, "cursor-pointer select-none")}
-              onClick={() => toggleCollapse(col.key)}
+              key={col.key}
+              className="
+                flex flex-col min-w-[200px] sm:min-w-0 snap-start sm:snap-none
+                shrink-0 sm:shrink
+              "
             >
-              <div className="flex items-center gap-2">
-                <col.icon className="h-3.5 w-3.5" />
-                <span className="font-medium text-xs">{col.label}</span>
-                <span className="mr-auto flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold bg-white/60 dark:bg-white/10 px-1.5 py-0.5 rounded-full tabular-nums badge-dot">
-                    {col.orders.length}
-                  </span>
-                  <WipIndicator count={col.orders.length} limit={col.key === 'printing' ? 5 : undefined} />
-                </span>
-                {isCollapsed
-                  ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                  : <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                }
-              </div>
-              {!isCollapsed && col.orders.length > 0 && (
-                <div className="text-[10px] opacity-70 mt-0.5 flex items-center gap-2">
-                  <span className="font-bold">{formatDA(col.totalRevenue)}</span>
-                  <MiniSparkline values={col.orders.slice(-7).map(o => o.total)} />
-                </div>
-              )}
-            </div>
-            {/* محتوى العمود */}
-            {!isCollapsed && (
-            <SortableContext
-              items={col.orders.map((o) => o.id)}
-              strategy={verticalListSortingStrategy}
-            >
+              {/* رأس العمود — sticky on mobile */}
               <div
-                className="kanban-column-body"
-                data-column={col.key}
+                className={`
+                  flex flex-col px-3 sm:px-4 py-2.5 sm:py-2 rounded-t-lg border border-b-0
+                  sticky top-0 z-10
+                  shadow-sm
+                  ${col.color}
+                `}
               >
-                {col.orders.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-10 h-10 mx-auto rounded-xl bg-muted/50 flex items-center justify-center mb-2">
-                      <col.icon className="h-5 w-5 text-muted-foreground/30" />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/40">لا توجد طلبات</p>
+                <div className="flex items-center gap-2">
+                  <col.icon className="h-4 w-4" />
+                  <span className="font-medium text-xs sm:text-sm">{col.label}</span>
+                  <span className="mr-auto flex items-center">
+                    <span className="text-[10px] sm:text-xs font-bold bg-white/70 px-2 py-0.5 rounded-full shadow-sm min-h-[24px] flex items-center justify-center">
+                      {col.orders.length}
+                    </span>
+                  </span>
+                </div>
+                {col.orders.length > 0 && (
+                  <div className="text-[10px] sm:text-xs opacity-70 mt-0.5">
+                    {formatDA(col.totalRevenue)}
                   </div>
-                ) : (
-                  col.orders.map((order) => (
-                    <SortableOrderCard
-                      key={order.id}
-                      order={order}
-                      isDragging={order.id === activeId}
-                    />
-                  ))
                 )}
               </div>
-            </SortableContext>
-            )}
-          </div>
-          );
-        })}
+              {/* محتوى العمود */}
+              <SortableContext
+                items={col.orders.map((o) => o.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div
+                  className="
+                    flex-1 p-1.5 sm:p-2 border rounded-b-lg bg-muted/20 space-y-0
+                    min-h-[150px] max-h-[60vh] overflow-y-auto
+                  "
+                  data-column={col.key}
+                >
+                  {col.orders.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-10 px-3">
+                      <Inbox className="h-8 w-8 text-muted-foreground/20 mb-2" />
+                      <span className="text-xs text-muted-foreground/50 font-medium">
+                        لا توجد طلبات
+                      </span>
+                    </div>
+                  ) : (
+                    col.orders.map((order) => (
+                      <SortableOrderCard
+                        key={order.id}
+                        order={order}
+                        isDragging={order.id === activeId}
+                      />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* منطقة إسقاط الإلغاء */}

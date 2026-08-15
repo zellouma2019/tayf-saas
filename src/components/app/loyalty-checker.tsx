@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { shopApi } from "@/lib/shop-api";
 
 interface LoyaltyData {
   phone: string;
@@ -88,7 +87,7 @@ export function LoyaltyChecker() {
     setLoading(true);
     setData(null);
     try {
-      const res = await shopApi("/api/loyalty/check?phone=" + encodeURIComponent(clean));
+      const res = await fetch("/api/loyalty/check?phone=" + encodeURIComponent(clean));
       if (!res.ok) throw new Error();
       const d = await res.json();
       setData(d);

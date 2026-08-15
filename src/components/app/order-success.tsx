@@ -38,7 +38,7 @@ import {
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { downloadInvoicePDF } from "@/lib/pdf-invoice";
-import type { CreatedOrder } from "@/lib/store";
+import type { CreatedOrder } from "@/components/app/app-shell";
 import {
   STATUS_FLOW,
   STATUS_META,
@@ -52,7 +52,6 @@ import {
   PRINT_RANGES,
   SERVICE_MAP,
 } from "@/lib/print-config";
-import { shopApi } from "@/lib/shop-api";
 
 interface OrderSuccessProps {
   order: CreatedOrder | null;
@@ -169,7 +168,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
   /* ───── جلب تفاصيل الطلب الكاملة عند فتح النافذة ───── */
   useEffect(() => {
     if (order && open) {
-      shopApi(`/api/orders/${order.id}`)
+      fetch(`/api/orders/${order.id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.error) return;
@@ -185,7 +184,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
   useEffect(() => {
     if (editMode && order) {
       setEditLoading(true);
-      shopApi(`/api/orders/${order.id}`)
+      fetch(`/api/orders/${order.id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.error) {
@@ -262,7 +261,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
     if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
     setCancelling(true);
     try {
-      const res = await shopApi(`/api/orders/${order.id}`, {
+      const res = await fetch(`/api/orders/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel" }),
@@ -304,7 +303,7 @@ export function OrderSuccess({ order, open, onClose, onNavigate }: OrderSuccessP
         notes: editForm.notes,
         deliveryNotes: editForm.deliveryNotes,
       };
-      const res = await shopApi(`/api/orders/${order.id}`, {
+      const res = await fetch(`/api/orders/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

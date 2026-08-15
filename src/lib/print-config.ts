@@ -1,6 +1,4 @@
-// منطق الأعمال لمنصة طيف — الخدمات والأسعار والخيارات
-
-import { getCountry, getDefaultCountry } from "./countries";
+// منطق الأعمال لمطبعة الذكي — الخدمات والأسعار والخيارات
 
 export type ServiceType =
   | "document"
@@ -8,8 +6,7 @@ export type ServiceType =
   | "binding"
   | "copy"
   | "card"
-  | "poster"
-  | "spreadsheet";
+  | "poster";
 
 export interface ServiceDef {
   type: ServiceType;
@@ -17,7 +14,7 @@ export interface ServiceDef {
   emoji: string;
   description: string;
   popularity: number; // نسبة %
-  basePricePerPage: number; // سعر/صفحة
+  basePricePerPage: number; // ر.س/صفحة
   accepts: string[]; // أنواع الملفات
   isPopular?: boolean;
 }
@@ -77,15 +74,6 @@ export const SERVICES: ServiceDef[] = [
     popularity: 20,
     basePricePerPage: 50,
     accepts: ["PDF", "JPG", "PNG"],
-  },
-  {
-    type: "spreadsheet",
-    name: "جداول بيانات",
-    emoji: "📊",
-    description: "طباعة ملفات Excel وجداول البيانات",
-    popularity: 15,
-    basePricePerPage: 5,
-    accepts: ["PDF", "XLSX", "JPG", "PNG"],
   },
 ];
 
@@ -154,7 +142,7 @@ export interface BindingOption {
   label: string;
   emoji: string;
   description: string;
-  price: number; // سعر ثابت لكل نسخة
+  price: number; // ر.س ثابت لكل نسخة
 }
 
 export const BINDINGS: BindingOption[] = [
@@ -169,7 +157,7 @@ export interface PaperType {
   label: string;
   emoji: string;
   description: string;
-  surchargePerPage: number; // سعر/صفحة
+  surchargePerPage: number; // ر.س/صفحة
 }
 
 export const PAPER_TYPES: PaperType[] = [
@@ -185,7 +173,7 @@ export interface DeliveryOption {
   emoji: string;
   description: string;
   badge?: string;
-  surcharge: number; // رسوم إضافية
+  surcharge: number; // ر.س
 }
 
 export const DELIVERY_OPTIONS: DeliveryOption[] = [
@@ -281,8 +269,7 @@ export const STATUS_META: Record<
   { label: string; emoji: string; color: string; bg: string; step: number }
 > = {
   pending: { label: "بانتظار الطباعة", emoji: "⏳", color: "text-amber-700", bg: "bg-amber-50 text-amber-700 border-amber-200", step: 1 },
-  confirmed: { label: "مؤكد", emoji: "✅", color: "text-sky-700", bg: "bg-sky-50 text-sky-700 border-sky-200", step: 1.5 },
-  printing: { label: "جارٍ التنفيذ", emoji: "🖨️", color: "text-blue-700", bg: "bg-blue-50 text-blue-700 border-blue-200", step: 2 },
+  printing: { label: "جارٍ التنفيذ", emoji: "🖨️", color: "text-amber-700", bg: "bg-amber-50 text-amber-700 border-amber-200", step: 2 },
   ready: { label: "جاهز للاستلام", emoji: "✅", color: "text-emerald-700", bg: "bg-emerald-50 text-emerald-700 border-emerald-200", step: 3 },
   delivered: { label: "تم التسليم", emoji: "📦", color: "text-emerald-800", bg: "bg-emerald-100 text-emerald-800 border-emerald-300", step: 4 },
   cancelled: { label: "ملغي", emoji: "❌", color: "text-rose-700", bg: "bg-rose-50 text-rose-700 border-rose-200", step: 0 },
@@ -291,9 +278,7 @@ export const STATUS_META: Record<
 export const STATUS_FLOW = ["pending", "printing", "ready", "delivered"];
 
 export function generateReference(): string {
-  // مرجع فريد بدون الحاجة لفحص DB — يولّد A-XXXXXX (6 أرقام عشوائية)
-  // مساحة 900,000 قيمة كافية للتفرد
-  const rnd = Math.floor(100000 + Math.random() * 900000);
+  const rnd = Math.floor(1000 + Math.random() * 9000);
   return `A-${rnd}`;
 }
 
@@ -412,23 +397,16 @@ export function estimateDeliveryHours(deliveryMode: string, pages: number, copie
   const totalPages = pages * copies;
   let baseHours = 1; // أساس
   baseHours += Math.ceil(totalPages / 50); // ساعة لكل 50 صفحة
-  if (deliveryMode === "hour") return Math.max(1, baseHours);
+  if (deliveryMode === "hour") return Math.max(0.5, Math.min(1, baseHours * 0.5));
   if (deliveryMode === "today") return Math.max(2, baseHours + 1);
   if (deliveryMode === "tomorrow") return 24;
   return 48; // scheduled
 }
 
 
-export function formatDA(n: number | undefined | null, countryCode?: string | null): string {
-  const c = getCountry(countryCode) || getDefaultCountry();
-  if (n == null || isNaN(n)) {
-    return `0 ${c.currencySymbol}`;
-  }
-  const formatted = n.toLocaleString(
-    c.numberFormat === "ar" ? "ar-SA-u-nu-latn" : c.numberFormat === "fr" ? "fr-FR" : "en-US",
-    { minimumFractionDigits: c.decimals > 0 ? Math.min(c.decimals, 2) : 0, maximumFractionDigits: c.decimals > 0 ? Math.min(c.decimals, 2) : 0 },
-  );
-  return `${formatted} ${c.currencySymbol}`;
+export function formatDA(n: number | undefined | null): string {
+  if (n == null || isNaN(n)) return "0 ر.س";
+  return `${n.toLocaleString("en-US")} ر.س`;
 }
 
 export function formatDateAr(iso: string | null): string {
@@ -448,7 +426,6 @@ export function formatDateTimeAr(iso: string | null): string {
   if (!iso) return "—";
   try {
     return new Date(iso).toLocaleString("ar-SA-u-nu-latn", {
-      year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",

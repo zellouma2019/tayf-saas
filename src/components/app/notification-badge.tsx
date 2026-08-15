@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useAppStore } from "@/lib/store";
-import { shopApi } from "@/lib/shop-api";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -106,7 +105,7 @@ export function NotificationBadge() {
   /* ---- Fetch unread count ---- */
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const res = await shopApi("/api/notifications?unreadOnly=true");
+      const res = await fetch("/api/notifications?unreadOnly=true");
       if (res.ok) {
         const data = await res.json();
         const count = Array.isArray(data) ? data.length : data?.count ?? 0;
@@ -121,7 +120,7 @@ export function NotificationBadge() {
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await shopApi("/api/notifications");
+      const res = await fetch("/api/notifications");
       if (res.ok) {
         const data = await res.json();
         setNotifications(Array.isArray(data) ? data : []);
@@ -137,7 +136,7 @@ export function NotificationBadge() {
   const markAsRead = useCallback(
     async (id: string) => {
       try {
-        await shopApi(`/api/notifications/${id}/read`, { method: "POST" });
+        await fetch(`/api/notifications/${id}/read`, { method: "POST" });
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, read: true } : n))
         );
@@ -161,7 +160,7 @@ export function NotificationBadge() {
     try {
       await Promise.all(
         unreadIds.map((id) =>
-          shopApi(`/api/notifications/${id}/read`, { method: "POST" }),
+          fetch(`/api/notifications/${id}/read`, { method: "POST" }),
         ),
       );
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));

@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAppStore } from "@/lib/store";
 import { formatDateTimeAr } from "@/lib/print-config";
 import { cn } from "@/lib/utils";
-import { shopApi } from "@/lib/shop-api";
 
 interface OrderNotesProps {
   orderId: string;
@@ -31,7 +30,7 @@ export function OrderNotes({ orderId, initialNotes, updatedAt }: OrderNotesProps
   // تحميل الملاحظات من الـ API عند التوسيع
   const fetchNotes = useCallback(async () => {
     try {
-      const res = await shopApi(`/api/orders/${orderId}/notes?x-admin-code=${adminCode}`);
+      const res = await fetch(`/api/orders/${orderId}/notes?x-admin-code=${adminCode}`);
       if (res.ok) {
         const data = await res.json();
         setNotes(data.notes || "");
@@ -62,7 +61,7 @@ export function OrderNotes({ orderId, initialNotes, updatedAt }: OrderNotesProps
     }
     setSaving(true);
     try {
-      const res = await shopApi(`/api/orders/${orderId}/notes?x-admin-code=${adminCode}`, {
+      const res = await fetch(`/api/orders/${orderId}/notes?x-admin-code=${adminCode}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
         body: JSON.stringify({ notes }),

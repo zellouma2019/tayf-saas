@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Printer, Sparkles } from "lucide-react";
 import type { IntroSettings } from "@/lib/default-settings";
-import { shopApi } from "@/lib/shop-api";
 
 interface IntroProps {
   onFinish: () => void;
@@ -30,7 +29,7 @@ export function Intro({ onFinish }: IntroProps) {
 
   // تحميل إعدادات الإنترو
   useEffect(() => {
-    shopApi("/api/settings")
+    fetch("/api/settings")
       .then((r) => r.json())
       .then((d) => {
         if (d.intro) setSettings({ ...DEFAULT_INTRO, ...d.intro });

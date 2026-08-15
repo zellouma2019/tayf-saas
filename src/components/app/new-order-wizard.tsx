@@ -57,10 +57,9 @@ import { OfferPopup } from "@/components/app/offer-popup";
 // ServiceShowcase مخفي حسب طلب التبسيط
 // import { ServiceShowcase } from "@/components/app/service-showcase";
 import { OrderConfirmDialog } from "@/components/app/order-confirm-dialog";
-import type { CreatedOrder } from "@/lib/store";
+import type { CreatedOrder } from "@/components/app/app-shell";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { useAppStore } from "@/lib/store";
-import { shopApi } from "@/lib/shop-api";
 // FileAnalysisPanel replaced by UploadStep
 
 interface NewOrderWizardProps {
@@ -213,7 +212,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   );
 
   useEffect(() => {
-    shopApi("/api/settings")
+    fetch("/api/settings")
       .then((r) => r.json())
       .then((data: AppSettings) => {
         if (data.services?.length) {
@@ -754,7 +753,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
     if (!serviceType || !pricing || !finalPricing) return;
     setSubmitting(true);
     try {
-      const res = await shopApi("/api/orders", {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1079,7 +1078,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                         if (!convertTarget || !fileDataUrl) return;
                         setConverting(true);
                         try {
-                          const res = await shopApi("/api/convert", {
+                          const res = await fetch("/api/convert", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ storedFileName: fileDataUrl, targetFormat: convertTarget }),

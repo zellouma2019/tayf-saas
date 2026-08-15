@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Printer, Clock, CheckCircle2, AlertTriangle, Zap } from "lucide-react";
-import { shopApi } from "@/lib/shop-api";
 
 interface QueueStatus {
   pending: number;
@@ -18,7 +17,7 @@ export function ServiceStatusBanner() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    shopApi("/api/stats/overview")
+    fetch("/api/stats/overview")
       .then((r) => r.json())
       .then((d) => {
         setStatus({

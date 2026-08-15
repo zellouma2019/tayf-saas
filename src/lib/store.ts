@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { PrintOrderLite } from "@/lib/order-types";
 
-export type View = "new" | "repeat" | "track" | "history" | "admin" | "loyalty";
+export type View = "new" | "repeat" | "track" | "admin";
 
 export interface CreatedOrder {
   id: string;
@@ -14,13 +14,15 @@ export interface CreatedOrder {
 }
 
 interface AppState {
+  // المتجر (multi-shop)
+  shopId: string | null;
+  setShopId: (v: string | null) => void;
+  showAdminLink: boolean;
+  setShowAdminLink: (v: boolean) => void;
+
   // التنقل
   view: View;
   setView: (v: View) => void;
-
-  // متعدد المستأجرين
-  shopId: string | null;
-  setShopId: (v: string | null) => void;
 
   // طلب جديد
   createdOrder: CreatedOrder | null;
@@ -46,10 +48,6 @@ interface AppState {
   refreshKey: number;
   incrementRefresh: () => void;
 
-  // إظهار رابط الإدارة (المعاينة فقط)
-  showAdminLink: boolean;
-  setShowAdminLink: (v: boolean) => void;
-
   // المقدمة
   showIntro: boolean;
   setShowIntro: (v: boolean) => void;
@@ -60,11 +58,13 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  view: "new",
-  setView: (v) => set({ view: v }),
-
   shopId: null,
   setShopId: (v) => set({ shopId: v }),
+  showAdminLink: false,
+  setShowAdminLink: (v) => set({ showAdminLink: v }),
+
+  view: "new",
+  setView: (v) => set({ view: v }),
 
   createdOrder: null,
   setCreatedOrder: (o) => set({ createdOrder: o }),
@@ -84,9 +84,6 @@ export const useAppStore = create<AppState>((set) => ({
 
   refreshKey: 0,
   incrementRefresh: () => set((s) => ({ refreshKey: s.refreshKey + 1 })),
-
-  showAdminLink: false,
-  setShowAdminLink: (v) => set({ showAdminLink: v }),
 
   showIntro: true,
   setShowIntro: (v) => set({ showIntro: v }),

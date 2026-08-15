@@ -36,7 +36,6 @@ import {
 } from "@/lib/option-translations";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { shopApi } from "@/lib/shop-api";
 import { OrderNotes } from "@/components/app/order-notes";
 import { LoyaltyBadge } from "@/components/app/loyalty-badge";
 
@@ -81,7 +80,7 @@ export function OrderDetailModal({
     if (!order) return;
     setAuditLoading(true);
     try {
-      const res = await shopApi(`/api/orders/${order.id}/audit?x-admin-code=${adminCode}`);
+      const res = await fetch(`/api/orders/${order.id}/audit?x-admin-code=${adminCode}`);
       if (res.ok) {
         const data = await res.json();
         setAuditLogs(data.logs || []);
@@ -170,7 +169,7 @@ export function OrderDetailModal({
         return;
       }
 
-      const res = await shopApi(`/api/orders/${order.id}`, {
+      const res = await fetch(`/api/orders/${order.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
         body: JSON.stringify(payload),
@@ -199,7 +198,7 @@ export function OrderDetailModal({
     if (!currentOrder || !adminCode) return;
     setApplyingLoyalty(true);
     try {
-      const res = await shopApi("/api/loyalty/apply-discount", {
+      const res = await fetch("/api/loyalty/apply-discount", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
         body: JSON.stringify({ orderId: currentOrder.id, discountPercent }),
@@ -225,7 +224,7 @@ export function OrderDetailModal({
 
   function downloadFile() {
     if (order.fileData && order.fileData.startsWith("file_")) {
-      shopApi(`/api/orders/${order.id}/file?x-admin-code=${adminCode}`)
+      fetch(`/api/orders/${order.id}/file?x-admin-code=${adminCode}`)
         .then((r) => r.blob())
         .then((blob) => {
           const url = URL.createObjectURL(blob);
@@ -533,9 +532,9 @@ export function OrderDetailModal({
                   <span>{order.review}</span>
                 </div>
               )}
-              {order.rating && (
+              {order.ratedAt && (
                 <div className="text-[10px] text-muted-foreground/60 mt-1.5">
-                  {formatDateTimeAr(order.updatedAt)}
+                  {formatDateTimeAr(order.ratedAt)}
                 </div>
               )}
             </section>
@@ -657,7 +656,7 @@ function LoyaltyDiscountButton({
     const clean = phone.replace(/[\s\-+]/g, "");
     if (clean.length < 8) return;
     let cancelled = false;
-    shopApi(`/api/loyalty/check?phone=${encodeURIComponent(clean)}`)
+    fetch(`/api/loyalty/check?phone=${encodeURIComponent(clean)}`)
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.discountPercent > 0) {
