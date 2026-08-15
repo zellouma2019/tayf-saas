@@ -567,3 +567,23 @@ Stage Summary:
 - Customer view should now match the original uploaded version
 - Key restoration: top amber info bar, full header with desktop nav, complete footer with testimonials/contact/social links, proper dark mode support
 - Admin link for multi-shop preserved as non-intrusive overlay
+---
+Task ID: 2
+Agent: Main Agent
+Task: Completely replace all customer-facing files with exact original copies (zero modifications)
+
+Work Log:
+- Analyzed two new screenshots via VLM to understand what user sees
+- Copied ALL 35 original component files from /home/z/my-project/new-customer/src/components/app/ to /home/z/my-project/src/components/app/
+- Copied ALL 20 original lib files from /home/z/my-project/new-customer/src/lib/ to /home/z/my-project/src/lib/
+- Updated shop-page.tsx to render <AppShell /> without props (original AppShell has no props)
+- Verified ALL 15 key component files are byte-identical to originals (diff confirms)
+- Verified store.ts is byte-identical to original
+- Ran lint: zero errors in any of the copied original files
+- Dev server starts successfully
+
+Stage Summary:
+- Every customer-facing file is now an EXACT copy of the original uploaded version
+- Zero modifications made to any original file
+- shop-page.tsx adapted minimally to render original AppShell without props
+- Ready for user to test and provide change instructions

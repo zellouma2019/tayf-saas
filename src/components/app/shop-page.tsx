@@ -1,18 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
+import { Suspense, Component, type ReactNode, type ErrorInfo } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ShopProvider, useShop } from "@/lib/shop-context";
 import { AppShell } from "@/components/app/app-shell";
-import { useAppStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Store, AlertTriangle, RotateCcw } from "lucide-react";
 
 const MerchantDashboard = dynamic(
-  () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
+   () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
   { ssr: false, loading: () => <ShopLoader /> },
 );
 
@@ -44,7 +43,6 @@ class MerchantErrorBoundary extends Component<
 
   handleReset = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
-    // لا نُعيد تحميل الصفحة — نعيد المحاولة فقط
   };
 
   render() {
@@ -90,16 +88,13 @@ function ShopLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background animate-fade-in" dir="rtl">
       <div className="max-w-md w-full mx-auto p-8 text-center space-y-6">
-        {/* Logo placeholder with pulse */}
         <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 skeleton-sweep flex items-center justify-center">
           <div className="w-10 h-10 rounded-xl bg-primary/20 skeleton-sweep" style={{ animationDelay: "0.2s" }} />
         </div>
-        {/* Title skeleton */}
         <div className="space-y-3">
           <Skeleton className="h-6 w-3/4 mx-auto rounded-lg skeleton-sweep" />
           <Skeleton className="h-4 w-1/2 mx-auto rounded-lg skeleton-sweep" style={{ animationDelay: "0.1s" }} />
         </div>
-        {/* Service cards skeleton */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="p-4 rounded-xl bg-card border border-border space-y-2 fade-slide-up" style={{ animationDelay: `${i * 0.08}s` }}>
@@ -109,7 +104,6 @@ function ShopLoader() {
             </div>
           ))}
         </div>
-        {/* Loading text */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <span className="status-pulse inline-block w-1.5 h-1.5 rounded-full bg-primary" />
           <span className="animate-pulse-slow">جاري تحميل المتجر...</span>
@@ -148,20 +142,6 @@ function ShopAppInner({ slug }: { slug: string }) {
   const { shop, loading, error } = useShop();
   const searchParams = useSearchParams();
   const isAdmin = searchParams.get("admin") === "1";
-  const isPreview = searchParams.get("preview") === "1";
-  const setShopId = useAppStore((s) => s.setShopId);
-  const setShowAdminLink = useAppStore((s) => s.setShowAdminLink);
-
-  useEffect(() => {
-    if (shop) {
-      setShopId(shop.id);
-      setShowAdminLink(isPreview);
-    }
-    return () => {
-      setShopId(null);
-      setShowAdminLink(false);
-    };
-  }, [shop, isPreview, setShopId, setShowAdminLink]);
 
   if (loading) return <ShopLoader />;
   if (error || !shop) return <ShopNotFound />;
@@ -177,18 +157,7 @@ function ShopAppInner({ slug }: { slug: string }) {
     );
   }
 
-  return (
-    <AppShell
-      shopId={shop.id}
-      shopSlug={shop.slug}
-      shopName={shop.name}
-      shopPhone={shop.phone || undefined}
-      shopWhatsapp={shop.whatsapp || undefined}
-      shopEmail={shop.email || undefined}
-      shopAddress={shop.address || undefined}
-      shopLogo={shop.logoUrl || undefined}
-    />
-  );
+  return <AppShell />;
 }
 
 function ShopApp({ slug }: { slug: string }) {

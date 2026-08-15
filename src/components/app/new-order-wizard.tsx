@@ -57,7 +57,7 @@ import { OfferPopup } from "@/components/app/offer-popup";
 // ServiceShowcase مخفي حسب طلب التبسيط
 // import { ServiceShowcase } from "@/components/app/service-showcase";
 import { OrderConfirmDialog } from "@/components/app/order-confirm-dialog";
-import type { CreatedOrder } from "@/lib/store";
+import type { CreatedOrder } from "@/components/app/app-shell";
 import type { PrintOrderLite } from "@/lib/order-types";
 import { useAppStore } from "@/lib/store";
 // FileAnalysisPanel replaced by UploadStep
@@ -884,15 +884,15 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
   }
 
   return (
-    <div>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div>
         {/* رأس المعالج المحسّن */}
         {step > 0 && (
         <div className="mb-6">
           {/* شريط التقدم العلوي */}
-          <div className="w-full h-1.5 rounded-full bg-yellow-100 overflow-hidden mb-4">
+          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden mb-4">
             <div
-              className="h-full rounded-full bg-yellow-400 transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-gradient-to-l from-amber-400 to-amber-500 transition-all duration-500 ease-out"
               style={{ width: `${((step + 1) / 6) * 100}%` }}
             />
           </div>
@@ -909,10 +909,10 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0 ${
                         isCompleted
-                          ? "bg-yellow-400 text-neutral-900"
+                          ? "bg-emerald-500 text-white"
                           : isActive
-                            ? "bg-yellow-400 text-neutral-900 ring-4 ring-yellow-400/20 shadow-lg shadow-yellow-400/25"
-                            : "bg-yellow-100 text-neutral-400"
+                            ? "bg-amber-500 text-white ring-4 ring-amber-500/20 shadow-lg shadow-amber-500/25"
+                            : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {isCompleted ? (
@@ -924,7 +924,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                     {/* التسمية والمدة — تُخفى على الجوال */}
                     <div className="hidden md:flex flex-col items-center gap-0.5">
                       <span className={`text-[11px] font-medium transition-colors duration-300 ${
-                        isActive ? "text-yellow-700" : isCompleted ? "text-yellow-600" : "text-neutral-400"
+                        isActive ? "text-amber-700 dark:text-amber-400" : isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
                       }`}>
                         {STEP_LABELS[i]}
                       </span>
@@ -938,7 +938,7 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
                   {i < 5 && (
                     <div className="flex-1 mx-2 mt-[-18px] md:mt-[-30px]">
                       <div className={`h-0.5 rounded-full transition-all duration-300 ${
-                        i < step ? "bg-yellow-400" : "bg-yellow-100"
+                        i < step ? "bg-amber-400" : "bg-muted"
                       }`} />
                     </div>
                   )}
@@ -949,22 +949,58 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
 
           {/* عنوان الخطوة الحالية */}
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-xl md:text-2xl font-bold text-neutral-900">{STEP_LABELS[step]}</h2>
+            <h2 className="text-xl md:text-2xl font-bold">{STEP_LABELS[step]}</h2>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-yellow-500" />
+              <Sparkles className="h-3 w-3 text-amber-500" />
               المجموع ≈ دقيقة واحدة
             </span>
           </div>
         </div>
         )}
-          <span className="text-xs md:hidden font-medium text-yellow-700 bg-yellow-100 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+          <span className="text-xs md:hidden font-medium text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {STEP_DURATIONS[step]} · الخطوة {step + 1} من 6
           </span>
 
-        {/* ===== الخطوة 0: رفع الملف والتحليل ===== */}
+        {/* ===== الخطوة 0: رفع الملف والتحليل المحسّن ===== */}
         {step === 0 && (
-          <div className="space-y-5 pt-2">
+          <div className="relative z-0 space-y-6 min-h-[70vh] rounded-2xl p-6 md:p-8 overflow-hidden">
+            {/* طبقة الخلفية: تدرج احترافي يدل على الطباعة بدون صورة */}
+            <div className="absolute inset-0 -z-10">
+              <div className="w-full h-full" style={{
+                background: `
+                  radial-gradient(ellipse at 20% 50%, rgba(245,158,11,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 20%, rgba(217,119,6,0.06) 0%, transparent 40%),
+                  radial-gradient(ellipse at 60% 80%, rgba(180,83,9,0.05) 0%, transparent 45%),
+                  linear-gradient(135deg, #fefce8 0%, #fff7ed 50%, #fef3c7 100%)
+                `,
+              }} />
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/70" />
+            </div>
+            {/* نمط الشبكة الدقيق (ورق/طباعة) */}
+            <div className="absolute inset-0 -z-[9] opacity-[0.08]" style={{
+              backgroundImage: `
+                linear-gradient(rgba(180,140,80,.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(180,140,80,.15) 1px, transparent 1px)
+              `,
+              backgroundSize: '24px 24px',
+            }} />
+            {/* نقاط CMYK ملونة */}
+            <div className="absolute inset-0 -z-[8] opacity-[0.05] pointer-events-none" style={{
+              backgroundImage: `
+                radial-gradient(circle, rgba(245,158,11,0.6) 1.5px, transparent 1.5px),
+                radial-gradient(circle, rgba(59,130,246,0.5) 1px, transparent 1px),
+                radial-gradient(circle, rgba(239,68,68,0.4) 1px, transparent 1px)
+              `,
+              backgroundSize: '48px 48px',
+              backgroundPosition: '0 0, 16px 16px, 32px 32px',
+            }} />
+            {/* خطوط زخرفية ذهبية */}
+            <div className="absolute top-0 left-0 right-0 h-1 -z-[6]" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)' }} />
+            <div className="absolute bottom-0 left-0 right-0 h-1 -z-[6]" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent)' }} />
+            <div className="absolute top-6 right-0 w-0.5 h-24 -z-[6] opacity-40" style={{ background: 'linear-gradient(180deg, transparent, rgba(245,158,11,0.5), transparent)' }} />
+            <div className="absolute top-6 left-0 w-0.5 h-16 -z-[6] opacity-30" style={{ background: 'linear-gradient(180deg, transparent, rgba(245,158,11,0.3), transparent)' }} />
+
             {step > 0 && <ServiceStatusBanner />}
             <UploadStep
               fileName={fileName}
@@ -2039,25 +2075,25 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
         )}
 
         {/* أزرار التنقل */}
-        <div className="flex items-center justify-between mt-8 pt-4 border-t border-yellow-200/40">
-          <Button variant="ghost" onClick={prev} disabled={step === 0} className="text-neutral-600 hover:text-neutral-900">
+        <div className="flex items-center justify-between mt-8 pt-4 border-t">
+          <Button variant="outline" onClick={prev} disabled={step === 0}>
             <ArrowRight className="h-4 w-4" />
             السابق
           </Button>
-          <div className="text-xs text-neutral-500 font-medium">
+          <div className="text-xs text-muted-foreground">
             {step + 1} / 6
           </div>
           <Button
             onClick={next}
             disabled={!canProceed() || submitting}
-            className="bg-yellow-400 hover:bg-yellow-500 text-neutral-900 font-bold rounded-full px-6"
+            className="bg-neutral-900 hover:bg-neutral-800 text-white"
           >
             {submitting ? (
               <span className="animate-pulse">جارٍ الإرسال...</span>
             ) : step === 5 ? (
               <>
                 <Check className="h-4 w-4" />
-                تأكيد الطلب
+                إنشاء طلب الطباعة
               </>
             ) : (
               <>
@@ -2068,6 +2104,117 @@ export function NewOrderWizard({ onCreated, prefillOrder, onPrefillConsumed }: N
           </Button>
         </div>
       </div>
+
+      {/* ===== الشريط الجانبي: ملخص الطلب ===== */}
+      {step > 0 && (
+      <aside className="lg:sticky lg:top-24 h-fit">
+        <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b bg-neutral-900 text-white">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🧾</span>
+              <span className="font-bold text-sm">طلبك</span>
+            </div>
+          </div>
+          <div className="p-5 space-y-4">
+            {selectedService ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{selectedService.emoji}</span>
+                  <div>
+                    <div className="font-semibold text-sm">{selectedService.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {selectedService.description}
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t pt-3 space-y-2 text-xs">
+                  {step >= 1 && (
+                    <>
+                      {fileName && (
+                        <SummaryRow label="النطاق" value={printRange === "all" ? "كامل" : "صفحات محددة"} />
+                      )}
+                      <SummaryRow label="الصفحات" value={`${pages}`} />
+                      <SummaryRow label="النسخ" value={`${copies}`} />
+                      {currentSpec && currentSpec.sections.slice(0, 3).map((section) => {
+                        const selId = specOptions[section.optionKey];
+                        const opt = section.options.find((o) => o.id === selId);
+                        if (!opt) return null;
+                        return (
+                          <SummaryRow key={section.id} label={section.title} value={opt.label} />
+                        );
+                      })}
+                    </>
+                  )}
+                  {step >= 3 && (
+                    <SummaryRow
+                      label="التسليم"
+                      value={
+                        deliveryTimeSlot
+                          ? `${DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label} — ${deliveryEstimate.timeSlots.find(s => s.id === deliveryTimeSlot)?.label}`
+                          : DELIVERY_OPTIONS.find((d) => d.id === deliveryMode)?.label
+                      }
+                    />
+                  )}
+                  {step >= 4 && custName && (
+                    <SummaryRow label="العميل" value={custName} />
+                  )}
+                  {step >= 1 && notes && (
+                    <SummaryRow label="ملاحظات" value={notes.length > 30 ? notes.slice(0, 30) + "..." : notes} />
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-6 text-xs text-muted-foreground">
+                <div className="text-3xl mb-2">🖨️</div>
+                اختر خدمة لتبدأ بناء طلبك
+              </div>
+            )}
+
+            {pricing && (
+              <div className="border-t pt-3 space-y-2">
+                <div className="text-xs text-muted-foreground">سعر شفاف — لا مفاجآت</div>
+                <SummaryRow label="سعر الصفحة" value={formatDA(pricing.perPage)} />
+                {pricing.sidesSaving > 0 && (
+                  <SummaryRow label="توفير الوجهين" value={`−${formatDA(pricing.sidesSaving)}`} green />
+                )}
+                {pricing.finishingCost > 0 && (
+                  <SummaryRow label="التشطيب/التجليد" value={formatDA(pricing.finishingCost)} />
+                )}
+                {pricing.deliveryCost > 0 && (
+                  <SummaryRow label="التوصيل العاجل" value={formatDA(pricing.deliveryCost)} />
+                )}
+                {pricing.discount > 0 && (
+                  <SummaryRow label="خصم الكمية" value={`−${formatDA(pricing.discount)}`} green />
+                )}
+                {appliedOffer && finalPricing && finalPricing.total < pricing.total && (
+                  <SummaryRow
+                    label={`عرض خاص (${appliedOffer.code})`}
+                    value={`−${formatDA(pricing.total - finalPricing.total)}`}
+                    green
+                  />
+                )}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="font-bold text-sm">المجموع</span>
+                  {appliedOffer && finalPricing && finalPricing.total < pricing.total ? (
+                    <div className="text-left">
+                      <span className="text-xs text-muted-foreground line-through block">{formatDA(pricing.total)}</span>
+                      <span className="text-2xl font-bold text-amber-700">
+                        {formatDA(finalPricing.total)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-2xl font-bold text-amber-700">
+                      {formatDA(pricing.total)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </aside>
+      )}
 
       {/* نافذة العرض المفاجئ */}
       <OfferPopup

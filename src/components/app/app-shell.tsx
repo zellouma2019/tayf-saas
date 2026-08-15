@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
@@ -17,7 +17,6 @@ import {
   Calculator,
   Menu,
   Home,
-  ArrowLeftToLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -34,7 +33,7 @@ import { MobileSidebar } from "@/components/app/mobile-sidebar";
 import { BackToTop } from "@/components/app/back-to-top";
 import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
 import { TestimonialsSection } from "@/components/app/testimonials-section";
-import { useAppStore, type View, type CreatedOrder } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 import type { PrintOrderLite } from "@/lib/order-types";
 
 const NewOrderWizard = dynamic(() => import("@/components/app/new-order-wizard").then(m => ({ default: m.NewOrderWizard })), { loading: () => <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" /></div> });
@@ -42,42 +41,22 @@ const AdminPanel = dynamic(() => import("@/components/app/admin-panel").then(m =
 const QuickPriceCalculator = dynamic(() => import("@/components/app/quick-price-calculator").then(m => ({ default: m.QuickPriceCalculator })));
 const FloatingAssistant = dynamic(() => import("@/components/app/floating-assistant").then(m => ({ default: m.FloatingAssistant })), { ssr: false });
 
-/* ------------------------------------------------------------------
- *  Props — بيانات المتجر الديناميكية من shop-context / page props
- * ------------------------------------------------------------------ */
-export interface AppShellProps {
-  shopId?: string;
-  shopSlug?: string;
-  shopName?: string;
-  shopPhone?: string;
-  shopWhatsapp?: string;
-  shopEmail?: string;
-  shopAddress?: string;
-  shopLogo?: string;
-  shopCountry?: string;
-  shopCurrency?: string;
+type View = "new" | "repeat" | "track" | "admin";
+
+export interface CreatedOrder {
+  id: string;
+  reference: string;
+  serviceName: string;
+  total: number;
+  status: string;
+  estimatedHours: number;
+  editableUntil?: string;
 }
 
-export function AppShell({
-  shopId,
-  shopSlug,
-  shopName: propShopName,
-  shopPhone,
-  shopWhatsapp,
-  shopEmail,
-  shopAddress,
-  shopLogo,
-}: AppShellProps) {
+export function AppShell() {
   const [footerOpen, setFooterOpen] = useState(true);
   const [calcOpen, setCalcOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const shopName = propShopName || "مطبعة الذكي";
-  const isShopOpen = (() => {
-    const now = new Date();
-    const day = now.getDay();
-    const hour = now.getHours();
-    return day !== 5 && hour >= 8 && hour < 19;
-  })();
   const {
     view,
     setView,
@@ -91,12 +70,39 @@ export function AppShell({
     setAdminUnlocked,
     adminGateOpen,
     setAdminGateOpen,
+    adminCode,
+    setAdminCode,
     refreshKey,
     incrementRefresh,
     showIntro,
     setShowIntro,
-    showAdminLink,
   } = useAppStore();
+
+  const [shopName, setShopName] = useState("مطبعة الذكي");
+  const [shopLogo, setShopLogo] = useState("");
+  const [isShopOpen, setIsShopOpen] = useState(false);
+
+  useEffect(() => {
+    const checkOpen = () => {
+      const now = new Date();
+      const day = now.getDay();
+      const hour = now.getHours();
+      setIsShopOpen(day !== 5 && hour >= 8 && hour < 19);
+    };
+    checkOpen();
+    const timer = setInterval(checkOpen, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.general?.shopName) setShopName(d.general.shopName);
+        if (d.general?.shopLogo !== undefined) setShopLogo(d.general.shopLogo);
+      })
+      .catch(() => {});
+  }, [refreshKey]);
 
   const handleCreated = useCallback((order: CreatedOrder) => {
     setCreatedOrder(order);
@@ -133,7 +139,14 @@ export function AppShell({
     setAdminUnlocked(true);
     setAdminGateOpen(false);
     setView("admin");
-  }, [setAdminUnlocked, setAdminGateOpen, setView]);
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        const general = data.general;
+        if (general?.adminCode) setAdminCode(general.adminCode);
+      })
+      .catch(() => {});
+  }, [setAdminUnlocked, setAdminGateOpen, setView, setAdminCode]);
 
   const handleCloseOrderSuccess = useCallback(() => {
     setCreatedOrder(null);
@@ -145,11 +158,6 @@ export function AppShell({
     { key: "repeat", label: "تكرار طلب", shortLabel: "تكرار", icon: RotateCcw },
     { key: "track", label: "تتبّع", shortLabel: "تتبّع", icon: Search },
   ];
-
-  const displayPhone = shopPhone || "0560 00 00 00";
-  const displayPhoneTel = (shopPhone || "0560000000").replace(/\s/g, "");
-  const displayAddress = shopAddress || "شارع ديدوش مراد، الجزائر العاصمة";
-  const displayEmail = shopEmail || "contact@matbaa-dhaki.dz";
 
   return (
     <>
@@ -180,11 +188,11 @@ export function AppShell({
             </span>
           </div>
           <a
-            href={`tel:${displayPhoneTel}`}
+            href="tel:0560000000"
             className="flex items-center gap-1 hover:bg-white/20 transition-colors whitespace-nowrap shrink-0 text-xs rounded-full px-2 py-0.5"
           >
             <Phone className="h-3 w-3 shrink-0" />
-            <span className="hidden sm:inline">{displayPhone}</span>
+            <span className="hidden sm:inline">0560 00 00 00</span>
             <span className="sm:hidden">اتصل بنا</span>
           </a>
         </div>
@@ -200,11 +208,7 @@ export function AppShell({
             className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0"
           >
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-neutral-900 flex items-center justify-center shrink-0 overflow-hidden">
-              {shopLogo ? (
-                <img src={shopLogo} alt="" className="w-full h-full object-contain p-0.5" />
-              ) : (
-                <img src="/shop-logo.png" alt="" className="w-full h-full object-contain p-0.5" />
-              )}
+              <img src="/shop-logo.png" alt="" className="w-full h-full object-contain p-0.5" />
             </div>
             <div className="text-right min-w-0">
               <div className="font-bold text-sm md:text-base leading-tight truncate">{shopName}</div>
@@ -334,11 +338,7 @@ export function AppShell({
                 <div className="md:col-span-1">
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center overflow-hidden">
-                      {shopLogo ? (
-                        <img src={shopLogo} alt="" className="w-full h-full object-contain p-0.5" />
-                      ) : (
-                        <img src="/shop-logo.png" alt="" className="w-full h-full object-contain p-0.5" />
-                      )}
+                      <img src="/shop-logo.png" alt="" className="w-full h-full object-contain p-0.5" />
                     </div>
                     <div>
                       <div className="font-bold text-neutral-900 dark:text-white">{shopName}</div>
@@ -346,7 +346,7 @@ export function AppShell({
                     </div>
                   </div>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    خدمة طباعة احترافية وسريعة.
+                    خدمة طباعة احترافية وسريعة في الجزائر.
                   </p>
                   <div className="flex items-center gap-2 mt-4">
                     <a href="#" aria-label="facebook" className="social-icon w-8 h-8 rounded-full bg-amber-100 dark:bg-neutral-800 hover:bg-amber-200 dark:hover:bg-amber-500/20 text-amber-600 dark:text-neutral-400 hover:text-amber-700 dark:hover:text-amber-400 transition-all flex items-center justify-center">
@@ -388,10 +388,10 @@ export function AppShell({
                 <div>
                   <h4 className="text-neutral-900 dark:text-white font-semibold text-sm mb-3">تواصل معنا</h4>
                   <ul className="space-y-3 text-xs">
-                    <li className="flex items-start gap-2"><MapPin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" /><span>{displayAddress}</span></li>
-                    <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-400" /><span>{displayPhone}</span></li>
+                    <li className="flex items-start gap-2"><MapPin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" /><span>شارع ديدوش مراد، الجزائر العاصمة</span></li>
+                    <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-400" /><span>0560 00 00 00</span></li>
                     <li className="flex items-center gap-2"><MessageCircle className="h-4 w-4 text-amber-400" /><span>واتساب</span></li>
-                    <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-400" /><span>{displayEmail}</span></li>
+                    <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-400" /><span>contact@matbaa-dhaki.dz</span></li>
                     <li className="flex items-start gap-2 pt-2 border-t border-amber-200/40 dark:border-neutral-700">
                       <Clock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                       <div>
@@ -428,19 +428,7 @@ export function AppShell({
 
       <MobileBottomNav />
 
-      {/* Admin link for multi-shop */}
-      {showAdminLink && shopSlug && (
-        <a
-          href={`/s/${shopSlug}?admin=1`}
-          className="fixed bottom-16 left-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-neutral-900 text-white text-[11px] font-medium shadow-lg hover:bg-neutral-800 transition-colors no-print"
-          title="لوحة التحكم"
-        >
-          <ArrowLeftToLine className="h-3.5 w-3.5" />
-          <span>لوحة التحكم</span>
-        </a>
-      )}
-
-      <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v as View); }} />
+      <OrderSuccess order={createdOrder} open={!!createdOrder} onClose={handleCloseOrderSuccess} onNavigate={(v) => { if (v === "new") setFooterOpen(false); setView(v); }} />
       <AdminGate open={adminGateOpen} onClose={() => setAdminGateOpen(false)} onSuccess={handleAdminUnlock} />
 
       <BackToTop />

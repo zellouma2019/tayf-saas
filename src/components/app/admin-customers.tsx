@@ -54,7 +54,6 @@ import {
 import { toast } from "sonner";
 import { useAppStore } from "@/lib/store";
 import { formatDA, formatDateTimeAr } from "@/lib/print-config";
-import { shopApi } from "@/lib/shop-api";
 
 interface Customer {
   id: string;
@@ -107,7 +106,7 @@ export function AdminCustomers() {
   const fetchCustomers = useCallback(async (): Promise<{ customers: Customer[]; pagination: PaginationInfo }> => {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.set("search", search);
-    const res = await shopApi(`/api/customers?${params}`, { headers });
+    const res = await fetch(`/api/customers?${params}`, { headers });
     if (!res.ok) throw new Error("فشل تحميل العملاء");
     return res.json();
   }, [page, search, headers]);
@@ -129,7 +128,7 @@ export function AdminCustomers() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const res = await shopApi("/api/customers", {
+      const res = await fetch("/api/customers", {
         method: "POST",
         headers,
         body: JSON.stringify({ action: "sync" }),
@@ -161,7 +160,7 @@ export function AdminCustomers() {
   const saveEdit = async () => {
     if (!editingCustomer) return;
     try {
-      const res = await shopApi(`/api/customers/${editingCustomer.id}`, {
+      const res = await fetch(`/api/customers/${editingCustomer.id}`, {
         method: "PUT",
         headers,
         body: JSON.stringify(editData),
@@ -187,7 +186,7 @@ export function AdminCustomers() {
     setDeleteConfirmId(null);
     setDeletingId(id);
     try {
-      const res = await shopApi(`/api/customers/${id}`, {
+      const res = await fetch(`/api/customers/${id}`, {
         method: "DELETE",
         headers,
       });

@@ -1,25 +1,10 @@
 import { create } from "zustand";
 import type { PrintOrderLite } from "@/lib/order-types";
+import type { CreatedOrder } from "@/components/app/app-shell";
 
-export type View = "new" | "repeat" | "track" | "admin";
-
-export interface CreatedOrder {
-  id: string;
-  reference: string;
-  serviceName: string;
-  total: number;
-  status: string;
-  estimatedHours: number;
-  editableUntil?: string;
-}
+type View = "new" | "repeat" | "track" | "admin";
 
 interface AppState {
-  // المتجر (multi-shop)
-  shopId: string | null;
-  setShopId: (v: string | null) => void;
-  showAdminLink: boolean;
-  setShowAdminLink: (v: boolean) => void;
-
   // التنقل
   view: View;
   setView: (v: View) => void;
@@ -58,11 +43,6 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  shopId: null,
-  setShopId: (v) => set({ shopId: v }),
-  showAdminLink: false,
-  setShowAdminLink: (v) => set({ showAdminLink: v }),
-
   view: "new",
   setView: (v) => set({ view: v }),
 

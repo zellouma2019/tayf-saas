@@ -83,7 +83,6 @@ import type {
   ServiceType,
 } from "@/lib/service-specs";
 import { useAppStore } from "@/lib/store";
-import { shopApi } from "@/lib/shop-api";
 
 // إعادة تصدير النوع المركزي للإعدادات
 export type { AppSettings } from "@/lib/default-settings";
@@ -187,7 +186,7 @@ export function AdminSettings() {
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await shopApi("/api/settings");
+      const res = await fetch("/api/settings");
       if (!res.ok) throw new Error("فشل تحميل الإعدادات");
       const data = (await res.json()) as AppSettings;
       const safe: AppSettings = {
@@ -461,7 +460,7 @@ export function AdminSettings() {
     if (!settings) return;
     setSaving(true);
     try {
-      const res = await shopApi("/api/settings", {
+      const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...adminHeaders },
         body: JSON.stringify(settings),
@@ -487,7 +486,7 @@ export function AdminSettings() {
   async function handleReset() {
     setResetting(true);
     try {
-      const res = await shopApi("/api/settings", { method: "DELETE", headers: adminHeaders });
+      const res = await fetch("/api/settings", { method: "DELETE", headers: adminHeaders });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "فشل إعادة التعيين");

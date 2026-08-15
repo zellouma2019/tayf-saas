@@ -60,6 +60,7 @@ const SERVICE_OPTIONS: {
   { type: "poster", label: "ملصقات", emoji: "📜", hasPages: false, hasCopies: false, hasColor: true, hasSides: false, hasBinding: false, hasDelivery: true },
 ];
 
+// Collect breakdown line items for staggered animation
 function getBreakdownItems(price: PriceResult, pages: number, copies: number, binding: string) {
   const items: { id: string; content: React.ReactNode }[] = [];
   items.push({
@@ -193,14 +194,17 @@ export function QuickPriceCalculator() {
 
   const breakdownItems = getBreakdownItems(price, pages, copies, binding);
 
+  // Volume discount indicator logic
   const volumeDiscountInfo = useMemo(() => {
     if (copies >= 50) {
       return { label: "خصم 15% مفعّل ✨", color: "bg-emerald-500", textColor: "text-emerald-700 dark:text-emerald-400", fill: 100, stage: 3 as const };
     } else if (copies >= 10) {
+      // 10-49: fill proportionally between 10 and 50
       const fill = Math.min(100, ((copies - 10) / 40) * 100);
       return { label: "خصم 10% قريباً", color: "bg-amber-400", textColor: "text-amber-700 dark:text-amber-400", fill, stage: 2 as const };
     } else {
-      const fill = (copies / 10) * 30;
+      // 0-9: fill proportionally
+      const fill = (copies / 10) * 30; // max 30% fill for 0-9 range
       return { label: "خصم الكمية: لا يوجد", color: "bg-gray-300 dark:bg-gray-600", textColor: "text-muted-foreground", fill, stage: 1 as const };
     }
   }, [copies]);
@@ -227,10 +231,12 @@ export function QuickPriceCalculator() {
   const inputClass =
     "h-9 w-full text-sm rounded-lg border-input bg-background pr-2 focus:ring-2 focus:ring-ring transition-colors";
 
+  // Unique key to trigger re-animation on price changes
   const priceKey = `${price.total}-${serviceType}-${pages}-${copies}-${color}-${paperSize}-${sides}-${binding}-${delivery}`;
 
   return (
     <div className="space-y-5">
+        {/* اختيار الخدمة */}
         <div className="space-y-2">
           <Label className="text-xs font-medium">الخدمة</Label>
           <div className="grid grid-cols-3 gap-2">
@@ -245,6 +251,7 @@ export function QuickPriceCalculator() {
                     : "border-transparent bg-background hover:bg-muted/50"
                 }`}
               >
+                {/* Ripple/pulse effect on selected service */}
                 {serviceType === svc.type && (
                   <motion.span
                     className="absolute inset-0 rounded-xl border-2 border-amber-400"
@@ -269,6 +276,7 @@ export function QuickPriceCalculator() {
           </div>
         </div>
 
+        {/* الخيارات */}
         <div className="grid grid-cols-2 gap-4">
           {serviceType === "document" && (
             <div className="space-y-1.5">
@@ -389,6 +397,7 @@ export function QuickPriceCalculator() {
             )}
           </div>
 
+          {/* التسعير */}
           <div className="flex items-center gap-2">
             <Label className="text-xs font-medium shrink-0">النسخ</Label>
             <div className="flex items-center gap-1">
@@ -419,6 +428,7 @@ export function QuickPriceCalculator() {
             </div>
           </div>
 
+          {/* Volume discount progress bar */}
           <div className="space-y-1">
             <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
               <motion.div
@@ -434,6 +444,7 @@ export function QuickPriceCalculator() {
           </div>
         </div>
 
+          {/* التوصيل */}
           <div className="space-y-1.5">
             {serviceType !== "binding" && (
               <div className="space-y-1.5">
@@ -458,6 +469,7 @@ export function QuickPriceCalculator() {
             )}
           </div>
 
+          {/* النتيجة */}
           <motion.div
             key={priceKey}
             initial={{ opacity: 0, y: 10 }}
@@ -473,6 +485,7 @@ export function QuickPriceCalculator() {
               <div className="text-xs text-muted-foreground mb-3">السعر التقديري</div>
             </div>
 
+            {/* Staggered breakdown items */}
             <div className="space-y-2">
               <AnimatePresence mode="popLayout">
                 {breakdownItems.map((item, index) => (
@@ -494,6 +507,7 @@ export function QuickPriceCalculator() {
             <div className="flex justify-between items-end">
               <div className="text-xs text-muted-foreground">المجموع الإجمالي</div>
               <div className="flex items-center gap-2">
+                {/* Bounce-animated total price */}
                 <motion.span
                   key={price.total}
                   initial={{ scale: 1 }}
@@ -503,6 +517,7 @@ export function QuickPriceCalculator() {
                 >
                   {fmt(price.total)} دج
                 </motion.span>
+                {/* Copy price button */}
                 <motion.button
                   onClick={handleCopyPrice}
                   whileHover={{ scale: 1.1 }}
@@ -515,6 +530,7 @@ export function QuickPriceCalculator() {
               </div>
             </div>
 
+            {/* بطاقة تعريف سريعة — clickable reference rows */}
             {serviceType === "document" && (
               <div className="grid grid-cols-3 gap-2 text-[10px] text-muted-foreground mt-2 pt-2 border-t border-dashed border-amber-200/60 dark:border-amber-800/40">
                 {[
