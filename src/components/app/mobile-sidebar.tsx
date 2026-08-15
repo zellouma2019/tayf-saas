@@ -13,11 +13,9 @@ import {
   MapPin,
   Clock,
 } from "lucide-react";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, type View } from "@/lib/store";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Button } from "@/components/ui/button";
-
-type View = "new" | "repeat" | "track" | "admin";
 
 interface MobileSidebarProps {
   open: boolean;
@@ -37,22 +35,22 @@ const navItems: {
     key: "new",
     label: "طلب جديد",
     icon: Plus,
-    color: "text-amber-600",
-    activeColor: "bg-amber-50 text-amber-700",
+    color: "text-amber-600 dark:text-amber-400",
+    activeColor: "bg-amber-50 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300",
   },
   {
     key: "repeat",
     label: "تكرار طلب",
     icon: RotateCcw,
-    color: "text-teal-600",
-    activeColor: "bg-teal-50 text-teal-700",
+    color: "text-teal-600 dark:text-teal-400",
+    activeColor: "bg-teal-50 dark:bg-teal-400/10 text-teal-700 dark:text-teal-300",
   },
   {
     key: "track",
     label: "تتبّع طلب",
     icon: Search,
-    color: "text-blue-600",
-    activeColor: "bg-blue-50 text-blue-700",
+    color: "text-blue-600 dark:text-blue-400",
+    activeColor: "bg-blue-50 dark:bg-blue-400/10 text-blue-700 dark:text-blue-300",
   },
 ];
 
@@ -71,7 +69,6 @@ const sidebarVariants = {
 export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileSidebarProps) {
   const view = useAppStore((s) => s.view);
 
-  // منع التمرير عند فتح الشريط الجانبي
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -83,7 +80,6 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
     };
   }, [open]);
 
-  // إغلاق بمفتاح Escape
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -109,7 +105,6 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
     <AnimatePresence>
       {open && (
         <>
-          {/* خلفية معتمة */}
           <motion.div
             variants={overlayVariants}
             initial="hidden"
@@ -120,16 +115,14 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
             onClick={onClose}
           />
 
-          {/* الشريط الجانبي */}
           <motion.div
             variants={sidebarVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[80vw] bg-white shadow-2xl md:hidden flex flex-col"
+            className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[80vw] bg-white dark:bg-neutral-950 shadow-2xl md:hidden flex flex-col"
             dir="rtl"
           >
-            {/* رأس الشريط */}
             <div className="flex items-center justify-between px-4 h-14 border-b border-border">
               <span className="font-bold text-sm">القائمة</span>
               <Button
@@ -143,9 +136,7 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
               </Button>
             </div>
 
-            {/* محتوى الشريط */}
             <div className="flex-1 overflow-y-auto py-3">
-              {/* عناصر التنقل */}
               <div className="px-3 mb-2">
                 <p className="text-[11px] font-medium text-muted-foreground px-3 mb-2">
                   التنقل
@@ -175,25 +166,21 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
                 </div>
               </div>
 
-              {/* فاصل */}
               <div className="mx-4 my-3 h-px bg-border/60" />
 
-              {/* أدوات */}
               <div className="px-3 mb-2">
                 <p className="text-[11px] font-medium text-muted-foreground px-3 mb-2">
                   أدوات
                 </p>
                 <div className="space-y-1">
-                  {/* حاسبة الأسعار */}
                   <button
                     onClick={handleCalc}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/60 transition-all active:scale-[0.98]"
                   >
-                    <Calculator className="h-5 w-5 text-emerald-600" />
+                    <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     <span>حاسبة الأسعار</span>
                   </button>
 
-                  {/* تبديل المظهر */}
                   <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground">
                     <ThemeToggle />
                     <span>تبديل المظهر</span>
@@ -201,10 +188,8 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
                 </div>
               </div>
 
-              {/* فاصل */}
               <div className="mx-4 my-3 h-px bg-border/60" />
 
-              {/* معلومات التواصل */}
               <div className="px-3">
                 <p className="text-[11px] font-medium text-muted-foreground px-3 mb-2">
                   تواصل معنا

@@ -542,3 +542,28 @@ Stage Summary:
 - شريط التنقل السفلي يعود الآن مطابقاً للأصل: 3 تبويبات مع حركات spring
 - تمت إزالة تبويب حسابي (غير موجود في الأصل)
 - تم رفع commit 7705a23 إلى GitHub
+---
+Task ID: 1
+Agent: Main Agent
+Task: Replace customer-facing components with original uploaded versions to fix visual mismatch
+
+Work Log:
+- Explored all original files in /home/z/my-project/new-customer/src/components/app/
+- Compared each original file with current version using diff
+- Identified MASSIVE differences in app-shell.tsx (current was completely rewritten):
+  - Missing: top info bar, desktop nav, LiveClock, ThemeToggle, full footer with testimonials
+  - Wrong: background color (bg-[#FFFBEB] vs bg-background), header height (h-12 vs h-14), max-width (max-w-md vs max-w-7xl)
+  - Missing: AdminGate, admin view, footerOpen logic, shop open status
+- Replaced app-shell.tsx - kept multi-shop AppShellProps but restored ALL original structure
+- Replaced mobile-bottom-nav.tsx - restored dark: variants and mobile-nav-safe class
+- Replaced mobile-sidebar.tsx - restored dark: variants and ThemeToggle integration
+- Replaced quick-price-calculator.tsx - restored bg-background, dark: variants, proper input styling
+- Replaced theme-toggle.tsx - restored Button component and original SSR handling
+- Fixed lint errors (removed setState in useEffect patterns)
+- Verified all other customer components (testimonials, floating-assistant, intro, admin-gate, notification-badge, back-to-top, live-clock) are identical to originals
+
+Stage Summary:
+- 6 files replaced with original versions (adapted for multi-shop where needed)
+- Customer view should now match the original uploaded version
+- Key restoration: top amber info bar, full header with desktop nav, complete footer with testimonials/contact/social links, proper dark mode support
+- Admin link for multi-shop preserved as non-intrusive overlay

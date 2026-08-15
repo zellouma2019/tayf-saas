@@ -1,40 +1,44 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { useSyncExternalStore, useCallback } from "react";
-import { Moon, Sun } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Sun, Moon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const emptySubscribe = () => () => {};
-function useMounted() {
-  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+function getIsServer() {
+  return false;
+}
+
+function getServerSnapshot() {
+  return true;
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const mounted = useMounted();
-  const toggle = useCallback(() => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  }, [setTheme, resolvedTheme]);
+  const { resolvedTheme, setTheme } = useTheme();
+  const isServer = useSyncExternalStore(emptySubscribe, getIsServer, getServerSnapshot);
 
-  if (!mounted) return <div className={cn("h-8 w-8", className)} />;
+  const isDark = !isServer && resolvedTheme === "dark";
 
-  const isDark = resolvedTheme === "dark";
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className={cn(
-        "inline-flex items-center justify-center rounded-lg hover:bg-muted transition-colors",
-        className
-      )}
-      aria-label={isDark ? "تبديل إلى الوضع الفاتح" : "تبديل إلى الوضع الداكن"}
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={`relative w-9 h-9 rounded-full transition-all hover:bg-muted ${
+        isDark ? "bg-amber-400/10" : "bg-neutral-900/5"
+      } ${className || ""}`}
+      aria-label={isDark ? "التبديل للوضع النهاري" : "التبديل للوضع الليلي"}
+      title={isDark ? "الوضع النهاري" : "الوضع الليلي"}
     >
-      {isDark ? (
+      {isServer ? (
+        <div className="h-4 w-4" />
+      ) : isDark ? (
         <Sun className="h-4 w-4 text-amber-400" />
       ) : (
-        <Moon className="h-4 w-4 text-slate-600" />
+        <Moon className="h-4 w-4 text-neutral-700" />
       )}
-    </button>
+    </Button>
   );
 }

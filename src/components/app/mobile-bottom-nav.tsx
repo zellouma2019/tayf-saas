@@ -24,14 +24,14 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-2xl border-t border-amber-100/60 no-print"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-2xl border-t border-border/60 mobile-nav-safe no-print"
       role="tablist"
       aria-label="التنقل الرئيسي"
     >
       <div className="relative flex items-end h-14">
         <motion.div
           layoutId="mobile-tab-bg"
-          className="absolute bottom-0 h-11 w-1/3 rounded-t-2xl bg-amber-500/10"
+          className="absolute bottom-0 h-11 w-1/3 rounded-t-2xl bg-amber-500/10 dark:bg-amber-500/15"
           style={{
             right: `${(activeIndex >= 0 ? activeIndex : 0) * 33.333}%`,
           }}
@@ -51,8 +51,8 @@ export function MobileBottomNav() {
               onClick={() => setView(tab.key)}
               className={`relative flex-1 flex flex-col items-center justify-center py-1.5 gap-0.5 transition-all duration-200 active:scale-90 ${
                 isActive
-                  ? "text-amber-600"
-                  : "text-neutral-400"
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-muted-foreground/70"
               }`}
             >
               <div className="relative">
