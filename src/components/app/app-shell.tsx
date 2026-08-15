@@ -190,13 +190,13 @@ export function AppShell({
 
       {/* ===== Floating Action Button ===== */}
       <button
-        className="fixed bottom-16 right-3 z-50 w-10 h-10 rounded-full bg-yellow-400 hover:bg-yellow-500 text-neutral-900 shadow-lg shadow-yellow-400/30 flex items-center justify-center transition-colors no-print"
+        className="fixed bottom-[4.25rem] right-4 z-50 w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 text-neutral-900 shadow-lg shadow-yellow-400/30 flex items-center justify-center transition-colors no-print"
         aria-label="مساعد ذكي"
         onClick={() => useAppStore.getState().setAssistantOpen(true)}
       >
-        <Sparkles className="h-4 w-4" />
+        <Sparkles className="h-5 w-5" />
         {/* Red notification dot */}
-        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white" />
+        <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white" />
       </button>
 
       {/* ===== Order Success Dialog ===== */}
@@ -206,7 +206,7 @@ export function AppShell({
       {showAdminLink && shopSlug && (
         <a
           href={`/s/${shopSlug}?admin=1`}
-          className="fixed bottom-16 left-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-neutral-900 text-white text-[11px] font-medium shadow-lg hover:bg-neutral-800 transition-colors no-print"
+          className="fixed bottom-[4.25rem] left-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-neutral-900 text-white text-[11px] font-medium shadow-lg hover:bg-neutral-800 transition-colors no-print"
           title="لوحة التحكم"
         >
           <ArrowLeftToLine className="h-3.5 w-3.5" />
