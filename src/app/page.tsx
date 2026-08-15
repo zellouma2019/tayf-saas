@@ -123,7 +123,7 @@ function InlineLoginGate({ onUnlock }: { onUnlock: () => void }) {
               <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => { setPassword(e.target.value); setError(false); }} className="pr-9 h-11" dir="ltr" />
             </div>
             {error && <p className="text-destructive text-xs text-center">كلمة المرور غير صحيحة</p>}
-            <Button type="submit" className="w-full rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.3),0_0_60px_rgba(245,158,11,0.1)] hover:shadow-[0_0_24px_rgba(245,158,11,0.4),0_0_72px_rgba(245,158,11,0.15)] hover:scale-[0.97]" disabled={loading}>
+            <Button type="submit" className="w-full rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.3),0_0_60px_rgba(245,158,11,0.1)] hover:shadow-[0_0_24px_rgba(245,158,11,0.4),0_0_72px_rgba(245,158,11,0.15)] hover:opacity-90" disabled={loading}>
               {loading ? 'جاري التحقق...' : 'دخول'}
             </Button>
           </form>
@@ -187,7 +187,7 @@ function InlineCreateShop({ open, onClose, onCreated }: { open: boolean; onClose
                 </div>
               </div>
             </div>
-            <Button onClick={handleClose} className="w-full rounded-full px-6 py-3 hover:scale-[0.97]">تم</Button>
+            <Button onClick={handleClose} className="w-full rounded-full px-6 py-3 hover:opacity-90">تم</Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -206,8 +206,8 @@ function InlineCreateShop({ open, onClose, onCreated }: { open: boolean; onClose
               </Select>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleClose} className="flex-1 rounded-full hover:scale-[0.97]">إلغاء</Button>
-              <Button type="submit" disabled={!name || !slug || !pin || submitting} className="flex-1 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
+              <Button type="button" variant="outline" onClick={handleClose} className="flex-1 rounded-full hover:opacity-90">إلغاء</Button>
+              <Button type="submit" disabled={!name || !slug || !pin || submitting} className="flex-1 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:opacity-90">
                 {submitting ? 'جاري الإنشاء...' : 'إنشاء'}
               </Button>
             </div>
@@ -369,8 +369,8 @@ function InlineEditShop({ open, onClose, shop, onSaved }: {
               </div>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-full hover:scale-[0.97]">إلغاء</Button>
-              <Button type="submit" disabled={saving || !data.name} className="flex-1 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-full hover:opacity-90">إلغاء</Button>
+              <Button type="submit" disabled={saving || !data.name} className="flex-1 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:opacity-90">
                 {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
               </Button>
             </div>
@@ -417,7 +417,7 @@ function InlineShareShop({ open, onClose, shop }: {
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">رابط الزبون</span>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs bg-muted px-3 py-2.5 rounded-xl font-mono" dir="ltr">{customerLink}</code>
-              <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:scale-[0.97]" onClick={() => robustCopy(customerLink, 'تم النسخ', customerLink)}>
+              <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:opacity-90" onClick={() => robustCopy(customerLink, 'تم النسخ', customerLink)}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -426,7 +426,7 @@ function InlineShareShop({ open, onClose, shop }: {
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">رابط الإدارة</span>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs bg-muted px-3 py-2.5 rounded-xl font-mono" dir="ltr">{adminLink}</code>
-              <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:scale-[0.97]" onClick={() => robustCopy(adminLink, 'تم النسخ', adminLink)}>
+              <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:opacity-90" onClick={() => robustCopy(adminLink, 'تم النسخ', adminLink)}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -439,14 +439,14 @@ function InlineShareShop({ open, onClose, shop }: {
                 {pinData.loaded ? (pinData.pin || '—') : '...'}
               </code>
               {pinData.loaded && pinData.pin && (
-                <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:scale-[0.97]" onClick={() => robustCopy(pinData.pin, 'تم نسخ PIN', pinData.pin)}>
+                <Button size="sm" variant="outline" className="shrink-0 gap-1 rounded-full hover:opacity-90" onClick={() => robustCopy(pinData.pin, 'تم نسخ PIN', pinData.pin)}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
           </div>
         </div>
-        <Button onClick={onClose} className="w-full mt-4 rounded-full px-6 py-3 hover:scale-[0.97]">تم</Button>
+        <Button onClick={onClose} className="w-full mt-4 rounded-full px-6 py-3 hover:opacity-90">تم</Button>
       </DialogContent>
     </Dialog>
   );
@@ -788,8 +788,8 @@ export default function AdminPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={fetchData} disabled={refreshing} className="gap-1.5 rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">{refreshing ? 'جارٍ التحديث...' : 'تحديث'}</span></Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 rounded-full text-rose-500 dark:text-[#c75252] hover:scale-[0.97]"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
+              <Button variant="outline" size="sm" onClick={fetchData} disabled={refreshing} className="gap-1.5 rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:opacity-90"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /><span className="hidden sm:inline">{refreshing ? 'جارٍ التحديث...' : 'تحديث'}</span></Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 rounded-full text-rose-500 dark:text-[#c75252] hover:opacity-90"><LogOut className="h-3.5 w-3.5" /><span className="hidden sm:inline">خروج</span></Button>
             </div>
           </div>
         </header>
@@ -918,7 +918,7 @@ export default function AdminPage() {
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="بحث في المتاجر..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-9 h-11" />
                   </div>
-                  <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white dark:hover:from-[#d46060] dark:hover:to-[#b04040] shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
+                  <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white dark:hover:from-[#d46060] dark:hover:to-[#b04040] shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:opacity-90">
                     <Plus className="h-4 w-4" />إنشاء متجر
                   </Button>
                 </div>
@@ -928,7 +928,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filteredShops.map((shop, idx) => (
                       <motion.div key={shop.id} {...fadeIn} transition={{ delay: idx * 0.03 }}>
-                        <Card className="hover:shadow-md transition-shadow dark:glass-card dark:glass-card-hover">
+                        <Card className="hover:shadow-md transition-shadow dark:glass-card">
                           <CardContent className="p-5 space-y-3">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
@@ -948,21 +948,22 @@ export default function AdminPage() {
                             </div>
                             {shop.ownerName && <p className="text-xs text-muted-foreground">👤 {shop.ownerName}{shop.phone ? ` · ${shop.phone}` : ''}</p>}
                             <div className="flex flex-wrap gap-1.5 pt-1">
-                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => window.open(`/s/${shop.slug}`, '_blank')}><Eye className="h-3 w-3" />عرض</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => window.open(`/s/${shop.slug}?admin=1`, '_blank')}><Shield className="h-3 w-3" />إدارة</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => setEditTarget(shop)}><Pencil className="h-3 w-3" />تعديل</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => setShareTarget(shop)}><Share2 className="h-3 w-3" />مشاركة</Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => handleCopyPin(shop)}><Key className="h-3 w-3" />PIN</Button>
+                              <Button type="button" size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" asChild><a href={`/s/${shop.slug}`} target="_blank" rel="noopener noreferrer"><Eye className="h-3 w-3" />عرض</a></Button>
+                              <Button type="button" size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" asChild><a href={`/s/${shop.slug}?admin=1`} target="_blank" rel="noopener noreferrer"><Shield className="h-3 w-3" />إدارة</a></Button>
+                              <Button type="button" size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => setEditTarget(shop)}><Pencil className="h-3 w-3" />تعديل</Button>
+                              <Button type="button" size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => setShareTarget(shop)}><Share2 className="h-3 w-3" />مشاركة</Button>
+                              <Button type="button" size="sm" variant="outline" className="gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]" onClick={() => handleCopyPin(shop)}><Key className="h-3 w-3" />PIN</Button>
                               <Button
+                                type="button"
                                 size="sm"
                                 variant="outline"
-                                className={"gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] hover:scale-[0.97] " + (shop.isActive ? 'text-amber-600 hover:text-amber-700 dark:text-[#d46060] dark:hover:text-[#e07070]' : 'text-emerald-600 hover:text-emerald-700 dark:text-[#c75252] dark:hover:text-[#d46060]')}
+                                className={"gap-1 text-xs rounded-full dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06] " + (shop.isActive ? 'text-amber-600 hover:text-amber-700 dark:text-[#d46060] dark:hover:text-[#e07070]' : 'text-emerald-600 hover:text-emerald-700 dark:text-[#c75252] dark:hover:text-[#d46060]')}
                                 onClick={() => handleToggleShop(shop)}
                               >
                                 {shop.isActive ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
                                 {shop.isActive ? 'إيقاف' : 'تفعيل'}
                               </Button>
-                              <Button size="sm" variant="outline" className="gap-1 text-xs rounded-full text-rose-500 hover:text-rose-600 dark:text-[#dc2626] dark:border-white/[0.12] dark:hover:bg-white/[0.06] hover:scale-[0.97]" onClick={() => setDeleteTarget(shop)}><Trash2 className="h-3 w-3" /></Button>
+                              <Button type="button" size="sm" variant="outline" className="gap-1 text-xs rounded-full text-rose-500 hover:text-rose-600 dark:text-[#dc2626] dark:border-white/[0.12] dark:hover:bg-white/[0.06]" onClick={() => setDeleteTarget(shop)}><Trash2 className="h-3 w-3" /></Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -1178,7 +1179,7 @@ export default function AdminPage() {
                           <div className="space-y-2"><Label>واتساب</Label><Input value={platformSettings.platformWhatsapp} onChange={(e) => setPlatformSettings({ ...platformSettings, platformWhatsapp: e.target.value })} dir="ltr" placeholder="213xxxxxxxxx" className="h-11" /></div>
                           <div className="space-y-2"><Label>وصف المنصة</Label><Textarea value={platformSettings.platformDescription} onChange={(e) => setPlatformSettings({ ...platformSettings, platformDescription: e.target.value })} rows={2} /></div>
                         </div>
-                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
+                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:opacity-90">
                           <Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                         </Button>
                       </CardContent>
@@ -1211,7 +1212,7 @@ export default function AdminPage() {
                           <div className="space-y-2"><Label>الحد الأقصى للمتاجر</Label><Input type="number" value={platformSettings.maxShops} onChange={(e) => setPlatformSettings({ ...platformSettings, maxShops: parseInt(e.target.value) || 100 })} className="h-11" /></div>
                           <div className="space-y-2"><Label>رسالة الترحيب الافتراضية</Label><Input value={platformSettings.defaultWelcomeMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, defaultWelcomeMessage: e.target.value })} className="h-11" /></div>
                         </div>
-                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 rounded-full hover:scale-[0.97]"><Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ'}</Button>
+                        <Button onClick={() => saveSettings(platformSettings)} disabled={settingsSaving} className="gap-2 rounded-full hover:opacity-90"><Save className="h-4 w-4" />{settingsSaving ? 'جاري الحفظ...' : 'حفظ'}</Button>
                       </CardContent>
                     </Card>
 
@@ -1235,7 +1236,7 @@ export default function AdminPage() {
                             />
                           </div>
                         ))}
-                        <Button onClick={() => saveSettings({ defaultFeatures: platformSettings.defaultFeatures })} disabled={settingsSaving} className="gap-2 rounded-full hover:scale-[0.97]"><Save className="h-4 w-4" />حفظ</Button>
+                        <Button onClick={() => saveSettings({ defaultFeatures: platformSettings.defaultFeatures })} disabled={settingsSaving} className="gap-2 rounded-full hover:opacity-90"><Save className="h-4 w-4" />حفظ</Button>
                       </CardContent>
                     </Card>
 
@@ -1257,7 +1258,7 @@ export default function AdminPage() {
                             />
                           </div>
                         ))}
-                        <Button onClick={() => saveSettings({ notifications: platformSettings.notifications })} disabled={settingsSaving} className="gap-2 rounded-full hover:scale-[0.97]"><Save className="h-4 w-4" />حفظ</Button>
+                        <Button onClick={() => saveSettings({ notifications: platformSettings.notifications })} disabled={settingsSaving} className="gap-2 rounded-full hover:opacity-90"><Save className="h-4 w-4" />حفظ</Button>
                       </CardContent>
                     </Card>
 
@@ -1279,7 +1280,7 @@ export default function AdminPage() {
                           <div className="space-y-2">
                             <Label>رسالة الصيانة</Label>
                             <Textarea value={platformSettings.maintenanceMessage} onChange={(e) => setPlatformSettings({ ...platformSettings, maintenanceMessage: e.target.value })} rows={2} />
-                            <Button onClick={() => saveSettings({ maintenanceMessage: platformSettings.maintenanceMessage })} disabled={settingsSaving} size="sm" className="gap-1 rounded-full hover:scale-[0.97]"><Save className="h-3.5 w-3.5" />حفظ الرسالة</Button>
+                            <Button onClick={() => saveSettings({ maintenanceMessage: platformSettings.maintenanceMessage })} disabled={settingsSaving} size="sm" className="gap-1 rounded-full hover:opacity-90"><Save className="h-3.5 w-3.5" />حفظ الرسالة</Button>
                           </div>
                         )}
                         <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
@@ -1311,7 +1312,7 @@ export default function AdminPage() {
                       <div className="space-y-2"><Label>كلمة المرور الجديدة</Label><Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} dir="ltr" className="h-11" /></div>
                       <div className="space-y-2"><Label>تأكيد كلمة المرور</Label><Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} dir="ltr" className="h-11" /></div>
                     </div>
-                    <Button onClick={changePassword} disabled={passLoading || !newPass} className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:scale-[0.97]">
+                    <Button onClick={changePassword} disabled={passLoading || !newPass} className="gap-2 rounded-full px-6 py-3 bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_20px_rgba(245,158,11,0.25),0_0_60px_rgba(245,158,11,0.08)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35),0_0_72px_rgba(245,158,11,0.12)] hover:opacity-90">
                       <Lock className="h-4 w-4" />{passLoading ? 'جاري التغيير...' : 'تغيير كلمة المرور'}
                     </Button>
                   </CardContent>
@@ -1331,7 +1332,7 @@ export default function AdminPage() {
                           <SelectContent><SelectItem value="admin">مدير</SelectItem><SelectItem value="member">عضو</SelectItem><SelectItem value="viewer">مشاهد</SelectItem></SelectContent>
                         </Select>
                       </div>
-                      <div className="flex items-end"><Button onClick={addTeamMember} disabled={!newMemberName || !newMemberEmail} size="sm" className="w-full gap-1 rounded-full bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_16px_rgba(245,158,11,0.2),0_0_48px_rgba(245,158,11,0.06)] hover:scale-[0.97]"><Plus className="h-4 w-4" />إضافة</Button></div>
+                      <div className="flex items-end"><Button onClick={addTeamMember} disabled={!newMemberName || !newMemberEmail} size="sm" className="w-full gap-1 rounded-full bg-gradient-to-l from-amber-500 to-amber-600 text-white dark:from-[#c75252] dark:to-[#a03030] dark:text-white shadow-[0_0_16px_rgba(245,158,11,0.2),0_0_48px_rgba(245,158,11,0.06)] hover:opacity-90"><Plus className="h-4 w-4" />إضافة</Button></div>
                     </div>
                     {/* Members list */}
                     <div className="space-y-2">
@@ -1349,7 +1350,7 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px]">{member.role === 'admin' ? 'مدير' : member.role === 'member' ? 'عضو' : 'مشاهد'}</Badge>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 rounded-full hover:scale-[0.97]" onClick={() => removeTeamMember(member.email)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:text-rose-600 rounded-full hover:opacity-90" onClick={() => removeTeamMember(member.email)}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>
                         </div>
                       ))}
@@ -1372,7 +1373,7 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><p className="text-sm">المسؤول الحالي</p></div>
                       <span className="text-sm font-medium">{adminName}</span>
                     </div>
-                    <Button variant="outline" onClick={handleLogout} className="w-full gap-2 text-rose-500 mt-2 rounded-full hover:scale-[0.97]"><LogOut className="h-4 w-4" />تسجيل الخروج</Button>
+                    <Button variant="outline" onClick={handleLogout} className="w-full gap-2 text-rose-500 mt-2 rounded-full hover:opacity-90"><LogOut className="h-4 w-4" />تسجيل الخروج</Button>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -1395,7 +1396,7 @@ export default function AdminPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting} className="rounded-full">إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteShop} disabled={deleting} className="rounded-full font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[0.97]">
+            <AlertDialogAction onClick={handleDeleteShop} disabled={deleting} className="rounded-full font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:opacity-90">
               {deleting ? 'جارٍ الحذف...' : 'حذف المتجر'}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -366,3 +366,37 @@ Stage Summary:
 - Dialogs are wider on large screens for better form layout
 - New shop creation code (with countries, trial, features) pending Vercel deployment
 
+---
+Task ID: 4
+Agent: Main
+Task: Fix admin dashboard buttons not responding on desktop
+
+Work Log:
+- Analyzed user screenshot (Screenshot_50.png) using VLM — identified shop card action buttons in light mode
+- Tested all buttons in agent-browser — found they work in Chromium but user reports failure on their computer
+- Root cause analysis identified 3 issues:
+  1. `hover:scale-[0.97]` on ALL shop card buttons caused "moving target" effect — button shrinks on hover, mouse may no longer be over click target
+  2. `dark:glass-card-hover` CSS class added `transform: translateY(-2px)` on Card hover — entire card moves up, shifting all buttons
+  3. `window.open()` in onClick handlers could be blocked by popup blockers on some browsers
+- Also found `active:scale-[0.97]` in shadcn Button component base styles affecting all buttons globally
+
+Fixes applied:
+1. Removed `hover:scale-[0.97]` from all shop card buttons (replaced with `hover:opacity-90` where needed)
+2. Removed `dark:glass-card-hover` from shop Card element (no more translateY on hover)
+3. Removed `translateY(-2px)` from `.glass-card-hover:hover` in globals.css
+4. Replaced `window.open()` with proper `<a>` tags using `asChild` for View/Admin buttons
+5. Added explicit `type="button"` to all shop card buttons
+6. Removed `active:scale-[0.97]` and changed `transition-all` to `transition-colors` in Button component
+7. Removed ALL remaining `hover:scale-[0.97]` from page.tsx (17 instances)
+
+Verification:
+- Tested in agent-browser: all buttons (عرض, إدارة, تعديل, مشاركة, PIN, إيقاف, حذف) respond correctly
+- Edit dialog opens with all tabs (الأساسيات, الخطة والتجربة, ميزات المتجر, لوحة التحكم, المظهر, ملاحظات)
+- Country selector works, feature toggles work, plan/trial settings work
+- View and Admin buttons now render as `<a>` links (more reliable than window.open)
+
+Stage Summary:
+- Root cause: CSS transforms (scale + translateY) on hover created "moving target" that prevented clicks on certain browsers/resolutions
+- Fixed 3 files: page.tsx, button.tsx, globals.css
+- All buttons now use static positioning with opacity feedback instead of transform-based effects
+- Navigation buttons use semantic `<a>` tags instead of JavaScript window.open
