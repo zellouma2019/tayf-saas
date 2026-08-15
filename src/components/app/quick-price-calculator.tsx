@@ -137,7 +137,7 @@ function getBreakdownItems(price: PriceResult, pages: number, copies: number, bi
           initial={{ scale: 0.8, rotate: -3, opacity: 0 }}
           animate={{ scale: 1, rotate: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 400, damping: 15, delay: items.length * 0.05 + 0.1 }}
-          className="flex justify-between text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg px-3 py-1.5"
+          className="flex justify-between text-xs text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5"
         >
           <span>🎁 خصم الكمية ({copies >= 50 ? "15%" : "10%"})</span>
           <span>−{formatDA(price.discount)} دج</span>
@@ -197,15 +197,15 @@ export function QuickPriceCalculator() {
   // Volume discount indicator logic
   const volumeDiscountInfo = useMemo(() => {
     if (copies >= 50) {
-      return { label: "خصم 15% مفعّل ✨", color: "bg-emerald-500", textColor: "text-emerald-700 dark:text-emerald-400", fill: 100, stage: 3 as const };
+      return { label: "خصم 15% مفعّل ✨", color: "bg-emerald-500", textColor: "text-emerald-700", fill: 100, stage: 3 as const };
     } else if (copies >= 10) {
       // 10-49: fill proportionally between 10 and 50
       const fill = Math.min(100, ((copies - 10) / 40) * 100);
-      return { label: "خصم 10% قريباً", color: "bg-amber-400", textColor: "text-amber-700 dark:text-amber-400", fill, stage: 2 as const };
+      return { label: "خصم 10% قريباً", color: "bg-amber-400", textColor: "text-amber-700", fill, stage: 2 as const };
     } else {
       // 0-9: fill proportionally
       const fill = (copies / 10) * 30; // max 30% fill for 0-9 range
-      return { label: "خصم الكمية: لا يوجد", color: "bg-gray-300 dark:bg-gray-600", textColor: "text-muted-foreground", fill, stage: 1 as const };
+      return { label: "خصم الكمية: لا يوجد", color: "bg-amber-200", textColor: "text-muted-foreground", fill, stage: 1 as const };
     }
   }, [copies]);
 
@@ -229,7 +229,7 @@ export function QuickPriceCalculator() {
   };
 
   const inputClass =
-    "h-9 w-full text-sm rounded-lg border-input bg-background pr-2 focus:ring-2 focus:ring-ring transition-colors";
+    "h-9 w-full text-sm rounded-lg border-amber-200 bg-white pr-2 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-colors";
 
   // Unique key to trigger re-animation on price changes
   const priceKey = `${price.total}-${serviceType}-${pages}-${copies}-${color}-${paperSize}-${sides}-${binding}-${delivery}`;
@@ -247,8 +247,8 @@ export function QuickPriceCalculator() {
                 title={serviceType !== svc.type ? "اختر هذا النوع" : undefined}
                 className={`relative rounded-xl p-3 border-2 text-center transition-all hover:shadow-md ${
                   serviceType === svc.type
-                    ? "border-amber-400 bg-amber-50 dark:bg-amber-950/40 shadow-sm"
-                    : "border-transparent bg-background hover:bg-muted/50"
+                    ? "border-amber-400 bg-amber-50 shadow-sm"
+                    : "border-transparent bg-white hover:bg-amber-50/50"
                 }`}
               >
                 {/* Ripple/pulse effect on selected service */}
@@ -289,8 +289,8 @@ export function QuickPriceCalculator() {
                       onClick={() => setColor(c.id)}
                       className={`rounded-lg py-2 text-xs font-medium transition-colors border-2 ${
                         color === c.id
-                          ? "border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 shadow-sm"
-                          : "border-transparent bg-background hover:bg-muted/50"
+                          ? "border-amber-400 bg-amber-50 text-amber-800 shadow-sm"
+                          : "border-transparent bg-white hover:bg-amber-50/50"
                       }`}
                     >
                       <span>{c.emoji}</span>
@@ -308,8 +308,8 @@ export function QuickPriceCalculator() {
                       onClick={() => setPaperSize(s.id)}
                       className={`rounded-lg py-2 text-xs font-medium transition-colors border-2 ${
                         paperSize === s.id
-                          ? "border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 shadow-sm"
-                          : "border-transparent bg-background hover:bg-muted/50"
+                          ? "border-amber-400 bg-amber-50 text-amber-800 shadow-sm"
+                          : "border-transparent bg-white hover:bg-amber-50/50"
                       }`}
                     >
                       <span className="text-[10px]">{s.id}</span>
@@ -332,8 +332,8 @@ export function QuickPriceCalculator() {
                     onClick={() => setSides(s.id)}
                     className={`rounded-lg py-2 text-xs font-medium transition-colors border-2 ${
                       sides === s.id
-                        ? "border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 shadow-sm"
-                        : "border-transparent bg-background hover:bg-muted/50"
+                        ? "border-amber-400 bg-amber-50 text-amber-800 shadow-sm"
+                        : "border-transparent bg-white hover:bg-amber-50/50"
                     }`}
                   >
                     <span>{s.emoji}</span>
@@ -352,8 +352,8 @@ export function QuickPriceCalculator() {
                       onClick={() => setBinding(b.id)}
                       className={`rounded-lg py-2 text-[10px] font-medium transition-colors border-2 ${
                         binding === b.id
-                          ? "border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 shadow-sm"
-                          : "border-transparent bg-background hover:bg-muted/50"
+                          ? "border-amber-400 bg-amber-50 text-amber-800 shadow-sm"
+                          : "border-transparent bg-white hover:bg-amber-50/50"
                       }`}
                     >
                       <span className="text-[9px]">{b.label}</span>
@@ -430,7 +430,7 @@ export function QuickPriceCalculator() {
 
           {/* Volume discount progress bar */}
           <div className="space-y-1">
-            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-amber-100 overflow-hidden">
               <motion.div
                 className={`h-full rounded-full ${volumeDiscountInfo.color}`}
                 initial={{ width: 0 }}
@@ -456,8 +456,8 @@ export function QuickPriceCalculator() {
                       onClick={() => setDelivery(d.id)}
                       className={`rounded-lg py-2 text-[10px] font-medium transition-colors border-2 ${
                         delivery === d.id
-                          ? "border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 shadow-sm"
-                          : "border-transparent bg-background hover:bg-muted/50"
+                          ? "border-amber-400 bg-amber-50 text-amber-800 shadow-sm"
+                          : "border-transparent bg-white hover:bg-amber-50/50"
                       }`}
                     >
                       <span className="text-[9px]">{d.emoji}</span>
@@ -475,10 +475,10 @@ export function QuickPriceCalculator() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="rounded-xl border-2 border-amber-200 dark:border-amber-800/60 bg-gradient-to-br from-white to-amber-50/80 dark:from-neutral-900 to-neutral-800 p-5 space-y-3"
+            className="rounded-xl border-2 border-amber-200 bg-gradient-to-br from-white to-amber-50/80 p-5 space-y-3"
           >
             <div className="text-center mb-3">
-              <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+              <span className="text-xs text-amber-700 font-medium">
                 {SERVICE_OPTIONS.find((s) => s.type === serviceType)?.emoji}{" "}
                 {SERVICE_OPTIONS.find((s) => s.type === serviceType)?.label}
               </span>
@@ -502,7 +502,7 @@ export function QuickPriceCalculator() {
               </AnimatePresence>
             </div>
 
-            <div className="border-t border-dashed border-amber-200 dark:border-amber-800/40 pt-3 mt-1" />
+            <div className="border-t border-dashed border-amber-200 pt-3 mt-1" />
 
             <div className="flex justify-between items-end">
               <div className="text-xs text-muted-foreground">المجموع الإجمالي</div>
@@ -513,7 +513,7 @@ export function QuickPriceCalculator() {
                   initial={{ scale: 1 }}
                   animate={{ scale: [1, 1.08, 1] }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="text-2xl font-black text-amber-800 dark:text-amber-400 inline-block"
+                  className="text-2xl font-black text-amber-800 inline-block" style={{ fontFamily: 'var(--font-inter)' }}
                 >
                   {fmt(price.total)} دج
                 </motion.span>
@@ -522,7 +522,7 @@ export function QuickPriceCalculator() {
                   onClick={handleCopyPrice}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                  className="p-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors"
                   title="نسخ السعر"
                 >
                   <Copy className="h-3.5 w-3.5" />
@@ -532,7 +532,7 @@ export function QuickPriceCalculator() {
 
             {/* بطاقة تعريف سريعة — clickable reference rows */}
             {serviceType === "document" && (
-              <div className="grid grid-cols-3 gap-2 text-[10px] text-muted-foreground mt-2 pt-2 border-t border-dashed border-amber-200/60 dark:border-amber-800/40">
+              <div className="grid grid-cols-3 gap-2 text-[10px] text-muted-foreground mt-2 pt-2 border-t border-dashed border-amber-200/60">
                 {[
                   { num: 10, priceVal: price.pagesCost * 10 },
                   { num: 50, priceVal: price.pagesCost * 50 - Math.floor(price.pagesCost * 50 * 0.1) },
@@ -543,11 +543,11 @@ export function QuickPriceCalculator() {
                     onClick={() => handleQuickCopies(ref.num)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="text-center p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
+                    className="text-center p-1.5 rounded-lg hover:bg-amber-50 transition-colors cursor-pointer"
                     title={`تعيين ${ref.num} نسخة`}
                   >
                     <div className="font-medium">{ref.num} نسخ</div>
-                    <div className="text-emerald-700 font-bold">{fmt(ref.priceVal)}</div>
+                    <div className="text-emerald-700 font-bold" style={{ fontFamily: 'var(--font-inter)' }}>{fmt(ref.priceVal)}</div>
                   </motion.button>
                 ))}
               </div>

@@ -35928,3 +35928,61 @@ input[type="number"], input[type="tel"], input[type="email"],
   font-family: var(--font-inter), var(--font-cairo), system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
+
+/* ===== Customer Shell Font Rules ===== */
+/* Ensure body text in customer shell uses Cairo */
+.customer-shell {
+  font-family: var(--font-cairo), system-ui, sans-serif;
+}
+
+/* Headings in customer view use Alexandria */
+.customer-shell h1,
+.customer-shell h2,
+.customer-shell h3,
+.customer-shell h4,
+.customer-shell h5,
+.customer-shell h6,
+.customer-shell [data-slot="dialog-title"] {
+  font-family: var(--font-alexandria), var(--font-cairo), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Bold + large text in customer view = headings → Alexandria */
+.customer-shell .font-bold.text-lg,
+.customer-shell .font-bold.text-xl,
+.customer-shell .font-bold.text-2xl,
+.customer-shell .font-bold.text-3xl,
+.customer-shell .font-bold.text-4xl,
+.customer-shell .font-extrabold,
+.customer-shell .font-black {
+  font-family: var(--font-alexandria), var(--font-cairo), system-ui, sans-serif;
+}
+
+/* Numbers, prices, and inputs in customer view use Inter */
+.customer-shell td,
+.customer-shell th,
+.customer-shell .tabular-nums,
+.customer-shell .font-num,
+.customer-shell .font-mono,
+.customer-shell code,
+.customer-shell pre,
+.customer-shell input[type="number"],
+.customer-shell input[type="tel"],
+.customer-shell input[type="email"],
+.customer-shell .time,
+.customer-shell .date,
+.customer-shell .amount,
+.customer-shell .price,
+.customer-shell .stat-value,
+.customer-shell .metric-value {
+  font-family: var(--font-inter), var(--font-cairo), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Large text (likely prices/totals) in customer view use Inter */
+.customer-shell .text-2xl.font-black,
+.customer-shell .text-2xl.font-extrabold,
+.customer-shell .text-3xl,
+.customer-shell .text-4xl {
+  font-family: var(--font-inter), var(--font-cairo), system-ui, sans-serif;
+}

@@ -29,7 +29,7 @@ export function MobileBottomNav() {
       role="tablist"
       aria-label="التنقل الرئيسي"
     >
-      <div className="max-w-md mx-auto flex items-center h-16 px-2">
+      <div className="max-w-md mx-auto flex items-center h-14 px-2">
         {/* Add / جديد — Active with yellow circle */}
         <button
           role="tab"
@@ -39,15 +39,15 @@ export function MobileBottomNav() {
           className="flex-1 flex flex-col items-center justify-center gap-1"
         >
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
               view === "new"
                 ? "bg-yellow-400 text-neutral-900 shadow-md shadow-yellow-400/30"
                 : "text-neutral-400"
             }`}
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-[18px] w-[18px]" />
           </div>
-          <span className={`text-[10px] font-medium transition-colors duration-200 ${
+          <span className={`text-[9px] font-medium transition-colors duration-200 ${
             view === "new" ? "text-neutral-900" : "text-neutral-400"
           }`}>
             جديد
@@ -62,12 +62,12 @@ export function MobileBottomNav() {
           onClick={() => setView("repeat")}
           className="flex-1 flex flex-col items-center justify-center gap-1"
         >
-          <div className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200">
-            <RotateCcw className={`h-5 w-5 transition-colors duration-200 ${
+          <div className="w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-200">
+            <RotateCcw className={`h-[18px] w-[18px] transition-colors duration-200 ${
               view === "repeat" ? "text-neutral-900" : "text-neutral-400"
             }`} />
           </div>
-          <span className={`text-[10px] font-medium transition-colors duration-200 ${
+          <span className={`text-[9px] font-medium transition-colors duration-200 ${
             view === "repeat" ? "text-neutral-900" : "text-neutral-400"
           }`}>
             تكرار
@@ -82,12 +82,12 @@ export function MobileBottomNav() {
           onClick={() => setView("track")}
           className="flex-1 flex flex-col items-center justify-center gap-1"
         >
-          <div className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200">
-            <Search className={`h-5 w-5 transition-colors duration-200 ${
+          <div className="w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-200">
+            <Search className={`h-[18px] w-[18px] transition-colors duration-200 ${
               view === "track" ? "text-neutral-900" : "text-neutral-400"
             }`} />
           </div>
-          <span className={`text-[10px] font-medium transition-colors duration-200 ${
+          <span className={`text-[9px] font-medium transition-colors duration-200 ${
             view === "track" ? "text-neutral-900" : "text-neutral-400"
           }`}>
             تتبّع
@@ -99,10 +99,10 @@ export function MobileBottomNav() {
           aria-label="الملف الشخصي"
           className="flex-1 flex flex-col items-center justify-center gap-1"
         >
-          <div className="w-10 h-10 rounded-full border-2 border-neutral-300 flex items-center justify-center text-neutral-400 transition-colors duration-200">
-            <User className="h-5 w-5" />
+          <div className="w-9 h-9 rounded-full border-2 border-neutral-300 flex items-center justify-center text-neutral-400 transition-colors duration-200">
+            <User className="h-[18px] w-[18px]" />
           </div>
-          <span className="text-[10px] font-medium text-neutral-400">
+          <span className="text-[9px] font-medium text-neutral-400">
             حسابي
           </span>
         </button>

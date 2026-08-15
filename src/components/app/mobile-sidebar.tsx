@@ -37,22 +37,22 @@ const navItems: {
     key: "new",
     label: "طلب جديد",
     icon: Plus,
-    color: "text-amber-600 dark:text-amber-400",
-    activeColor: "bg-amber-50 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300",
+    color: "text-amber-600",
+    activeColor: "bg-amber-50 text-amber-700",
   },
   {
     key: "repeat",
     label: "تكرار طلب",
     icon: RotateCcw,
-    color: "text-teal-600 dark:text-teal-400",
-    activeColor: "bg-teal-50 dark:bg-teal-400/10 text-teal-700 dark:text-teal-300",
+    color: "text-teal-600",
+    activeColor: "bg-teal-50 text-teal-700",
   },
   {
     key: "track",
     label: "تتبّع طلب",
     icon: Search,
-    color: "text-blue-600 dark:text-blue-400",
-    activeColor: "bg-blue-50 dark:bg-blue-400/10 text-blue-700 dark:text-blue-300",
+    color: "text-blue-600",
+    activeColor: "bg-blue-50 text-blue-700",
   },
 ];
 
@@ -126,7 +126,7 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[80vw] bg-white dark:bg-neutral-950 shadow-2xl md:hidden flex flex-col"
+            className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[80vw] bg-white shadow-2xl md:hidden flex flex-col"
             dir="rtl"
           >
             {/* رأس الشريط */}
@@ -189,7 +189,7 @@ export function MobileSidebar({ open, onClose, onNavClick, onCalcOpen }: MobileS
                     onClick={handleCalc}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/60 transition-all active:scale-[0.98]"
                   >
-                    <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <Calculator className="h-5 w-5 text-emerald-600" />
                     <span>حاسبة الأسعار</span>
                   </button>
 

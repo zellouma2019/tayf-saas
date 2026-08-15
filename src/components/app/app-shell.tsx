@@ -103,25 +103,25 @@ export function AppShell({
     <>
     {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
     <LayoutGroup>
-      <div className="min-h-screen flex flex-col bg-[#FFFBEB]" dir="rtl">
+      <div className="customer-shell min-h-screen flex flex-col bg-[#FFFBEB]" dir="rtl">
 
       {/* ===== Sticky Header with Glass Effect ===== */}
       <header className="sticky top-0 z-40 no-print bg-white/80 backdrop-blur-xl border-b border-yellow-100/60">
-        <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between gap-3">
+        <div className="max-w-md mx-auto px-4 h-12 flex items-center justify-between gap-3">
           {/* Right side: Logo + Shop name */}
           <button
             onClick={() => setView("new")}
-            className="flex items-center gap-2.5 shrink-0 min-w-0"
+            className="flex items-center gap-2 shrink-0 min-w-0"
           >
-            <div className="w-9 h-9 rounded-full bg-neutral-900 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center shrink-0 overflow-hidden">
               {shopLogo ? (
                 <img src={shopLogo} alt="" className="w-full h-full object-contain p-0.5" />
               ) : (
-                <span className="text-white text-xs font-bold">ط</span>
+                <span className="text-white text-[10px] font-bold">ط</span>
               )}
             </div>
             <div className="text-right min-w-0">
-              <div className="font-bold text-sm leading-tight truncate text-neutral-900">{shopName}</div>
+              <div className="font-bold text-sm leading-tight truncate text-neutral-900" style={{ fontFamily: 'var(--font-alexandria)' }}>{shopName}</div>
               <div className="text-[10px] text-neutral-500 leading-tight truncate">
                 خدمة طباعة احترافية
               </div>
@@ -130,12 +130,12 @@ export function AppShell({
 
           {/* Left side: Home + Bell + Menu */}
           <div className="flex items-center gap-0.5 shrink-0">
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-neutral-500" onClick={() => setView("new")} aria-label="الرئيسية">
-              <Home className="h-[18px] w-[18px]" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500" onClick={() => setView("new")} aria-label="الرئيسية">
+              <Home className="h-4 w-4" />
             </Button>
             <NotificationBadge />
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-neutral-500" onClick={() => setMobileSidebarOpen(true)} aria-label="القائمة">
-              <Menu className="h-[20px] w-[20px]" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500" onClick={() => setMobileSidebarOpen(true)} aria-label="القائمة">
+              <Menu className="h-[18px] w-[18px]" />
             </Button>
           </div>
         </div>
@@ -150,7 +150,7 @@ export function AppShell({
       />
 
       {/* ===== Main Content ===== */}
-      <main className="flex-1 flex flex-col pb-20">
+      <main className="flex-1 flex flex-col pb-24">
         <div className="max-w-md mx-auto w-full px-4">
           <AnimatePresence mode="wait">
             {view === "new" && (
@@ -177,13 +177,13 @@ export function AppShell({
 
       {/* ===== Floating Action Button ===== */}
       <button
-        className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 text-neutral-900 shadow-lg shadow-yellow-400/30 flex items-center justify-center transition-colors no-print active:scale-95"
+        className="fixed bottom-16 right-3 z-50 w-10 h-10 rounded-full bg-yellow-400 hover:bg-yellow-500 text-neutral-900 shadow-lg shadow-yellow-400/30 flex items-center justify-center transition-colors no-print"
         aria-label="مساعد ذكي"
         onClick={() => useAppStore.getState().setAssistantOpen(true)}
       >
-        <Sparkles className="h-5 w-5" />
+        <Sparkles className="h-4 w-4" />
         {/* Red notification dot */}
-        <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white" />
+        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white" />
       </button>
 
       {/* ===== Order Success Dialog ===== */}
@@ -193,7 +193,7 @@ export function AppShell({
       {showAdminLink && shopSlug && (
         <a
           href={`/s/${shopSlug}?admin=1`}
-          className="fixed bottom-20 left-3 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full bg-neutral-900 text-white text-xs font-medium shadow-lg hover:bg-neutral-800 transition-colors no-print"
+          className="fixed bottom-16 left-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-neutral-900 text-white text-[11px] font-medium shadow-lg hover:bg-neutral-800 transition-colors no-print"
           title="لوحة التحكم"
         >
           <ArrowLeftToLine className="h-3.5 w-3.5" />
