@@ -343,3 +343,26 @@ Stage Summary:
 - Default country: Saudi Arabia (SA) for Gulf/Middle East focus
 - Pushed to GitHub: commit af22693
 - Pending: update admin/merchant dashboards to match new customer features
+---
+Task ID: 3
+Agent: main
+Task: Fix desktop responsiveness for shop settings
+
+Work Log:
+- Tested live site with agent-browser: admin panel, shops list, edit dialog, create dialog
+- Verified edit dialog tabs (الأساسيات, الخطة والتجربة, ميزات المتجر) work correctly
+- Verified feature toggles respond to clicks
+- Found Vercel still serving old code (new create shop form not yet deployed)
+- Identified responsive issues: dialogs too narrow, tab buttons too small
+- Widened edit shop dialog: sm:max-w-3xl → sm:max-w-4xl lg:max-w-5xl
+- Widened create shop dialog: max-w-2xl → sm:max-w-3xl lg:max-w-4xl
+- Increased tab button size: min-h-[44px]→[48px], icons h-3.5→h-4, added active:scale feedback
+- Added cursor-pointer to tab buttons
+- Pushed commit 7d1084e
+
+Stage Summary:
+- Desktop responsiveness improved for shop settings dialogs
+- Tab buttons now have larger click targets (48px) for desktop
+- Dialogs are wider on large screens for better form layout
+- New shop creation code (with countries, trial, features) pending Vercel deployment
+
