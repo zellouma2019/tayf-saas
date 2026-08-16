@@ -1,36 +1,48 @@
 ---
-Task ID: 1
+Task ID: 2
 Agent: Main
-Task: Delete old customer view, add new customer version from a2.zip
+Task: Integrate new customer v2, add admin settings, cleanup, push to GitHub
 
 Work Log:
-- Deleted 33 customer-only component files (app-shell, mobile-bottom-nav, mobile-sidebar, etc.)
-- Deleted /s/[slug] customer-specific metadata (simplified page.tsx)
-- Deleted track page route
-- Deleted customer-only APIs (track, notifications, loyalty)
-- Restored notification/loyalty APIs used by merchant dashboard
-- Cleaned up store.ts (removed customer-specific state, kept shared types)
-- Updated shop-page.tsx to remove AppShell customer path
-- Extracted a2.zip to /new-customer-v2/ for analysis
-- Analyzed new version: 6 app components, 12 lib files, 9 API routes, ~11K lines
-- Copied new customer files to isolated namespaces:
-  - src/lib/customer/ (8 lib files)
-  - src/components/customer/ (5 component files)
-  - src/app/api/c/ (9 API routes)
-- Fixed ALL import paths (@/lib/customer/..., @/components/customer/...)
-- Created customer-page.tsx (original page.tsx WITHOUT admin settings button)
-- Updated shop-page.tsx: default=CustomerPage, ?admin=1=MerchantDashboard
-- Changed all API paths in customer components to /api/c/ prefix
-- Installed missing deps: three, @types/three, pdfjs-dist, mammoth
-- Created whatsapp-notifier.ts stub
-- Copied star-rating UI component
-- Copied PDF worker files to public/
-- Both / and /s/[slug] return HTTP 200
+- Analyzed new customer version features: 45+ configurable settings across 8 categories
+- Identified gap: admin panel missing controls for pricing rules, work hours config, delivery points/zones, tagline, google maps key
+- Updated /src/lib/default-settings.ts to include ALL new fields from customer v2 (PricingRules, WorkHoursConfig, DeliveryPoint, DeliveryZone, SAUDI_CITIES)
+- Added new settings UI to admin-settings.tsx: pricing rules card, work hours config card, delivery points manager, delivery price & google maps key
+- Added tagline field to shop identity section
+- Connected customer SettingsProvider to ShopProvider context (shop name, logo, phone, whatsapp, email, address override)
+- Fixed autoDeleteDays: cleanup.ts now reads from DB settings instead of hardcoded 10
+- Deleted old customer files: file-analyzer.ts, content-classifier.ts, analysis-cache.ts, smart-assistant.ts
+- Deleted reference folders: new-customer/, new-customer-v2/, tool-results/
+- Fixed standalone-preview.tsx import: @/lib/file-analyzer → @/lib/customer/file-analyzer
+- Committed all changes (106 files, +490/-34031 lines)
+- Push FAILED: GitHub token is invalid/expired
 
 Stage Summary:
-- Old customer view COMPLETELY removed
-- New customer version added as-is with ZERO visual changes
-- Admin link (Settings icon + SimpleAdmin) removed from customer footer
-- Customer view at /s/[slug] — Merchant at /s/[slug]?admin=1
-- Admin panel at / — unchanged
-- Fonts: still Cairo only (project uses Cairo+Alexandria, will match later)
+- Admin panel now has full control over new customer version settings
+- Customer view merges shop-specific data from ShopProvider
+- autoDeleteDays reads from DB settings (was hardcoded)
+- All old customer files removed, no overlap
+- LOCAL COMMIT READY but PUSH BLOCKED by invalid GitHub token
+- User needs to provide a valid GitHub PAT
+
+Known Issues:
+- Dual pricing engines (old print-config vs new service-specs) - customer UI uses new, API uses old
+- Delivery zones editor not yet in admin UI (complex geo editor needed)
+- No service enable/disable toggle in customer version schema
+
+Files Modified:
+- src/lib/default-settings.ts (added new types and fields)
+- src/components/app/admin-settings.tsx (added pricing, work hours, delivery points UI)
+- src/components/customer/customer-page.tsx (shop data integration)
+- src/lib/customer/settings-provider.tsx (shopData prop support)
+- src/components/customer/standalone-preview.tsx (fixed import path)
+- src/lib/cleanup.ts (autoDeleteDays from DB)
+
+Files Deleted:
+- src/lib/file-analyzer.ts (old version)
+- src/lib/content-classifier.ts (old)
+- src/lib/analysis-cache.ts (old)
+- src/lib/smart-assistant.ts (old)
+- new-customer/ (entire directory)
+- new-customer-v2/ (entire directory)
+- tool-results/ (temp files)
