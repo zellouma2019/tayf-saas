@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { Heart, ShieldCheck, Loader2 } from "lucide-react";
 import { SettingsProvider, useSettings } from "@/lib/customer/settings-provider";
+import { useShop } from "@/lib/shop-context";
 
 const StandalonePreview = dynamic(
   () => import("@/components/customer/standalone-preview").then((m) => m.StandalonePreview),
@@ -54,8 +55,9 @@ function CustomerContent() {
 }
 
 export function CustomerPage() {
+  const { shop } = useShop();
   return (
-    <SettingsProvider>
+    <SettingsProvider shopData={shop}>
       <CustomerContent />
     </SettingsProvider>
   );

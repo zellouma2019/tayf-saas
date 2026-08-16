@@ -1,8 +1,21 @@
 // وظائف الصيانة التلقائية - حذف الطلبات القديمة
 import { db } from "@/lib/db";
 
-/// حذف الطلبات التي مرّ عليها أكثر من 10 أيام
-export async function cleanupOldOrders(daysOld = 10): Promise<number> {
+/// حذف الطلبات التي مرّ عليها أكثر من عدد أيام محدد (يُقرأ من الإعدادات)
+export async function cleanupOldOrders(daysOld?: number): Promise<number> {
+  // قراءة autoDeleteDays من الإعدادات إن لم يُمرّر
+  if (daysOld === undefined) {
+    try {
+      const { db } = await import("@/lib/db");
+      const row = await db.setting.findUnique({ where: { key: "general" } });
+      if (row) {
+        const parsed = JSON.parse(row.value);
+        daysOld = parsed.autoDeleteDays || 10;
+      }
+    } catch { daysOld = 10; }
+  }
+  daysOld = daysOld || 10;
+
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - daysOld);
   try {
@@ -27,5 +40,5 @@ export async function runAutoCleanup(): Promise<void> {
     return;
   }
   globalForCleanup.lastCleanup = now;
-  await cleanupOldOrders(10);
+  await cleanupOldOrders();
 }

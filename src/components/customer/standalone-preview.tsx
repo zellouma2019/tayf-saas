@@ -628,7 +628,7 @@ export function StandalonePreview() {
           })();
 
           // Run full analysis (text, metadata, health) in parallel with worker
-          const { analyzeFileReal } = await import("@/lib/file-analyzer");
+          const { analyzeFileReal } = await import("@/lib/customer/file-analyzer");
           setAnalysisProgress(20);
 
           // Wait for both to complete

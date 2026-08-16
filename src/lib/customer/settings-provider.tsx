@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { AppSettings } from "@/lib/customer/default-settings";
 import { DEFAULT_SETTINGS } from "@/lib/customer/default-settings";
+import type { ShopData } from "@/lib/shop-context";
 
 interface SettingsCtx {
   settings: AppSettings;
@@ -17,7 +18,7 @@ interface SettingsCtx {
 
 const Ctx = createContext<SettingsCtx | null>(null);
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
+export function SettingsProvider({ children, shopData }: { children: ReactNode; shopData?: ShopData | null }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
@@ -52,15 +53,38 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const g = settings.general;
+
+  // Override shop-specific fields from ShopProvider context (when inside /s/[slug])
+  const shopName = shopData?.name || g.shopName;
+  const shopLogo = shopData?.logoUrl || g.shopLogo;
+  const whatsappNumber = shopData?.whatsapp || g.whatsappNumber;
+  const phoneNumber = shopData?.phone || g.phoneNumber;
+
+  // Build merged settings with shop overrides baked into general
+  const mergedSettings: AppSettings = shopData
+    ? {
+        ...settings,
+        general: {
+          ...g,
+          shopName,
+          shopLogo,
+          whatsappNumber,
+          phoneNumber,
+          email: shopData.email || g.email,
+          address: shopData.address || g.address,
+        },
+      }
+    : settings;
+
   const value: SettingsCtx = {
-    settings,
+    settings: mergedSettings,
     loading,
     refresh,
-    shopName: g.shopName,
+    shopName,
     tagline: g.tagline,
-    shopLogo: g.shopLogo,
-    whatsappNumber: g.whatsappNumber,
-    phoneNumber: g.phoneNumber,
+    shopLogo,
+    whatsappNumber,
+    phoneNumber,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

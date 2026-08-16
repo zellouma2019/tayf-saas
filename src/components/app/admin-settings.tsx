@@ -70,6 +70,7 @@ import {
   AlertTriangle,
   Printer,
   Store,
+  Calculator,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -1166,6 +1167,12 @@ export function AdminSettings() {
                   اتركه فارغاً لاستخدام الأيقونة الافتراضية
                 </p>
               </div>
+              <Field
+                label="الشعار النصي (Tagline)"
+                value={settings.general.tagline ?? ""}
+                onChange={(v) => updateGeneral("tagline", v)}
+                hint="يظهر تحت اسم المطبعة في الترويسة"
+              />
             </CardContent>
           </Card>
 
@@ -1363,6 +1370,317 @@ export function AdminSettings() {
                   بالدينار الجزائري
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* قواعد التسعير */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-amber-500" />
+                قواعد التسعير
+              </CardTitle>
+              <CardDescription className="text-xs">
+                التكاليف الأساسية لحساب أسعار الطلبات تلقائياً
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field
+                label="تكلفة صفحة أبيض وأسود"
+                type="number"
+                value={settings.general.pricingRules?.bwCostPerPage ?? 0}
+                onChange={(v) =>
+                  updateGeneral("pricingRules", {
+                    ...(settings.general.pricingRules ?? {}),
+                    bwCostPerPage: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="بالريال / الصفحة"
+              />
+              <Field
+                label="تكلفة صفحة ملونة"
+                type="number"
+                value={settings.general.pricingRules?.colorCostPerPage ?? 0}
+                onChange={(v) =>
+                  updateGeneral("pricingRules", {
+                    ...(settings.general.pricingRules ?? {}),
+                    colorCostPerPage: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="بالريال / الصفحة"
+              />
+              <Field
+                label="تكلفة غلاف بلاستيك شفاف"
+                type="number"
+                value={settings.general.pricingRules?.clearCoverCost ?? 0}
+                onChange={(v) =>
+                  updateGeneral("pricingRules", {
+                    ...(settings.general.pricingRules ?? {}),
+                    clearCoverCost: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="بالريال / الغلاف"
+              />
+              <Field
+                label="رسوم الطباعة على الوجهين"
+                type="number"
+                value={settings.general.pricingRules?.duplexPerPageRate ?? 0}
+                onChange={(v) =>
+                  updateGeneral("pricingRules", {
+                    ...(settings.general.pricingRules ?? {}),
+                    duplexPerPageRate: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="بالريال / الصفحة الإضافية"
+              />
+              <Field
+                label="نسبة ضريبة القيمة المضافة %"
+                type="number"
+                value={(settings.general.pricingRules?.vatRate ?? 0) * 100}
+                onChange={(v) =>
+                  updateGeneral("pricingRules", {
+                    ...(settings.general.pricingRules ?? {}),
+                    vatRate: toNumber(v) / 100,
+                  })
+                }
+                dir="ltr"
+                hint="مثلاً 15 تعني 15%"
+              />
+            </CardContent>
+          </Card>
+
+          {/* إعدادات ساعات العمل المتقدمة */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-500" />
+                إعدادات ساعات العمل المتقدمة
+              </CardTitle>
+              <CardDescription className="text-xs">
+                تحكم بساعات العمل وأيام العطلة والرسوم الإضافية
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field
+                label="ساعة البدء (0-23)"
+                type="number"
+                value={settings.general.workHoursConfig?.startHour ?? 8}
+                onChange={(v) =>
+                  updateGeneral("workHoursConfig", {
+                    ...(settings.general.workHoursConfig ?? {}),
+                    startHour: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="مثلاً 8 = 8:00 صباحاً"
+              />
+              <Field
+                label="ساعة الانتهاء (0-23)"
+                type="number"
+                value={settings.general.workHoursConfig?.endHour ?? 19}
+                onChange={(v) =>
+                  updateGeneral("workHoursConfig", {
+                    ...(settings.general.workHoursConfig ?? {}),
+                    endHour: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="مثلاً 19 = 7:00 مساءً"
+              />
+              <div className="space-y-1.5 md:col-span-2">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  أيام العطلة
+                </Label>
+                <div className="flex flex-wrap gap-3 mt-1">
+                  {(["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"] as const).map(
+                    (dayName, idx) => {
+                      const isOff = (settings.general.workHoursConfig?.daysOff ?? []).includes(idx);
+                      return (
+                        <label
+                          key={idx}
+                          className="flex items-center gap-1.5 cursor-pointer text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isOff}
+                            onChange={(e) => {
+                              let days = [...(settings.general.workHoursConfig?.daysOff ?? [])];
+                              if (e.target.checked) {
+                                if (!days.includes(idx)) days.push(idx);
+                              } else {
+                                days = days.filter((d) => d !== idx);
+                              }
+                              updateGeneral("workHoursConfig", {
+                                ...(settings.general.workHoursConfig ?? {}),
+                                daysOff: days,
+                              });
+                            }}
+                            className="w-4 h-4 rounded accent-amber-500"
+                          />
+                          {dayName}
+                        </label>
+                      );
+                    },
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground/80">
+                  0 = الأحد, 6 = السبت
+                </p>
+              </div>
+              <Field
+                label="رسوم الاستعجال الثابتة"
+                type="number"
+                value={settings.general.workHoursConfig?.urgentBaseSurcharge ?? 0}
+                onChange={(v) =>
+                  updateGeneral("workHoursConfig", {
+                    ...(settings.general.workHoursConfig ?? {}),
+                    urgentBaseSurcharge: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="بالريال — تُضاف للطلبات المستعجلة"
+              />
+              <Field
+                label="رسوم الاستعجال لكل صفحة"
+                type="number"
+                value={settings.general.workHoursConfig?.urgentPerPageRate ?? 0}
+                onChange={(v) =>
+                  updateGeneral("workHoursConfig", {
+                    ...(settings.general.workHoursConfig ?? {}),
+                    urgentPerPageRate: toNumber(v),
+                  })
+                }
+                dir="ltr"
+                hint="بالريال / الصفحة الإضافية"
+              />
+            </CardContent>
+          </Card>
+
+          {/* نقاط الاستلام */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-amber-500" />
+                نقاط الاستلام
+              </CardTitle>
+              <CardDescription className="text-xs">
+                أماكن يمكن للعميل استلام طلبه منها
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(settings.general.deliveryPoints ?? []).map((point, idx) => (
+                <div
+                  key={point.id || idx}
+                  className="grid grid-cols-1 md:grid-cols-[1fr_1fr_100px_50px_auto] gap-2 items-start p-3 rounded-lg border bg-muted/20"
+                >
+                  <Field
+                    label="الاسم"
+                    value={point.name}
+                    onChange={(v) => {
+                      const pts = [...(settings.general.deliveryPoints ?? [])];
+                      pts[idx] = { ...pts[idx], name: v };
+                      updateGeneral("deliveryPoints", pts);
+                    }}
+                  />
+                  <Field
+                    label="العنوان"
+                    value={point.address}
+                    onChange={(v) => {
+                      const pts = [...(settings.general.deliveryPoints ?? [])];
+                      pts[idx] = { ...pts[idx], address: v };
+                      updateGeneral("deliveryPoints", pts);
+                    }}
+                  />
+                  <Field
+                    label="السعر"
+                    type="number"
+                    value={point.price}
+                    onChange={(v) => {
+                      const pts = [...(settings.general.deliveryPoints ?? [])];
+                      pts[idx] = { ...pts[idx], price: toNumber(v) };
+                      updateGeneral("deliveryPoints", pts);
+                    }}
+                    dir="ltr"
+                  />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      أيقونة
+                    </Label>
+                    <Input
+                      value={point.emoji ?? ""}
+                      onChange={(e) => {
+                        const pts = [...(settings.general.deliveryPoints ?? [])];
+                        pts[idx] = { ...pts[idx], emoji: e.target.value };
+                        updateGeneral("deliveryPoints", pts);
+                      }}
+                      className="h-9 text-sm text-center"
+                      maxLength={4}
+                      placeholder="🏪"
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="mt-5 h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => {
+                      const pts = (settings.general.deliveryPoints ?? []).filter(
+                        (_, i) => i !== idx,
+                      );
+                      updateGeneral("deliveryPoints", pts);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                className="w-full border-dashed h-10 text-sm gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const pts = [
+                    ...(settings.general.deliveryPoints ?? []),
+                    { id: uid("dp"), name: "", address: "", price: 0, emoji: "📍" },
+                  ];
+                  updateGeneral("deliveryPoints", pts);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                إضافة نقطة استلام جديدة
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* سعر التوصيل الافتراضي + مفتاح خرائط جوجل */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Truck className="h-4 w-4 text-amber-500" />
+                التوصيل والخريطة
+              </CardTitle>
+              <CardDescription className="text-xs">
+                سعر التوصيل ومفتاح Google Maps API
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field
+                label="سعر التوصيل الافتراضي"
+                type="number"
+                value={settings.general.deliveryPrice}
+                onChange={(v) => updateGeneral("deliveryPrice", toNumber(v))}
+                dir="ltr"
+                hint="بالدينار — يُستخدم إذا لم يتم تحديد منطقة"
+              />
+              <Field
+                label="مفتاح خرائط جوجل"
+                value={settings.general.googleMapsKey}
+                onChange={(v) => updateGeneral("googleMapsKey", v)}
+                dir="ltr"
+                hint="Google Maps API Key — يُستخدم لعرض الخريطة"
+              />
             </CardContent>
           </Card>
         </TabsContent>
