@@ -99,3 +99,31 @@ Stage Summary:
 Unresolved:
 - Vercel may need manual cache purge or build retry from dashboard
 - If build still fails, need to check Vercel build logs for specific error
+
+---
+Task ID: 5
+Agent: Main
+Task: Final Vercel build fix and deployment
+
+Work Log:
+- Discovered root cause of persistent old version on Vercel: BUILD FAILURES since commit 9750ba1
+- Ran `next build` locally and found 2 critical Turbopack errors:
+  1. `@napi-rs/canvas` (native addon) - "non-ecmascript placeable asset"
+  2. `applyOfferCode` not exported from `@/lib/offers` (only `selectOffer` exists)
+- Fixed error 1: Added `serverExternalPackages` to next.config.ts
+- Fixed error 2: Added `applyOfferCode` function to offers.ts
+- First push (a08a8a3) - Vercel still showed old version (serverExternalPackages not enough for Turbopack)
+- Fixed error 1 (v2): Changed `await import("@napi-rs/canvas")` to `require("@napi-rs/canvas")` in both pdf-process and render-cover routes
+- Local build succeeded with require() approach
+- Pushed final fix (4b83cfd)
+- Removed `output: "standalone"` from next.config.ts (may also help Vercel)
+
+Stage Summary:
+- The Vercel build has been failing silently since the intro.tsx deletion (commit 9750ba1)
+- Root cause: Turbopack cannot bundle native Node.js addons (@napi-rs/canvas)
+- Fix: Use `require()` instead of `import()` for native addons
+- Also fixed missing `applyOfferCode` export in offers.ts
+- Also removed `output: "standalone"` from next.config.ts
+- All fixes verified with successful local `next build`
+- GitHub push protection: had to soft-reset commit containing GitHub token
+- Total pushes: b5e1caa, 36756ab, 6e2ae78, 63672be, a08a8a3, 4b83cfd
