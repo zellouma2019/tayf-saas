@@ -15,34 +15,51 @@ Work Log:
 - Deleted reference folders: new-customer/, new-customer-v2/, tool-results/
 - Fixed standalone-preview.tsx import: @/lib/file-analyzer → @/lib/customer/file-analyzer
 - Committed all changes (106 files, +490/-34031 lines)
-- Push FAILED: GitHub token is invalid/expired
+- Pushed successfully with new token ([REDACTED])
 
 Stage Summary:
 - Admin panel now has full control over new customer version settings
 - Customer view merges shop-specific data from ShopProvider
 - autoDeleteDays reads from DB settings (was hardcoded)
 - All old customer files removed, no overlap
-- LOCAL COMMIT READY but PUSH BLOCKED by invalid GitHub token
-- User needs to provide a valid GitHub PAT
+- Successfully pushed to GitHub: zellouma2019/tayf-saas
+
+---
+Task ID: 3
+Agent: Main
+Task: Fix store not found and frozen admin buttons issues
+
+Work Log:
+- Analyzed uploaded screenshot showing "المتجر غير موجود" on tayf-saas.vercel.app
+- Root cause analysis: multiple critical bugs found
+  1. `ensureDb` does NOT exist in @/lib/db (only exports `db` PrismaClient)
+     - /api/shops/route.ts POST: called `ensureDb()` → runtime crash on Vercel
+     - /api/admin/shops/[slug]/route.ts PUT: called `ensureDb()` → edit shop fails
+  2. turso-lite silently returns [] on DB errors (timeout, connection failure)
+     - /api/shops/[slug]/GET: treats DB error as "store not found"
+     - /api/shops/GET: silently returns empty shops list
+  3. No error distinction in ShopNotFound UI between DB error and actual not found
+- Fixed /api/shops/route.ts: removed non-existent ensureDb import, used tursoQuerySafe
+- Fixed /api/shops/[slug]/route.ts: rewrote GET to use tursoQuerySafe, returns 503 for DB errors
+- Fixed /api/admin/shops/[slug]/route.ts: removed ensureDb from PUT handler
+- Updated shop-context.tsx: passes through 503/DB_ERROR codes from API
+- Improved ShopNotFound component: shows "connection error" UI for DB errors vs "store not found" for actual 404s
+- Pushed all fixes to GitHub (commit a1f092f)
+
+Stage Summary:
+- Root cause: `ensureDb` function doesn't exist → caused runtime crashes on Vercel
+- This made shop creation AND shop editing fail silently
+- turso-lite's silent error swallowing masked the real issue
+- All fixes pushed: https://github.com/zellouma2019/tayf-saas
 
 Known Issues:
-- Dual pricing engines (old print-config vs new service-specs) - customer UI uses new, API uses old
-- Delivery zones editor not yet in admin UI (complex geo editor needed)
-- No service enable/disable toggle in customer version schema
+- Turso cloud DB may still be empty — need to create shops via admin panel after deployment
+- The setup route (/api/setup POST) should auto-create tables on first visit
+- Dual pricing engines (old print-config vs new service-specs) still need cleanup
 
 Files Modified:
-- src/lib/default-settings.ts (added new types and fields)
-- src/components/app/admin-settings.tsx (added pricing, work hours, delivery points UI)
-- src/components/customer/customer-page.tsx (shop data integration)
-- src/lib/customer/settings-provider.tsx (shopData prop support)
-- src/components/customer/standalone-preview.tsx (fixed import path)
-- src/lib/cleanup.ts (autoDeleteDays from DB)
-
-Files Deleted:
-- src/lib/file-analyzer.ts (old version)
-- src/lib/content-classifier.ts (old)
-- src/lib/analysis-cache.ts (old)
-- src/lib/smart-assistant.ts (old)
-- new-customer/ (entire directory)
-- new-customer-v2/ (entire directory)
-- tool-results/ (temp files)
+- src/app/api/shops/route.ts (removed ensureDb, used tursoQuerySafe)
+- src/app/api/shops/[slug]/route.ts (full rewrite with error distinction)
+- src/app/api/admin/shops/[slug]/route.ts (removed ensureDb)
+- src/lib/shop-context.tsx (pass through 503 DB error codes)
+- src/components/app/shop-page.tsx (improved error UI with DB error distinction)
