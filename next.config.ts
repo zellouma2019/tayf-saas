@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Force clean build - v3
+  serverExternalPackages: ["@napi-rs/canvas", "canvas", "sharp"],
   typescript: {
     ignoreBuildErrors: true,
   },

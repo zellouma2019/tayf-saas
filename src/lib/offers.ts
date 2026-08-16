@@ -175,6 +175,21 @@ export function selectOffer(
 }
 
 /**
+ * تطبيق كود عرض على التسعير
+ */
+export function applyOfferCode(
+  code: string,
+  _serviceType: string,
+  _pages?: number,
+  _copies?: number,
+  _currentPricing?: Record<string, number>,
+): { valid: boolean; pricing?: Record<string, number> } {
+  const offer = OFFERS.find((o) => o.code === code);
+  if (!offer || !offer.discount) return { valid: false };
+  return { valid: true, pricing: { discount: offer.discount } };
+}
+
+/**
  * ألوان الثيمات للعروض
  */
 export const OFFER_THEMES: Record<string, {

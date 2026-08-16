@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, tursoQuerySafe, tursoExecute, toNum, safeJson } from "@/lib/turso-lite";
-import { applyOfferCode } from "@/lib/offers";
+import { selectOffer, applyOfferCode } from "@/lib/offers";
 import fs from "fs";
 import path from "path";
 
