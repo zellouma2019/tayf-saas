@@ -101,7 +101,9 @@ export async function POST(req: NextRequest) {
       const workerPath = path.join(process.cwd(), "public", "pdf.worker.min.mjs");
       pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
 
-      const { Canvas } = await import("@napi-rs/canvas");
+      // Native addon - use require() to bypass Turbopack static analysis
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Canvas } = require("@napi-rs/canvas");
 
       const nodeCanvasFactory = {
         create(width: number, height: number) {

@@ -89,8 +89,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       const pdfjsLib = await import("pdfjs-dist");
       pdfjsLib.GlobalWorkerOptions.workerSrc = path.join(process.cwd(), "public", "pdf.worker.min.mjs");
 
-      const { Canvas } = await import("@napi-rs/canvas");
-      const sharp = (await import("sharp")).default;
+      // Native addons - use require() to bypass Turbopack static analysis
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Canvas } = require("@napi-rs/canvas");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const sharp = require("sharp").default;
 
       const nodeCanvasFactory = {
         create(width: number, height: number) {
