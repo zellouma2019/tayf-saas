@@ -1,17 +1,15 @@
 "use client";
 
 import { Suspense, Component, type ReactNode, type ErrorInfo } from "react";
-import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ShopProvider, useShop } from "@/lib/shop-context";
-import { AppShell } from "@/components/app/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Store, AlertTriangle, RotateCcw } from "lucide-react";
+import { Store, AlertTriangle, RotateCcw, ShieldCheck } from "lucide-react";
 
 const MerchantDashboard = dynamic(
-   () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
+  () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
   { ssr: false, loading: () => <ShopLoader /> },
 );
 
@@ -19,16 +17,15 @@ const MerchantDashboard = dynamic(
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
 }
 
 class MerchantErrorBoundary extends Component<
-  { children: ReactNode; shopId: string; shopSlug: string },
+  { children: ReactNode; shopSlug: string },
   ErrorBoundaryState
 > {
-  constructor(props: { children: ReactNode; shopId: string; shopSlug: string }) {
+  constructor(props: { children: ReactNode; shopSlug: string }) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
@@ -38,12 +35,7 @@ class MerchantErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[MerchantDashboard] Error caught by boundary:", error);
     console.error("[MerchantDashboard] Component stack:", errorInfo.componentStack);
-    this.setState({ errorInfo });
   }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
-  };
 
   render() {
     if (this.state.hasError) {
@@ -55,7 +47,7 @@ class MerchantErrorBoundary extends Component<
                 <AlertTriangle className="h-8 w-8 text-rose-500" />
               </div>
               <h2 className="text-xl font-bold mb-2 text-foreground">حدث خطأ في لوحة التحكم</h2>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground mb-4">
                 يرجى المحاولة مرة أخرى أو تحديث الصفحة
               </p>
               {this.state.error && (
@@ -64,15 +56,19 @@ class MerchantErrorBoundary extends Component<
                 </div>
               )}
               <div className="flex items-center justify-center gap-3">
-                <Button onClick={() => { this.setState({ hasError: false, error: null, errorInfo: null }); }} className="gap-2 active:scale-[0.97]">
+                <Button
+                  onClick={() => this.setState({ hasError: false, error: null })}
+                  className="gap-2 active:scale-[0.97]"
+                >
                   <RotateCcw className="h-4 w-4" />
                   إعادة المحاولة
                 </Button>
-                <Button variant="outline" onClick={this.handleReset} className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = `/s/${this.props.shopSlug}`}
+                  className="gap-2"
+                >
                   تحديث الصفحة
-                </Button>
-                <Button variant="outline" onClick={() => window.location.href = `/s/${this.props.shopSlug}?admin=1`}>
-                  العودة للمتجر
                 </Button>
               </div>
             </CardContent>
@@ -86,28 +82,16 @@ class MerchantErrorBoundary extends Component<
 
 function ShopLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background animate-fade-in" dir="rtl">
+    <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl">
       <div className="max-w-md w-full mx-auto p-8 text-center space-y-6">
-        <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 skeleton-sweep flex items-center justify-center">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 skeleton-sweep" style={{ animationDelay: "0.2s" }} />
+        <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center animate-pulse">
+          <ShieldCheck className="w-10 h-10 text-primary/40" />
         </div>
         <div className="space-y-3">
-          <Skeleton className="h-6 w-3/4 mx-auto rounded-lg skeleton-sweep" />
-          <Skeleton className="h-4 w-1/2 mx-auto rounded-lg skeleton-sweep" style={{ animationDelay: "0.1s" }} />
+          <Skeleton className="h-6 w-3/4 mx-auto rounded-lg" />
+          <Skeleton className="h-4 w-1/2 mx-auto rounded-lg" />
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 rounded-xl bg-card border border-border space-y-2 fade-slide-up" style={{ animationDelay: `${i * 0.08}s` }}>
-              <Skeleton className="h-8 w-8 rounded-lg mx-auto skeleton-sweep" style={{ animationDelay: `${i * 0.1}s` }} />
-              <Skeleton className="h-3 w-3/4 mx-auto rounded skeleton-sweep" style={{ animationDelay: `${i * 0.1 + 0.1}s` }} />
-              <Skeleton className="h-2 w-1/2 mx-auto rounded skeleton-sweep" style={{ animationDelay: `${i * 0.1 + 0.2}s` }} />
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <span className="status-pulse inline-block w-1.5 h-1.5 rounded-full bg-primary" />
-          <span className="animate-pulse-slow">جاري تحميل المتجر...</span>
-        </div>
+        <p className="text-xs text-muted-foreground animate-pulse">جاري تحميل لوحة التحكم...</p>
       </div>
     </div>
   );
@@ -115,8 +99,8 @@ function ShopLoader() {
 
 function ShopNotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full text-center card-textured">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
+      <Card className="max-w-md w-full text-center">
         <CardContent className="py-12 px-6">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
             <Store className="h-8 w-8 text-muted-foreground/50" />
@@ -140,30 +124,24 @@ function ShopNotFound() {
 
 function ShopAppInner({ slug }: { slug: string }) {
   const { shop, loading, error } = useShop();
-  const searchParams = useSearchParams();
-  const isAdmin = searchParams.get("admin") === "1";
 
   if (loading) return <ShopLoader />;
   if (error || !shop) return <ShopNotFound />;
 
-  if (isAdmin) {
-    return (
-      <MerchantErrorBoundary shopId={shop.id} shopSlug={slug}>
-        <MerchantDashboard
-          shopId={shop.id}
-          shopSlug={slug}
-        />
-      </MerchantErrorBoundary>
-    );
-  }
-
-  return <AppShell />;
+  return (
+    <MerchantErrorBoundary shopSlug={slug}>
+      <MerchantDashboard
+        shopId={shop.id}
+        shopSlug={slug}
+      />
+    </MerchantErrorBoundary>
+  );
 }
 
 function ShopApp({ slug }: { slug: string }) {
   return (
     <Suspense fallback={<ShopLoader />}>
-      <div className="min-h-screen safe-bottom">
+      <div className="min-h-screen">
         <ShopAppInner slug={slug} />
       </div>
     </Suspense>

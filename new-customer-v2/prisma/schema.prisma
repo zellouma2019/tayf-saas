@@ -1,0 +1,224 @@
+// ============================================================
+// Prisma Schema — Printing Service Application
+// Database: SQLite
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../db/custom.db"
+}
+
+// ============================================================
+// PrintOrder — Core model for print service orders
+// ============================================================
+
+model PrintOrder {
+  id                  String    @id @default(cuid())
+  reference           String    @unique // e.g. "20250615-7382"
+  serviceType         String // e.g. "document", "photo", "binding"
+  serviceName         String // human-readable service name
+  fileName            String? // uploaded file name
+  fileType            String? // e.g. "PDF", "PNG"
+  fileSize            Int? // file size in bytes
+  fileData            String? // stored file reference name (file_xxx.ext)
+  smartAnalysis       String? // JSON: AI file analysis results
+  options             String // JSON: print options {pages, copies, color, paperSize, sides, binding, paperType, printRange, pageRange, notes, totalPages}
+  customer            String // JSON: customer info {name, phone, whatsapp, email, deliveryMethod, address}
+  delivery            String // JSON: delivery info {mode, date, timeSlot, notes}
+  pricing             String // JSON: pricing breakdown {perPage, pagesCost, copiesCost, sidesSaving, deliveryCost, discount, total, ...}
+  estimatedHours      Int // estimated delivery hours
+  status              String    @default("pending") // pending | printing | ready | delivered | cancelled
+  pages               Int // number of pages
+  copies              Int // number of copies
+  total               Float // final total price
+  cost                Float?    @default(0) // admin-set actual cost
+  tags                String? // JSON array: admin tags
+  adminNotes          String? // admin notes
+  editableUntil       DateTime? // 15-min edit window for customers
+  startedPrintingAt   DateTime? // when printing started
+  readyAt             DateTime? // when order became ready
+  completedPrintingAt DateTime? // when printing completed
+  deliveredAt         DateTime? // when order was delivered
+  rating              Int? // 1-5 star rating
+  review              String? // customer review text
+  ratedAt             DateTime? // when rating was submitted
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// ============================================================
+// Coupon — Discount coupon codes
+// ============================================================
+
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique // e.g. "SAVE20"
+  discountType  String    @default("percentage") // "percentage" | "fixed"
+  discountValue Float     @default(0) // percentage value or fixed amount
+  maxDiscount   Float? // cap for percentage discounts
+  minOrderTotal Float? // minimum order total to apply
+  maxUses       Int? // maximum total uses
+  currentUses   Int       @default(0) // current total uses
+  startsAt      DateTime? // coupon activation date
+  expiresAt     DateTime? // coupon expiration date
+  isActive      Boolean   @default(true) // admin toggle
+  description   String? // coupon description
+  emoji         String    @default("🏷️") // display emoji
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================================
+// Customer — Customer directory (synced from orders)
+// ============================================================
+
+model Customer {
+  id          String    @id @default(cuid())
+  phone       String    @unique // unique phone identifier
+  name        String // customer name
+  email       String? // email address
+  address     String? // delivery address
+  notes       String? // admin notes
+  totalOrders Int       @default(0) // aggregated order count
+  totalSpent  Float     @default(0) // aggregated total spent
+  lastOrderAt DateTime? // date of most recent order
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ============================================================
+// Expense — Business expense tracking
+// ============================================================
+
+model Expense {
+  id          String   @id @default(cuid())
+  category    String // expense category
+  amount      Float // expense amount
+  description String? // expense description
+  date        DateTime // expense date
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// FormTemplate — Reusable form template definitions
+// ============================================================
+
+model FormTemplate {
+  id          String   @id @default(cuid())
+  code        String // template code (e.g. "نموذج 9")
+  name        String // template display name
+  description String   @default("") // template description
+  category    String   @default("عام") // template category
+  icon        String   @default("file-text") // icon identifier
+  schema      String // JSON: form schema {sections: [{title, fields: [{key, label, type, ...}]}], approvals: [...]}
+  isActive    Boolean  @default(true) // admin toggle
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  records FormRecord[]
+}
+
+// ============================================================
+// FormRecord — Individual form submission records
+// ============================================================
+
+model FormRecord {
+  id            String    @id @default(cuid())
+  reference     String    @unique // auto-generated reference number
+  templateId    String // FK to FormTemplate
+  applicantName String    @default("—") // who submitted
+  subject       String    @default("—") // form subject
+  status        String    @default("draft") // draft | submitted | under_review | approved | rejected
+  priority      String    @default("normal") // low | normal | high | urgent
+  data          String // JSON: filled form data
+  notes         String? // admin/reviewer notes
+  submittedAt   DateTime? // when status changed to submitted
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  template FormTemplate @relation(fields: [templateId], references: [id])
+}
+
+// ============================================================
+// InventoryItem — Paper/material inventory tracking
+// ============================================================
+
+model InventoryItem {
+  id                String   @id @default(cuid())
+  optionKey         String   @unique // unique item key (e.g. "paper_a4_white")
+  label             String // display label
+  category          String // item category (e.g. "paper", "binding", "cover")
+  icon              String   @default("📦") // display icon
+  status            String   @default("available") // available | low_stock | unavailable
+  quantity          Int? // current stock quantity
+  lowStockThreshold Int      @default(5) // threshold for low stock alert
+  unit              String   @default("رزمة") // measurement unit
+  sortOrder         Int      @default(0) // display sort order
+  notes             String? // admin notes
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ============================================================
+// LoyaltyPoints — Customer loyalty points balance
+// ============================================================
+
+model LoyaltyPoints {
+  id             String    @id @default(cuid())
+  phone          String    @unique // phone number as unique key
+  points         Int       @default(0) // current points balance
+  tier           String    @default("bronze") // bronze | silver | gold
+  totalSpent     Float     @default(0) // lifetime total spent
+  totalOrders    Int       @default(0) // lifetime total orders
+  lastActivityAt DateTime? // last earn/redeem activity
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// ============================================================
+// LoyaltyTransaction — Loyalty points transaction history
+// ============================================================
+
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  phone       String // customer phone
+  type        String // earn | redeem | bonus | tier_upgrade
+  points      Int // points earned (positive) or redeemed (negative)
+  description String? // human-readable description
+  orderId     String? // optional FK reference to PrintOrder
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// Setting — Application settings (key-value store)
+// ============================================================
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique // setting key (e.g. "services", "deliveryOptions", "general")
+  value     String // JSON: setting value
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// AuditLog — Order change audit trail
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orderId   String? // optional FK reference to PrintOrder
+  action    String // create | status_change | edit | delete | settings_change | rating_added
+  field     String? // which field changed
+  oldValue  String? // previous value
+  newValue  String? // new value
+  details   String? // human-readable description
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
