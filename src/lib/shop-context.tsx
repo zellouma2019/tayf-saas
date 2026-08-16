@@ -95,6 +95,7 @@ export function ShopProvider({
   const fetchShop = useCallback((currentSlug: string) => {
     return fetch(`/api/shops/${encodeURIComponent(currentSlug)}`)
       .then((r) => {
+        if (r.status === 503) throw new Error("503:DB_ERROR");
         if (!r.ok) throw new Error("المتجر غير موجود");
         return r.json();
       })

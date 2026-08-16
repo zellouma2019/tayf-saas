@@ -50,14 +50,30 @@ export async function GET(
   if (!rl.ok) return rl.response;
   try {
     const { slug } = await params;
-    const rows = await tursoQuery<ShopRow>(
+    
+    // استخدام tursoQuerySafe لتمييز خطأ الاتصال عن النتيجة الفارغة
+    const { rows, error: dbError } = await tursoQuerySafe<ShopRow>(
       `SELECT ${SHOP_SELECT_COLUMNS}, "adminPin" FROM "Shop" WHERE slug = ? LIMIT 1`,
       [slug]
     );
+
+    // إذا حدث خطأ في قاعدة البيانات (timeout، اتصال، إلخ)
+    if (dbError) {
+      console.error('[shops/[slug]/GET] DB error:', dbError);
+      return NextResponse.json({ 
+        error: "الخدمة غير متاحة حالياً", 
+        code: "DB_ERROR" 
+      }, { status: 503 });
+    }
+
     const shop = rows[0];
 
-    if (!shop || !shop.isActive) {
+    if (!shop) {
       return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
+    }
+
+    if (!shop.isActive) {
+      return NextResponse.json({ error: "المتجر غير موجود", code: "INACTIVE" }, { status: 404 });
     }
 
     // لا نُرجع كلمة المرور
@@ -70,28 +86,7 @@ export async function GET(
     return NextResponse.json({ shop: safeShop });
   } catch (e) {
     console.error('[shops/[slug]/GET]', e);
-    // محاولة تهيئة قاعدة البيانات إن لم تكن الجداول موجودة
-    try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      await fetch(`${baseUrl}/api/setup`, { method: 'POST' });
-      // إعادة المحاولة بعد التهيئة
-      const { slug } = await params;
-      const rows = await tursoQuery<ShopRow>(
-        `SELECT ${SHOP_SELECT_COLUMNS} FROM "Shop" WHERE slug = ? AND "isActive" = 1 LIMIT 1`,
-        [slug]
-      );
-      const shop = rows[0];
-      if (!shop) {
-        return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
-      }
-      if (typeof shop.isActive === "number") shop.isActive = shop.isActive === 1;
-      return NextResponse.json({ shop });
-    } catch (retryErr) {
-      console.error('[shops/[slug]/GET retry]', retryErr);
-      return NextResponse.json({ error: "الخدمة غير متاحة حالياً" }, { status: 503 });
-    }
+    return NextResponse.json({ error: "الخدمة غير متاحة حالياً" }, { status: 503 });
   }
 }
 

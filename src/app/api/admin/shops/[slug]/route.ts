@@ -70,8 +70,6 @@ export async function PUT(
   if (!rl.ok) return rl.response;
 
   try {
-    const { ensureDb } = await import("@/lib/db");
-    await ensureDb();
     const { slug } = await params;
     const body = await req.json();
 

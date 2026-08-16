@@ -7,7 +7,7 @@ import { ShopProvider, useShop } from "@/lib/shop-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Store, AlertTriangle, RotateCcw, ShieldCheck, Loader2 } from "lucide-react";
+import { Store, AlertTriangle, RotateCcw, ShieldCheck, Loader2, WifiOff, RefreshCw } from "lucide-react";
 
 const MerchantDashboard = dynamic(
   () => import("@/components/app/merchant-dashboard").then((m) => ({ default: m.MerchantDashboard })),
@@ -75,19 +75,45 @@ function ShopLoader() {
   );
 }
 
-function ShopNotFound() {
+function ShopNotFound({ isDbError }: { isDbError?: boolean }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
       <Card className="max-w-md w-full text-center">
         <CardContent className="py-12 px-6">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
-            <Store className="h-8 w-8 text-muted-foreground/50" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">المتجر غير موجود</h2>
-          <p className="text-sm text-muted-foreground mb-6">تأكد من صحة الرابط</p>
-          <Button variant="outline" onClick={() => window.location.href = "/"} className="gap-2">
-            العودة للرئيسية
-          </Button>
+          {isDbError ? (
+            <>
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center mb-4">
+                <WifiOff className="h-8 w-8 text-orange-500" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">مشكلة في الاتصال</h2>
+              <p className="text-sm text-muted-foreground mb-2">
+                لا يمكن الاتصال بقاعدة البيانات حالياً.
+              </p>
+              <p className="text-xs text-muted-foreground/70 mb-6">
+                تأكد من اتصالك بالإنترنت وحاول مرة أخرى
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                إعادة المحاولة
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+                <Store className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">المتجر غير موجود</h2>
+              <p className="text-sm text-muted-foreground mb-6">تأكد من صحة الرابط أو تواصل مع صاحب المتجر</p>
+              <Button variant="outline" onClick={() => window.location.href = "/"} className="gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                العودة للرئيسية
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -100,7 +126,7 @@ function ShopAppInner({ slug }: { slug: string }) {
   const isAdmin = searchParams.get("admin") === "1";
 
   if (loading) return <ShopLoader />;
-  if (error || !shop) return <ShopNotFound />;
+  if (error || !shop) return <ShopNotFound isDbError={error?.includes("503") || error?.includes("DB_ERROR") || false} />;
 
   if (isAdmin) {
     return (

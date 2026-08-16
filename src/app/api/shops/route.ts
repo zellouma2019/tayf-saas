@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tursoQuery, toNum } from "@/lib/turso-lite";
+import { toNum } from "@/lib/turso-lite";
 import { withRateLimit } from "@/lib/rate-limit";
 
 /// جلب كل المتاجر عبر turso-lite (أسرع 10x من Prisma على Vercel)
@@ -7,20 +7,27 @@ export async function GET(req: NextRequest) {
   const rl = withRateLimit(req, "shops");
   if (!rl.ok) return rl.response;
   try {
-    const shops = await tursoQuery(
-      `SELECT
-        s.id, s.slug, s.name, s.phone, s."ownerName", s."ownerPhone",
-        s."isActive", s.country, s.language, s."themeId", s."createdAt",
-        COALESCE(o.cnt, 0) as orderCount
-      FROM "Shop" s
-      LEFT JOIN (
-        SELECT "shopId", COUNT(*) as cnt FROM "PrintOrder" GROUP BY "shopId"
-      ) o ON o."shopId" = s.id
-      ORDER BY s."createdAt" DESC`
+    const { rows: shops, error: dbError } = await import("@/lib/turso-lite").then(m =>
+      m.tursoQuerySafe(
+        `SELECT
+          s.id, s.slug, s.name, s.phone, s."ownerName", s."ownerPhone",
+          s."isActive", s.country, s.language, s."themeId", s."createdAt",
+          COALESCE(o.cnt, 0) as orderCount
+        FROM "Shop" s
+        LEFT JOIN (
+          SELECT "shopId", COUNT(*) as cnt FROM "PrintOrder" GROUP BY "shopId"
+        ) o ON o."shopId" = s.id
+        ORDER BY s."createdAt" DESC`
+      )
     );
 
+    if (dbError) {
+      console.error('[shops/GET] DB error:', dbError);
+      return NextResponse.json({ shops: [], error: "DB_ERROR" });
+    }
+
     return NextResponse.json({
-      shops: shops.map((s) => ({
+      shops: shops.map((s: Record<string, unknown>) => ({
         id: String(s.id),
         slug: String(s.slug),
         name: String(s.name),
@@ -37,7 +44,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (e) {
     console.error('[shops/GET]', e);
-    return NextResponse.json({ error: "حدث خطأ أثناء جلب المتاجر" }, { status: 500 });
+    return NextResponse.json({ shops: [], error: "FETCH_ERROR" });
   }
 }
 
@@ -47,9 +54,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return rl.response;
   try {
     const { db } = await import("@/lib/db");
-    const { ensureDb } = await import("@/lib/db");
     const { getNextThemeId } = await import("@/lib/themes");
-    await ensureDb();
 
     const body = await req.json();
     const {
