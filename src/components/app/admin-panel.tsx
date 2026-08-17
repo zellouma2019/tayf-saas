@@ -292,8 +292,8 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     if (queryStats) setStats(queryStats);
   }, [queryStats]);
 
-  function loadAll() {
-    setLoading(true);
+  function loadAll(silent = false) {
+    if (!silent) setLoading(true);
     Promise.all([
       fetch("/api/admin/stats", { headers: adminHeaders }).then((r) => r.json()).catch(() => null),
       fetch("/api/orders").then((r) => r.json()).catch(() => ({ orders: [] })),
@@ -312,14 +312,23 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       })
       .catch((err) => {
         console.error("loadAll error:", err);
-        setOrders([]);
+        if (!silent) setOrders([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!silent) setLoading(false); });
   }
 
+  // التحميل الأولي
   useEffect(() => {
     loadAll();
   }, []);
+
+  // مزامنة تلقائية للطلبات كل 30 ثانية
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadAll(true); // تحديث صامت بدون مؤشر تحميل
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [adminCode]); // إعادة التعيين عند تغيير رمز الإدارة
 
   // تصفية: حالة + بحث + تاريخ
   const filteredOrders = useMemo(() => {
@@ -359,14 +368,18 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
         headers: { "Content-Type": "application/json", ...adminHeaders },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("فشل التحديث");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error((errData as Record<string, string>).error || "فشل التحديث");
+      }
       toast.success("تم تحديث الحالة", {
         description: `${order.reference} → ${STATUS_META[status].label}`,
       });
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
-      loadAll();
     } catch (e) {
-      toast.error("خطأ", { description: (e as Error).message });
+      toast.error("خطأ في تحديث الحالة", { description: (e as Error).message });
+    } finally {
+      loadAll(true); // مزامنة دائمة مع الخادم
     }
   }
 
@@ -390,9 +403,10 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
       });
       if (!res.ok) throw new Error("فشل نسخ الطلب");
       toast.success("تم نسخ الطلب بنجاح");
-      loadAll();
     } catch (e) {
       toast.error("خطأ في نسخ الطلب", { description: (e as Error).message });
+    } finally {
+      loadAll(true);
     }
   }
 
@@ -418,22 +432,27 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     setBatchStatusLoading(true);
     try {
       const ids = Array.from(selectedIds);
-      await Promise.all(
+      const results = await Promise.all(
         ids.map((id) =>
           fetch(`/api/orders/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", ...adminHeaders },
-            body: JSON.stringify({ action: "status", status }),
-          }),
+            body: JSON.stringify({ status }),
+          }).then((r) => ({ id, ok: r.ok })),
         ),
       );
-      toast.success(`تم تغيير حالة ${ids.length} طلب إلى ${STATUS_META[status].label}`);
+      const failed = results.filter((r) => !r.ok).length;
+      if (failed > 0) {
+        toast.warning(`تم تحديث ${ids.length - failed} من ${ids.length} طلب`, { description: `${failed} طلب فشل تحديثها` });
+      } else {
+        toast.success(`تم تغيير حالة ${ids.length} طلب إلى ${STATUS_META[status].label}`);
+      }
       setSelectedIds(new Set());
-      loadAll();
     } catch (e) {
       toast.error("خطأ في تغيير الحالة", { description: (e as Error).message });
     } finally {
       setBatchStatusLoading(false);
+      loadAll(true);
     }
   }
 
@@ -442,14 +461,21 @@ export function AdminPanel({ onRefresh: _onRefresh }: AdminPanelProps) {
     setDeleting(true);
     try {
       const ids = Array.from(selectedIds);
-      await Promise.all(ids.map((id) => fetch(`/api/orders/${id}`, { method: "DELETE", headers: adminHeaders })));
-      toast.success("تم حذف الطلبات المحددة", { description: `${ids.length} طلب` });
+      const results = await Promise.all(ids.map((id) => 
+        fetch(`/api/orders/${id}`, { method: "DELETE", headers: adminHeaders }).then((r) => ({ id, ok: r.ok }))
+      ));
+      const failed = results.filter((r) => !r.ok).length;
+      if (failed > 0) {
+        toast.warning(`تم حذف ${ids.length - failed} من ${ids.length} طلب`, { description: `${failed} طلب فشل حذفها` });
+      } else {
+        toast.success("تم حذف الطلبات المحددة", { description: `${ids.length} طلب` });
+      }
       setSelectedIds(new Set());
-      loadAll();
     } catch (e) {
       toast.error("خطأ في الحذف", { description: (e as Error).message });
     } finally {
       setDeleting(false);
+      loadAll(true);
     }
   }
 

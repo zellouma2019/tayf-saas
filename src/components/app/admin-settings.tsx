@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -175,6 +175,7 @@ const SERVICE_TYPE_LABELS: Record<string, string> = {
 
 export function AdminSettings() {
   const adminCode = useAppStore((s) => s.adminCode);
+  const setAdminCode = useAppStore((s) => s.setAdminCode);
   const adminHeaders: Record<string, string> = { "x-admin-code": adminCode };
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [original, setOriginal] = useState<AppSettings | null>(null);
@@ -184,6 +185,9 @@ export function AdminSettings() {
   const [activeTab, setActiveTab] = useState("services");
 
   // تحميل الإعدادات عند التركيب
+  const adminCodeFetched = useRef(false);
+  const adminCodeRef = useRef(adminCode);
+  adminCodeRef.current = adminCode;
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
@@ -197,6 +201,11 @@ export function AdminSettings() {
       };
       setSettings(safe);
       setOriginal(deepClone(safe));
+      // ضمان توفر رمز الإدارة (للمصادقة على عمليات الحفظ)
+      if (!adminCodeFetched.current && safe.general?.adminCode) {
+        adminCodeFetched.current = true;
+        if (!adminCodeRef.current) setAdminCode(safe.general.adminCode);
+      }
     } catch (e) {
       toast.error("تعذّر تحميل الإعدادات", {
         description: (e as Error).message,
@@ -207,7 +216,7 @@ export function AdminSettings() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setAdminCode]);
 
   useEffect(() => {
     void loadSettings();
