@@ -124,7 +124,7 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
   open: boolean; onClose: () => void; onCreated: () => void;
 }) {
   const [step, setStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Step 1: Basic info
   const [name, setName] = useState("");
@@ -173,6 +173,18 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
   const [createdPin, setCreatedPin] = useState("");
   const [createdName, setCreatedName] = useState("");
 
+  // Platform Quota & Limits
+  const [maxOrdersPerMonth, setMaxOrdersPerMonth] = useState(""); // empty = unlimited
+  const [maxFileSizeMB, setMaxFileSizeMB] = useState("50");
+  const [maxStorageMB, setMaxStorageMB] = useState(""); // empty = unlimited
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [autoApproveOrders, setAutoApproveOrders] = useState(false);
+  const [allowGuestOrders, setAllowGuestOrders] = useState(true);
+  const [smsNotifications, setSmsNotifications] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [orderExpirationHours, setOrderExpirationHours] = useState(""); // empty = never
+  const [maxDailyOrders, setMaxDailyOrders] = useState(""); // empty = unlimited
+
   const showSuccess = !!createdSlug;
 
   // الحصول على بيانات الدولة المختارة
@@ -185,11 +197,19 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
   const gulfCountries = useMemo(() => ARAB_COUNTRIES.slice(0, 6), []);
   const otherCountries = useMemo(() => ARAB_COUNTRIES.slice(6), []);
 
+  // Track if slug was manually edited
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
   function handleNameChange(value: string) {
     setName(value);
-    if (!slug || slug === generateSlug(name)) {
+    if (!slugManuallyEdited) {
       setSlug(generateSlug(value));
     }
+  }
+
+  function handleSlugChange(value: string) {
+    setSlug(value.replace(/[^a-z0-9-]/g, ""));
+    setSlugManuallyEdited(true);
   }
 
   function generateSlug(text: string): string {
@@ -197,20 +217,24 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
       .toLowerCase()
       .replace(/[\u0600-\u06FF]/g, (m) => {
         const map: Record<string, string> = {
-          "ا": "a", "ب": "b", "ت": "t", "ث": "th", "ج": "j", "ح": "h", "خ": "kh",
-          "د": "d", "ذ": "dh", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s",
-          "ض": "dh", "ط": "t", "ظ": "dh", "ع": "a", "غ": "gh", "ف": "f", "ق": "k",
-          "ك": "k", "ل": "l", "م": "m", "ن": "n", "ه": "h", "و": "w", "ي": "y",
+          "ا": "a", "أ": "a", "إ": "a", "آ": "a", "ٱ": "a",
+          "ب": "b", "ة": "h", "ت": "t", "ث": "th", "ج": "j",
+          "ح": "h", "خ": "kh", "د": "d", "ذ": "dh", "ر": "r",
+          "ز": "z", "س": "s", "ش": "sh", "ص": "s", "ض": "d",
+          "ط": "t", "ظ": "z", "ع": "a", "غ": "gh", "ف": "f",
+          "ق": "k", "ك": "k", "ل": "l", "م": "m", "ن": "n",
+          "ه": "h", "و": "w", "ي": "y", "ى": "a",
+          "ؤ": "w", "ئ": "y",
         };
         return map[m] || "";
       })
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/^-+|-+$/g, "");
   }
 
   function handleClose() {
     setCreatedSlug(""); setCreatedPin(""); setCreatedName("");
-    setName(""); setSlug(""); setAdminPin(""); setOwnerName(""); setOwnerPhone("");
+    setName(""); setSlug(""); setSlugManuallyEdited(false); setAdminPin(""); setOwnerName(""); setOwnerPhone("");
     setPhone(""); setWhatsapp(""); setEmail(""); setAddress("");
     setCountry("SA"); setLanguage("ar"); setCustomCurrency("");
     setPlan("free"); setTrialDays("0");
@@ -227,6 +251,10 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
       canDeleteOrders: true, canExportData: true, canEditServices: true,
       canChangePin: false, canManageTeam: false, canViewReports: true,
     });
+    setMaxOrdersPerMonth(""); setMaxFileSizeMB("50"); setMaxStorageMB("");
+    setMaintenanceMode(false); setAutoApproveOrders(false); setAllowGuestOrders(true);
+    setSmsNotifications(false); setEmailNotifications(true);
+    setOrderExpirationHours(""); setMaxDailyOrders("");
     setStep(1);
     setExpandedFeatureSection(null);
     onClose();
@@ -284,6 +312,17 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
         primaryColor: primaryColor || undefined,
         customCurrency: customCurrency || undefined,
         plan,
+        // Platform quota & limits
+        ...(maxOrdersPerMonth ? { maxOrdersPerMonth: Number(maxOrdersPerMonth) } : {}),
+        ...(maxFileSizeMB ? { maxFileSizeMB: Number(maxFileSizeMB) } : {}),
+        ...(maxStorageMB ? { maxStorageMB: Number(maxStorageMB) } : {}),
+        ...(maxDailyOrders ? { maxDailyOrders: Number(maxDailyOrders) } : {}),
+        ...(orderExpirationHours ? { orderExpirationHours: Number(orderExpirationHours) } : {}),
+        maintenanceMode,
+        autoApproveOrders,
+        allowGuestOrders,
+        smsNotifications,
+        emailNotifications,
       };
 
       const res = await fetch("/api/shops", {
@@ -417,11 +456,11 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
               </div>
               {/* Stepper */}
               <div className="flex gap-1">
-                {[1, 2, 3, 4].map((s) => (
+                {[1, 2, 3, 4, 5].map((s) => (
                   <div key={s} className="flex-1 flex flex-col items-center gap-1">
                     <div className={`h-1.5 rounded-full transition-all w-full ${s <= step ? "bg-amber-500" : "bg-muted"}`} />
                     <span className={`text-[10px] ${s === step ? "text-amber-600 font-bold" : "text-muted-foreground"}`}>
-                      {s === 1 ? "المعلومات" : s === 2 ? "الخطة والميزات" : s === 3 ? "المظهر" : "الإدارة"}
+                      {s === 1 ? "المعلومات" : s === 2 ? "الخطة والميزات" : s === 3 ? "الحدود والصلاحيات" : s === 4 ? "المظهر" : "الإدارة"}
                     </span>
                   </div>
                 ))}
@@ -442,9 +481,10 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
                       <Label className="text-sm font-medium">المعرّف (الرابط) <span className="text-rose-500">*</span></Label>
                       <div className="flex items-center gap-0 mt-1.5">
                         <span className="text-xs text-muted-foreground bg-muted px-3 py-2.5 rounded-r-lg border border-l-0 border-border whitespace-nowrap font-mono">/s/</span>
-                        <Input value={slug} onChange={(e) => setSlug(e.target.value.replace(/[^a-z0-9-]/g, ""))} placeholder="matbaa-alnoor" className="rounded-l-lg rounded-r-none" dir="ltr" required />
+                        <Input value={slug} onChange={(e) => handleSlugChange(e.target.value)} placeholder="matbaa-alnoor" className="rounded-l-lg rounded-r-none" dir="ltr" required />
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">{baseUrl}/s/{slug || "..."}</p>
+                      {slugManuallyEdited && <p className="text-xs text-amber-500 mt-0.5">✏️ تم التعديل يدوياً — لن يتم التحديث تلقائياً مع اسم المتجر</p>}
                     </div>
                     <div>
                       <Label className="text-sm font-medium">كلمة مرور الإدارة <span className="text-rose-500">*</span></Label>
@@ -474,6 +514,7 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
                           </div>
                           {gulfCountries.map((c) => (
                             <SelectItem key={c.code} value={c.code} className="py-2.5 px-3 cursor-pointer">
+                              <span className="sr-only">{c.flag} {c.nameAr}</span>
                               <div className="flex items-center gap-3">
                                 <span className="text-xl leading-none">{c.flag}</span>
                                 <div className="flex-1">
@@ -497,6 +538,8 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
                           </div>
                           {otherCountries.map((c) => (
                             <SelectItem key={c.code} value={c.code} className="py-2.5 px-3 cursor-pointer">
+
+                              <span className="sr-only">{c.flag} {c.nameAr}</span>
                               <div className="flex items-center gap-3">
                                 <span className="text-xl leading-none">{c.flag}</span>
                                 <div className="flex-1">
@@ -761,8 +804,127 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
                 </div>
               )}
 
-              {/* ===== STEP 3: Appearance ===== */}
+              {/* ===== STEP 3: Platform Limits ===== */}
               {step === 3 && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Timer className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">حدود المنصة وحصة الاستخدام والصلاحيات المتقدمة</p>
+                  </div>
+
+                  {/* Quota Section */}
+                  <div>
+                    <Label className="text-sm font-semibold">حدود الاستخدام</Label>
+                    <p className="text-xs text-muted-foreground mt-1">اترك الحقول فارغة لعدم التحديد (غير محدود)</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">الحد الأقصى للطلبات/شهر</Label>
+                        <Input type="number" value={maxOrdersPerMonth} onChange={(e) => setMaxOrdersPerMonth(e.target.value)} placeholder="غير محدود" className="mt-1" dir="ltr" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">الحد الأقصى للطلبات/يوم</Label>
+                        <Input type="number" value={maxDailyOrders} onChange={(e) => setMaxDailyOrders(e.target.value)} placeholder="غير محدود" className="mt-1" dir="ltr" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">حجم الملف الأقصى (ميغابايت)</Label>
+                        <Input type="number" value={maxFileSizeMB} onChange={(e) => setMaxFileSizeMB(e.target.value)} placeholder="50" className="mt-1" dir="ltr" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">حصة التخزين (ميغابايت)</Label>
+                        <Input type="number" value={maxStorageMB} onChange={(e) => setMaxStorageMB(e.target.value)} placeholder="غير محدود" className="mt-1" dir="ltr" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">انتهاء الطلب التلقائي (ساعات)</Label>
+                        <Input type="number" value={orderExpirationHours} onChange={(e) => setOrderExpirationHours(e.target.value)} placeholder="بدون انتهاء" className="mt-1" dir="ltr" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Behavior Toggles */}
+                  <div>
+                    <Label className="text-sm font-semibold">سلوك المنصة</Label>
+                    <div className="space-y-2 mt-3">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:border-border transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${maintenanceMode ? "bg-rose-100 dark:bg-rose-500/15" : "bg-muted/80"}`}>
+                            <AlertTriangle className={`h-4 w-4 ${maintenanceMode ? "text-rose-600" : "text-muted-foreground"}`} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium">وضع الصيانة</div>
+                            <div className="text-[10px] text-muted-foreground">إخفاء واجهة الزبون وعرض رسالة صيانة</div>
+                          </div>
+                        </div>
+                        <Switch checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:border-border transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${autoApproveOrders ? "bg-emerald-100 dark:bg-emerald-500/15" : "bg-muted/80"}`}>
+                            <CheckCircle2 className={`h-4 w-4 ${autoApproveOrders ? "text-emerald-600" : "text-muted-foreground"}`} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium">موافقة تلقائية على الطلبات</div>
+                            <div className="text-[10px] text-muted-foreground">تخطي مراجعة التاجر والموافقة المباشرة</div>
+                          </div>
+                        </div>
+                        <Switch checked={autoApproveOrders} onCheckedChange={setAutoApproveOrders} />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:border-border transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${allowGuestOrders ? "bg-blue-100 dark:bg-blue-500/15" : "bg-muted/80"}`}>
+                            <User className={`h-4 w-4 ${allowGuestOrders ? "text-blue-600" : "text-muted-foreground"}`} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium">السماح بالطلبات بدون تسجيل</div>
+                            <div className="text-[10px] text-muted-foreground">الزبون يمكنه الطلب بدون إنشاء حساب</div>
+                          </div>
+                        </div>
+                        <Switch checked={allowGuestOrders} onCheckedChange={setAllowGuestOrders} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Notification Toggles */}
+                  <div>
+                    <Label className="text-sm font-semibold">قنوات الإشعارات</Label>
+                    <div className="space-y-2 mt-3">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:border-border transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${emailNotifications ? "bg-sky-100 dark:bg-sky-500/15" : "bg-muted/80"}`}>
+                            <Mail className={`h-4 w-4 ${emailNotifications ? "text-sky-600" : "text-muted-foreground"}`} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium">إشعارات البريد الإلكتروني</div>
+                            <div className="text-[10px] text-muted-foreground">إرسال إشعارات حالة الطلب بالبريد</div>
+                          </div>
+                        </div>
+                        <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:border-border transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${smsNotifications ? "bg-green-100 dark:bg-green-500/15" : "bg-muted/80"}`}>
+                            <Phone className={`h-4 w-4 ${smsNotifications ? "text-green-600" : "text-muted-foreground"}`} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium">إشعارات الرسائل القصيرة SMS</div>
+                            <div className="text-[10px] text-muted-foreground">إرسال SMS عند تغيير حالة الطلب</div>
+                          </div>
+                        </div>
+                        <Switch checked={smsNotifications} onCheckedChange={setSmsNotifications} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== STEP 4: Appearance ===== */}
+              {step === 4 && (
                 <div className="space-y-6">
                   {/* Theme */}
                   <div>
@@ -824,8 +986,8 @@ export function CreateShopDialog({ open, onClose, onCreated }: {
                 </div>
               )}
 
-              {/* ===== STEP 4: Merchant Admin ===== */}
-              {step === 4 && (
+              {/* ===== STEP 5: Merchant Admin ===== */}
+              {step === 5 && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 mb-2">
                     <Info className="h-4 w-4 text-muted-foreground" />

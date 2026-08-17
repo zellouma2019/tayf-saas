@@ -56,7 +56,7 @@ const PageViewer2D = dynamic(
 
 type Step = "idle" | "uploading" | "analyzing" | "results" | "preview";
 
-type UploadedFileType = "pdf" | "image";
+type UploadedFileType = "pdf" | "image" | "document" | "design";
 
 interface AnalysisResult {
   pageCount: number;
@@ -107,12 +107,14 @@ const HISTORY_KEY = "print-shop-recent-uploads";
 
 /* ═══ محرك تصنيف الملفات التلقائي ═══ */
 function classifyFile(
-  fileType: UploadedFileType,
+  fileType: UploadedFileType | string,
   pageCount: number,
   pageDimensionsMM: { width: number; height: number } | null,
 ): FileCategory {
   // صورة مباشرة = دائماً صورة
   if (fileType === "image") return "image";
+  // مستند أو تصميم = مستند قصير
+  if (fileType === "document" || fileType === "design") return "short-doc";
   // PDF صفحة واحدة = صورة
   if (pageCount <= 1) return "image";
   // 2-10 صفحات = مستند قصير
@@ -257,7 +259,7 @@ export function StandalonePreview() {
       const entry: RecentUpload = {
         name: f.name,
         size: f.size > 1024 * 1024 ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(f.size / 1024)} KB`,
-        pages: ft === "image" ? 1 : totalPages || 1,
+        pages: (ft === "image" || ft === "document" || ft === "design") ? 1 : totalPages || 1,
         category: cat,
         timestamp: Date.now(),
         storedFileName: sn,
@@ -387,11 +389,20 @@ export function StandalonePreview() {
 
   const uploadAndAnalyze = useCallback(async (f: File) => {
     const ext = f.name.split(".").pop()?.toLowerCase() || "";
-    const claimedImage = ["jpg", "jpeg", "png", "webp"].includes(ext);
-    const claimedPdf = ext === "pdf";
+    const imageExts = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff", "tif", "avif", "svg"];
+    const pdfExts = ["pdf"];
+    const docExts = ["docx", "doc", "xlsx", "xls", "pptx", "ppt", "txt", "rtf", "csv"];
+    const designExts = ["ai", "eps", "psd", "indd"];
+    const allAccepted = [...imageExts, ...pdfExts, ...docExts, ...designExts];
 
-    if (!claimedImage && !claimedPdf) {
-      setError("يرجى اختيار ملف PDF أو صورة (JPG, PNG)");
+    const claimedImage = imageExts.includes(ext);
+    const claimedPdf = pdfExts.includes(ext);
+    const claimedDoc = docExts.includes(ext);
+    const claimedDesign = designExts.includes(ext);
+    const isAccepted = allAccepted.includes(ext);
+
+    if (!isAccepted) {
+      setError(`صيغة غير مدعومة. الصيغ المدعومة: PDF, JPG, PNG, WebP, GIF, BMP, TIFF, AVIF, SVG, DOCX, XLSX, PPTX, AI, EPS, PSD`);
       return;
     }
     if (f.size > 100 * 1024 * 1024) {
@@ -407,22 +418,34 @@ export function StandalonePreview() {
         return;
       }
       if (claimedImage && detected.type === "pdf") {
-        setError("هذا الملف PDF وليس صورة — سيتم معالجته كمستند PDF.");
         // Auto-correct: treat as PDF
-        // (we continue with PDF flow below)
       }
-      if (claimedImage && detected.type !== "unknown" && !detected.description.startsWith("JPEG") && detected.type !== "png" && detected.type !== "jpeg" && detected.type !== "webp") {
-        setError(`صيغة الصورة غير مدعومة — تم اكتشاف: ${detected.description}`);
-        return;
+      // Relax magic bytes for new image formats (GIF, BMP, TIFF, AVIF, SVG don't have strict magic detection)
+      if (claimedImage && !claimedDoc && !claimedDesign && detected.type !== "unknown" && detected.type !== "pdf") {
+        const validImageTypes = ["jpeg", "jpg", "png", "webp", "gif", "bmp", "tiff", "avif", "svg"];
+        if (!validImageTypes.includes(detected.type) && !detected.description.startsWith("JPEG")) {
+          setError(`صيغة الصورة غير مدعومة — تم اكتشاف: ${detected.description}`);
+          return;
+        }
       }
+      // Skip magic bytes validation for documents and design files (they have varied internal structures)
     } catch {
       // If magic bytes check fails, continue with extension-based detection (graceful fallback)
     }
 
     const isImage = claimedImage;
-    const isPdf = claimedPdf;
+    const isPdf = claimedPdf || (claimedImage && false); // PDF auto-correct handled above
+    const isDoc = claimedDoc;
+    const isDesign = claimedDesign;
 
-    setUploadedFileType(isImage ? "image" : "pdf");
+    // Determine display file type
+    let displayType: "image" | "pdf" | "document" | "design" = "image";
+    if (claimedPdf) displayType = "pdf";
+    else if (claimedDoc) displayType = "document";
+    else if (claimedDesign) displayType = "design";
+    else if (claimedImage) displayType = "image";
+
+    setUploadedFileType(displayType);
     setStep("uploading"); setUploadProgress(0);
     setWorkerResult(null);
     fileForWorkerRef.current = isPdf ? f : null;
@@ -481,6 +504,33 @@ export function StandalonePreview() {
         setTotalPages(1);
         const cat = classifyFile("image", 1, null);
         saveToHistory(f, cat, storedFileName, "image");
+        setStep("results");
+      } else if (isDoc || isDesign) {
+        // ═══ مستند أو ملف تصميم: رفع مباشر بدون تحليل PDF ═══
+        setAnalysisProgress(100);
+        const fileLabel = isDoc ? "مستند" : "ملف تصميم";
+        const docResult: AnalysisResult = {
+          ...DEFAULT_ANALYSIS,
+          pageCount: 1,
+          fileSizeKB: Math.round(f.size / 1024),
+          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+          paperSize: "A4",
+          paperType: "normal",
+          binding: "none",
+          color: "color",
+          orientation: "portrait",
+          closestPaperSize: "A4",
+          confidence: 70,
+          insights: [`${fileLabel} مرفوع (${ext.toUpperCase()}) — سيتم مراجعته من قبل المطبعة`],
+          healthScore: 75,
+          hasImages: isDesign,
+          isColor: true,
+          fileNature: isDesign ? "تصميم" : "مستند",
+        };
+        setAnalysis(docResult);
+        setTotalPages(1);
+        const cat = classifyFile(isDesign ? "design" : "document", 1, null);
+        saveToHistory(f, cat, storedFileName, displayType);
         setStep("results");
       } else {
         // ═══════════════════════════════════════════════════════════════
@@ -818,7 +868,7 @@ export function StandalonePreview() {
               className={`relative rounded-[21px] bg-background cursor-pointer group transition-all duration-300 ${isDragging ? "bg-amber-50/80 dark:bg-amber-950/30" : "hover:bg-muted/20"}`}
               onClick={() => fileInputRef.current?.click()}
             >
-              <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden" onChange={onFileInput} />
+              <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.tif,.avif,.svg,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.csv,.ai,.eps,.psd,.indd" className="hidden" onChange={onFileInput} />
               <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px]">
                 {/* Upload icon with float */}
                 <div className="upload-float w-20 h-20 rounded-2xl bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm">
@@ -830,12 +880,15 @@ export function StandalonePreview() {
                 </div>
 
                 {/* Format icons row */}
-                <div className="flex items-center justify-center gap-2.5 flex-wrap">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
                   {[
                     { icon: <FileText className="h-4 w-4" />, label: "PDF", bg: "bg-red-50 dark:bg-red-950/30 text-red-500 border-red-200/50 dark:border-red-800/30" },
                     { icon: <ImageIcon className="h-4 w-4" />, label: "JPG", bg: "bg-blue-50 dark:bg-blue-950/30 text-blue-500 border-blue-200/50 dark:border-blue-800/30" },
                     { icon: <ImagePlus className="h-4 w-4" />, label: "PNG", bg: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500 border-emerald-200/50 dark:border-emerald-800/30" },
                     { icon: <FileText className="h-4 w-4" />, label: "WebP", bg: "bg-purple-50 dark:bg-purple-950/30 text-purple-500 border-purple-200/50 dark:border-purple-800/30" },
+                    { icon: <FileText className="h-4 w-4" />, label: "DOCX", bg: "bg-sky-50 dark:bg-sky-950/30 text-sky-500 border-sky-200/50 dark:border-sky-800/30" },
+                    { icon: <FileText className="h-4 w-4" />, label: "AI/PSD", bg: "bg-orange-50 dark:bg-orange-950/30 text-orange-500 border-orange-200/50 dark:border-orange-800/30" },
+                    { icon: <FileText className="h-4 w-4" />, label: "+18", bg: "bg-gray-50 dark:bg-gray-950/30 text-gray-500 border-gray-200/50 dark:border-gray-800/30" },
                   ].map((fmt) => (
                     <span key={fmt.label} className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold min-w-[72px] justify-center ${fmt.bg}`}>
                       {fmt.icon}
@@ -2039,7 +2092,7 @@ export function StandalonePreview() {
                         body: JSON.stringify({
                           serviceType: "document",
                           fileName: file?.name,
-                          fileType: uploadedFileType === "image" ? "PNG" : "PDF",
+                          fileType: uploadedFileType === "image" ? "PNG" : uploadedFileType === "document" ? "DOCX" : uploadedFileType === "design" ? "AI" : "PDF",
                           fileSize: file?.size,
                           fileData: storedName,
                           smartAnalysis: analysis,

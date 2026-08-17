@@ -5,7 +5,14 @@ import crypto from "crypto";
 
 // حجم كل جزء: 900 كيلوبايت (أقل من 1 ميغا لتجنب حد البوابة)
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const ACCEPTED_EXTENSIONS = ["pdf", "docx", "jpg", "jpeg", "png", "webp"];
+const ACCEPTED_EXTENSIONS = [
+  // Images
+  "pdf", "docx", "jpg", "jpeg", "png", "webp", "gif", "svg", "bmp", "tiff", "tif", "avif",
+  // Documents
+  "doc", "xlsx", "xls", "pptx", "ppt", "txt", "rtf", "csv",
+  // Design/Print files
+  "ai", "eps", "psd", "indd",
+];
 
 function getChunksDir() {
   return path.join(process.cwd(), "uploads", ".chunks");

@@ -53,5 +53,5 @@ server.log
 # Skills directory
 /skills/old-project/
 tool-results/
-upload/
+/upload/
 live-check*.json
