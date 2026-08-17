@@ -452,12 +452,19 @@ export function StandalonePreview() {
     setStep("uploading"); setUploadProgress(0);
     setWorkerResult(null);
     fileForWorkerRef.current = isPdf ? f : null;
+    // ═══════════════════════════════════════════════════════════════
+    // UPLOAD WITH FALLBACK: Server upload → local base64 fallback
+    // ═══════════════════════════════════════════════════════════════
+    let storedFileName: string | null = null;
+    let usedLocalFallback = false;
+
+    // PATH 1: Try server upload (with progress tracking)
     try {
-      // ═══ Real XHR upload with progress tracking ═══
       const fd = new FormData(); fd.append("file", f);
-      const storedFileName = await new Promise<string>((resolve, reject) => {
+      storedFileName = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/c/upload");
+        xhr.timeout = 60_000; // 60s timeout
         xhr.upload.addEventListener("progress", (e) => {
           if (e.lengthComputable) {
             const pct = Math.round((e.loaded / e.total) * 100);
@@ -472,16 +479,51 @@ export function StandalonePreview() {
               resolve(data.storedFileName);
             } catch { reject(new Error("فشل في قراءة استجابة الخادم")); }
           } else {
-            try { const e = JSON.parse(xhr.responseText); reject(new Error(e.error || "فشل في رفع الملف")); }
+            try { const e2 = JSON.parse(xhr.responseText); reject(new Error(e2.error || `فشل في رفع الملف (${xhr.status})`)); }
             catch { reject(new Error(`فشل في رفع الملف (${xhr.status})`)); }
           }
         });
-        xhr.addEventListener("error", () => reject(new Error("خطأ في الاتصال بالخادم")));
+        xhr.addEventListener("error", () => reject(new Error("SERVER_UNREACHABLE")));
+        xhr.addEventListener("timeout", () => reject(new Error("SERVER_TIMEOUT")));
         xhr.addEventListener("abort", () => reject(new Error("تم إلغاء الرفع")));
         xhr.send(fd);
       });
-      setStoredName(storedFileName);
+    } catch (uploadErr) {
+      const errMsg = (uploadErr as Error).message;
+      console.warn("[upload] Server upload failed, using local fallback:", errMsg);
 
+      // PATH 2: Local fallback — convert file to data URL (for images & small docs)
+      // For large PDFs, we still need server processing so retry once more
+      if (isPdf && f.size > 5 * 1024 * 1024) {
+        // Large PDF: must use server — show clear error
+        throw new Error("لا يمكن رفع ملف PDF كبير بدون اتصال بالخادم. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.");
+      }
+
+      // For images and small files: convert to base64 data URL locally
+      setUploadProgress(50);
+      try {
+        storedFileName = await new Promise<string>((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === "string") {
+              res(reader.result); // data:image/...;base64,...
+            } else {
+              rej(new Error("فشل في قراءة الملف محلياً"));
+            }
+          };
+          reader.onerror = () => rej(new Error("فشل في قراءة الملف"));
+          reader.readAsDataURL(f);
+        });
+        usedLocalFallback = true;
+        setUploadProgress(100);
+      } catch (localErr) {
+        throw new Error("فشل في رفع الملف — يرجى التأكد من اتصالك بالإنترنت");
+      }
+    }
+
+    setStoredName(storedFileName);
+
+    try {
       if (isImage) {
         // صورة: تحليل مبسط بدون pdfjs
         setAnalysisProgress(100);
@@ -635,9 +677,9 @@ export function StandalonePreview() {
             hasImages: true,
             isColor: true,
             insights: [
-              `معالجة سحابية ناجحة في ${serverData.processingTimeMs ?? "?"}مس`,
-              `الملف يحتوي على ${numP} صفحة`,
-              `الأبعاد: ${serverData.pageDimensionsMM?.width ?? "?"}×${serverData.pageDimensionsMM?.height ?? "?"} مم`,
+            `معالجة سحابية ناجحة في ${serverData.processingTimeMs ?? "?"}مس`,
+            `الملف يحتوي على ${numP} صفحة`,
+            `الأبعاد: ${serverData.pageDimensionsMM?.width ?? "?"}×${serverData.pageDimensionsMM?.height ?? "?"} مم`,
             ],
             fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
           };
@@ -711,7 +753,7 @@ export function StandalonePreview() {
           saveToHistory(f, cat, storedFileName, "pdf");
           setStep("results");
         }
-      }
+      }  // ← closes the outer else (PDF processing)
     } catch (e) {
       /* Error during upload/analyze */
       setError((e as Error).message || "حدث خطأ غير متوقع"); setStep("idle");
