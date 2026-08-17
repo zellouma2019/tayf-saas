@@ -7,6 +7,7 @@ import {
   type FeatureKey,
   isFeatureEnabled,
 } from "@/lib/shop-features";
+import { useAppStore } from "@/lib/store";
 
 export interface ShopData {
   id: string;
@@ -100,7 +101,11 @@ export function ShopProvider({
         return r.json();
       })
       .then((d) => {
-        if (activeRef.current) setState({ shop: d.shop, loading: false, error: null });
+        if (activeRef.current) {
+          setState({ shop: d.shop, loading: false, error: null });
+          // خزّن shopId في Store ليستخدمه shopApi
+          if (d.shop?.id) useAppStore.getState().setShopId(d.shop.id);
+        }
       })
       .catch((e) => {
         if (activeRef.current) setState({ shop: null, loading: false, error: e.message });

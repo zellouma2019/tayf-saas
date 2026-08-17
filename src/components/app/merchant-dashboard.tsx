@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, useEffect, useCallback, useMemo, useRef, Component } from "react";
 import { useShop } from "@/lib/shop-context";
+import { useAppStore } from "@/lib/store";
 import {
   Package,
   Settings,
@@ -425,6 +426,7 @@ class OrdersErrorBoundary extends Component<
 
 export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const { shop, hasFeature, refreshShop } = useShop();
+  const setAdminCodeStore = useAppStore((s) => s.setAdminCode);
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
   const verifiedPinRef = useRef("");
@@ -1037,6 +1039,8 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       if (res.ok) {
         toast.success("مرحباً بك في لوحة التحكم");
         verifiedPinRef.current = pin;
+        // خزّن رمز الإدارة في Store ليستخدمه shopApi للطلبات المحمية
+        setAdminCodeStore(pin);
         setUnlocked(true);
         setPin("");
       } else {

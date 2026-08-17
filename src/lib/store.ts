@@ -33,6 +33,9 @@ interface AppState {
   // رمز الإدارة — يُخزَّن بعد تسجيل الدخول
   adminCode: string;
   setAdminCode: (code: string) => void;
+  // معرّف المتجر الحالي — يُخزَّن عند تحميل المتجر
+  shopId: string;
+  setShopId: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -40,4 +43,6 @@ export const useAppStore = create<AppState>((set) => ({
   incrementRefresh: () => set((s) => ({ refreshKey: s.refreshKey + 1 })),
   adminCode: "",
   setAdminCode: (code) => set({ adminCode: code }),
+  shopId: "",
+  setShopId: (id) => set({ shopId: id }),
 }));
