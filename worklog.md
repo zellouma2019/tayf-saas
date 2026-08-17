@@ -81,3 +81,26 @@ Stage Summary:
 - ROOT CAUSE of sync fixed: customer orders now write to same Turso DB as merchant reads
 - PDF analysis now uses server-side pdf-lib for ALL sizes (not just >10MB)
 - Customers can now access invoices by reference and look up orders by phone
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix sync, PDF analysis accuracy, add tracking/invoice/sharing
+
+Work Log:
+- Diagnosed ROOT CAUSE of sync issue: /api/c/orders used Prisma (local SQLite) while merchant /api/orders used turso-lite (remote Turso DB) — orders written by customers went to a DIFFERENT database than where merchant reads
+- Rewrote /api/c/orders/route.ts to use tursoExecute/tursoQuerySafe instead of Prisma, mirroring the pattern from /api/orders
+- Created /api/c/analyze-pdf/route.ts: Fast server-side PDF metadata extraction using pdf-lib only (<1s for all sizes). Returns numPages, pageDimensionsMM, closestPaperSize, isPortrait, title, author
+- Updated standalone-preview.tsx PDF analysis flow: ALL PDFs now call /api/c/analyze-pdf first for accurate page count (fixes 50-page PDF showing 1 page). Cover rendering still uses worker for ≤10MB and server for >10MB
+- Added orderReference state and capture from POST response
+- Updated order success screen: shows tracking number with copy button, invoice download button, share button (native share API or clipboard)
+- Created /api/c/invoice/[reference]/route.ts for customer invoice access via tursoQuery
+- Created /api/c/order-lookup/route.ts for order lookup by phone number
+- Pushed all changes to GitHub
+
+Stage Summary:
+- SYNC FIX (critical): Customer orders now write to same Turso DB as merchant reads
+- PDF ANALYSIS FIX: Server-side pdf-lib for all PDFs ensures accurate page count
+- TRACKING: Order reference number shown to customer after submission
+- INVOICE: Customer can download/view invoice via /api/c/invoice/[reference]
+- SHARING: Native share API / clipboard for order details
+- All changes pushed to GitHub (commit 3b0eab7)
