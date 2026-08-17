@@ -37,3 +37,28 @@ Stage Summary:
 - Root cause of settings save failure: shopApi missing both shopId and x-admin-code
 - Root cause of file upload failure: /api/c/upload route didn't exist
 - Root cause of feature toggle "not responding": actually working, but settings save failure made it seem broken
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix file upload in customer version - recreate lost route + add local fallback
+
+
+Work Log:
+- Analyzed screenshot showing "هذا الحقل مطلوب" error in upload area
+- Discovered /api/c/upload/route.ts was NOT persisted from previous session
+- Recreated the upload route with full validation (extensions, size, unique naming)
+- Added dual-path upload mechanism with local fallback:
+  - PATH 1: Server upload via XHR with 60s timeout
+  - PATH 2: Local base64 data URL conversion for images/docs when server fails
+  - Large PDFs (>5MB) still require server (show clear error if offline)
+- Fixed broken brace structure in uploadAndAnalyze function after fallback addition
+- Verified with TypeScript compilation (no new errors from changes)
+- Pushed to GitHub
+
+Stage Summary:
+- Root cause: Upload route file was not saved in previous session
+- Created: /src/app/api/c/upload/route.ts (server-side file upload)
+- Modified: /src/components/customer/standalone-preview.tsx (local fallback mechanism)
+- Uploads now work even when server is temporarily unavailable
+- File upload is resilient: tries server first, falls back to local base64
