@@ -545,7 +545,7 @@ export default function AdminPage() {
 
   // Fetch main data
   const fetchData = useCallback(async (silent = false) => {
-    setRefreshing(true);
+    if (!silent) setRefreshing(true);
     try {
       const [shopsRes, statsRes, dailyRes] = await Promise.all([
         fetch('/api/shops'),
@@ -569,10 +569,38 @@ export default function AdminPage() {
       }
       if (!silent) toast.success('تم تحديث البيانات');
     } catch { if (!silent) toast.error('فشل تحميل البيانات'); }
-    setRefreshing(false);
+    if (!silent) setRefreshing(false);
   }, []);
 
   useEffect(() => { if (authenticated) fetchData(true); }, [authenticated, fetchData]);
+
+  // مزامنة تلقائية كل 30 ثانية
+  const adminCodeAuto = useAppStore((s) => s.adminCode);
+  useEffect(() => {
+    if (!authenticated) return;
+    const interval = setInterval(() => fetchData(true), 30_000);
+    return () => clearInterval(interval);
+  }, [authenticated, fetchData]);
+
+  // تغيير حالة طلب
+  const adminCodeOrders = useAppStore((s) => s.adminCode);
+  const changeOrderStatus = useCallback(async (orderId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-code': adminCodeOrders },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as Record<string, string>).error || 'فشل تحديث الحالة');
+      }
+      toast.success('تم تحديث حالة الطلب');
+      fetchData(true);
+    } catch (e) {
+      toast.error('خطأ', { description: (e as Error).message });
+    }
+  }, [adminCodeOrders, fetchData]);
 
   // Fetch platform settings
   const fetchSettings = useCallback(async () => {
@@ -1041,10 +1069,22 @@ export default function AdminPage() {
                                 </div>
                               </div>
                             </div>
-                            <div className="text-left shrink-0">
-                              <p className="text-sm font-black tabular-nums dark:text-white">{formatDA(order.total)}</p>
-                              <p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p>
-                            </div>
+                            <div className="text-left shrink-0 flex items-center gap-2">
+                                <Select value={order.status} onValueChange={(v) => changeOrderStatus(order.id, v)}>
+                                  <SelectTrigger className="w-[110px] h-8 text-[10px] border-dashed dark:border-white/[0.12]"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">معلّق</SelectItem>
+                                    <SelectItem value="printing">يطبع</SelectItem>
+                                    <SelectItem value="ready">جاهز</SelectItem>
+                                    <SelectItem value="delivered">تم التسليم</SelectItem>
+                                    <SelectItem value="cancelled">ملغى</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <div>
+                                  <p className="text-sm font-black tabular-nums dark:text-white">{formatDA(order.total)}</p>
+                                  <p className="text-[10px] text-muted-foreground">{getTimeAgoShort(order.createdAt)}</p>
+                                </div>
+                              </div>
                           </div>
                         </CardContent>
                       </Card>
