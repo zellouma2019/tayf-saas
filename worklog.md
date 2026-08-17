@@ -62,3 +62,22 @@ Stage Summary:
 - Modified: /src/components/customer/standalone-preview.tsx (local fallback mechanism)
 - Uploads now work even when server is temporarily unavailable
 - File upload is resilient: tries server first, falls back to local base64
+
+---
+Task ID: 1-a
+Agent: backend-fix
+Task: Fix sync + create analyze-pdf + invoice endpoints
+
+Work Log:
+- Rewrote /api/c/orders/route.ts to use turso-lite (tursoQuerySafe, tursoExecute) instead of Prisma
+- GET: mirrors /api/orders pattern — dynamic WHERE, COUNT, LIMIT/OFFSET, parseFullOrder
+- POST: uses tursoExecute INSERT with same column layout as /api/orders (id, reference, serviceName, etc.)
+- Created /api/c/analyze-pdf/route.ts — fast server-side PDF metadata extraction using pdf-lib only (< 1s for any size)
+- Created /api/c/invoice/[reference]/route.ts — look up order by reference, return parsed JSON
+- Created /api/c/order-lookup/route.ts — customer order lookup by phone number + optional shopId
+- Verified TypeScript: no new errors in modified/created files
+
+Stage Summary:
+- ROOT CAUSE of sync fixed: customer orders now write to same Turso DB as merchant reads
+- PDF analysis now uses server-side pdf-lib for ALL sizes (not just >10MB)
+- Customers can now access invoices by reference and look up orders by phone

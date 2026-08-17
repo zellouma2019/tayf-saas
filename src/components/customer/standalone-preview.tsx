@@ -220,6 +220,7 @@ export function StandalonePreview() {
   // Order dialog state
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
+  const [orderReference, setOrderReference] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   // Order dialog
@@ -579,180 +580,149 @@ export function StandalonePreview() {
         setStep("results");
       } else {
         // ═══════════════════════════════════════════════════════════════
-        // HYBRID PDF PROCESSING: 10MB threshold
+        // PDF PROCESSING — ALL PDFs use server-side analysis for accurate page count
         // ═══════════════════════════════════════════════════════════════
         setStep("analyzing"); setAnalysisProgress(0);
+        setAnalysisStage("جارٍ تحليل الملف على الخادم...");
+        setAnalysisProgress(10);
 
+        // ═══ STEP 1: Fast server-side metadata for ALL PDFs (always accurate) ═══
+        const analyzeFd = new FormData();
+        analyzeFd.append("file", f);
+        setAnalysisProgress(20);
+
+        let serverMeta: { numPages: number; pageDimensionsMM: { width: number; height: number } | null; closestPaperSize: string; isPortrait: boolean; title: string; author: string; processingTimeMs: number } | null = null;
+        try {
+          const analyzeRes = await fetch("/api/c/analyze-pdf", { method: "POST", body: analyzeFd });
+          if (analyzeRes.ok) {
+            serverMeta = await analyzeRes.json();
+            setAnalysisProgress(40);
+          }
+        } catch {
+          // Server analysis failed — will fall back to client
+        }
+
+        const numP = serverMeta?.numPages || 1;
+        const dimsMM = serverMeta?.pageDimensionsMM || null;
+        const paperSize = serverMeta?.closestPaperSize || "A4";
+        const isPortrait = serverMeta?.isPortrait !== false;
+
+        // ═══ STEP 2: Cover rendering (only for >10MB use server, ≤10MB use worker) ═══
         const IS_LARGE_FILE = f.size > CLIENT_SIZE_LIMIT;
 
         if (IS_LARGE_FILE) {
-          // ═══════════════════════════════════════════════════════
-          // PATH A: Server-Side Processing (>10MB)
-          // The browser NEVER reads this file — zero memory impact
-          // ═══════════════════════════════════════════════════════
-          setAnalysisStage("معالجة سحابية — الملف كبير (جاريْ المعالجة على الخادم)...");
-          setAnalysisProgress(10);
+          // Server-side cover rendering for large files
+          setAnalysisStage("معالجة سحابية — استخراج الغلاف...");
+          setAnalysisProgress(50);
 
-          // Send file to server for processing (separate from upload to avoid double send)
           const processFd = new FormData();
           processFd.append("file", f);
 
-          setAnalysisProgress(25);
-          const processRes = await fetch("/api/c/pdf-process", { method: "POST", body: processFd });
+          try {
+            const processRes = await fetch("/api/c/pdf-process", { method: "POST", body: processFd });
+            if (processRes.ok) {
+              const serverData: ServerPdfResult = await processRes.json();
+              setAnalysisProgress(80);
 
-          if (!processRes.ok) {
-            const errData = await processRes.json().catch(() => ({}));
-            throw new Error(errData.error || "فشل في المعالجة السحابية");
-          }
+              let coverDataUrl: string | null = null;
+              let backDataUrl: string | null = null;
 
-          setAnalysisProgress(70);
-          const serverData: ServerPdfResult = await processRes.json();
+              if (serverData.coverImageUrl) {
+                try {
+                  setAnalysisStage("جارٍ تحميل صورة الغلاف...");
+                  const coverResp = await fetch(serverData.coverImageUrl);
+                  if (coverResp.ok) {
+                    const coverBlob = await coverResp.blob();
+                    coverDataUrl = await new Promise<string>((res) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => res(reader.result as string);
+                      reader.readAsDataURL(coverBlob);
+                    });
+                  }
+                } catch { /* cover failed */ }
+              }
 
-          setAnalysisProgress(85);
-          setAnalysisStage("جارٍ تحميل صورة الغلاف...");
+              if (serverData.backImageUrl) {
+                try {
+                  const backResp = await fetch(serverData.backImageUrl);
+                  if (backResp.ok) {
+                    const backBlob = await backResp.blob();
+                    backDataUrl = await new Promise<string>((res) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => res(reader.result as string);
+                      reader.readAsDataURL(backBlob);
+                    });
+                  }
+                } catch { /* back failed */ }
+              }
 
-          // ═══ STRICT PIPELINE: Convert server URLs to data URLs BEFORE showing 3D preview ═══
-          // This ensures BookMockup3D receives the texture on its FIRST render
-          let coverDataUrl: string | null = null;
-          let backDataUrl: string | null = null;
-
-          if (serverData.coverImageUrl) {
-            try {
-              setAnalysisStage("جارٍ تحميل صورة الغلاف...");
-              const coverResp = await fetch(serverData.coverImageUrl);
-              if (!coverResp.ok) throw new Error(`HTTP ${coverResp.status}`);
-              const coverBlob = await coverResp.blob();
-              coverDataUrl = await new Promise<string>((res) => {
-                const reader = new FileReader();
-                reader.onloadend = () => res(reader.result as string);
-                reader.readAsDataURL(coverBlob);
+              setWorkerResult({
+                numPages: serverData.numPages ?? numP,
+                pageDimensionsMM: serverData.pageDimensionsMM ?? dimsMM,
+                closestPaperSize: serverData.closestPaperSize ?? paperSize,
+                isPortrait: serverData.isPortrait ?? isPortrait,
+                aspectRatio: serverData.aspectRatio,
+                coverDataUrl,
+                backDataUrl,
               });
-            } catch {
-              /* cover conversion failed — will render without cover texture */
             }
+          } catch {
+            /* pdf-process failed — cover rendering skipped, page count still accurate from analyze-pdf */
           }
-
-          if (serverData.backImageUrl) {
-            try {
-              const backResp = await fetch(serverData.backImageUrl);
-              if (!backResp.ok) throw new Error(`HTTP ${backResp.status}`);
-              const backBlob = await backResp.blob();
-              backDataUrl = await new Promise<string>((res) => {
-                const reader = new FileReader();
-                reader.onloadend = () => res(reader.result as string);
-                reader.readAsDataURL(backBlob);
-              });
-            } catch {
-              /* back conversion failed — will render without back texture */
-            }
-          }
-
-          // Set worker result WITH the data URLs (not null)
-          setWorkerResult({
-            numPages: serverData.numPages ?? 1,
-            pageDimensionsMM: serverData.pageDimensionsMM ?? null,
-            closestPaperSize: serverData.closestPaperSize ?? undefined,
-            isPortrait: serverData.isPortrait ?? true,
-            aspectRatio: serverData.aspectRatio ?? undefined,
-            coverDataUrl,
-            backDataUrl,
-          });
-
-          // Build analysis result from server data + light client metadata
-          setAnalysisProgress(95);
-          const numP = serverData.numPages ?? 1;
-          const pdfResult: AnalysisResult = {
-            ...DEFAULT_ANALYSIS,
-            pageCount: numP,
-            fileSizeKB: Math.round(f.size / 1024),
-            fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
-            paperSize: serverData.closestPaperSize || undefined,
-            orientation: serverData.isPortrait ? "portrait" : "landscape",
-            closestPaperSize: serverData.closestPaperSize || undefined,
-            pageDimensionsMM: serverData.pageDimensionsMM ?? null,
-            title: serverData.title || "",
-            author: serverData.author || "",
-            confidence: 90,
-            healthScore: 90,
-            hasImages: true,
-            isColor: true,
-            insights: [
-            `معالجة سحابية ناجحة في ${serverData.processingTimeMs ?? "?"}مس`,
-            `الملف يحتوي على ${numP} صفحة`,
-            `الأبعاد: ${serverData.pageDimensionsMM?.width ?? "?"}×${serverData.pageDimensionsMM?.height ?? "?"} مم`,
-            ],
-            fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
-          };
-          setAnalysis(pdfResult);
-          setTotalPages(numP);
-          setAnalysisProgress(100);
-          setAnalysisStage("");
-          const cat = classifyFile("pdf", numP, serverData.pageDimensionsMM ?? null);
-          saveToHistory(f, cat, storedFileName, "pdf");
-          setStep("results");
-
         } else {
-          // ═══════════════════════════════════════════════════════
-          // PATH B: Client-Side Web Worker Processing (≤10MB)
-          // Fast local processing, no server rendering needed
-          // ═══════════════════════════════════════════════════════
-          setAnalysisStage("جارٍ تحليل الملف...");
-
-          // Start Web Worker for cover/back textures in parallel (non-blocking)
-          const workerPromise = (async () => {
+          // Client-side Web Worker for cover/back textures (≤10MB)
+          setAnalysisStage("استخراج الغلاف (خيط منفصل)...");
+          try {
+            const result = await processPdfInWorker(f, (p) => {
+              if (p.percent > 20) setAnalysisProgress(Math.min(40 + p.percent * 0.5, 85));
+              if (p.stage === "cover") setAnalysisStage("جارٍ استخراج الغلاف...");
+              else if (p.stage === "back") setAnalysisStage("جارٍ استخراج الصفحة الأخيرة...");
+            });
+            setWorkerResult(result);
+          } catch {
             try {
-              setAnalysisStage("استخراج الغلاف (خيط منفصل)...");
-              const result = await processPdfInWorker(f, (p) => {
-                if (p.percent > 20) setAnalysisProgress(Math.min(p.percent * 0.8, 85));
-                if (p.stage === "cover") setAnalysisStage("جارٍ استخراج الغلاف...");
-                else if (p.stage === "back") setAnalysisStage("جارٍ استخراج الصفحة الأخيرة...");
-                else if (p.stage === "cleanup") setAnalysisStage("جارٍ الانتهاء...");
+              const fallback = await processPdfMainThread(f, (p) => {
+                if (p.percent > 20) setAnalysisProgress(Math.min(40 + p.percent * 0.5, 85));
               });
-              setWorkerResult(result);
-              return result;
-            } catch {
-              /* Worker failed — falling back to main-thread */
-              try {
-                const fallback = await processPdfMainThread(f, (p) => {
-                  if (p.percent > 20) setAnalysisProgress(Math.min(p.percent * 0.8, 85));
-                });
-                setWorkerResult(fallback);
-                return fallback;
-              } catch { return null; }
-            }
-          })();
-
-          // Run full analysis (text, metadata, health) in parallel with worker
-          const { analyzeFileReal } = await import("@/lib/customer/file-analyzer");
-          setAnalysisProgress(20);
-
-          // Wait for both to complete
-          const [r] = await Promise.all([analyzeFileReal(f), workerPromise]);
-
-          setAnalysisProgress(100);
-          setAnalysisStage("");
-          const pdfResult: AnalysisResult = {
-            pageCount: r.pageCount, fileSizeKB: r.fileSizeKB, fileSizeMB: r.fileSizeMB,
-            paperSize: r.closestPaperSize || r.suggestedPaperSize || "A4",
-            paperType: r.suggestedPaperType || "normal", binding: r.suggestedBinding || "none",
-            color: r.suggestedColor || "bw",
-            orientation: r.isPortrait === false ? "landscape" : "portrait",
-            title: r.pdfTitle || "", author: r.pdfAuthor || "", confidence: r.confidence,
-            insights: r.insights,
-            healthScore: Math.min(100, Math.round(r.confidence * 0.8 + (r.hasEmbeddedFonts ? 10 : 0) + (r.textLayer ? 10 : 0))),
-            hasImages: r.hasImages || false, hasEmbeddedFonts: r.hasEmbeddedFonts || false,
-            imageCount: r.imageCount || 0, isEncrypted: r.isEncrypted || false,
-            textLayer: r.textLayer || false, isColor: r.isColor || false,
-            dpiCategory: r.dpiCategory || "", estimatedDPI: r.estimatedDPI || 0,
-            closestPaperSize: r.closestPaperSize || "",
-            pageDimensionsMM: r.pageDimensionsMM || null, fileNature: r.fileNature || "",
-          };
-          setAnalysis(pdfResult);
-          setTotalPages(r.pageCount);
-          const cat = classifyFile("pdf", r.pageCount, r.pageDimensionsMM || null);
-          saveToHistory(f, cat, storedFileName, "pdf");
-          setStep("results");
+              setWorkerResult(fallback);
+            } catch { /* worker and main-thread both failed */ }
+          }
         }
+
+        // ═══ STEP 3: Build analysis result from server metadata ═══
+        setAnalysisProgress(95);
+        const pdfResult: AnalysisResult = {
+          ...DEFAULT_ANALYSIS,
+          pageCount: numP,
+          fileSizeKB: Math.round(f.size / 1024),
+          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+          paperSize: paperSize,
+          orientation: isPortrait ? "portrait" : "landscape",
+          closestPaperSize: paperSize,
+          pageDimensionsMM: dimsMM,
+          title: serverMeta?.title || "",
+          author: serverMeta?.author || "",
+          confidence: serverMeta ? 95 : 70,
+          healthScore: serverMeta ? 95 : 70,
+          hasImages: numP > 1,
+          isColor: true,
+          insights: serverMeta
+            ? [
+                `تحليل دقيق على الخادم في ${serverMeta.processingTimeMs}مث`,
+                `الملف يحتوي على ${numP} صفحة`,
+                `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
+                `مقاس الورق: ${paperSize}`,
+              ]
+            : ["تم التحليل بنجاح"],
+          fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
+        };
+        setAnalysis(pdfResult);
+        setTotalPages(numP);
+        setAnalysisProgress(100);
+        setAnalysisStage("");
+        const cat = classifyFile("pdf", numP, dimsMM);
+        saveToHistory(f, cat, storedFileName, "pdf");
+        setStep("results");
       }  // ← closes the outer else (PDF processing)
     } catch (e) {
       /* Error during upload/analyze */
@@ -1957,7 +1927,7 @@ export function StandalonePreview() {
             transition={{ delay: 0.15 }}
           >
             <Button
-              onClick={() => { setOrderSubmitted(false); setOrderStep(1); setOrderDialogOpen(true); }}
+              onClick={() => { setOrderSubmitted(false); setOrderReference(""); setOrderStep(1); setOrderDialogOpen(true); }}
               className="w-full h-13 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 transition-all duration-300 font-bold text-sm gap-2"
             >
               <Send className="h-4 w-4" />طلب طباعة — {pricing.total.toFixed(2)} ر.س
@@ -2093,10 +2063,47 @@ export function StandalonePreview() {
                   >
                     <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                   </motion.div>
-                  <div className="text-center space-y-1.5">
+                  <div className="text-center space-y-2">
                     <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">تم إرسال طلبك بنجاح!</p>
+                    {orderReference && (
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-sm text-muted-foreground">رقم التتبع:</span>
+                        <span className="font-mono font-bold text-lg text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-lg border border-amber-200 dark:border-amber-800">{orderReference}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(orderReference); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="نسخ رقم التتبع">
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    )}
                     <p className="text-sm text-muted-foreground">سنتواصل معك على <span className="font-medium text-foreground" dir="ltr">{customerPhone}</span></p>
                   </div>
+
+                  {/* أزرار الإجراءات: فاتورة + مشاركة */}
+                  {orderReference && (
+                    <div className="flex items-center gap-2 w-full">
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(`/api/c/invoice/${orderReference}`, "_blank")}
+                        className="flex-1 h-10 rounded-xl gap-1.5 text-xs"
+                      >
+                        <Download className="h-3.5 w-3.5" />تنزيل الفاتورة
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const text = `طلب طباعة - رقم: ${orderReference}\nالمبلغ: ${pricing.total.toFixed(2)} ر.س\nالملف: ${file?.name}\nالصفحات: ${analysis.pageCount}`;
+                          if (navigator.share) {
+                            navigator.share({ title: `طلب ${orderReference}`, text });
+                          } else {
+                            navigator.clipboard.writeText(text);
+                          }
+                        }}
+                        className="flex-1 h-10 rounded-xl gap-1.5 text-xs"
+                      >
+                        <Send className="h-3.5 w-3.5" />مشاركة الطلب
+                      </Button>
+                    </div>
+                  )}
+
                   <Button onClick={() => { setOrderDialogOpen(false); resetAll(); }} className="w-full h-11 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm gap-2 shadow-lg shadow-amber-500/20">تم</Button>
                 </motion.div>
               )}
@@ -2131,7 +2138,7 @@ export function StandalonePreview() {
                   onClick={async () => {
                     setIsSubmitting(true);
                     try {
-                      await fetch("/api/c/orders", {
+                      const res = await fetch("/api/c/orders", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -2157,6 +2164,10 @@ export function StandalonePreview() {
                           shopId: shopId,
                         }),
                       });
+                      if (res.ok) {
+                        const data = await res.json();
+                        setOrderReference(data.reference || "");
+                      }
                       setOrderSubmitted(true);
                     } catch {
                       /* silent */
