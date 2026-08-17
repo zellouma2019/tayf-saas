@@ -30,9 +30,14 @@ interface AppState {
   // تحديث البيانات
   refreshKey: number;
   incrementRefresh: () => void;
+  // رمز الإدارة — يُخزَّن بعد تسجيل الدخول
+  adminCode: string;
+  setAdminCode: (code: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   refreshKey: 0,
   incrementRefresh: () => set((s) => ({ refreshKey: s.refreshKey + 1 })),
+  adminCode: "",
+  setAdminCode: (code) => set({ adminCode: code }),
 }));

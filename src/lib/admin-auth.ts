@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { tursoQuery } from "@/lib/turso-lite";
 import { DEFAULT_SETTINGS } from "@/lib/default-settings";
 
 let cachedCode: string | null = null;
@@ -10,9 +10,11 @@ export async function getAdminCode(): Promise<string> {
   if (cachedCode && now - cacheTime < CACHE_TTL) return cachedCode;
 
   try {
-    const setting = await db.setting.findUnique({ where: { key: "general" } });
-    if (setting) {
-      const parsed = JSON.parse(setting.value);
+    const rows = await tursoQuery<{ value: string }>(
+      `SELECT value FROM "Setting" WHERE key = 'general' AND ("shopId" IS NULL) LIMIT 1`
+    );
+    if (rows.length > 0) {
+      const parsed = JSON.parse(rows[0].value);
       cachedCode = parsed.adminCode || DEFAULT_SETTINGS.general.adminCode;
     } else {
       cachedCode = DEFAULT_SETTINGS.general.adminCode;

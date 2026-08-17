@@ -45,6 +45,7 @@ import { AdminShopManagement } from '@/components/app/admin-shop-management';
 import { ARAB_COUNTRIES, formatDA } from '@/lib/countries';
 import type { ShopItem } from '@/lib/admin-types';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/lib/store';
 
 // ===== Animation =====
 const fadeIn = {
@@ -88,6 +89,7 @@ function InlineLoginGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const setAdminCode = useAppStore((s) => s.setAdminCode);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,7 +102,12 @@ function InlineLoginGate({ onUnlock }: { onUnlock: () => void }) {
         body: JSON.stringify({ password }),
       });
       const data = await res.json();
-      if (data.success) { markAuthenticated(data.token, data.ts); onUnlock(); }
+      if (data.success) { 
+        markAuthenticated(data.token, data.ts); 
+        // خزّن رمز الإدارة في Store ليستخدمه كل المكونات الفرعية
+        if (data.adminCode) setAdminCode(data.adminCode);
+        onUnlock(); 
+      }
       else setError(true);
     } catch { setError(true); }
     finally { setLoading(false); }
@@ -484,6 +491,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [adminName, setAdminName] = useState('مدير المنصة');
+  const setAdminCodeStore = useAppStore((s) => s.setAdminCode);
   const [deleteTarget, setDeleteTarget] = useState<ShopItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -514,7 +522,20 @@ export default function AdminPage() {
     (async () => {
       if (isAuthenticated()) {
         const { valid, adminName: name } = await verifySession();
-        if (valid) { setAuthenticated(true); if (name) setAdminName(name); }
+        if (valid) {
+          setAuthenticated(true);
+          if (name) setAdminName(name);
+          // جلب رمز الإدارة من الإعدادات عند استعادة الجلسة
+          try {
+            const settingsRes = await fetch('/api/settings');
+            if (settingsRes.ok) {
+              const settingsData = await settingsRes.json();
+              if (settingsData?.general?.adminCode) {
+                setAdminCodeStore(settingsData.general.adminCode);
+              }
+            }
+          } catch { /* ignore */ }
+        }
       }
       setLoading(false);
     })();
