@@ -128,3 +128,62 @@ Stage Summary:
 - GitHub push protection: had to soft-reset commit containing GitHub token
 - Total pushes: b5e1caa, 36756ab, 6e2ae78, 63672be, a08a8a3, 4b83cfd
 ---\nTask ID: 1-7\nAgent: Main Agent\nTask: Fix customer upload 404, expand file types, fix country/slug issues, add SaaS admin settings\n\nWork Log:\n- Analyzed 4 uploaded screenshots showing: file upload 404 error, country names missing, slug not auto-generating\n- Created /api/c/upload/route.ts - the MISSING endpoint causing 404 errors\n- Expanded file type support from 4 (PDF, JPG, PNG, WebP) to 24+ formats including GIF, BMP, TIFF, AVIF, SVG, DOCX, DOC, XLSX, PPTX, AI, EPS, PSD, INDD\n- Fixed country selector to show country names via sr-only text (shadcn/ui SelectItem has no label prop)\n- Fixed slug auto-generation with improved Arabic transliteration (added hamza, taa marbuta, etc.) and manual edit tracking\n- Added new Step 3 (Platform Limits) to shop creation with: order quotas, file size limits, storage limits, maintenance mode, auto-approve orders, guest orders, SMS/email notification toggles\n- Fixed .gitignore blocking /api/c/upload/ route\n- Pushed all fixes to GitHub\n\nStage Summary:\n- Upload 404: FIXED (new /api/c/upload endpoint)\n- File types: EXPANDED from 4 to 24+ formats\n- Country names: FIXED (sr-only text in SelectItem)\n- Slug auto-gen: FIXED (improved map + manual edit tracking)\n- Admin settings: ADDED Platform Limits step with 9 new settings\n- All TypeScript errors resolved\n- Pushed to GitHub: zellouma2019/tayf-saas
+
+---
+Task ID: 8
+Agent: Main
+Task: Fix critical admin buttons and file upload failures
+
+Work Log:
+- ROOT CAUSE ANALYSIS of all reported issues:
+  1. File uploads failing: `/api/c/upload` route DID NOT EXIST (404)
+  2. Admin buttons frozen: Zustand store (`src/lib/store.ts`) had NO `adminCode` property — all admin components got `undefined` from `useAppStore(s => s.adminCode)`, causing all API calls to fail with 401
+  3. `requireAdmin` used Prisma `findUnique({ where: { key: 'general' } })` but Prisma schema has compound unique `@@unique([shopId, key])` — query always fails
+  4. `/api/c/settings` used broken Prisma `upsert` with partial compound key
+  5. `/api/orders/[id]/notes` called `.rows` on tursoQuery result (returns array directly, not object with .rows)
+  6. Upload route saved to filesystem (Vercel has read-only filesystem)
+
+- Fix 1: Added `adminCode` and `setAdminCode` to Zustand store
+- Fix 2: Modified `/api/super-admin/auth` to return `adminCode` from DB settings
+- Fix 3: Updated `InlineLoginGate` in page.tsx to store adminCode in Zustand after login
+- Fix 4: Added session restore logic to fetch adminCode from `/api/settings` on page reload
+- Fix 5: Rewrote `requireAdmin` in `admin-auth.ts` to use turso-lite (no more broken Prisma query)
+- Fix 6: Created `/api/c/upload/route.ts` — the missing upload endpoint
+- Fix 7: Rewrote `/api/c/settings/route.ts` to use turso-lite instead of broken Prisma upsert
+- Fix 8: Fixed `/api/orders/[id]/notes/route.ts` to use AuditLog table (OrderNote doesn't exist)
+- Fix 9: Updated upload to use DB storage (FileUpload table) for Vercel compatibility, returns `__chunked__:<uuid>` prefix for file-resolver compatibility
+
+- END-TO-END VERIFICATION via agent-browser on Vercel:
+  ✅ Admin login with password works
+  ✅ Admin panel loads with 4 shops, 20 orders, 19 customers
+  ✅ Settings page loads with all controls (text fields, dropdowns, switches, save buttons)
+  ✅ Settings save button works (no errors)
+  ✅ Shops tab shows all 4 shops with working buttons (view, manage, edit, share, PIN, toggle)
+  ✅ Customer view at /s/mtba-alryan loads with shop name "مطبعة الريان"
+  ✅ File upload area shows supported formats: PDF, JPG, PNG, WebP, DOCX, AI/PSD, +18
+  ✅ PNG file upload succeeds (stored in DB via FileUpload table)
+  ✅ File analysis completes: shows preview, health score 85/100, file type "صورة / شهادة"
+  ✅ Pricing calculated: 0.25 – 0.4 ريال
+  ✅ Order form appears with name and phone inputs
+  ✅ Order submitted successfully: "تم إرسال طلبك بنجاح!"
+
+Stage Summary:
+- ALL critical issues FIXED and VERIFIED on Vercel
+- Admin panel fully functional (settings save, shop management, toggles)
+- File uploads work end-to-end (DB storage for Vercel, disk fallback for local)
+- Order creation flow complete (upload → analyze → configure → submit → confirm)
+- Two commits pushed: f862af5 (core fixes), c2d5d1d (Vercel upload fix)
+
+Files Modified:
+- src/lib/store.ts (added adminCode + setAdminCode)
+- src/lib/admin-auth.ts (rewrote to use turso-lite)
+- src/app/page.tsx (store adminCode after login + session restore)
+- src/app/api/super-admin/auth/route.ts (return adminCode)
+- src/app/api/c/upload/route.ts (NEW - DB-based file upload)
+- src/app/api/c/settings/route.ts (rewrote with turso-lite)
+- src/app/api/orders/[id]/notes/route.ts (fixed tursoQuery usage)
+
+Known Remaining Issues:
+- Large file uploads (>5MB) may fail on Vercel due to Turso row size limits (chunked upload should handle this)
+- Some TypeScript type errors remain in AI routes (non-blocking)
+- PDF processing routes have type errors with pdfjs (non-blocking for basic flow)
