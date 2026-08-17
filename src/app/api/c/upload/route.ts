@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { tursoExecute } from "@/lib/turso-lite";
+import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 ميغابايت
 
 const ACCEPTED_EXTENSIONS = [
-  // Images
   "pdf", "jpg", "jpeg", "png", "webp", "gif", "svg", "bmp", "tiff", "tif", "avif",
-  // Documents
   "doc", "docx", "xlsx", "xls", "pptx", "ppt", "txt", "rtf", "csv",
-  // Design/Print files
   "ai", "eps", "psd", "indd",
 ];
 
@@ -23,7 +21,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "لم يتم إرسال ملف" }, { status: 400 });
     }
 
-    // التحقق من الحجم
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: `حجم الملف ${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (50 ميغابايت)` },
@@ -31,43 +28,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // استخراج الامتداد من اسم الملف
     const originalName = file.name || "unknown";
     const ext = originalName.split(".").pop()?.toLowerCase() || "";
 
-    // التحقق من الصيغة
     if (!ACCEPTED_EXTENSIONS.includes(ext)) {
       return NextResponse.json(
-        { error: `صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: ${ACCEPTED_EXTENSIONS.join(", ")}` },
+        { error: `صيغة الملف ".${ext}" غير مدعومة` },
         { status: 400 },
       );
     }
 
-    // التأكد من وجود مجلد الرفع
-    const uploadsDir = path.join(process.cwd(), "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    // حفظ الملف باسم فريد
-    const randomSuffix = crypto.randomBytes(8).toString("hex");
-    const timestamp = Date.now();
-    const storedFileName = `file_${timestamp}_${randomSuffix}.${ext}`;
-    const filePath = path.join(uploadsDir, storedFileName);
-
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    const base64 = buffer.toString("base64");
+    const mimeMap: Record<string, string> = {
+      pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg",
+      png: "image/png", webp: "image/webp", gif: "image/gif",
+      svg: "image/svg+xml", bmp: "image/bmp",
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      doc: "application/msword",
+      xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      txt: "text/plain", rtf: "application/rtf", csv: "text/csv",
+    };
+    const mime = mimeMap[ext] || "application/octet-stream";
+    const dataUrl = `data:${mime};base64,${base64}`;
 
-    return NextResponse.json({
-      storedFileName,
-      originalName,
-      size: file.size,
-      type: ext,
-    });
+    const uploadId = randomUUID();
+
+    // محاولة حفظ في قاعدة البيانات أولاً (يعمل على Vercel + local)
+    try {
+      await tursoExecute(
+        `INSERT INTO "FileUpload" (id, fileName, fileSize, fileExt, totalChunks, receivedCount, status, assembledBase64, "createdAt") VALUES (?, ?, ?, ?, 1, 1, 'complete', ?, datetime('now'))`,
+        [uploadId, originalName, file.size, ext, dataUrl],
+      );
+      // إرجاع معرّف مع بادئة __chunked__ ليتمكن file-resolver من إيجاده في قاعدة البيانات
+      const storedFileName = `__chunked__:${uploadId}`;
+      return NextResponse.json({ storedFileName, originalName, size: file.size, type: ext });
+    } catch (dbErr) {
+      // إذا فشل الحفظ في قاعدة البيانات (ملف كبير جداً)، نحفظ على القرص
+      console.warn("[upload] DB save failed, falling back to disk:", dbErr);
+      const uploadsDir = path.join(process.cwd(), "uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const timestamp = Date.now();
+      const suffix = uploadId.slice(0, 8);
+      const diskFileName = `file_${timestamp}_${suffix}.${ext}`;
+      fs.writeFileSync(path.join(uploadsDir, diskFileName), buffer);
+      return NextResponse.json({ storedFileName: diskFileName, originalName, size: file.size, type: ext });
+    }
   } catch (e) {
     console.error("[upload] Error:", e);
     return NextResponse.json(
-      { error: "فشل في حفظ الملف على الخادم" },
+      { error: "فشل في رفع الملف" },
       { status: 500 },
     );
   }
