@@ -187,3 +187,67 @@ Known Remaining Issues:
 - Large file uploads (>5MB) may fail on Vercel due to Turso row size limits (chunked upload should handle this)
 - Some TypeScript type errors remain in AI routes (non-blocking)
 - PDF processing routes have type errors with pdfjs (non-blocking for basic flow)
+
+---
+Task ID: 9
+Agent: Main
+Task: Fix settings save and order sync issues
+
+Work Log:
+- ROOT CAUSE ANALYSIS:
+  1. Previous critical fixes (f862af5, c2d5d1d) were committed locally but NEVER PUSHED to GitHub/Vercel
+     - Remote origin/main was at 4b83cfd (4 commits behind local)
+     - Vercel was deploying old code without adminCode store fix
+     - All admin API calls failed with 401 because adminCode was empty string
+  2. page.tsx had 3 broken useState lines (missing opening bracket)
+     - Verified these were terminal display artifacts (ANSI escape consumption), not actual file issues
+  3. Orders tab in page.tsx was read-only — no status change controls
+  4. No auto-refresh/polling for orders or dashboard data
+
+- Fix 1: Pushed 4 pending commits (f862af5, c2d5d1d, 21573b6, 15a6cd9) to GitHub
+  - This included the critical adminCode Zustand store fix
+  - This included the requireAdmin turso-lite rewrite
+  - This included the /api/c/upload endpoint creation
+
+- Fix 2: Added 30s auto-refresh polling in admin-panel.tsx
+  - loadAll() now supports silent mode (no loading spinner)
+  - Auto-refresh runs every 30s, re-initializes when adminCode changes
+  - changeStatus now uses finally block to always sync with server
+  - batchChangeStatus tracks per-order success/failure
+  - deleteSelected tracks per-order success/failure
+
+- Fix 3: Added adminCode safety net in admin-settings.tsx
+  - Settings load now auto-fetches adminCode from GET /api/settings response
+  - Uses useRef to prevent infinite re-render loops
+
+- Fix 4: Added order status change and auto-refresh to page.tsx
+  - Added changeOrderStatus function with proper error handling
+  - Added Select dropdown to each order card for status changes
+  - Added 30s auto-refresh polling for all dashboard data
+  - Fixed fetchData to support true silent mode
+
+- END-TO-END VERIFICATION via agent-browser on Vercel:
+  ✅ Admin login works (session restore)
+  ✅ Settings tab loads with all controls
+  ✅ Settings save works (toggled switch, saved, reloaded — persisted)
+  ✅ PUT /api/super-admin/platform-settings returns 200
+  ✅ Orders tab shows 20 orders with status change dropdowns (21 comboboxes)
+  ✅ Status change from معلّق → جاهز works (PUT /api/orders/{id} returns 200)
+  ✅ UI updates immediately after status change
+  ✅ No console errors or runtime errors
+
+Stage Summary:
+- ROOT CAUSE: 4 critical commits were never pushed to Vercel
+- All admin features now working: settings save, order status changes, auto-sync
+- Added 30s auto-refresh for dashboard data and orders
+- Added per-order status change dropdowns to the main admin page
+- 3 commits pushed: 15a6cd9 (panel fixes), d05a0dc (page.tsx fixes + status change)
+
+Files Modified:
+- src/app/page.tsx (auto-refresh, status change, silent fetchData)
+- src/components/app/admin-panel.tsx (auto-refresh, improved error handling)
+- src/components/app/admin-settings.tsx (adminCode safety net)
+
+Commits Pushed:
+- 15a6cd9: fix: add order auto-refresh, adminCode safety net, improved error handling
+- d05a0dc: fix: add order status change, auto-refresh, and sync to main admin page
