@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { tursoQuery, tursoExecute, safeJson, toNum } from "@/lib/turso-lite";
+import { tursoQuery, tursoExecute, tursoQuerySafe, safeJson, toNum } from "@/lib/turso-lite";
 import { withRateLimit } from "@/lib/rate-limit";
+
+const SHOP_SELECT_COLUMNS = `
+  id, slug, name, phone, whatsapp, email, address,
+  "logoUrl", "logoIcon", "primaryColor", "themeId",
+  settings, "ownerName", "ownerPhone", "isActive",
+  plan, features, "createdAt", "updatedAt",
+  "trialDays", "trialStartsAt", country, language, "customCurrency"
+`;
 
 /// جلب تفاصيل متجر مع كلمة المرور (للمدير العام فقط)
 export async function GET(
@@ -61,7 +68,7 @@ export async function GET(
   }
 }
 
-/// تحديث متجر من طرف المالك (بدون كلمة مرور)
+/// تحديث متجر من طرف المالك — عبر turso-lite (متسق مع باقي APIs)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -73,8 +80,9 @@ export async function PUT(
     const { slug } = await params;
     const body = await req.json();
 
-    const shop = await db.shop.findUnique({ where: { slug } });
-    if (!shop) {
+    // التحقق من وجود المتجر
+    const existing = await tursoQuery(`SELECT id, "trialStartsAt" FROM "Shop" WHERE slug = ? LIMIT 1`, [slug]);
+    if (!existing.length) {
       return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
     }
 
@@ -85,39 +93,70 @@ export async function PUT(
       "isActive", "trialDays", "trialStartsAt",
       "plan", "features", "paymentInfo", "ownerNotes",
       "logoUrl", "logoIcon", "themeId", "language", "customCurrency",
-    ] as const;
+    ];
 
-    const updateData: Record<string, unknown> = {};
+    const setClauses: string[] = [];
+    const args: unknown[] = [];
+
     for (const key of allowed) {
       if (body[key] !== undefined) {
         if (key === "trialDays" && body[key] === "") {
-          updateData[key] = null;
+          setClauses.push(`"${key}" = NULL`);
         } else if (key === "trialStartsAt" && (body[key] === "" || body[key] === null)) {
-          updateData[key] = null;
+          setClauses.push(`"${key}" = NULL`);
         } else if (key === "trialDays") {
-          updateData[key] = Number(body[key]) || null;
+          setClauses.push(`"${key}" = ?`);
+          args.push(Number(body[key]) || null);
         } else if (key === "features" && typeof body[key] === "object") {
-          updateData[key] = JSON.stringify(body[key]);
+          setClauses.push(`"${key}" = ?`);
+          args.push(JSON.stringify(body[key]));
         } else if (key === "paymentInfo" || key === "ownerNotes") {
-          updateData[key] = body[key] || null;
+          setClauses.push(`"${key}" = ?`);
+          args.push(body[key] || null);
+        } else if (key === "isActive" && typeof body[key] === "boolean") {
+          setClauses.push(`"${key}" = ?`);
+          args.push(body[key] ? 1 : 0);
+        } else if (key === "themeId" || key === "trialDays") {
+          setClauses.push(`"${key}" = ?`);
+          args.push(Number(body[key]) || null);
         } else {
-          updateData[key] = body[key];
+          setClauses.push(`"${key}" = ?`);
+          args.push(body[key]);
         }
       }
     }
 
-    // إذا تم تعيين مدة تجربة ولم يحدد تاريخ بداية، ابدأ من الآن
-    if (updateData.trialDays && !updateData.trialStartsAt && !shop.trialStartsAt) {
-      updateData.trialStartsAt = new Date();
+    if (setClauses.length === 0) {
+      // لا توجد حقول للتحديث — أرجع البيانات الحالية
+      const currentRows = await tursoQuery(`SELECT ${SHOP_SELECT_COLUMNS} FROM "Shop" WHERE slug = ? LIMIT 1`, [slug]);
+      if (!currentRows.length) {
+        return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });
+      }
+      return NextResponse.json({ shop: currentRows[0] });
     }
 
-    const updated = await db.shop.update({
-      where: { slug },
-      data: updateData,
-    });
+    // إذا تم تعيين مدة تجربة ولم يحدد تاريخ بداية، ابدأ من الآن
+    if (body.trialDays && !body.trialStartsAt && !existing[0].trialStartsAt) {
+      setClauses.push(`"trialStartsAt" = ?`);
+      args.push(new Date().toISOString());
+    }
 
-    const { adminPin: _, ...safeShop } = updated;
-    return NextResponse.json({ shop: safeShop });
+    setClauses.push(`"updatedAt" = ?`);
+    args.push(new Date().toISOString());
+    args.push(slug); // WHERE clause
+
+    const result = await tursoExecute<{ id: string }>(
+      `UPDATE "Shop" SET ${setClauses.join(", ")} WHERE slug = ? RETURNING ${SHOP_SELECT_COLUMNS}`,
+      args
+    );
+
+    const updated = result.rows[0];
+    if (!updated) {
+      return NextResponse.json({ error: "فشل تحديث المتجر" }, { status: 500 });
+    }
+    if (typeof updated.isActive === "number") updated.isActive = updated.isActive === 1;
+
+    return NextResponse.json({ shop: updated });
   } catch (e) {
     console.error("[admin/shops/slug/PUT]", e);
     return NextResponse.json({ error: "خطأ في تحديث المتجر" }, { status: 500 });
@@ -134,8 +173,6 @@ export async function DELETE(
 
   try {
     const { slug } = await params;
-    // Use tursoExecute for direct SQL (more reliable on Vercel)
-    // First get shop ID
     const rows = await tursoQuery(`SELECT id FROM "Shop" WHERE slug = ?`, [slug]);
     if (!rows.length) {
       return NextResponse.json({ error: "المتجر غير موجود" }, { status: 404 });

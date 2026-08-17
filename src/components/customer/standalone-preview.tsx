@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
 import { useSettings } from "@/lib/customer/settings-provider";
+import { useShop } from "@/lib/shop-context";
 import { DEFAULT_PRICING_RULES } from "@/lib/customer/default-settings";
 import { detectFileType } from "@/lib/customer/magic-bytes";
 import { processPdfInWorker, processPdfMainThread, terminatePdfWorker, type PdfWorkerResult } from "@/lib/customer/pdf-worker-bridge";
@@ -165,6 +166,8 @@ function formatFileSize(bytes: number): string {
 
 export function StandalonePreview() {
   const settings = useSettings();
+  const { shop } = useShop();
+  const shopId = shop?.id || null;
   const [step, setStep] = useState<Step>("idle");
   const [file, setFile] = useState<File | null>(null);
   const [uploadedFileType, setUploadedFileType] = useState<UploadedFileType>("pdf");
@@ -2109,6 +2112,7 @@ export function StandalonePreview() {
                           },
                           customer: { name: customerName, phone: customerPhone },
                           delivery: { mode: "pickup" },
+                          shopId: shopId,
                         }),
                       });
                       setOrderSubmitted(true);

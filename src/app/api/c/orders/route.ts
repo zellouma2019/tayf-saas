@@ -51,8 +51,10 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(10000, Math.max(1, rawLimit));
     const noPreview = searchParams.get("noPreview") === "true";
 
+    const shopId = searchParams.get("shopId");
     const where: Record<string, unknown> = {};
     if (status && status !== "all") where.status = status;
+    if (shopId) where.shopId = shopId;
     if (phone) {
       // البحث برقم الهاتف في حقل customer (JSON)
       where.customer = { contains: phone };
@@ -125,7 +127,9 @@ export async function POST(req: NextRequest) {
       options,
       customer,
       delivery,
+      shopId: bodyShopId,
     } = body;
+    const shopId = bodyShopId || req.nextUrl.searchParams.get("shopId");
 
     const service = SERVICE_MAP[serviceType as ServiceType];
     if (!service) {
@@ -174,6 +178,7 @@ export async function POST(req: NextRequest) {
         copies,
         total: pricing.total,
         editableUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 دقيقة للتعديل
+        shop: shopId ? { connect: { id: shopId } } : undefined,
       },
     });
 
@@ -184,6 +189,7 @@ export async function POST(req: NextRequest) {
       delivery: JSON.parse(order.delivery),
       pricing: JSON.parse(order.pricing),
       smartAnalysis: order.smartAnalysis ? JSON.parse(order.smartAnalysis) : null,
+      shopId: order.shopId,
     });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
