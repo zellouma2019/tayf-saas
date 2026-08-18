@@ -220,7 +220,7 @@ export async function PUT(
     }
 
     // ===== تغيير الحالة =====
-    const { status, statusNotes } = body;
+    const { status, statusNotes, trackingNumber } = body;
     const oldStatus = String(existing.status);
     const setClauses: string[] = [`status = ?`];
     const sqlArgs: unknown[] = [status];
@@ -229,6 +229,12 @@ export async function PUT(
     if (statusNotes !== undefined && statusNotes !== null && statusNotes !== '') {
       setClauses.push(`"statusNotes" = ?`);
       sqlArgs.push(statusNotes);
+    }
+
+    // Save tracking number if provided
+    if (trackingNumber !== undefined && trackingNumber !== null) {
+      setClauses.push(`"trackingNumber" = ?`);
+      sqlArgs.push(String(trackingNumber));
     }
 
     if (status === "printing" && !existing.startedPrintingAt) {

@@ -202,6 +202,15 @@ function TrackingSection() {
                         </button>
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">{order.fileName || "طلب طباعة"}</p>
+                      {(order as any).trackingNumber && (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5 flex items-center gap-1">
+                          <Truck className="h-2.5 w-2.5" />
+                          رقم التتبع: <span dir="ltr" className="font-mono">{(order as any).trackingNumber}</span>
+                        </p>
+                      )}
+                      {(order as any).adminNotes && (
+                        <p className="text-[9px] text-muted-foreground/80 mt-0.5 truncate">{(order as any).adminNotes}</p>
+                      )}
                     </div>
                     <div className="text-left shrink-0">
                       <p className="text-xs font-bold">{order.total.toFixed(2)} ر.س</p>

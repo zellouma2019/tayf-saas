@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { tursoQuery } from "@/lib/turso-lite";
 import {
   translateOptionKey,
   translateOptionValue,
 } from "@/lib/option-translations";
 import { STATUS_META, formatDateTimeAr } from "@/lib/print-config";
-import { getCountry, formatCurrency } from "@/lib/countries";
-import { orderFindWhere } from "@/lib/order-lookup";
+import { getCountry } from "@/lib/countries";
 
 const EXCLUDED_KEYS = ["notes","printRange","pageRange","totalPages","appliedOffer","pages","copies"];
 const SERVICE_NAMES: Record<string,string> = { document:"طباعة مستندات", photo:"طباعة صور", binding:"تجليد", copy:"نسخ مستندات", card:"طباعة بطاقات", poster:"طباعة ملصقات" };
@@ -16,8 +15,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const shopId = req.nextUrl.searchParams.get("shopId");
-    const findWhere = orderFindWhere(id, shopId);
-    const order = await db.printOrder.findFirst({ where: findWhere });
+
+    // جلب الطلب عبر turso-lite
+    const whereClause = shopId
+      ? `WHERE o.id = ? AND (o."shopId" = ? OR o."shopId" IS NULL)`
+      : `WHERE o.id = ?`;
+    const args = shopId ? [id, shopId] : [id];
+
+    const orderRows = await tursoQuery<Record<string, unknown>>(
+      `SELECT * FROM "PrintOrder" o ${whereClause} LIMIT 1`,
+      args
+    );
+    const order = orderRows[0];
     if (!order) return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
 
     // جلب بيانات المتجر إن وجد shopId
@@ -28,38 +37,33 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     let shopLogoUrl = "";
     let currencySymbol = "";
     if (shopId) {
-      const shop = await db.shop.findUnique({ where: { id: shopId } });
+      const shopRows = await tursoQuery<Record<string, unknown>>(
+        `SELECT name, phone, email, address, "logoUrl", country, "customCurrency" FROM "Shop" WHERE id = ? LIMIT 1`,
+        [shopId]
+      );
+      const shop = shopRows[0];
       if (shop) {
-        shopName = shop.name || "طيف";
-        shopPhone = shop.phone || "";
-        shopEmail = shop.email || "";
-        shopAddress = shop.address || "";
-        shopLogoUrl = shop.logoUrl || "";
-        currencySymbol = getCountry(shop.country)?.currencySymbol || "";
+        shopName = String(shop.name || "طيف");
+        shopPhone = String(shop.phone || "");
+        shopEmail = String(shop.email || "");
+        shopAddress = String(shop.address || "");
+        shopLogoUrl = String(shop.logoUrl || "");
+        const cc = String(shop.country || "DZ");
+        currencySymbol = getCountry(cc)?.currencySymbol || "";
+        const customCur = shop.customCurrency as string | null;
+        if (customCur) currencySymbol = customCur;
       }
     }
 
-    // جلب شعار المنصة كـ fallback
-    let platformLogo = "";
-    try {
-      const rows = await db.$queryRawUnsafe<Array<{ platformSettings: string }>>`
-        SELECT platformSettings FROM "SuperAdmin" WHERE key = 'main' LIMIT 1
-      `;
-      if (rows[0]?.platformSettings) {
-        const s = JSON.parse(rows[0].platformSettings);
-        platformLogo = s.platformLogo || "";
-      }
-    } catch {}
+    const logoSrc = shopLogoUrl;
 
-    const logoSrc = shopLogoUrl || platformLogo || "";
-
-    const options = JSON.parse(order.options);
-    const customer = JSON.parse(order.customer);
-    const delivery = JSON.parse(order.delivery);
-    const pricing = JSON.parse(order.pricing);
-    const meta = STATUS_META[order.status] || { label: "—" };
-    const st = order.serviceType;
-    const sName = SERVICE_NAMES[st] || order.serviceName;
+    const options = JSON.parse(String(order.options || "{}"));
+    const customer = JSON.parse(String(order.customer || "{}"));
+    const delivery = JSON.parse(String(order.delivery || "{}"));
+    const pricing = JSON.parse(String(order.pricing || "{}"));
+    const meta = STATUS_META[String(order.status)] || { label: "—" };
+    const st = String(order.serviceType);
+    const sName = SERVICE_NAMES[st] || String(order.serviceName);
     const sIcon = SERVICE_ICONS[st] || "🖨️";
 
     const optionRows = Object.entries(options)
@@ -68,18 +72,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       .join("");
 
     const cur = currencySymbol;
+    const pages = Number(order.pages) || 0;
+    const copies = Number(order.copies) || 0;
     const priceRows: string[] = [];
-    priceRows.push(`<div class="prow"><span>${sName} (${order.pages > 0 ? order.pages + " صفحة × " : ""}${order.copies} نسخة)</span><span class="pamt">${pricing.copiesCost} ${cur}</span></div>`);
-    if (pricing.sidesSaving > 0) priceRows.push(`<div class="prow disc"><span>توفير الطباعة على الوجهين</span><span class="pamt">−${pricing.sidesSaving} ${cur}</span></div>`);
-    const finishCost = (pricing.finishingCost || 0) + (pricing.paperTypeSurcharge || 0) + (pricing.bindingCost || 0) + (pricing.extrasCost || 0);
-      if (finishCost > 0) priceRows.push(`<div class="prow"><span>التشطيب والتغليف</span><span class="pamt">${finishCost} ${cur}</span></div>`);
-    if (pricing.deliveryCost > 0) priceRows.push(`<div class="prow"><span>رسوم التوصيل</span><span class="pamt">${pricing.deliveryCost} ${cur}</span></div>`);
-    if (pricing.discount > 0) priceRows.push(`<div class="prow disc"><span>خصم الكمية</span><span class="pamt">−${pricing.discount} ${cur}</span></div>`);
+    priceRows.push(`<div class="prow"><span>${sName} (${pages > 0 ? pages + " صفحة × " : ""}${copies} نسخة)</span><span class="pamt">${pricing.copiesCost || 0} ${cur}</span></div>`);
+    if (Number(pricing.sidesSaving) > 0) priceRows.push(`<div class="prow disc"><span>توفير الطباعة على الوجهين</span><span class="pamt">−${pricing.sidesSaving} ${cur}</span></div>`);
+    const finishCost = (Number(pricing.finishingCost) || 0) + (Number(pricing.paperTypeSurcharge) || 0) + (Number(pricing.bindingCost) || 0) + (Number(pricing.extrasCost) || 0);
+    if (finishCost > 0) priceRows.push(`<div class="prow"><span>التشطيب والتغليف</span><span class="pamt">${finishCost} ${cur}</span></div>`);
+    if (Number(pricing.deliveryCost) > 0) priceRows.push(`<div class="prow"><span>رسوم التوصيل</span><span class="pamt">${pricing.deliveryCost} ${cur}</span></div>`);
+    if (Number(pricing.discount) > 0) priceRows.push(`<div class="prow disc"><span>خصم الكمية</span><span class="pamt">−${pricing.discount} ${cur}</span></div>`);
 
     const delivLabels: Record<string,string> = { hour:"خلال ساعة ⚡", today:"اليوم", tomorrow:"غداً", scheduled:"في موعد محدد" };
     const countLabel = (st === "photo" || st === "card" || st === "poster")
-      ? `<div class="opt-row"><span class="opt-key">العدد</span><span class="opt-val">${order.copies}</span></div>`
-      : `<div class="opt-row"><span class="opt-key">عدد الصفحات</span><span class="opt-val">${order.pages}</span></div><div class="opt-row"><span class="opt-key">عدد النسخ</span><span class="opt-val">${order.copies}</span></div>`;
+      ? `<div class="opt-row"><span class="opt-key">العدد</span><span class="opt-val">${copies}</span></div>`
+      : `<div class="opt-row"><span class="opt-key">عدد الصفحات</span><span class="opt-val">${pages}</span></div><div class="opt-row"><span class="opt-key">عدد النسخ</span><span class="opt-val">${copies}</span></div>`;
+
+    const createdAt = String(order.createdAt || new Date().toISOString());
+    const estimatedHours = Number(order.estimatedHours) || 0;
+    const total = Number(order.total) || 0;
+    const fileName = String(order.fileName || "");
 
     const html = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -91,7 +102,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   @page { margin: 10mm; size: A4; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    /* استخدم خطوط النظام لتجنّب الاعتماد على CDN خارجي (أسرع + يعمل دون اتصال) */
     font-family: "Cairo", "Tajawal", "Segoe UI", "Noto Sans Arabic", Tahoma, "Helvetica Neue", Arial, sans-serif;
     background: #f0f2f5;
     min-height: 100vh;
@@ -111,7 +121,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     box-shadow: 0 4px 24px rgba(0,0,0,0.08);
   }
 
-  /* === الرأس === */
   .header {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     padding: 32px 36px;
@@ -199,7 +208,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     margin-top: 4px;
   }
 
-  /* === شريط الحالة === */
   .status-bar {
     background: linear-gradient(90deg, #D4AF37 0%, #E8C547 100%);
     padding: 12px 36px;
@@ -221,7 +229,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     font-weight: 700;
   }
 
-  /* === المحتوى === */
   .content {
     padding: 28px 36px;
   }
@@ -273,7 +280,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     font-weight: 700;
   }
 
-  /* === التسعير === */
   .pricing-section { margin-bottom: 20px; }
   .pricing-header {
     background: #1a1a2e;
@@ -304,7 +310,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   .prow.disc .pamt { color: #16a34a; font-weight: 700; }
   .pamt { font-weight: 700; color: #1a1a2e; }
 
-  /* === المجموع === */
   .total-box {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border-radius: 14px;
@@ -334,7 +339,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     font-weight: 900;
   }
 
-  /* === ملاحظات === */
   .notes-box {
     background: #fffbe6;
     border: 1px solid #f0e0a0;
@@ -348,7 +352,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     line-height: 1.9;
   }
 
-  /* === التذييل === */
   .footer {
     background: #1a1a2e;
     padding: 18px 36px;
@@ -363,7 +366,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     color: #D4AF37;
   }
 
-  /* === زر الطباعة === */
   .print-btn {
     position: fixed;
     top: 20px;
@@ -406,7 +408,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 <button class="print-btn no-print" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
 
 <div class="invoice">
-  <!-- الرأس -->
   <div class="header">
     <div class="brand">
       ${logoSrc ? `<div class="brand-logo"><img src="${logoSrc}" alt="${shopName}" /></div>` : `<div class="brand-logo fallback">🖨️</div>`}
@@ -418,11 +419,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     <div class="invoice-meta">
       <div class="tag">فاتورة</div>
       <div class="ref">${order.reference}</div>
-      <div class="date">${formatDateTimeAr(order.createdAt.toISOString())}</div>
+      <div class="date">${formatDateTimeAr(createdAt)}</div>
     </div>
   </div>
 
-  <!-- شريط الحالة -->
   <div class="status-bar">
     <div>
       <span class="label">رقم الطلب: </span>
@@ -431,10 +431,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     <div class="status-badge">${meta.label}</div>
   </div>
 
-  <!-- المحتوى -->
   <div class="content">
     <div class="cards-grid">
-      <!-- بطاقة العميل -->
       <div class="card">
         <div class="card-header">👤 بيانات العميل</div>
         <div class="card-body">
@@ -447,7 +445,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      <!-- بطاقة المواصفات -->
       <div class="card">
         <div class="card-header">${sIcon} ${st === "photo" ? "مواصفات الصورة" : st === "card" ? "مواصفات البطاقة" : st === "poster" ? "مواصفات الملصق" : st === "binding" ? "مواصفات التجليد" : "مواصفات الطباعة"}</div>
         <div class="card-body">
@@ -455,13 +452,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           ${countLabel}
           ${optionRows}
           <div class="opt-row"><span class="opt-key">موعد التسليم</span><span class="opt-val">${delivLabels[delivery.mode] || delivery.mode || "—"}</span></div>
-          <div class="opt-row"><span class="opt-key">الوقت المتوقع</span><span class="opt-val">${order.estimatedHours} ساعة</span></div>
-          ${order.fileName ? `<div class="opt-row"><span class="opt-key">اسم الملف</span><span class="opt-val" style="font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${order.fileName}</span></div>` : ""}
+          <div class="opt-row"><span class="opt-key">الوقت المتوقع</span><span class="opt-val">${estimatedHours} ساعة</span></div>
+          ${fileName ? `<div class="opt-row"><span class="opt-key">اسم الملف</span><span class="opt-val" style="font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fileName}</span></div>` : ""}
         </div>
       </div>
     </div>
 
-    <!-- التسعير -->
     <div class="pricing-section">
       <div class="pricing-header">
         <span>البيان</span>
@@ -472,13 +468,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       </div>
     </div>
 
-    <!-- المجموع الإجمالي -->
     <div class="total-box">
       <span class="total-label">المجموع الإجمالي</span>
-      <span class="total-amount">${pricing.total.toLocaleString("ar-DZ")} ${cur}</span>
+      <span class="total-amount">${total.toLocaleString("ar-DZ")} ${cur}</span>
     </div>
 
-    <!-- ملاحظات -->
     ${options.notes ? `<div class="notes-box"><p><strong>📝 ملاحظات:</strong> ${options.notes}</p></div>` : ""}
 
     <div class="notes-box">
@@ -488,7 +482,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     </div>
   </div>
 
-  <!-- التذييل -->
   <div class="footer">
     <div class="footer-info">
       <strong>${shopName}</strong>${shopAddress ? ` · ${shopAddress}` : ""}${shopPhone ? ` · ${shopPhone}` : ""}${shopEmail ? ` · ${shopEmail}` : ""}
@@ -497,7 +490,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 </div>
 
 <script>
-  // انتظر تحميل الصفحة ثم اطبع بعد تأخير قصير (300ms أسرع من 500ms)
   window.addEventListener('load', function() {
     setTimeout(function() { window.print(); }, 300);
   });

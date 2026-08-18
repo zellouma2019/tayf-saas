@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         options, customer, delivery, pricing,
         "estimatedHours", status, pages, copies, total, cost,
         "createdAt", "updatedAt", "readyAt", "deliveredAt",
-        tags, "shopId"
+        tags, "shopId", "trackingNumber", "adminNotes"
       FROM "PrintOrder" o
       ${whereClause}
       ORDER BY o."createdAt" DESC
@@ -67,6 +67,8 @@ export async function GET(req: NextRequest) {
       deliveredAt: o.deliveredAt,
       tags: safeJson<string[]>(o.tags as string, []),
       shopId: o.shopId,
+      trackingNumber: (o.trackingNumber as string) || null,
+      adminNotes: (o.adminNotes as string) || null,
     }));
 
     return NextResponse.json({ orders });
