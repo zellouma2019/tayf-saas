@@ -34,8 +34,10 @@ export async function GET(
 
     // ملف على القرص (يبدأ بـ "file_")
     if (order.fileData.startsWith("file_")) {
-      const filePath = path.join(process.cwd(), "uploads", order.fileData);
-      if (!fs.existsSync(filePath)) {
+      const tmpPath = path.join("/tmp/uploads", order.fileData);
+      const cwdPath = path.join(process.cwd(), "uploads", order.fileData);
+      const filePath = fs.existsSync(tmpPath) ? tmpPath : fs.existsSync(cwdPath) ? cwdPath : null;
+      if (!filePath) {
         return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 404 });
       }
       const buffer = fs.readFileSync(filePath);

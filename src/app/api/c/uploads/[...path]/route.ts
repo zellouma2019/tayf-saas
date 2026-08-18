@@ -21,13 +21,24 @@ export async function GET(
     const relativePath = pathSegments.join("/");
 
     // Security: prevent directory traversal
-    const resolvedPath = path.resolve(path.join(process.cwd(), "uploads", relativePath));
-    const uploadsDir = path.resolve(path.join(process.cwd(), "uploads"));
-    if (!resolvedPath.startsWith(uploadsDir)) {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    // Check /tmp/uploads (Vercel) first, then cwd/uploads (local dev)
+    const tmpDir = "/tmp/uploads";
+    const cwdDir = path.join(process.cwd(), "uploads");
+    let resolvedPath: string | null = null;
+    let baseDir = "";
+
+    const tmpCandidate = path.resolve(path.join(tmpDir, relativePath));
+    const cwdCandidate = path.resolve(path.join(cwdDir, relativePath));
+
+    if (tmpCandidate.startsWith(path.resolve(tmpDir)) && fs.existsSync(tmpCandidate) && fs.statSync(tmpCandidate).isFile()) {
+      resolvedPath = tmpCandidate;
+      baseDir = tmpDir;
+    } else if (cwdCandidate.startsWith(path.resolve(cwdDir)) && fs.existsSync(cwdCandidate) && fs.statSync(cwdCandidate).isFile()) {
+      resolvedPath = cwdCandidate;
+      baseDir = cwdDir;
     }
 
-    if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
+    if (!resolvedPath) {
       return NextResponse.json({ error: "الملف غير موجود" }, { status: 404 });
     }
 
