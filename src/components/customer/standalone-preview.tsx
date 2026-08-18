@@ -493,21 +493,14 @@ export function StandalonePreview() {
       const errMsg = (uploadErr as Error).message;
       console.warn("[upload] Server upload failed, using local fallback:", errMsg);
 
-      // PATH 2: Local fallback — convert file to data URL (for images & small docs)
-      // For large PDFs, we still need server processing so retry once more
-      if (isPdf && f.size > 5 * 1024 * 1024) {
-        // Large PDF: must use server — show clear error
-        throw new Error("لا يمكن رفع ملف PDF كبير بدون اتصال بالخادم. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.");
-      }
-
-      // For images and small files: convert to base64 data URL locally
+      // PATH 2: Local fallback — convert file to data URL (last resort)
       setUploadProgress(50);
       try {
         storedFileName = await new Promise<string>((res, rej) => {
           const reader = new FileReader();
           reader.onload = () => {
             if (typeof reader.result === "string") {
-              res(reader.result); // data:image/...;base64,...
+              res(reader.result); // data:...;base64,...
             } else {
               rej(new Error("فشل في قراءة الملف محلياً"));
             }

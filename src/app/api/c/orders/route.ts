@@ -11,11 +11,11 @@ import {
   type ServiceType,
 } from "@/lib/customer/print-config";
 
-/// قراءة ملف مخزّن على القرص وتحويله إلى Data URL (للصور فقط)
+/// قراءة ملف مخزّن على القراص وتحويله إلى Data URL (للصور فقط)
 function getFilePreview(storedName: string, fileType: string | null): string | null {
   try {
     if (!storedName || !storedName.startsWith("file_")) return null;
-    const imageTypes = ["PNG", "JPG", "JPEG", "WEBP", "GIF"];
+    const imageTypes = ["PNG", "JPG", "JPEG", "WEBP", "GIF", "BMP", "TIFF", "AVIF", "SVG"];
     if (fileType && !imageTypes.includes(fileType.toUpperCase())) return null;
 
     const filePath = path.join(process.cwd(), "uploads", storedName);
@@ -28,6 +28,11 @@ function getFilePreview(storedName: string, fileType: string | null): string | n
       jpeg: "image/jpeg",
       gif: "image/gif",
       webp: "image/webp",
+      bmp: "image/bmp",
+      tiff: "image/tiff",
+      tif: "image/tiff",
+      avif: "image/avif",
+      svg: "image/svg+xml",
     };
     const mime = mimeTypes[ext] || "image/png";
     return `data:${mime};base64,${buffer.toString("base64")}`;
@@ -51,7 +56,10 @@ FROM "PrintOrder" o`;
 function parseFullOrder(o: Record<string, unknown>, noPreview: boolean) {
   const fileName = (o.fileName as string) || null;
   const fileType = (o.fileType as string) || null;
-  const filePreview = noPreview ? null : fileName ? getFilePreview(fileName, fileType) : null;
+  const fileData = (o.fileData as string) || null;
+  // Use fileData (stored filename) for preview lookup, fallback to fileName
+  const storedFileForPreview = fileData?.startsWith("file_") ? fileData : fileName;
+  const filePreview = noPreview ? null : storedFileForPreview ? getFilePreview(storedFileForPreview, fileType) : null;
   return {
     id: o.id,
     reference: o.reference,
