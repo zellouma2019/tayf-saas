@@ -587,13 +587,18 @@ export function StandalonePreview() {
         setAnalysisProgress(10);
 
         // ═══ STEP 1: Fast server-side metadata for ALL PDFs (always accurate) ═══
-        const analyzeFd = new FormData();
-        analyzeFd.append("file", f);
         setAnalysisProgress(20);
 
         let serverMeta: { numPages: number; pageDimensionsMM: { width: number; height: number } | null; closestPaperSize: string; isPortrait: boolean; title: string; author: string; processingTimeMs: number } | null = null;
         try {
-          const analyzeRes = await fetch("/api/c/analyze-pdf", { method: "POST", body: analyzeFd });
+          // If file was uploaded to server, pass storedFileName to avoid re-upload
+          const analyzeUrl = storedFileName && !usedLocalFallback
+            ? `/api/c/analyze-pdf?storedFileName=${encodeURIComponent(storedFileName)}`
+            : "/api/c/analyze-pdf";
+          const analyzeBody = (storedFileName && !usedLocalFallback)
+            ? undefined
+            : (() => { const fd = new FormData(); fd.append("file", f); return fd; })();
+          const analyzeRes = await fetch(analyzeUrl, { method: "POST", body: analyzeBody });
           if (analyzeRes.ok) {
             serverMeta = await analyzeRes.json();
             setAnalysisProgress(40);
@@ -615,11 +620,15 @@ export function StandalonePreview() {
           setAnalysisStage("معالجة سحابية — استخراج الغلاف...");
           setAnalysisProgress(50);
 
-          const processFd = new FormData();
-          processFd.append("file", f);
-
           try {
-            const processRes = await fetch("/api/c/pdf-process", { method: "POST", body: processFd });
+            // If file was uploaded to server, pass storedFileName to avoid re-upload
+            const processUrl = storedFileName && !usedLocalFallback
+              ? `/api/c/pdf-process?storedFileName=${encodeURIComponent(storedFileName)}`
+              : "/api/c/pdf-process";
+            const processBody = (storedFileName && !usedLocalFallback)
+              ? undefined
+              : (() => { const fd = new FormData(); fd.append("file", f); return fd; })();
+            const processRes = await fetch(processUrl, { method: "POST", body: processBody });
             if (processRes.ok) {
               const serverData: ServerPdfResult = await processRes.json();
               setAnalysisProgress(80);

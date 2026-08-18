@@ -3,41 +3,8 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-// الحد الأقصى: 100 ميغابايت
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
-
-const ACCEPTED_EXTENSIONS = [
-  "pdf", "docx", "doc", "xlsx", "xls", "pptx", "ppt", "txt", "rtf", "csv",
-  "jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff", "tif", "avif", "svg",
-  "ai", "eps", "psd", "indd",
-];
-
-const MIME_MAP: Record<string, string> = {
-  pdf: "application/pdf",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  doc: "application/msword",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  xls: "application/vnd.ms-excel",
-  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  ppt: "application/vnd.ms-powerpoint",
-  txt: "text/plain",
-  rtf: "application/rtf",
-  csv: "text/csv",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-  bmp: "image/bmp",
-  tiff: "image/tiff",
-  tif: "image/tiff",
-  avif: "image/avif",
-  svg: "image/svg+xml",
-  ai: "application/illustrator",
-  eps: "application/postscript",
-  psd: "image/vnd.adobe.photoshop",
-  indd: "application/x-indesign",
-};
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+const ACCEPTED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"];
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "لم يتم إرسال ملف" }, { status: 400 });
     }
 
-    // التحقق من الحجم
+    // Check file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: `حجم الملف ${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (100 ميغابايت)` },
@@ -56,44 +23,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // استخراج الامتداد والتحقق منه
-    const originalName = file.name || "upload";
+    // Extract extension
+    const originalName = file.name || "unknown";
     const ext = originalName.split(".").pop()?.toLowerCase() || "";
 
-    if (!ext || !ACCEPTED_EXTENSIONS.includes(ext)) {
+    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
       return NextResponse.json(
-        { error: `صيغة الملف ".${ext}" غير مدعومة` },
+        { error: `صيغة الملف ".${ext}" غير مدعومة. الصيغ المدعومة: ${ACCEPTED_EXTENSIONS.join(", ")}` },
         { status: 400 },
       );
     }
 
-    // إنشاء اسم ملف فريد
-    const uniqueId = crypto.randomBytes(12).toString("hex");
-    const timestamp = Date.now().toString(36);
-    const storedFileName = `file_${timestamp}_${uniqueId}.${ext}`;
-
-    // التأكد من وجود مجلد uploads
+    // Ensure uploads directory exists
     const uploadsDir = path.join(process.cwd(), "uploads");
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    // حفظ الملف
-    const filePath = path.join(uploadsDir, storedFileName);
+    // Generate unique filename
+    const randomSuffix = crypto.randomBytes(8).toString("hex");
+    const timestamp = Date.now();
+    const storedFileName = `file_${timestamp}_${randomSuffix}.${ext}`;
+    const finalPath = path.join(uploadsDir, storedFileName);
+
+    // Write file to disk
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    fs.writeFileSync(finalPath, buffer);
 
     return NextResponse.json({
       storedFileName,
       originalName,
       size: file.size,
       type: ext,
-      mimeType: MIME_MAP[ext] || "application/octet-stream",
     });
   } catch (e) {
-    console.error("[c/upload] Error:", (e as Error).message, e);
+    console.error("[c/upload] Error:", e);
     return NextResponse.json(
-      { error: "فشل في رفع الملف على الخادم" },
+      { error: "فشل في رفع الملف" },
       { status: 500 },
     );
   }

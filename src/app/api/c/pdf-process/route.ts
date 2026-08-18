@@ -9,8 +9,11 @@ import path from "path";
  * Uses pdf-lib for fast metadata + pdfjs-dist + @napi-rs/canvas for cover rendering.
  * Returns lightweight JSON: dimensions + page count + cover image URL.
  *
- * Quality: Dynamic scale (3.0-4.0x), PNG lossless for text, 4096px max dimension.
- * The browser NEVER reads the large PDF — it only receives a small JSON response.
+ * Accepts either:
+ *   - FormData with "file" field (direct upload)
+ *   - Query param "storedFileName" to read from disk (after /api/c/upload saved it)
+ *
+ * Quality: Dynamic scale (2.5-5.0x), PNG lossless for text, 4096px max dimension.
  */
 
 const PAPER_SIZES_MM: Record<string, { w: number; h: number }> = {
@@ -32,10 +35,6 @@ function findClosestPaperSize(widthMM: number, heightMM: number): string {
   return closest;
 }
 
-/**
- * Calculate optimal render scale to target ~3500px longest edge.
- * Capped to prevent OOM on the server.
- */
 function calculateOptimalScale(widthPt: number, heightPt: number): number {
   const longestEdge = Math.max(widthPt, heightPt);
   const TARGET_PX = 3500;
@@ -48,23 +47,40 @@ function calculateOptimalScale(widthPt: number, heightPt: number): number {
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    let arrayBuffer: ArrayBuffer;
+    let fileName = "file";
+    let fileSize = 0;
 
-    if (!file) {
-      return NextResponse.json({ error: "\u0644\u0645 \u064a\u062a\u0645 \u0625\u0631\u0633\u0627\u0644 \u0645\u0644\u0641" }, { status: 400 });
+    // Check if storedFileName is provided (skip re-upload)
+    const storedFileName = req.nextUrl.searchParams.get("storedFileName");
+
+    if (storedFileName) {
+      const filePath = path.join(process.cwd(), "uploads", storedFileName);
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 400 });
+      }
+      const fileBuffer = fs.readFileSync(filePath);
+      arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength) as ArrayBuffer;
+      fileName = storedFileName;
+      fileSize = fileBuffer.length;
+    } else {
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      if (!file) {
+        return NextResponse.json({ error: "\u0644\u0645 \u064a\u062a\u0645 \u0625\u0631\u0633\u0627\u0644 \u0645\u0644\u0641" }, { status: 400 });
+      }
+      arrayBuffer = await file.arrayBuffer();
+      fileName = file.name;
+      fileSize = file.size;
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const nodeBuffer = Buffer.from(arrayBuffer);
-
     // Verify PDF magic bytes
-    const header = nodeBuffer.slice(0, 5).toString("utf-8");
+    const header = Buffer.from(arrayBuffer).slice(0, 5).toString("utf-8");
     if (!header.startsWith("%PDF-")) {
       return NextResponse.json({ error: "\u0627\u0644\u0645\u0644\u0641 \u0644\u064a\u0633 PDF \u062d\u0642\u064a\u0642\u064a" }, { status: 400 });
     }
 
-    // ═══ STEP 1: Fast metadata extraction with pdf-lib ═══
+    // STEP 1: Fast metadata extraction with pdf-lib
     const { PDFDocument } = await import("pdf-lib");
     let pdfDoc;
     try {
@@ -91,7 +107,7 @@ export async function POST(req: NextRequest) {
     try { title = pdfDoc.getTitle() || ""; } catch { /* ignore */ }
     try { author = pdfDoc.getAuthor() || ""; } catch { /* ignore */ }
 
-    // ═══ STEP 2: Ultra-HD cover rendering on server ═══
+    // STEP 2: Ultra-HD cover rendering on server
     let coverImageUrl: string | null = null;
     let backImageUrl: string | null = null;
 
@@ -101,7 +117,6 @@ export async function POST(req: NextRequest) {
       const workerPath = path.join(process.cwd(), "public", "pdf.worker.min.mjs");
       pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
 
-      // Native addon - use require() to bypass Turbopack static analysis
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { Canvas } = require("@napi-rs/canvas");
 
@@ -136,7 +151,6 @@ export async function POST(req: NextRequest) {
         fs.mkdirSync(previewDir, { recursive: true });
       }
 
-      // ═══ DYNAMIC SCALE: Target ~3500px on longest edge ═══
       const RENDER_SCALE = calculateOptimalScale(widthPt, heightPt);
       const MAX_DIM = 4096;
 
@@ -146,7 +160,6 @@ export async function POST(req: NextRequest) {
       let renderW = Math.round(vp1.width);
       let renderH = Math.round(vp1.height);
 
-      // Cap at MAX_DIM to prevent OOM
       if (renderW > MAX_DIM || renderH > MAX_DIM) {
         const scaleDown = MAX_DIM / Math.max(renderW, renderH);
         renderW = Math.round(renderW * scaleDown);
@@ -155,32 +168,25 @@ export async function POST(req: NextRequest) {
 
       const canvas1 = new Canvas(renderW, renderH);
       const ctx1 = canvas1.getContext("2d");
-
-      // Highest quality image smoothing
       ctx1.imageSmoothingEnabled = true;
       ctx1.imageSmoothingQuality = "high";
-
-      // White background
       ctx1.fillStyle = "#ffffff";
       ctx1.fillRect(0, 0, renderW, renderH);
 
-      // Re-calculate viewport for capped dimensions
       const finalScale = Math.min(renderW / widthPt, renderH / heightPt);
- const finalVp1 = page1.getViewport({ scale: finalScale });
+      const finalVp1 = page1.getViewport({ scale: finalScale });
       await page1.render({ canvasContext: ctx1, viewport: finalVp1 }).promise;
 
-      // Convert to PNG (lossless for crisp text) then WebP with high quality
       const { default: sharp } = await import("sharp");
       const coverPngBuf = canvas1.toBuffer("image/png");
       const coverFileName = `cover_${Date.now()}_${Math.random().toString(36).slice(2, 10)}.webp`;
       const coverPath = path.join(previewDir, coverFileName);
 
-      // WebP at 92% quality — visually lossless for text, much smaller than PNG
       await sharp(coverPngBuf)
         .webp({ quality: 92, effort: 6, smartSubsample: true })
-        .resize(renderW > 2400 ? 2400 : undefined, undefined, { 
+        .resize(renderW > 2400 ? 2400 : undefined, undefined, {
           withoutEnlargement: true,
-          kernel: "lanczos3", 
+          kernel: "lanczos3",
         })
         .toFile(coverPath);
 
@@ -204,7 +210,6 @@ export async function POST(req: NextRequest) {
           const ctxLast = canvasLast.getContext("2d");
           ctxLast.imageSmoothingEnabled = true;
           ctxLast.imageSmoothingQuality = "high";
-
           ctxLast.fillStyle = "#ffffff";
           ctxLast.fillRect(0, 0, lastW, lastH);
 
@@ -219,9 +224,9 @@ export async function POST(req: NextRequest) {
 
           await sharp(backPngBuf)
             .webp({ quality: 92, effort: 6, smartSubsample: true })
-            .resize(lastW > 2400 ? 2400 : undefined, undefined, { 
+            .resize(lastW > 2400 ? 2400 : undefined, undefined, {
               withoutEnlargement: true,
-              kernel: "lanczos3", 
+              kernel: "lanczos3",
             })
             .toFile(backPath);
 
@@ -237,7 +242,7 @@ export async function POST(req: NextRequest) {
     }
 
     const elapsed = Date.now() - startTime;
-    console.log(`[PDF Process] Processed ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)}MB, ${numPages} pages) in ${elapsed}ms`);
+    console.log(`[pdf-process] ${fileName} (${(fileSize / (1024 * 1024)).toFixed(1)}MB, ${numPages} pages) in ${elapsed}ms`);
 
     return NextResponse.json({
       numPages,
@@ -252,7 +257,7 @@ export async function POST(req: NextRequest) {
       processingTimeMs: elapsed,
     });
   } catch (e) {
-    console.error("[PDF Process] Fatal error:", e);
+    console.error("[pdf-process] Fatal error:", e);
     return NextResponse.json(
       { error: "\u0641\u0634\u0644 \u0641\u064a \u0645\u0639\u0627\u0644\u062c\u0629 \u0627\u0644\u0645\u0644\u0641 \u0639\u0644\u0649 \u0627\u0644\u062e\u0627\u062f\u0645" },
       { status: 500 },

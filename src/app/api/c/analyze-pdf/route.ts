@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 /**
  * Fast PDF metadata extraction using pdf-lib only.
  * No cover rendering — just numPages, dimensions, paper size, orientation, title, author.
  * Works for ALL PDF sizes in < 1 second.
+ *
+ * Accepts either:
+ *   - FormData with "file" field (direct upload)
+ *   - Query param "storedFileName" to read from disk (after /api/c/upload saved it)
  */
 
 const PAPER_SIZES_MM: Record<string, { w: number; h: number }> = {
@@ -28,14 +34,36 @@ function findClosestPaperSize(widthMM: number, heightMM: number): string {
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    let arrayBuffer: ArrayBuffer;
+    let fileName = "file";
+    let fileSize = 0;
 
-    if (!file) {
-      return NextResponse.json({ error: "لم يتم إرسال ملف" }, { status: 400 });
+    // Check if storedFileName is provided (skip re-upload)
+    const storedFileName = req.nextUrl.searchParams.get("storedFileName");
+
+    if (storedFileName) {
+      // Read from disk — no re-upload needed!
+      const filePath = path.join(process.cwd(), "uploads", storedFileName);
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 400 });
+      }
+      const fileBuffer = fs.readFileSync(filePath);
+      arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength) as ArrayBuffer;
+      fileName = storedFileName;
+      fileSize = fileBuffer.length;
+    } else {
+      // Fallback: direct file upload in FormData
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+
+      if (!file) {
+        return NextResponse.json({ error: "لم يتم إرسال ملف" }, { status: 400 });
+      }
+
+      arrayBuffer = await file.arrayBuffer();
+      fileName = file.name;
+      fileSize = file.size;
     }
-
-    const arrayBuffer = await file.arrayBuffer();
 
     // Verify PDF magic bytes
     const header = Buffer.from(arrayBuffer).slice(0, 5).toString("utf-8");
@@ -69,7 +97,7 @@ export async function POST(req: NextRequest) {
     try { author = pdfDoc.getAuthor() || ""; } catch { /* ignore */ }
 
     const elapsed = Date.now() - startTime;
-    console.log(`[analyze-pdf] ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)}MB, ${numPages} pages) in ${elapsed}ms`);
+    console.log(`[analyze-pdf] ${fileName} (${(fileSize / (1024 * 1024)).toFixed(1)}MB, ${numPages} pages) in ${elapsed}ms`);
 
     return NextResponse.json({
       numPages,
