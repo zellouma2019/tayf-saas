@@ -1791,7 +1791,7 @@ export function StandalonePreview() {
                       pageWidthMM={workerResult?.pageDimensionsMM?.width || analysis.pageDimensionsMM?.width}
                       pageHeightMM={workerResult?.pageDimensionsMM?.height || analysis.pageDimensionsMM?.height}
                       paperWeight={paperWeight}
-                      coverDataUrl={workerResult?.coverDataUrl || null}
+                      coverDataUrl={uploadedFileType === "image" ? imagePreviewUrl : (workerResult?.coverDataUrl || null)}
                       backDataUrl={workerResult?.backDataUrl || null}
                       onBrowsePages={() => setBrowsePagesOpen(true)}
                     />
@@ -1898,6 +1898,29 @@ export function StandalonePreview() {
                   <div className="px-3 py-1.5 bg-muted/30 border-t flex items-center justify-between text-[10px] text-muted-foreground">
                     <span className="flex items-center gap-1"><Eye className="h-3 w-3" />معاينة الصورة • {file?.name}</span>
                     <span>{analysis.fileSizeMB} ميغابايت</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            {previewMode !== "mockup" && (uploadedFileType === "document" || uploadedFileType === "design") && (
+              <motion.div key="doc" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }}>
+                <div className="rounded-2xl border bg-muted/10 overflow-hidden shadow-sm">
+                  <div className="flex flex-col items-center justify-center p-8 bg-muted/5 min-h-[300px] gap-4">
+                    <div className={`w-20 h-24 rounded-xl border-2 border-dashed ${uploadedFileType === "design" ? "border-violet-300 bg-violet-50 dark:bg-violet-950/20" : "border-amber-300 bg-amber-50 dark:bg-amber-950/20"} flex items-center justify-center`}>
+                      <FileText className={`h-8 w-8 ${uploadedFileType === "design" ? "text-violet-400" : "text-amber-400"}`} />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-semibold truncate max-w-[250px]">{file?.name}</p>
+                      <p className="text-xs text-muted-foreground">{uploadedFileType === "design" ? "ملف تصميم" : "مستند"} — {analysis.fileSizeMB} ميغابايت</p>
+                      <div className="flex items-center gap-2 justify-center mt-2">
+                        <Badge variant="outline" className="text-[10px]">{(file?.name?.split(".").pop() || "").toUpperCase()}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">{analysis.closestPaperSize || "A4"}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-3 py-1.5 bg-muted/30 border-t flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" />معاينة المستند • {file?.name}</span>
+                    <span>سيتم مراجعته من قبل المطبعة</span>
                   </div>
                 </div>
               </motion.div>

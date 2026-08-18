@@ -346,21 +346,77 @@ export function BookMockup3D({
     const envMap = managerRef.current?.getEnvMap() || null;
     const pbr = PAPER_PBR[paperType] || PAPER_PBR.normal;
 
-    // Load textures for images (from server URL)
-    let imageTexInfo: TextureInfo | null = null;
-    if (fileType === "image") {
-      try {
-        const url = `/api/file-preview?file=${encodeURIComponent(fileSource)}`;
-        imageTexInfo = await loadImageTextureFromUrl(url, THREE);
-        managerRef.current?.trackTexture(imageTexInfo.texture);
-      } catch (imgErr) {
-        console.warn("[BookMockup3D] Failed to load image texture:", imgErr);
-      }
-    }
+    // ═══ Texture selection logic ═══
+    let activeFrontTexInfo: TextureInfo | null = frontTexInfo ?? null;
+    let activeBackTexInfo: TextureInfo | null = backTexInfo ?? null;
 
-    // Use provided textures or fall back to colored materials
-    const activeFrontTexInfo = fileType === "image" ? imageTexInfo : (frontTexInfo ?? null);
-    const activeBackTexInfo = fileType === "image" ? null : (backTexInfo ?? null);
+    // For documents/designs without textures: create procedural cover texture
+    if (!activeFrontTexInfo && (fileType === "document" || fileType === "design")) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 800;
+      canvas.height = 1100;
+      const ctx = canvas.getContext("2d")!;
+      // Paper background
+      ctx.fillStyle = "#fafaf8";
+      ctx.fillRect(0, 0, 800, 1100);
+      // Header bar
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillRect(0, 0, 800, 8);
+      // File icon
+      ctx.fillStyle = "#fbbf24";
+      ctx.beginPath();
+      ctx.roundRect(300, 300, 200, 240, 16);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.roundRect(320, 320, 160, 200, 8);
+      ctx.fill();
+      // Folded corner
+      ctx.fillStyle = "#fef3c7";
+      ctx.beginPath();
+      ctx.moveTo(440, 320);
+      ctx.lineTo(480, 320);
+      ctx.lineTo(480, 360);
+      ctx.closePath();
+      ctx.fill();
+      // File extension text
+      const ext = fileSource.split(".").pop()?.toUpperCase() || "FILE";
+      ctx.fillStyle = "#92400e";
+      ctx.font = "bold 36px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(ext, 400, 440);
+      // File name
+      ctx.fillStyle = "#44403c";
+      ctx.font = "600 28px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      const displayName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
+      const truncated = displayName.length > 28 ? displayName.slice(0, 25) + "..." : displayName;
+      ctx.fillText(truncated, 400, 620);
+      // Subtitle
+      const typeLabel = fileType === "design" ? "ملف تصميم" : "مستند";
+      ctx.fillStyle = "#a8a29e";
+      ctx.font = "500 22px system-ui, sans-serif";
+      ctx.fillText(typeLabel, 400, 670);
+      // Will be reviewed note
+      ctx.fillStyle = "#78716c";
+      ctx.font = "400 18px system-ui, sans-serif";
+      ctx.fillText("سيتم مراجعته من قبل المطبعة", 400, 760);
+      // Tayf branding
+      ctx.fillStyle = "#d6d3d1";
+      ctx.font = "400 16px system-ui, sans-serif";
+      ctx.fillText("طيف — منصة الطباعة", 400, 1050);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.generateMipmaps = true;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      if (managerRef.current) {
+        tex.anisotropy = managerRef.current.getRenderer().capabilities.getMaxAnisotropy();
+      }
+      managerRef.current?.trackTexture(tex);
+      activeFrontTexInfo = { texture: tex, aspectRatio: 800 / 1100 };
+    }
 
     // ═══ Cover Front Material — PBR calibrated for print paper ═══
     const coverFrontMat = new THREE.MeshStandardMaterial({
@@ -759,7 +815,7 @@ export function BookMockup3D({
     return group;
   // NOTE: showClearCover is intentionally NOT in deps — it uses instant update effect instead
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [binding, category, getDimensions, totalPages, copies, fileType, fileSource, loadImageTextureFromUrl]);
+  }, [binding, category, getDimensions, totalPages, copies, fileType, fileSource]);
 
   /* ═══════════════════════════════════════════════════════════════════
      STRICT SEQUENTIAL PIPELINE — Scene init depends on fileSource + coverDataUrl/backDataUrl.
@@ -889,9 +945,9 @@ export function BookMockup3D({
       manager.setAutoRotate(true);
     };
     rebuild();
-  // Only structural changes trigger rebuild — NOT visual/material changes
+  // All structural changes trigger rebuild for live preview updates
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [binding, totalPages, duplex, paperSize, category, buildMeshGroup]);
+  }, [binding, totalPages, duplex, paperSize, category, paperWeight, paperType, copies, buildMeshGroup]);
 
   /* ═══════════════════════════════════════════════════════════════════
      INSTANT MATERIAL UPDATES — No rebuild, <50ms feedback.
