@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireShopOrGlobalAdmin } from "@/lib/admin-auth";
 import { addAuditLog } from "@/lib/audit";
 import { STATUS_META, calculatePricing, estimateDeliveryHours } from "@/lib/print-config";
 import type { ServiceType } from "@/lib/print-config";
@@ -57,13 +57,13 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { authorized, error: authError } = await requireAdmin(req);
+  const { id } = await params;
+  const shopId = req.nextUrl.searchParams.get("shopId");
+  const { authorized, error: authError } = await requireShopOrGlobalAdmin(req, shopId);
   if (!authorized) return authError;
 
   try {
-    const { id } = await params;
     const body = await req.json();
-    const shopId = body.shopId || req.nextUrl.searchParams.get("shopId");
 
     // جلب الطلب الحالي عبر turso-lite
     const existing = await fetchOrderRaw(id, shopId);
@@ -301,12 +301,12 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { authorized, error: authError } = await requireAdmin(req);
+  const { id } = await params;
+  const shopId = req.nextUrl.searchParams.get("shopId");
+  const { authorized, error: authError } = await requireShopOrGlobalAdmin(req, shopId);
   if (!authorized) return authError;
 
   try {
-    const { id } = await params;
-    const shopId = req.nextUrl.searchParams.get("shopId");
     const existing = await fetchOrderRaw(id, shopId);
     if (!existing) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });

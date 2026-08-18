@@ -2145,6 +2145,10 @@ export function StandalonePreview() {
               ) : (
                 <Button
                   onClick={async () => {
+                    if (!shopId) {
+                      setError("المتجر غير محدد، يرجى إعادة تحميل الصفحة");
+                      return;
+                    }
                     setIsSubmitting(true);
                     try {
                       const res = await fetch("/api/c/orders", {
@@ -2176,10 +2180,15 @@ export function StandalonePreview() {
                       if (res.ok) {
                         const data = await res.json();
                         setOrderReference(data.reference || "");
+                        setOrderSubmitted(true);
+                      } else {
+                        const errData = await res.json().catch(() => ({}));
+                        console.error("[order-submit] Failed:", res.status, errData);
+                        setError(errData.error || `فشل إرسال الطلب (${res.status})`);
                       }
-                      setOrderSubmitted(true);
-                    } catch {
-                      /* silent */
+                    } catch (e) {
+                      console.error("[order-submit] Error:", e);
+                      setError("تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى");
                     } finally {
                       setIsSubmitting(false);
                     }

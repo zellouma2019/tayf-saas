@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireShopOrGlobalAdmin } from "@/lib/admin-auth";
 
 export const revalidate = 0;
 
@@ -14,12 +14,12 @@ export const revalidate = 0;
  * - الإيرادات اليومية
  */
 export async function GET(request: NextRequest) {
-  const { authorized, error: authError } = await requireAdmin(request);
+  const { searchParams } = new URL(request.url);
+  const shopId = searchParams.get("shopId");
+  const { authorized, error: authError } = await requireShopOrGlobalAdmin(request, shopId);
   if (!authorized) return authError;
 
   try {
-    const { searchParams } = new URL(request.url);
-    const shopId = searchParams.get("shopId");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 

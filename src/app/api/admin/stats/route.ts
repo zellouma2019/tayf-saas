@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireShopOrGlobalAdmin } from "@/lib/admin-auth";
 import { tursoQuery, toNum, safeJson } from "@/lib/turso-lite";
 
 // الرد ديناميكي (يستخدم searchParams) لكن يُسمح بـ edge cache قصير
@@ -8,11 +8,11 @@ export const revalidate = 0;
 /// إحصائيات التاجر/الإدارة عبر turso-lite
 /// مُحسَّن: يستخدم الفهرس على shopId بدلاً من OR IS NULL (كان يسبب 504)
 export async function GET(request: NextRequest) {
-  const { authorized, error: authError } = await requireAdmin(request);
+  const shopId = request.nextUrl.searchParams.get("shopId");
+  const { authorized, error: authError } = await requireShopOrGlobalAdmin(request, shopId);
   if (!authorized) return authError;
 
   try {
-    const shopId = request.nextUrl.searchParams.get("shopId");
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayISO = todayStart.toISOString();

@@ -427,6 +427,7 @@ class OrdersErrorBoundary extends Component<
 export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSlug: string }) {
   const { shop, hasFeature, refreshShop } = useShop();
   const setAdminCodeStore = useAppStore((s) => s.setAdminCode);
+  const adminCode = useAppStore((s) => s.adminCode);
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
   const verifiedPinRef = useRef("");
@@ -457,6 +458,13 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
   const [pendingCount, setPendingCount] = useState(0);
   const pendingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  // ===== ترويسات المصادقة — تُرسل مع كل طلب API محمي =====
+  const authHeaders = useCallback((): Record<string, string> => {
+    const code = useAppStore.getState().adminCode;
+    if (!code) return {};
+    return { "x-admin-code": code };
+  }, []);
 
   // ===== المفضلة والملاحظات =====
   const [favoriteOrders, setFavoriteOrders] = useState<Set<string>>(() => {
@@ -731,7 +739,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     try {
       const res = await fetch(`/api/orders/bulk?shopId=${shopId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ ids: Array.from(selectedIds), status: newStatus }),
       });
       if (!res.ok) throw new Error("فشل التحديث");
@@ -760,7 +768,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     try {
       const res = await fetch(`/api/orders/bulk?shopId=${shopId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
       });
       if (!res.ok) throw new Error("فشل الحذف");
@@ -802,7 +810,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
 
   async function deleteOrder(id: string) {
     try {
-      const res = await fetch(`/api/orders/${id}?shopId=${shopId}`, { method: "DELETE" });
+      const res = await fetch(`/api/orders/${id}?shopId=${shopId}`, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) throw new Error("فشل الحذف");
       toast.success("تم حذف الطلب");
       setSelectedOrder(null);
@@ -826,7 +834,10 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     }
     setStatsLoading(true);
     try {
-      const res = await fetch(`/api/admin/stats?shopId=${shopId}&_t=${Date.now()}`);
+      const headers = authHeaders();
+      const res = await fetch(`/api/admin/stats?shopId=${shopId}&_t=${Date.now()}`, {
+        headers,
+      });
       if (res.ok) {
         const data = await res.json();
         setStats(data);
@@ -837,10 +848,9 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
     } finally {
       setStatsLoading(false);
     }
-  }, [shopId]);
+  }, [shopId, authHeaders]);
 
   const statsRef = useRef(stats);
-  statsRef.current = stats;
 
   // عدد مرات إعادة المحاولة التلقائية
   const ordersRetryRef = useRef(0);
@@ -1083,7 +1093,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       if (statusNotes) payload.statusNotes = statusNotes;
       const res = await fetch(`/api/orders/${order.id}?shopId=${shopId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("فشل التحديث");
@@ -2626,7 +2636,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
                 try {
                   const from = reportFrom.toISOString().slice(0, 10);
                   const to = reportTo.toISOString().slice(0, 10);
-                  const res = await fetch(`/api/orders/report?shopId=${shopId}&from=${from}&to=${to}`);
+                  const res = await fetch(`/api/orders/report?shopId=${shopId}&from=${from}&to=${to}`, { headers: authHeaders() });
                   if (!res.ok) throw new Error("فشل في جلب التقرير");
                   const data: StatsReportData = await res.json();
                   generateStatsReport(data);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tursoExecute } from "@/lib/turso-lite";
 import { withRateLimit } from "@/lib/rate-limit";
+import { requireShopOrGlobalAdmin } from "@/lib/admin-auth";
 
 const VALID_STATUSES = new Set(["pending", "printing", "ready", "delivered", "cancelled"]);
 const MAX_BULK_IDS = 100;
@@ -11,10 +12,12 @@ function getShopId(req: NextRequest): string | undefined {
 
 /// عمليات جماعية عبر turso-lite (أسرع 10x من Prisma على Vercel)
 export async function PUT(req: NextRequest) {
+  const queryShopId = getShopId(req);
+  const { authorized, error: authError } = await requireShopOrGlobalAdmin(req, queryShopId);
+  if (!authorized) return authError;
+
   const rl = withRateLimit(req, "bulk-update");
   if (!rl.ok) return rl.response;
-
-  const queryShopId = getShopId(req);
   let ids: string[], status: string, bodyShopId: string | undefined = undefined;
   try {
     const body = await req.json();
@@ -51,10 +54,12 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const queryShopId = getShopId(req);
+  const { authorized, error: authError } = await requireShopOrGlobalAdmin(req, queryShopId);
+  if (!authorized) return authError;
+
   const rl = withRateLimit(req, "bulk-delete");
   if (!rl.ok) return rl.response;
-
-  const queryShopId = getShopId(req);
   let ids: string[], bodyShopId: string | undefined = undefined;
   try {
     const body = await req.json();
