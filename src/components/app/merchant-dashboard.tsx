@@ -853,6 +853,7 @@ export function MerchantDashboard({ shopId, shopSlug }: { shopId: string; shopSl
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       params.set("shopId", shopId);
+      params.set("noPreview", "false");
       params.set("_t", String(Date.now()));
 
       const res = await fetch(`/api/orders?${params.toString()}`, { cache: "no-store" });
