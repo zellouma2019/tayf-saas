@@ -42,8 +42,10 @@ export async function POST(req: NextRequest) {
     const storedFileName = req.nextUrl.searchParams.get("storedFileName");
 
     if (storedFileName) {
-      // Read from disk — no re-upload needed!
-      const filePath = path.join(process.cwd(), "uploads", storedFileName);
+      // Read from disk — check /tmp (Vercel) first, then cwd (local dev)
+      const tmpPath = path.join("/tmp/uploads", storedFileName);
+      const cwdPath = path.join(process.cwd(), "uploads", storedFileName);
+      const filePath = fs.existsSync(tmpPath) ? tmpPath : cwdPath;
       if (!fs.existsSync(filePath)) {
         return NextResponse.json({ error: "الملف غير موجود على الخادم" }, { status: 400 });
       }

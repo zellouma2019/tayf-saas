@@ -11,31 +11,36 @@ import {
   type ServiceType,
 } from "@/lib/customer/print-config";
 
-/// قراءة ملف مخزّن على القراص وتحويله إلى Data URL (للصور فقط)
-function getFilePreview(storedName: string, fileType: string | null): string | null {
+/// Get file preview: base64 data URL from DB or read from disk
+function getFilePreview(fileData: string | null, fileType: string | null): string | null {
   try {
-    if (!storedName || !storedName.startsWith("file_")) return null;
-    const imageTypes = ["PNG", "JPG", "JPEG", "WEBP", "GIF", "BMP", "TIFF", "AVIF", "SVG"];
-    if (fileType && !imageTypes.includes(fileType.toUpperCase())) return null;
+    // 1. If fileData is already a base64 data URL (client fallback), return it directly
+    if (fileData?.startsWith("data:")) return fileData;
 
-    const filePath = path.join(process.cwd(), "uploads", storedName);
-    if (!fs.existsSync(filePath)) return null;
-    const buffer = fs.readFileSync(filePath);
-    const ext = storedName.split(".").pop()?.toLowerCase() || "";
-    const mimeTypes: Record<string, string> = {
-      png: "image/png",
-      jpg: "image/jpeg",
-      jpeg: "image/jpeg",
-      gif: "image/gif",
-      webp: "image/webp",
-      bmp: "image/bmp",
-      tiff: "image/tiff",
-      tif: "image/tiff",
-      avif: "image/avif",
-      svg: "image/svg+xml",
-    };
-    const mime = mimeTypes[ext] || "image/png";
-    return `data:${mime};base64,${buffer.toString("base64")}`;
+    // 2. If fileData is a stored filename (file_xxx.ext), try to read from disk
+    if (fileData?.startsWith("file_")) {
+      const imageTypes = ["PNG", "JPG", "JPEG", "WEBP", "GIF", "BMP", "TIFF", "AVIF", "SVG"];
+      if (fileType && !imageTypes.includes(fileType.toUpperCase())) return null;
+
+      // Check /tmp (Vercel) first, then cwd (local dev)
+      const tmpPath = path.join("/tmp/uploads", fileData);
+      const cwdPath = path.join(process.cwd(), "uploads", fileData);
+      const filePath = fs.existsSync(tmpPath) ? tmpPath : fs.existsSync(cwdPath) ? cwdPath : null;
+      if (!filePath) return null;
+
+      const buffer = fs.readFileSync(filePath);
+      const ext = fileData.split(".").pop()?.toLowerCase() || "";
+      const mimeTypes: Record<string, string> = {
+        png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
+        gif: "image/gif", webp: "image/webp", bmp: "image/bmp",
+        tiff: "image/tiff", tif: "image/tiff",
+        avif: "image/avif", svg: "image/svg+xml",
+      };
+      const mime = mimeTypes[ext] || "image/png";
+      return `data:${mime};base64,${buffer.toString("base64")}`;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -44,7 +49,7 @@ function getFilePreview(storedName: string, fileType: string | null): string | n
 /// استعلام كامل: كل الأعمدة بدون JOIN
 const FULL_ORDERS_SQL = `SELECT
   id, reference, "serviceType", "serviceName",
-  "fileName", "fileType", "fileSize",
+  "fileName", "fileType", "fileSize", "fileData",
   options, customer, delivery, pricing,
   "estimatedHours", status, pages, copies, total,
   "createdAt", "updatedAt", "readyAt", "deliveredAt",
@@ -57,9 +62,8 @@ function parseFullOrder(o: Record<string, unknown>, noPreview: boolean) {
   const fileName = (o.fileName as string) || null;
   const fileType = (o.fileType as string) || null;
   const fileData = (o.fileData as string) || null;
-  // Use fileData (stored filename) for preview lookup, fallback to fileName
-  const storedFileForPreview = fileData?.startsWith("file_") ? fileData : fileName;
-  const filePreview = noPreview ? null : storedFileForPreview ? getFilePreview(storedFileForPreview, fileType) : null;
+  // getFilePreview handles both base64 data URLs and disk file references
+  const filePreview = noPreview ? null : getFilePreview(fileData, fileType);
   return {
     id: o.id,
     reference: o.reference,
