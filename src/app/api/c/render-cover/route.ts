@@ -27,16 +27,15 @@ function getUploadsDir(): string {
 }
 
 export async function GET(req: NextRequest) {
+  // Warm-up: if no file param, just keep function warm
+  const storedFileName = req.nextUrl.searchParams.get("file");
+  if (!storedFileName) {
+    return NextResponse.json({ status: "ok" });
+  }
+
+  // Actual cover rendering
   const t0 = Date.now();
   try {
-    const storedFileName = req.nextUrl.searchParams.get("file");
-    const page = req.nextUrl.searchParams.get("page") || "first"; // first | last
-
-    if (!storedFileName) {
-      return NextResponse.json({ error: "معرف الملف مطلوب" }, { status: 400 });
-    }
-
-    const uploadsDir = getUploadsDir();
     const filePath = path.join(uploadsDir, storedFileName);
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({ error: "الملف غير موجود" }, { status: 404 });
