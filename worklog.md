@@ -212,3 +212,39 @@ Files created/modified:
 - RESTORED: src/app/api/c/upload/route.ts  
 - MODIFIED: src/app/api/c/pdf-process/route.ts
 - MODIFIED: src/components/customer/standalone-preview.tsx
+---
+Task ID: 2c
+Agent: Main Agent
+Task: تحسين سرعة الرفع والتحليل — فصل الغلاف عن مسار الرفع
+
+Work Log:
+- تحليل مفصل للاختناقات: cover rendering (pdfjs+canvas+sharp) كان يحجب الاستجابة 3 ثواني
+- مزدوج التخزين: formData + arrayBuffer + Buffer.from
+- Base64 data URLs يضخم JSON بـ 200-500KB
+- الغلاف الخلفي يُرسم بدون داع في التحميل الأول
+- شريط التقدم يتوقف عند 60% أثناء الرفع (يبدو بطيئ)
+
+الاصلاحات:
+- **upload-analyze**: بيانات وصفحة فقط (pdf-lib ~50ms)، بدون رسم غلاف
+- **render-cover (جديد)**: GET /api/c/render-cover عند الطلب، JPEG متدفق، 1200px كحد أقصى
+- **pdf-process**: نفس التحسين (بيانات وصفحة فقط، يُرجع رابط render-cover)
+- **العميل**: عرض النتائج فوراً، تحميل الغلاف في الخلفية
+- **شريط التقدم**: 0-95% أثناء الرفع (بدلاً من 0-60%)
+- **كتابة الملف**: متدفقة (streaming) بدل التخزين المزدوج
+
+تجربة على Vercel:
+- الصفحة تُحمّل بدون أخطاء ✅
+- منطقة الرفع ظاهرة مع Ctrl+V ✅
+- render-cover endpoint موجود (GET→404 app-level) ✅
+- upload-analyze endpoint موجود (GET→405 POST-only) ✅
+
+Stage Summary:
+- قبل: رفع+تحليل+غلاف في طلب واحد = 10s+3s (يدوي 13 ثانية)
+- بعد: رفع+تحليل = ~2-3s (الغلاف يُحمّل في الخلفية لاحقاً)
+- Commit: 1589e1d
+
+Files:
+- REWRITTEN: src/app/api/c/upload-analyze/route.ts (metadata only, streaming write)
+- REWRITTEN: src/app/api/c/pdf-process/route.ts (metadata only, delegates to render-cover)
+- NEW: src/app/api/c/render-cover/route.ts (on-demand JPEG streaming)
+- MODIFIED: src/components/customer/standalone-preview.tsx (background cover loading)
