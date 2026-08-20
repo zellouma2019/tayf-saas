@@ -245,6 +245,8 @@ export function StandalonePreview() {
   const [recentUploads, setRecentUploads] = useState<RecentUpload[]>([]);
   // image preview URL
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  // PDF data URL for client-side rendering (Vercel /tmp not shared between functions)
+  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
   // Worker-processed PDF data (cover/back textures + dimensions)
   const [workerResult, setWorkerResult] = useState<PdfWorkerResult | null>(null);
   // Original file ref for worker processing
@@ -328,16 +330,39 @@ export function StandalonePreview() {
     dimsMM: { width: number; height: number } | null,
     paperSize: string,
   ) => {
-    try {
-      const coverUrl = `/api/c/render-cover?file=${encodeURIComponent(storedFileName)}`;
-      const coverResp = await fetch(coverUrl);
-      if (coverResp.ok) {
-        const blob = await coverResp.blob();
-        const coverDataUrl = await new Promise<string>((res) => {
-          const reader = new FileReader();
-          reader.onloadend = () => res(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
+    // Use the client-side File object directly (Vercel /tmp is not shared between functions)
+    const pdfFile = fileForWorkerRef.current;
+    if (pdfFile) {
+      try {
+        const pdfjsLib = await import("pdfjs-dist");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.min.mjs",
+          import.meta.url
+        ).toString();
+
+        const arrayBuffer = await pdfFile.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), disableAutoFetch: true });
+        const doc = await loadingTask.promise;
+
+        const page = await doc.getPage(1);
+        const MAX_DIM = 1000;
+        const { width: widthPt, height: heightPt } = page.getViewport({ scale: 1 });
+        const scale = Math.min(MAX_DIM / Math.max(widthPt, heightPt), 2.0);
+        const vp = page.getViewport({ scale });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(vp.width);
+        canvas.height = Math.round(vp.height);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        doc.destroy();
+
+        const coverDataUrl = canvas.toDataURL("image/jpeg", 0.75);
         setWorkerResult({
           numPages: numP,
           pageDimensionsMM: dimsMM,
@@ -346,10 +371,24 @@ export function StandalonePreview() {
           coverDataUrl,
           backDataUrl: null,
         });
-      }
-    } catch {
-      /* cover load failed — non-critical, results already shown */
+        return;
+      } catch { /* fall through to server fallback */ }
     }
+
+    // Server fallback: only works on persistent filesystems (local dev)
+    try {
+      const coverUrl = `/api/c/render-cover?file=${encodeURIComponent(storedFileName)}`;
+      const coverResp = await fetch(coverUrl);
+      if (coverResp.ok) {
+        const blob = await coverResp.blob();
+        const cdu = await new Promise<string>((res) => {
+          const reader = new FileReader();
+          reader.onloadend = () => res(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        setWorkerResult({ numPages: numP, pageDimensionsMM: dimsMM, closestPaperSize: paperSize, isPortrait, coverDataUrl: cdu, backDataUrl: null });
+      }
+    } catch { /* non-critical */ }
   }, []);
 
   /* ─── إعادة رفع من السجل ─── */
@@ -415,7 +454,7 @@ export function StandalonePreview() {
   const resetAll = useCallback(() => {
     setStep("idle"); setFile(null); setStoredName(""); setUploadProgress(0);
     setAnalysis(DEFAULT_ANALYSIS); setAnalysisProgress(0); setAnalysisStage("");
-    setError(""); setPreviewMode("mockup"); setZoom(100); setCurrentPage(1);
+    setError(""); setPreviewMode("mockup"); setZoom(100); setCurrentPage(1); setPdfDataUrl(null);
     setTotalPages(0); setShowOverlay(false); setShowCropMarks(false);
     setUploadedFileType("pdf"); setHolePunch("none"); setStaplePosition("top-left");
     setImagePaperType("normal"); setImagePreviewUrl(null);
@@ -523,6 +562,15 @@ export function StandalonePreview() {
     setUploadedFileType(displayType);
     setWorkerResult(null);
     fileForWorkerRef.current = isPdf ? f : null;
+
+    // Create PDF data URL for client-side rendering (Vercel /tmp not shared between functions)
+    if (isPdf && f) {
+      const reader = new FileReader();
+      reader.onload = () => setPdfDataUrl(reader.result as string);
+      reader.readAsDataURL(f);
+    } else {
+      setPdfDataUrl(null);
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // FAST UPLOAD: Combined endpoint (upload + analyze + cover in 1 request)
@@ -2412,7 +2460,7 @@ export function StandalonePreview() {
             {previewMode !== "mockup" && uploadedFileType === "pdf" && (
               <motion.div key="pdf" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} ref={previewContainerRef}>
                 <div className="rounded-2xl border bg-muted/10 overflow-hidden shadow-sm relative">
-                  <ProfessionalPdfViewer fileSource={storedName} currentPage={currentPage} onPageChange={setCurrentPage} viewMode={pdfViewMode} initialScale={zoom / 100} maxWidth={600} onTotalPages={(n) => setTotalPages(n)} />
+                  <ProfessionalPdfViewer fileSource={pdfDataUrl || storedName} currentPage={currentPage} onPageChange={setCurrentPage} viewMode={pdfViewMode} initialScale={zoom / 100} maxWidth={600} onTotalPages={(n) => setTotalPages(n)} />
                   {pdfViewMode === "single" && totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 px-4 py-3 bg-muted/20 border-t">
                       <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all"><ChevronRight className="h-4 w-4" /></button>
