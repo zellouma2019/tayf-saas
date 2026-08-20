@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
 
   // Actual cover rendering
   const t0 = Date.now();
+  const page = req.nextUrl.searchParams.get("page") || "first";
+  const uploadsDir = getUploadsDir();
   try {
     const filePath = path.join(uploadsDir, storedFileName);
     if (!fs.existsSync(filePath)) {
