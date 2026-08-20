@@ -2228,6 +2228,39 @@ export function StandalonePreview() {
             />
           )}
 
+          {/* ─── ملخص الطلب السريع ─── Quick Order Summary ─── */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-3"><Bookmark className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span></div>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />الملف</span>
+                <span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Layers className="h-3.5 w-3.5" />الصفحات</span>
+                <span className="font-medium">{analysis.pageCount} صفحة × {copies} نسخة</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" />الطباعة</span>
+                <span className="font-medium">{printColor ? "ملون" : "أبيض وأسود"}</span>
+              </div>
+              {effectiveBinding !== "none" && (
+                <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                  <span className="text-muted-foreground flex items-center gap-1.5"><Bookmark className="h-3.5 w-3.5" />التجليد</span>
+                  <span className="font-medium">{bindingLabel[effectiveBinding]}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Layers className="h-3.5 w-3.5" />مقاس الورق</span>
+                <span className="font-medium">{analysis.closestPaperSize || analysis.paperSize}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />الوقت المتوقع</span>
+                <span className="font-medium">{estimateTime(analysis.pageCount * copies)}</span>
+              </div>
+            </div>
+          </motion.div>
+
           {/* ─── حاسبة التسعير اللحظي ─── Real-Time Pricing Panel ─── */}
           {step === "preview" && (
             <motion.div
@@ -2298,24 +2331,33 @@ export function StandalonePreview() {
                 </div>
                 )}
 
-                {/* Total */}
-                <div className="flex items-center justify-between rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 p-4 text-white mt-2">
-                  <div>
-                    <p className="text-xs opacity-80">الإجمالي شامل الضريبة</p>
-                    <p className="text-2xl font-extrabold tabular-nums">{pricing.total.toFixed(2)}</p>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs opacity-80">
-                      <Layers className="h-3 w-3" />
-                      <span>{copies} نسخة</span>
+                {/* Total — receipt style */}
+                <div className="relative rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 p-4 text-white mt-2 overflow-hidden">
+                  {/* Decorative pattern */}
+                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+                  <div className="relative">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs opacity-80">الإجمالي شامل الضريبة</p>
+                        <p className="text-2xl font-extrabold tabular-nums">{pricing.total.toFixed(2)}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                        <Hash className="h-6 w-6" />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs opacity-80">
-                      <FileText className="h-3 w-3" />
-                      <span>{analysis.pageCount} صفحة</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs opacity-80">
-                      <Clock className="h-3 w-3" />
-                      <span>{estimateTime(analysis.pageCount * copies)}</span>
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
+                      <div className="flex items-center gap-1.5 text-xs opacity-80">
+                        <Layers className="h-3 w-3" />
+                        <span>{copies} نسخة</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs opacity-80">
+                        <FileText className="h-3 w-3" />
+                        <span>{analysis.pageCount} صفحة</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs opacity-80">
+                        <Clock className="h-3 w-3" />
+                        <span>{estimateTime(analysis.pageCount * copies)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2390,20 +2432,26 @@ export function StandalonePreview() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.2 }}
           >
             <Button
               onClick={() => { setOrderSubmitted(false); setOrderReference(""); setOrderStep(1); setOrderDialogOpen(true); }}
-              className="w-full h-13 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 transition-all duration-300 font-bold text-sm gap-2"
+              className="w-full h-14 rounded-2xl bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 font-bold text-sm gap-2.5 active:scale-[0.98]"
             >
-              <Send className="h-4 w-4" />طلب طباعة — {finalPricing.total.toFixed(2)} ر.س
+              <Send className="h-5 w-5" />
+              <span>تأكيد طلب الطباعة</span>
+              <span className="text-lg font-extrabold tabular-nums mr-auto">{finalPricing.total.toFixed(2)} <span className="text-xs font-semibold opacity-80">ر.س</span></span>
             </Button>
+            <p className="text-[10px] text-center text-muted-foreground mt-2 flex items-center justify-center gap-1">
+              <ShieldCheck className="h-3 w-3 text-emerald-500" />
+              <span>الدفع عند الاستلام — لا حاجة لبطاقة ائتمان</span>
+            </p>
           </motion.div>
 
           {/* ─── أزرار التنقل المحسّنة ─── */}
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setStep("results")} className="flex-1 h-11 rounded-xl shadow-sm"><ArrowRight className="h-4 w-4 ml-1" />نتائج التحليل</Button>
-            <Button variant="outline" onClick={resetAll} className="flex-1 h-11 rounded-xl shadow-sm"><RotateCcw className="h-4 w-4 ml-1" />رفع ملف جديد</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setStep("results")} className="flex-1 h-10 rounded-xl shadow-sm text-xs gap-1.5"><ArrowRight className="h-3.5 w-3.5" />نتائج التحليل</Button>
+            <Button variant="outline" onClick={resetAll} className="flex-1 h-10 rounded-xl shadow-sm text-xs gap-1.5"><RotateCcw className="h-3.5 w-3.5" />رفع ملف جديد</Button>
           </div>
         </motion.div>
       )}
@@ -2471,6 +2519,7 @@ export function StandalonePreview() {
                         <div className="space-y-1.5">
                           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />رقم الجوال</label>
                           <Input placeholder="05XXXXXXXX" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="h-11 rounded-xl text-sm" dir="ltr" type="tel" />
+                          <p className="text-[10px] text-muted-foreground/60">سيتم إرسال رمز تتبع الطلب إلى هذا الرقم</p>
                         </div>
                       </div>
                     </>
@@ -2525,12 +2574,17 @@ export function StandalonePreview() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
-                    className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center"
+                    className="relative"
                   >
-                    <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                    <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center">
+                      <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                    </div>
+                    {/* Pulse rings */}
+                    <div className="absolute inset-0 w-20 h-20 rounded-full border-2 border-emerald-400/30 animate-ping" />
                   </motion.div>
                   <div className="text-center space-y-2">
                     <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">تم إرسال طلبك بنجاح!</p>
+                    <p className="text-xs text-muted-foreground">سيتم حفظ طلبك وسيتم التواصل معك خلال دقائق</p>
                     {orderReference && (
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-muted-foreground">رقم التتبع:</span>
