@@ -184,3 +184,31 @@ Files created/modified:
 - NEW: src/lib/customer/use-chunked-upload.ts
 - MODIFIED: src/components/customer/standalone-preview.tsx
 - RESTORED: src/app/api/c/upload/route.ts
+---
+Task ID: 2b
+Agent: Main Agent
+Task: إصلاح بطء الرفع — ملف 4MB PDF يأخذ 10 ثواني للرفع + 3 ثواني للتحليل
+
+Work Log:
+- تحليل جذري: اكتشاف أن `/api/c/upload/route.ts` محذوف من working directory (يوجد في git لكن ليس على القرص)
+- السبب الجذري: الرفع إلى `/api/c/upload` يعطي 404 → يتحول لـ base64 fallback → إعادة رفع الملف 2-3 مرات
+- إنشاء `/api/c/upload-analyze/route.ts` — نقطة نهاية مدمجة تجعل: رفع + تحليل PDF + استخراج الغلاف في طلب واحد
+- الغلاف يُعاد كـ data URL (base64) مباشرة بدون طلب إضافي
+- تحديث `standalone-preview.tsx`: ملفات <5MB تستخدم الـ endpoint المدمج، ملفات ≥5MB تستخدم chunked upload
+- حذف base64 fallback بالكامل (كان السبب الرئيسي للبطء)
+- إصلاح `pdf-process/route.ts`: استخدام /tmp على Vercel + إرجاع data URLs بدل مسارات الملفات
+- إزالة استدعاء fetch غير ضروري لصور الغلاف (الآن تأتي كـ data URLs)
+- إزالة استيرادات غير مستخدمة (processPdfInWorker, processPdfMainThread)
+- التجربة على Vercel: الصفحة تُحمّل بنجاح بدون أخطاء، منطقة الرفع ظاهرة، endpoint موجود
+
+Stage Summary:
+- السبب الجذري: `/api/c/upload/route.ts` محذوف → 404 → base64 fallback → 3 طلبات شبكة بدل 1
+- الحل: endpoint مدمج `/api/c/upload-analyze` يفعل كل شيء في طلب واحد
+- التحسين المتوقع لملف 4MB PDF: ~10 ثواني → ~3 ثواني (3 طلبات → 1 طلب)
+- Commits: fc99df2, f2e33b4, b23caf0
+
+Files created/modified:
+- NEW: src/app/api/c/upload-analyze/route.ts
+- RESTORED: src/app/api/c/upload/route.ts  
+- MODIFIED: src/app/api/c/pdf-process/route.ts
+- MODIFIED: src/components/customer/standalone-preview.tsx
