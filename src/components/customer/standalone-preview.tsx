@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useMemo, useEffect, Suspense } from "react";
+import { useChunkedUpload, type UploadPhase } from "@/lib/customer/use-chunked-upload";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, FileText, Eye, Box, Sparkles, ShieldCheck, AlertTriangle,
@@ -8,6 +9,7 @@ import {
   Maximize2, Check, RotateCcw, Layers, Palette, Monitor,
   ArrowRight, ArrowLeft, X, ImagePlus, Bookmark,
   Copy, Settings2, ToggleLeft, ToggleRight, Pin, CircleDot, Paperclip, ImageIcon,
+  Pause, Play, Square,
   Printer, Zap, Clock, History, Download, Minus, Plus, Calculator, Hash, Cloud,
   Send, User, Phone, CheckCircle2, Loader2,
 } from "lucide-react";
@@ -198,9 +200,12 @@ export function StandalonePreview() {
   const shopId = shop?.id || null;
   const [step, setStep] = useState<Step>("idle");
   const [file, setFile] = useState<File | null>(null);
+  // ===== Chunked Upload Hook =====
+  const chunkedUpload = useChunkedUpload();
+
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFileType, setUploadedFileType] = useState<UploadedFileType>("pdf");
   const [storedName, setStoredName] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [analysis, setAnalysis] = useState<AnalysisResult>(DEFAULT_ANALYSIS);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStage, setAnalysisStage] = useState("");
@@ -483,68 +488,39 @@ export function StandalonePreview() {
     setStep("uploading"); setUploadProgress(0);
     setWorkerResult(null);
     fileForWorkerRef.current = isPdf ? f : null;
+
     // ═══════════════════════════════════════════════════════════════
-    // UPLOAD WITH FALLBACK: Server upload → local base64 fallback
+    // UPLOAD: Use chunked upload hook (fast, resumable, with controls)
     // ═══════════════════════════════════════════════════════════════
     let storedFileName: string | null = null;
     let usedLocalFallback = false;
 
-    // PATH 1: Try server upload (with progress tracking)
-    try {
-      const fd = new FormData(); fd.append("file", f);
-      storedFileName = await new Promise<string>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/c/upload");
-        xhr.timeout = 60_000; // 60s timeout
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) {
-            const pct = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(Math.min(pct, 99));
-          }
-        });
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              setUploadProgress(100);
-              resolve(data.storedFileName);
-            } catch { reject(new Error("فشل في قراءة استجابة الخادم")); }
-          } else {
-            try { const e2 = JSON.parse(xhr.responseText); reject(new Error(e2.error || `فشل في رفع الملف (${xhr.status})`)); }
-            catch { reject(new Error(`فشل في رفع الملف (${xhr.status})`)); }
-          }
-        });
-        xhr.addEventListener("error", () => reject(new Error("SERVER_UNREACHABLE")));
-        xhr.addEventListener("timeout", () => reject(new Error("SERVER_TIMEOUT")));
-        xhr.addEventListener("abort", () => reject(new Error("تم إلغاء الرفع")));
-        xhr.send(fd);
-      });
-    } catch (uploadErr) {
-      const errMsg = (uploadErr as Error).message;
-      console.warn("[upload] Server upload failed, using local fallback:", errMsg);
-
-      // PATH 2: Local fallback — convert file to data URL (last resort)
+    const uploadResult = await chunkedUpload.upload(f);
+    if (uploadResult) {
+      storedFileName = uploadResult;
+    } else {
+      // Chunked upload failed/cancelled — try base64 fallback
+      console.warn("[upload] Chunked upload failed, using local fallback");
       setUploadProgress(50);
       try {
         storedFileName = await new Promise<string>((res, rej) => {
           const reader = new FileReader();
           reader.onload = () => {
-            if (typeof reader.result === "string") {
-              res(reader.result); // data:...;base64,...
-            } else {
-              rej(new Error("فشل في قراءة الملف محلياً"));
-            }
+            if (typeof reader.result === "string") res(reader.result);
+            else rej(new Error("فشل في قراءة الملف محلياً"));
           };
           reader.onerror = () => rej(new Error("فشل في قراءة الملف"));
           reader.readAsDataURL(f);
         });
         usedLocalFallback = true;
         setUploadProgress(100);
-      } catch (localErr) {
+      } catch {
         throw new Error("فشل في رفع الملف — يرجى التأكد من اتصالك بالإنترنت");
       }
     }
 
+    // Sync progress state with hook state
+    setUploadProgress(chunkedUpload.progress);
     setStoredName(storedFileName);
 
     try {
@@ -821,6 +797,26 @@ export function StandalonePreview() {
     const s = e.target.files?.[0]; if (s) handleFile(s);
   }, [handleFile]);
 
+  // ─── Clipboard Paste Support (Ctrl+V / Cmd+V) ───
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      // Only handle paste when in idle step and no modal is open
+      if (step !== "idle") return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.kind === "file") {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) handleFile(file);
+          return;
+        }
+      }
+    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [step, handleFile]);
+
   // Reusable category-based gradient classnames (eliminates 4x duplication in stat cards)
   const catCardBg = useMemo(() => {
     if (fileCategory === "image") return "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-950/10 border-emerald-200/50 dark:border-emerald-800/30";
@@ -993,6 +989,7 @@ export function StandalonePreview() {
                 <div className="text-center w-full">
                   <p className="text-lg font-bold mb-1.5 bg-gradient-to-l from-amber-600 to-orange-500 bg-clip-text text-transparent">اسحب الملف هنا</p>
                   <p className="text-sm text-muted-foreground leading-relaxed">أو انقر لاختيار ملف من جهازك</p>
+                  <p className="text-[11px] text-muted-foreground/60">أو Ctrl+V للصق من الحافظة</p>
                 </div>
 
                 {/* Format icons row */}
@@ -1107,21 +1104,76 @@ export function StandalonePreview() {
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
               className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center"
             >
-              <Upload className="h-8 w-8 text-amber-500" />
+              {chunkedUpload.phase === "assembling" ? (
+                <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+              ) : chunkedUpload.phase === "preparing" ? (
+                <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+              ) : (
+                <Upload className="h-8 w-8 text-amber-500" />
+              )}
             </motion.div>
-            <div><p className="font-semibold text-lg">جارٍ رفع الملف...</p><p className="text-sm text-muted-foreground mt-1">{file?.name}</p><p className="text-xs text-muted-foreground/70">{file ? `${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت` : ""}</p></div>
-            <div className="w-full max-w-sm space-y-2">
+            <div>
+              <p className="font-semibold text-lg">
+                {chunkedUpload.phase === "preparing" && "جارٍ تجهيز الرفع..."}
+                {chunkedUpload.phase === "uploading" && "جارٍ رفع الملف..."}
+                {chunkedUpload.phase === "assembling" && "جارٍ تجميع الملف..."}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">{file?.name}</p>
+              <p className="text-xs text-muted-foreground/70">{file ? `${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت` : ""}</p>
+            </div>
+            <div className="w-full max-w-sm space-y-3">
+              {/* Progress bar */}
               <div className="relative">
-                <Progress value={uploadProgress} className="h-3" />
+                <Progress value={chunkedUpload.progress} className="h-3" />
                 <motion.div
                   className="absolute top-0 right-0 h-3 rounded-full bg-gradient-to-l from-amber-400 to-amber-500/0"
-                  style={{ width: `${uploadProgress}%` }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
+                  style={{ width: `${chunkedUpload.progress}%` }}
+                  animate={chunkedUpload.phase === "uploading" ? { opacity: [0.3, 0.6, 0.3] } : { opacity: 0 }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground font-mono tabular-nums">{uploadProgress}%</p>
+              {/* Stats row: speed + ETA + uploaded */}
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono tabular-nums">
+                <span>{chunkedUpload.formatSpeed(chunkedUpload.speed)}</span>
+                <span className="font-bold text-foreground text-sm">{chunkedUpload.progress}%</span>
+                <span>{chunkedUpload.formatETA(chunkedUpload.eta)}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground/70">
+                {chunkedUpload.formatSize(chunkedUpload.uploadedBytes)} / {chunkedUpload.formatSize(chunkedUpload.totalBytes)}
+              </p>
+              {/* Control buttons */}
+              {(chunkedUpload.canPause || chunkedUpload.canResume) && (
+                <div className="flex items-center justify-center gap-3 pt-1">
+                  {chunkedUpload.canPause && (
+                    <button
+                      onClick={chunkedUpload.pause}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 text-xs font-semibold hover:bg-amber-200 dark:hover:bg-amber-950/50 transition-all border border-amber-200/50 dark:border-amber-800/30"
+                    >
+                      <Pause className="h-3.5 w-3.5" />
+                      إيقاف مؤقت
+                    </button>
+                  )}
+                  {chunkedUpload.canResume && (
+                    <button
+                      onClick={chunkedUpload.resume}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-950/50 transition-all border border-emerald-200/50 dark:border-emerald-800/30"
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                      استئناف
+                    </button>
+                  )}
+                  <button
+                    onClick={chunkedUpload.cancel}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-200 dark:hover:bg-rose-950/50 transition-all border border-rose-200/50 dark:border-rose-800/30"
+                  >
+                    <Square className="h-3.5 w-3.5" />
+                    إلغاء
+                  </button>
+                </div>
+              )}
+              {chunkedUpload.errorMessage && (
+                <p className="text-xs text-rose-600 dark:text-rose-400">{chunkedUpload.errorMessage}</p>
+              )}
             </div>
           </div>
         </motion.div>
