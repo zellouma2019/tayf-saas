@@ -836,6 +836,29 @@ export function StandalonePreview() {
   const cost = estimateCost(analysis.pageCount, analysis.isColor);
   const printTime = estimateTime(analysis.pageCount);
 
+  /* ─── حاسبة التسعير اللحظي (القديم — fallback) ─── */
+  const pricing = useMemo(() => {
+    const pages = analysis.pageCount || 1;
+    const isColor = printColor;
+    const pr = settings.settings.general.pricingRules || DEFAULT_PRICING_RULES;
+    const basePerPage = isColor ? pr.colorCostPerPage : pr.bwCostPerPage;
+    const printCost = basePerPage * pages * copies * (pr.paperSurcharge[paperWeight] || 1.0);
+    const bindCost = pr.bindingCosts[effectiveBinding] || 0;
+    const coverCost = clearCover ? pr.clearCoverCost : 0;
+    const duplexSurcharge = duplex && pages > 1 ? pages * pr.duplexPerPageRate * copies : 0;
+    const subtotal = printCost + bindCost * copies + coverCost * copies + duplexSurcharge;
+    const vat = subtotal * (pr.vatRate / 100);
+    const total = Math.round((subtotal + vat) * 100) / 100;
+    return {
+      printCost: Math.round(printCost * 100) / 100,
+      bindCost: Math.round(bindCost * copies * 100) / 100,
+      coverCost: Math.round(coverCost * copies * 100) / 100,
+      duplexSurcharge: Math.round(duplexSurcharge * 100) / 100,
+      vat: Math.round(vat * 100) / 100,
+      total,
+    };
+  }, [analysis.pageCount, printColor, copies, paperWeight, effectiveBinding, clearCover, duplex, settings.settings.general.pricingRules]);
+
   // ===== خدمة التسعير المخصصة من service-specs =====
   const servicePricing = useMemo(() => {
     if (!serviceOptions) return null;
@@ -861,29 +884,6 @@ export function StandalonePreview() {
         total: Math.round((servicePricing.total + Math.max(1, servicePricing.total) * 0.15) * 100) / 100,
       }
     : pricing;
-
-  /* ─── حاسبة التسعير اللحظي ─── */
-  const pricing = useMemo(() => {
-    const pages = analysis.pageCount || 1;
-    const isColor = printColor;
-    const pr = settings.settings.general.pricingRules || DEFAULT_PRICING_RULES;
-    const basePerPage = isColor ? pr.colorCostPerPage : pr.bwCostPerPage;
-    const printCost = basePerPage * pages * copies * (pr.paperSurcharge[paperWeight] || 1.0);
-    const bindCost = pr.bindingCosts[effectiveBinding] || 0;
-    const coverCost = clearCover ? pr.clearCoverCost : 0;
-    const duplexSurcharge = duplex && pages > 1 ? pages * pr.duplexPerPageRate * copies : 0;
-    const subtotal = printCost + bindCost * copies + coverCost * copies + duplexSurcharge;
-    const vat = subtotal * (pr.vatRate / 100);
-    const total = Math.round((subtotal + vat) * 100) / 100;
-    return {
-      printCost: Math.round(printCost * 100) / 100,
-      bindCost: Math.round(bindCost * copies * 100) / 100,
-      coverCost: Math.round(coverCost * copies * 100) / 100,
-      duplexSurcharge: Math.round(duplexSurcharge * 100) / 100,
-      vat: Math.round(vat * 100) / 100,
-      total,
-    };
-  }, [analysis.pageCount, printColor, copies, paperWeight, effectiveBinding, clearCover, duplex, settings.settings.general.pricingRules]);
 
   const ORDER_STEPS = [
     { n: 1, label: "بياناتك", icon: <User className="h-4 w-4" /> },
@@ -1481,7 +1481,7 @@ export function StandalonePreview() {
             />
           )}
 
-          {/* Hidden: preserve the old options block as fallback reference — kept for 3D settings only */
+          {/* Hidden: preserve the old options block as fallback reference — kept for 3D settings only */}
           {false && previewMode === "mockup" && (
             <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
               <button onClick={() => setShow3DSettings(!show3DSettings)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">

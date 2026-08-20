@@ -124,3 +124,31 @@ Stage Summary:
 - Each format extracts real data from binary headers or file structure
 - Service suggestions are tailored to each format's characteristics
 - Export advice provided for formats that need conversion (CDR, INDD, etc.)
+---
+Task ID: 1
+Agent: Main Agent
+Task: Section 1 — ServiceOptionsPanel integration (file types, options, analysis, preview)
+
+Work Log:
+- Created `src/components/customer/service-options-panel.tsx` (590 lines) — dynamic panel that renders service-specs.ts sections as interactive option selectors
+- Integrated ServiceOptionsPanel into `standalone-preview.tsx` replacing hardcoded options per fileCategory
+- Added service type override: 7 service types (مستند، صور، تجليد، نسخ، بطاقات، ملصقات، تصميم مخصص) as clickable buttons
+- Added `custom-design` to `print-config.ts` ServiceType union
+- Updated `file-analyzer.ts`: AI, EPS, CDR, INDD, PSD now detect as `custom-design` service type
+- Integrated `calculatePricingCustom` from service-specs.ts with fallback to old pricing
+- Fixed JSX comment syntax error (missing `}`) that caused parsing failure
+- Fixed variable initialization order: `pricing` useMemo now declared BEFORE `finalPricing` that references it
+- Browser-verified: uploaded image, expanded ServiceOptionsPanel, confirmed all 7 service types + photo-specific options render correctly
+
+Stage Summary:
+- ServiceOptionsPanel WORKING: renders dynamic sections from service-specs.ts with grid/row layouts
+- Service type override WORKING: user can switch between 7 types, auto-detected type highlighted
+- Pricing integration WORKING: uses calculatePricingCustom when ServiceOptionsPanel is active, falls back to old calculator
+- Custom-design detection WORKING: design files (AI, EPS, CDR, INDD, PSD) detected correctly
+- Files modified: service-options-panel.tsx (new), standalone-preview.tsx, file-analyzer.ts, print-config.ts
+- Pre-existing lint errors: 9 errors (setState in effect, React Compiler memoization) — NOT from this work
+
+Unresolved/Next Phase:
+- Need to test other file types (PDF, DOCX, XLSX, PPTX) to confirm correct service type detection and options
+- Sections 4 and 5 modifications pending (user mentioned these for later)
+- Pre-existing lint errors in settings-provider.tsx, customer-page.tsx, and other files remain
