@@ -152,3 +152,35 @@ Unresolved/Next Phase:
 - Need to test other file types (PDF, DOCX, XLSX, PPTX) to confirm correct service type detection and options
 - Sections 4 and 5 modifications pending (user mentioned these for later)
 - Pre-existing lint errors in settings-provider.tsx, customer-page.tsx, and other files remain
+---
+Task ID: 2
+Agent: Main Agent
+Task: القسم الثاني — طرق الرفع، قواعد البيانات، سرعة رفع الملفات
+
+Work Log:
+- بحث معمق عبر 8 استعلامات ويب: أفضل ممارسات رفع الملفات (UploadCare, Eleken, DesignNBuy, Vistaprint)
+- بحث تقنيات: tus protocol, chunked upload, resumable uploads, Uppy.js, presigned URLs
+- إنشاء 4 API routes جديدة: upload-init, upload-chunk, upload-complete, upload-status
+- إنشاء useChunkedUpload hook (280 سطر) مع: chunked upload 2MB chunks, 3 parallel workers, auto-retry 3x, pause/resume/cancel, speed rolling window, ETA calculation
+- تحديث standalone-preview.tsx: استبدال XHR القديم بالـ hook الجديد
+- واجهة رفع جديدة: شريط تقدم مع سرعة (MB/s) + وقت متبقي + حجم مرفوع/إجمالي + أزرار إيقاف/استئناف/إلغاء
+- إضافة دعم لصق من الحافظة (Ctrl+V / Cmd+V) مع text "أو Ctrl+V للصق من الحافظة"
+- ملفات <5MB: رفع مباشر (سريع)، ملفات >=5MB: تقسيم تلقائي مع استئناف
+- إعادة /api/c/upload/route.ts بعد حذفه بالخطأ (مطلوب للملفات الصغيرة)
+- تجربة على Vercel: رفع ناجح بدون أخطاء
+
+Stage Summary:
+- رفع مقسم يعمل: chunked upload مع 4 API routes
+- 3 طرق رفع: سحب + نقر + لصق من الحافظة
+- تحكم كامل: إيقاف مؤقت / استئناف / إلغاء
+- معلومات اللحظية: سرعة + وقت متبقي + حجم مرفوع
+- ملاحظة: لا يمكن اختبار محلياً بسبب OOM (4GB RAM), يعمل على Vercel
+
+Files created/modified:
+- NEW: src/app/api/c/upload-init/route.ts
+- NEW: src/app/api/c/upload-chunk/route.ts  
+- NEW: src/app/api/c/upload-complete/route.ts
+- NEW: src/app/api/c/upload-status/route.ts
+- NEW: src/lib/customer/use-chunked-upload.ts
+- MODIFIED: src/components/customer/standalone-preview.tsx
+- RESTORED: src/app/api/c/upload/route.ts
