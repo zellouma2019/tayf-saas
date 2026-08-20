@@ -99,7 +99,7 @@ export async function GET() {
   return NextResponse.json({ status: "ok" });
 }
 
-async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const startTime = Date.now();
   try {
     const formData = await req.formData();
