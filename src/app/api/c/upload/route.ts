@@ -3,14 +3,13 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 ميغابايت
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = [
   "pdf", "jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff", "tif", "avif", "svg",
   "docx", "doc", "xlsx", "xls", "pptx", "ppt", "txt", "rtf", "csv",
   "ai", "eps", "psd", "indd",
 ];
 
-/** Vercel: /tmp/uploads | local: cwd/uploads */
 function getUploadsDir(): string {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
     const dir = "/tmp/uploads";
@@ -49,7 +48,6 @@ export async function POST(req: NextRequest) {
     }
 
     const uploadsDir = getUploadsDir();
-
     const randomSuffix = crypto.randomBytes(8).toString("hex");
     const timestamp = Date.now();
     const storedFileName = `file_${timestamp}_${randomSuffix}.${ext}`;

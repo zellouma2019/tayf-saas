@@ -27,7 +27,7 @@ import { useSettings } from "@/lib/customer/settings-provider";
 import { useShop } from "@/lib/shop-context";
 import { DEFAULT_PRICING_RULES } from "@/lib/customer/default-settings";
 import { detectFileType } from "@/lib/customer/magic-bytes";
-import { processPdfInWorker, processPdfMainThread, terminatePdfWorker, type PdfWorkerResult } from "@/lib/customer/pdf-worker-bridge";
+import { terminatePdfWorker, type PdfWorkerResult } from "@/lib/customer/pdf-worker-bridge";
 import { analyzeFileReal, type RealFileAnalysis } from "@/lib/customer/file-analyzer";
 
 /* ═══ Server-side PDF processing result (for large files >10MB) ═══ */
@@ -485,173 +485,292 @@ export function StandalonePreview() {
     else if (claimedImage) displayType = "image";
 
     setUploadedFileType(displayType);
-    setStep("uploading"); setUploadProgress(0);
     setWorkerResult(null);
     fileForWorkerRef.current = isPdf ? f : null;
 
     // ═══════════════════════════════════════════════════════════════
-    // UPLOAD: Use chunked upload hook (fast, resumable, with controls)
+    // FAST UPLOAD: Combined endpoint (upload + analyze + cover in 1 request)
     // ═══════════════════════════════════════════════════════════════
+    const SMALL_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
     let storedFileName: string | null = null;
-    let usedLocalFallback = false;
-
-    const uploadResult = await chunkedUpload.upload(f);
-    if (uploadResult) {
-      storedFileName = uploadResult;
-    } else {
-      // Chunked upload failed/cancelled — try base64 fallback
-      console.warn("[upload] Chunked upload failed, using local fallback");
-      setUploadProgress(50);
-      try {
-        storedFileName = await new Promise<string>((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === "string") res(reader.result);
-            else rej(new Error("فشل في قراءة الملف محلياً"));
-          };
-          reader.onerror = () => rej(new Error("فشل في قراءة الملف"));
-          reader.readAsDataURL(f);
-        });
-        usedLocalFallback = true;
-        setUploadProgress(100);
-      } catch {
-        throw new Error("فشل في رفع الملف — يرجى التأكد من اتصالك بالإنترنت");
-      }
-    }
-
-    // Sync progress state with hook state
-    setUploadProgress(chunkedUpload.progress);
-    setStoredName(storedFileName);
 
     try {
-      if (isPdf) {
-      // ═══════════════════════════════════════════════════════════════
-      // PDF PROCESSING — ALL PDFs use server-side analysis for accurate page count
-      // ═══════════════════════════════════════════════════════════════
-      setStep("analyzing"); setAnalysisProgress(0);
-      setAnalysisStage("جارٍ تحليل الملف على الخادم...");
-      setAnalysisProgress(10);
+      if (f.size < SMALL_FILE_THRESHOLD) {
+        // ═══ SMALL FILES (< 5MB): Single combined request ═══
+        // Upload + PDF analysis + cover rendering all in ONE network round trip
+        setStep("uploading"); setUploadProgress(0);
+        setAnalysisStage(isPdf ? "جارٍ رفع وتحليل الملف..." : "جارٍ رفع الملف...");
 
-        // ═══ STEP 1: Fast server-side metadata for ALL PDFs (always accurate) ═══
-        setAnalysisProgress(20);
+        const uploadAnalyzeResult = await new Promise<Record<string, unknown> | null>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const fd = new FormData();
+          fd.append("file", f);
+          xhr.open("POST", "/api/c/upload-analyze");
+          xhr.timeout = 120_000;
+
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+              // Upload is ~60% of total (rest is server analysis)
+              const uploadPct = Math.round((e.loaded / e.total) * 100);
+              const totalPct = Math.round(uploadPct * 0.6);
+              setUploadProgress(totalPct);
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                resolve(JSON.parse(xhr.responseText));
+              } catch { reject(new Error("فشل في قراءة استجابة الخادم")); }
+            } else {
+              try {
+                const err = JSON.parse(xhr.responseText);
+                reject(new Error(err.error || `فشل (${xhr.status})`));
+              } catch { reject(new Error(`فشل في رفع الملف (${xhr.status})`)); }
+            }
+          });
+          xhr.addEventListener("error", () => reject(new Error("SERVER_UNREACHABLE")));
+          xhr.addEventListener("timeout", () => reject(new Error("SERVER_TIMEOUT")));
+
+          xhr.send(fd);
+        });
+
+        if (!uploadAnalyzeResult) {
+          throw new Error("فشل في رفع الملف — يرجى التأكد من اتصالك بالإنترنت");
+        }
+
+        storedFileName = uploadAnalyzeResult.storedFileName as string;
+        setStoredName(storedFileName);
+        setUploadProgress(100);
+
+        if (isPdf && uploadAnalyzeResult.isPdf) {
+          // ═══ PDF: Server already analyzed + rendered cover in the same request ═══
+          setStep("analyzing"); setAnalysisProgress(80);
+          setAnalysisStage("جارٍ تجهيز النتائج...");
+
+          const numP = (uploadAnalyzeResult.numPages as number) || 1;
+          const dimsMM = uploadAnalyzeResult.pageDimensionsMM as { width: number; height: number } | null;
+          const paperSize = (uploadAnalyzeResult.closestPaperSize as string) || "A4";
+          const isPortrait = (uploadAnalyzeResult.isPortrait as boolean) !== false;
+          const totalTimeMs = uploadAnalyzeResult.totalTimeMs as number || 0;
+
+          // Set cover/back from the combined response (already data URLs, no extra fetch!)
+          const coverDataUrl = (uploadAnalyzeResult.coverUrl as string) || null;
+          const backDataUrl = (uploadAnalyzeResult.backUrl as string) || null;
+
+          if (coverDataUrl || backDataUrl) {
+            setWorkerResult({
+              numPages: numP,
+              pageDimensionsMM: dimsMM,
+              closestPaperSize: paperSize,
+              isPortrait,
+              aspectRatio: uploadAnalyzeResult.aspectRatio as number | undefined,
+              coverDataUrl,
+              backDataUrl,
+            });
+          }
+
+          const pdfResult: AnalysisResult = {
+            ...DEFAULT_ANALYSIS,
+            pageCount: numP,
+            fileSizeKB: Math.round(f.size / 1024),
+            fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+            paperSize,
+            orientation: isPortrait ? "portrait" : "landscape",
+            closestPaperSize: paperSize,
+            pageDimensionsMM: dimsMM,
+            title: (uploadAnalyzeResult.title as string) || "",
+            author: (uploadAnalyzeResult.author as string) || "",
+            confidence: 95,
+            healthScore: 95,
+            hasImages: numP > 1,
+            isColor: true,
+            insights: [
+              `رفع + تحليل + غلاف في ${totalTimeMs}مث (طلب واحد)`,
+              `الملف يحتوي على ${numP} صفحة`,
+              `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
+              `مقاس الورق: ${paperSize}`,
+            ],
+            fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
+          };
+          setAnalysis(pdfResult);
+          setTotalPages(numP);
+          setAnalysisProgress(100);
+          setAnalysisStage("");
+          const cat = classifyFile("pdf", numP, dimsMM);
+          saveToHistory(f, cat, storedFileName, "pdf");
+          setStep("results");
+          return;
+        } else {
+          // ═══ Non-PDF: Upload done, client-side analysis ═══
+          setStep("analyzing"); setAnalysisProgress(0);
+          setAnalysisStage("جارٍ تحليل الملف...");
+          setAnalysisProgress(30);
+          const realAnalysis = await analyzeFileReal(f);
+          setAnalysisProgress(90);
+          setAnalysisProgress(100);
+
+          const isColorFile = realAnalysis.suggestedColor === "color";
+          const dimsMM = realAnalysis.pageDimensionsMM || null;
+          const serviceLabel = realAnalysis.detectedServiceName || realAnalysis.fileNature || "طباعة";
+
+          const detailedResult: AnalysisResult = {
+            pageCount: realAnalysis.pageCount || 1,
+            fileSizeKB: realAnalysis.fileSizeKB,
+            fileSizeMB: realAnalysis.fileSizeMB,
+            paperSize: realAnalysis.suggestedPaperSize || "A4",
+            paperType: realAnalysis.suggestedPaperType || "normal",
+            binding: realAnalysis.suggestedBinding || "none",
+            color: realAnalysis.suggestedColor || (isColorFile ? "color" : "bw"),
+            orientation: (realAnalysis.orientation === "أفقي" ? "landscape" : "portrait"),
+            title: realAnalysis.pdfTitle || "",
+            author: realAnalysis.pdfAuthor || "",
+            confidence: realAnalysis.confidence,
+            insights: realAnalysis.insights,
+            healthScore: realAnalysis.confidence,
+            hasImages: realAnalysis.hasImages || false,
+            hasEmbeddedFonts: false,
+            imageCount: realAnalysis.imageCount || 0,
+            isEncrypted: false,
+            textLayer: realAnalysis.hasText || false,
+            isColor: isColorFile,
+            dpiCategory: realAnalysis.dpiCategory || "",
+            estimatedDPI: realAnalysis.estimatedDPI || 0,
+            closestPaperSize: realAnalysis.closestPaperSize || realAnalysis.suggestedPaperSize || "A4",
+            pageDimensionsMM: dimsMM,
+            fileNature: realAnalysis.fileNature || "",
+            detectedService: realAnalysis.detectedService,
+            detectedServiceName: serviceLabel,
+            thumbnailUrl: realAnalysis.thumbnailUrl,
+            colorSpace: realAnalysis.colorSpace,
+            aspectRatio: realAnalysis.aspectRatio,
+            dominantColors: realAnalysis.dominantColors,
+            imageDimensionsDetailed: realAnalysis.imageDimensionsDetailed,
+            tiffDetails: realAnalysis.tiffDetails,
+            gifDetails: realAnalysis.gifDetails,
+            svgDetails: realAnalysis.svgDetails,
+            psdDetails: realAnalysis.psdDetails,
+            spreadsheetDetails: realAnalysis.spreadsheetDetails,
+            presentationDetails: realAnalysis.presentationDetails,
+            vectorDetails: realAnalysis.vectorDetails,
+            documentDetails: realAnalysis.documentDetails,
+            bmpDetails: realAnalysis.bmpDetails,
+            exportAdvice: realAnalysis.exportAdvice,
+            suggestedPhotoSize: realAnalysis.suggestedPhotoSize,
+            suggestedPhotoSizeDPI: realAnalysis.suggestedPhotoSizeDPI,
+            textPreview: realAnalysis.textPreview,
+            detectedLanguage: realAnalysis.detectedLanguage,
+            hasText: realAnalysis.hasText,
+          };
+          setAnalysis(detailedResult);
+          setTotalPages(realAnalysis.pageCount || 1);
+          if (realAnalysis.thumbnailUrl) setImagePreviewUrl(realAnalysis.thumbnailUrl);
+
+          const svc = realAnalysis.detectedService;
+          let cat: FileCategory = "short-doc";
+          if (svc === "photo") cat = "image";
+          else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
+          else if (svc === "poster") cat = "short-doc";
+          saveToHistory(f, cat, storedFileName, displayType);
+          setStep("results");
+          return;
+        }
+      } else {
+        // ═══ LARGE FILES (≥ 5MB): Chunked upload + separate analysis ═══
+        setStep("uploading"); setUploadProgress(0);
+        const uploadResult = await chunkedUpload.upload(f);
+        if (uploadResult) {
+          storedFileName = uploadResult;
+        } else {
+          throw new Error("فشل في رفع الملف — يرجى التأكد من اتصالك بالإنترنت");
+        }
+        setUploadProgress(100);
+        setStoredName(storedFileName);
+      }
+
+      // ═══ LARGE FILE ANALYSIS (chunked upload done, now analyze) ═══
+      if (isPdf) {
+        setStep("analyzing"); setAnalysisProgress(0);
+        setAnalysisStage("جارٍ تحليل الملف على الخادم...");
+        setAnalysisProgress(10);
 
         let serverMeta: { numPages: number; pageDimensionsMM: { width: number; height: number } | null; closestPaperSize: string; isPortrait: boolean; title: string; author: string; processingTimeMs: number } | null = null;
         try {
-          // If file was uploaded to server, pass storedFileName to avoid re-upload
-          const analyzeUrl = storedFileName && !usedLocalFallback
-            ? `/api/c/analyze-pdf?storedFileName=${encodeURIComponent(storedFileName)}`
-            : "/api/c/analyze-pdf";
-          const analyzeBody = (storedFileName && !usedLocalFallback)
-            ? undefined
-            : (() => { const fd = new FormData(); fd.append("file", f); return fd; })();
-          const analyzeRes = await fetch(analyzeUrl, { method: "POST", body: analyzeBody });
+          const analyzeUrl = `/api/c/analyze-pdf?storedFileName=${encodeURIComponent(storedFileName!)}`;
+          const analyzeRes = await fetch(analyzeUrl, { method: "POST" });
           if (analyzeRes.ok) {
             serverMeta = await analyzeRes.json();
             setAnalysisProgress(40);
           }
-        } catch {
-          // Server analysis failed — will fall back to client
-        }
+        } catch { /* fall through */ }
 
         const numP = serverMeta?.numPages || 1;
         const dimsMM = serverMeta?.pageDimensionsMM || null;
         const paperSize = serverMeta?.closestPaperSize || "A4";
         const isPortrait = serverMeta?.isPortrait !== false;
 
-        // ═══ STEP 2: Cover rendering (only for >10MB use server, ≤10MB use worker) ═══
-        const IS_LARGE_FILE = f.size > CLIENT_SIZE_LIMIT;
+        // Cover rendering: server-side for large files
+        setAnalysisStage("معالجة سحابية — استخراج الغلاف...");
+        setAnalysisProgress(50);
 
-        if (IS_LARGE_FILE) {
-          // Server-side cover rendering for large files
-          setAnalysisStage("معالجة سحابية — استخراج الغلاف...");
-          setAnalysisProgress(50);
+        try {
+          const processUrl = `/api/c/pdf-process?storedFileName=${encodeURIComponent(storedFileName!)}`;
+          const processRes = await fetch(processUrl, { method: "POST" });
+          if (processRes.ok) {
+            const serverData: ServerPdfResult = await processRes.json();
+            setAnalysisProgress(80);
 
-          try {
-            // If file was uploaded to server, pass storedFileName to avoid re-upload
-            const processUrl = storedFileName && !usedLocalFallback
-              ? `/api/c/pdf-process?storedFileName=${encodeURIComponent(storedFileName)}`
-              : "/api/c/pdf-process";
-            const processBody = (storedFileName && !usedLocalFallback)
-              ? undefined
-              : (() => { const fd = new FormData(); fd.append("file", f); return fd; })();
-            const processRes = await fetch(processUrl, { method: "POST", body: processBody });
-            if (processRes.ok) {
-              const serverData: ServerPdfResult = await processRes.json();
-              setAnalysisProgress(80);
+            let coverDataUrl: string | null = null;
+            let backDataUrl: string | null = null;
 
-              let coverDataUrl: string | null = null;
-              let backDataUrl: string | null = null;
-
-              if (serverData.coverImageUrl) {
-                try {
-                  setAnalysisStage("جارٍ تحميل صورة الغلاف...");
-                  const coverResp = await fetch(serverData.coverImageUrl);
-                  if (coverResp.ok) {
-                    const coverBlob = await coverResp.blob();
-                    coverDataUrl = await new Promise<string>((res) => {
-                      const reader = new FileReader();
-                      reader.onloadend = () => res(reader.result as string);
-                      reader.readAsDataURL(coverBlob);
-                    });
-                  }
-                } catch { /* cover failed */ }
-              }
-
-              if (serverData.backImageUrl) {
-                try {
-                  const backResp = await fetch(serverData.backImageUrl);
-                  if (backResp.ok) {
-                    const backBlob = await backResp.blob();
-                    backDataUrl = await new Promise<string>((res) => {
-                      const reader = new FileReader();
-                      reader.onloadend = () => res(reader.result as string);
-                      reader.readAsDataURL(backBlob);
-                    });
-                  }
-                } catch { /* back failed */ }
-              }
-
-              setWorkerResult({
-                numPages: serverData.numPages ?? numP,
-                pageDimensionsMM: serverData.pageDimensionsMM ?? dimsMM,
-                closestPaperSize: serverData.closestPaperSize ?? paperSize,
-                isPortrait: serverData.isPortrait ?? isPortrait,
-                aspectRatio: serverData.aspectRatio,
-                coverDataUrl,
-                backDataUrl,
-              });
+            if (serverData.coverImageUrl) {
+              try {
+                setAnalysisStage("جارٍ تحميل صورة الغلاف...");
+                const coverResp = await fetch(serverData.coverImageUrl);
+                if (coverResp.ok) {
+                  const coverBlob = await coverResp.blob();
+                  coverDataUrl = await new Promise<string>((res) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => res(reader.result as string);
+                    reader.readAsDataURL(coverBlob);
+                  });
+                }
+              } catch { /* cover failed */ }
             }
-          } catch {
-            /* pdf-process failed — cover rendering skipped, page count still accurate from analyze-pdf */
-          }
-        } else {
-          // Client-side Web Worker for cover/back textures (≤10MB)
-          setAnalysisStage("استخراج الغلاف (خيط منفصل)...");
-          try {
-            const result = await processPdfInWorker(f, (p) => {
-              if (p.percent > 20) setAnalysisProgress(Math.min(40 + p.percent * 0.5, 85));
-              if (p.stage === "cover") setAnalysisStage("جارٍ استخراج الغلاف...");
-              else if (p.stage === "back") setAnalysisStage("جارٍ استخراج الصفحة الأخيرة...");
-            });
-            setWorkerResult(result);
-          } catch {
-            try {
-              const fallback = await processPdfMainThread(f, (p) => {
-                if (p.percent > 20) setAnalysisProgress(Math.min(40 + p.percent * 0.5, 85));
-              });
-              setWorkerResult(fallback);
-            } catch { /* worker and main-thread both failed */ }
-          }
-        }
 
-        // ═══ STEP 3: Build analysis result from server metadata ═══
+            if (serverData.backImageUrl) {
+              try {
+                const backResp = await fetch(serverData.backImageUrl);
+                if (backResp.ok) {
+                  const backBlob = await backResp.blob();
+                  backDataUrl = await new Promise<string>((res) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => res(reader.result as string);
+                    reader.readAsDataURL(backBlob);
+                  });
+                }
+              } catch { /* back failed */ }
+            }
+
+            setWorkerResult({
+              numPages: serverData.numPages ?? numP,
+              pageDimensionsMM: serverData.pageDimensionsMM ?? dimsMM,
+              closestPaperSize: serverData.closestPaperSize ?? paperSize,
+              isPortrait: serverData.isPortrait ?? isPortrait,
+              aspectRatio: serverData.aspectRatio,
+              coverDataUrl,
+              backDataUrl,
+            });
+          }
+        } catch { /* pdf-process failed */ }
+
         setAnalysisProgress(95);
         const pdfResult: AnalysisResult = {
           ...DEFAULT_ANALYSIS,
           pageCount: numP,
           fileSizeKB: Math.round(f.size / 1024),
           fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
-          paperSize: paperSize,
+          paperSize,
           orientation: isPortrait ? "portrait" : "landscape",
           closestPaperSize: paperSize,
           pageDimensionsMM: dimsMM,
@@ -676,105 +795,102 @@ export function StandalonePreview() {
         setAnalysisProgress(100);
         setAnalysisStage("");
         const cat = classifyFile("pdf", numP, dimsMM);
-        saveToHistory(f, cat, storedFileName, "pdf");
+        saveToHistory(f, cat, storedFileName!, "pdf");
         setStep("results");
       } else {
-      // ═══════════════════════════════════════════════════════════════
-      // تحليل حقيقي لكل أنواع الملفات غير PDF
-      // ═══════════════════════════════════════════════════════════════
-      setStep("analyzing");
-      setAnalysisProgress(0);
-      setAnalysisStage("جارٍ تحليل الملف...");
+        // Non-PDF large file: client-side analysis
+        setStep("analyzing"); setAnalysisProgress(0);
+        setAnalysisStage("جارٍ تحليل الملف...");
 
-      try {
-        setAnalysisProgress(30);
-        const realAnalysis = await analyzeFileReal(f);
-        setAnalysisProgress(90);
-        setAnalysisProgress(100);
+        try {
+          setAnalysisProgress(30);
+          const realAnalysis = await analyzeFileReal(f);
+          setAnalysisProgress(90);
+          setAnalysisProgress(100);
 
-        const isColorFile = realAnalysis.suggestedColor === "color";
-        const dimsMM = realAnalysis.pageDimensionsMM || null;
-        const serviceLabel = realAnalysis.detectedServiceName || realAnalysis.fileNature || "طباعة";
+          const isColorFile = realAnalysis.suggestedColor === "color";
+          const dimsMM = realAnalysis.pageDimensionsMM || null;
+          const serviceLabel = realAnalysis.detectedServiceName || realAnalysis.fileNature || "طباعة";
 
-        const detailedResult: AnalysisResult = {
-          pageCount: realAnalysis.pageCount || 1,
-          fileSizeKB: realAnalysis.fileSizeKB,
-          fileSizeMB: realAnalysis.fileSizeMB,
-          paperSize: realAnalysis.suggestedPaperSize || "A4",
-          paperType: realAnalysis.suggestedPaperType || "normal",
-          binding: realAnalysis.suggestedBinding || "none",
-          color: realAnalysis.suggestedColor || (isColorFile ? "color" : "bw"),
-          orientation: (realAnalysis.orientation === "أفقي" ? "landscape" : "portrait"),
-          title: realAnalysis.pdfTitle || "",
-          author: realAnalysis.pdfAuthor || "",
-          confidence: realAnalysis.confidence,
-          insights: realAnalysis.insights,
-          healthScore: realAnalysis.confidence,
-          hasImages: realAnalysis.hasImages || false,
-          hasEmbeddedFonts: false,
-          imageCount: realAnalysis.imageCount || 0,
-          isEncrypted: false,
-          textLayer: realAnalysis.hasText || false,
-          isColor: isColorFile,
-          dpiCategory: realAnalysis.dpiCategory || "",
-          estimatedDPI: realAnalysis.estimatedDPI || 0,
-          closestPaperSize: realAnalysis.closestPaperSize || realAnalysis.suggestedPaperSize || "A4",
-          pageDimensionsMM: dimsMM,
-          fileNature: realAnalysis.fileNature || "",
-          detectedService: realAnalysis.detectedService,
-          detectedServiceName: serviceLabel,
-          thumbnailUrl: realAnalysis.thumbnailUrl,
-          colorSpace: realAnalysis.colorSpace,
-          aspectRatio: realAnalysis.aspectRatio,
-          dominantColors: realAnalysis.dominantColors,
-          imageDimensionsDetailed: realAnalysis.imageDimensionsDetailed,
-          tiffDetails: realAnalysis.tiffDetails,
-          gifDetails: realAnalysis.gifDetails,
-          svgDetails: realAnalysis.svgDetails,
-          psdDetails: realAnalysis.psdDetails,
-          spreadsheetDetails: realAnalysis.spreadsheetDetails,
-          presentationDetails: realAnalysis.presentationDetails,
-          vectorDetails: realAnalysis.vectorDetails,
-          documentDetails: realAnalysis.documentDetails,
-          bmpDetails: realAnalysis.bmpDetails,
-          exportAdvice: realAnalysis.exportAdvice,
-          suggestedPhotoSize: realAnalysis.suggestedPhotoSize,
-          suggestedPhotoSizeDPI: realAnalysis.suggestedPhotoSizeDPI,
-          textPreview: realAnalysis.textPreview,
-          detectedLanguage: realAnalysis.detectedLanguage,
-          hasText: realAnalysis.hasText,
-        };
-        setAnalysis(detailedResult);
-        setTotalPages(realAnalysis.pageCount || 1);
-        if (realAnalysis.thumbnailUrl) setImagePreviewUrl(realAnalysis.thumbnailUrl);
+          const detailedResult: AnalysisResult = {
+            pageCount: realAnalysis.pageCount || 1,
+            fileSizeKB: realAnalysis.fileSizeKB,
+            fileSizeMB: realAnalysis.fileSizeMB,
+            paperSize: realAnalysis.suggestedPaperSize || "A4",
+            paperType: realAnalysis.suggestedPaperType || "normal",
+            binding: realAnalysis.suggestedBinding || "none",
+            color: realAnalysis.suggestedColor || (isColorFile ? "color" : "bw"),
+            orientation: (realAnalysis.orientation === "أفقي" ? "landscape" : "portrait"),
+            title: realAnalysis.pdfTitle || "",
+            author: realAnalysis.pdfAuthor || "",
+            confidence: realAnalysis.confidence,
+            insights: realAnalysis.insights,
+            healthScore: realAnalysis.confidence,
+            hasImages: realAnalysis.hasImages || false,
+            hasEmbeddedFonts: false,
+            imageCount: realAnalysis.imageCount || 0,
+            isEncrypted: false,
+            textLayer: realAnalysis.hasText || false,
+            isColor: isColorFile,
+            dpiCategory: realAnalysis.dpiCategory || "",
+            estimatedDPI: realAnalysis.estimatedDPI || 0,
+            closestPaperSize: realAnalysis.closestPaperSize || realAnalysis.suggestedPaperSize || "A4",
+            pageDimensionsMM: dimsMM,
+            fileNature: realAnalysis.fileNature || "",
+            detectedService: realAnalysis.detectedService,
+            detectedServiceName: serviceLabel,
+            thumbnailUrl: realAnalysis.thumbnailUrl,
+            colorSpace: realAnalysis.colorSpace,
+            aspectRatio: realAnalysis.aspectRatio,
+            dominantColors: realAnalysis.dominantColors,
+            imageDimensionsDetailed: realAnalysis.imageDimensionsDetailed,
+            tiffDetails: realAnalysis.tiffDetails,
+            gifDetails: realAnalysis.gifDetails,
+            svgDetails: realAnalysis.svgDetails,
+            psdDetails: realAnalysis.psdDetails,
+            spreadsheetDetails: realAnalysis.spreadsheetDetails,
+            presentationDetails: realAnalysis.presentationDetails,
+            vectorDetails: realAnalysis.vectorDetails,
+            documentDetails: realAnalysis.documentDetails,
+            bmpDetails: realAnalysis.bmpDetails,
+            exportAdvice: realAnalysis.exportAdvice,
+            suggestedPhotoSize: realAnalysis.suggestedPhotoSize,
+            suggestedPhotoSizeDPI: realAnalysis.suggestedPhotoSizeDPI,
+            textPreview: realAnalysis.textPreview,
+            detectedLanguage: realAnalysis.detectedLanguage,
+            hasText: realAnalysis.hasText,
+          };
+          setAnalysis(detailedResult);
+          setTotalPages(realAnalysis.pageCount || 1);
+          if (realAnalysis.thumbnailUrl) setImagePreviewUrl(realAnalysis.thumbnailUrl);
 
-        const svc = realAnalysis.detectedService;
-        let cat: FileCategory = "short-doc";
-        if (svc === "photo") cat = "image";
-        else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
-        else if (svc === "poster") cat = "short-doc";
-        saveToHistory(f, cat, storedFileName, displayType);
-        setStep("results");
-      } catch (analysisErr) {
-        console.error("[analysis] Real analysis failed:", analysisErr);
-        setAnalysisProgress(100);
-        const fallbackResult: AnalysisResult = {
-          ...DEFAULT_ANALYSIS,
-          pageCount: 1,
-          fileSizeKB: Math.round(f.size / 1024),
-          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
-          confidence: 60,
-          insights: ["تم رفع الملف بنجاح — سيتم تحليله من قبل المطبعة"],
-          healthScore: 60,
-          fileNature: isDesign ? "تصميم" : "مستند",
-          isColor: true,
-        };
-        setAnalysis(fallbackResult);
-        setTotalPages(1);
-        saveToHistory(f, "short-doc", storedFileName, displayType);
-        setStep("results");
+          const svc = realAnalysis.detectedService;
+          let cat: FileCategory = "short-doc";
+          if (svc === "photo") cat = "image";
+          else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
+          else if (svc === "poster") cat = "short-doc";
+          saveToHistory(f, cat, storedFileName!, displayType);
+          setStep("results");
+        } catch (analysisErr) {
+          console.error("[analysis] Real analysis failed:", analysisErr);
+          setAnalysisProgress(100);
+          const fallbackResult: AnalysisResult = {
+            ...DEFAULT_ANALYSIS,
+            pageCount: 1,
+            fileSizeKB: Math.round(f.size / 1024),
+            fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+            confidence: 60,
+            insights: ["تم رفع الملف بنجاح — سيتم تحليله من قبل المطبعة"],
+            healthScore: 60,
+            fileNature: isDesign ? "تصميم" : "مستند",
+            isColor: true,
+          };
+          setAnalysis(fallbackResult);
+          setTotalPages(1);
+          saveToHistory(f, "short-doc", storedFileName!, displayType);
+          setStep("results");
+        }
       }
-      }  // closes if (isPdf) ... else
     } catch (e) {
       /* Error during upload/analyze */
       setError((e as Error).message || "حدث خطأ غير متوقع"); setStep("idle");
