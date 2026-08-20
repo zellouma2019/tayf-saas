@@ -1004,8 +1004,8 @@ export function StandalonePreview() {
           <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent">
             {settings.shopName || "مطبعة الذكي"}
           </h1>
-          <p className="text-foreground/70 text-sm mt-2 font-medium">
-            ارفع ملفك وشاهد المعاينة ثلاثية الأبعاد فوراً
+          <p className="text-foreground/60 text-sm mt-2 font-medium">
+            ارفع ملفك واحصل على تحليل فوري وتسعيرة تلقائية
           </p>
         </div>
 
@@ -1013,8 +1013,8 @@ export function StandalonePreview() {
         <div className="flex justify-center gap-3 flex-wrap">
           {[
             { icon: <Sparkles className="h-3.5 w-3.5" />, label: "تحليل ذكي" },
-            { icon: <Box className="h-3.5 w-3.5" />, label: "معاينة 3D" },
-            { icon: <Zap className="h-3.5 w-3.5" />, label: "طباعة فورية" },
+            { icon: <Ruler className="h-3.5 w-3.5" />, label: "فحص جاهزية" },
+            { icon: <Zap className="h-3.5 w-3.5" />, label: "تسعيرة فورية" },
           ].map((badge) => (
             <span
               key={badge.label}
@@ -1078,26 +1078,34 @@ export function StandalonePreview() {
                   <p className="text-[11px] text-muted-foreground/60">أو Ctrl+V للصق من الحافظة</p>
                 </div>
 
-                {/* Format icons row */}
+                {/* Format icons row with staggered animation */}
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   {[
-                    { icon: <FileText className="h-4 w-4" />, label: "PDF", bg: "bg-red-50 dark:bg-red-950/30 text-red-500 border-red-200/50 dark:border-red-800/30" },
-                    { icon: <ImageIcon className="h-4 w-4" />, label: "JPG", bg: "bg-blue-50 dark:bg-blue-950/30 text-blue-500 border-blue-200/50 dark:border-blue-800/30" },
-                    { icon: <ImagePlus className="h-4 w-4" />, label: "PNG", bg: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500 border-emerald-200/50 dark:border-emerald-800/30" },
-                    { icon: <FileText className="h-4 w-4" />, label: "WebP", bg: "bg-purple-50 dark:bg-purple-950/30 text-purple-500 border-purple-200/50 dark:border-purple-800/30" },
-                    { icon: <FileText className="h-4 w-4" />, label: "DOCX", bg: "bg-sky-50 dark:bg-sky-950/30 text-sky-500 border-sky-200/50 dark:border-sky-800/30" },
-                    { icon: <FileText className="h-4 w-4" />, label: "AI/PSD", bg: "bg-orange-50 dark:bg-orange-950/30 text-orange-500 border-orange-200/50 dark:border-orange-800/30" },
-                    { icon: <FileText className="h-4 w-4" />, label: "+18", bg: "bg-gray-50 dark:bg-gray-950/30 text-gray-500 border-gray-200/50 dark:border-gray-800/30" },
-                  ].map((fmt) => (
-                    <span key={fmt.label} className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold min-w-[72px] justify-center ${fmt.bg}`}>
+                    { icon: <FileText className="h-3.5 w-3.5" />, label: "PDF", bg: "bg-red-50 dark:bg-red-950/30 text-red-500 border-red-200/50 dark:border-red-800/30" },
+                    { icon: <ImageIcon className="h-3.5 w-3.5" />, label: "JPG", bg: "bg-blue-50 dark:bg-blue-950/30 text-blue-500 border-blue-200/50 dark:border-blue-800/30" },
+                    { icon: <ImagePlus className="h-3.5 w-3.5" />, label: "PNG", bg: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500 border-emerald-200/50 dark:border-emerald-800/30" },
+                    { icon: <ImageIcon className="h-3.5 w-3.5" />, label: "WebP", bg: "bg-purple-50 dark:bg-purple-950/30 text-purple-500 border-purple-200/50 dark:border-purple-800/30" },
+                    { icon: <FileText className="h-3.5 w-3.5" />, label: "DOCX", bg: "bg-sky-50 dark:bg-sky-950/30 text-sky-500 border-sky-200/50 dark:border-sky-800/30" },
+                    { icon: <FileText className="h-3.5 w-3.5" />, label: "AI/PSD", bg: "bg-orange-50 dark:bg-orange-950/30 text-orange-500 border-orange-200/50 dark:border-orange-800/30" },
+                    { icon: <Layers className="h-3.5 w-3.5" />, label: "+18", bg: "bg-gray-50 dark:bg-gray-950/30 text-gray-500 border-gray-200/50 dark:border-gray-800/30" },
+                  ].map((fmt, i) => (
+                    <motion.span
+                      key={fmt.label}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + i * 0.06 }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-semibold min-w-[64px] justify-center ${fmt.bg} transition-transform hover:scale-105`}
+                    >
                       {fmt.icon}
                       {fmt.label}
-                    </span>
+                    </motion.span>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>حتى 100 ميغابايت</span>
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground/70">
+                  <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" />حتى 100 ميغابايت</span>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                  <span>رفع آمن ومشفّر</span>
                 </div>
               </div>
             </div>

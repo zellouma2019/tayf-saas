@@ -267,7 +267,8 @@ function CustomerContent() {
               )}
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3 text-emerald-500" />ملفات آمنة</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3 text-emerald-500" />ملفات آمنة ومشفّرة</span>
+              <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-blue-500" />طباعة فورية</span>
               <span className="flex items-center gap-1"><Heart className="h-3 w-3 text-rose-400" />صُنع بحب</span>
             </div>
           </div>
