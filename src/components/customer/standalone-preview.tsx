@@ -11,7 +11,7 @@ import {
   Copy, Settings2, ToggleLeft, ToggleRight, Pin, CircleDot, Paperclip, ImageIcon,
   Pause, Play, Square,
   Printer, Zap, Clock, History, Download, Minus, Plus, Calculator, Hash, Cloud,
-  Send, User, Phone, CheckCircle2, Loader2,
+  Send, User, Phone, CheckCircle2, Loader2, Truck, MessageCircle, Star, FileCheck,
 } from "lucide-react";
 import type { BindingType, FileCategory } from "@/components/customer/book-mockup-3d";
 import { ServiceOptionsPanel, type ServiceOptionsState } from "@/components/customer/service-options-panel";
@@ -194,6 +194,26 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/* ─── أيقونة نوع الملف ─── */
+function getFileTypeIcon(fileType: string): React.ReactNode {
+  switch (fileType) {
+    case "image": return <ImageIcon className="h-4 w-4" />;
+    case "pdf": return <FileText className="h-4 w-4" />;
+    case "design": return <Star className="h-4 w-4" />;
+    default: return <FileCheck className="h-4 w-4" />;
+  }
+}
+
+/* ─── تدرج لوني حسب نوع الملف ─── */
+function getFileTypeGradient(fileType: string): string {
+  switch (fileType) {
+    case "image": return "from-emerald-400 to-teal-500";
+    case "pdf": return "from-red-400 to-rose-500";
+    case "design": return "from-violet-400 to-purple-500";
+    default: return "from-amber-400 to-orange-500";
+  }
+}
+
 export function StandalonePreview() {
   const settings = useSettings();
   const { shop } = useShop();
@@ -265,6 +285,7 @@ export function StandalonePreview() {
   // Order dialog
   const [orderStep, setOrderStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryMode, setDeliveryMode] = useState<"pickup" | "delivery">("pickup");
   // Service options state (from ServiceOptionsPanel)
   const [serviceOptions, setServiceOptions] = useState<ServiceOptionsState | null>(null);
 
@@ -1103,9 +1124,15 @@ export function StandalonePreview() {
             .dark .grid-pattern {
               background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
             }
+            .upload-glow {
+              box-shadow: 0 0 40px rgba(245, 158, 11, 0.08), 0 0 80px rgba(249, 115, 22, 0.04);
+            }
+            .dark .upload-glow {
+              box-shadow: 0 0 40px rgba(245, 158, 11, 0.04), 0 0 80px rgba(249, 115, 22, 0.02);
+            }
           `}</style>
           <div
-            className={`relative rounded-3xl p-[3px] transition-all duration-300 ${isDragging ? "scale-[1.02] shadow-xl shadow-amber-500/20" : "hover:shadow-lg hover:shadow-amber-500/10"}`}
+            className={`relative rounded-3xl p-[3px] transition-all duration-300 upload-glow ${isDragging ? "scale-[1.02] shadow-xl shadow-amber-500/30" : "hover:shadow-lg hover:shadow-amber-500/15"}`}
             onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDragOver={onDragOver} onDrop={onDrop}
           >
             {/* Animated gradient border */}
@@ -1117,8 +1144,8 @@ export function StandalonePreview() {
               <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.tif,.avif,.svg,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.csv,.ai,.eps,.psd,.indd" className="hidden" onChange={onFileInput} />
               <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px]">
                 {/* Upload icon with float */}
-                <div className="upload-float w-20 h-20 rounded-2xl bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                  <Upload className="h-10 w-10 text-amber-500" />
+                <div className="upload-float w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20">
+                  <Upload className="h-12 w-12 text-amber-500 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
                 </div>
                 <div className="text-center w-full">
                   <p className="text-lg font-bold mb-1.5 bg-gradient-to-l from-amber-600 to-orange-500 bg-clip-text text-transparent">اسحب الملف هنا</p>
@@ -1142,11 +1169,28 @@ export function StandalonePreview() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 + i * 0.06 }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-semibold min-w-[64px] justify-center ${fmt.bg} transition-transform hover:scale-105`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-semibold min-w-[64px] justify-center ${fmt.bg} transition-all duration-200 hover:scale-110 hover:shadow-md cursor-default`}
                     >
                       {fmt.icon}
                       {fmt.label}
                     </motion.span>
+                  ))}
+                </div>
+
+                {/* 3-step process indicator */}
+                <div className="flex items-center gap-0 mt-1">
+                  {[
+                    { n: "1", label: "ارفع", icon: <Upload className="h-3 w-3" /> },
+                    { n: "2", label: "تحليل", icon: <Sparkles className="h-3 w-3" /> },
+                    { n: "3", label: "اطلب", icon: <Send className="h-3 w-3" /> },
+                  ].map((s, i) => (
+                    <div key={s.n} className="flex items-center">
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50">
+                        <span className="text-amber-600 dark:text-amber-400">{s.icon}</span>
+                        <span className="text-[10px] font-medium text-muted-foreground">{s.label}</span>
+                      </div>
+                      {i < 2 && <ChevronLeft className="h-3 w-3 text-muted-foreground/40 mx-0.5" />}
+                    </div>
                   ))}
                 </div>
 
@@ -1213,16 +1257,13 @@ export function StandalonePreview() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
                       onClick={() => reuploadFromHistory(item)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl border ${catColor} transition-all duration-200 hover:shadow-sm text-right`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border ${catColor} transition-all duration-200 hover:shadow-md hover:scale-[1.01] text-right group`}
                     >
-                      <div className="w-9 h-9 rounded-lg bg-background dark:bg-card flex items-center justify-center shrink-0 shadow-sm">
-                        {item.fileType === "image"
-                          ? <ImageIcon className="h-4 w-4 text-emerald-500" />
-                          : <FileText className="h-4 w-4 text-red-500" />
-                        }
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getFileTypeGradient(item.fileType)} flex items-center justify-center shrink-0 shadow-sm text-white`}>
+                        {getFileTypeIcon(item.fileType)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.name}</p>
+                        <p className="text-sm font-medium truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{item.name}</p>
                         <p className="text-[10px] text-muted-foreground">{item.pages} صفحة • {item.size}</p>
                       </div>
                       <Badge className={`${badgeColor} border-0 text-[9px] font-semibold`}>
@@ -2570,6 +2611,22 @@ export function StandalonePreview() {
                           <Input placeholder="05XXXXXXXX" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="h-11 rounded-xl text-sm" dir="ltr" type="tel" />
                           <p className="text-[10px] text-muted-foreground/60">سيتم إرسال رمز تتبع الطلب إلى هذا الرقم</p>
                         </div>
+                        {/* طريقة الاستلام */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5"><Truck className="h-3.5 w-3.5" />طريقة الاستلام</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => setDeliveryMode("pickup")} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-200 ${deliveryMode === "pickup" ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm" : "border-transparent bg-muted/40 hover:bg-muted/60"}`}>
+                              <Printer className={`h-5 w-5 ${deliveryMode === "pickup" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+                              <span className={`text-xs font-semibold ${deliveryMode === "pickup" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}`}>استلام من المطبعة</span>
+                              <span className="text-[9px] text-muted-foreground">مجاني</span>
+                            </button>
+                            <button type="button" onClick={() => setDeliveryMode("delivery")} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-200 ${deliveryMode === "delivery" ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm" : "border-transparent bg-muted/40 hover:bg-muted/60"}`}>
+                              <Truck className={`h-5 w-5 ${deliveryMode === "delivery" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+                              <span className={`text-xs font-semibold ${deliveryMode === "delivery" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}`}>توصيل</span>
+                              <span className="text-[9px] text-muted-foreground">يتم الاتفاق على التكلفة</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </>
                   )}
@@ -2588,6 +2645,7 @@ export function StandalonePreview() {
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">التجليد</span><span className="font-medium">{bindingLabel[effectiveBinding]}</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">الطباعة</span><span className="font-medium">{printColor ? "ملون" : "أبيض وأسود"}</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">الورق</span><span className="font-medium">{paperWeight}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الاستلام</span><span className="font-medium">{deliveryMode === "pickup" ? "استلام من المطبعة" : "توصيل"}</span></div>
                       </div>
 
                       {/* بيانات العميل */}
@@ -2668,7 +2726,10 @@ export function StandalonePreview() {
                         }}
                         className="flex-1 h-10 rounded-xl gap-1.5 text-xs"
                       >
-                        <Send className="h-3.5 w-3.5" />مشاركة الطلب
+                        <Send className="h-3.5 w-3.5" />مشاركة
+                      </Button>
+                      <Button variant="outline" onClick={() => { const text = encodeURIComponent(`طلب طباعة — رقم: ${orderReference}\nالمبلغ: ${pricing.total.toFixed(2)} ر.س\nالملف: ${file?.name}\nالصفحات: ${analysis.pageCount}`); window.open(`https://wa.me/?text=${text}`, "_blank"); }} className="h-10 w-10 rounded-xl gap-0 p-0 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/20">
+                        <MessageCircle className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
@@ -2739,7 +2800,7 @@ export function StandalonePreview() {
                                 clearCover,
                               },
                           customer: { name: customerName, phone: customerPhone },
-                          delivery: { mode: "pickup" },
+                          delivery: { mode: deliveryMode },
                           shopId: shopId,
                         }),
                       });
