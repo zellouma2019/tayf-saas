@@ -10,6 +10,19 @@ const ACCEPTED_EXTENSIONS = [
   "ai", "eps", "psd", "indd",
 ];
 
+/** Vercel: /tmp/uploads | محلي: cwd/uploads */
+function getUploadsDir(): string {
+  // Vercel أو أي بيئة serverless → /tmp
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const dir = "/tmp/uploads";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  }
+  const dir = path.join(process.cwd(), "uploads");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -36,10 +49,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const uploadsDir = path.join(process.cwd(), "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    const uploadsDir = getUploadsDir();
 
     const randomSuffix = crypto.randomBytes(8).toString("hex");
     const timestamp = Date.now();
