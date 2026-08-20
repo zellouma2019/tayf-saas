@@ -15,15 +15,14 @@ import path from "path";
  * - Streaming response (no base64 bloat)
  */
 
-function getUploadsDir(): string {
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    const dir = "/tmp/uploads";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return dir;
-  }
-  const dir = path.join(process.cwd(), "uploads");
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  return dir;
+function resolveFilePath(storedFileName: string): string | null {
+  // Check /tmp/uploads (Vercel) first, then cwd/uploads (local dev)
+  const tmpPath = path.join("/tmp/uploads", storedFileName);
+  const cwdPath = path.join(process.cwd(), "uploads", storedFileName);
+
+  if (fs.existsSync(tmpPath) && fs.statSync(tmpPath).isFile()) return tmpPath;
+  if (fs.existsSync(cwdPath) && fs.statSync(cwdPath).isFile()) return cwdPath;
+  return null;
 }
 
 export async function GET(req: NextRequest) {
@@ -33,17 +32,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ status: "ok" });
   }
 
+  // Security: prevent directory traversal
+  const safeName = path.basename(storedFileName).replace(/\.\./g, "");
+  if (!safeName) {
+    return NextResponse.json({ error: "invalid file name" }, { status: 400 });
+  }
+
   // Actual cover rendering
   const t0 = Date.now();
   const page = req.nextUrl.searchParams.get("page") || "first";
-  const uploadsDir = getUploadsDir();
   try {
-    const filePath = path.join(uploadsDir, storedFileName);
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveFilePath(safeName);
+    if (!filePath) {
       return NextResponse.json({ error: "الملف غير موجود" }, { status: 404 });
     }
 
-    const ext = storedFileName.split(".").pop()?.toLowerCase();
+    const ext = safeName.split(".").pop()?.toLowerCase();
     if (ext !== "pdf") {
       // For non-PDF files, serve the original file directly as cover
       const buf = fs.readFileSync(filePath);
@@ -108,7 +112,7 @@ export async function GET(req: NextRequest) {
       .jpeg({ quality: 80, mozjpeg: true, effort: 1 })
       .toBuffer();
 
-    console.log(`[render-cover] ${storedFileName} page=${page} ${renderW}x${renderH} in ${Date.now() - t0}ms`);
+    console.log(`[render-cover] ${safeName} page=${page} ${renderW}x${renderH} in ${Date.now() - t0}ms`);
 
     return new NextResponse(jpegBuf, {
       headers: {

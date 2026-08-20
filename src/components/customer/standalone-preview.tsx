@@ -2219,9 +2219,10 @@ export function StandalonePreview() {
           </AnimatePresence>
 
           {/* ═══ 2D High-Res Page Viewer Overlay ═══ */}
-          {browsePagesOpen && uploadedFileType === "pdf" && file && (
+          {browsePagesOpen && uploadedFileType === "pdf" && (file || storedName) && (
             <PageViewer2D
               file={file}
+              storedFileName={storedName}
               totalPages={totalPages}
               isOpen={browsePagesOpen}
               onClose={() => setBrowsePagesOpen(false)}

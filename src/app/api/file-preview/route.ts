@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 /// عرض ملف من مجلد uploads بالاسم (للمعاينة قبل إنشاء الطلب)
+/// يدعم كلًا من /tmp/uploads (Vercel) و cwd/uploads (محلي)
 export async function GET(req: NextRequest) {
   try {
     const file = req.nextUrl.searchParams.get("file");
@@ -16,9 +17,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "invalid file name" }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), "uploads", safeName);
+    // Check /tmp/uploads (Vercel) first, then cwd/uploads (local dev)
+    const tmpPath = path.join("/tmp/uploads", safeName);
+    const cwdPath = path.join(process.cwd(), "uploads", safeName);
+    let filePath: string | null = null;
 
-    if (!fs.existsSync(filePath)) {
+    if (fs.existsSync(tmpPath) && fs.statSync(tmpPath).isFile()) {
+      filePath = tmpPath;
+    } else if (fs.existsSync(cwdPath) && fs.statSync(cwdPath).isFile()) {
+      filePath = cwdPath;
+    }
+
+    if (!filePath) {
       return NextResponse.json({ error: "file not found" }, { status: 404 });
     }
 

@@ -8,20 +8,23 @@ import { Button } from "@/components/ui/button";
 /**
  * PageViewer2D — High-Fidelity 2D Page Viewer
  *
- * Replaces the broken 3D open-book page inspection with a clean,
- * high-resolution 2D viewer that renders PDF pages to canvas at scale 2.5.
+ * Supports two source modes:
+ * 1. File object (client-side PDF rendering)
+ * 2. Stored file name (server-side fetch via /api/c/uploads/)
+ *
  * Features:
- * - Crisp text rendering via high-DPI canvas (scale × devicePixelRatio)
+ * - Crisp text rendering via high-DPI canvas
  * - Smooth page transitions with Framer Motion
  * - Pinch-to-zoom and scroll-to-zoom support
  * - Fullscreen mode
  * - Page counter with keyboard navigation
- * - No z-fighting, no texture issues, pure 2D canvas rendering
  */
 
 interface PageViewer2DProps {
-  /** PDF File object for rendering pages */
-  file: File | null;
+  /** PDF File object for client-side rendering */
+  file?: File | null;
+  /** Stored file name for server-side loading (fallback) */
+  storedFileName?: string | null;
   /** Total number of pages */
   totalPages: number;
   /** Initial page to display */
@@ -35,10 +38,11 @@ interface PageViewer2DProps {
 }
 
 /** Scale factor for rendering PDF pages to canvas */
-const RENDER_SCALE = 2.5;
+const RENDER_SCALE = 2.0;
 
 export function PageViewer2D({
   file,
+  storedFileName,
   totalPages,
   initialPage = 1,
   isOpen,
@@ -61,20 +65,35 @@ export function PageViewer2D({
   // Load pdfjs and render page
   const renderPage = useCallback(
     async (pageNum: number) => {
-      if (!file || isRenderingRef.current || abortRef.current) return;
+      if (isRenderingRef.current || abortRef.current) return;
       isRenderingRef.current = true;
       setIsLoading(true);
       setPageError(null);
 
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.min.mjs",
+          import.meta.url
+        ).toString();
 
         // Load document if not already loaded
         if (!pdfDocRef.current) {
-          const arrayBuffer = await file.arrayBuffer();
+          let source: { data: ArrayBuffer } | { url: string };
+
+          if (file) {
+            // Client-side: use File object directly
+            const arrayBuffer = await file.arrayBuffer();
+            source = { data: arrayBuffer };
+          } else if (storedFileName) {
+            // Server-side: fetch from /api/c/uploads/ endpoint
+            source = { url: `/api/c/uploads/${encodeURIComponent(storedFileName)}` };
+          } else {
+            throw new Error("لا يوجد ملف للعرض");
+          }
+
           const loadingTask = pdfjsLib.getDocument({
-            data: arrayBuffer,
+            ...source,
             disableAutoFetch: true,
           });
           pdfDocRef.current = (await loadingTask.promise) as {
@@ -92,7 +111,7 @@ export function PageViewer2D({
           render: (o: Record<string, unknown>) => { promise: Promise<void> };
         };
 
-        const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+        const dpr = typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 3) : 1;
         const effectiveScale = RENDER_SCALE * dpr;
         const viewport = page.getViewport({ scale: effectiveScale });
 
@@ -106,7 +125,7 @@ export function PageViewer2D({
 
         if (abortRef.current) return;
 
-        // ═══ CRITICAL: White background before rendering ═══
+        // ═══ White background before rendering ═══
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, width, height);
 
@@ -135,18 +154,19 @@ export function PageViewer2D({
         isRenderingRef.current = false;
       }
     },
-    [file]
+    [file, storedFileName]
   );
 
   // Render when page changes
   useEffect(() => {
-    if (!isOpen || !file) return;
+    if (!isOpen) return;
+    if (!file && !storedFileName) return;
     abortRef.current = false;
     renderPage(currentPage);
     return () => {
       abortRef.current = true;
     };
-  }, [isOpen, file, currentPage, renderPage]);
+  }, [isOpen, file, storedFileName, currentPage, renderPage]);
 
   // Cleanup PDF document on unmount or close
   useEffect(() => {
@@ -160,13 +180,13 @@ export function PageViewer2D({
     };
   }, []);
 
-  // Reset PDF doc when file changes
+  // Reset PDF doc when source changes
   useEffect(() => {
     pdfDocRef.current = null;
     setCurrentPage(initialPage);
     setPageDataUrl(null);
     setZoomLevel(100);
-  }, [file, initialPage]);
+  }, [file, storedFileName, initialPage]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -344,7 +364,6 @@ export function PageViewer2D({
 
                 {pageDataUrl && !isLoading && (
                   <div className="relative rounded-lg overflow-hidden shadow-2xl shadow-black/50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={pageDataUrl}
                       alt={`صفحة ${currentPage}`}

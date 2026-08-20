@@ -122,7 +122,7 @@ export function ProfessionalPdfViewer({
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           source = { data: bytes.buffer as ArrayBuffer };
         } else {
-          source = { url: `/api/file-preview?file=${encodeURIComponent(fileSource)}` };
+          source = { url: `/api/c/uploads/${encodeURIComponent(fileSource)}` };
         }
 
         const pdf = await pdfjsLib.getDocument(source).promise;
