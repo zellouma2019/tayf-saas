@@ -720,37 +720,9 @@ export function StandalonePreview() {
             const serverData: ServerPdfResult = await processRes.json();
             setAnalysisProgress(80);
 
-            let coverDataUrl: string | null = null;
-            let backDataUrl: string | null = null;
-
-            if (serverData.coverImageUrl) {
-              try {
-                setAnalysisStage("جارٍ تحميل صورة الغلاف...");
-                const coverResp = await fetch(serverData.coverImageUrl);
-                if (coverResp.ok) {
-                  const coverBlob = await coverResp.blob();
-                  coverDataUrl = await new Promise<string>((res) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => res(reader.result as string);
-                    reader.readAsDataURL(coverBlob);
-                  });
-                }
-              } catch { /* cover failed */ }
-            }
-
-            if (serverData.backImageUrl) {
-              try {
-                const backResp = await fetch(serverData.backImageUrl);
-                if (backResp.ok) {
-                  const backBlob = await backResp.blob();
-                  backDataUrl = await new Promise<string>((res) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => res(reader.result as string);
-                    reader.readAsDataURL(backBlob);
-                  });
-                }
-              } catch { /* back failed */ }
-            }
+            // Cover/back URLs are now data URLs (no extra fetch needed)
+            const coverDataUrl = serverData.coverImageUrl || null;
+            const backDataUrl = serverData.backImageUrl || null;
 
             setWorkerResult({
               numPages: serverData.numPages ?? numP,
