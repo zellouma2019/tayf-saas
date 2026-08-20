@@ -24,6 +24,7 @@ import { useShop } from "@/lib/shop-context";
 import { DEFAULT_PRICING_RULES } from "@/lib/customer/default-settings";
 import { detectFileType } from "@/lib/customer/magic-bytes";
 import { processPdfInWorker, processPdfMainThread, terminatePdfWorker, type PdfWorkerResult } from "@/lib/customer/pdf-worker-bridge";
+import { analyzeFileReal, type RealFileAnalysis } from "@/lib/customer/file-analyzer";
 
 /* ═══ Server-side PDF processing result (for large files >10MB) ═══ */
 interface ServerPdfResult {
@@ -84,6 +85,31 @@ interface AnalysisResult {
   closestPaperSize: string;
   pageDimensionsMM: { width: number; height: number } | null;
   fileNature: string;
+  // ===== تفاصيل تحليل متقدمة =====
+  detectedService?: string;
+  detectedServiceName?: string;
+  thumbnailUrl?: string;
+  fileNature?: string;
+  colorSpace?: string;
+  aspectRatio?: string;
+  dominantColors?: string[];
+  imageDimensionsDetailed?: { width: number; height: number; megapixels: number };
+  tiffDetails?: { bitDepth: number; compression: string; photometric: string; multiPage: boolean; pageTileCount: number };
+  gifDetails?: { animated: boolean; frameCount: number; hasTransparency: boolean };
+  svgDetails?: { hasText: boolean; textCount: number; hasImages: boolean; imageCount: number; hasEmbeddedFonts: boolean; viewBox: string };
+  psdDetails?: { channels: number; bitDepth: number; colorMode: string; colorModeName: string };
+  spreadsheetDetails?: { sheetCount: number; estimatedRows: number; hasCharts: boolean };
+  presentationDetails?: { slideCount: number; aspectRatio: string; isWidescreen: boolean };
+  vectorDetails?: { boundingBoxMM: { width: number; height: number } | null; isPdfCompatible: boolean };
+  documentDetails?: { wordCount: number; charCount: number; detectedLanguage: string; hasImages: boolean };
+  bmpDetails?: { bitDepth: number; colorCount: number; topDown: boolean };
+  exportAdvice?: string;
+  suggestedPhotoSize?: string;
+  suggestedPhotoSizeDPI?: number;
+  textPreview?: string;
+  fullText?: string;
+  detectedLanguage?: string;
+  hasText?: boolean;
 }
 
 interface RecentUpload {
@@ -518,66 +544,13 @@ export function StandalonePreview() {
     setStoredName(storedFileName);
 
     try {
-      if (isImage) {
-        // صورة: تحليل مبسط بدون pdfjs
-        setAnalysisProgress(100);
-        const imgResult: AnalysisResult = {
-          ...DEFAULT_ANALYSIS,
-          pageCount: 1,
-          fileSizeKB: Math.round(f.size / 1024),
-          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
-          paperSize: "A4",
-          paperType: "normal",
-          binding: "none",
-          color: "color",
-          orientation: "portrait",
-          closestPaperSize: "A4",
-          confidence: 85,
-          insights: ["صورة مرفوعة — ستُطبع كورقة واحدة"],
-          healthScore: 85,
-          hasImages: true,
-          isColor: true,
-          fileNature: "صورة",
-        };
-        setAnalysis(imgResult);
-        setTotalPages(1);
-        const cat = classifyFile("image", 1, null);
-        saveToHistory(f, cat, storedFileName, "image");
-        setStep("results");
-      } else if (isDoc || isDesign) {
-        // ═══ مستند أو ملف تصميم: رفع مباشر بدون تحليل PDF ═══
-        setAnalysisProgress(100);
-        const fileLabel = isDoc ? "مستند" : "ملف تصميم";
-        const docResult: AnalysisResult = {
-          ...DEFAULT_ANALYSIS,
-          pageCount: 1,
-          fileSizeKB: Math.round(f.size / 1024),
-          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
-          paperSize: "A4",
-          paperType: "normal",
-          binding: "none",
-          color: "color",
-          orientation: "portrait",
-          closestPaperSize: "A4",
-          confidence: 70,
-          insights: [`${fileLabel} مرفوع (${ext.toUpperCase()}) — سيتم مراجعته من قبل المطبعة`],
-          healthScore: 75,
-          hasImages: isDesign,
-          isColor: true,
-          fileNature: isDesign ? "تصميم" : "مستند",
-        };
-        setAnalysis(docResult);
-        setTotalPages(1);
-        const cat = classifyFile(isDesign ? "design" : "document", 1, null);
-        saveToHistory(f, cat, storedFileName, displayType);
-        setStep("results");
-      } else {
-        // ═══════════════════════════════════════════════════════════════
-        // PDF PROCESSING — ALL PDFs use server-side analysis for accurate page count
-        // ═══════════════════════════════════════════════════════════════
-        setStep("analyzing"); setAnalysisProgress(0);
-        setAnalysisStage("جارٍ تحليل الملف على الخادم...");
-        setAnalysisProgress(10);
+      if (isPdf) {
+      // ═══════════════════════════════════════════════════════════════
+      // PDF PROCESSING — ALL PDFs use server-side analysis for accurate page count
+      // ═══════════════════════════════════════════════════════════════
+      setStep("analyzing"); setAnalysisProgress(0);
+      setAnalysisStage("جارٍ تحليل الملف على الخادم...");
+      setAnalysisProgress(10);
 
         // ═══ STEP 1: Fast server-side metadata for ALL PDFs (always accurate) ═══
         setAnalysisProgress(20);
@@ -725,7 +698,103 @@ export function StandalonePreview() {
         const cat = classifyFile("pdf", numP, dimsMM);
         saveToHistory(f, cat, storedFileName, "pdf");
         setStep("results");
-      }  // ← closes the outer else (PDF processing)
+      } else {
+      // ═══════════════════════════════════════════════════════════════
+      // تحليل حقيقي لكل أنواع الملفات غير PDF
+      // ═══════════════════════════════════════════════════════════════
+      setStep("analyzing");
+      setAnalysisProgress(0);
+      setAnalysisStage("جارٍ تحليل الملف...");
+
+      try {
+        setAnalysisProgress(30);
+        const realAnalysis = await analyzeFileReal(f);
+        setAnalysisProgress(90);
+        setAnalysisProgress(100);
+
+        const isColorFile = realAnalysis.suggestedColor === "color";
+        const dimsMM = realAnalysis.pageDimensionsMM || null;
+        const serviceLabel = realAnalysis.detectedServiceName || realAnalysis.fileNature || "طباعة";
+
+        const detailedResult: AnalysisResult = {
+          pageCount: realAnalysis.pageCount || 1,
+          fileSizeKB: realAnalysis.fileSizeKB,
+          fileSizeMB: realAnalysis.fileSizeMB,
+          paperSize: realAnalysis.suggestedPaperSize || "A4",
+          paperType: realAnalysis.suggestedPaperType || "normal",
+          binding: realAnalysis.suggestedBinding || "none",
+          color: realAnalysis.suggestedColor || (isColorFile ? "color" : "bw"),
+          orientation: (realAnalysis.orientation === "أفقي" ? "landscape" : "portrait"),
+          title: realAnalysis.pdfTitle || "",
+          author: realAnalysis.pdfAuthor || "",
+          confidence: realAnalysis.confidence,
+          insights: realAnalysis.insights,
+          healthScore: realAnalysis.confidence,
+          hasImages: realAnalysis.hasImages || false,
+          hasEmbeddedFonts: false,
+          imageCount: realAnalysis.imageCount || 0,
+          isEncrypted: false,
+          textLayer: realAnalysis.hasText || false,
+          isColor: isColorFile,
+          dpiCategory: realAnalysis.dpiCategory || "",
+          estimatedDPI: realAnalysis.estimatedDPI || 0,
+          closestPaperSize: realAnalysis.closestPaperSize || realAnalysis.suggestedPaperSize || "A4",
+          pageDimensionsMM: dimsMM,
+          fileNature: realAnalysis.fileNature || "",
+          detectedService: realAnalysis.detectedService,
+          detectedServiceName: serviceLabel,
+          thumbnailUrl: realAnalysis.thumbnailUrl,
+          colorSpace: realAnalysis.colorSpace,
+          aspectRatio: realAnalysis.aspectRatio,
+          dominantColors: realAnalysis.dominantColors,
+          imageDimensionsDetailed: realAnalysis.imageDimensionsDetailed,
+          tiffDetails: realAnalysis.tiffDetails,
+          gifDetails: realAnalysis.gifDetails,
+          svgDetails: realAnalysis.svgDetails,
+          psdDetails: realAnalysis.psdDetails,
+          spreadsheetDetails: realAnalysis.spreadsheetDetails,
+          presentationDetails: realAnalysis.presentationDetails,
+          vectorDetails: realAnalysis.vectorDetails,
+          documentDetails: realAnalysis.documentDetails,
+          bmpDetails: realAnalysis.bmpDetails,
+          exportAdvice: realAnalysis.exportAdvice,
+          suggestedPhotoSize: realAnalysis.suggestedPhotoSize,
+          suggestedPhotoSizeDPI: realAnalysis.suggestedPhotoSizeDPI,
+          textPreview: realAnalysis.textPreview,
+          detectedLanguage: realAnalysis.detectedLanguage,
+          hasText: realAnalysis.hasText,
+        };
+        setAnalysis(detailedResult);
+        setTotalPages(realAnalysis.pageCount || 1);
+        if (realAnalysis.thumbnailUrl) setImagePreviewUrl(realAnalysis.thumbnailUrl);
+
+        const svc = realAnalysis.detectedService;
+        let cat: FileCategory = "short-doc";
+        if (svc === "photo") cat = "image";
+        else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
+        else if (svc === "poster") cat = "short-doc";
+        saveToHistory(f, cat, storedFileName, displayType);
+        setStep("results");
+      } catch (analysisErr) {
+        console.error("[analysis] Real analysis failed:", analysisErr);
+        setAnalysisProgress(100);
+        const fallbackResult: AnalysisResult = {
+          ...DEFAULT_ANALYSIS,
+          pageCount: 1,
+          fileSizeKB: Math.round(f.size / 1024),
+          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+          confidence: 60,
+          insights: ["تم رفع الملف بنجاح — سيتم تحليله من قبل المطبعة"],
+          healthScore: 60,
+          fileNature: isDesign ? "تصميم" : "مستند",
+          isColor: true,
+        };
+        setAnalysis(fallbackResult);
+        setTotalPages(1);
+        saveToHistory(f, "short-doc", storedFileName, displayType);
+        setStep("results");
+      }
+      }  // closes if (isPdf) ... else
     } catch (e) {
       /* Error during upload/analyze */
       setError((e as Error).message || "حدث خطأ غير متوقع"); setStep("idle");
@@ -1175,6 +1244,77 @@ export function StandalonePreview() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="rounded-2xl border bg-gradient-to-br from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 p-4 space-y-2 shadow-sm">
               <div className="flex items-center gap-2 mb-2"><Sparkles className="h-4 w-4 text-amber-500" /><span className="text-xs font-semibold">توصيات</span></div>
               <ul className="space-y-1.5">{analysis.insights.map((ins, i) => (<li key={i} className="flex items-start gap-2 text-xs"><Check className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" /><span>{ins}</span></li>))}</ul>
+            </motion.div>
+          )}
+          {/* ═══ تقرير التحليل المفصّل ═══ */}
+          {(analysis.imageDimensionsDetailed || analysis.tiffDetails || analysis.gifDetails || analysis.svgDetails || analysis.psdDetails || analysis.spreadsheetDetails || analysis.presentationDetails || analysis.vectorDetails || analysis.documentDetails || analysis.bmpDetails || analysis.exportAdvice || analysis.colorSpace || analysis.aspectRatio || analysis.dominantColors || analysis.suggestedPhotoSize || analysis.textPreview) && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-2xl border bg-card p-4 space-y-3 shadow-sm">
+              <div className="flex items-center gap-2"><Ruler className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">تقرير التحليل المفصّل</span></div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                {analysis.imageDimensionsDetailed && (
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">الأبعاد</span><span className="font-semibold font-mono">{analysis.imageDimensionsDetailed.width}×{analysis.imageDimensionsDetailed.height} بكسل</span></div>
+                )}
+                {analysis.imageDimensionsDetailed && analysis.imageDimensionsDetailed.megapixels > 0 && (
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">الميجابكسل</span><span className="font-semibold">{analysis.imageDimensionsDetailed.megapixels} MP</span></div>
+                )}
+                {analysis.colorSpace && (
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">المساحة اللونية</span><span className="font-semibold">{analysis.colorSpace === "RGB" ? "RGB" : analysis.colorSpace === "CMYK" ? "CMYK" : analysis.colorSpace === "تدرج رمادي" ? "تدرج رمادي" : analysis.colorSpace}</span></div>
+                )}
+                {analysis.aspectRatio && (
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">نسبة العرض</span><span className="font-semibold font-mono">{analysis.aspectRatio}</span></div>
+                )}
+                {analysis.dominantColors && analysis.dominantColors.length > 0 && (
+                  <div className="rounded-lg bg-muted/50 p-2.5 col-span-2"><span className="text-muted-foreground block">الألوان السائدة</span><div className="flex gap-1.5 mt-1">{analysis.dominantColors.map((c, i) => (<span key={i} className="inline-block px-2 py-0.5 rounded-md bg-background border text-[10px] font-mono">{c}</span>))}</div></div>
+                )}
+                {analysis.suggestedPhotoSize && (
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">المقاس المقترح للصورة</span><span className="font-semibold">{analysis.suggestedPhotoSize}</span>{analysis.suggestedPhotoSizeDPI && <span className="text-muted-foreground"> ({analysis.suggestedPhotoSizeDPI} DPI)</span>}</div>
+                )}
+                {analysis.tiffDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">عمق اللون</span><span className="font-semibold">{analysis.tiffDetails.bitDepth} بت</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">الضغط</span><span className="font-semibold">{analysis.tiffDetails.compression}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">وضع الألوان</span><span className="font-semibold">{analysis.tiffDetails.photometric}</span></div>
+                  {analysis.tiffDetails.multiPage && <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-2.5 border border-amber-200/50"><span className="text-muted-foreground block">صفحات TIFF</span><span className="font-semibold text-amber-600">{analysis.tiffDetails.pageTileCount} صفحة متعددة</span></div>}
+                </>)}
+                {analysis.psdDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">وضع اللون</span><span className="font-semibold">{analysis.psdDetails.colorModeName}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">القنوات</span><span className="font-semibold">{analysis.psdDetails.channels}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">عمق البت</span><span className="font-semibold">{analysis.psdDetails.bitDepth} بت</span></div>
+                </>)}
+                {analysis.gifDetails && (<>
+                  <div className={`rounded-lg p-2.5 ${analysis.gifDetails.animated ? 'bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50' : 'bg-muted/50'}`}><span className="text-muted-foreground block">نوع GIF</span><span className="font-semibold">{analysis.gifDetails.animated ? `متحرك (${analysis.gifDetails.frameCount} إطار)` : "ثابت"}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">شفافية</span><span className="font-semibold">{analysis.gifDetails.hasTransparency ? "نعم" : "لا"}</span></div>
+                </>)}
+                {analysis.bmpDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">عمق اللون</span><span className="font-semibold">{analysis.bmpDetails.bitDepth} بت</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">عدد الألوان</span><span className="font-semibold">{analysis.bmpDetails.colorCount}</span></div>
+                </>)}
+                {analysis.svgDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">نصوص SVG</span><span className="font-semibold">{analysis.svgDetails.textCount} عنصر</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">صور مدمجة</span><span className="font-semibold">{analysis.svgDetails.imageCount}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">خطوط مدمجة</span><span className="font-semibold">{analysis.svgDetails.hasEmbeddedFonts ? "نعم" : "لا"}</span></div>
+                </>)}
+                {analysis.presentationDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">عدد الشرائح</span><span className="font-semibold">{analysis.presentationDetails.slideCount}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">نسبة العرض</span><span className="font-semibold">{analysis.presentationDetails.aspectRatio} {analysis.presentationDetails.isWidescreen ? "(عريض)" : "(قياسي)"}</span></div>
+                </>)}
+                {analysis.spreadsheetDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">أوراق العمل</span><span className="font-semibold">{analysis.spreadsheetDetails.sheetCount}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">صفوف تقديرية</span><span className="font-semibold">~{analysis.spreadsheetDetails.estimatedRows}</span></div>
+                </>)}
+                {analysis.documentDetails && (<>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">عدد الكلمات</span><span className="font-semibold">{analysis.documentDetails.wordCount}</span></div>
+                  <div className="rounded-lg bg-muted/50 p-2.5"><span className="text-muted-foreground block">اللغة</span><span className="font-semibold">{analysis.documentDetails.detectedLanguage}</span></div>
+                </>)}
+                {analysis.vectorDetails?.boundingBoxMM && (
+                  <div className="rounded-lg bg-muted/50 p-2.5 col-span-2"><span className="text-muted-foreground block">أبعاد المتجهة</span><span className="font-semibold font-mono">{Math.round(analysis.vectorDetails.boundingBoxMM.width)}×{Math.round(analysis.vectorDetails.boundingBoxMM.height)} مم</span></div>
+                )}
+              </div>
+              {analysis.exportAdvice && (
+                <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/30 p-3 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div><p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-0.5">نصيحة التصدير</p><p className="text-xs text-muted-foreground">{analysis.exportAdvice}</p></div>
+                </div>
+              )}
             </motion.div>
           )}
           <Button onClick={() => {

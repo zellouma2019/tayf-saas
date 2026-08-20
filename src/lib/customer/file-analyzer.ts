@@ -99,6 +99,70 @@ export interface RealFileAnalysis {
   orientation?: "عمودي" | "أفقي" | "مربع";
   // الحجم المنسّق
   fileSizeFormatted?: string;
+  // تحليل متقدم للصور
+  imageDimensionsDetailed?: { width: number; height: number; megapixels: number };
+  // تحليل TIFF
+  tiffDetails?: {
+    bitDepth: number;
+    compression: string;
+    photometric: string;
+    multiPage: boolean;
+    pageTileCount: number;
+  };
+  // تحليل GIF
+  gifDetails?: {
+    animated: boolean;
+    frameCount: number;
+    hasTransparency: boolean;
+  };
+  // تحليل SVG
+  svgDetails?: {
+    hasText: boolean;
+    textCount: number;
+    hasImages: boolean;
+    imageCount: number;
+    hasEmbeddedFonts: boolean;
+    viewBox: string;
+  };
+  // تحليل PSD
+  psdDetails?: {
+    channels: number;
+    bitDepth: number;
+    colorMode: string;
+    colorModeName: string;
+  };
+  // تحليل XLSX/XLS/CSV
+  spreadsheetDetails?: {
+    sheetCount: number;
+    estimatedRows: number;
+    hasCharts: boolean;
+  };
+  // تحليل PPTX
+  presentationDetails?: {
+    slideCount: number;
+    aspectRatio: string;
+    isWidescreen: boolean;
+  };
+  // تحليل EPS/AI
+  vectorDetails?: {
+    boundingBoxMM: { width: number; height: number } | null;
+    isPdfCompatible: boolean;
+  };
+  // تحليل مستند
+  documentDetails?: {
+    wordCount: number;
+    charCount: number;
+    detectedLanguage: string;
+    hasImages: boolean;
+  };
+  // تحليل BMP
+  bmpDetails?: {
+    bitDepth: number;
+    colorCount: number;
+    topDown: boolean;
+  };
+  // معلومات التصدير
+  exportAdvice?: string; // نصيحة للتصدير (مثل 'صدّر كـ PDF لنتائج أفضل')
 }
 
 // ===== مقاسات الأوراق القياسية بالملم =====
@@ -168,6 +232,36 @@ function formatFileSize(kb: number, mb: number): string {
   return `${Math.round(kb * 1024)} بايت`;
 }
 
+/// خرائط تصنيف PSD و TIFF
+const PSD_COLOR_MODES: Record<number, string> = {
+  0: 'Bitmap',
+  1: 'تدرج رمادي',
+  2: 'مفهرس',
+  3: 'RGB',
+  4: 'CMYK',
+  7: 'متعدد القنوات',
+  8: 'Duotone',
+  9: 'Lab',
+};
+
+const TIFF_COMPRESSION: Record<number, string> = {
+  1: 'بدون ضغط',
+  5: 'LZW',
+  7: 'JPEG',
+  8: 'Deflate',
+  32773: 'PackBits',
+};
+
+const TIFF_PHOTOMETRIC: Record<number, string> = {
+  0: 'WhiteIsZero',
+  1: 'BlackIsZero',
+  2: 'RGB',
+  3: 'Palette',
+  4: 'Transparency Mask',
+  5: 'CMYK',
+  6: 'YCbCr',
+};
+
 /// تحليل حقيقي للملف بناءً على محتواه الفعلي — مع تخزين مؤقت بمفتاح هاش المحتوى
 export async function analyzeFileReal(file: File): Promise<RealFileAnalysis> {
   const cacheKey = await computeFileKey(file);
@@ -182,15 +276,21 @@ export async function analyzeFileReal(file: File): Promise<RealFileAnalysis> {
   const sizeMB = Math.round((sizeBytes / (1024 * 1024)) * 100) / 100;
 
   let result: RealFileAnalysis;
-  if (ext === "pdf") {
-    result = await analyzePdf(file, sizeKB, sizeMB);
-  } else if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
-    result = await analyzeImage(file, ext, sizeKB, sizeMB);
-  } else if (ext === "docx" || ext === "doc") {
-    result = await analyzeDocx(file, sizeKB, sizeMB);
-  } else {
-    result = defaultAnalysis(file.name, ext, sizeKB, sizeMB);
-  }
+  if (ext === 'pdf') result = await analyzePdf(file, sizeKB, sizeMB);
+  else if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) result = await analyzeImage(file, ext, sizeKB, sizeMB);
+  else if (ext === 'tiff' || ext === 'tif') result = await analyzeTiff(file, sizeKB, sizeMB);
+  else if (ext === 'bmp') result = await analyzeBmp(file, sizeKB, sizeMB);
+  else if (ext === 'gif') result = await analyzeGif(file, sizeKB, sizeMB);
+  else if (ext === 'svg') result = await analyzeSvg(file, sizeKB, sizeMB);
+  else if (ext === 'docx' || ext === 'doc') result = await analyzeDocx(file, sizeKB, sizeMB);
+  else if (['xlsx', 'xls', 'csv'].includes(ext)) result = await analyzeSpreadsheet(file, ext, sizeKB, sizeMB);
+  else if (ext === 'pptx' || ext === 'ppt') result = await analyzePresentation(file, ext, sizeKB, sizeMB);
+  else if (ext === 'psd') result = await analyzePsd(file, sizeKB, sizeMB);
+  else if (ext === 'ai') result = await analyzeIllustrator(file, sizeKB, sizeMB);
+  else if (ext === 'eps') result = await analyzeEps(file, sizeKB, sizeMB);
+  else if (ext === 'cdr') result = await analyzeCorelDraw(file, sizeKB, sizeMB);
+  else if (ext === 'indd') result = await analyzeInDesign(file, sizeKB, sizeMB);
+  else result = defaultAnalysis(file.name, ext, sizeKB, sizeMB);
 
   analysisCache.set(cacheKey, result);
   return result;
@@ -226,8 +326,8 @@ async function analyzePdf(
   let hasHeadings = false;
   let linkCount = 0;
   const extraThumbnails: string[] = [];
-  let fullText = ""; // ✅ خارج try لتجنب ReferenceError
-  let detectedLanguage: string | undefined; // ✅ خارج try لتجنب ReferenceError
+  let fullText = "";
+  let detectedLanguage: string | undefined;
   let totalTextItems = 0;
   let totalChars = 0;
   const pageTexts: { pageNum: number; text: string; fontSize: number }[] = [];
@@ -237,7 +337,7 @@ async function analyzePdf(
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = lib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
-    pageCount = pdf.numPages; // العدد الحقيقي للصفحات
+    pageCount = pdf.numPages;
 
     // استخراج البيانات الوصفية
     try {
@@ -251,7 +351,7 @@ async function analyzePdf(
     } catch {}
 
     // استخراج النص من كل الصفحات لتحليل عميق
-    const pagesToReadFull = Math.min(pageCount, 50); // حد أقصى 50 صفحة
+    const pagesToReadFull = Math.min(pageCount, 50);
     for (let i = 1; i <= pagesToReadFull; i++) {
       try {
         const page = await pdf.getPage(i);
@@ -265,7 +365,6 @@ async function analyzePdf(
             totalTextItems++;
             if (item.str.trim()) {
               pageTextParts.push(item.str);
-              // كشف حجم الخط للعناوين
               const fontHeight = (item as { height?: number }).height || 0;
               if (fontHeight > maxFontSize) maxFontSize = fontHeight;
             }
@@ -298,8 +397,8 @@ async function analyzePdf(
         // توليد معاينة مصغرة + استخراج أبعاد الصفحة من أول صفحة
         if (i === 1) {
           try {
-            const viewport = page.getViewport({ scale: 1 }); // scale=1 للحصول على البكسلات الحقيقية
-            const pdfWidthMM = (viewport.width * 25.4) / 72; // PDF يستخدم 72 نقطة/إنش
+            const viewport = page.getViewport({ scale: 1 });
+            const pdfWidthMM = (viewport.width * 25.4) / 72;
             const pdfHeightMM = (viewport.height * 25.4) / 72;
             pageDimensionsMM = {
               width: Math.round(pdfWidthMM * 10) / 10,
@@ -310,7 +409,6 @@ async function analyzePdf(
             isPortrait = orientation === "عمودي";
             aspectRatio = getAspectRatioText(Math.round(pdfWidthMM), Math.round(pdfHeightMM));
 
-            // المعاينة المصغرة
             const thumbViewport = page.getViewport({ scale: 0.5 });
             const canvas = document.createElement("canvas");
             canvas.width = thumbViewport.width;
@@ -320,40 +418,31 @@ async function analyzePdf(
               await page.render({ canvasContext: context, viewport: thumbViewport, canvas } as Parameters<typeof page.render>[0]).promise;
               thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
 
-              // تحليل الألوان من المعاينة
               try {
                 const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
                 let colorPixels = 0;
                 let grayPixels = 0;
-                const sampleStep = 16; // عينة كل 16 بكسل
+                const sampleStep = 16;
                 for (let p = 0; p < imgData.data.length; p += 4 * sampleStep) {
                   const r = imgData.data[p];
                   const g = imgData.data[p + 1];
                   const b = imgData.data[p + 2];
                   const maxC = Math.max(r, g, b);
                   const minC = Math.min(r, g, b);
-                  if (maxC - minC > 30) {
-                    colorPixels++;
-                  } else {
-                    grayPixels++;
-                  }
+                  if (maxC - minC > 30) colorPixels++;
+                  else grayPixels++;
                 }
                 const total = colorPixels + grayPixels;
                 if (total > 0) {
-                  if (colorPixels / total > 0.3) {
-                    colorSpace = "RGB";
-                  } else {
-                    colorSpace = "تدرج رمادي";
-                  }
+                  if (colorPixels / total > 0.3) colorSpace = "RGB";
+                  else colorSpace = "تدرج رمادي";
                 }
               } catch {}
 
-              // تقدير DPI من بكسلات المعاينة والأبعاد الفعلية
               estimatedDPI = Math.round(canvas.width / (pdfWidthMM / 25.4));
               dpiCategory = categorizeDPI(estimatedDPI);
             }
 
-            // فحص وجود صور ونصوص في الصفحة (من operators)
             try {
               const ops = await page.getOperatorList();
               const textOpNames = new Set([
@@ -368,9 +457,7 @@ async function analyzePdf(
 
               for (let opIdx = 0; opIdx < ops.fnArray.length; opIdx++) {
                 const fnName = String(ops.fnArray[opIdx]);
-                if (textOpNames.has(fnName) && !hasText) {
-                  hasText = true;
-                }
+                if (textOpNames.has(fnName) && !hasText) hasText = true;
                 if (imageOpNames.has(fnName)) {
                   hasImages = true;
                   imageCount++;
@@ -381,7 +468,6 @@ async function analyzePdf(
           } catch {}
         }
 
-        // توليد معاينات إضافية (صفحة وسط + أخيرة)
         if (i > 1 && extraThumbnails.length < 2) {
           const isMiddlePage = (pageCount > 5 && i === Math.ceil(pageCount / 2));
           const isLastPage = (i === pageCount);
@@ -403,8 +489,6 @@ async function analyzePdf(
       } catch {}
     }
 
-    // ═══ فحص إضافي: إذا وجدنا عناصر نص كثيرة (حتى لو فارغة) فالملف يحتوي نصوص ═══
-    // هذا يحدث مع ملفات PDF التي تستخدم ترميز خطوط مخصص (CMap) لا يستطيع pdf.js فك شفرته
     if (!hasText && totalTextItems > 5) {
       hasText = true;
       insights.push("نصوص مكتشفة (ترميز خطوط مخصص — قد لا يتم عرضها بشكل صحيح)");
@@ -417,7 +501,6 @@ async function analyzePdf(
       insights.push(`مساحة بيضاء عالية (${whitespaceRatio}%) — قد يكون الملف فارغ جزئياً`);
     }
 
-    // ═══ تحليل عميق: كشف العناوين الكبيرة ═══
     const avgFontSize = pageTexts.length > 0
       ? pageTexts.reduce((s, p) => s + p.fontSize, 0) / pageTexts.length
       : 0;
@@ -427,21 +510,14 @@ async function analyzePdf(
       insights.push(`كُشف ${headingPages.length} عناوين كبيرة — مستند منظم بفصول`);
     }
 
-    // ═══ تحليل عميق: الروابط التشعبية ═══
     const urlMatches = fullText.match(/https?:\/\/[^\s]+|www\.[^\s]+/g);
     linkCount = urlMatches ? urlMatches.length : 0;
-    if (linkCount > 0) {
-      insights.push(`${linkCount} رابط تشعبي مكتشف`);
-    }
+    if (linkCount > 0) insights.push(`${linkCount} رابط تشعبي مكتشف`);
 
-    // ═══ تحليل عميق: عدد الصور ═══
-    if (imageCount > 0) {
-      insights.push(`${imageCount} صورة مدمجة مكتشفة`);
-    }
+    if (imageCount > 0) insights.push(`${imageCount} صورة مدمجة مكتشفة`);
 
     textPreview = fullText.trim().substring(0, 300);
 
-    // اكتشاف اللغة
     const arabicChars = (fullText.match(/[\u0600-\u06FF]/g) || []).length;
     const latinChars = (fullText.match(/[a-zA-Z]/g) || []).length;
     if (arabicChars > latinChars && arabicChars > 20) {
@@ -457,8 +533,6 @@ async function analyzePdf(
     insights.push("تعذّر قراءة تفاصيل PDF — تم استخدام التقدير");
   }
 
-  // اكتشاف نوع المحتوى بنظام تسجيل نقاط مرجّح متعدد الإشارات (اسم الملف + النص + عدد الصفحات)
-  // بدل سلسلة if/else القديمة التي تتوقف عند أول تطابق بلا اعتبار لقوة الأدلة الأخرى.
   const searchText = `${pdfTitle || ""} ${fullText}`;
   let detectedService: ServiceType = "document";
   let confidence = 70;
@@ -468,7 +542,6 @@ async function analyzePdf(
   let suggestedBinding = "none";
   let detectedServiceName = "طباعة مستند";
 
-  // Inline content classification based on filename and page count
   const ext = file.name.split('.').pop()?.toLowerCase() || '';
   if (ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'webp') {
     detectedService = 'photo';
@@ -478,7 +551,7 @@ async function analyzePdf(
     suggestedColor = 'color';
     suggestedPaperType = 'glossy';
   } else if (pageCount > 10) {
-    detectedService = 'book';
+    detectedService = 'book' as ServiceType;
     detectedServiceName = 'طباعة كتاب/كتيب';
     fileNature = 'كتاب أو مستند طويل';
     confidence = 0.8;
@@ -490,13 +563,9 @@ async function analyzePdf(
   }
 
   if (detectedService) {
-    // مقاس الورق: نفضّل المقاس المكتشف فعلياً من أبعاد الصفحة إن وُجد
-    if (!closestPaperSize || closestPaperSize === "مخصص") {
-      suggestedPaperSize = "A4";
-    }
+    if (!closestPaperSize || closestPaperSize === "مخصص") suggestedPaperSize = "A4";
     insights.push(`تم تحديد: ${detectedServiceName}`);
   } else {
-    // لا توجد إشارات نصية كافية — اكتشاف عام من عدد الصفحات فقط
     if (pageCount === 1) {
       confidence = 75;
       fileNature = "صفحة واحدة";
@@ -524,9 +593,6 @@ async function analyzePdf(
     insights.push(`متوسط الحجم لكل صفحة: ${Math.round(sizeKB / pageCount)} ك.ب`);
   }
 
-  // ═══ تصحيح مبني على الدليل البصري الفعلي: لا نكتفي بتصنيف الفئة النصية ═══
-  // القاعدة السابقة تفترض "bw" لكل مستند من فئة "تقرير/مذكرة" حتى لو احتوى فعلياً صوراً ملونة —
-  // هذا غير واقعي: نستخدم colorSpace وhasImages المُقاسين فعلياً من رندر الصفحة الأولى لتصحيح الاقتراح.
   if (suggestedColor === "bw" && hasImages && colorSpace === "RGB") {
     suggestedColor = "color";
     insights.push("⚠️ تصحيح: المستند يحتوي عناصر/صوراً ملونة فعلياً رغم أنه من فئة نصية عادة تُطبع بالأبيض والأسود — تم اقتراح الطباعة الملونة");
@@ -535,7 +601,6 @@ async function analyzePdf(
     insights.push("⚠️ تصحيح: لا توجد ألوان فعلية مكتشفة في الصفحة رغم أن الفئة تفترض عادة طباعة ملونة — تم اقتراح الأبيض والأسود لتوفير التكلفة");
   }
 
-  // ═══ خفض جودة الورق تلقائياً إذا كانت الدقة المقدَّرة منخفضة ═══
   if (estimatedDPI && estimatedDPI < 150 && (suggestedPaperType === "premium" || suggestedPaperType === "glossy")) {
     insights.push(`⬇️ تم تخفيض نوع الورق — الدقة المقدَّرة (${estimatedDPI} DPI) لا تبرر ورقاً لامعاً/فاخراً لمحتوى قد يظهر ضبابياً`);
     suggestedPaperType = "normal";
@@ -562,7 +627,6 @@ async function analyzePdf(
     thumbnailUrl,
     fileNature,
     isPortrait,
-    // الحقول التفصيلية الجديدة
     pageDimensionsMM,
     closestPaperSize,
     estimatedDPI,
@@ -573,7 +637,6 @@ async function analyzePdf(
     orientation,
     aspectRatio,
     fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
-    // بيانات تحليل عميق
     fullText: fullText.trim().substring(0, 10000) || undefined,
     imageCount: imageCount > 0 ? imageCount : undefined,
     whitespaceRatio,
@@ -595,8 +658,6 @@ const PHOTO_SIZES_CM: { id: string; w: number; h: number }[] = [
 
 /**
  * يقترح أنسب مقاس طباعة فعلي بناءً على أبعاد الصورة الحقيقية بالبكسل — وليس A4 ثابتة دائماً.
- * المبدأ: نختار أكبر مقاس تحافظ فيه الصورة على دقة ≥150 DPI (حد أدنى مقبول للطباعة الفوتوغرافية)،
- * فطباعة صورة 400×600 بكسل على A4 تنتج نتيجة مبكسلة وغير واقعية — نرشّح لها 10×15 بدلاً من ذلك.
  */
 function suggestPhotoSize(
   widthPx: number,
@@ -608,14 +669,12 @@ function suggestPhotoSize(
   let best: { id: string; dpi: number } | null = null;
 
   for (const size of PHOTO_SIZES_CM) {
-    // نجرب اتجاه الطباعة المطابق لاتجاه الصورة نفسها لتفادي دقة مضخّمة وهمية
     const wCM = isPortraitImg ? size.w : size.h;
     const hCM = isPortraitImg ? size.h : size.w;
     const dpiW = widthPx / (wCM / 2.54);
     const dpiH = heightPx / (hCM / 2.54);
     const dpi = Math.min(dpiW, dpiH);
     if (dpi >= 150) {
-      // نحتفظ بأكبر مقاس ما زال يحقق 150 DPI على الأقل
       if (!best || size.w * size.h > (PHOTO_SIZES_CM.find((s) => s.id === best!.id)!.w * PHOTO_SIZES_CM.find((s) => s.id === best!.id)!.h)) {
         best = { id: size.id, dpi: Math.round(dpi) };
       }
@@ -624,7 +683,6 @@ function suggestPhotoSize(
 
   if (best) return { sizeId: best.id, achievableDPI: best.dpi };
 
-  // لا يوجد مقاس يحقق 150 DPI — نرشّح أصغر مقاس مع تحذير صريح بدل الادعاء بجودة غير واقعية
   const smallest = PHOTO_SIZES_CM[0];
   const wCM = isPortraitImg ? smallest.w : smallest.h;
   const hCM = isPortraitImg ? smallest.h : smallest.w;
@@ -659,7 +717,6 @@ async function analyzeImage(
     width = img.naturalWidth;
     height = img.naturalHeight;
 
-    // إنشاء معاينة مصغرة + استخراج الألوان السائدة + تحليل المساحة اللونية
     try {
       const canvas = document.createElement("canvas");
       const maxThumb = 300;
@@ -671,7 +728,6 @@ async function analyzeImage(
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         thumbnailUrl = canvas.toDataURL("image/jpeg", 0.8);
 
-        // تحليل المساحة اللونية والألوان السائدة
         const sampleCanvas = document.createElement("canvas");
         sampleCanvas.width = 20;
         sampleCanvas.height = 20;
@@ -688,7 +744,6 @@ async function analyzeImage(
             const b = Math.round(data[i + 2] / 64) * 64;
             const key = `${r},${g},${b}`;
             colorBuckets[key] = (colorBuckets[key] || 0) + 1;
-            // فحص ألوان/رمادي
             const maxC = Math.max(data[i], data[i + 1], data[i + 2]);
             const minC = Math.min(data[i], data[i + 1], data[i + 2]);
             if (maxC - minC > 30) colorPixels++;
@@ -702,7 +757,6 @@ async function analyzeImage(
             if (brightness < 16) return "داكن";
             return `rgb(${r},${g},${b})`;
           });
-          // تصنيف المساحة اللونية
           const total = colorPixels + grayPixels;
           if (total > 0) {
             imgColorSpace = colorPixels / total > 0.3 ? "RGB" : "تدرج رمادي";
@@ -722,7 +776,6 @@ async function analyzeImage(
   const isHighRes = megapixels > 8;
   const orientation: "عمودي" | "أفقي" | "مربع" = isPortrait ? "عمودي" : isLandscape ? "أفقي" : "مربع";
 
-  // تقدير DPI على ورق A4
   const a4WMM = 210;
   const a4HMM = 297;
   const imgDPI = estimateDPI(width, height, a4WMM, a4HMM);
@@ -737,7 +790,6 @@ async function analyzeImage(
   let suggestedPaperType = "glossy";
   let suggestedBinding = "none";
 
-  // ═══ اقتراح مقاس واقعي من الأبعاد الفعلية بالبكسل بدل A4 الثابتة ═══
   const photoSizeSuggestion = suggestPhotoSize(width, height);
   let suggestedPhotoSize = photoSizeSuggestion.sizeId;
   const suggestedPhotoSizeDPI = photoSizeSuggestion.achievableDPI;
@@ -748,12 +800,9 @@ async function analyzeImage(
     insights.push(`المقاس المقترح: ${suggestedPhotoSize} (يحقق ≈${suggestedPhotoSizeDPI} DPI — جودة طباعة سليمة)`);
   }
 
-  // اكتشاف نوع الصورة من الاسم (ملاحظة: خدمة "photo" تستخدم حقل photoSize لا paperSize —
-  // القيمة القديمة "suggestedPaperSize = A5" هنا كانت لا تُطبَّق فعلياً على أي خيار حقيقي في الواجهة)
   if (/passport|جواز|id|هوية|photo id|صورة شخصية/.test(name)) {
     detectedServiceName = "طباعة صور (صورة شخصية)";
     confidence = Math.min(confidence, 93);
-    // صورة شخصية/جواز تُطبع عادة في أصغر مقاس متاح، لكن نحترم تحذير الدقة إن كانت الصورة رديئة أصلاً
     if (!photoSizeSuggestion.warning) suggestedPhotoSize = "10x15";
     suggestedPaperType = "glossy";
     fileNature = "صورة شخصية";
@@ -764,7 +813,7 @@ async function analyzeImage(
     confidence = 91;
     suggestedPaperSize = "A3";
     fileNature = "ملصق";
-    insights.push("ملصق — حجم A3 (تنبيه: يُطبع كملصق بمقاس A3 فعلي، وليس بحجم الصورة القياسي)");
+    insights.push("ملصق — حجم A3");
   } else if (/wedding|زفاف|عرس/.test(name)) {
     fileNature = "صورة زفاف";
     suggestedPaperType = "premium";
@@ -774,8 +823,6 @@ async function analyzeImage(
     insights.push("صورة — طباعة ملونة على ورق لامع");
   }
 
-  // ═══ خفض جودة الورق تلقائياً إذا كانت الدقة الفعلية لا تبرر ورقاً فاخراً/معدنياً ═══
-  // طباعة صورة منخفضة الدقة على ورق "معدني" أو "فاخر برو" يُبرز العيوب بدل إخفائها — اقتراح مضلل بصرياً واقتصادياً
   if (suggestedPhotoSizeDPI > 0 && suggestedPhotoSizeDPI < 150 && (suggestedPaperType === "premium" || suggestedPaperType === "metallic")) {
     insights.push(`⬇️ تم تخفيض نوع الورق من "${suggestedPaperType}" إلى "لامع عادي" — الدقة المتاحة (${suggestedPhotoSizeDPI} DPI) لا تبرر ورقاً فاخراً`);
     suggestedPaperType = "glossy";
@@ -785,14 +832,11 @@ async function analyzeImage(
   else if (isLandscape) insights.push(`اتجاه أفقي (${width}×${height})`);
   else insights.push(`مربع (${width}×${height})`);
 
-  if (isHighRes) {
-    insights.push(`دقة عالية ${megapixels} ميجابكسل — جودة طباعة ممتازة`);
-  } else if (megapixels < 1) {
+  if (isHighRes) insights.push(`دقة عالية ${megapixels} ميجابكسل — جودة طباعة ممتازة`);
+  else if (megapixels < 1) {
     insights.push(`دقة منخفضة ${megapixels} ميجابكسل — قد تظهر بكسلية عند الطباعة الكبيرة`);
     confidence = Math.max(70, confidence - 10);
-  } else {
-    insights.push(`دقة ${megapixels} ميجابكسل`);
-  }
+  } else insights.push(`دقة ${megapixels} ميجابكسل`);
 
   insights.push(`الدقة على A4: ≈${imgDPI} DPI (${imgDpiCat})`);
 
@@ -821,8 +865,7 @@ async function analyzeImage(
     fileNature,
     isPortrait,
     dominantColors,
-    // الحقول التفصيلية الجديدة
-    pageDimensionsMM: { width, height: height }, // للصور: البكسل = الأبعاد (يُفترض 72 DPI)
+    pageDimensionsMM: { width, height },
     estimatedDPI: imgDPI,
     dpiCategory: imgDpiCat,
     colorSpace: imgColorSpace,
@@ -834,7 +877,7 @@ async function analyzeImage(
   };
 }
 
-/// تحليل DOCX حقيقي — يستخرج النص الفعلي عبر mammoth بدل تقدير الصفحات من حجم الملف فقط
+/// تحليل DOCX حقيقي — يستخرج النص الفعلي عبر mammoth
 async function analyzeDocx(
   file: File,
   sizeKB: number,
@@ -845,7 +888,6 @@ async function analyzeDocx(
   let extractionOk = false;
 
   try {
-    // mammoth يعمل في المتصفح ويقرأ .docx فعلياً (وليس .doc القديم — نتحقق أدناه)
     const mammoth = await import("mammoth");
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.extractRawText({ arrayBuffer });
@@ -861,13 +903,14 @@ async function analyzeDocx(
     insights.push("تعذّر استخراج نص الملف مباشرة (قد يكون .doc قديم) — تم استخدام تقدير من الحجم");
   }
 
-  // عدد الصفحات: من عدد الكلمات الفعلي إن توفر النص (≈500 كلمة/صفحة، معيار شائع لمستندات Word)،
-  // وإلا نرجع لتقدير الحجم كخطة بديلة فقط
   let pageCount: number;
+  let wordCount = 0;
+  let charCount = 0;
   if (extractionOk) {
-    const wordCount = fullText.split(/\s+/).filter(Boolean).length;
+    wordCount = fullText.split(/\s+/).filter(Boolean).length;
+    charCount = fullText.length;
     pageCount = Math.max(1, Math.min(500, Math.ceil(wordCount / 500)));
-    insights.push(`عدد الصفحات المقدّر: ${pageCount} (من ${wordCount} كلمة فعلية — أدق من تقدير الحجم)`);
+    insights.push(`عدد الصفحات المقدّر: ${pageCount} (من ${wordCount} كلمة فعلية)`);
   } else {
     pageCount = Math.max(1, Math.min(500, Math.round(sizeKB / 30)));
     insights.push(`عدد الصفحات المقدّر: ${pageCount} (تقدير احتياطي من حجم الملف)`);
@@ -883,7 +926,7 @@ async function analyzeDocx(
   let fileNature: string | undefined;
 
   if (extractionOk && pageCount > 10) {
-    detectedService = "book";
+    detectedService = "book" as ServiceType;
     detectedServiceName = "طباعة كتاب/كتيب (Word)";
     confidence = 70;
     suggestedBinding = "spiral";
@@ -895,12 +938,19 @@ async function analyzeDocx(
     insights.push("مستند طويل — تجليد لولبي مقترح");
   }
 
-
   const arabicChars = (fullText.match(/[\u0600-\u06FF]/g) || []).length;
   const latinChars = (fullText.match(/[a-zA-Z]/g) || []).length;
   let detectedLanguage: string | undefined;
   if (arabicChars > latinChars && arabicChars > 20) detectedLanguage = "العربية";
   else if (latinChars > 20) detectedLanguage = "أجنبية";
+
+  // كشف صور في DOCX (ZIP → ابحث عن media/)
+  let hasImagesInDoc = false;
+  try {
+    const rawBytes = new Uint8Array(await file.slice(0, Math.min(file.size, 1024 * 1024)).arrayBuffer());
+    const rawStr = new TextDecoder('latin1').decode(rawBytes);
+    if (rawStr.includes('media/') || rawStr.includes('image/')) hasImagesInDoc = true;
+  } catch {}
 
   if (!extractionOk) {
     insights.push("نصيحة: حوّل إلى PDF أو ارفع .docx حديث لتحليل أدق للمحتوى");
@@ -925,6 +975,1355 @@ async function analyzeDocx(
     hasText: extractionOk,
     fullText: extractionOk ? fullText.substring(0, 10000) : undefined,
     textPreview: extractionOk ? fullText.substring(0, 300) : undefined,
+    documentDetails: {
+      wordCount,
+      charCount,
+      detectedLanguage: detectedLanguage || 'غير محدد',
+      hasImages: hasImagesInDoc,
+    },
+    hasImages: hasImagesInDoc || undefined,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// محللات الأنواع الجديدة
+// ═══════════════════════════════════════════════════════════════
+
+/// تحليل TIFF/TIF — تحليل ثنائي كامل لرأس IFD
+async function analyzeTiff(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let width = 0;
+  let height = 0;
+  let bitDepth = 8;
+  let compression = 'بدون ضغط';
+  let photometric = 'RGB';
+  let xRes = 72;
+  let yRes = 72;
+  let resUnit = 2; // inch
+  let multiPage = false;
+  let stripTileCount = 1;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, Math.min(file.size, 65536)).arrayBuffer());
+
+    if (buf.length < 8) throw new Error('ملف TIFF قصير جداً');
+
+    // التحقق من التوقيع
+    const byteOrder = buf[0] === 0x49 && buf[1] === 0x49 ? 'LE' : buf[0] === 0x4D && buf[1] === 0x4D ? 'BE' : null;
+    if (!byteOrder) throw new Error('ليس ملف TIFF صالح');
+    insights.push(`ترتيب البايتات: ${byteOrder === 'LE' ? 'Little-Endian (II)' : 'Big-Endian (MM)'}`);
+
+    const isLE = byteOrder === 'LE';
+    const getU16 = (off: number) => isLE ? buf[off] | (buf[off + 1] << 8) : (buf[off] << 8) | buf[off + 1];
+    const getU32 = (off: number) => isLE
+      ? buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16) | (buf[off + 3] << 24)
+      : (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3];
+
+    const magic = getU16(2);
+    if (magic !== 42) throw new Error(`رقم TIFF سحري غير صحيح: ${magic}`);
+
+    const ifdOffset = getU32(4);
+    if (ifdOffset + 2 > buf.length) throw new Error('IFD offset خارج نطاق الملف');
+
+    const entryCount = getU16(ifdOffset);
+    insights.push(`عدد عناصر IFD: ${entryCount}`);
+
+    for (let i = 0; i < entryCount; i++) {
+      const entryOff = ifdOffset + 2 + (i * 12);
+      if (entryOff + 12 > buf.length) break;
+
+      const tag = getU16(entryOff);
+      const type = getU16(entryOff + 2);
+      const count = getU32(entryOff + 4);
+      // value/offset (4 bytes)
+
+      // قراءة القيمة حسب النوع
+      const readRational = (off: number): { num: number; den: number } => {
+        if (off + 8 > buf.length) return { num: 72, den: 1 };
+        const n = getU32(off);
+        const d = getU32(off + 4);
+        return { num: n, den: d };
+      };
+
+      const valueOffset = entryOff + 8;
+
+      switch (tag) {
+        case 256: // ImageWidth
+          width = type === 3 ? getU16(valueOffset) : getU32(valueOffset);
+          break;
+        case 257: // ImageLength (height)
+          height = type === 3 ? getU16(valueOffset) : getU32(valueOffset);
+          break;
+        case 258: // BitsPerSample
+          if (type === 3) bitDepth = getU16(valueOffset);
+          else if (type === 4) bitDepth = getU32(valueOffset);
+          break;
+        case 259: // Compression
+          compression = TIFF_COMPRESSION[type === 3 ? getU16(valueOffset) : getU32(valueOffset)] || `مجهول (${type === 3 ? getU16(valueOffset) : getU32(valueOffset)})`;
+          break;
+        case 262: // PhotometricInterpretation
+          photometric = TIFF_PHOTOMETRIC[getU16(valueOffset)] || `مجهول (${getU16(valueOffset)})`;
+          break;
+        case 273: // StripOffsets
+          if (count > 1) {
+            multiPage = true;
+            stripTileCount = count;
+          }
+          break;
+        case 278: // RowsPerStrip
+          break;
+        case 279: // StripByteCounts
+          break;
+        case 282: { // XResolution
+          const off = count <= 1 ? valueOffset : getU32(valueOffset);
+          const r = readRational(Math.min(off, buf.length - 8));
+          if (r.den > 0) xRes = r.num / r.den;
+          break;
+        }
+        case 283: { // YResolution
+          const off = count <= 1 ? valueOffset : getU32(valueOffset);
+          const r = readRational(Math.min(off, buf.length - 8));
+          if (r.den > 0) yRes = r.num / r.den;
+          break;
+        }
+        case 296: // ResolutionUnit
+          resUnit = getU16(valueOffset);
+          break;
+      }
+    }
+  } catch (e) {
+    insights.push(`تعذّر تحليل رأس TIFF بالكامل: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  const megapixels = width && height ? Math.round(((width * height) / 1000000) * 100) / 100 : 0;
+  const isPortrait = height > width;
+  const orientation: "عمودي" | "أفقي" | "مربع" = height > width + 1 ? "عمودي" : width > height + 1 ? "أفقي" : "مربع";
+
+  // تحويل DPI حسب وحدة القياس
+  let effectiveDPI = Math.round((xRes + yRes) / 2);
+  if (resUnit === 3) { // سنتيمتر
+    effectiveDPI = Math.round(effectiveDPI * 2.54);
+  }
+
+  // أبعاد بالملم من البكسل والدقة
+  let widthMM = width > 0 && effectiveDPI > 0 ? Math.round((width / effectiveDPI) * 25.4 * 10) / 10 : 0;
+  let heightMM = height > 0 && effectiveDPI > 0 ? Math.round((height / effectiveDPI) * 25.4 * 10) / 10 : 0;
+
+  const closestPaper = widthMM > 0 && heightMM > 0 ? findClosestPaperSize(widthMM, heightMM) : null;
+
+  insights.push(`الأبعاد: ${width}×${height} بكسل (${megapixels} ميجابكسل)`);
+  insights.push(`عمق البت: ${bitDepth} بت`);
+  insights.push(`الضغط: ${compression}`);
+  insights.push(`الفضاء اللوني: ${photometric}`);
+  insights.push(`الدقة: ${effectiveDPI} DPI`);
+  if (multiPage) insights.push(`ملف متعدد الصفحات (≈${stripTileCount} شرائح/صفحات)`);
+  if (widthMM > 0 && heightMM > 0) {
+    insights.push(`الأبعاد المقدّرة: ${widthMM}×${heightMM} مم`);
+    if (closestPaper) insights.push(`أقرب مقاس ورقي: ${closestPaper.name}`);
+  }
+
+  // اقتراح الخدمة
+  let detectedService: ServiceType;
+  let detectedServiceName: string;
+  let confidence: number;
+  let suggestedColor: string;
+  let suggestedPaperSize: string;
+  let suggestedPaperType: string;
+  let suggestedBinding = "none";
+  let suggestedPhotoSize: string | undefined;
+  let suggestedPhotoSizeDPI: number | undefined;
+
+  if (multiPage) {
+    // متعدد الصفحات → مستند أو كتاب
+    const estPages = Math.max(2, stripTileCount);
+    if (estPages > 10) {
+      detectedService = "book" as ServiceType;
+      detectedServiceName = "طباعة كتاب/كتيب (TIFF)";
+      suggestedBinding = "spiral";
+      confidence = 70;
+    } else {
+      detectedService = "document";
+      detectedServiceName = "طباعة مستند (TIFF)";
+      confidence = 72;
+    }
+    suggestedColor = photometric === 'CMYK' ? 'color' : 'bw';
+    suggestedPaperSize = closestPaper && closestPaper.name !== 'مخصص' ? closestPaper.name : 'A4';
+    suggestedPaperType = 'normal';
+  } else {
+    // صفحة واحدة عالية الدقة → صورة فوتوغرافية
+    detectedService = 'photo';
+    detectedServiceName = 'طباعة صور (TIFF)';
+    confidence = 85;
+    suggestedColor = 'color';
+    suggestedPaperType = 'glossy';
+    suggestedPaperSize = 'A4';
+
+    if (width > 0 && height > 0) {
+      const ps = suggestPhotoSize(width, height);
+      suggestedPhotoSize = ps.sizeId;
+      suggestedPhotoSizeDPI = ps.achievableDPI;
+      if (ps.warning) insights.push(`⚠️ ${ps.warning}`);
+      else insights.push(`المقاس المقترح: ${ps.sizeId} (≈${ps.achievableDPI} DPI)`);
+    }
+  }
+
+  const dpiCat = categorizeDPI(effectiveDPI);
+  insights.push(`فئة الدقة: ${dpiCat}`);
+
+  return {
+    detectedService,
+    detectedServiceName,
+    pageCount: multiPage ? Math.max(2, stripTileCount) : 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor,
+    suggestedPaperSize,
+    suggestedPaperType,
+    suggestedBinding,
+    suggestedPhotoSize,
+    suggestedPhotoSizeDPI,
+    confidence,
+    insights,
+    fileType: 'TIFF',
+    fileName: file.name,
+    fileNature: multiPage ? 'مستند TIFF متعدد الصفحات' : 'صورة TIFF',
+    imageDimensions: width > 0 && height > 0 ? { width, height, megapixels } : undefined,
+    isPortrait,
+    orientation,
+    pageDimensionsMM: widthMM > 0 && heightMM > 0 ? { width: widthMM, height: heightMM } : undefined,
+    closestPaperSize: closestPaper?.name,
+    estimatedDPI: effectiveDPI,
+    dpiCategory: dpiCat,
+    colorSpace: photometric === 'CMYK' ? 'CMYK' : photometric === 'WhiteIsZero' || photometric === 'BlackIsZero' ? 'تدرج رمادي' : 'RGB',
+    aspectRatio: width > 0 && height > 0 ? getAspectRatioText(width, height) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    tiffDetails: {
+      bitDepth,
+      compression,
+      photometric,
+      multiPage,
+      pageTileCount: stripTileCount,
+    },
+  };
+}
+
+/// تحليل BMP — تحليل ثنائي لرأس DIB
+async function analyzeBmp(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let width = 0;
+  let height = 0;
+  let bitDepth = 24;
+  let dibHeaderSize = 0;
+  let topDown = false;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+    if (buf.length < 30) throw new Error('ملف BMP قصير جداً');
+
+    // التحقق من التوقيع 'BM'
+    if (buf[0] !== 0x42 || buf[1] !== 0x4D) throw new Error('ليس ملف BMP صالح (توقيع BM مفقود)');
+
+    const pixelDataOffset = buf[10] | (buf[11] << 8) | (buf[12] << 16) | (buf[13] << 24);
+    dibHeaderSize = buf[14] | (buf[15] << 8) | (buf[16] << 16) | (buf[17] << 24);
+
+    insights.push(`حجم رأس DIB: ${dibHeaderSize} بايت`);
+
+    if (dibHeaderSize >= 40) {
+      width = buf[18] | (buf[19] << 8) | (buf[20] << 16) | (buf[21] << 24);
+      // BMP uses signed int for height — negative means top-down
+      const signedHeight = buf[22] | (buf[23] << 8) | (buf[24] << 16) | (buf[25] << 24);
+      // تحويل من signed 32-bit
+      height = signedHeight < 0 ? -signedHeight : signedHeight;
+      topDown = signedHeight < 0;
+      bitDepth = buf[28] | (buf[29] << 8);
+    }
+
+    // التعامل مع قيم سالبة (أعلى-أسفل) بشكل صحيح
+    if (width < 0) width = -width;
+    if (height < 0) height = -height;
+
+  } catch (e) {
+    insights.push(`تعذّر تحليل رأس BMP: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  const megapixels = width > 0 && height > 0 ? Math.round(((width * height) / 1000000) * 100) / 100 : 0;
+  const colorCount = bitDepth <= 8 ? Math.pow(2, bitDepth) : 0;
+  const isPortrait = height > width;
+  const orientation: "عمودي" | "أفقي" | "مربع" = height > width + 1 ? "عمودي" : width > height + 1 ? "أفقي" : "مربع";
+
+  insights.push(`الأبعاد: ${width}×${height} بكسل`);
+  insights.push(`عمق البت: ${bitDepth} بت`);
+  if (colorCount > 0) insights.push(`عدد الألوان: ${colorCount} (لوحة ألوان)`);
+  if (topDown) insights.push('ترتيب البكسلات: من الأعلى للأسفل');
+
+  // إنتاج معاينة (BMP يمكن تحميله في Image)
+  let thumbnailUrl: string | undefined;
+  try {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(300 / img.width, 300 / img.height, 1);
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
+    }
+    URL.revokeObjectURL(url);
+  } catch {}
+
+  const photoSuggestion = width > 0 && height > 0 ? suggestPhotoSize(width, height) : null;
+
+  return {
+    detectedService: 'photo',
+    detectedServiceName: 'طباعة صور (BMP)',
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: bitDepth > 8 ? 'color' : 'bw',
+    suggestedPaperSize: 'A4',
+    suggestedPaperType: 'normal',
+    suggestedBinding: 'none',
+    suggestedPhotoSize: photoSuggestion?.sizeId,
+    suggestedPhotoSizeDPI: photoSuggestion?.achievableDPI,
+    confidence: 70,
+    insights,
+    fileType: 'BMP',
+    fileName: file.name,
+    fileNature: 'صورة BMP',
+    imageDimensions: width > 0 && height > 0 ? { width, height, megapixels } : undefined,
+    isPortrait,
+    thumbnailUrl,
+    orientation,
+    colorSpace: bitDepth <= 8 ? 'تدرج رمادي' : 'RGB',
+    hasImages: true,
+    aspectRatio: width > 0 && height > 0 ? getAspectRatioText(width, height) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    bmpDetails: {
+      bitDepth,
+      colorCount: Math.round(colorCount),
+      topDown,
+    },
+    exportAdvice: 'BMP غير مضغوط وحجمه كبير — لحفظ أفضل مع جودة مماثلة، استخدم PNG أو TIFF',
+  };
+}
+
+/// تحليل GIF — تحليل ثنائي للرأس وكشف الحركة
+async function analyzeGif(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let width = 0;
+  let height = 0;
+  let version = '';
+  let animated = false;
+  let frameCount = 1;
+  let hasTransparency = false;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, Math.min(file.size, 65536)).arrayBuffer());
+    if (buf.length < 13) throw new Error('ملف GIF قصير جداً');
+
+    // التحقق من التوقيع 'GIF'
+    if (buf[0] !== 0x47 || buf[1] !== 0x49 || buf[2] !== 0x46) throw new Error('ليس ملف GIF صالح');
+
+    version = String.fromCharCode(buf[3], buf[4], buf[5]);
+    width = buf[6] | (buf[7] << 8);
+    height = buf[8] | (buf[9] << 8);
+
+    const packedByte = buf[10];
+    const hasGCT = (packedByte & 0x80) !== 0;
+    const gctSize = 2 << (packedByte & 0x07);
+    const backgroundColorIndex = buf[11];
+    const pixelAspectRatio = buf[12];
+
+    insights.push(`إصدار GIF: ${version}`);
+    if (hasGCT) insights.push(`جدول ألوان عالمي: ${gctSize} لون`);
+    if (backgroundColorIndex < gctSize) insights.push(`لون الخلفية: فهرس ${backgroundColorIndex}`);
+
+    // حساب نهاية الجدول اللوني العالمي
+    let pos = 13;
+    if (hasGCT) pos += gctSize * 3;
+
+    // فحص الكتل لاكتشاف الحركة والشفافية
+    let imageSeparators = 0;
+    while (pos < buf.length - 1) {
+      const blockType = buf[pos];
+
+      if (blockType === 0x3B) break; // Trailer — نهاية الملف
+
+      if (blockType === 0x2C) {
+        // Image Separator
+        imageSeparators++;
+        pos += 10; // الحد الأدنى لحجم Image Descriptor
+        const imgPacked = buf[pos - 1]; // packed byte بعد الحقول الثابتة
+        const hasLCT = (imgPacked & 0x80) !== 0;
+        if (hasLCT) {
+          const lctSize = 2 << (imgPacked & 0x07);
+          pos += lctSize * 3;
+        }
+        // LZW minimum code size + sub-blocks
+        if (pos < buf.length) {
+          pos++; // LZW min code size
+          while (pos < buf.length && buf[pos] !== 0) pos += buf[pos] + 1;
+          pos++; // block terminator
+        }
+      } else if (blockType === 0x21) {
+        // Extension
+        pos++;
+        if (pos < buf.length) {
+          const label = buf[pos];
+          pos++;
+
+          if (label === 0xF9) {
+            // Graphics Control Extension — كشف الشفافية
+            if (pos + 5 < buf.length) {
+              const gcPacked = buf[pos + 1];
+              hasTransparency = (gcPacked & 0x01) !== 0;
+              const delayTime = buf[pos + 2] | (buf[pos + 3] << 8);
+              if (delayTime > 0) animated = true;
+            }
+            pos++; // block size (always 4)
+            pos += 4; // data
+            if (pos < buf.length && buf[pos] === 0) pos++; // block terminator
+          } else {
+            // Extension أخرى (Comment, Application, etc.)
+            while (pos < buf.length && buf[pos] !== 0) pos += buf[pos] + 1;
+            if (pos < buf.length && buf[pos] === 0) pos++; // block terminator
+          }
+        }
+      } else {
+        pos++;
+      }
+    }
+
+    frameCount = imageSeparators;
+    if (frameCount > 1) animated = true;
+
+  } catch (e) {
+    insights.push(`تعذّر تحليل GIF بالكامل: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  const megapixels = Math.round(((width * height) / 1000000) * 100) / 100;
+  const isPortrait = height > width;
+  const orientation: "عمودي" | "أفقي" | "مربع" = height > width + 1 ? "عمودي" : width > height + 1 ? "أفقي" : "مربع";
+
+  insights.push(`الأبعاد: ${width}×${height} بكسل (${megapixels} ميجابكسل)`);
+  if (animated) {
+    insights.push(`⚠️ ملف GIF متحرك (${frameCount} إطار) — سيتم طباعة الإطار الأول فقط`);
+  } else {
+    insights.push('ملف GIF ثابت');
+  }
+  if (hasTransparency) insights.push('يحتوي شفافية');
+
+  // معاينة
+  let thumbnailUrl: string | undefined;
+  try {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(300 / img.width, 300 / img.height, 1);
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
+    }
+    URL.revokeObjectURL(url);
+  } catch {}
+
+  const photoSuggestion = width > 0 && height > 0 ? suggestPhotoSize(width, height) : null;
+
+  return {
+    detectedService: 'photo',
+    detectedServiceName: animated ? 'طباعة صور (GIF — إطار أول فقط)' : 'طباعة صور (GIF)',
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize: 'A4',
+    suggestedPaperType: 'normal',
+    suggestedBinding: 'none',
+    suggestedPhotoSize: photoSuggestion?.sizeId,
+    suggestedPhotoSizeDPI: photoSuggestion?.achievableDPI,
+    confidence: animated ? 60 : 70,
+    insights,
+    fileType: 'GIF',
+    fileName: file.name,
+    fileNature: animated ? 'GIF متحرك' : 'صورة GIF',
+    imageDimensions: { width, height, megapixels },
+    isPortrait,
+    thumbnailUrl,
+    orientation,
+    colorSpace: 'RGB',
+    hasImages: true,
+    aspectRatio: width > 0 && height > 0 ? getAspectRatioText(width, height) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    gifDetails: {
+      animated,
+      frameCount,
+      hasTransparency,
+    },
+    exportAdvice: animated ? 'GIF متحرك — يُنصح بتحويل الإطار المطلوب إلى PNG للحصول على جودة طباعة أفضل' : 'GIF يدعم 256 لون كحد أقصى — لجودة طباعة أفضل، استخدم PNG',
+  };
+}
+
+/// تحليل SVG — تحليل نصي XML
+async function analyzeSvg(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let viewBox = '';
+  let svgWidth = 0;
+  let svgHeight = 0;
+  let textCount = 0;
+  let imageCount = 0;
+  let hasEmbeddedFonts = false;
+  let isPortrait = true;
+
+  try {
+    const text = await file.text();
+
+    // تحليل XML باستخدام DOMParser
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'image/svg+xml');
+    const svgEl = doc.querySelector('svg');
+
+    if (svgEl) {
+      // استخراج viewBox
+      viewBox = svgEl.getAttribute('viewBox') || '';
+
+      // استخراج width/height
+      const wAttr = svgEl.getAttribute('width');
+      const hAttr = svgEl.getAttribute('height');
+
+      if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/).map(Number);
+        if (parts.length === 4 && !parts.some(isNaN)) {
+          svgWidth = parts[2];
+          svgHeight = parts[3];
+        }
+      }
+
+      // إذا لم يكن هناك viewBox، استخدم width/height
+      if (svgWidth === 0 && wAttr) {
+        svgWidth = parseFloat(wAttr);
+      }
+      if (svgHeight === 0 && hAttr) {
+        svgHeight = parseFloat(hAttr);
+      }
+
+      // عدد عناصر النص
+      textCount = doc.querySelectorAll('text, tspan, textPath').length;
+      imageCount = doc.querySelectorAll('image').length;
+
+      // كشف الخطوط المدمجة
+      const fontFaces = doc.querySelectorAll('font-face, style');
+      for (const el of fontFaces) {
+        const content = el.textContent || '';
+        if (content.includes('@font-face') || el.tagName.toLowerCase() === 'font-face') {
+          hasEmbeddedFonts = true;
+          break;
+        }
+      }
+      // كشف font-family في الأنماط
+      if (!hasEmbeddedFonts) {
+        const allText = text;
+        if (allText.includes('font-family:') || allText.includes('font-family =')) {
+          hasEmbeddedFonts = true;
+        }
+      }
+    } else {
+      insights.push('تعذّر تحليل هيكل SVG — قد يكون الملف تالفاً');
+    }
+
+    // حساب الأبعاد الفعلية بالملم
+    let widthMM = 0;
+    let heightMM = 0;
+    if (svgWidth > 0 && svgHeight > 0) {
+      // SVG الأبعاد عادة بالنقاط (1 نقطة = 1/72 إنش) أو بدون وحدة (بكسل)
+      // نفترض وحدات SVG = نقاط
+      widthMM = Math.round((svgWidth * 25.4) / 72 * 10) / 10;
+      heightMM = Math.round((svgHeight * 25.4) / 72 * 10) / 10;
+    }
+
+    isPortrait = svgHeight > svgWidth;
+    const closestPaper = widthMM > 0 && heightMM > 0 ? findClosestPaperSize(widthMM, heightMM) : null;
+
+    insights.push(`أبعاد SVG: ${svgWidth}×${svgHeight} وحدة`);
+    if (viewBox) insights.push(`ViewBox: ${viewBox}`);
+    if (widthMM > 0 && heightMM > 0) {
+      insights.push(`الأبعاد المقدّرة: ${widthMM}×${heightMM} مم`);
+      if (closestPaper && closestPaper.name !== 'مخصص') insights.push(`أقرب مقاس ورقي: ${closestPaper.name}`);
+    }
+    insights.push(`عناصر نصية: ${textCount}`);
+    insights.push(`صور مدمجة: ${imageCount}`);
+    if (hasEmbeddedFonts) insights.push('يحتوي خطوطاً مدمجة — ستحافظ على شكلها عند الطباعة');
+    if (textCount === 0 && imageCount === 0) insights.push('تصميم فارغ أو رسومات شكلية فقط');
+
+  } catch (e) {
+    insights.push(`تعذّر تحليل SVG: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  // تحديد الخدمة
+  let detectedService: ServiceType;
+  let detectedServiceName: string;
+  let suggestedPaperSize = 'A4';
+  let suggestedPaperType = 'normal';
+
+  if (svgWidth > 500 || svgHeight > 500 || sizeKB > 100) {
+    detectedService = 'poster';
+    detectedServiceName = 'ملصق (SVG)';
+    suggestedPaperSize = 'A3';
+    suggestedPaperType = 'normal';
+  } else {
+    detectedService = 'document';
+    detectedServiceName = 'طباعة تصميم (SVG)';
+    suggestedPaperType = 'normal';
+  }
+
+  const orientation: "عمودي" | "أفقي" | "مربع" = svgHeight > svgWidth + 1 ? "عمودي" : svgWidth > svgHeight + 1 ? "أفقي" : "مربع";
+
+  return {
+    detectedService,
+    detectedServiceName,
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize,
+    suggestedPaperType,
+    suggestedBinding: 'none',
+    confidence: 75,
+    insights,
+    fileType: 'SVG',
+    fileName: file.name,
+    fileNature: 'تصميم متجهي SVG',
+    isPortrait,
+    orientation,
+    hasImages: imageCount > 0,
+    hasText: textCount > 0,
+    colorSpace: 'RGB',
+    aspectRatio: svgWidth > 0 && svgHeight > 0 ? getAspectRatioText(Math.round(svgWidth), Math.round(svgHeight)) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    svgDetails: {
+      hasText: textCount > 0,
+      textCount,
+      hasImages: imageCount > 0,
+      imageCount,
+      hasEmbeddedFonts,
+      viewBox,
+    },
+  };
+}
+
+/// تحليل جداول البيانات XLSX/XLS/CSV
+async function analyzeSpreadsheet(
+  file: File,
+  ext: string,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let sheetCount = 1;
+  let estimatedRows = 0;
+  let hasCharts = false;
+
+  try {
+    if (ext === 'csv') {
+      // CSV: قراءة نصية مباشرة
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      estimatedRows = Math.max(0, lines.length - 1); // السطر الأول عادة عناوين
+      const firstLine = lines[0] || '';
+      const colCount = firstLine.split(',').length;
+      sheetCount = 1;
+      insights.push(`صفوف البيانات: ${estimatedRows}`);
+      insights.push(`أعمدة (تقدير): ${colCount}`);
+    } else {
+      // XLSX/XLS: تحليل ثنائي
+      const buf = new Uint8Array(await file.slice(0, Math.min(file.size, 2 * 1024 * 1024)).arrayBuffer());
+      const rawStr = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+
+      if (ext === 'xlsx') {
+        // XLSX هو ملف ZIP يبدأ بـ PK\x03\x04
+        if (buf[0] === 0x50 && buf[1] === 0x4B && buf[2] === 0x03 && buf[3] === 0x04) {
+          // عد أوراق العمل من نمط XML
+          const worksheetMatches = rawStr.match(/<worksheet /g);
+          sheetCount = worksheetMatches ? worksheetMatches.length : 1;
+
+          // كشف وجود رسوم بيانية
+          hasCharts = rawStr.includes('<c:chart') || rawStr.includes('drawing') || rawStr.includes('chartSpace');
+
+          // تقدير عدد الصفوف من حجم الملف
+          // XLSX: متوسط ~20KB لكل 1000 صف بيانات
+          estimatedRows = Math.round((sizeKB / 20) * 1000);
+
+          // محاولة عد أكثر دقة من <row> في sheetData
+          const rowMatches = rawStr.match(/<row /g);
+          if (rowMatches && rowMatches.length > 0) {
+            estimatedRows = rowMatches.length;
+          }
+
+          // كشف خلايا مدمجة
+          const mergeMatches = rawStr.match(/<mergeCell /g);
+          if (mergeMatches) insights.push(`${mergeMatches.length} خلية مدمجة`);
+
+          insights.push(`أوراق العمل: ${sheetCount}`);
+          insights.push(`الصفوف المقدّرة: ${estimatedRows}`);
+          if (hasCharts) insights.push('يحتوي رسوماً بيانية');
+        } else {
+          insights.push('تنسيق XLSX غير معروف (لا يبدأ بـ PK)');
+          estimatedRows = Math.round(sizeKB / 0.5);
+        }
+      } else {
+        // XLS (ثنائي قديم)
+        // BOF record: 0x09 0x08 (BIFF8)
+        if (buf.length > 8 && buf[0] === 0xD0 && buf[1] === 0xCF) {
+          insights.push('ملف Excel ثنائي (BIFF) قديم');
+          estimatedRows = Math.round(sizeKB / 0.3);
+        } else {
+          insights.push('تنسيق XLS غير معروف');
+          estimatedRows = Math.round(sizeKB / 0.5);
+        }
+        sheetCount = 1;
+      }
+    }
+  } catch (e) {
+    insights.push(`تعذّر تحليل الملف: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  // تقدير الصفحات (≈50 صف لكل صفحة مطبوعة)
+  const pageCount = Math.max(1, Math.ceil(estimatedRows / 50));
+
+  // تحديد الخدمة
+  let detectedService: ServiceType;
+  let detectedServiceName: string;
+  let confidence: number;
+  let suggestedBinding = 'none';
+
+  if (pageCount > 10) {
+    detectedService = 'document';
+    detectedServiceName = 'طباعة جدول بيانات (متعدد الصفحات)';
+    suggestedBinding = 'spiral';
+    confidence = 70;
+  } else if (hasCharts && pageCount <= 3) {
+    detectedService = 'document';
+    detectedServiceName = 'طباعة جدول بيانات (يحتوي رسوماً بيانية)';
+    confidence = 68;
+  } else {
+    detectedService = 'document';
+    detectedServiceName = 'طباعة جدول بيانات';
+    confidence = 70;
+  }
+
+  if (ext === 'csv') insights.push('ملف CSV نصي — تنسيق بسيط');
+  else if (ext === 'xls') insights.push('ملف Excel قديم — يُنصح بالتحويل إلى XLSX أو PDF');
+
+  return {
+    detectedService,
+    detectedServiceName,
+    pageCount,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'bw',
+    suggestedPaperSize: 'A4',
+    suggestedPaperType: 'normal',
+    suggestedBinding,
+    confidence,
+    insights,
+    fileType: ext.toUpperCase(),
+    fileName: file.name,
+    fileNature: `جدول بيانات (${ext.toUpperCase()})`,
+    hasText: true,
+    orientation: 'عمودي',
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    spreadsheetDetails: {
+      sheetCount,
+      estimatedRows,
+      hasCharts,
+    },
+    exportAdvice: ext === 'csv' ? 'لأفضل نتائج طباعة، افتح الملف في Excel وصدّره كـ PDF' : 'لأفضل نتائج طباعة، صدّر كـ PDF مع ترويسات وتذييلات',
+  };
+}
+
+/// تحليل العروض التقديمية PPTX/PPT
+async function analyzePresentation(
+  file: File,
+  ext: string,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let slideCount = 0;
+  let aspectRatio = '4:3';
+  let isWidescreen = false;
+
+  try {
+    if (ext === 'pptx') {
+      const buf = new Uint8Array(await file.slice(0, Math.min(file.size, 4 * 1024 * 1024)).arrayBuffer());
+      const rawStr = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+
+      if (buf[0] === 0x50 && buf[1] === 0x4B) {
+        // عد الشرائح من نمط XML
+        const slideMatches = rawStr.match(/<p:sld[\s>]/g) || rawStr.match(/<p:slide[\s>]/g);
+        slideCount = slideMatches ? slideMatches.length : 0;
+
+        // كشف أبعاد الشريحة من sldSz
+        const sldSzMatch = rawStr.match(/sldSz[^>]*cx[=\s"]+(\d+)[^>]*cy[=\s"]+(\d+)/);
+        if (sldSzMatch) {
+          const cx = parseInt(sldSzMatch[1], 10);
+          const cy = parseInt(sldSzMatch[2], 10);
+          // EMU (English Metric Units): 914400 EMU = 1 إنش
+          const widthInches = cx / 914400;
+          const heightInches = cy / 914400;
+          const ratio = widthInches / heightInches;
+          isWidescreen = ratio > 1.5;
+          aspectRatio = isWidescreen ? '16:9' : '4:3';
+          insights.push(`أبعاد الشريحة: ${widthInches.toFixed(1)}×${heightInches.toFixed(1)} إنش (${aspectRatio})`);
+        } else {
+          // محاولة أخرى مع ترتيب مختلف
+          const sldSzMatch2 = rawStr.match(/sldSz[^>]*cy[=\s"]+(\d+)[^>]*cx[=\s"]+(\d+)/);
+          if (sldSzMatch2) {
+            const cy = parseInt(sldSzMatch2[1], 10);
+            const cx = parseInt(sldSzMatch2[2], 10);
+            const widthInches = cx / 914400;
+            const heightInches = cy / 914400;
+            isWidescreen = (widthInches / heightInches) > 1.5;
+            aspectRatio = isWidescreen ? '16:9' : '4:3';
+          }
+        }
+
+        if (slideCount === 0) {
+          // تقدير بديل: ابحث عن صيغ أخرى
+          const slideRelMatches = rawStr.match(/slide\d+\.xml/g);
+          slideCount = slideRelMatches ? new Set(slideRelMatches).size : 0;
+        }
+      } else {
+        insights.push('تنسيق PPTX غير معروف (لا يبدأ بـ PK)');
+      }
+    } else {
+      // PPT ثنائي — تقدير من الحجم (≈50KB لكل شريحة)
+      slideCount = Math.max(1, Math.round(sizeKB / 50));
+      insights.push('ملف PowerPoint ثنائي — عدد الشرائح تقديري من الحجم');
+    }
+
+    if (slideCount > 0) insights.push(`عدد الشرائح: ${slideCount}`);
+    if (isWidescreen) insights.push('شاشة عريضة (16:9)');
+
+  } catch (e) {
+    insights.push(`تعذّر تحليل العرض: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+    slideCount = Math.max(1, Math.round(sizeKB / 50));
+  }
+
+  // تحديد الخدمة
+  let detectedService: ServiceType;
+  let detectedServiceName: string;
+  let confidence: number;
+  let suggestedPaperSize = 'A4';
+  let suggestedBinding = 'none';
+
+  if (slideCount <= 4) {
+    detectedService = 'document';
+    detectedServiceName = 'طباعة عرض تقديمي';
+    confidence = 72;
+  } else {
+    detectedService = 'document';
+    detectedServiceName = 'طباعة عرض تقديمي (متعدد الشرائح)';
+    confidence = 75;
+    suggestedBinding = slideCount > 10 ? 'spiral' : 'none';
+  }
+
+  return {
+    detectedService,
+    detectedServiceName,
+    pageCount: slideCount,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize,
+    suggestedPaperType: 'normal',
+    suggestedBinding,
+    confidence,
+    insights,
+    fileType: ext.toUpperCase(),
+    fileName: file.name,
+    fileNature: `عرض تقديمي (${ext.toUpperCase()})`,
+    hasText: true,
+    hasImages: true,
+    orientation: 'أفقي',
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    presentationDetails: {
+      slideCount,
+      aspectRatio,
+      isWidescreen,
+    },
+    exportAdvice: 'لأفضل نتائج طباعة، صدّر العرض كـ PDF مع تخطيط الشرائح المطلوب',
+  };
+}
+
+/// تحليل ملفات Photoshop PSD
+async function analyzePsd(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let width = 0;
+  let height = 0;
+  let channels = 3;
+  let bitDepth = 8;
+  let colorMode = 3; // RGB
+  let version = 1;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, 30).arrayBuffer());
+    if (buf.length < 26) throw new Error('ملف PSD قصير جداً');
+
+    // التحقق من التوقيع '8BPS'
+    if (buf[0] !== 0x38 || buf[1] !== 0x42 || buf[2] !== 0x50 || buf[3] !== 0x53) {
+      throw new Error('ليس ملف Photoshop PSD صالح');
+    }
+
+    version = buf[4] | (buf[5] << 8);
+    // bytes 6-11: reserved
+    channels = buf[12] | (buf[13] << 8);
+    height = buf[14] | (buf[15] << 8) | (buf[16] << 16) | (buf[17] << 24);
+    width = buf[18] | (buf[19] << 8) | (buf[20] << 16) | (buf[21] << 24);
+    bitDepth = buf[22] | (buf[23] << 8);
+    colorMode = buf[24];
+
+    // التعامل مع القيم السالبة (unsigned)
+    if (width < 0) width = 0;
+    if (height < 0) height = 0;
+
+  } catch (e) {
+    insights.push(`تعذّر تحليل رأس PSD: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  const colorModeName = PSD_COLOR_MODES[colorMode] || `مجهول (${colorMode})`;
+  const megapixels = width > 0 && height > 0 ? Math.round(((width * height) / 1000000) * 100) / 100 : 0;
+  const isPortrait = height > width;
+  const orientation: "عمودي" | "أفقي" | "مربع" = height > width + 1 ? "عمودي" : width > height + 1 ? "أفقي" : "مربع";
+
+  insights.push(`إصدار PSD: ${version}`);
+  insights.push(`الأبعاد: ${width}×${height} بكسل (${megapixels} ميجابكسل)`);
+  insights.push(`القنوات: ${channels}`);
+  insights.push(`عمق البت لكل قناة: ${bitDepth} بت`);
+  insights.push(`نمط الألوان: ${colorModeName}`);
+
+  const photoSuggestion = width > 0 && height > 0 ? suggestPhotoSize(width, height) : null;
+
+  // تحديد الخدمة
+  let detectedService: ServiceType;
+  let detectedServiceName: string;
+  let suggestedColor: string;
+  let suggestedPaperSize = 'A4';
+  let suggestedPaperType = 'normal';
+
+  if (megapixels > 4) {
+    detectedService = 'poster';
+    detectedServiceName = 'ملصق (تصميم Photoshop)';
+    suggestedPaperSize = 'A3';
+    suggestedPaperType = 'normal';
+    suggestedColor = 'color';
+  } else {
+    detectedService = 'photo';
+    detectedServiceName = 'طباعة صور (Photoshop)';
+    suggestedPaperType = 'glossy';
+    suggestedColor = colorMode === 4 ? 'color' : 'color';
+  }
+
+  return {
+    detectedService,
+    detectedServiceName,
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor,
+    suggestedPaperSize,
+    suggestedPaperType,
+    suggestedBinding: 'none',
+    suggestedPhotoSize: photoSuggestion?.sizeId,
+    suggestedPhotoSizeDPI: photoSuggestion?.achievableDPI,
+    confidence: 72,
+    insights,
+    fileType: 'PSD',
+    fileName: file.name,
+    fileNature: 'تصميم Photoshop',
+    imageDimensions: width > 0 && height > 0 ? { width, height, megapixels } : undefined,
+    isPortrait,
+    orientation,
+    colorSpace: colorMode === 4 ? 'CMYK' : colorMode === 1 ? 'تدرج رمادي' : 'RGB',
+    hasImages: true,
+    aspectRatio: width > 0 && height > 0 ? getAspectRatioText(width, height) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    psdDetails: {
+      channels,
+      bitDepth,
+      colorMode: String(colorMode),
+      colorModeName,
+    },
+    exportAdvice: 'صدّر كـ PDF أو TIFF (بدون طبقات) للحصول على أفضل نتائج طباعة',
+  };
+}
+
+/// تحليل ملفات Adobe Illustrator AI
+async function analyzeIllustrator(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let width = 0;
+  let height = 0;
+  let boundingBoxMM: { width: number; height: number } | null = null;
+  let isPdfCompatible = false;
+  let pageDimensionsMM: { width: number; height: number } | undefined;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, Math.min(file.size, 65536)).arrayBuffer());
+    const headerStr = new TextDecoder('ascii', { fatal: false }).decode(buf.slice(0, 32));
+
+    if (headerStr.startsWith('%PDF')) {
+      // PDF-compatible AI file
+      isPdfCompatible = true;
+      insights.push('ملف AI متوافق مع PDF — يمكن قراءته كـ PDF');
+
+      // محاولة استخراج BoundingBox من محتوى PDF
+      const fullStr = new TextDecoder('latin1', { fatal: false }).decode(buf);
+      const bboxMatch = fullStr.match(/%%BoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+      if (bboxMatch) {
+        const llx = parseFloat(bboxMatch[1]);
+        const lly = parseFloat(bboxMatch[2]);
+        const urx = parseFloat(bboxMatch[3]);
+        const ury = parseFloat(bboxMatch[4]);
+        width = Math.round(urx - llx);
+        height = Math.round(ury - lly);
+        boundingBoxMM = {
+          width: Math.round(width * 25.4 / 72 * 10) / 10,
+          height: Math.round(height * 25.4 / 72 * 10) / 10,
+        };
+        insights.push(`BoundingBox: ${width}×${height} نقطة (${boundingBoxMM.width}×${boundingBoxMM.height} مم)`);
+      }
+    } else if (headerStr.startsWith('%!PS-Adobe')) {
+      // PostScript-based AI
+      insights.push('ملف AI مبني على PostScript — تنسيق قديم');
+
+      const fullStr = new TextDecoder('latin1', { fatal: false }).decode(buf);
+      const bboxMatch = fullStr.match(/%%BoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+      if (bboxMatch) {
+        const llx = parseFloat(bboxMatch[1]);
+        const lly = parseFloat(bboxMatch[2]);
+        const urx = parseFloat(bboxMatch[3]);
+        const ury = parseFloat(bboxMatch[4]);
+        width = Math.round(urx - llx);
+        height = Math.round(ury - lly);
+        boundingBoxMM = {
+          width: Math.round(width * 25.4 / 72 * 10) / 10,
+          height: Math.round(height * 25.4 / 72 * 10) / 10,
+        };
+        insights.push(`BoundingBox: ${width}×${height} نقطة (${boundingBoxMM.width}×${boundingBoxMM.height} مم)`);
+      }
+    } else {
+      insights.push('تنسيق AI غير معروف — قد يكون إصدار حديث مشفّر');
+    }
+  } catch (e) {
+    insights.push(`تعذّر تحليل AI: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  const isPortrait = height > width;
+  const orientation: "عمودي" | "أفقي" | "مربع" = height > width + 1 ? "عمودي" : width > height + 1 ? "أفقي" : "مربع";
+  const closestPaper = boundingBoxMM ? findClosestPaperSize(boundingBoxMM.width, boundingBoxMM.height) : null;
+
+  if (boundingBoxMM) {
+    pageDimensionsMM = boundingBoxMM;
+    if (closestPaper && closestPaper.name !== 'مخصص') {
+      insights.push(`أقرب مقاس ورقي: ${closestPaper.name}`);
+    }
+  }
+
+  return {
+    detectedService: 'poster',
+    detectedServiceName: 'ملصق (Adobe Illustrator)',
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize: closestPaper && closestPaper.name !== 'مخصص' ? closestPaper.name : 'A3',
+    suggestedPaperType: 'normal',
+    suggestedBinding: 'none',
+    confidence: 68,
+    insights,
+    fileType: 'AI',
+    fileName: file.name,
+    fileNature: 'تصميم متجهي (Adobe Illustrator)',
+    isPortrait,
+    orientation,
+    colorSpace: 'RGB',
+    hasImages: false,
+    pageDimensionsMM,
+    closestPaperSize: closestPaper?.name,
+    aspectRatio: width > 0 && height > 0 ? getAspectRatioText(width, height) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    vectorDetails: {
+      boundingBoxMM,
+      isPdfCompatible,
+    },
+    exportAdvice: isPdfCompatible
+      ? 'يمكن إعادة تسميته إلى .pdf وفتحه مباشرة — أو صدّره من Illustrator كـ PDF'
+      : 'صدّر من Adobe Illustrator كـ PDF لضمان التوافق عند الطباعة',
+  };
+}
+
+/// تحليل ملفات EPS
+async function analyzeEps(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let boundingBoxMM: { width: number; height: number } | null = null;
+  let pageDimensionsMM: { width: number; height: number } | undefined;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, Math.min(file.size, 65536)).arrayBuffer());
+    const text = new TextDecoder('latin1', { fatal: false }).decode(buf);
+
+    // البحث عن HiResBoundingBox أولاً (أكثر دقة)
+    const hiresMatch = text.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+    const bboxMatch = text.match(/%%BoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+
+    const match = hiresMatch || bboxMatch;
+    if (match) {
+      const llx = parseFloat(match[1]);
+      const lly = parseFloat(match[2]);
+      const urx = parseFloat(match[3]);
+      const ury = parseFloat(match[4]);
+      const widthPt = urx - llx;
+      const heightPt = ury - lly;
+      const widthMM = Math.round(widthPt * 25.4 / 72 * 10) / 10;
+      const heightMM = Math.round(heightPt * 25.4 / 72 * 10) / 10;
+      boundingBoxMM = { width: widthMM, height: heightMM };
+      pageDimensionsMM = boundingBoxMM;
+
+      insights.push(`${hiresMatch ? 'HiRes' : ''}BoundingBox: ${Math.round(widthPt)}×${Math.round(heightPt)} نقطة`);
+      insights.push(`الأبعاد: ${widthMM}×${heightMM} مم`);
+    } else {
+      insights.push('لم يُعثر على BoundingBox — قد يكون الملف بصيغة ثنائية EPS');
+    }
+
+    // كشف معلومات إضافية من تعليقات DSC
+    const titleMatch = text.match(/%%Title:\s*(.+)/);
+    const creatorMatch = text.match(/%%Creator:\s*(.+)/);
+    if (titleMatch) insights.push(`العنوان: ${titleMatch[1].trim()}`);
+    if (creatorMatch) insights.push(`المُنشئ: ${creatorMatch[1].trim()}`);
+
+  } catch (e) {
+    insights.push(`تعذّر تحليل EPS: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  const w = boundingBoxMM?.width || 0;
+  const h = boundingBoxMM?.height || 0;
+  const isPortrait = h > w;
+  const orientation: "عمودي" | "أفقي" | "مربع" = h > w + 1 ? "عمودي" : w > h + 1 ? "أفقي" : "مربع";
+  const closestPaper = boundingBoxMM ? findClosestPaperSize(w, h) : null;
+
+  if (closestPaper && closestPaper.name !== 'مخصص') {
+    insights.push(`أقرب مقاس ورقي: ${closestPaper.name}`);
+  }
+
+  return {
+    detectedService: 'poster',
+    detectedServiceName: 'ملصق (EPS)',
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize: closestPaper && closestPaper.name !== 'مخصص' ? closestPaper.name : 'A3',
+    suggestedPaperType: 'normal',
+    suggestedBinding: 'none',
+    confidence: 68,
+    insights,
+    fileType: 'EPS',
+    fileName: file.name,
+    fileNature: 'تصميم متجهي (EPS)',
+    isPortrait,
+    orientation,
+    colorSpace: 'RGB',
+    pageDimensionsMM,
+    closestPaperSize: closestPaper?.name,
+    aspectRatio: w > 0 && h > 0 ? getAspectRatioText(Math.round(w), Math.round(h)) : undefined,
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    vectorDetails: {
+      boundingBoxMM,
+      isPdfCompatible: false,
+    },
+    exportAdvice: 'صدّر كـ PDF من البرنامج المُنشئ لضمان أفضل نتائج طباعة',
+  };
+}
+
+/// تحليل ملفات CorelDraw CDR
+async function analyzeCorelDraw(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+  let version = 'مجهول';
+  let isRiff = false;
+
+  try {
+    const buf = new Uint8Array(await file.slice(0, 32).arrayBuffer());
+
+    if (buf.length >= 12 && buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46) {
+      isRiff = true;
+      // RIFF header: 'RIFF' + size (4 bytes) + type (4 bytes)
+      const riffType = String.fromCharCode(buf[8], buf[9], buf[10], buf[11]);
+      // CDR versions: bytes 8-9 as version number
+      const versionNum = buf[8] | (buf[9] << 8);
+      const versionMap: Record<number, string> = {
+        0x0500: 'CDR 5',
+        0x0600: 'CDR 6',
+        0x0700: 'CDR 7',
+        0x0800: 'CDR 8',
+        0x0900: 'CDR 9',
+        0x0A00: 'CDR 10',
+        0x0B00: 'CDR 11',
+        0x0C00: 'CDR 12',
+        0x0D00: 'CDR X3',
+        0x0E00: 'CDR X4',
+        0x0F00: 'CDR X5',
+        0x1000: 'CDR X6',
+        0x1100: 'CDR X7',
+        0x1200: 'CDR X8',
+        0x1300: 'CDR 2017',
+        0x1400: 'CDR 2018',
+        0x1500: 'CDR 2019',
+        0x1600: 'CDR 2020',
+        0x1700: 'CDR 2021',
+      };
+      version = versionMap[versionNum] || `CDR (إصدار ${versionNum})`;
+      insights.push(`تنسيق RIFF — ${version}`);
+    } else {
+      insights.push('تنسيق CDR حديث (غير RIFF) — لا يمكن تحليله بالكامل في المتصفح');
+      // محاولة كشف الإصدار من بداية الملف
+      const headerStr = new TextDecoder('ascii', { fatal: false }).decode(buf.slice(0, 16));
+      if (headerStr.includes('CDR')) {
+        version = 'CDR (حديث)';
+      }
+    }
+  } catch (e) {
+    insights.push(`تعذّر تحليل CDR: ${e instanceof Error ? e.message : 'خطأ مجهول'}`);
+  }
+
+  // تقدير التعقيد من الحجم
+  let complexity = 'بسيط';
+  if (sizeMB > 5) complexity = 'معقد/كبير';
+  else if (sizeMB > 1) complexity = 'متوسط';
+
+  insights.push(`التعقيد (من الحجم): ${complexity}`);
+
+  return {
+    detectedService: 'poster',
+    detectedServiceName: 'ملصق (CorelDraw)',
+    pageCount: 1,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize: 'A3',
+    suggestedPaperType: 'normal',
+    suggestedBinding: 'none',
+    confidence: 55,
+    insights,
+    fileType: 'CDR',
+    fileName: file.name,
+    fileNature: `تصميم CorelDraw (${version})`,
+    orientation: 'عمودي',
+    colorSpace: 'RGB',
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    exportAdvice: 'صدّر من CorelDraw كـ PDF أو SVG لضمان نتائج طباعة دقيقة — تنسيق CDR الخاص لا يمكن قراءته مباشرة',
+  };
+}
+
+/// تحليل ملفات Adobe InDesign INDD
+async function analyzeInDesign(
+  file: File,
+  sizeKB: number,
+  sizeMB: number,
+): Promise<RealFileAnalysis> {
+  const insights: string[] = [];
+
+  // INDD لا يملك رأساً ثنائياً موثوقاً — نعتمد على الحجم والتقدير
+  let complexity = 'بسيط';
+  let estimatedPages = 1;
+
+  if (sizeKB < 100) {
+    complexity = 'بسيط';
+    estimatedPages = 1;
+  } else if (sizeKB < 1024) {
+    complexity = 'متوسط';
+    estimatedPages = Math.max(1, Math.round(sizeKB / 200));
+  } else {
+    complexity = 'معقد/متعدد الصفحات';
+    estimatedPages = Math.max(1, Math.round(sizeMB / 0.5));
+  }
+
+  insights.push('ملف Adobe InDesign — لا يمكن تحليله بالكامل في المتصفح');
+  insights.push(`التعقيد (من الحجم): ${complexity}`);
+  insights.push(`الصفحات المقدّرة: ${estimatedPages}`);
+
+  let detectedService: ServiceType;
+  let detectedServiceName: string;
+  let suggestedBinding = 'none';
+
+  if (estimatedPages > 10) {
+    detectedService = 'document';
+    detectedServiceName = 'كتاب/منشور (InDesign)';
+    suggestedBinding = 'spiral';
+  } else {
+    detectedService = 'document';
+    detectedServiceName = 'مستند (InDesign)';
+  }
+
+  return {
+    detectedService,
+    detectedServiceName,
+    pageCount: estimatedPages,
+    fileSizeKB: sizeKB,
+    fileSizeMB: sizeMB,
+    suggestedColor: 'color',
+    suggestedPaperSize: 'A4',
+    suggestedPaperType: 'normal',
+    suggestedBinding,
+    confidence: 50,
+    insights,
+    fileType: 'INDD',
+    fileName: file.name,
+    fileNature: 'منشور/مستند (Adobe InDesign)',
+    hasText: true,
+    hasImages: true,
+    orientation: 'عمودي',
+    fileSizeFormatted: formatFileSize(sizeKB, sizeMB),
+    exportAdvice: 'صدّر من Adobe InDesign كـ PDF (File → Export → Adobe PDF) لضمان أفضل نتائج طباعة',
   };
 }
 
@@ -988,35 +2387,29 @@ export async function analyzeFileWithAI(
     formData.append("fileName", file.name);
     formData.append("fileType", basicAnalysis.fileType);
 
-    // إرسال المعاينة المصغرة أو الصورة الأصلية
     if (basicAnalysis.thumbnailUrl) {
       formData.append("thumbnailDataUrl", basicAnalysis.thumbnailUrl);
     } else if (isImage) {
       formData.append("file", file);
     }
 
-    // إرسال معاينات إضافية (صفحة وسط + أخيرة)
     if (basicAnalysis.extraThumbnails?.length) {
       basicAnalysis.extraThumbnails.forEach((t, idx) => {
         formData.append(`extraThumbnail${idx}`, t);
       });
     }
 
-    // إرسال النص الكامل (حتى 10000 حرف بدلاً من 300)
     const textToSend = basicAnalysis.fullText || basicAnalysis.textPreview || "";
     if (textToSend.trim()) {
       formData.append("textPreview", textToSend.substring(0, 10000));
     }
 
-    // عدد الصفحات كسياق
     if (basicAnalysis.pageCount > 0) {
       formData.append("pageCount", String(basicAnalysis.pageCount));
     }
 
-    // نوع الخدمة المكتشف محلياً (يساعد في تخصيص البرومبت)
     formData.append("detectedService", basicAnalysis.detectedService);
 
-    // ملخص إحصائي عميق
     const stats: string[] = [];
     if (basicAnalysis.imageCount) stats.push(`صور:${basicAnalysis.imageCount}`);
     if (basicAnalysis.whitespaceRatio != null) stats.push(`مساحة_بيضاء:${basicAnalysis.whitespaceRatio}%`);
@@ -1031,13 +2424,10 @@ export async function analyzeFileWithAI(
       formData.append("statsSummary", stats.join(" | "));
     }
 
-    // لا نرسل طلب VLM إذا لم يكن هناك صورة أو معاينة
     if (!basicAnalysis.thumbnailUrl && !isImage) {
       return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
     }
 
-    // مهلة زمنية + محاولة إعادة واحدة: تحليل VLM قد يتأخر على شبكة بطيئة،
-    // ومحاولة واحدة إضافية عند فشل مؤقت أفضل من الاستسلام فوراً للتحليل الأساسي
     const data = await fetchWithTimeoutAndRetry("/api/ai/analyze-file", formData, 20000, 1);
 
     if (!data || !data.success || !data.analysis) {
@@ -1051,7 +2441,6 @@ export async function analyzeFileWithAI(
     return { vlmAnalysis: vlm, enhancedAnalysis: enhanced };
   } catch (err) {
     console.warn("[VLM] Request failed:", err);
-    // في حالة الفشل، نرجع التحليل الأساسي فقط
     return { vlmAnalysis: null, enhancedAnalysis: basicAnalysis };
   }
 }
@@ -1087,13 +2476,9 @@ async function fetchWithTimeoutAndRetry(
 
 /**
  * دمج مرجّح بالثقة بين التحليل المحلي ونتيجة VLM — بدل الاستبدال الأعمى.
- * المبدأ: عندما تكون ثقة التحليل المحلي عالية جداً (إشارة نص/اسم ملف صريحة وقوية)
- * وتختلف عن VLM بنوع الخدمة، نُبقي على تصنيف الخدمة المحلي (فهو مبني على نص حقيقي مقروء بدقة)
- * لكن نأخذ من VLM كل الخيارات الدقيقة (نوع الورق، التشطيب...) التي تحتاج فحصاً بصرياً لا يقدر عليه النص وحده.
- * عند الاتفاق بين المصدرين نرفع الثقة، وعند الاختلاف نسجّل ذلك بوضوح للمستخدم بدل إخفائه.
  */
 function mergeAnalyses(basic: RealFileAnalysis, vlm: VLMAnalysis): RealFileAnalysis {
-  const LOCAL_HIGH_CONFIDENCE = 88; // عتبة اعتبار الإشارة المحلية "قوية بما يكفي لتُحترم"
+  const LOCAL_HIGH_CONFIDENCE = 88;
   const localIsStrong = basic.confidence >= LOCAL_HIGH_CONFIDENCE;
   const servicesAgree = vlm.suggestedService === basic.detectedService;
 
@@ -1102,9 +2487,6 @@ function mergeAnalyses(basic: RealFileAnalysis, vlm: VLMAnalysis): RealFileAnaly
   let finalServiceName = basic.detectedServiceName;
   let finalConfidence = vlm.confidence || basic.confidence;
 
-  // ═══ تحقق تقاطعي: هل يتعارض ادعاء VLM مع قياسات محلية صلبة (DPI فعلي، ألوان مقاسة فعلياً)؟ ═══
-  // VLM يرى معاينة مصغّرة مضغوطة فقط وقد "يخمّن" جودة أو لوناً لا يطابق ما قِسناه فعلياً من بكسلات الملف.
-  // بدل تبنّي ادعائه كما هو، نقارنه بالحقائق القابلة للقياس ونُخفّض الثقة عند التعارض بدل إخفائه.
   const vlmSaysColor = vlm.suggestedColor === "color" || vlm.suggestedOptions?.color === "color";
   const vlmSaysBW = vlm.suggestedColor === "bw" || vlm.suggestedOptions?.color === "bw";
   let conflictPenalty = 0;
@@ -1124,21 +2506,18 @@ function mergeAnalyses(basic: RealFileAnalysis, vlm: VLMAnalysis): RealFileAnaly
   }
 
   if (servicesAgree) {
-    // اتفاق بين التحليلين: نرفع الثقة (كل مصدر يعزز الآخر) ونأخذ تسمية VLM الأدق عادة
     finalServiceName = vlm.suggestedServiceName || basic.detectedServiceName;
     finalConfidence = Math.min(99, Math.max(vlm.confidence || 0, basic.confidence) + 5);
     insights.push(`✅ اتفاق بين التحليل المحلي والذكاء الاصطناعي — ثقة معزّزة (${finalConfidence}%)`);
   } else if (localIsStrong) {
-    // التحليل المحلي واثق جداً من نص حقيقي مقروء — نحترمه بدل استبداله تلقائياً بتخمين بصري
     finalService = basic.detectedService;
     finalServiceName = basic.detectedServiceName;
     finalConfidence = basic.confidence;
     insights.push(
-      `⚠️ اختلاف تصنيف: التحليل المحلي رجّح "${basic.detectedServiceName}" من نص الملف الفعلي (ثقة ${basic.confidence}%)، ` +
+      `⚠️ اختلاف تصنيف: التحليل المحلي رجّح "${basic.detectedServiceName}" من نص الملف الفعلي (ثقة ${basic.confidence}%), ` +
         `بينما اقترح الذكاء الاصطناعي "${vlm.suggestedServiceName}" — تم الاعتماد على النص الفعلي كمصدر أدق. يمكنك تغيير الخدمة يدوياً إن لزم.`,
     );
   } else {
-    // التحليل المحلي غير واثق كفاية — نثق بـ VLM لأنه يرى الملف بصرياً
     finalService = (vlm.suggestedService as ServiceType) || basic.detectedService;
     finalServiceName = vlm.suggestedServiceName || basic.detectedServiceName;
     finalConfidence = vlm.confidence || basic.confidence;

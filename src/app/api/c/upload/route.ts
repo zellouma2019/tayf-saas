@@ -3,8 +3,12 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
-const ACCEPTED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "webp"];
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 ميغابايت
+const ACCEPTED_EXTENSIONS = [
+  "pdf", "jpg", "jpeg", "png", "webp", "gif", "bmp", "tiff", "tif", "avif", "svg",
+  "docx", "doc", "xlsx", "xls", "pptx", "ppt", "txt", "rtf", "csv",
+  "ai", "eps", "psd", "indd",
+];
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +19,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "لم يتم إرسال ملف" }, { status: 400 });
     }
 
-    // Check file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: `حجم الملف ${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت يتجاوز الحد الأقصى (100 ميغابايت)` },
@@ -23,7 +26,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extract extension
     const originalName = file.name || "unknown";
     const ext = originalName.split(".").pop()?.toLowerCase() || "";
 
@@ -34,19 +36,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure uploads directory exists
     const uploadsDir = path.join(process.cwd(), "uploads");
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    // Generate unique filename
     const randomSuffix = crypto.randomBytes(8).toString("hex");
     const timestamp = Date.now();
     const storedFileName = `file_${timestamp}_${randomSuffix}.${ext}`;
     const finalPath = path.join(uploadsDir, storedFileName);
 
-    // Write file to disk
     const buffer = Buffer.from(await file.arrayBuffer());
     fs.writeFileSync(finalPath, buffer);
 
