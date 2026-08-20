@@ -148,8 +148,10 @@ export async function POST(req: NextRequest) {
 
       const doc = await loadingTask.promise;
 
-      // Ensure preview directory exists
-      const previewDir = path.join(process.cwd(), "public", "pdf-previews");
+      // Ensure preview directory exists (use /tmp on Vercel)
+      const previewDir = (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)
+        ? "/tmp/pdf-previews"
+        : path.join(process.cwd(), "public", "pdf-previews");
       if (!fs.existsSync(previewDir)) {
         fs.mkdirSync(previewDir, { recursive: true });
       }
@@ -193,7 +195,13 @@ export async function POST(req: NextRequest) {
         })
         .toFile(coverPath);
 
-      coverImageUrl = `/pdf-previews/${coverFileName}`;
+      // On Vercel, /tmp is not served — return data URLs instead of file paths
+    function fileToDataUrl(filePath: string): string {
+      const buf = fs.readFileSync(filePath);
+      return `data:image/webp;base64,${buf.toString("base64")}`;
+    }
+
+    coverImageUrl = fileToDataUrl(coverPath);
 
       // Render last page (back cover) if multi-page
       if (numPages > 1) {
@@ -233,7 +241,7 @@ export async function POST(req: NextRequest) {
             })
             .toFile(backPath);
 
-          backImageUrl = `/pdf-previews/${backFileName}`;
+          backImageUrl = fileToDataUrl(backPath);
         } catch (backErr) {
           console.warn("[PDF Process] Back page render failed (non-critical):", backErr);
         }
