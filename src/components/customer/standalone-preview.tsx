@@ -209,6 +209,10 @@ export function StandalonePreview() {
   const [analysis, setAnalysis] = useState<AnalysisResult>(DEFAULT_ANALYSIS);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStage, setAnalysisStage] = useState("");
+  // Enhanced small-file upload metrics
+  const [uploadStartTime, setUploadStartTime] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState(0);
+  const [uploadETA, setUploadETA] = useState(0);
   const [error, setError] = useState("");
   const [previewMode, setPreviewMode] = useState<"mockup" | "precise">("mockup");
   const [zoom, setZoom] = useState(100);
@@ -539,11 +543,19 @@ export function StandalonePreview() {
           fd.append("file", f);
           xhr.open("POST", "/api/c/upload-analyze");
           xhr.timeout = 120_000;
+          const t0 = Date.now();
+          setUploadStartTime(t0);
 
           xhr.upload.addEventListener("progress", (e) => {
             if (e.lengthComputable) {
               const pct = Math.round((e.loaded / e.total) * 100);
               setUploadProgress(Math.min(pct, 95));
+              const elapsed = (Date.now() - t0) / 1000;
+              if (elapsed > 0.2) {
+                setUploadSpeed(e.loaded / elapsed);
+                const remaining = (e.total - e.loaded) / (e.loaded / elapsed);
+                setUploadETA(remaining);
+              }
             }
           });
 
@@ -897,11 +909,6 @@ export function StandalonePreview() {
   }, [step, handleFile]);
 
   // Reusable category-based gradient classnames (eliminates 4x duplication in stat cards)
-  const catCardBg = useMemo(() => {
-    if (fileCategory === "image") return "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-950/10 border-emerald-200/50 dark:border-emerald-800/30";
-    if (fileCategory === "short-doc") return "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-950/10 border-amber-200/50 dark:border-amber-800/30";
-    return "bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-950/10 border-violet-200/50 dark:border-violet-800/30";
-  }, [fileCategory]);
 
   const hCol = analysis.healthScore >= 80 ? "text-emerald-500" : analysis.healthScore >= 60 ? "text-amber-500" : "text-rose-500";
   const hBg = analysis.healthScore >= 80 ? "bg-emerald-500" : analysis.healthScore >= 60 ? "bg-amber-500" : "bg-rose-500";
@@ -1183,9 +1190,7 @@ export function StandalonePreview() {
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
               className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center"
             >
-              {chunkedUpload.phase === "assembling" ? (
-                <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
-              ) : chunkedUpload.phase === "preparing" ? (
+              {chunkedUpload.phase === "assembling" || chunkedUpload.phase === "preparing" ? (
                 <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
               ) : (
                 <Upload className="h-8 w-8 text-amber-500" />
@@ -1196,29 +1201,32 @@ export function StandalonePreview() {
                 {chunkedUpload.phase === "preparing" && "جارٍ تجهيز الرفع..."}
                 {chunkedUpload.phase === "uploading" && "جارٍ رفع الملف..."}
                 {chunkedUpload.phase === "assembling" && "جارٍ تجميع الملف..."}
+                {chunkedUpload.phase === "idle" && uploadProgress < 100 && "جارٍ رفع الملف..."}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">{file?.name}</p>
-              <p className="text-xs text-muted-foreground/70">{file ? `${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت` : ""}</p>
+              <p className="text-sm text-muted-foreground mt-1 truncate max-w-xs">{file?.name}</p>
+              <p className="text-xs text-muted-foreground/70">{file ? formatFileSize(file.size) : ""}</p>
             </div>
             <div className="w-full max-w-sm space-y-3">
               {/* Progress bar */}
               <div className="relative">
-                <Progress value={chunkedUpload.progress} className="h-3" />
+                <Progress value={chunkedUpload.phase !== "idle" ? chunkedUpload.progress : uploadProgress} className="h-3" />
                 <motion.div
                   className="absolute top-0 right-0 h-3 rounded-full bg-gradient-to-l from-amber-400 to-amber-500/0"
-                  style={{ width: `${chunkedUpload.progress}%` }}
-                  animate={chunkedUpload.phase === "uploading" ? { opacity: [0.3, 0.6, 0.3] } : { opacity: 0 }}
+                  style={{ width: `${chunkedUpload.phase !== "idle" ? chunkedUpload.progress : uploadProgress}%` }}
+                  animate={(chunkedUpload.phase === "uploading" || (chunkedUpload.phase === "idle" && uploadProgress < 100)) ? { opacity: [0.3, 0.6, 0.3] } : { opacity: 0 }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />
               </div>
               {/* Stats row: speed + ETA + uploaded */}
               <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono tabular-nums">
-                <span>{chunkedUpload.formatSpeed(chunkedUpload.speed)}</span>
-                <span className="font-bold text-foreground text-sm">{chunkedUpload.progress}%</span>
-                <span>{chunkedUpload.formatETA(chunkedUpload.eta)}</span>
+                <span>{chunkedUpload.phase !== "idle" ? chunkedUpload.formatSpeed(chunkedUpload.speed) : (uploadSpeed > 0 ? formatFileSize(Math.round(uploadSpeed)) + "/ث" : "—")}</span>
+                <span className="font-bold text-foreground text-sm">{chunkedUpload.phase !== "idle" ? chunkedUpload.progress : uploadProgress}%</span>
+                <span>{chunkedUpload.phase !== "idle" ? chunkedUpload.formatETA(chunkedUpload.eta) : (uploadETA > 0 ? `~${Math.ceil(uploadETA)}ث` : "—")}</span>
               </div>
               <p className="text-[10px] text-muted-foreground/70">
-                {chunkedUpload.formatSize(chunkedUpload.uploadedBytes)} / {chunkedUpload.formatSize(chunkedUpload.totalBytes)}
+                {chunkedUpload.phase !== "idle"
+                  ? `${chunkedUpload.formatSize(chunkedUpload.uploadedBytes)} / ${chunkedUpload.formatSize(chunkedUpload.totalBytes)}`
+                  : (file ? `${formatFileSize(Math.round((uploadProgress / 100) * file.size))} / ${formatFileSize(file.size)}` : "")}
               </p>
               {/* Control buttons */}
               {(chunkedUpload.canPause || chunkedUpload.canResume) && (
@@ -1292,6 +1300,17 @@ export function StandalonePreview() {
 
       {step === "results" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+          {/* ─── رفع ملف جديد ─── */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => { setStep("idle"); setFile(null); setImagePreviewUrl(null); setAnalysis(DEFAULT_ANALYSIS); setWorkerResult(null); setError(""); }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all border border-transparent hover:border-border"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              ملف جديد
+            </button>
+          </div>
+
           {/* ─── بطاقة النتائج مع شارة التصنيف + معاينة + مؤشر دائري ─── */}
           <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
@@ -1349,23 +1368,27 @@ export function StandalonePreview() {
             </div>
           </div>
 
-          {/* ─── بطاقات الإحصائيات مع خلفيات متدرجة ─── */}
+          {/* ─── بطاقات الإحصائيات مع أيقونات ملونة ─── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={`rounded-xl p-3 text-center border ${catCardBg}`}>
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1"><FileText className="h-4 w-4" /><span className="text-[10px]">الصفحات</span></div>
-              <span className="text-sm font-bold block">{analysis.pageCount}</span>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center"><FileText className="h-4 w-4 text-blue-500" /></div>
+              <span className="text-[10px] text-muted-foreground block">الصفحات</span>
+              <span className="text-base font-bold block mt-0.5">{analysis.pageCount}</span>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className={`rounded-xl p-3 text-center border ${catCardBg}`}>
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1"><ImagePlus className="h-4 w-4" /><span className="text-[10px]">الصور</span></div>
-              <span className="text-sm font-bold block">{analysis.imageCount}</span>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center"><ImagePlus className="h-4 w-4 text-emerald-500" /></div>
+              <span className="text-[10px] text-muted-foreground block">الصور</span>
+              <span className="text-base font-bold block mt-0.5">{analysis.imageCount}</span>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`rounded-xl p-3 text-center border ${catCardBg}`}>
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1"><Layers className="h-4 w-4" /><span className="text-[10px]">مقاس الورق</span></div>
-              <span className="text-sm font-bold block">{analysis.closestPaperSize || analysis.paperSize}</span>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center"><Layers className="h-4 w-4 text-violet-500" /></div>
+              <span className="text-[10px] text-muted-foreground block">مقاس الورق</span>
+              <span className="text-base font-bold block mt-0.5">{analysis.closestPaperSize || analysis.paperSize}</span>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className={`rounded-xl p-3 text-center border ${catCardBg}`}>
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1"><Palette className="h-4 w-4" /><span className="text-[10px]">الألوان</span></div>
-              <span className="text-sm font-bold block">{analysis.isColor ? "ملون" : "أبيض وأسود"}</span>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className={`w-8 h-8 mx-auto mb-1.5 rounded-lg flex items-center justify-center ${analysis.isColor ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-gray-50 dark:bg-gray-950/30'}`}><Palette className={`h-4 w-4 ${analysis.isColor ? 'text-rose-500' : 'text-gray-500'}`} /></div>
+              <span className="text-[10px] text-muted-foreground block">الألوان</span>
+              <span className="text-base font-bold block mt-0.5">{analysis.isColor ? "ملون" : "أبيض وأسود"}</span>
             </motion.div>
           </div>
 
@@ -1394,10 +1417,10 @@ export function StandalonePreview() {
           {analysis.pageDimensionsMM && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-2xl border bg-card p-4 shadow-sm">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="flex flex-col"><span className="text-muted-foreground">الأبعاد</span><span className="font-medium font-mono">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height} مم</span></div>
-                <div className="flex flex-col"><span className="text-muted-foreground">الدقة</span><span className="font-medium">{analysis.estimatedDPI ? `${analysis.estimatedDPI} DPI` : "—"}</span></div>
-                <div className="flex flex-col"><span className="text-muted-foreground">فئة الدقة</span><span className="font-medium">{analysis.dpiCategory || "—"}</span></div>
-                <div className="flex flex-col"><span className="text-muted-foreground">الاتجاه</span><span className="font-medium">{analysis.orientation === "portrait" ? "عمودي" : "أفقي"}</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">الأبعاد</span><span className="font-bold font-mono text-sm">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height}</span><span className="text-[10px] text-muted-foreground">مم</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{analysis.estimatedDPI ? `${analysis.estimatedDPI}` : "—"}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className="font-bold text-sm">{analysis.dpiCategory || "—"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">الاتجاه</span><span className="font-bold text-sm">{analysis.orientation === "portrait" ? "عمودي" : "أفقي"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
               </div>
             </motion.div>
           )}
@@ -1407,6 +1430,69 @@ export function StandalonePreview() {
               <ul className="space-y-1.5">{analysis.insights.map((ins, i) => (<li key={i} className="flex items-start gap-2 text-xs"><Check className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" /><span>{ins}</span></li>))}</ul>
             </motion.div>
           )}
+
+          {/* ═══ بطاقة معلومات الملف + قائمة جاهزية الطباعة ═══ */}
+          {uploadedFileType === "pdf" && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }} className="space-y-3">
+              {/* File metadata card */}
+              <div className="rounded-2xl border bg-card p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3"><FileText className="h-4 w-4 text-blue-500" /><span className="text-xs font-bold">معلومات الملف</span></div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                    <span className="text-muted-foreground">اسم الملف</span>
+                    <span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name || "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                    <span className="text-muted-foreground">الحجم</span>
+                    <span className="font-medium font-mono">{analysis.fileSizeKB > 1024 ? `${analysis.fileSizeMB} MB` : `${analysis.fileSizeKB} KB`}</span>
+                  </div>
+                  {(analysis.title || analysis.author) && (
+                    <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                      <span className="text-muted-foreground">العنوان</span>
+                      <span className="font-medium truncate max-w-[200px]">{analysis.title || analysis.author || "—"}</span>
+                    </div>
+                  )}
+                  {analysis.author && analysis.title && (
+                    <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                      <span className="text-muted-foreground">المؤلف</span>
+                      <span className="font-medium truncate max-w-[200px]">{analysis.author}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-muted-foreground">نوع الملف</span>
+                    <span className="font-medium">PDF — {analysis.fileNature || "مستند"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Print readiness checklist */}
+              <div className="rounded-2xl border bg-card p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3"><Printer className="h-4 w-4 text-violet-500" /><span className="text-xs font-bold">فحص جاهزية الطباعة</span></div>
+                <div className="space-y-2">
+                  {[
+                    { ok: !analysis.isEncrypted, label: "الملف غير مشفّر", detail: "يمكن معالجته مباشرة" },
+                    { ok: analysis.pageCount > 0, label: "يحتوي على صفحات", detail: `${analysis.pageCount} صفحة` },
+                    { ok: analysis.closestPaperSize !== "مخصص" || false, label: "مقاس ورق قياسي", detail: analysis.closestPaperSize || "مخصص" },
+                    { ok: analysis.hasEmbeddedFonts || analysis.textLayer || false, label: "يحتوي على نصوص", detail: "طباعة نصوص واضحة" },
+                    { ok: analysis.isColor, label: "ملون", detail: "سيُطبع بالألوان" },
+                  ].map((item, i) => (
+                    <div key={i} className={`flex items-center gap-3 py-2 px-3 rounded-xl transition-colors ${item.ok ? 'bg-emerald-50/60 dark:bg-emerald-950/15' : 'bg-amber-50/60 dark:bg-amber-950/15'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.ok ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}`}>
+                        {item.ok
+                          ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          : <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-medium ${item.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>{item.label}</p>
+                        <p className="text-[10px] text-muted-foreground">{item.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* ═══ تقرير التحليل المفصّل ═══ */}
           {(analysis.imageDimensionsDetailed || analysis.tiffDetails || analysis.gifDetails || analysis.svgDetails || analysis.psdDetails || analysis.spreadsheetDetails || analysis.presentationDetails || analysis.vectorDetails || analysis.documentDetails || analysis.bmpDetails || analysis.exportAdvice || analysis.colorSpace || analysis.aspectRatio || analysis.dominantColors || analysis.suggestedPhotoSize || analysis.textPreview) && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-2xl border bg-card p-4 space-y-3 shadow-sm">
