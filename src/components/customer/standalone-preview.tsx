@@ -316,6 +316,38 @@ export function StandalonePreview() {
     localStorage.removeItem(HISTORY_KEY);
   }, []);
 
+  /* ─── تحميل الغلاف في الخلفية (بدون حظر المستخدم) ─── */
+  const loadCoverInBackground = useCallback(async (
+    storedFileName: string,
+    numP: number,
+    isPortrait: boolean,
+    dimsMM: { width: number; height: number } | null,
+    paperSize: string,
+  ) => {
+    try {
+      const coverUrl = `/api/c/render-cover?file=${encodeURIComponent(storedFileName)}`;
+      const coverResp = await fetch(coverUrl);
+      if (coverResp.ok) {
+        const blob = await coverResp.blob();
+        const coverDataUrl = await new Promise<string>((res) => {
+          const reader = new FileReader();
+          reader.onloadend = () => res(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        setWorkerResult({
+          numPages: numP,
+          pageDimensionsMM: dimsMM,
+          closestPaperSize: paperSize,
+          isPortrait,
+          coverDataUrl,
+          backDataUrl: null,
+        });
+      }
+    } catch {
+      /* cover load failed — non-critical, results already shown */
+    }
+  }, []);
+
   /* ─── إعادة رفع من السجل ─── */
   const reuploadFromHistory = useCallback(async (item: RecentUpload) => {
     setStoredName(item.storedFileName);
@@ -510,10 +542,8 @@ export function StandalonePreview() {
 
           xhr.upload.addEventListener("progress", (e) => {
             if (e.lengthComputable) {
-              // Upload is ~60% of total (rest is server analysis)
-              const uploadPct = Math.round((e.loaded / e.total) * 100);
-              const totalPct = Math.round(uploadPct * 0.6);
-              setUploadProgress(totalPct);
+              const pct = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(Math.min(pct, 95));
             }
           });
 
@@ -544,32 +574,14 @@ export function StandalonePreview() {
         setUploadProgress(100);
 
         if (isPdf && uploadAnalyzeResult.isPdf) {
-          // ═══ PDF: Server already analyzed + rendered cover in the same request ═══
-          setStep("analyzing"); setAnalysisProgress(80);
-          setAnalysisStage("جارٍ تجهيز النتائج...");
-
+          // ═══ PDF: Metadata ready instantly — show results, load cover in background ═══
           const numP = (uploadAnalyzeResult.numPages as number) || 1;
           const dimsMM = uploadAnalyzeResult.pageDimensionsMM as { width: number; height: number } | null;
           const paperSize = (uploadAnalyzeResult.closestPaperSize as string) || "A4";
           const isPortrait = (uploadAnalyzeResult.isPortrait as boolean) !== false;
           const totalTimeMs = uploadAnalyzeResult.totalTimeMs as number || 0;
 
-          // Set cover/back from the combined response (already data URLs, no extra fetch!)
-          const coverDataUrl = (uploadAnalyzeResult.coverUrl as string) || null;
-          const backDataUrl = (uploadAnalyzeResult.backUrl as string) || null;
-
-          if (coverDataUrl || backDataUrl) {
-            setWorkerResult({
-              numPages: numP,
-              pageDimensionsMM: dimsMM,
-              closestPaperSize: paperSize,
-              isPortrait,
-              aspectRatio: uploadAnalyzeResult.aspectRatio as number | undefined,
-              coverDataUrl,
-              backDataUrl,
-            });
-          }
-
+          // Show results IMMEDIATELY (no waiting for cover)
           const pdfResult: AnalysisResult = {
             ...DEFAULT_ANALYSIS,
             pageCount: numP,
@@ -586,7 +598,7 @@ export function StandalonePreview() {
             hasImages: numP > 1,
             isColor: true,
             insights: [
-              `رفع + تحليل + غلاف في ${totalTimeMs}مث (طلب واحد)`,
+              `رفع + تحليل في ${totalTimeMs}مث`,
               `الملف يحتوي على ${numP} صفحة`,
               `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
               `مقاس الورق: ${paperSize}`,
@@ -598,8 +610,11 @@ export function StandalonePreview() {
           setAnalysisProgress(100);
           setAnalysisStage("");
           const cat = classifyFile("pdf", numP, dimsMM);
-          saveToHistory(f, cat, storedFileName, "pdf");
+          saveToHistory(f, cat, storedFileName!, "pdf");
           setStep("results");
+
+          // Load cover in background (non-blocking)
+          loadCoverInBackground(storedFileName!, numP, isPortrait, dimsMM, paperSize);
           return;
         } else {
           // ═══ Non-PDF: Upload done, client-side analysis ═══
@@ -709,34 +724,7 @@ export function StandalonePreview() {
         const paperSize = serverMeta?.closestPaperSize || "A4";
         const isPortrait = serverMeta?.isPortrait !== false;
 
-        // Cover rendering: server-side for large files
-        setAnalysisStage("معالجة سحابية — استخراج الغلاف...");
-        setAnalysisProgress(50);
-
-        try {
-          const processUrl = `/api/c/pdf-process?storedFileName=${encodeURIComponent(storedFileName!)}`;
-          const processRes = await fetch(processUrl, { method: "POST" });
-          if (processRes.ok) {
-            const serverData: ServerPdfResult = await processRes.json();
-            setAnalysisProgress(80);
-
-            // Cover/back URLs are now data URLs (no extra fetch needed)
-            const coverDataUrl = serverData.coverImageUrl || null;
-            const backDataUrl = serverData.backImageUrl || null;
-
-            setWorkerResult({
-              numPages: serverData.numPages ?? numP,
-              pageDimensionsMM: serverData.pageDimensionsMM ?? dimsMM,
-              closestPaperSize: serverData.closestPaperSize ?? paperSize,
-              isPortrait: serverData.isPortrait ?? isPortrait,
-              aspectRatio: serverData.aspectRatio,
-              coverDataUrl,
-              backDataUrl,
-            });
-          }
-        } catch { /* pdf-process failed */ }
-
-        setAnalysisProgress(95);
+        // Show results immediately, load cover in background
         const pdfResult: AnalysisResult = {
           ...DEFAULT_ANALYSIS,
           pageCount: numP,
@@ -769,6 +757,9 @@ export function StandalonePreview() {
         const cat = classifyFile("pdf", numP, dimsMM);
         saveToHistory(f, cat, storedFileName!, "pdf");
         setStep("results");
+
+        // Load cover in background
+        if (storedFileName) loadCoverInBackground(storedFileName, numP, isPortrait, dimsMM, paperSize);
       } else {
         // Non-PDF large file: client-side analysis
         setStep("analyzing"); setAnalysisProgress(0);
