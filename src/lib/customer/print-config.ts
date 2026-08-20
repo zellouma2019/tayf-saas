@@ -6,7 +6,8 @@ export type ServiceType =
   | "binding"
   | "copy"
   | "card"
-  | "poster";
+  | "poster"
+  | "custom-design";
 
 export interface ServiceDef {
   type: ServiceType;
@@ -74,6 +75,16 @@ export const SERVICES: ServiceDef[] = [
     popularity: 20,
     basePricePerPage: 5,
     accepts: ["PDF", "JPG", "PNG"],
+  },
+  {
+    type: "custom-design",
+    name: "تصميم مخصص",
+    emoji: "🎨",
+    description: "بنرات، هدايا تخرج 3D، أشكال مخصصة",
+    popularity: 80,
+    basePricePerPage: 10,
+    accepts: ["PDF", "JPG", "PNG", "AI", "EPS", "PSD", "CDR", "INDD"],
+    isPopular: true,
   },
 ];
 

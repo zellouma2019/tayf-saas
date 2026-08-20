@@ -12,6 +12,8 @@ import {
   Send, User, Phone, CheckCircle2, Loader2,
 } from "lucide-react";
 import type { BindingType, FileCategory } from "@/components/customer/book-mockup-3d";
+import { ServiceOptionsPanel, type ServiceOptionsState } from "@/components/customer/service-options-panel";
+import { calculatePricingCustom, SERVICE_SPECS, type ServiceType as SpecServiceType } from "@/lib/customer/service-specs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -252,6 +254,8 @@ export function StandalonePreview() {
   // Order dialog
   const [orderStep, setOrderStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Service options state (from ServiceOptionsPanel)
+  const [serviceOptions, setServiceOptions] = useState<ServiceOptionsState | null>(null);
 
   /* ─── تحميل السجل من localStorage ─── */
   useEffect(() => {
@@ -831,6 +835,32 @@ export function StandalonePreview() {
 
   const cost = estimateCost(analysis.pageCount, analysis.isColor);
   const printTime = estimateTime(analysis.pageCount);
+
+  // ===== خدمة التسعير المخصصة من service-specs =====
+  const servicePricing = useMemo(() => {
+    if (!serviceOptions) return null;
+    const spec = SERVICE_SPECS[serviceOptions.serviceType];
+    if (!spec) return null;
+    return calculatePricingCustom({
+      serviceType: serviceOptions.serviceType,
+      pages: analysis.pageCount || 1,
+      copies: serviceOptions.copies,
+      delivery: "today",
+      selectedOptions: serviceOptions.selectedOptions,
+    });
+  }, [serviceOptions, analysis.pageCount]);
+
+  // التسعير الفعلي: service-specs إذا متاح، وإلا القديم
+  const finalPricing = servicePricing
+    ? {
+        printCost: servicePricing.pagesCost,
+        bindCost: servicePricing.finishingCost,
+        coverCost: 0,
+        duplexSurcharge: 0,
+        vat: Math.round(Math.max(1, servicePricing.total) * 0.15 * 100) / 100,
+        total: Math.round((servicePricing.total + Math.max(1, servicePricing.total) * 0.15) * 100) / 100,
+      }
+    : pricing;
 
   /* ─── حاسبة التسعير اللحظي ─── */
   const pricing = useMemo(() => {
@@ -1431,6 +1461,28 @@ export function StandalonePreview() {
               لوحة الإعدادات التفاعلية — مختلفة حسب التصنيف
              ═══════════════════════════════════════════════════════════ */}
           {previewMode === "mockup" && (
+            <ServiceOptionsPanel
+              detectedService={analysis.detectedService || "document"}
+              detectedServiceName={analysis.detectedServiceName || "طباعة"}
+              analysisData={{
+                suggestedColor: analysis.isColor ? "color" : "bw",
+                suggestedPaperSize: analysis.closestPaperSize || analysis.paperSize,
+                suggestedPaperType: analysis.paperType,
+                suggestedBinding: effectiveBinding,
+                suggestedPhotoSize: analysis.suggestedPhotoSize,
+                isColor: analysis.isColor,
+                pageCount: analysis.pageCount,
+              }}
+              copies={copies}
+              onCopiesChange={setCopies}
+              onOptionsChange={setServiceOptions}
+              colorScheme={fileCategory === "image" ? "emerald" : fileCategory === "book" ? "violet" : "amber"}
+              defaultOpen={show3DSettings}
+            />
+          )}
+
+          {/* Hidden: preserve the old options block as fallback reference — kept for 3D settings only */
+          {false && previewMode === "mockup" && (
             <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
               <button onClick={() => setShow3DSettings(!show3DSettings)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -1961,9 +2013,32 @@ export function StandalonePreview() {
               <div className="flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-l from-amber-100/60 to-orange-100/30 dark:from-amber-950/30 dark:to-orange-950/15">
                 <Calculator className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <span className="text-sm font-bold text-amber-800 dark:text-amber-200">التسعير اللحظي</span>
-                <span className="text-[9px] text-amber-600/70 dark:text-amber-400/70 font-medium mr-auto">يتحدث تلقائياً</span>
+                {serviceOptions && (
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-0 text-[9px] font-semibold gap-1 mr-auto">
+                    {SERVICE_SPECS[serviceOptions.serviceType]?.emoji} {SERVICE_SPECS[serviceOptions.serviceType]?.name}
+                  </Badge>
+                )}
+                {!serviceOptions && (
+                  <span className="text-[9px] text-amber-600/70 dark:text-amber-400/70 font-medium mr-auto">يتحدث تلقائياً</span>
+                )}
               </div>
               <div className="p-4 space-y-2.5">
+                {servicePricing && servicePricing.breakdown.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {servicePricing.breakdown.map((item, i) => (
+                      <div key={i} className="rounded-xl bg-background/80 p-3 border">
+                        <p className="text-[10px] text-muted-foreground mb-0.5 truncate" title={item.label}>{item.label}</p>
+                        <p className={`text-sm font-bold tabular-nums ${item.amount < 0 ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
+                          {item.amount < 0 ? "" : ""}{Math.abs(item.amount).toFixed(2)} ر.س
+                        </p>
+                      </div>
+                    ))}
+                    <div className="rounded-xl bg-background/80 p-3 border">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">ضريبة القيمة المضافة (15%)</p>
+                      <p className="text-sm font-bold tabular-nums">{finalPricing.vat.toFixed(2)} ر.س</p>
+                    </div>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div className="rounded-xl bg-background/80 p-3 border">
                     <p className="text-[10px] text-muted-foreground mb-0.5">تكلفة الطباعة</p>
@@ -1996,6 +2071,7 @@ export function StandalonePreview() {
                     <p className="text-sm font-bold tabular-nums">{pricing.vat.toFixed(2)} ر.س</p>
                   </div>
                 </div>
+                )}
 
                 {/* Total */}
                 <div className="flex items-center justify-between rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 p-4 text-white mt-2">
@@ -2095,7 +2171,7 @@ export function StandalonePreview() {
               onClick={() => { setOrderSubmitted(false); setOrderReference(""); setOrderStep(1); setOrderDialogOpen(true); }}
               className="w-full h-13 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 transition-all duration-300 font-bold text-sm gap-2"
             >
-              <Send className="h-4 w-4" />طلب طباعة — {pricing.total.toFixed(2)} ر.س
+              <Send className="h-4 w-4" />طلب طباعة — {finalPricing.total.toFixed(2)} ر.س
             </Button>
           </motion.div>
 
@@ -2311,23 +2387,29 @@ export function StandalonePreview() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          serviceType: "document",
+                          serviceType: serviceOptions?.serviceType || "document",
                           fileName: file?.name,
                           fileType: uploadedFileType === "image" ? "PNG" : uploadedFileType === "document" ? "DOCX" : uploadedFileType === "design" ? "AI" : "PDF",
                           fileSize: file?.size,
                           fileData: storedName,
                           smartAnalysis: analysis,
-                          options: {
-                            pages: analysis.pageCount,
-                            copies,
-                            color: printColor ? "color" : "bw",
-                            paperSize: analysis.closestPaperSize || "A4",
-                            sides: duplex ? "duplex" : "simplex",
-                            binding: effectiveBinding,
-                            paperType: paperWeight,
-                            printRange: "all",
-                            clearCover,
-                          },
+                          options: serviceOptions
+                            ? {
+                                ...serviceOptions.selectedOptions,
+                                pages: analysis.pageCount,
+                                copies: serviceOptions.copies,
+                              }
+                            : {
+                                pages: analysis.pageCount,
+                                copies,
+                                color: printColor ? "color" : "bw",
+                                paperSize: analysis.closestPaperSize || "A4",
+                                sides: duplex ? "duplex" : "simplex",
+                                binding: effectiveBinding,
+                                paperType: paperWeight,
+                                printRange: "all",
+                                clearCover,
+                              },
                           customer: { name: customerName, phone: customerPhone },
                           delivery: { mode: "pickup" },
                           shopId: shopId,
@@ -2352,7 +2434,7 @@ export function StandalonePreview() {
                   disabled={isSubmitting}
                   className="h-10 rounded-xl bg-gradient-to-l from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-xs gap-1.5 shadow-md shadow-emerald-500/20 flex-1 disabled:opacity-50"
                 >
-                  {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}تأكيد الطلب — {pricing.total.toFixed(2)} ر.س
+                  {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}تأكيد الطلب — {finalPricing.total.toFixed(2)} ر.س
                 </Button>
               )}
             </div>

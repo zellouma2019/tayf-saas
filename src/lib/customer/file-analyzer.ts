@@ -1940,15 +1940,15 @@ async function analyzePsd(
   let suggestedPaperType = 'normal';
 
   if (megapixels > 4) {
-    detectedService = 'poster';
-    detectedServiceName = 'ملصق (تصميم Photoshop)';
+    detectedService = 'custom-design' as ServiceType;
+    detectedServiceName = 'تصميم مخصص (Photoshop)';
     suggestedPaperSize = 'A3';
     suggestedPaperType = 'normal';
     suggestedColor = 'color';
   } else {
-    detectedService = 'photo';
-    detectedServiceName = 'طباعة صور (Photoshop)';
-    suggestedPaperType = 'glossy';
+    detectedService = 'custom-design' as ServiceType;
+    detectedServiceName = 'تصميم مخصص (Photoshop)';
+    suggestedPaperType = 'normal';
     suggestedColor = colorMode === 4 ? 'color' : 'color';
   }
 
@@ -2062,8 +2062,8 @@ async function analyzeIllustrator(
   }
 
   return {
-    detectedService: 'poster',
-    detectedServiceName: 'ملصق (Adobe Illustrator)',
+    detectedService: 'custom-design' as ServiceType,
+    detectedServiceName: 'تصميم مخصص (Adobe Illustrator)',
     pageCount: 1,
     fileSizeKB: sizeKB,
     fileSizeMB: sizeMB,
@@ -2152,8 +2152,8 @@ async function analyzeEps(
   }
 
   return {
-    detectedService: 'poster',
-    detectedServiceName: 'ملصق (EPS)',
+    detectedService: 'custom-design' as ServiceType,
+    detectedServiceName: 'تصميم مخصص (EPS)',
     pageCount: 1,
     fileSizeKB: sizeKB,
     fileSizeMB: sizeMB,
@@ -2243,8 +2243,8 @@ async function analyzeCorelDraw(
   insights.push(`التعقيد (من الحجم): ${complexity}`);
 
   return {
-    detectedService: 'poster',
-    detectedServiceName: 'ملصق (CorelDraw)',
+    detectedService: 'custom-design' as ServiceType,
+    detectedServiceName: 'تصميم مخصص (CorelDraw)',
     pageCount: 1,
     fileSizeKB: sizeKB,
     fileSizeMB: sizeMB,
