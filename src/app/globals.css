@@ -496,6 +496,30 @@ html {
   animation: upload-icon-pulse 2.5s ease-in-out infinite;
 }
 
+@keyframes upload-dashed-border {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+.upload-dashed-ring {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    rgba(245, 158, 11, 0.25) 8px,
+    rgba(245, 158, 11, 0.25) 10px
+  );
+  background-size: 200% 200%;
+  animation: upload-dashed-border 8s linear infinite;
+}
+
+@keyframes upload-glow-hover {
+  0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.15), 0 0 30px rgba(249, 115, 22, 0.08); }
+  50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.3), 0 0 50px rgba(249, 115, 22, 0.15); }
+}
+.upload-icon-glow:hover {
+  animation: upload-glow-hover 1.5s ease-in-out infinite;
+}
+
 @keyframes success-bounce {
   0% { transform: scale(0); opacity: 0; }
   50% { transform: scale(1.2); }

@@ -12,7 +12,7 @@ import {
   Pause, Play, Square, Quote, Lock,
   Printer, Zap, Clock, History, Download, Minus, Plus, Calculator, Hash, Cloud,
   Send, User, Phone, CheckCircle2, Loader2, Truck, MessageCircle, Star, FileCheck,
-  MoveVertical,
+  MoveVertical, CreditCard,
 } from "lucide-react";
 import type { BindingType, FileCategory } from "@/components/customer/book-mockup-3d";
 import { ServiceOptionsPanel, type ServiceOptionsState } from "@/components/customer/service-options-panel";
@@ -249,6 +249,7 @@ export function StandalonePreview() {
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragFileType, setDragFileType] = useState<"pdf" | "image" | "other" | null>(null);
   const [activeBinding, setActiveBinding] = useState<BindingType>("spiral");
   const [duplex, setDuplex] = useState(true);
   const [spineColor, setSpineColor] = useState("");
@@ -1168,13 +1169,35 @@ export function StandalonePreview() {
   }, [uploadAndAnalyze]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false); setDragFileType(null);
     const dropped = e.dataTransfer.files[0];
     if (dropped) handleFile(dropped);
   }, [handleFile]);
-  const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); }, []);
-  const onDragEnter = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
-  const onDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }, []);
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    // Detect file type from dataTransfer
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0) {
+      const type = items[0].type;
+      if (type === "application/pdf") setDragFileType("pdf");
+      else if (type.startsWith("image/")) setDragFileType("image");
+      else setDragFileType("other");
+    }
+  }, []);
+  const onDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation(); setIsDragging(true);
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0) {
+      const type = items[0].type;
+      if (type === "application/pdf") setDragFileType("pdf");
+      else if (type.startsWith("image/")) setDragFileType("image");
+      else setDragFileType("other");
+    }
+  }, []);
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) { setIsDragging(false); setDragFileType(null); }
+  }, []);
   const onFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const s = e.target.files?.[0]; if (s) handleFile(s);
   }, [handleFile]);
@@ -1415,6 +1438,8 @@ export function StandalonePreview() {
           >
             {/* Animated gradient border */}
             <div className={`upload-zone-border absolute inset-0 rounded-3xl transition-opacity duration-300 ${isDragging ? "opacity-100 scale-105 drag-pulse" : "opacity-70"}`} ></div>
+            {/* Animated dashed border ring */}
+            <div className="upload-dashed-ring absolute -inset-[6px] rounded-[26px] pointer-events-none opacity-40" ></div>
             <div
               className={`relative rounded-[21px] bg-background cursor-pointer group transition-all duration-300 ${isDragging ? "bg-amber-50/80 dark:bg-amber-950/30" : "hover:bg-muted/20"}`}
               onClick={() => fileInputRef.current?.click()}
@@ -1425,7 +1450,7 @@ export function StandalonePreview() {
                 <div className="upload-orb-1 absolute top-8 right-12 w-32 h-32 rounded-full bg-amber-200/20 dark:bg-amber-500/5 blur-2xl pointer-events-none" ></div>
                 <div className="upload-orb-2 absolute bottom-12 left-8 w-40 h-40 rounded-full bg-orange-200/20 dark:bg-orange-500/5 blur-2xl pointer-events-none" ></div>
                 <div className="absolute top-1/2 left-1/4 w-20 h-20 rounded-full bg-yellow-200/10 dark:bg-yellow-500/3 blur-xl pointer-events-none" ></div>
-                {/* Drag overlay */}
+                {/* Drag overlay with file-type-specific messaging */}
                 <AnimatePresence>
                   {isDragging && (
                     <motion.div
@@ -1435,15 +1460,23 @@ export function StandalonePreview() {
                       className="absolute inset-0 z-10 rounded-[21px] bg-amber-50/90 dark:bg-amber-950/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3"
                     >
                       <div className="drop-icon-bounce w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-500/30">
-                        <ArrowRight className="h-10 w-10 text-white" />
+                        {dragFileType === "pdf" ? (
+                          <FileText className="h-10 w-10 text-white" />
+                        ) : dragFileType === "image" ? (
+                          <ImageIcon className="h-10 w-10 text-white" />
+                        ) : (
+                          <FileCheck className="h-10 w-10 text-white" />
+                        )}
                       </div>
-                      <p className="text-lg font-bold text-amber-700 dark:text-amber-300">أفلت الملف هنا</p>
+                      <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                        {dragFileType === "pdf" ? "PDF جاهز للتحليل" : dragFileType === "image" ? "صورة جاهزة للطباعة" : "ملف جاهز للرفع"}
+                      </p>
                       <p className="text-xs text-amber-600/70 dark:text-amber-400/70">سيتم رفع الملف وتحليله تلقائياً</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
-                {/* Upload icon with float */}
-                <div className="upload-float w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20">
+                {/* Upload icon with float + hover glow */}
+                <div className="upload-float upload-icon-glow w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20">
                   <Upload className="h-12 w-12 text-amber-500 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
                 </div>
                 <div className="text-center w-full">
@@ -1493,9 +1526,18 @@ export function StandalonePreview() {
                   ))}
                 </div>
 
+                {/* Prominent file size badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-l from-amber-100/80 to-orange-100/60 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/30">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                    <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300">الحد الأقصى: 100 ميغابايت</p>
+                    <p className="text-[9px] text-muted-foreground">PDF, صور, مستندات, تصاميم</p>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-3 text-[11px] text-muted-foreground/70">
-                  <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" />حتى 100 ميغابايت</span>
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                   <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-400" />رفع سريع فوري</span>
                   <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                   <span>رفع آمن ومشفّر</span>
@@ -1893,6 +1935,91 @@ export function StandalonePreview() {
             </motion.div>
           </div>
 
+          {/* ═══ طباعة سريعة — إعدادات مسبقة ═══ */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl border bg-card overflow-hidden shadow-sm"
+          >
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-l from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10">
+              <Zap className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-bold">طباعة سريعة</span>
+              <span className="text-[9px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full mr-auto">اختر مقاساً جاهزاً</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
+              {([
+                {
+                  id: "card" as const,
+                  label: "كروت شخصية",
+                  desc: "A6 · 300gsm · وجهين · مات",
+                  icon: <CreditCard className="h-5 w-5" />,
+                  color: "from-violet-100 to-violet-50 dark:from-violet-950/40 dark:to-violet-950/20",
+                  iconColor: "text-violet-500",
+                  borderActive: "border-violet-400",
+                  preset: { paperSize: "A6", paperFinish: "matte", sides: "double", binding: "none", paperWeight: "300gsm" as const },
+                },
+                {
+                  id: "flyer" as const,
+                  label: "فلاير A5",
+                  desc: "A5 · 128gsm · وجه واحد · لامع",
+                  icon: <FileText className="h-5 w-5" />,
+                  color: "from-blue-100 to-blue-50 dark:from-blue-950/40 dark:to-blue-950/20",
+                  iconColor: "text-blue-500",
+                  borderActive: "border-blue-400",
+                  preset: { paperSize: "A5", paperFinish: "glossy", sides: "single", binding: "none", paperWeight: "128gsm" as const },
+                },
+                {
+                  id: "brochure" as const,
+                  label: "بروشور A4",
+                  desc: "A4 · 150gsm · وجهين · مات",
+                  icon: <BookOpen className="h-5 w-5" />,
+                  color: "from-emerald-100 to-emerald-50 dark:from-emerald-950/40 dark:to-emerald-950/20",
+                  iconColor: "text-emerald-500",
+                  borderActive: "border-emerald-400",
+                  preset: { paperSize: "A4", paperFinish: "matte", sides: "double", binding: "none", paperWeight: "150gsm" as const },
+                },
+                {
+                  id: "poster" as const,
+                  label: "ملصق A3",
+                  desc: "A3 · 200gsm · وجه واحد · لامع",
+                  icon: <ImagePlus className="h-5 w-5" />,
+                  color: "from-rose-100 to-rose-50 dark:from-rose-950/40 dark:to-rose-950/20",
+                  iconColor: "text-rose-500",
+                  borderActive: "border-rose-400",
+                  preset: { paperSize: "A3", paperFinish: "glossy", sides: "single", binding: "none", paperWeight: "200gsm" as const },
+                },
+              ] as const).map((preset, i) => (
+                <motion.button
+                  key={preset.id}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.35 + i * 0.08 }}
+                  whileHover={{ y: -3, scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    setAnalysis((a) => ({ ...a, paperSize: preset.preset.paperSize, closestPaperSize: preset.preset.paperSize }));
+                    setDuplex(preset.preset.sides === "double");
+                    setActiveBinding(preset.preset.binding as BindingType);
+                    setStep("preview");
+                  }}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-transparent hover:border-border bg-background hover:shadow-lg transition-all duration-200 text-center group cursor-pointer"
+                >
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${preset.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-200 ${preset.iconColor}`}>
+                    {preset.icon}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">{preset.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{preset.desc}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[9px] text-amber-600 dark:text-amber-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowLeft className="h-3 w-3" />تطبيق ومعاينة
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+
           {/* ─── تقدير التكلفة والوقت ─── */}
           <div className="grid grid-cols-2 gap-3">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} whileHover={{ y: -2, scale: 1.01 }} className="rounded-xl border bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 p-4 flex items-center gap-3 cursor-default transition-all duration-200">
@@ -2232,458 +2359,6 @@ export function StandalonePreview() {
             />
           )}
 
-          {/* Hidden: preserve the old options block as fallback reference — kept for 3D settings only */}
-          {false && previewMode === "mockup" && (
-            <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
-              <button onClick={() => setShow3DSettings(!show3DSettings)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Settings2 className="h-4 w-4 text-amber-500" />
-                  <span>خيارات الطباعة والعرض</span>
-                  <Badge className={`${categoryInfo.color} border-0 text-[10px] font-semibold gap-1`}>{categoryInfo.icon}{categoryInfo.label}</Badge>
-                </div>
-                <svg className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${show3DSettings ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              <AnimatePresence>
-                {show3DSettings && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                    <div className="px-4 pb-4 space-y-4 border-t">
-
-                      {/* ═══🟢 مسار الصورة / صفحة واحدة ═══ */}
-                      {fileCategory === "image" && (
-                        <div className="pt-3 space-y-4">
-                          <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl px-3 py-2">
-                            <ImageIcon className="h-4 w-4" />
-                            <span className="font-medium">ورقة / صورة واحدة — التجليد غير مطلوب</span>
-                          </div>
-
-                          {/* ─── عدد النسخ ─── */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">عدد النسخ</p>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => setCopies((c) => Math.max(1, c - 1))}
-                                disabled={copies <= 1}
-                                className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                              ><Minus className="h-3.5 w-3.5" /></button>
-                              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 min-w-[70px] justify-center">
-                                <Hash className="h-3.5 w-3.5 text-emerald-500" />
-                                <span className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-300">{copies}</span>
-                              </div>
-                              <button
-                                onClick={() => setCopies((c) => Math.min(99, c + 1))}
-                                disabled={copies >= 99}
-                                className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                              ><Plus className="h-3.5 w-3.5" /></button>
-                              {copies > 1 && (
-                                <button onClick={() => setCopies(1)} className="text-[10px] text-muted-foreground hover:text-rose-500 transition-colors">إعادة تعيين</button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* ─── لون الطباعة ─── */}
-                          <div className="flex items-center gap-4">
-                            <p className="text-xs font-semibold text-muted-foreground">الطباعة:</p>
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => setPrintColor(true)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${printColor ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 border-2 border-emerald-400" : "border hover:bg-muted text-muted-foreground"}`}
-                              ><Palette className="h-3 w-3" />ملون</button>
-                              <button
-                                onClick={() => setPrintColor(false)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${!printColor ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 border-2 border-emerald-400" : "border hover:bg-muted text-muted-foreground"}`}
-                              >أبيض وأسود</button>
-                            </div>
-                          </div>
-
-                          {/* نوع الورق */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">نوع الورق</p>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: "normal" as const, label: "عادي", desc: "ورق قياسي" },
-                                { id: "glossy" as const, label: "لامع", desc: "بريق عالي" },
-                                { id: "matte" as const, label: "مات", desc: "غير لامع" },
-                              ]).map((p) => (
-                                <button
-                                  key={p.id}
-                                  onClick={() => setImagePaperType(p.id)}
-                                  className={`flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl text-[10px] transition-all duration-200 ${
-                                    imagePaperType === p.id
-                                      ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  <span className="font-medium">{p.label}</span>
-                                  <span className="text-[9px] opacity-70">{p.desc}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* ─── وزن الورق ─── */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">سمك الورق</p>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: "80gsm" as const, label: "80 جرام", desc: "قياسي" },
-                                { id: "100gsm" as const, label: "100 جرام", desc: "أسمك" },
-                                { id: "120gsm" as const, label: "120 جرام", desc: "فاخر" },
-                              ]).map((p) => (
-                                <button
-                                  key={p.id}
-                                  onClick={() => setPaperWeight(p.id)}
-                                  className={`flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl text-[10px] transition-all duration-200 ${
-                                    paperWeight === p.id
-                                      ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  <span className="font-medium">{p.label}</span>
-                                  <span className="text-[9px] opacity-70">{p.desc}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* مقاس الطباعة */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">مقاس الطباعة</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {["A5", "A4", "A3", "Letter"].map((s) => (
-                                <button
-                                  key={s}
-                                  onClick={() => setAnalysis((a) => ({ ...a, paperSize: s, closestPaperSize: s }))}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                    (analysis.closestPaperSize || analysis.paperSize) === s
-                                      ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-400"
-                                      : "border hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >{s}</button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ═══🟡 مسار المستند القصير (2-10 صفحات) ═══ */}
-                      {fileCategory === "short-doc" && (
-                        <div className="pt-3 space-y-4">
-                          <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 rounded-xl px-3 py-2">
-                            <FileText className="h-4 w-4" />
-                            <span className="font-medium">مستند قصير ({analysis.pageCount} صفحة) — دبوس + تجويف بدل التجليد المتقدم</span>
-                          </div>
-
-                          {/* ─── عدد النسخ ─── */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">عدد النسخ</p>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => setCopies((c) => Math.max(1, c - 1))}
-                                disabled={copies <= 1}
-                                className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                              ><Minus className="h-3.5 w-3.5" /></button>
-                              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 min-w-[70px] justify-center">
-                                <Hash className="h-3.5 w-3.5 text-amber-500" />
-                                <span className="text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">{copies}</span>
-                              </div>
-                              <button
-                                onClick={() => setCopies((c) => Math.min(99, c + 1))}
-                                disabled={copies >= 99}
-                                className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                              ><Plus className="h-3.5 w-3.5" /></button>
-                              {copies > 1 && (
-                                <button onClick={() => setCopies(1)} className="text-[10px] text-muted-foreground hover:text-rose-500 transition-colors">إعادة تعيين</button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* ─── لون الطباعة ─── */}
-                          <div className="flex items-center gap-4">
-                            <p className="text-xs font-semibold text-muted-foreground">الطباعة:</p>
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => setPrintColor(true)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${printColor ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 border-2 border-amber-400" : "border hover:bg-muted text-muted-foreground"}`}
-                              ><Palette className="h-3 w-3" />ملون</button>
-                              <button
-                                onClick={() => setPrintColor(false)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${!printColor ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 border-2 border-amber-400" : "border hover:bg-muted text-muted-foreground"}`}
-                              >أبيض وأسود</button>
-                            </div>
-                          </div>
-
-                          {/* ─── وزن الورق ─── */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">سمك الورق</p>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: "80gsm" as const, label: "80 جرام", desc: "قياسي" },
-                                { id: "100gsm" as const, label: "100 جرام", desc: "أسمك" },
-                                { id: "120gsm" as const, label: "120 جرام", desc: "فاخر" },
-                              ]).map((p) => (
-                                <button
-                                  key={p.id}
-                                  onClick={() => setPaperWeight(p.id)}
-                                  className={`flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl text-[10px] transition-all duration-200 ${
-                                    paperWeight === p.id
-                                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-2 border-amber-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  <span className="font-medium">{p.label}</span>
-                                  <span className="text-[9px] opacity-70">{p.desc}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* طباعة وجه/وجهين */}
-                          <div className="flex items-center gap-6">
-                            <button onClick={() => setDuplex(!duplex)} className="flex items-center gap-2 text-xs">
-                              {duplex ? <ToggleRight className="h-5 w-5 text-amber-500" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
-                              <span className={duplex ? "text-amber-700 dark:text-amber-300 font-medium" : "text-muted-foreground"}>طباعة على وجهين</span>
-                            </button>
-                          </div>
-
-                          {/* موضع الدبوس */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">وضع الدبوس</p>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: "top-left" as const, label: "زاوية علوية", icon: <Pin className="h-4 w-4" /> },
-                                { id: "top" as const, label: "أعلى الوسط", icon: <Bookmark className="h-4 w-4" /> },
-                                { id: "left" as const, label: "يسار الوسط", icon: <Paperclip className="h-4 w-4" /> },
-                              ]).map((s) => (
-                                <button
-                                  key={s.id}
-                                  onClick={() => setStaplePosition(s.id)}
-                                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-[10px] font-medium transition-all duration-200 ${
-                                    staplePosition === s.id
-                                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-2 border-amber-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  {s.icon}
-                                  <span>{s.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* التخريم (تجويف) */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">التخريم</p>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: "none" as const, label: "بدون تخريم", icon: <CircleDot className="h-4 w-4" /> },
-                                { id: "2hole" as const, label: "ثقبين", icon: <CircleDot className="h-4 w-4" /> },
-                                { id: "4hole" as const, label: "4 ثقوب", icon: <CircleDot className="h-4 w-4" /> },
-                              ]).map((h) => (
-                                <button
-                                  key={h.id}
-                                  onClick={() => setHolePunch(h.id)}
-                                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-[10px] font-medium transition-all duration-200 ${
-                                    holePunch === h.id
-                                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-2 border-amber-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  {h.icon}
-                                  <span>{h.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* مقاس الورق */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">مقاس الورق</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {["A5", "A4", "B5", "Letter"].map((s) => (
-                                <button
-                                  key={s}
-                                  onClick={() => setAnalysis((a) => ({ ...a, paperSize: s, closestPaperSize: s }))}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                    (analysis.closestPaperSize || analysis.paperSize) === s
-                                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-2 border-amber-400"
-                                      : "border hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >{s}</button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ═══🔵 مسار الكتاب / المذكرة (>10 صفحات) ═══ */}
-                      {fileCategory === "book" && (
-                        <div className="pt-3 space-y-4">
-                          <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/20 rounded-xl px-3 py-2">
-                            <BookOpen className="h-4 w-4" />
-                            <span className="font-medium">كتاب / مذكرة ({analysis.pageCount} صفحة) — تجليد متقدم متاح</span>
-                          </div>
-
-                          {/* ─── عدد النسخ ─── */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">عدد النسخ</p>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => setCopies((c) => Math.max(1, c - 1))}
-                                disabled={copies <= 1}
-                                className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                              ><Minus className="h-3.5 w-3.5" /></button>
-                              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20 min-w-[70px] justify-center">
-                                <Hash className="h-3.5 w-3.5 text-violet-500" />
-                                <span className="text-lg font-bold tabular-nums text-violet-700 dark:text-violet-300">{copies}</span>
-                              </div>
-                              <button
-                                onClick={() => setCopies((c) => Math.min(99, c + 1))}
-                                disabled={copies >= 99}
-                                className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                              ><Plus className="h-3.5 w-3.5" /></button>
-                              {copies > 1 && (
-                                <button onClick={() => setCopies(1)} className="text-[10px] text-muted-foreground hover:text-rose-500 transition-colors">إعادة تعيين</button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* ─── لون الطباعة ─── */}
-                          <div className="flex items-center gap-4">
-                            <p className="text-xs font-semibold text-muted-foreground">الطباعة:</p>
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => setPrintColor(true)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${printColor ? "bg-violet-100 dark:bg-violet-950/40 text-violet-700 border-2 border-violet-400" : "border hover:bg-muted text-muted-foreground"}`}
-                              ><Palette className="h-3 w-3" />ملون</button>
-                              <button
-                                onClick={() => setPrintColor(false)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${!printColor ? "bg-violet-100 dark:bg-violet-950/40 text-violet-700 border-2 border-violet-400" : "border hover:bg-muted text-muted-foreground"}`}
-                              >أبيض وأسود</button>
-                            </div>
-                          </div>
-
-                          {/* ─── وزن الورق ─── */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">سمك الورق</p>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: "80gsm" as const, label: "80 جرام", desc: "قياسي" },
-                                { id: "100gsm" as const, label: "100 جرام", desc: "أسمك" },
-                                { id: "120gsm" as const, label: "120 جرام", desc: "فاخر" },
-                              ]).map((p) => (
-                                <button
-                                  key={p.id}
-                                  onClick={() => setPaperWeight(p.id)}
-                                  className={`flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl text-[10px] transition-all duration-200 ${
-                                    paperWeight === p.id
-                                      ? "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-2 border-violet-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  <span className="font-medium">{p.label}</span>
-                                  <span className="text-[9px] opacity-70">{p.desc}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* نوع التجليد */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">نوع التجليد</p>
-                            <div className="grid grid-cols-4 gap-1.5">
-                              {([
-                                { id: "spiral" as BindingType, label: "سلك", icon: <Copy className="h-4 w-4" /> },
-                                { id: "perfect" as BindingType, label: "كمالي", icon: <Bookmark className="h-4 w-4" /> },
-                                { id: "staple" as BindingType, label: "دبوس", icon: <Pin className="h-4 w-4" /> },
-                                { id: "none" as BindingType, label: "سائبة", icon: <Layers className="h-4 w-4" /> },
-                              ]).map((b) => (
-                                <button
-                                  key={b.id}
-                                  onClick={() => setActiveBinding(b.id)}
-                                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-[10px] font-medium transition-all duration-200 ${
-                                    effectiveBinding === b.id
-                                      ? "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-2 border-violet-400"
-                                      : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  {b.icon}
-                                  <span>{b.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* طباعة على وجهين + لون التجليد */}
-                          <div className="flex flex-wrap items-center gap-6">
-                            <button onClick={() => setDuplex(!duplex)} className="flex items-center gap-2 text-xs">
-                              {duplex ? <ToggleRight className="h-5 w-5 text-amber-500" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
-                              <span className={duplex ? "text-amber-700 dark:text-amber-300 font-medium" : "text-muted-foreground"}>طباعة على وجهين</span>
-                            </button>
-
-                            {/* لون التجليد */}
-                            {effectiveBinding !== "none" && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">لون التجليد:</span>
-                                <div className="flex gap-1.5">
-                                  {[
-                                    { c: "", label: "تلقائي" },
-                                    { c: "#1a1a2e", label: "كحلي" },
-                                    { c: "#8b0000", label: "أحمر" },
-                                    { c: "#1a5c2a", label: "أخضر" },
-                                    { c: "#1a3a5c", label: "أزرق" },
-                                    { c: "#5c4b1a", label: "بني" },
-                                  ].map((clr) => (
-                                    <button
-                                      key={clr.c || "auto"}
-                                      onClick={() => setSpineColor(clr.c)}
-                                      aria-label={clr.label}
-                                      className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                                        spineColor === clr.c
-                                          ? "border-violet-500 ring-2 ring-violet-300"
-                                          : (clr.c ? `border-muted-foreground/20` : "border-muted-foreground/30 border-dashed")
-                                      }`}
-                                      style={clr.c ? { backgroundColor: clr.c } : { background: "repeating-conic-gradient(#d4d4d4 0% 25%, transparent 0% 50%) 50%/8px 8px" }}
-                                    />
-                                  ))}
-                                </div>
-                                {(() => { const sel = [{ c: "", label: "تلقائي" }, { c: "#1a1a2e", label: "كحلي" }, { c: "#8b0000", label: "أحمر" }, { c: "#1a5c2a", label: "أخضر" }, { c: "#1a3a5c", label: "أزرق" }, { c: "#5c4b1a", label: "بني" }].find(cl => cl.c === spineColor); return sel ? <span className="text-[10px] text-muted-foreground/70">{sel.label}</span> : null; })()}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* مقاس الورق */}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">مقاس الورق</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {["A5", "B5", "A4", "B4", "Letter"].map((s) => (
-                                <button
-                                  key={s}
-                                  onClick={() => setAnalysis((a) => ({ ...a, paperSize: s, closestPaperSize: s }))}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                    (analysis.closestPaperSize || analysis.paperSize) === s
-                                      ? "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-2 border-violet-400"
-                                      : "border hover:bg-muted text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >{s}</button>
-                              ))}
-                            </div>
-                          </div>
-                          {/* غلاف بلاستيكي شفاف */}
-                          <div className="flex items-center gap-6">
-                            <button onClick={() => setClearCover(!clearCover)} className="flex items-center gap-2 text-xs">
-                              {clearCover ? <ToggleRight className="h-5 w-5 text-violet-500" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
-                              <span className={clearCover ? "text-violet-700 dark:text-violet-300 font-medium" : "text-muted-foreground"}>غلاف بلاستيكي شفاف</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
 
           {previewMode !== "mockup" && (
             <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl border bg-card shadow-sm">
