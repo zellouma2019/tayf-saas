@@ -74,6 +74,7 @@ export function PageViewer2D({
 
     try {
       const pdfjsLib = await import("pdfjs-dist");
+      // Try API route for worker, fall back to main thread
       pdfjsLib.GlobalWorkerOptions.workerSrc = "/api/c/pdf-worker";
 
       if (!pdfDocRef.current) {

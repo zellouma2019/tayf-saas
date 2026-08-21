@@ -3,20 +3,41 @@ import { readFileSync } from "fs";
 import path from "path";
 
 /**
- * Serves the pdfjs worker file.
- * Used instead of public/ because Vercel sometimes doesn't serve large static files reliably.
+ * Serves the pdfjs worker file via API route.
+ * On Vercel, public/ static files can be unreliable for large JS files,
+ * so we serve from node_modules directly.
  */
 export async function GET() {
   try {
-    const workerPath = require.resolve("pdfjs-dist/build/pdf.worker.min.mjs");
-    const content = readFileSync(workerPath);
+    // Try multiple path resolution strategies for Vercel serverless compatibility
+    const possiblePaths = [
+      path.join(process.cwd(), "node_modules", "pdfjs-dist", "build", "pdf.worker.min.mjs"),
+      path.join(process.cwd(), ".next", "server", "node_modules", "pdfjs-dist", "build", "pdf.worker.min.mjs"),
+    ];
+    
+    let content: Buffer | null = null;
+    for (const p of possiblePaths) {
+      try {
+        content = readFileSync(p);
+        break;
+      } catch {
+        continue;
+      }
+    }
+    
+    if (!content) {
+      console.error("[pdf-worker] File not found in any path");
+      return new NextResponse("Worker file not found", { status: 404 });
+    }
+    
     return new NextResponse(content, {
       headers: {
         "Content-Type": "application/javascript",
         "Cache-Control": "public, max-age=31536000, immutable",
-      },
+        },
     });
-  } catch {
-    return new NextResponse("Worker file not found", { status: 404 });
+  } catch (err) {
+    console.error("[pdf-worker] Error:", err);
+    return new NextResponse("Worker file error", { status: 500 });
   }
 }

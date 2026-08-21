@@ -391,7 +391,8 @@ export function StandalonePreview() {
     if (pdfFile) {
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/api/c/pdf-worker";
+        // Run on main thread for maximum Vercel compatibility (no worker file needed)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
         const arrayBuffer = await pdfFile.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), disableAutoFetch: true });
