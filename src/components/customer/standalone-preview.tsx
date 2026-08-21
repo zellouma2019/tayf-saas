@@ -1780,8 +1780,8 @@ export function StandalonePreview() {
           </motion.div>
 
           <div className="flex items-center gap-1 p-1 rounded-2xl bg-muted/60 border shadow-sm">
-            <button onClick={() => setPreviewMode("mockup")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${previewMode === "mockup" ? "bg-white dark:bg-card shadow-sm text-amber-600 dark:text-amber-400" : "text-muted-foreground hover:text-foreground"}`}><Box className="h-4 w-4" /><span>معاينة 3D</span></button>
-            <button onClick={() => setPreviewMode("precise")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${previewMode !== "mockup" ? "bg-white dark:bg-card shadow-sm text-amber-600 dark:text-amber-400" : "text-muted-foreground hover:text-foreground"}`}><Eye className="h-4 w-4" /><span>معاينة الصفحات</span></button>
+            <button onClick={() => setPreviewMode("mockup")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${previewMode === "mockup" ? "bg-white dark:bg-card shadow-sm text-amber-600 dark:text-amber-400" : "text-muted-foreground hover:text-foreground"}`}><Box className="h-4 w-4" /><span>معاينة 3D</span></button>
+            <button onClick={() => setPreviewMode("precise")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${previewMode !== "mockup" ? "bg-white dark:bg-card shadow-sm text-amber-600 dark:text-amber-400" : "text-muted-foreground hover:text-foreground"}`}><Eye className="h-4 w-4" /><span>معاينة الصفحات</span></button>
           </div>
 
           {/* ═══════════════════════════════════════════════════════════
@@ -2516,10 +2516,19 @@ export function StandalonePreview() {
                 <div className="rounded-2xl border bg-muted/10 overflow-hidden shadow-sm relative">
                   <ProfessionalPdfViewer fileSource={pdfDataUrl || storedName} currentPage={currentPage} onPageChange={setCurrentPage} viewMode={pdfViewMode} initialScale={zoom / 100} maxWidth={600} onTotalPages={(n) => setTotalPages(n)} />
                   {pdfViewMode === "single" && totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 px-4 py-3 bg-muted/20 border-t">
-                      <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all"><ChevronRight className="h-4 w-4" /></button>
-                      <div className="flex items-center gap-1.5 text-xs"><span className="font-mono font-bold text-amber-600 dark:text-amber-400">{currentPage}</span><span className="text-muted-foreground">/</span><span className="font-mono">{totalPages}</span></div>
-                      <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage >= totalPages} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all"><ChevronLeft className="h-4 w-4" /></button>
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 border-t">
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all active:scale-95"><ChevronRight className="h-4 w-4" /></button>
+                        <div className="flex items-center gap-1 text-xs"><span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">{currentPage}</span><span className="text-muted-foreground">/</span><span className="font-mono">{totalPages}</span></div>
+                        <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage >= totalPages} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all active:scale-95"><ChevronLeft className="h-4 w-4" /></button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => { setZoom(z => Math.max(50, z - 25)); }} className="w-7 h-7 rounded-lg border flex items-center justify-center hover:bg-muted transition-all active:scale-95" title="تصغير"><Minus className="h-3 w-3" /></button>
+                        <button onClick={() => setZoom(100)} className="px-2 h-7 rounded-lg border flex items-center justify-center hover:bg-muted transition-all text-[10px] font-mono font-medium min-w-[44px]" title="إعادة تعيين">{zoom}%</button>
+                        <button onClick={() => { setZoom(z => Math.min(300, z + 25)); }} className="w-7 h-7 rounded-lg border flex items-center justify-center hover:bg-muted transition-all active:scale-95" title="تكبير"><Plus className="h-3 w-3" /></button>
+                        <div className="w-px h-4 bg-border mx-0.5" />
+                        <button onClick={() => setBrowsePagesOpen(true)} className="h-7 px-2 rounded-lg border flex items-center justify-center gap-1 hover:bg-muted transition-all text-[10px] font-medium active:scale-95" title="تصفح جميع الصفحات"><Grid3X3 className="h-3 w-3" /><span className="hidden sm:inline">الصفحات</span></button>
+                      </div>
                     </div>
                   )}
                   <div className="px-3 py-1.5 bg-muted/30 border-t flex items-center justify-between text-[10px] text-muted-foreground">
