@@ -504,6 +504,94 @@ export function BookMockup3D({
       activeFrontTexInfo = { texture: tex, aspectRatio: 800 / 1100 };
     }
 
+    // For PDF files without cover texture: create elegant placeholder cover
+    if (!activeFrontTexInfo && fileType === "pdf") {
+      const canvas = document.createElement("canvas");
+      canvas.width = 800;
+      canvas.height = 1100;
+      const ctx = canvas.getContext("2d")!;
+      // Warm paper background
+      ctx.fillStyle = "#faf9f7";
+      ctx.fillRect(0, 0, 800, 1100);
+      // Top accent bar
+      const grad = ctx.createLinearGradient(0, 0, 800, 0);
+      grad.addColorStop(0, "#f59e0b");
+      grad.addColorStop(1, "#f97316");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 800, 12);
+      // Book icon (open book)
+      ctx.fillStyle = "#e7e5e4";
+      ctx.beginPath();
+      ctx.roundRect(250, 280, 300, 220, 16);
+      ctx.fill();
+      // Left page
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.roundRect(270, 300, 125, 180, 8);
+      ctx.fill();
+      // Right page
+      ctx.beginPath();
+      ctx.roundRect(405, 300, 125, 180, 8);
+      ctx.fill();
+      // Page lines (left)
+      ctx.strokeStyle = "#d6d3d1";
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(285, 340 + i * 28);
+        ctx.lineTo(380, 340 + i * 28);
+        ctx.stroke();
+      }
+      // Page lines (right)
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(420, 340 + i * 28);
+        ctx.lineTo(515, 340 + i * 28);
+        ctx.stroke();
+      }
+      // Spine
+      ctx.fillStyle = "#d6d3d1";
+      ctx.fillRect(396, 295, 8, 190);
+      // Title
+      ctx.fillStyle = "#1c1917";
+      ctx.font = "600 30px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      const pdfName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
+      const truncName = pdfName.length > 30 ? pdfName.slice(0, 27) + "..." : pdfName;
+      ctx.fillText(truncName, 400, 580);
+      // Page count & size
+      ctx.fillStyle = "#78716c";
+      ctx.font = "500 20px system-ui, sans-serif";
+      ctx.fillText(`${totalPages} صفحة  •  ${paperSize}`, 400, 625);
+      // Category label
+      const catLabel = category === "book" ? "كتاب / مذكرة" : "مستند قصير";
+      ctx.fillStyle = "#a8a29e";
+      ctx.font = "400 18px system-ui, sans-serif";
+      ctx.fillText(catLabel, 400, 665);
+      // Loading indicator
+      ctx.fillStyle = "#d6d3d1";
+      ctx.font = "400 15px system-ui, sans-serif";
+      ctx.fillText("جارٍ تحميل الغلاف الفعلي...", 400, 1040);
+      // Bottom bar
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 1088, 800, 12);
+      // Branding
+      ctx.fillStyle = "#e7e5e4";
+      ctx.font = "400 13px system-ui, sans-serif";
+      ctx.fillText("طيف — منصة الطباعة", 400, 1070);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.generateMipmaps = true;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      if (managerRef.current) {
+        tex.anisotropy = managerRef.current.getRenderer().capabilities.getMaxAnisotropy();
+      }
+      managerRef.current?.trackTexture(tex);
+      activeFrontTexInfo = { texture: tex, aspectRatio: 800 / 1100 };
+    }
+
     // ═══ Cover Front Material — PBR calibrated for print paper ═══
     const coverFrontMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,

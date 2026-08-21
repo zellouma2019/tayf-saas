@@ -687,13 +687,13 @@ function CustomerContent() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className="flex items-center gap-4 text-xs"
+                className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs"
               >
                 {[
-                  { icon: <ShieldCheck className="h-3.5 w-3.5" />, label: "ملفات آمنة", color: "text-emerald-500" },
-                  { icon: <Zap className="h-3.5 w-3.5" />, label: "تسعيرة فورية", color: "text-amber-500" },
-                  { icon: <Printer className="h-3.5 w-3.5" />, label: "طباعة فورية", color: "text-blue-500" },
-                  { icon: <Heart className="h-3.5 w-3.5" />, label: "صُنع بحب", color: "text-rose-400" },
+                  { icon: <ShieldCheck className="h-3.5 w-3.5" />, label: "ملفات آمنة", color: "text-emerald-500 dark:text-emerald-400" },
+                  { icon: <Zap className="h-3.5 w-3.5" />, label: "تسعيرة فورية", color: "text-amber-500 dark:text-amber-400" },
+                  { icon: <Printer className="h-3.5 w-3.5" />, label: "طباعة فورية", color: "text-blue-500 dark:text-blue-400" },
+                  { icon: <Heart className="h-3.5 w-3.5" />, label: "صُنع بحب", color: "text-rose-400 dark:text-rose-300" },
                 ].map((badge, i) => (
                   <motion.span
                     key={badge.label}
@@ -701,7 +701,7 @@ function CustomerContent() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.15 + i * 0.06 }}
-                    className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors cursor-default"
+                    className="flex items-center gap-1 text-muted-foreground/80 hover:text-foreground transition-colors cursor-default"
                   >
                     <span className={badge.color}>{badge.icon}</span>
                     {badge.label}
@@ -733,7 +733,7 @@ function CustomerContent() {
                   key={feat.label}
                   whileHover={{ y: -1, scale: 1.05 }}
                   title={feat.desc}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50 text-[10px] text-muted-foreground/70 cursor-default hover:text-foreground hover:border-foreground/20 transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted/50 dark:bg-muted/30 border border-border/70 dark:border-border/50 text-[11px] text-muted-foreground/80 cursor-default hover:text-foreground hover:border-foreground/20 active:scale-95 transition-all"
                 >
                   {feat.icon}
                   {feat.label}
@@ -742,9 +742,9 @@ function CustomerContent() {
             </motion.div>
 
             {/* Copyright row */}
-            <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/40 mt-1">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/70 mt-1">
               <span>صُنع بواسطة</span>
-              <span className="font-semibold text-amber-500/60">طيف</span>
+              <span className="font-semibold text-amber-400">طيف</span>
               <span>© {new Date().getFullYear()}</span>
             </div>
           </div>

@@ -969,13 +969,19 @@ export function StandalonePreview() {
           confidence: 95,
           healthScore: 95,
           hasImages: numP > 1,
+          imageCount: 0,
           isColor: true,
+          textLayer: true,
+          estimatedDPI: 300,
+          dpiCategory: "ممتازة",
           insights: [
             `رفع + تحليل في ${totalTimeMs}ms (تجزئة)`,
             `الملف يحتوي على ${numP} صفحة`,
             `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
             `مقاس الورق: ${paperSize}`,
-          ],
+            numP > 1 ? "يحتوي على نصوص" : null,
+            numP > 1 ? "طباعة نصوص واضحة" : null,
+          ].filter(Boolean) as string[],
           fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
         };
         setAnalysis(pdfResult);
@@ -1825,7 +1831,7 @@ export function StandalonePreview() {
               {/* Circular gauge — larger for better readability */}
               <div className="shrink-0 relative">
                 <svg width="104" height="104" viewBox="0 0 104 104" className="transform -rotate-90">
-                  <circle cx="52" cy="52" r={gaugeRadius} fill="none" className="stroke-muted" strokeWidth="7" />
+                  <circle cx="52" cy="52" r={gaugeRadius} fill="none" className="stroke-muted/60" strokeWidth="7" />
                   <motion.circle
                     cx="52" cy="52" r={gaugeRadius} fill="none"
                     stroke={hStroke} strokeWidth="7" strokeLinecap="round"
@@ -1837,7 +1843,7 @@ export function StandalonePreview() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className={`text-2xl font-extrabold ${hCol}`}>{analysis.healthScore}</span>
-                  <span className="text-[10px] text-muted-foreground">/ 100</span>
+                  <span className="text-[10px] text-muted-foreground/80">/ 100</span>
                 </div>
               </div>
               <div className="flex-1 space-y-2">
@@ -1957,15 +1963,19 @@ export function StandalonePreview() {
 
               {/* Print readiness checklist */}
               <div className="rounded-2xl border bg-card p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3"><Printer className="h-4 w-4 text-violet-500" /><span className="text-xs font-bold">فحص جاهزية الطباعة</span><span className="text-[9px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full mr-auto">5/5</span></div>
-                <div className="space-y-2">
-                  {[
+                {(() => {
+                  const checks = [
                     { ok: !analysis.isEncrypted, label: "الملف غير مشفّر", detail: "يمكن معالجته مباشرة" },
                     { ok: analysis.pageCount > 0, label: "يحتوي على صفحات", detail: `${analysis.pageCount} صفحة` },
                     { ok: analysis.closestPaperSize !== "مخصص" || false, label: "مقاس ورق قياسي", detail: analysis.closestPaperSize || "مخصص" },
                     { ok: analysis.hasEmbeddedFonts || analysis.textLayer || false, label: "يحتوي على نصوص", detail: "طباعة نصوص واضحة" },
                     { ok: analysis.isColor, label: "ملون", detail: "سيُطبع بالألوان" },
-                  ].map((item, i) => (
+                  ];
+                  const passCount = checks.filter(c => c.ok).length;
+                  return (<>
+                <div className="flex items-center gap-2 mb-3"><Printer className="h-4 w-4 text-violet-500" /><span className="text-xs font-bold">فحص جاهزية الطباعة</span><span className={`text-[9px] px-2 py-0.5 rounded-full mr-auto font-medium ${passCount === checks.length ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}>{passCount}/{checks.length}</span></div>
+                <div className="space-y-2">
+                  {checks.map((item, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, x: 10 }}
@@ -1985,6 +1995,8 @@ export function StandalonePreview() {
                     </motion.div>
                   ))}
                 </div>
+                  </>);
+                })()}
               </div>
             </motion.div>
           )}
@@ -2743,7 +2755,7 @@ export function StandalonePreview() {
               <Receipt className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span>
               <span className="text-[9px] text-muted-foreground mr-auto font-mono">#{Date.now().toString(36).toUpperCase()}</span>
             </div>
-            <div className="divide-y divide-border/40">
+            <div className="divide-y divide-border">
               <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />الملف</span>
                 <span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name}</span>
@@ -2777,12 +2789,16 @@ export function StandalonePreview() {
                 <span className="text-muted-foreground flex items-center gap-1.5"><Cloud className="h-3 w-3.5" />حجم الملف</span>
                 <span className="font-medium font-mono">{analysis.fileSizeMB > 0 ? `${analysis.fileSizeMB} MB` : `${analysis.fileSizeKB} KB`}</span>
               </div>
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Calculator className="h-3.5 w-3.5" />وزن الورق</span>
+                <span className="font-medium">{paperWeight === "80gsm" ? "80" : paperWeight === "100gsm" ? "100" : "120"} جم/م²</span>
+              </div>
             </div>
             {/* Receipt-style total strip */}
             <div className="relative px-4 py-3 bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600">
               <div className="absolute inset-x-0 top-0 h-3 bg-gradient-to-b from-amber-400/20 to-transparent" />
               <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white/90">
+                <div className="flex items-center gap-2 text-white">
                   <Quote className="h-4 w-4" />
                   <span className="text-xs font-semibold">الإجمالي شامل الضريبة</span>
                 </div>

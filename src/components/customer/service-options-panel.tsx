@@ -59,7 +59,7 @@ interface ServiceOptionsPanelProps {
 const COLOR_MAPS = {
   emerald: {
     active: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-400",
-    inactive: "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground",
+    inactive: "border border-border/40 hover:bg-muted/80 hover:border-border text-muted-foreground hover:text-foreground hover:shadow-sm",
     badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
     border: "border-emerald-200 dark:border-emerald-800",
     accent: "text-emerald-500",
@@ -74,7 +74,7 @@ const COLOR_MAPS = {
   },
   amber: {
     active: "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-2 border-amber-400",
-    inactive: "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground",
+    inactive: "border border-border/40 hover:bg-muted/80 hover:border-border text-muted-foreground hover:text-foreground hover:shadow-sm",
     badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
     border: "border-amber-200 dark:border-amber-800",
     accent: "text-amber-500",
@@ -89,7 +89,7 @@ const COLOR_MAPS = {
   },
   violet: {
     active: "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-2 border-violet-400",
-    inactive: "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground",
+    inactive: "border border-border/40 hover:bg-muted/80 hover:border-border text-muted-foreground hover:text-foreground hover:shadow-sm",
     badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
     border: "border-violet-200 dark:border-violet-800",
     accent: "text-violet-500",
