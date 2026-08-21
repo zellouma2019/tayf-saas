@@ -62,11 +62,22 @@ export class ThreeSceneManager {
     );
     const T = this.THREE;
 
-    // Scene
+    // Scene with gradient background (not flat)
     this.scene = new T.Scene();
-    this.scene.background = new T.Color(
-      options.backgroundColor ?? 0xf5f5f4,
-    );
+    // Create gradient background using a large sphere with gradient texture
+    const bgCanvas = document.createElement("canvas");
+    bgCanvas.width = 2;
+    bgCanvas.height = 512;
+    const bgCtx = bgCanvas.getContext("2d")!;
+    const bgGrad = bgCtx.createLinearGradient(0, 0, 0, 512);
+    bgGrad.addColorStop(0, "#f0eeeb");
+    bgGrad.addColorStop(0.5, "#e8e5e1");
+    bgGrad.addColorStop(1, "#d8d4cf");
+    bgCtx.fillStyle = bgGrad;
+    bgCtx.fillRect(0, 0, 2, 512);
+    const bgTex = new T.CanvasTexture(bgCanvas);
+    bgTex.colorSpace = T.SRGBColorSpace;
+    this.scene.background = bgTex;
 
     // Camera
     const aspect =
@@ -94,7 +105,7 @@ export class ThreeSceneManager {
     
     // ACES Filmic tone mapping for cinematic, print-accurate colors
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 1.15;
     this.renderer.outputColorSpace = T.SRGBColorSpace;
     
     this.container.appendChild(this.renderer.domElement);
@@ -256,9 +267,10 @@ export class ThreeSceneManager {
     const hemi = new T.HemisphereLight(0xfff8f0, 0xe8e0d0, 0.6);
     this.scene.add(hemi);
 
-    // ═══ 2. Key Light — main directional with crisp 4096px shadows ═══
-    const keyLight = new T.DirectionalLight(0xfff5ee, 1.4);
-    keyLight.position.set(4, 8, 5);
+    // ═══ 2. Key Light — main directional with crisp 2048px shadows ═══
+    // Slightly warmer for print/paper look
+    const keyLight = new T.DirectionalLight(0xfff8f0, 1.6);
+    keyLight.position.set(3, 6, 4);
     keyLight.castShadow = true;
     // 2048px PCFSoft shadow maps (good quality, stable memory usage)
     keyLight.shadow.mapSize.set(2048, 2048);
@@ -275,14 +287,15 @@ export class ThreeSceneManager {
     this.scene.add(keyLight);
 
     // ═══ 3. Fill Light — softens shadows from the left ═══
-    const fillLight = new T.DirectionalLight(0xf0f4ff, 0.5);
-    fillLight.position.set(-4, 5, 3);
+    // Cooler tone for natural contrast
+    const fillLight = new T.DirectionalLight(0xeef2ff, 0.6);
+    fillLight.position.set(-3, 4, 2);
     // No shadow from fill — only key light casts shadows for clean look
     this.scene.add(fillLight);
 
     // ═══ 4. Rim Light — creates edge highlight (separation from background) ═══
-    const rimLight = new T.DirectionalLight(0xffeedd, 0.6);
-    rimLight.position.set(-2, 4, -4);
+    const rimLight = new T.DirectionalLight(0xfff0e0, 0.8);
+    rimLight.position.set(-1.5, 3, -3);
     this.scene.add(rimLight);
 
     // ═══ 5. Top Soft Light — even overhead illumination ═══
@@ -300,7 +313,7 @@ export class ThreeSceneManager {
   addGroundAndShadow() {
     const T = this.THREE;
 
-    // Ground plane — subtle warm gray (like a print shop desk)
+    // Ground plane — subtle warm gray surface with soft appearance
     const gndGeo = new T.PlaneGeometry(20, 20);
     const gndMat = new T.MeshStandardMaterial({ 
       color: 0xe8e5e0, 
@@ -314,36 +327,59 @@ export class ThreeSceneManager {
     ground.receiveShadow = true;
     this.scene.add(ground);
 
-    // High-quality contact shadow (512px canvas for smooth gradient)
-    const shadowCanvas = document.createElement("canvas");
-    shadowCanvas.width = 512;
-    shadowCanvas.height = 512;
-    const sCtx = shadowCanvas.getContext("2d")!;
-    
-    // Multi-stop radial gradient for realistic soft contact shadow
-    const grad = sCtx.createRadialGradient(256, 256, 0, 256, 256, 256);
-    grad.addColorStop(0, "rgba(0,0,0,0.22)");
-    grad.addColorStop(0.2, "rgba(0,0,0,0.15)");
-    grad.addColorStop(0.4, "rgba(0,0,0,0.08)");
-    grad.addColorStop(0.7, "rgba(0,0,0,0.02)");
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    sCtx.fillStyle = grad;
-    sCtx.fillRect(0, 0, 512, 512);
+    // ═══ Multi-layer contact shadow for realistic book shadow ═══
+    // Layer 1: Large diffuse shadow (ambient occlusion simulation)
+    const shadow1Canvas = document.createElement("canvas");
+    shadow1Canvas.width = 512;
+    shadow1Canvas.height = 512;
+    const s1Ctx = shadow1Canvas.getContext("2d")!;
+    const g1 = s1Ctx.createRadialGradient(256, 230, 0, 256, 256, 240);
+    g1.addColorStop(0, "rgba(0,0,0,0.18)");
+    g1.addColorStop(0.15, "rgba(0,0,0,0.12)");
+    g1.addColorStop(0.35, "rgba(0,0,0,0.06)");
+    g1.addColorStop(0.6, "rgba(0,0,0,0.02)");
+    g1.addColorStop(1, "rgba(0,0,0,0)");
+    s1Ctx.fillStyle = g1;
+    s1Ctx.fillRect(0, 0, 512, 512);
+    // Slight offset for directional light feel
+    const s1Off = s1Ctx.createRadialGradient(275, 220, 0, 270, 256, 200);
+    s1Off.addColorStop(0, "rgba(0,0,0,0.06)");
+    s1Off.addColorStop(0.3, "rgba(0,0,0,0.03)");
+    s1Off.addColorStop(1, "rgba(0,0,0,0)");
+    s1Ctx.fillStyle = s1Off;
+    s1Ctx.fillRect(0, 0, 512, 512);
 
-    const shadowTex = new T.CanvasTexture(shadowCanvas);
-    shadowTex.colorSpace = T.SRGBColorSpace;
-    this.externalTextures.push(shadowTex);
+    const shadow1Tex = new T.CanvasTexture(shadow1Canvas);
+    shadow1Tex.colorSpace = T.SRGBColorSpace;
+    this.externalTextures.push(shadow1Tex);
+    const cs1Geo = new T.PlaneGeometry(5, 5);
+    const cs1Mat = new T.MeshBasicMaterial({ map: shadow1Tex, transparent: true, depthWrite: false });
+    const contactShadow1 = new T.Mesh(cs1Geo, cs1Mat);
+    contactShadow1.rotation.x = -Math.PI / 2;
+    contactShadow1.position.set(0.15, -0.49, 0.1);
+    this.scene.add(contactShadow1);
 
-    const csGeo = new T.CircleGeometry(2.5, 64);
-    const csMat = new T.MeshBasicMaterial({
-      map: shadowTex,
-      transparent: true,
-      depthWrite: false,
-    });
-    const contactShadow = new T.Mesh(csGeo, csMat);
-    contactShadow.rotation.x = -Math.PI / 2;
-    contactShadow.position.y = -0.49;
-    this.scene.add(contactShadow);
+    // Layer 2: Tight sharp shadow (direct light simulation)
+    const shadow2Canvas = document.createElement("canvas");
+    shadow2Canvas.width = 256;
+    shadow2Canvas.height = 256;
+    const s2Ctx = shadow2Canvas.getContext("2d")!;
+    const g2 = s2Ctx.createRadialGradient(140, 120, 0, 128, 128, 120);
+    g2.addColorStop(0, "rgba(0,0,0,0.12)");
+    g2.addColorStop(0.4, "rgba(0,0,0,0.06)");
+    g2.addColorStop(0.7, "rgba(0,0,0,0.02)");
+    g2.addColorStop(1, "rgba(0,0,0,0)");
+    s2Ctx.fillStyle = g2;
+    s2Ctx.fillRect(0, 0, 256, 256);
+    const shadow2Tex = new T.CanvasTexture(shadow2Canvas);
+    shadow2Tex.colorSpace = T.SRGBColorSpace;
+    this.externalTextures.push(shadow2Tex);
+    const cs2Geo = new T.PlaneGeometry(3, 3);
+    const cs2Mat = new T.MeshBasicMaterial({ map: shadow2Tex, transparent: true, depthWrite: false });
+    const contactShadow2 = new T.Mesh(cs2Geo, cs2Mat);
+    contactShadow2.rotation.x = -Math.PI / 2;
+    contactShadow2.position.set(0.2, -0.49, 0.05);
+    this.scene.add(contactShadow2);
   }
 
   /** Clean material helper */

@@ -471,9 +471,22 @@ export function BookMockup3D({
     /* === Path 1: Flat printed sheet (image / single page) === */
     if (category === "image") {
       const sheetThickness = 0.008;
-      const geo = new THREE.BoxGeometry(w, h, sheetThickness);
-      const mats = [edgeMat, edgeMat, edgeMat, edgeMat, coverFrontMat, whiteBackMat];
-      const mesh = new THREE.Mesh(geo, mats);
+      // Slight rounded corners using ExtrudeGeometry with rounded rect shape
+      const cornerRadius = Math.min(w, h) * 0.01;
+      const shape = new THREE.Shape();
+      const hw = w / 2, hh = h / 2;
+      shape.moveTo(-hw + cornerRadius, -hh);
+      shape.lineTo(hw - cornerRadius, -hh);
+      shape.quadraticCurveTo(hw, -hh, hw, -hh + cornerRadius);
+      shape.lineTo(hw, hh - cornerRadius);
+      shape.quadraticCurveTo(hw, hh, hw - cornerRadius, hh);
+      shape.lineTo(-hw + cornerRadius, hh);
+      shape.quadraticCurveTo(-hw, hh, -hw, hh - cornerRadius);
+      shape.lineTo(-hw, -hh + cornerRadius);
+      shape.quadraticCurveTo(-hw, -hh, -hw + cornerRadius, -hh);
+      const extSettings = { depth: sheetThickness, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 3 };
+      const geo = new THREE.ExtrudeGeometry(shape, extSettings);
+      const mesh = new THREE.Mesh(geo, coverFrontMat);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       group.add(mesh);
@@ -1097,12 +1110,17 @@ export function BookMockup3D({
           </div>
         )}
 
-        <div className="absolute bottom-0 inset-x-0 px-4 py-2.5 bg-gradient-to-t from-black/50 to-transparent text-white/90 text-[10px] flex items-center justify-between z-10">
+        <div className="absolute bottom-0 inset-x-0 px-4 py-2.5 bg-gradient-to-t from-black/60 via-black/30 to-transparent text-white/90 text-[10px] flex items-center justify-between z-10">
           <span className="flex items-center gap-1.5">
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9z" /><path d="M12 8v8M8 12h8" /></svg>
             مرّر للتدوير 360°
           </span>
-          <span>{totalPages} صفحة • {paperSize} • {categoryLabel} • {bindingDesc}</span>
+          <span className="flex items-center gap-2">
+            <span className="bg-white/15 px-1.5 py-0.5 rounded text-[9px]">{totalPages} صفحة</span>
+            <span className="bg-white/15 px-1.5 py-0.5 rounded text-[9px]">{paperSize}</span>
+            <span className="bg-white/15 px-1.5 py-0.5 rounded text-[9px]">{categoryLabel}</span>
+            <span className="bg-amber-400/20 text-amber-200 px-1.5 py-0.5 rounded text-[9px] font-medium">{bindingDesc}</span>
+          </span>
         </div>
       </div>
 

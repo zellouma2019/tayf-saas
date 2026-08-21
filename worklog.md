@@ -781,3 +781,48 @@ Unresolved / Next Phase:
 Risks:
 - Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
 - OOM in local dev (4GB RAM) — all testing must be on Vercel
+---
+Task ID: 13
+Agent: Cron Agent (round 13)
+Task: QA testing, z-index fix, styling improvements, new features
+
+Work Log:
+- Full QA test on tayf-saas.vercel.app/s/mtba-alryan via agent-browser
+- Uploaded test PDF (2 pages, A4) — upload + analysis completed in 110ms
+- Full flow tested: upload → results → 3D preview → page viewer (canvas 588×831px, 0.52% non-white pixels) → order dialog
+- Zero console errors throughout entire flow
+
+**Bug Found & Fixed:**
+- Order CTA button was covered by label element from ServiceOptionsPanel
+  - Added `relative z-10` to CTA wrapper div and `relative z-20` to Button itself
+  - Verified fix: elementsFromPoint now returns empty array (no covering elements)
+
+Styling Improvements:
+1. Order CTA button: added shimmer hover effect (white gradient sweep)
+2. Continue to Preview button: added shimmer hover effect
+3. Cost/Time estimate cards: added whileHover lift animation
+4. Service Options Panel header: icon container with bg color + hover scale
+5. Copies +/- buttons: added active:scale-95 press effect
+6. Footer feature pills: hover lift animation + tooltip descriptions
+7. Order summary reference number: changed to font-mono
+
+New Features:
+1. Quick copy quantity buttons (1, 2, 5, 10, 25, 50) in ServiceOptionsPanel
+
+Commit: 98d94a9
+Pushed to GitHub: zellouma2019/tayf-saas main branch
+
+Current Project Status:
+- Sections 1-6: COMPLETE
+- All customer-facing features working
+- Zero console errors in full upload→order flow
+
+Unresolved / Next Phase:
+- Real-world testing with actual 4MB+ PDF files
+- Mobile responsive testing on real devices
+- Dark mode thorough testing
+- Dead CSS cleanup in globals.css (35K lines)
+
+Risks:
+- Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
+- OOM in local dev (4GB RAM) — all testing must be on Vercel

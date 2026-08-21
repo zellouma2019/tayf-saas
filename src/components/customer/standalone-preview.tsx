@@ -495,7 +495,62 @@ export function StandalonePreview() {
 
   // التجليد الفعّال = التصنيف يحدد الخيارات المتاحة
   const effectiveBinding = fileCategory === "image" ? "none" : activeBinding;
-  const bindingLabel: Record<string, string> = { perfect: "كمالي", spiral: "سلك", brochure: "بروشور", staple: "دبوس", none: "سائبة" };
+  const bindingLabel: Record<string, string> = { perfect: "كمالي", spiral: "سلك", brochure: "بروشور", staple: "دبوس", none: "سائبة", glue: "غراء" };
+
+  /* ═══ ربط خيارات ServiceOptionsPanel بالمعاينة 3D مباشرة ═══ */
+  useEffect(() => {
+    if (!serviceOptions?.selectedOptions) return;
+    const opts = serviceOptions.selectedOptions;
+
+    // ربط التجليد
+    if (opts.binding) {
+      const bindMap: Record<string, BindingType> = {
+        none: "none", staple: "staple", spiral: "spiral",
+        glue: "perfect", perfect: "perfect", brochure: "brochure",
+      };
+      const mapped = bindMap[opts.binding];
+      if (mapped && fileCategory !== "image") setActiveBinding(mapped);
+    }
+
+    // ربط الوجهين
+    if (opts.sides) {
+      setDuplex(opts.sides === "double");
+    }
+
+    // ربط لون الطباعة
+    if (opts.color) {
+      setPrintColor(opts.color === "color");
+    }
+
+    // ربط نوع الورق (normal/glossy/matte/cardboard → imagePaperType)
+    if (opts.paperType) {
+      const ptMap: Record<string, "normal" | "glossy" | "matte"> = {
+        normal: "normal", glossy: "glossy", matte: "matte", cardboard: "normal",
+      };
+      setImagePaperType(ptMap[opts.paperType] || "normal");
+    }
+
+    // ربط وزن الورق
+    if (opts.weight) {
+      const wMap: Record<string, "80gsm" | "100gsm" | "120gsm"> = {
+        "80gsm": "80gsm", "100gsm": "100gsm", "120gsm": "120gsm",
+      };
+      setPaperWeight(wMap[opts.weight] || "80gsm");
+    }
+
+    // ربط عدد النسخ
+    if (serviceOptions.copies) {
+      setCopies(serviceOptions.copies);
+    }
+
+    // ربط الغلاف الشفاف
+    if (opts.clearCover === "yes") {
+      setClearCover(true);
+    } else if (opts.clearCover === "no") {
+      setClearCover(false);
+    }
+
+  }, [serviceOptions, fileCategory]);
 
   // أوصاف التصنيف بالعربي
   const categoryInfo = useMemo(() => {
