@@ -1812,8 +1812,11 @@ export function StandalonePreview() {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="font-semibold text-sm truncate">{file?.name}</p>
-                  <p className="text-xs text-muted-foreground">{analysis.fileSizeKB > 1024 ? (analysis.fileSizeMB + " ميغابايت") : (analysis.fileSizeKB + " KB")} • {analysis.pageCount} صفحة</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm truncate">{file?.name}</p>
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-mono uppercase tracking-wider border-amber-300/60 dark:border-amber-700/40 text-amber-600 dark:text-amber-400 shrink-0">{uploadedFileType === 'pdf' ? 'PDF' : uploadedFileType === 'image' ? 'IMG' : 'DOC'}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{analysis.fileSizeKB > 1024 ? (analysis.fileSizeMB + " ميغابايت") : (analysis.fileSizeKB + " KB")} • {analysis.pageCount} صفحة</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -1862,7 +1865,7 @@ export function StandalonePreview() {
           {/* ─── بطاقات الإحصائيات مع أيقونات ملونة ─── */
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} whileHover={{ y: -2, scale: 1.02 }} className="rounded-xl p-3.5 text-center border bg-card shadow-sm hover:shadow-lg hover:border-blue-200/50 dark:hover:border-blue-800/30 transition-all duration-200 cursor-default">
-              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/50 dark:to-blue-950/20 flex items-center justify-center shadow-sm shadow-blue-200/50 dark:shadow-blue-900/20"><FileText className="h-4.5 w-4.5 text-blue-500" /></div>
+              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/50 dark:to-blue-950/20 flex items-center justify-center shadow-sm shadow-blue-200/50 dark:shadow-blue-900/20"><BookOpen className="h-4.5 w-4.5 text-blue-500" /></div>
               <span className="text-[10px] text-muted-foreground block">الصفحات</span>
               <span className="text-lg font-extrabold block mt-0.5 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">{analysis.pageCount}</span>
             </motion.div>
