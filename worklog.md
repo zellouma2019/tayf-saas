@@ -868,4 +868,40 @@ Stage Summary:
 Unresolved Issues:
 - أخطاء TS سابقة في standalone-preview.tsx (خطوط 1395, 1837, 2749) - موجودة مسبقاً
 - سيرفر التطوير يتوقف بسبب OOM في بيئة الاختبار (4GB RAM)
-- التعديلات لم تُدفع إلى GitHub بعد
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: تحسين المعاينة ثلاثية الأبعاد ليكون الكتاب واقعي + ربط خيارات الطباعة بالمعاينة + إصلاح الفاتورة
+
+Work Log:
+- بحث عبر الإنترنت عن أفضل تقنيات المعاينة 3D: DearFlip، StPageFlip، react-pageflip، Turn.js، 3d-flip-book
+- فحص كامل لـ book-mockup-3d.tsx (1163 سطر) و service-options-panel.tsx (613 سطر)
+- تحسين هندسة الكتاب ثلاثي الأبعاد (perfect binding):
+  - استبدال BoxGeometry واحد بـ 11 عنصر منفصل (غلاف أمامي، خلفي، كعب، كتلة صفحات، أشرطة حواف، عصابات)
+  - الأغلفة أكبر من الصفحات بـ 0.025 وحدة من 3 جهات (أعلى، أسفل، حافة أمامية)
+  - الكعب يصل الغلافين بمادة جلدية واقعية
+  - خطوط أخاديد حيث يلتقي الغلاف بالكعب
+- ربط خيارات الطباعة بالمعاينة 3D:
+  - props جديدة: photoFinish, photoSize, imageFit, retouch, dpiBoost
+  - photoFinish: إطار أبيض أو عريض مع ظل وزخرفة
+  - retouch: تحسين تلقائي (تباين + سطوع + تشبع) أو إزالة خلفية
+  - photoSize: تعديل أبعاد الموديل حسب المقاس
+  - شريط المعلومات يعرض الخيارات النشطة
+- إصلاح نظام الفاتورة:
+  - المشكلة: html2canvas لا يدعم العربية والخلفيات الداكنة
+  - الحل: iframe مخفي + html2canvas مباشرة + onclone لفرض خطوط بديلة
+
+Commit: 984d49b
+Pushed to GitHub: zellouma2019/tayf-saas main branch
+
+Current Project Status:
+- 3D Preview: Realistic multi-mesh book (covers, spine, page block, edge strips)
+- Print Options: Connected to 3D preview (frame, retouch, DPI, size)
+- Invoice: Fixed PDF generation approach
+
+Unresolved / Next Phase:
+- User testing on Vercel to verify 3D preview and invoice
+- Consider StPageFlip/react-pageflip for page-turning effect
+- Pre-existing TS errors in standalone-preview.tsx
+- Upload speed optimization (P0 from previous session)
