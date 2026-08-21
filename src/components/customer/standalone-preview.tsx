@@ -1891,8 +1891,12 @@ export function StandalonePreview() {
           {/* ─── شريط الملخص العلوي ─── Summary bar ─── */}
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border bg-gradient-to-l from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Image thumbnail in summary */}
-              {imagePreviewUrl ? (
+              {/* Cover/image thumbnail in summary */
+              {workerResult?.coverDataUrl ? (
+                <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border-2 border-amber-200/50 dark:border-amber-800/30 shadow-sm bg-white">
+                  <img src={workerResult.coverDataUrl} alt="غلاف" className="w-full h-full object-cover" draggable={false} />
+                </div>
+              ) : imagePreviewUrl ? (
                 <div className={`w-10 h-10 rounded-lg overflow-hidden shrink-0 border-2 bg-gradient-to-br ${categoryInfo.borderGrad}`}>
                   <img src={imagePreviewUrl} alt="معاينة" className="w-full h-full object-cover" />
                 </div>
