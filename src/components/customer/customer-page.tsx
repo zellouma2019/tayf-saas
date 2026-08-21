@@ -722,19 +722,21 @@ function CustomerContent() {
               className="flex items-center justify-center gap-2 flex-wrap"
             >
               {[
-                { icon: <Sparkles className="h-3 w-3" />, label: "تحليل ذكي" },
-                { icon: <Box className="h-3 w-3" />, label: "معاينة 3D" },
-                { icon: <MapPin className="h-3 w-3" />, label: "تتبع لحظي" },
-                { icon: <RotateCcw className="h-3 w-3" />, label: "الدفع عند الاستلام" },
-                { icon: <Clock className="h-3 w-3" />, label: "تسليم سريع" },
+                { icon: <Sparkles className="h-3 w-3" />, label: "تحليل ذكي", desc: "فحص فوري للملف" },
+                { icon: <Box className="h-3 w-3" />, label: "معاينة 3D", desc: "شكل نهائي واقعي" },
+                { icon: <MapPin className="h-3 w-3" />, label: "تتبع لحظي", desc: "تتبع طلبك لحظياً" },
+                { icon: <RotateCcw className="h-3 w-3" />, label: "الدفع عند الاستلام", desc: "لا حاجة لبطاقة" },
+                { icon: <Clock className="h-3 w-3" />, label: "تسليم سريع", desc: "جاهز في دقائق" },
               ].map((feat) => (
-                <span
+                <motion.span
                   key={feat.label}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50 text-[10px] text-muted-foreground/70"
+                  whileHover={{ y: -1, scale: 1.05 }}
+                  title={feat.desc}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50 text-[10px] text-muted-foreground/70 cursor-default hover:text-foreground hover:border-foreground/20 transition-colors"
                 >
                   {feat.icon}
                   {feat.label}
-                </span>
+                </motion.span>
               ))}
             </motion.div>
 

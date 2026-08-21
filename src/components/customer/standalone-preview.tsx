@@ -1781,7 +1781,7 @@ export function StandalonePreview() {
 
           {/* ─── تقدير التكلفة والوقت ─── */}
           <div className="grid grid-cols-2 gap-3">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 p-4 flex items-center gap-3">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} whileHover={{ y: -2, scale: 1.01 }} className="rounded-xl border bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 p-4 flex items-center gap-3 cursor-default transition-all duration-200">
               <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center shrink-0">
                 <Monitor className="h-5 w-5 text-amber-500" />
               </div>
@@ -1790,7 +1790,7 @@ export function StandalonePreview() {
                 <p className="text-sm font-bold text-amber-700 dark:text-amber-300">{cost.min} – {cost.max} ريال</p>
               </div>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="rounded-xl border bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 p-4 flex items-center gap-3">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} whileHover={{ y: -2, scale: 1.01 }} className="rounded-xl border bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 p-4 flex items-center gap-3 cursor-default transition-all duration-200">
               <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center shrink-0">
                 <Clock className="h-5 w-5 text-amber-500" />
               </div>
@@ -1981,8 +1981,9 @@ export function StandalonePreview() {
               // تعيين التجليد الافتراضي حسب التصنيف عند الدخول للمعاينة
               setActiveBinding(getDefaultBinding(fileCategory));
               setStep("preview");
-            }} className="w-full h-12 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98]">
-              <Eye className="h-4 w-4" />متابعة للمعاينة<ArrowLeft className="h-4 w-4" />
+            }} className="w-full h-12 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98] relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <Eye className="h-4 w-4 relative z-10" /><span className="relative z-10">متابعة للمعاينة</span><ArrowLeft className="h-4 w-4 relative z-10" />
             </Button>
           </div>
         </motion.div>
@@ -2644,7 +2645,7 @@ export function StandalonePreview() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card overflow-hidden shadow-sm">
             <div className="flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-l from-muted/60 to-muted/30">
               <Receipt className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span>
-              <span className="text-[9px] text-muted-foreground mr-auto font-medium">#{Date.now().toString(36).toUpperCase()}</span>
+              <span className="text-[9px] text-muted-foreground mr-auto font-mono">#{Date.now().toString(36).toUpperCase()}</span>
             </div>
             <div className="divide-y divide-border/40">
               <div className="flex items-center justify-between px-4 py-2.5 text-xs">
@@ -2871,14 +2872,16 @@ export function StandalonePreview() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className="relative z-10"
           >
             <Button
               onClick={() => { setOrderSubmitted(false); setOrderReference(""); setOrderStep(1); setOrderDialogOpen(true); }}
-              className="w-full h-14 rounded-2xl bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 font-bold text-sm gap-2.5 active:scale-[0.98]"
+              className="w-full h-14 rounded-2xl bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 font-bold text-sm gap-2.5 active:scale-[0.98] relative z-20 overflow-hidden group"
             >
-              <Send className="h-5 w-5" />
-              <span>تأكيد طلب الطباعة</span>
-              <span className="text-lg font-extrabold tabular-nums mr-auto">{finalPricing.total.toFixed(2)} <span className="text-xs font-semibold opacity-80">ر.س</span></span>
+              <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/15 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <Send className="h-5 w-5 relative z-10" />
+              <span className="relative z-10">تأكيد طلب الطباعة</span>
+              <span className="text-lg font-extrabold tabular-nums mr-auto relative z-10">{finalPricing.total.toFixed(2)} <span className="text-xs font-semibold opacity-80">ر.س</span></span>
             </Button>
             <p className="text-[10px] text-center text-muted-foreground mt-2.5 flex items-center justify-center gap-1.5">
               <Lock className="h-3 w-3 text-emerald-500" />

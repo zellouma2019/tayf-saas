@@ -116,6 +116,9 @@ export function ServiceOptionsPanel({
 }: ServiceOptionsPanelProps) {
   const colors = COLOR_MAPS[colorScheme];
 
+  // اختيارات سريعة للكمية
+  const QUICK_COPIES = [1, 2, 5, 10, 25, 50];
+
   // نوع الخدمة الفعّل (يمكن للمستخدم تغييره)
   const [activeServiceType, setActiveServiceType] = useState<ServiceType>(() =>
     mapToSpecService(detectedService),
@@ -208,10 +211,12 @@ export function ServiceOptionsPanel({
       {/* الرأس — نوع الخدمة */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors group"
       >
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <Sparkles className={`h-4 w-4 ${colors.accent}`} />
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110 ${colors.bg}`}>
+            <Sparkles className={`h-4 w-4 ${colors.accent}`} />
+          </div>
           <span>خيارات الطباعة</span>
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors.badge}`}
@@ -219,11 +224,13 @@ export function ServiceOptionsPanel({
             {activeSpec.emoji} {activeSpec.name}
           </span>
         </div>
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        )}
+        <div className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
+          {isOpen ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
       </button>
 
       <AnimatePresence>
@@ -273,7 +280,7 @@ export function ServiceOptionsPanel({
                   <button
                     onClick={() => onCopiesChange(Math.max(1, copies - 1))}
                     disabled={copies <= 1}
-                    className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
                   </button>
@@ -287,7 +294,7 @@ export function ServiceOptionsPanel({
                   <button
                     onClick={() => onCopiesChange(Math.min(99, copies + 1))}
                     disabled={copies >= 99}
-                    className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    className="w-9 h-9 rounded-xl border flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                   </button>
@@ -299,6 +306,22 @@ export function ServiceOptionsPanel({
                       إعادة تعيين
                     </button>
                   )}
+                </div>
+                {/* أزرار الكمية السريعة */}
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                  {QUICK_COPIES.filter(q => q !== copies).slice(0, 5).map(q => (
+                    <button
+                      key={q}
+                      onClick={() => onCopiesChange(q)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 border active:scale-95 ${
+                        copies === q
+                          ? colors.active
+                          : "border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
                 </div>
               </div>
 
