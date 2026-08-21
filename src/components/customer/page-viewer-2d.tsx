@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Loader2, AlertCircle, Grid3X3, Columns2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Loader2, AlertCircle, Grid3X3, Columns2, Ruler } from "lucide-react";
 
 interface PageViewer2DProps {
   file?: File | null;
@@ -35,6 +35,9 @@ export function PageViewer2D({
   const [zoomLevel, setZoomLevel] = useState(100);
   const [pageDataUrl, setPageDataUrl] = useState<string | null>(null);
   const [showThumbnails, setShowThumbnails] = useState(false);
+  const [showBleed, setShowBleed] = useState(false);
+  const [goToPageInput, setGoToPageInput] = useState("");
+  const [showGoToPage, setShowGoToPage] = useState(false);
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
   const pdfDocRef = useRef<unknown>(null);
@@ -91,8 +94,14 @@ export function PageViewer2D({
         } else if (storedFileName) {
           const fetchUrl = `/api/c/uploads/${encodeURIComponent(storedFileName)}`;
           const resp = await fetch(fetchUrl);
-          if (!resp.ok) throw new Error("الملف غير متوفر — يرجى إعادة رفع الملف لعرض الصفحات");
+          if (!resp.ok) {
+            // On Vercel, /tmp/ files expire between function invocations
+            throw new Error("الملف غير متوفر حالياً — تم انتهاء صلاحية الملف المؤقت. يرجى إعادة رفع الملف لعرض الصفحات.");
+          }
           const arrayBuffer = await resp.arrayBuffer();
+          if (arrayBuffer.byteLength === 0) {
+            throw new Error("الملف فارغ — يرجى إعادة رفع الملف.");
+          }
           source = { data: arrayBuffer };
         } else {
           throw new Error("لا يوجد ملف للعرض");
@@ -255,6 +264,8 @@ export function PageViewer2D({
               <button onClick={zoomIn} disabled={zoomLevel >= 300} className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all disabled:opacity-25" title="تكبير"><ZoomIn className="h-4 w-4" /></button>
               <div className="w-px h-4 bg-white/10 mx-0.5" />
               <button onClick={() => setShowThumbnails(!showThumbnails)} className={`p-2 rounded-lg transition-all ${showThumbnails ? 'text-amber-400 bg-amber-400/10' : 'text-white/60 hover:text-white hover:bg-white/10'}`} title="شريط الصفحات المصغرة"><Grid3X3 className="h-4 w-4" /></button>
+              <button onClick={() => setShowBleed(!showBleed)} className={`p-2 rounded-lg transition-all ${showBleed ? 'text-rose-400 bg-rose-400/10' : 'text-white/60 hover:text-white hover:bg-white/10'}`} title="خطوط الهوامش والنزيف"><Ruler className="h-4 w-4" /></button>
+              <button onClick={() => setShowGoToPage(!showGoToPage)} className={`p-2 rounded-lg transition-all ${showGoToPage ? 'text-sky-400 bg-sky-400/10' : 'text-white/60 hover:text-white hover:bg-white/10'}`} title="الذهاب لصفحة"><Columns2 className="h-4 w-4" /></button>
               <button onClick={toggleFullscreen} className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all" title="ملء الشاشة"><Maximize2 className="h-4 w-4" /></button>
               <button onClick={onClose} className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all" title="إغلاق"><X className="h-4 w-4" /></button>
             </div>
@@ -337,6 +348,43 @@ export function PageViewer2D({
                   {pageDataUrl && !isLoading && (
                     <div className="relative rounded-lg overflow-hidden shadow-2xl shadow-black/50">
                       <img src={pageDataUrl} alt={`صفحة ${currentPage}`} className="block max-h-[70vh] w-auto" style={{ imageRendering: "-webkit-optimize-contrast" }} draggable={false} />
+                      {/* Bleed/margin overlay */}
+                      {showBleed && (
+                        <div className="absolute inset-0 pointer-events-none">
+                          {/* Trim line (3mm safety margin) */}
+                          <div className="absolute inset-[3%] border-2 border-dashed border-rose-400/70 rounded-sm" />
+                          {/* Bleed line (5mm bleed area) */}
+                          <div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-sm" />
+                          {/* Labels */}
+                          <span className="absolute top-1 right-1 text-[8px] bg-rose-500/80 text-white px-1 rounded">هامش آمن</span>
+                          <span className="absolute bottom-1 left-1 text-[8px] bg-amber-500/80 text-white px-1 rounded">منطقة النزيف</span>
+                        </div>
+                      )}
+                      {/* Go-to-page overlay */}
+                      {showGoToPage && (
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/80 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
+                          <input
+                            type="number"
+                            min={1}
+                            max={totalPages}
+                            value={goToPageInput}
+                            onChange={(e) => setGoToPageInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const n = parseInt(goToPageInput);
+                                if (n >= 1 && n <= totalPages) setCurrentPage(n);
+                                setShowGoToPage(false);
+                                setGoToPageInput("");
+                              }
+                              if (e.key === 'Escape') { setShowGoToPage(false); setGoToPageInput(""); }
+                            }}
+                            className="w-12 bg-transparent text-white text-center text-sm outline-none border-b border-white/30 focus:border-amber-400"
+                            placeholder={String(currentPage)}
+                            autoFocus
+                          />
+                          <span className="text-white/40 text-xs">/ {totalPages}</span>
+                        </div>
+                      )}
                       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm text-white/90 text-xs font-medium">
                         صفحة {currentPage} من {totalPages}
                       </div>

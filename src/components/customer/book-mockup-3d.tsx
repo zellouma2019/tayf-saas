@@ -613,81 +613,146 @@ export function BookMockup3D({
       activeFrontTexInfo = { texture: tex, aspectRatio: 800 / 1100 };
     }
 
-    // For PDF files without cover texture: create elegant placeholder cover
+    // For PDF files without cover texture: create realistic book cover placeholder
     if (!activeFrontTexInfo && fileType === "pdf") {
       const canvas = document.createElement("canvas");
       canvas.width = 800;
       canvas.height = 1100;
       const ctx = canvas.getContext("2d")!;
-      // Warm paper background
-      ctx.fillStyle = "#faf9f7";
+
+      // ── Rich dark cover background (like a real printed book) ──
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1100);
+      bgGrad.addColorStop(0, "#1e293b");
+      bgGrad.addColorStop(0.5, "#1a2332");
+      bgGrad.addColorStop(1, "#0f172a");
+      ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, 800, 1100);
-      // Top accent bar
-      const grad = ctx.createLinearGradient(0, 0, 800, 0);
-      grad.addColorStop(0, "#f59e0b");
-      grad.addColorStop(1, "#f97316");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 800, 12);
-      // Book icon (open book)
-      ctx.fillStyle = "#e7e5e4";
+
+      // ── Subtle texture noise overlay ──
+      ctx.globalAlpha = 0.03;
+      for (let i = 0; i < 3000; i++) {
+        const x = Math.random() * 800;
+        const y = Math.random() * 1100;
+        ctx.fillStyle = Math.random() > 0.5 ? "#ffffff" : "#000000";
+        ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      // ── Top decorative band ──
+      const topGrad = ctx.createLinearGradient(0, 0, 800, 0);
+      topGrad.addColorStop(0, "#f59e0b");
+      topGrad.addColorStop(0.5, "#fbbf24");
+      topGrad.addColorStop(1, "#f59e0b");
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 0, 800, 8);
+
+      // ── Inner border frame (gold) ──
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.3)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.roundRect(250, 280, 300, 220, 16);
+      ctx.roundRect(60, 40, 680, 1020, 4);
+      ctx.stroke();
+
+      // ── Second inner frame ──
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.12)";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.roundRect(72, 52, 656, 996, 2);
+      ctx.stroke();
+
+      // ── Open book icon (centered, elegant) ──
+      const iconY = 250;
+      ctx.fillStyle = "rgba(245, 158, 11, 0.08)";
+      ctx.beginPath();
+      ctx.roundRect(220, iconY, 360, 200, 12);
       ctx.fill();
+
       // Left page
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
       ctx.beginPath();
-      ctx.roundRect(270, 300, 125, 180, 8);
+      ctx.roundRect(240, iconY + 20, 155, 160, 6);
       ctx.fill();
       // Right page
       ctx.beginPath();
-      ctx.roundRect(405, 300, 125, 180, 8);
+      ctx.roundRect(405, iconY + 20, 155, 160, 6);
       ctx.fill();
+      // Spine line
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.15)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(400, iconY + 15);
+      ctx.lineTo(400, iconY + 185);
+      ctx.stroke();
       // Page lines (left)
-      ctx.strokeStyle = "#d6d3d1";
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < 5; i++) {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
         ctx.beginPath();
-        ctx.moveTo(285, 340 + i * 28);
-        ctx.lineTo(380, 340 + i * 28);
+        ctx.moveTo(255, iconY + 50 + i * 22);
+        ctx.lineTo(375, iconY + 50 + i * 22);
         ctx.stroke();
       }
       // Page lines (right)
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         ctx.beginPath();
-        ctx.moveTo(420, 340 + i * 28);
-        ctx.lineTo(515, 340 + i * 28);
+        ctx.moveTo(415, iconY + 50 + i * 22);
+        ctx.lineTo(540, iconY + 50 + i * 22);
         ctx.stroke();
       }
-      // Spine
-      ctx.fillStyle = "#d6d3d1";
-      ctx.fillRect(396, 295, 8, 190);
-      // Title
-      ctx.fillStyle = "#1c1917";
-      ctx.font = "600 30px system-ui, sans-serif";
+
+      // ── Decorative divider ──
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(250, 520);
+      ctx.lineTo(550, 520);
+      ctx.stroke();
+      // Diamond ornament
+      ctx.fillStyle = "rgba(245, 158, 11, 0.5)";
+      ctx.beginPath();
+      ctx.moveTo(400, 512);
+      ctx.lineTo(410, 520);
+      ctx.lineTo(400, 528);
+      ctx.lineTo(390, 520);
+      ctx.closePath();
+      ctx.fill();
+
+      // ── Title ──
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "700 32px system-ui, sans-serif";
       ctx.textAlign = "center";
       const pdfName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
-      const truncName = pdfName.length > 30 ? pdfName.slice(0, 27) + "..." : pdfName;
-      ctx.fillText(truncName, 400, 580);
-      // Page count & size
-      ctx.fillStyle = "#78716c";
-      ctx.font = "500 20px system-ui, sans-serif";
-      ctx.fillText(`${totalPages} صفحة  •  ${paperSize}`, 400, 625);
-      // Category label
-      const catLabel = category === "book" ? "كتاب / مذكرة" : "مستند قصير";
-      ctx.fillStyle = "#a8a29e";
-      ctx.font = "400 18px system-ui, sans-serif";
-      ctx.fillText(catLabel, 400, 665);
-      // Loading indicator
-      ctx.fillStyle = "#d6d3d1";
-      ctx.font = "400 15px system-ui, sans-serif";
-      ctx.fillText("جارٍ تحميل الغلاف الفعلي...", 400, 1040);
-      // Bottom bar
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 1088, 800, 12);
+      const truncName = pdfName.length > 32 ? pdfName.slice(0, 29) + "..." : pdfName;
+      ctx.fillText(truncName, 400, 590);
+
+      // ── Subtitle line ──
+      ctx.fillStyle = "rgba(245, 158, 11, 0.7)";
+      ctx.font = "500 18px system-ui, sans-serif";
+      const catLabel = category === "book" ? "كتاب / مذكرة" : "مستند";
+      ctx.fillText(catLabel, 400, 640);
+
+      // ── Page count & size info ──
+      ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+      ctx.font = "400 16px system-ui, sans-serif";
+      ctx.fillText(`${totalPages} صفحة  ·  ${paperSize}  ·  300 DPI`, 400, 690);
+
+      // ── Bottom section ──
+      // Decorative divider
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.15)";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(250, 940);
+      ctx.lineTo(550, 940);
+      ctx.stroke();
+
       // Branding
-      ctx.fillStyle = "#e7e5e4";
-      ctx.font = "400 13px system-ui, sans-serif";
-      ctx.fillText("طيف — منصة الطباعة", 400, 1070);
+      ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
+      ctx.font = "400 14px system-ui, sans-serif";
+      ctx.fillText("طيف — منصة الطباعة", 400, 970);
+
+      // ── Bottom accent bar ──
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 1092, 800, 8);
 
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;

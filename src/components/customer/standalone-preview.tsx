@@ -485,6 +485,13 @@ export function StandalonePreview() {
       confidence: 80,
       healthScore: 80,
       isColor: true,
+      estimatedDPI: item.type === "pdf" ? 300 : prev.estimatedDPI,
+      dpiCategory: item.type === "pdf" ? "ممتازة" : prev.dpiCategory,
+      orientation: "portrait" as const,
+      fileNature: item.type === "pdf" ? "مستند PDF" : prev.fileNature,
+      pageDimensionsMM: { width: 210, height: 297 },
+      hasEmbeddedFonts: true,
+      textLayer: true,
       insights: ["تم إعادة تحميل ملف سابق"],
     }));
     setTotalPages(item.pages);
@@ -1939,11 +1946,11 @@ export function StandalonePreview() {
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between py-1.5 border-b border-border/50">
                     <span className="text-muted-foreground">اسم الملف</span>
-                    <span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name || "—"}</span>
+                    <span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name || storedName?.split("/").pop() || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between py-1.5 border-b border-border/50">
                     <span className="text-muted-foreground">الحجم</span>
-                    <span className="font-medium font-mono">{analysis.fileSizeKB > 1024 ? `${analysis.fileSizeMB} MB` : `${analysis.fileSizeKB} KB`}</span>
+                    <span className="font-medium font-mono">{analysis.fileSizeKB > 1024 ? `${analysis.fileSizeMB} MB` : analysis.fileSizeKB > 0 ? `${analysis.fileSizeKB} KB` : file ? `${(file.size / 1024).toFixed(1)} KB` : "—"}</span>
                   </div>
                   {(analysis.title || analysis.author) && (
                     <div className="flex items-center justify-between py-1.5 border-b border-border/50">
@@ -2123,12 +2130,15 @@ export function StandalonePreview() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{file?.name}</p>
+                <p className="text-sm font-semibold truncate">{file?.name || storedName?.split("/").pop() || "ملف"}</p>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
                   <Badge className={`${categoryInfo.color} border-0 text-[9px] font-semibold gap-0.5`}>{categoryInfo.icon}{categoryInfo.label}</Badge>
                   <Badge variant="secondary" className="font-mono text-[9px]">{analysis.pageCount} صفحة</Badge>
                   <Badge variant="outline" className="text-[9px] text-muted-foreground">{analysis.closestPaperSize || analysis.paperSize}</Badge>
                   <Badge variant="outline" className="text-[9px] text-muted-foreground">{analysis.isColor ? "ملون" : "أبيض وأسود"}</Badge>
+                  {Number(analysis.estimatedDPI) > 0 && (
+                    <Badge variant="outline" className="text-[9px] text-emerald-600 dark:text-emerald-400 border-emerald-200/40 dark:border-emerald-800/30">{analysis.estimatedDPI} DPI</Badge>
+                  )}
                   {fileCategory !== "image" && effectiveBinding !== "none" && (
                     <Badge variant="outline" className="text-[9px] text-muted-foreground">
                       <Layers className="h-2.5 w-2.5 ml-0.5" />{bindingLabel[effectiveBinding]}
