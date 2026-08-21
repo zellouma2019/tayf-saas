@@ -1390,9 +1390,15 @@ export function StandalonePreview() {
                       onClick={() => reuploadFromHistory(item)}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl border ${catColor} transition-all duration-200 hover:shadow-md hover:scale-[1.01] text-right group`}
                     >
-                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getFileTypeGradient(item.fileType)} flex items-center justify-center shrink-0 shadow-sm text-white`}>
-                        {getFileTypeIcon(item.fileType)}
-                      </div>
+                      {item.coverDataUrl ? (
+                        <div className="w-10 h-12 rounded-lg overflow-hidden shrink-0 shadow-sm border border-black/5 dark:border-white/10 bg-white">
+                          <img src={item.coverDataUrl} alt="" className="w-full h-full object-cover" draggable={false} />
+                        </div>
+                      ) : (
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getFileTypeGradient(item.fileType)} flex items-center justify-center shrink-0 shadow-sm text-white`}>
+                          {getFileTypeIcon(item.fileType)}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{item.name}</p>
                         <p className="text-[10px] text-muted-foreground">{item.pages} صفحة • {item.size}</p>
@@ -1533,6 +1539,32 @@ export function StandalonePreview() {
         </motion.div>
       )}
 
+      {/* ═══ Progress Steps Indicator (results, preview, analyzing) ═══ */
+      {(step === "results" || step === "preview") && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-0 mb-2">
+          {[
+            { n: 1, label: "الرفع", icon: <Upload className="h-3.5 w-3.5" />, done: true },
+            { n: 2, label: "التحليل", icon: <Sparkles className="h-3.5 w-3.5" />, done: step === "results" || step === "preview" },
+            { n: 3, label: "المعاينة", icon: <Eye className="h-3.5 w-3.5" />, done: step === "preview" },
+            { n: 4, label: "الطلب", icon: <Send className="h-3.5 w-3.5" />, done: false },
+          ].map((s, i) => (
+            <div key={s.n} className="flex items-center">
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300 ${
+                s.done
+                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/30"
+                  : "bg-muted/50 text-muted-foreground border border-border/50"
+              }`}>
+                {s.done ? <Check className="h-3 w-3" /> : s.icon}
+                {s.label}
+              </div>
+              {i < 3 && (
+                <ChevronLeft className={`h-3 w-3 mx-0.5 transition-colors duration-300 ${s.done ? "text-emerald-400" : "text-muted-foreground/30"}`} />
+              )}
+            </div>
+          ))}
+        </motion.div>
+      )}
+
       {step === "results" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
           {/* ─── رفع ملف جديد ─── */}
@@ -1550,8 +1582,12 @@ export function StandalonePreview() {
           <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                {/* Image thumbnail or file icon */}
-                {imagePreviewUrl ? (
+                {/* Cover thumbnail or file icon */}
+                {workerResult?.coverDataUrl ? (
+                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 border-amber-200/50 dark:border-amber-800/30 shadow-sm bg-white">
+                    <img src={workerResult.coverDataUrl} alt="غلاف" className="w-full h-full object-cover" draggable={false} />
+                  </div>
+                ) : imagePreviewUrl ? (
                   <div className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 bg-gradient-to-br ${categoryInfo.borderGrad}`}>
                     <img src={imagePreviewUrl} alt="معاينة" className="w-full h-full object-cover" />
                   </div>
