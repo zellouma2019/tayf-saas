@@ -1,4 +1,66 @@
 ---
+Task ID: 17
+Agent: Cron Agent (round 17)
+Task: 3D book realism overhaul + DPI fix + styling improvements + QA
+
+Work Log:
+- Full QA on tayf-saas.vercel.app/s/mtba-alryan via agent-browser + VLM analysis
+- VLM rated current 3D book mockup 3/10 — identified 6 major issues
+- Researched real book mockups via image search (8 reference images from Pacdora, Canva, etc.)
+- Analyzed reference images with VLM for specific realism techniques
+
+Critical 3D Book Fixes (book-mockup-3d.tsx):
+1. **NEW: createForeEdgeTexture()** function — procedural vertical page lines for the fore-edge (most visible side)
+   - Individual sheet stripes with alternating cream colors and ±5% random brightness variation
+   - Dark gradient at top/bottom edges (dust/shadow accumulation)
+   - Spine-side shadow gradient (ambient occlusion simulation)
+2. **Page block +X face**: Now uses foreEdgeTex (was flat solid color — CRITICAL FIX)
+3. **Page block -X face**: Darker gutterC color (paperColor × 0.88) for ambient occlusion at spine
+4. **Front/back cover materials**: Upgraded from MeshStandardMaterial to MeshPhysicalMaterial with clearcoat: 0.6 (simulates laminated cover sheen)
+5. **Spine outer material**: Upgraded to MeshPhysicalMaterial with clearcoat: 0.3
+6. **Spine grooves**: Made 2.5× wider (0.002 → 0.005), taller (94% → 96%), pushed further from spine
+
+DPI Display Fix (standalone-preview.tsx):
+- Changed expression from chained || to explicit Number() > 0 check
+- Ensures DPI shows 300 for all PDFs even if value is 0
+
+Styling Improvements:
+1. File extension badge (PDF/IMG/DOC) next to file name on results page
+2. BookOpen icon for page count stat (replaced FileText)
+3. File name and badge layout improved with gap and flex
+
+QA Results (post-fix, Vercel):
+- Upload + analysis: zero JS errors
+- Page loads in ~1.35s
+- VLM confirms page edge texture now visible: "edge has a textured appearance suggesting stacked pages" (was "solid white block")
+- Cover shows procedural placeholder (expected for test PDF without real cover)
+- Build: Clean, no new errors
+
+Commits: 68f99f7 (3D book + DPI), 3c54dba (styling)
+Pushed to GitHub: zellouma2019/tayf-saas main branch
+
+Current Project Status:
+- Sections 1-6: COMPLETE
+- 3D Book: IMPROVED (fore-edge page lines visible, clearcoat covers, gutter AO)
+- DPI Display: FIXED (explicit Number() check)
+- Upload speed: OPTIMIZED (~60ms server metadata-only for PDFs)
+- Build: CLEAN
+- Zero console errors in full upload → results → preview flow
+
+Unresolved / Next Phase:
+- Verify DPI fix displays correctly after Vercel re-deployment
+- 3D cover texture loading from client-side pdfjs needs verification on Vercel
+- Cover still shows procedural placeholder (enhance with more realistic design)
+- Consider: spine curvature (CylinderGeometry), rounded page block edges
+- Mobile responsive testing on real devices
+- Dead CSS cleanup in globals.css (35K lines)
+- Pre-existing TS errors in admin routes
+
+Risks:
+- Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
+- OOM in local dev (4GB RAM) — all testing must be on Vercel
+- MeshPhysicalMaterial (clearcoat) may have slightly higher GPU cost on mobile
+---
 Task ID: 1
 Agent: Main
 Task: Fix customer-side file upload failure, optimize performance, add tracking
@@ -1074,3 +1136,46 @@ Risks:
 - Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
 - OOM in local dev (4GB RAM) — all testing must be on Vercel
 - pdfjs main thread rendering may be slower for page viewer with many pages
+---
+## Realistic 3D Book Mockup — Photorealism Overhaul
+
+### Date: $(date -u +"%Y-%m-%d %H:%M UTC")
+
+### Problem
+The 3D book preview looked like a basic CG render, not a real book photo. VLM analysis identified 6 specific issues.
+
+### Changes Made
+
+#### A. `src/components/customer/book-mockup-3d.tsx`
+
+1. **Enhanced `createPageEdgeTexture`** (lines 250-292):
+   - Changed base colors to warmer cream: baseR=235,baseG=228,baseB=218 / altR=245,altG=238,altB=228
+   - Increased brightness variation from ±5% to ±12% (range [0.88, 1.12])
+   - Added ±1px random x-offset per line to simulate page fanning effect
+   - Added spine-side shadow gradient (left 10% darker) simulating gutter shadow
+
+2. **Added `createCoverRoughnessMap`** (lines 310-329):
+   - New function generates 256x256 canvas noise texture
+   - Base roughness ~66% (#a8a8a8) with ±12.5 noise variation
+   - RepeatWrapping for seamless tiling on all cover surfaces
+   - Breaks up the flat CG look with micro-surface variation
+
+3. **Rewrote Perfect Binding section** (lines 763-1013):
+   - **Rounded spine**: Replaced BoxGeometry with CylinderGeometry (180° arc, 24 segments, open-ended). Positioned at x=-w/2-coverOverhang/2 with radius=totalDepth/2. Added CircleGeometry caps at top/bottom with DoubleSide rendering.
+   - **Beveled covers**: Replaced BoxGeometry with ExtrudeGeometry using rounded-rect Shape (0.8% corner radius) + 0.001 bevel. Extrusion centered via translate(0,0,-ct/2). Material arrays: [front face, back face, sides].
+   - **AO shadow planes**: 3 semi-transparent dark planes - front/back cover-page junction (opacity 0.12) and spine gutter (opacity 0.18).
+   - **Roughness maps**: Applied coverRoughnessMap to front cover face, back cover face, spine, edge strips, and spine caps.
+   - **Subsurface scattering**: Added emissive=Color(paperColor)*0.03 to fore-edge and spine-side page materials.
+   - **Head/tail bands**: Changed from BoxGeometry to CylinderGeometry arcs matching the curved spine.
+
+#### B. `src/lib/customer/three-scene-manager.ts`
+
+1. **Hemisphere light**: Reduced intensity from 0.6 to 0.4 for more contrast
+2. **Key light**: Moved position from (3,6,4) to (4,5,3) for more dramatic shadows
+3. **Rim light**: Changed color from 0xfff0e0 to 0xffe8d0 (slightly warmer tint)
+
+### Lint Results
+0 errors, 4 pre-existing warnings (unused eslint-disable directives).
+
+### Deployment
+Pushed to GitHub main branch (commit c2dbeff).
