@@ -19,6 +19,7 @@ export interface UploadState {
   errorMessage: string | null;
   canPause: boolean;
   canResume: boolean;
+  lastCompleteResult: Record<string, unknown> | null;  // Full upload-complete response (includes PDF metadata)
 }
 
 interface ChunkTask {
@@ -49,6 +50,7 @@ export function useChunkedUpload() {
     errorMessage: null,
     canPause: false,
     canResume: false,
+    lastCompleteResult: null,
   });
 
   const fileRef = useRef<File | null>(null);
@@ -137,6 +139,7 @@ export function useChunkedUpload() {
       errorMessage: null,
       canPause: false,
       canResume: false,
+      lastCompleteResult: null,
     });
     fileRef.current = null;
   }, []);
@@ -261,6 +264,7 @@ export function useChunkedUpload() {
       errorMessage: null,
       canPause: false,
       canResume: false,
+      lastCompleteResult: null,
     });
 
     try {
@@ -425,6 +429,7 @@ export function useChunkedUpload() {
         eta: 0,
         uploadedBytes: file.size,
         canPause: false,
+        lastCompleteResult: result,
       }));
 
       return result.storedFileName;

@@ -596,71 +596,90 @@ export function StandalonePreview() {
     // ═══════════════════════════════════════════════════════════════
     // FAST UPLOAD: Combined endpoint (upload + analyze + cover in 1 request)
     // ═══════════════════════════════════════════════════════════════
-    const SMALL_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
+    const SMALL_FILE_THRESHOLD = 4 * 1024 * 1024; // 4MB — Vercel body limit is 4.5MB, leave safety margin
     let storedFileName: string | null = null;
+    let fellBackToChunked = false;
 
     try {
       if (f.size < SMALL_FILE_THRESHOLD) {
-        // ═══ SMALL FILES (< 5MB): Single combined request ═══
-        // Upload + PDF analysis + cover rendering all in ONE network round trip
+        // ═══ SMALL FILES (< 4MB): Single combined request ═══
+        // Upload + PDF analysis in ONE network round trip
+        // If 413 (Vercel body limit), fallback to chunked upload
         setStep("uploading"); setUploadProgress(0);
         setAnalysisStage(isPdf ? "جارٍ رفع وتحليل الملف..." : "جارٍ رفع الملف...");
 
-        const uploadAnalyzeResult = await new Promise<Record<string, unknown> | null>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          const fd = new FormData();
-          fd.append("file", f);
-          xhr.open("POST", "/api/c/upload-analyze");
-          xhr.timeout = 120_000;
-          const t0 = Date.now();
-          setUploadStartTime(t0);
+        let uploadAnalyzeResult: Record<string, unknown> | null = null;
 
-          xhr.upload.addEventListener("progress", (e) => {
-            if (e.lengthComputable) {
-              const pct = Math.round((e.loaded / e.total) * 100);
-              setUploadProgress(Math.min(pct, 95));
-              const elapsed = (Date.now() - t0) / 1000;
-              if (elapsed > 0.2) {
-                setUploadSpeed(e.loaded / elapsed);
-                const remaining = (e.total - e.loaded) / (e.loaded / elapsed);
-                setUploadETA(remaining);
+        try {
+          uploadAnalyzeResult = await new Promise<Record<string, unknown> | null>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            const fd = new FormData();
+            fd.append("file", f);
+            xhr.open("POST", "/api/c/upload-analyze");
+            xhr.timeout = 120_000;
+            const t0 = Date.now();
+            setUploadStartTime(t0);
+
+            xhr.upload.addEventListener("progress", (e) => {
+              if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 100);
+                setUploadProgress(Math.min(pct, 95));
+                const elapsed = (Date.now() - t0) / 1000;
+                if (elapsed > 0.2) {
+                  setUploadSpeed(e.loaded / elapsed);
+                  const remaining = (e.total - e.loaded) / (e.loaded / elapsed);
+                  setUploadETA(remaining);
+                }
               }
-            }
+            });
+
+            xhr.addEventListener("load", () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  resolve(JSON.parse(xhr.responseText));
+                } catch { reject(new Error("فشل في قراءة استجابة الخادم")); }
+              } else if (xhr.status === 413) {
+                // File too large for single request (Vercel 4.5MB body limit) — signal fallback to chunked
+                reject(new Error("ENTITY_TOO_LARGE"));
+              } else {
+                try {
+                  const err = JSON.parse(xhr.responseText);
+                  reject(new Error(err.error || `فشل (${xhr.status})`));
+                } catch { reject(new Error(`فشل في رفع الملف (${xhr.status})`)); }
+              }
+            });
+            xhr.addEventListener("error", () => reject(new Error("SERVER_UNREACHABLE")));
+            xhr.addEventListener("timeout", () => reject(new Error("SERVER_TIMEOUT")));
+
+            xhr.send(fd);
           });
+        } catch (smallUploadErr) {
+          if ((smallUploadErr as Error).message === "ENTITY_TOO_LARGE") {
+            // Graceful fallback: switch to chunked upload
+            fellBackToChunked = true;
+          } else {
+            throw smallUploadErr;
+          }
+        }
 
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                resolve(JSON.parse(xhr.responseText));
-              } catch { reject(new Error("فشل في قراءة استجابة الخادم")); }
-            } else {
-              try {
-                const err = JSON.parse(xhr.responseText);
-                reject(new Error(err.error || `فشل (${xhr.status})`));
-              } catch { reject(new Error(`فشل في رفع الملف (${xhr.status})`)); }
-            }
-          });
-          xhr.addEventListener("error", () => reject(new Error("SERVER_UNREACHABLE")));
-          xhr.addEventListener("timeout", () => reject(new Error("SERVER_TIMEOUT")));
-
-          xhr.send(fd);
-        });
-
-        if (!uploadAnalyzeResult) {
+        if (fellBackToChunked) {
+          // Fall through to chunked upload below
+        } else if (!uploadAnalyzeResult) {
           throw new Error("فشل في رفع الملف — يرجى التأكد من اتصالك بالإنترنت");
         }
 
-        storedFileName = uploadAnalyzeResult.storedFileName as string;
-        setStoredName(storedFileName);
-        setUploadProgress(100);
+        if (!fellBackToChunked) {
+          storedFileName = uploadAnalyzeResult!.storedFileName as string;
+          setStoredName(storedFileName);
+          setUploadProgress(100);
 
-        if (isPdf && uploadAnalyzeResult.isPdf) {
-          // ═══ PDF: Metadata ready instantly — show results, load cover in background ═══
-          const numP = (uploadAnalyzeResult.numPages as number) || 1;
-          const dimsMM = uploadAnalyzeResult.pageDimensionsMM as { width: number; height: number } | null;
-          const paperSize = (uploadAnalyzeResult.closestPaperSize as string) || "A4";
-          const isPortrait = (uploadAnalyzeResult.isPortrait as boolean) !== false;
-          const totalTimeMs = uploadAnalyzeResult.totalTimeMs as number || 0;
+          if (isPdf && uploadAnalyzeResult!.isPdf) {
+            // ═══ PDF: Metadata ready instantly — show results, load cover in background ═══
+            const numP = (uploadAnalyzeResult!.numPages as number) || 1;
+            const dimsMM = uploadAnalyzeResult!.pageDimensionsMM as { width: number; height: number } | null;
+            const paperSize = (uploadAnalyzeResult!.closestPaperSize as string) || "A4";
+            const isPortrait = (uploadAnalyzeResult!.isPortrait as boolean) !== false;
+            const totalTimeMs = uploadAnalyzeResult!.totalTimeMs as number || 0;
 
           // Show results IMMEDIATELY (no waiting for cover)
           const pdfResult: AnalysisResult = {
@@ -672,8 +691,8 @@ export function StandalonePreview() {
             orientation: isPortrait ? "portrait" : "landscape",
             closestPaperSize: paperSize,
             pageDimensionsMM: dimsMM,
-            title: (uploadAnalyzeResult.title as string) || "",
-            author: (uploadAnalyzeResult.author as string) || "",
+            title: (uploadAnalyzeResult!.title as string) || "",
+            author: (uploadAnalyzeResult!.author as string) || "",
             confidence: 95,
             healthScore: 95,
             hasImages: numP > 1,
@@ -767,13 +786,17 @@ export function StandalonePreview() {
           if (svc === "photo") cat = "image";
           else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
           else if (svc === "poster") cat = "short-doc";
-          saveToHistory(f, cat, storedFileName, displayType);
+          saveToHistory(f, cat, storedFileName!, displayType);
           setStep("results");
           return;
         }
-      } else {
-        // ═══ LARGE FILES (≥ 5MB): Chunked upload + separate analysis ═══
-        setStep("uploading"); setUploadProgress(0);
+        } // end if (!fellBackToChunked)
+      }
+
+      // ═══ CHUNKED UPLOAD (large files OR 413 fallback from small file path) ═══
+      if (f.size >= SMALL_FILE_THRESHOLD || fellBackToChunked) {
+        // ═══ LARGE FILES (≥ 4MB): Chunked upload + separate analysis ═══
+        setAnalysisStage(fellBackToChunked ? "جارٍ رفع الملف (تجزئة تلقائية)..." : "جارٍ رفع الملف...");
         const uploadResult = await chunkedUpload.upload(f);
         if (uploadResult) {
           storedFileName = uploadResult;
@@ -785,7 +808,52 @@ export function StandalonePreview() {
       }
 
       // ═══ LARGE FILE ANALYSIS (chunked upload done, now analyze) ═══
-      if (isPdf) {
+      // Check if upload-complete already returned PDF metadata (optimization: skip separate analyze call)
+      const chunkedResult = chunkedUpload.lastCompleteResult;
+      const hasChunkedMeta = chunkedResult?.isPdf && chunkedResult?.numPages;
+
+      if (isPdf && hasChunkedMeta) {
+        // Use metadata from upload-complete directly (no extra network call)
+        const numP = (chunkedResult.numPages as number) || 1;
+        const dimsMM = chunkedResult.pageDimensionsMM as { width: number; height: number } | null;
+        const paperSize = (chunkedResult.closestPaperSize as string) || "A4";
+        const isPortrait = (chunkedResult.isPortrait as boolean) !== false;
+        const totalTimeMs = chunkedResult.totalTimeMs as number || 0;
+
+        const pdfResult: AnalysisResult = {
+          ...DEFAULT_ANALYSIS,
+          pageCount: numP,
+          fileSizeKB: Math.round(f.size / 1024),
+          fileSizeMB: Math.round((f.size / (1024 * 1024)) * 100) / 100,
+          paperSize,
+          orientation: isPortrait ? "portrait" : "landscape",
+          closestPaperSize: paperSize,
+          pageDimensionsMM: dimsMM,
+          title: (chunkedResult.title as string) || "",
+          author: (chunkedResult.author as string) || "",
+          confidence: 95,
+          healthScore: 95,
+          hasImages: numP > 1,
+          isColor: true,
+          insights: [
+            `رفع + تحليل في ${totalTimeMs}ms (تجزئة)`,
+            `الملف يحتوي على ${numP} صفحة`,
+            `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
+            `مقاس الورق: ${paperSize}`,
+          ],
+          fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
+        };
+        setAnalysis(pdfResult);
+        setTotalPages(numP);
+        setAnalysisProgress(100);
+        setAnalysisStage("");
+        const cat = classifyFile("pdf", numP, dimsMM);
+        saveToHistory(f, cat, storedFileName!, "pdf");
+        setStep("results");
+
+        // Load cover in background
+        if (storedFileName) loadCoverInBackground(storedFileName, numP, isPortrait, dimsMM, paperSize);
+      } else if (isPdf) {
         setStep("analyzing"); setAnalysisProgress(0);
         setAnalysisStage("جارٍ تحليل الملف على الخادم...");
         setAnalysisProgress(10);
