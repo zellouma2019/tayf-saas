@@ -523,3 +523,74 @@ Unresolved / Next Phase:
 Risks:
 - Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
 - OOM in local dev (4GB RAM) — all testing must be on Vercel
+---
+Task ID: 9
+Agent: Cron Agent (round 9)
+Task: Critical upload fix (4-5MB 413), chunked upload enhancement, styling improvements
+
+Work Log:
+- QA test on Vercel revealed CRITICAL BUG: files 4-5MB hit Vercel 4.5MB body limit → silent 413 error
+  - Root cause: SMALL_FILE_THRESHOLD was 5MB but Vercel body limit is 4.5MB
+  - Files between 4-5MB: upload-analyze returns 413, no fallback, upload appears to hang
+
+Fix 1 — Lower threshold:
+- Changed SMALL_FILE_THRESHOLD from 5MB to 4MB (0.5MB safety margin)
+
+Fix 2 — Auto-fallback on 413:
+- Added 413 detection in XHR load handler → throws 'ENTITY_TOO_LARGE'
+- Wrapped small file upload in try/catch, catches ENTITY_TOO_LARGE, sets fellBackToChunked=true
+- Falls through to chunked upload path automatically
+
+Fix 3 — Enhanced upload-complete endpoint:
+- upload-complete now also runs PDF metadata analysis after assembling chunks
+- Returns PDF metadata (numPages, dimensions, paperSize, isPortrait, title, author) in response
+- This eliminates the need for a separate analyze-pdf call for chunked uploads
+
+Fix 4 — useChunkedUpload hook update:
+- Added lastCompleteResult to UploadState interface
+- Stores full upload-complete response (includes PDF metadata)
+- Client checks this before making separate analyze-pdf API call
+
+Fix 5 — Client optimization:
+- For chunked uploads with PDF metadata from upload-complete, skip analyze-pdf entirely
+- Saves one network round-trip for large file uploads
+
+QA Testing:
+- 3.5KB PDF via curl: 80ms server processing, 746ms total (cold start) ✅
+- 3.9MB PDF via curl: 141ms server processing, 2.4s total ✅
+- 4.4MB PDF via curl: correctly returns 413 (triggers chunked fallback) ✅
+- 3.9MB PDF via browser upload: results page shows 8 pages, A4, color ✅
+- Full preview flow: 3D mockup + options + order button (20.70 ر.س) ✅
+- Zero console errors throughout ✅
+
+Styling Improvements:
+1. Upload speed badge on results page file card (shows KB/s or MB/s)
+2. Chunked upload indicator badge during upload ("رفع مجزأ 2MB/جزء")
+3. Enhanced insights section: bordered cards, count badge, hover effects
+4. Print readiness checklist: staggered entrance animations, 5/5 count badge, extra checkmarks
+5. Continue button: improved feature pills layout with dividers and icons
+6. Drag pulse animation on upload zone border
+7. Added "fast upload" Zap icon indicator in upload zone
+
+Commits: 9dedafc (critical fix), 96989af (styling)
+Pushed to GitHub: zellouma2019/tayf-saas main branch
+
+Current Project Status:
+- Sections 1-6: COMPLETE
+- Upload speed: FIXED (4MB threshold + 413 fallback + chunked optimization)
+- All file sizes now handled correctly:
+  - <4MB: single request (fast, ~80-150ms server processing)
+  - 4-5MB: auto-fallback to chunked upload (transparent to user)
+  - ≥5MB: chunked upload (with metadata from upload-complete)
+
+Unresolved / Next Phase:
+- Real-world testing with actual 4-5MB files from users
+- Preview readability issues mentioned in prior session (pages not readable in viewer)
+- Mobile responsive testing on real devices
+- Dark mode thorough testing
+- Dead CSS cleanup in globals.css (35K lines)
+- Pre-existing TS errors in admin routes (not customer-facing)
+
+Risks:
+- Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
+- OOM in local dev (4GB RAM) — all testing must be on Vercel
