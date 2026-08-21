@@ -74,7 +74,7 @@ export function PageViewer2D({
 
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/api/c/pdf-worker";
 
       if (!pdfDocRef.current) {
         let source: { data: ArrayBuffer } | { url: string };

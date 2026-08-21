@@ -134,7 +134,7 @@ export function ProfessionalPdfViewer({
 
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/api/c/pdf-worker";
 
         // Determine source type
         let source: { url: string } | { data: ArrayBuffer };

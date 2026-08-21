@@ -391,7 +391,7 @@ export function StandalonePreview() {
     if (pdfFile) {
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/api/c/pdf-worker";
 
         const arrayBuffer = await pdfFile.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), disableAutoFetch: true });
