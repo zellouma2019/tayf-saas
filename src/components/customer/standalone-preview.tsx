@@ -2677,6 +2677,11 @@ export function StandalonePreview() {
                       coverDataUrl={uploadedFileType === "image" ? imagePreviewUrl : (workerResult?.coverDataUrl || null)}
                       backDataUrl={workerResult?.backDataUrl || null}
                       onBrowsePages={() => setBrowsePagesOpen(true)}
+                      photoFinish={serviceOptions?.selectedOptions?.finish}
+                      photoSize={serviceOptions?.selectedOptions?.photoSize}
+                      imageFit={serviceOptions?.selectedOptions?.imageFit}
+                      retouch={serviceOptions?.selectedOptions?.retouch}
+                      dpiBoost={serviceOptions?.selectedOptions?.dpiBoost}
                     />
                   </Suspense>
                 </div>

@@ -82,6 +82,16 @@ export interface BookMockup3DProps {
   onBindingChange?: (b: BindingType) => void;
   /** Callback to open the 2D page viewer */
   onBrowsePages?: () => void;
+  /** Photo finish option: 'borderless' | 'border' | 'whiteframe' */
+  photoFinish?: string;
+  /** Photo size option: '10x15' | '13x18' | '15x21' | '20x30' */
+  photoSize?: string;
+  /** Image fit: 'fill' | 'keep-ratio' | 'center' */
+  imageFit?: string;
+  /** Retouch option: 'none' | 'auto' | 'removebg' */
+  retouch?: string;
+  /** DPI boost: 'auto' | 'dpi-150' | 'dpi-300' */
+  dpiBoost?: string;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -102,6 +112,77 @@ const PAPER_PBR: Record<string, { roughness: number; metalness: number; envMapIn
   glossy:  { roughness: 0.15, metalness: 0.02, envMapIntensity: 0.6, clearcoat: 0.8, clearcoatRoughness: 0.1 },
   matte:   { roughness: 0.75, metalness: 0.0, envMapIntensity: 0.08, clearcoat: 0.0, clearcoatRoughness: 0.8 },
 };
+
+/* ==================================================================
+   Photo Finish — adds frame/border to texture based on print option
+   ================================================================== */
+function applyPhotoFinish(
+  sourceImg: HTMLImageElement | HTMLCanvasElement,
+  finish: string,
+  THREE: typeof import("three"),
+  renderer?: import("three").WebGLRenderer | null,
+): TextureInfo {
+  const borderRatio = finish === "whiteframe" ? 0.12 : finish === "border" ? 0.05 : 0;
+  const srcW = sourceImg.width;
+  const srcH = sourceImg.height;
+
+  let canvas: HTMLCanvasElement;
+  let aspectRatio: number;
+
+  if (borderRatio > 0) {
+    const borderW = Math.round(srcW * borderRatio);
+    const borderH = Math.round(srcH * borderRatio);
+    canvas = document.createElement("canvas");
+    canvas.width = srcW + borderW * 2;
+    canvas.height = srcH + borderH * 2;
+    const ctx = canvas.getContext("2d")!;
+
+    // White frame background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Subtle inner shadow for wide frame
+    if (finish === "whiteframe") {
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.08)";
+      ctx.shadowBlur = borderW * 0.6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(borderW - 1, borderH - 1, srcW + 2, srcH + 2);
+      ctx.restore();
+    }
+
+    // Thin decorative line for wide frame
+    if (finish === "whiteframe") {
+      ctx.strokeStyle = "#e0ddd5";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(borderW * 0.4, borderH * 0.4, canvas.width - borderW * 0.8, canvas.height - borderH * 0.8);
+    }
+
+    // Draw the original image centered
+    ctx.drawImage(sourceImg, borderW, borderH, srcW, srcH);
+    aspectRatio = canvas.width / canvas.height;
+  } else {
+    canvas = sourceImg instanceof HTMLCanvasElement ? sourceImg : (() => {
+      const c = document.createElement("canvas");
+      c.width = srcW; c.height = srcH;
+      c.getContext("2d")!.drawImage(sourceImg, 0, 0);
+      return c;
+    })();
+    aspectRatio = srcW / srcH;
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  tex.needsUpdate = true;
+
+  return { texture: tex, aspectRatio };
+}
 
 /* ==================================================================
    Promise-based texture loader with Ultra-HD settings
@@ -234,6 +315,11 @@ export function BookMockup3D({
   coverDataUrl,
   backDataUrl,
   onBrowsePages,
+  photoFinish = "borderless",
+  photoSize,
+  imageFit = "keep-ratio",
+  retouch = "none",
+  dpiBoost = "auto",
 }: BookMockup3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const managerRef = useRef<ThreeSceneManager | null>(null);
@@ -551,98 +637,191 @@ export function BookMockup3D({
       return group;
     }
 
-    /* === Path 3: Full book/notebook (>10 pages) === */
+    /* === Path 3: Full book/notebook (>10 pages) — REALISTIC multi-mesh book === */
     if (binding === "perfect") {
-      const geo = new THREE.BoxGeometry(w, h, thickness);
+      const coverOverhang = 0.025; // covers extend 2.5 units beyond pages on 3 sides
+      const coverThickness = 0.012;
+      const coverW = w + coverOverhang * 2;
+      const coverH = h + coverOverhang * 2;
+      const totalDepth = thickness + coverThickness * 2;
 
       // Create procedural page edge texture for top/bottom faces
       const { texture: pageEdgeTex } = createPageEdgeTexture(THREE, thickness, sheets, paperColor);
       managerRef.current?.trackTexture(pageEdgeTex);
 
-      const edgeTopMat = new THREE.MeshStandardMaterial({
-        color: paperC,
-        roughness: 0.9,
-        metalness: 0.0,
-        envMap: envMap || undefined,
-        envMapIntensity: 0.05,
-        map: pageEdgeTex,
-      });
-      const edgeBottomMat = new THREE.MeshStandardMaterial({
-        color: paperC,
-        roughness: 0.9,
-        metalness: 0.0,
-        envMap: envMap || undefined,
-        envMapIntensity: 0.05,
-        map: pageEdgeTex,
-      });
+      // ═══ 1. PAGE BLOCK (inner pages) — slightly recessed ═══
+      const pageGeo = new THREE.BoxGeometry(w, h, thickness);
+      const pageMats = [
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0 }), // +X fore-edge
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0 }), // -X spine-side
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.9, metalness: 0.0, map: pageEdgeTex }), // +Y top
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.9, metalness: 0.0, map: pageEdgeTex }), // -Y bottom
+        new THREE.MeshStandardMaterial({ color: 0xfffef8, roughness: 0.95, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.02 }), // +Z front edge
+        new THREE.MeshStandardMaterial({ color: 0xfffef8, roughness: 0.95, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.02 }), // -Z back edge
+      ];
+      const pageMesh = new THREE.Mesh(pageGeo, pageMats);
+      pageMesh.castShadow = false;
+      pageMesh.receiveShadow = true;
+      // Offset page block so covers overhang on fore-edge (+X), top (+Y), bottom (-Y)
+      pageMesh.position.set(coverOverhang / 2, 0, 0);
+      group.add(pageMesh);
 
-      // Material order: +X (spine), -X (spine), +Y (top/head), -Y (bottom/tail), +Z (front cover), -Z (back cover)
-      const mats = [spineMat, spineMat, edgeTopMat, edgeBottomMat, coverFrontMat, coverBackMat];
-      const mesh = new THREE.Mesh(geo, mats);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      group.add(mesh);
+      // ═══ 2. FRONT COVER — separate mesh, extends beyond pages ═══
+      const frontCoverGeo = new THREE.BoxGeometry(coverW, coverH, coverThickness);
+      // Materials: [+X edge, -X spine edge, +Y top, -Y bottom, +Z outer face (texture), -Z inner face]
+      const frontCoverEdgeMat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(spColor).multiplyScalar(1.1), roughness: 0.5, metalness: 0.1,
+      });
+      const frontCoverInnerMat = new THREE.MeshStandardMaterial({
+        color: 0xf5f3ee, roughness: 0.9, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.05,
+      });
+      const frontCoverMats = [
+        frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat,
+        coverFrontMat, frontCoverInnerMat,
+      ];
+      const frontCoverMesh = new THREE.Mesh(frontCoverGeo, frontCoverMats);
+      frontCoverMesh.position.set(coverOverhang / 2, 0, thickness / 2 + coverThickness / 2);
+      frontCoverMesh.castShadow = true;
+      frontCoverMesh.receiveShadow = true;
+      group.add(frontCoverMesh);
 
-      // ═══ Head/Tail Bands — colored cloth strips at spine top/bottom ═══
+      // ═══ 3. BACK COVER — separate mesh, extends beyond pages ═══
+      const backCoverGeo = new THREE.BoxGeometry(coverW, coverH, coverThickness);
+      const backCoverInnerMat = new THREE.MeshStandardMaterial({
+        color: 0xf5f3ee, roughness: 0.9, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.05,
+      });
+      const backCoverMats = [
+        frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat,
+        backCoverInnerMat, coverBackMat,
+      ];
+      const backCoverMesh = new THREE.Mesh(backCoverGeo, backCoverMats);
+      backCoverMesh.position.set(coverOverhang / 2, 0, -(thickness / 2 + coverThickness / 2));
+      backCoverMesh.castShadow = true;
+      backCoverMesh.receiveShadow = true;
+      group.add(backCoverMesh);
+
+      // ═══ 4. SPINE — connects front and back covers on the left side ═══
+      const spineW = coverThickness;
+      const spineGeo = new THREE.BoxGeometry(spineW, coverH, totalDepth);
+      // Materials: [+X outer, -X inner (facing pages), +Y top, -Y bottom, +Z front edge, -Z back edge]
+      const spineOuterMat = new THREE.MeshStandardMaterial({
+        color: spineC, roughness: 0.5, metalness: 0.15,
+        envMap: envMap || undefined, envMapIntensity: 0.3,
+      });
+      const spineInnerMat = new THREE.MeshStandardMaterial({
+        color: 0xf0ede6, roughness: 0.9, metalness: 0.0,
+      });
+      const spineEdgeMat = new THREE.MeshStandardMaterial({
+        color: spineC, roughness: 0.5, metalness: 0.1,
+      });
+      const spineMats = [spineOuterMat, spineInnerMat, spineEdgeMat, spineEdgeMat, spineEdgeMat, spineEdgeMat];
+      const spineMesh = new THREE.Mesh(spineGeo, spineMats);
+      // Position: left edge of covers, centered vertically and in depth
+      spineMesh.position.set(
+        -(w + coverOverhang) / 2 + coverOverhang / 2,
+        0,
+        0,
+      );
+      spineMesh.castShadow = true;
+      spineMesh.receiveShadow = true;
+      group.add(spineMesh);
+
+      // ═══ 5. TOP EDGE STRIP — connects front cover top → spine top → back cover top ═══
+      const topStripW = w + coverOverhang + coverThickness;
+      const topStripGeo = new THREE.BoxGeometry(topStripW, coverThickness, totalDepth);
+      const stripMat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(spColor).multiplyScalar(1.05), roughness: 0.55, metalness: 0.1,
+        envMap: envMap || undefined, envMapIntensity: 0.2,
+      });
+      const topStrip = new THREE.Mesh(topStripGeo, stripMat);
+      topStrip.position.set(
+        -(w + coverOverhang) / 2 + coverThickness / 2 + topStripW / 2 - coverOverhang + coverOverhang / 2,
+        coverH / 2,
+        0,
+      );
+      group.add(topStrip);
+
+      // ═══ 6. BOTTOM EDGE STRIP — same as top ═══
+      const bottomStrip = new THREE.Mesh(topStripGeo.clone(), stripMat);
+      bottomStrip.position.set(
+        topStrip.position.x,
+        -coverH / 2,
+        0,
+      );
+      group.add(bottomStrip);
+
+      // ═══ 7. FORE-EDGE STRIP — connects front cover → bottom strip → back cover on the right ═══
+      const foreStripGeo = new THREE.BoxGeometry(coverThickness, coverH, totalDepth);
+      const foreStrip = new THREE.Mesh(foreStripGeo, stripMat);
+      foreStrip.position.set(
+        (w + coverOverhang * 2 - coverThickness) / 2 + coverOverhang / 2,
+        0,
+        0,
+      );
+      group.add(foreStrip);
+
+      // ═══ 8. HEAD/TAIL BANDS — colored cloth strips at spine top/bottom ═══
       if (thickness > 0.06) {
-        const bandColors = [0x8b1a1a, 0x1a3a5c, 0x2d5a3d, 0x5c3a1a]; // maroon, navy, forest, brown
+        const bandColors = [0x8b1a1a, 0x1a3a5c, 0x2d5a3d, 0x5c3a1a];
         const bandColor = bandColors[Math.floor(Math.random() * bandColors.length)];
         const bandMat = new THREE.MeshStandardMaterial({ color: bandColor, roughness: 0.8, metalness: 0.0 });
-        const bandGeo = new THREE.BoxGeometry(thickness + 0.01, 0.03, 0.015);
+        const bandGeo = new THREE.BoxGeometry(spineW + 0.005, 0.035, 0.02);
         const headBand = new THREE.Mesh(bandGeo, bandMat);
-        headBand.position.set(0, h / 2 + 0.001, 0);
+        headBand.position.set(spineMesh.position.x, coverH / 2 + 0.001, 0);
         group.add(headBand);
-        const tailBand = new THREE.Mesh(bandGeo, bandMat);
-        tailBand.position.set(0, -h / 2 - 0.001, 0);
+        const tailBand = new THREE.Mesh(bandGeo.clone(), bandMat);
+        tailBand.position.set(spineMesh.position.x, -coverH / 2 - 0.001, 0);
         group.add(tailBand);
       }
 
-      // ═══ Spine Groove Lines — subtle indentations where cover meets spine ═══
+      // ═══ 9. SPINE GROOVE LINES — where cover meets spine ═══
       if (thickness > 0.05) {
-        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.9, metalness: 0.0 });
-        const grooveGeo = new THREE.BoxGeometry(thickness * 0.4, h * 0.92, 0.003);
+        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.95, metalness: 0.0 });
+        const grooveGeo = new THREE.BoxGeometry(0.002, coverH * 0.94, totalDepth);
+        // Front groove (between spine and front cover)
         const frontGroove = new THREE.Mesh(grooveGeo, grooveMat);
-        frontGroove.position.set(0, 0, thickness / 2 + 0.001);
+        frontGroove.position.set(
+          spineMesh.position.x + spineW / 2 + 0.001,
+          0, 0,
+        );
         group.add(frontGroove);
-        const backGroove = new THREE.Mesh(grooveGeo, grooveMat);
-        backGroove.position.set(0, 0, -thickness / 2 - 0.001);
+        // Back groove
+        const backGroove = new THREE.Mesh(grooveGeo.clone(), grooveMat);
+        backGroove.position.set(frontGroove.position.x, 0, 0);
         group.add(backGroove);
       }
 
-      if (thickness > 0.08) {
-        const pgGeo = new THREE.BoxGeometry(w - 0.02, h - 0.04, thickness * 0.9);
-        const pgMat = new THREE.MeshStandardMaterial({
-          color: 0xfffef8, roughness: 0.95, metalness: 0.0,
-          envMap: envMap || undefined, envMapIntensity: 0.02,
-          polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
-        });
-        const pg = new THREE.Mesh(pgGeo, pgMat);
-        pg.position.z = -0.003;
-        group.add(pg);
-      }
-
-      // Glass/Plastic clear cover (MeshPhysicalMaterial with transmission)
+      // ═══ 10. Glass/Plastic clear cover ═══
       if (showClearCover) {
         const clearCoverMat = new THREE.MeshPhysicalMaterial({
-          color: 0xffffff,
-          roughness: 0.1,
-          metalness: 0.0,
-          transmission: 0.85,
-          thickness: 0.01,
-          transparent: true,
-          opacity: 1.0,
-          ior: 1.5,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-          polygonOffset: true,
-          polygonOffsetFactor: -1,
-          polygonOffsetUnits: -1,
+          color: 0xffffff, roughness: 0.1, metalness: 0.0,
+          transmission: 0.85, thickness: 0.01, transparent: true, opacity: 1.0,
+          ior: 1.5, side: THREE.DoubleSide, depthWrite: false,
+          polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
         });
-        const clearGeo = new THREE.PlaneGeometry(w + 0.06, h + 0.06);
+        const clearGeo = new THREE.BoxGeometry(coverW + 0.04, coverH + 0.04, 0.003);
         const clearMesh = new THREE.Mesh(clearGeo, clearCoverMat);
-        clearMesh.position.z = thickness / 2 + 0.006;
+        clearMesh.position.set(coverOverhang / 2, 0, thickness / 2 + coverThickness + 0.002);
         clearCoverMeshRef.current = clearMesh;
         group.add(clearMesh);
+      }
+
+      // ═══ 11. PHOTO SIZE DIMENSIONS — override page block for photos ═══
+      if (photoSize) {
+        const photoSizeMap: Record<string, { w: number; h: number }> = {
+          "10x15": { w: 1.0, h: 1.5 },
+          "13x18": { w: 1.3, h: 1.8 },
+          "15x21": { w: 1.5, h: 2.1 },
+          "20x30": { w: 2.0, h: 3.0 },
+        };
+        const ps = photoSizeMap[photoSize];
+        if (ps) {
+          const scale = 3.0 / ps.h;
+          const newW = ps.w * scale;
+          const newH = 3.0;
+          // Adjust all mesh positions/scales proportionally
+          group.scale.set(newW / w, newH / h, 1);
+        }
       }
     }
 
@@ -861,7 +1040,56 @@ export function BookMockup3D({
         if (coverDataUrl) {
           try {
             const THREE = await import("three");
-            frontTexInfo = await loadTextureAsync(coverDataUrl, THREE, renderer);
+            // Load image first
+            const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+              const i = new Image();
+              i.onload = () => resolve(i);
+              i.onerror = reject;
+              i.src = coverDataUrl;
+            });
+            // Apply photo finish (frame/border) for images
+            if (category === "image" && photoFinish && photoFinish !== "borderless") {
+              frontTexInfo = applyPhotoFinish(img, photoFinish, THREE, renderer);
+            } else {
+              frontTexInfo = await loadTextureAsync(coverDataUrl, THREE, renderer);
+            }
+            // Apply retouch (auto color correction)
+            if (retouch === "auto" && frontTexInfo) {
+              const canvas = document.createElement("canvas");
+              const src = frontTexInfo.texture.image as HTMLCanvasElement;
+              canvas.width = src.width;
+              canvas.height = src.height;
+              const ctx = canvas.getContext("2d")!;
+              ctx.drawImage(src, 0, 0);
+              // Auto enhance: slight contrast + brightness
+              ctx.filter = "contrast(1.08) brightness(1.03) saturate(1.05)";
+              ctx.drawImage(canvas, 0, 0);
+              ctx.filter = "none";
+              const enhancedTex = new THREE.CanvasTexture(canvas);
+              enhancedTex.colorSpace = THREE.SRGBColorSpace;
+              enhancedTex.generateMipmaps = true;
+              enhancedTex.minFilter = THREE.LinearMipmapLinearFilter;
+              if (renderer) enhancedTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+              enhancedTex.needsUpdate = true;
+              frontTexInfo.texture.dispose();
+              frontTexInfo = { texture: enhancedTex, aspectRatio: frontTexInfo.aspectRatio };
+            }
+            // Apply removebg (white background)
+            if (retouch === "removebg" && frontTexInfo && frontTexInfo.texture.image) {
+              const src = frontTexInfo.texture.image as HTMLCanvasElement;
+              const ctx = src.getContext("2d")!;
+              const imageData = ctx.getImageData(0, 0, src.width, src.height);
+              const d = imageData.data;
+              for (let i = 0; i < d.length; i += 4) {
+                // Simple white background: make near-white pixels fully white
+                const brightness = (d[i] + d[i+1] + d[i+2]) / 3;
+                if (brightness > 240) {
+                  d[i] = 255; d[i+1] = 255; d[i+2] = 255; d[i+3] = 255;
+                }
+              }
+              ctx.putImageData(imageData, 0, 0);
+              frontTexInfo.texture.needsUpdate = true;
+            }
             if (destroyed) { frontTexInfo.texture.dispose(); frontTexInfo = null; }
             else { manager.trackTexture(frontTexInfo.texture); }
           } catch (texErr) { console.error("[BookMockup3D] Cover texture load FAILED:", texErr); }
@@ -906,7 +1134,7 @@ export function BookMockup3D({
       loadedFileRef.current = "";
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileSource, coverDataUrl, backDataUrl]);
+  }, [fileSource, coverDataUrl, backDataUrl, photoFinish, retouch, category]);
 
   /* ═══════════════════════════════════════════════════════════════════
      Rebuild the 3D model ONLY when STRUCTURAL settings change.
@@ -960,7 +1188,7 @@ export function BookMockup3D({
     rebuild();
   // All structural changes trigger rebuild for live preview updates
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [binding, totalPages, duplex, paperSize, category, paperWeight, paperType, copies, buildMeshGroup]);
+  }, [binding, totalPages, duplex, paperSize, category, paperWeight, paperType, copies, photoSize, photoFinish, buildMeshGroup]);
 
   /* ═══════════════════════════════════════════════════════════════════
      INSTANT MATERIAL UPDATES — No rebuild, <50ms feedback.
@@ -1120,6 +1348,21 @@ export function BookMockup3D({
             <span className="bg-white/15 px-1.5 py-0.5 rounded text-[9px]">{paperSize}</span>
             <span className="bg-white/15 px-1.5 py-0.5 rounded text-[9px]">{categoryLabel}</span>
             <span className="bg-amber-400/20 text-amber-200 px-1.5 py-0.5 rounded text-[9px] font-medium">{bindingDesc}</span>
+            {photoFinish && photoFinish !== "borderless" && (
+              <span className="bg-sky-400/20 text-sky-200 px-1.5 py-0.5 rounded text-[9px] font-medium">
+                {photoFinish === "border" ? "إطار" : "إطار عريض"}
+              </span>
+            )}
+            {retouch && retouch !== "none" && (
+              <span className="bg-violet-400/20 text-violet-200 px-1.5 py-0.5 rounded text-[9px] font-medium">
+                {retouch === "auto" ? "تحسين تلقائي" : "إزالة خلفية"}
+              </span>
+            )}
+            {dpiBoost && dpiBoost !== "auto" && (
+              <span className="bg-emerald-400/20 text-emerald-200 px-1.5 py-0.5 rounded text-[9px] font-medium">
+                {dpiBoost === "dpi-300" ? "300 DPI" : "150 DPI"}
+              </span>
+            )}
           </span>
         </div>
       </div>
