@@ -726,6 +726,22 @@ export function StandalonePreview() {
           setStoredName(storedFileName);
           setUploadProgress(100);
 
+          // ═══ Client-side PDF data URL for offline rendering (Vercel /tmp not shared) ═══
+          if (isPdf) {
+            try {
+              const pdfBuffer = await f.arrayBuffer();
+              const pdfBytes = new Uint8Array(pdfBuffer);
+              // Chunked base64 to avoid stack overflow on large files
+              const chunkSize = 8192;
+              let binary = "";
+              for (let i = 0; i < pdfBytes.length; i += chunkSize) {
+                const chunk = pdfBytes.subarray(i, i + chunkSize);
+                binary += String.fromCharCode.apply(null, Array.from(chunk));
+              }
+              setPdfDataUrl("data:application/pdf;base64," + btoa(binary));
+            } catch { /* ignore — page viewer will try server fetch */ }
+          }
+
           if (isPdf && uploadAnalyzeResult!.isPdf) {
             // ═══ PDF: Metadata ready instantly — show results, load cover in background ═══
             const numP = (uploadAnalyzeResult!.numPages as number) || 1;
@@ -2907,7 +2923,10 @@ export function StandalonePreview() {
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />رقم الجوال</label>
-                          <Input placeholder="05XXXXXXXX" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="h-11 rounded-xl text-sm" dir="ltr" type="tel" />
+                          <Input placeholder="05XXXXXXXX" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className={`h-11 rounded-xl text-sm ${customerPhone && !/^05\d{0,8}$/.test(customerPhone) ? 'border-red-400 focus-visible:ring-red-400' : ''}`} dir="ltr" type="tel" />
+                          {customerPhone && !/^05\d{8}$/.test(customerPhone) && (
+                            <p className="text-[10px] text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />صيغة الرقم غير صحيحة (يجب أن يبدأ بـ 05 ويحتوي 10 أرقام)</p>
+                          )}
                           <p className="text-[10px] text-muted-foreground/60">سيتم إرسال رمز تتبع الطلب إلى هذا الرقم</p>
                         </div>
                         {/* طريقة الاستلام */}
@@ -3054,10 +3073,10 @@ export function StandalonePreview() {
               {orderStep < 2 ? (
                 <Button
                   onClick={() => {
-                    if (!customerName.trim() || customerPhone.trim().length < 10) return;
+                    if (!customerName.trim() || !/^05\d{8}$/.test(customerPhone.trim())) return;
                     setOrderStep(2);
                   }}
-                  disabled={!customerName.trim() || customerPhone.trim().length < 10}
+                  disabled={!customerName.trim() || !/^05\d{8}$/.test(customerPhone.trim())}
                   className="h-10 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs gap-1.5 shadow-md shadow-amber-500/20 flex-1 disabled:opacity-50 disabled:shadow-none"
                 >
                   مراجعة الطلب<ArrowLeft className="h-3.5 w-3.5" />
