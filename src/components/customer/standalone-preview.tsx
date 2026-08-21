@@ -1259,13 +1259,35 @@ export function StandalonePreview() {
               0%, 100% { transform: translateY(0px); }
               50%      { transform: translateY(-8px); }
             }
+            @keyframes float-orb-1 {
+              0%, 100% { transform: translate(0, 0) scale(1); }
+              25% { transform: translate(15px, -20px) scale(1.1); }
+              50% { transform: translate(-10px, -35px) scale(0.95); }
+              75% { transform: translate(20px, -15px) scale(1.05); }
+            }
+            @keyframes float-orb-2 {
+              0%, 100% { transform: translate(0, 0) scale(1); }
+              25% { transform: translate(-20px, -10px) scale(1.08); }
+              50% { transform: translate(15px, -25px) scale(0.92); }
+              75% { transform: translate(-5px, -40px) scale(1.1); }
+            }
+            @keyframes shimmer {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
             .upload-zone-border {
-              background: linear-gradient(270deg, #f59e0b, #f97316, #eab308, #f59e0b);
-              background-size: 300% 300%;
-              animation: gradient-rotate 4s ease infinite;
+              background: linear-gradient(270deg, #f59e0b, #f97316, #eab308, #fb923c, #f59e0b);
+              background-size: 400% 400%;
+              animation: gradient-rotate 6s ease infinite;
             }
             .upload-float {
               animation: float-upload 3s ease-in-out infinite;
+            }
+            .upload-orb-1 {
+              animation: float-orb-1 8s ease-in-out infinite;
+            }
+            .upload-orb-2 {
+              animation: float-orb-2 10s ease-in-out infinite;
             }
             .grid-pattern {
               background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
@@ -1275,10 +1297,10 @@ export function StandalonePreview() {
               background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
             }
             .upload-glow {
-              box-shadow: 0 0 40px rgba(245, 158, 11, 0.08), 0 0 80px rgba(249, 115, 22, 0.04);
+              box-shadow: 0 0 60px rgba(245, 158, 11, 0.1), 0 0 120px rgba(249, 115, 22, 0.05);
             }
             .dark .upload-glow {
-              box-shadow: 0 0 40px rgba(245, 158, 11, 0.04), 0 0 80px rgba(249, 115, 22, 0.02);
+              box-shadow: 0 0 60px rgba(245, 158, 11, 0.05), 0 0 120px rgba(249, 115, 22, 0.02);
             }
             @keyframes pulse-border {
               0%, 100% { opacity: 0.5; transform: scale(1); }
@@ -1294,6 +1316,13 @@ export function StandalonePreview() {
             .drop-icon-bounce {
               animation: drop-bounce 0.6s ease-in-out infinite;
             }
+            .shimmer-line::after {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+              animation: shimmer 3s ease-in-out infinite;
+            }
           `}</style>
           <div
             className={`relative rounded-3xl p-[3px] transition-all duration-300 upload-glow ${isDragging ? "scale-[1.02] shadow-xl shadow-amber-500/30" : "hover:shadow-lg hover:shadow-amber-500/15"}`}
@@ -1306,7 +1335,11 @@ export function StandalonePreview() {
               onClick={() => fileInputRef.current?.click()}
             >
               <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.tif,.avif,.svg,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.csv,.ai,.eps,.psd,.indd" className="hidden" onChange={onFileInput} />
-              <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px] relative">
+              <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px] relative overflow-hidden">
+                {/* Floating decorative orbs */
+                <div className="upload-orb-1 absolute top-8 right-12 w-32 h-32 rounded-full bg-amber-200/20 dark:bg-amber-500/5 blur-2xl pointer-events-none" />
+                <div className="upload-orb-2 absolute bottom-12 left-8 w-40 h-40 rounded-full bg-orange-200/20 dark:bg-orange-500/5 blur-2xl pointer-events-none" />
+                <div className="absolute top-1/2 left-1/4 w-20 h-20 rounded-full bg-yellow-200/10 dark:bg-yellow-500/3 blur-xl pointer-events-none" />
                 {/* Drag overlay */}
                 <AnimatePresence>
                   {isDragging && (
@@ -1722,27 +1755,27 @@ export function StandalonePreview() {
             </div>
           </div>
 
-          {/* ─── بطاقات الإحصائيات مع أيقونات ملونة ─── */}
+          {/* ─── بطاقات الإحصائيات مع أيقونات ملونة ─── */
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center"><FileText className="h-4 w-4 text-blue-500" /></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} whileHover={{ y: -2, scale: 1.02 }} className="rounded-xl p-3.5 text-center border bg-card shadow-sm hover:shadow-lg hover:border-blue-200/50 dark:hover:border-blue-800/30 transition-all duration-200 cursor-default">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/50 dark:to-blue-950/20 flex items-center justify-center shadow-sm shadow-blue-200/50 dark:shadow-blue-900/20"><FileText className="h-4.5 w-4.5 text-blue-500" /></div>
               <span className="text-[10px] text-muted-foreground block">الصفحات</span>
-              <span className="text-base font-bold block mt-0.5">{analysis.pageCount}</span>
+              <span className="text-lg font-extrabold block mt-0.5 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">{analysis.pageCount}</span>
             </motion.div>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center"><ImagePlus className="h-4 w-4 text-emerald-500" /></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} whileHover={{ y: -2, scale: 1.02 }} className="rounded-xl p-3.5 text-center border bg-card shadow-sm hover:shadow-lg hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200 cursor-default">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-950/50 dark:to-emerald-950/20 flex items-center justify-center shadow-sm shadow-emerald-200/50 dark:shadow-emerald-900/20"><ImagePlus className="h-4.5 w-4.5 text-emerald-500" /></div>
               <span className="text-[10px] text-muted-foreground block">الصور</span>
-              <span className="text-base font-bold block mt-0.5">{analysis.imageCount}</span>
+              <span className="text-lg font-extrabold block mt-0.5 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">{analysis.imageCount}</span>
             </motion.div>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center"><Layers className="h-4 w-4 text-violet-500" /></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} whileHover={{ y: -2, scale: 1.02 }} className="rounded-xl p-3.5 text-center border bg-card shadow-sm hover:shadow-lg hover:border-violet-200/50 dark:hover:border-violet-800/30 transition-all duration-200 cursor-default">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br from-violet-100 to-violet-50 dark:from-violet-950/50 dark:to-violet-950/20 flex items-center justify-center shadow-sm shadow-violet-200/50 dark:shadow-violet-900/20"><Layers className="h-4.5 w-4.5 text-violet-500" /></div>
               <span className="text-[10px] text-muted-foreground block">مقاس الورق</span>
-              <span className="text-base font-bold block mt-0.5">{analysis.closestPaperSize || analysis.paperSize}</span>
+              <span className="text-lg font-extrabold block mt-0.5 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">{analysis.closestPaperSize || analysis.paperSize}</span>
             </motion.div>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }} className="rounded-xl p-3 text-center border bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className={`w-8 h-8 mx-auto mb-1.5 rounded-lg flex items-center justify-center ${analysis.isColor ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-gray-50 dark:bg-gray-950/30'}`}><Palette className={`h-4 w-4 ${analysis.isColor ? 'text-rose-500' : 'text-gray-500'}`} /></div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }} whileHover={{ y: -2, scale: 1.02 }} className="rounded-xl p-3.5 text-center border bg-card shadow-sm hover:shadow-lg hover:border-rose-200/50 dark:hover:border-rose-800/30 transition-all duration-200 cursor-default">
+              <div className={`w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br ${analysis.isColor ? 'from-rose-100 to-rose-50 dark:from-rose-950/50 dark:to-rose-950/20' : 'from-gray-100 to-gray-50 dark:from-gray-950/50 dark:to-gray-950/20'} flex items-center justify-center shadow-sm ${analysis.isColor ? 'shadow-rose-200/50 dark:shadow-rose-900/20' : ''}`}><Palette className={`h-4.5 w-4.5 ${analysis.isColor ? 'text-rose-500' : 'text-gray-500'}`} /></div>
               <span className="text-[10px] text-muted-foreground block">الألوان</span>
-              <span className="text-base font-bold block mt-0.5">{analysis.isColor ? "ملون" : "أبيض وأسود"}</span>
+              <span className="text-lg font-extrabold block mt-0.5 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">{analysis.isColor ? "ملون" : "أبيض وأسود"}</span>
             </motion.div>
           </div>
 
