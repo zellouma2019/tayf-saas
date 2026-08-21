@@ -7,9 +7,9 @@ import {
   Upload, FileText, Eye, Box, Sparkles, ShieldCheck, AlertTriangle,
   ZoomIn, ZoomOut, Grid3X3, Ruler, BookOpen, ChevronRight, ChevronLeft,
   Maximize2, Check, RotateCcw, Layers, Palette, Monitor,
-  ArrowRight, ArrowLeft, X, ImagePlus, Bookmark,
+  ArrowRight, ArrowLeft, X, ImagePlus, Bookmark, Receipt,
   Copy, Settings2, ToggleLeft, ToggleRight, Pin, CircleDot, Paperclip, ImageIcon,
-  Pause, Play, Square,
+  Pause, Play, Square, Quote, Lock,
   Printer, Zap, Clock, History, Download, Minus, Plus, Calculator, Hash, Cloud,
   Send, User, Phone, CheckCircle2, Loader2, Truck, MessageCircle, Star, FileCheck,
 } from "lucide-react";
@@ -2591,35 +2591,52 @@ export function StandalonePreview() {
             />
           )}
 
-          {/* ─── ملخص الطلب السريع ─── Quick Order Summary ─── */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-3"><Bookmark className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span></div>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+          {/* ─── ملخص الطلب السريع ─── Quick Order Summary ─── */
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-l from-muted/60 to-muted/30">
+              <Receipt className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span>
+              <span className="text-[9px] text-muted-foreground mr-auto font-medium">#{Date.now().toString(36).toUpperCase()}</span>
+            </div>
+            <div className="divide-y divide-border/40">
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />الملف</span>
                 <span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Layers className="h-3.5 w-3.5" />الصفحات</span>
-                <span className="font-medium">{analysis.pageCount} صفحة × {copies} نسخة</span>
+                <span className="font-medium tabular-nums">{analysis.pageCount} صفحة × {copies} نسخة</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" />الطباعة</span>
-                <span className="font-medium">{printColor ? "ملون" : "أبيض وأسود"}</span>
+                <span className="font-medium flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${printColor ? 'bg-rose-500' : 'bg-gray-400'}`} />
+                  {printColor ? "ملون" : "أبيض وأسود"}
+                </span>
               </div>
               {effectiveBinding !== "none" && (
-                <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                   <span className="text-muted-foreground flex items-center gap-1.5"><Bookmark className="h-3.5 w-3.5" />التجليد</span>
                   <span className="font-medium">{bindingLabel[effectiveBinding]}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                <span className="text-muted-foreground flex items-center gap-1.5"><Layers className="h-3.5 w-3.5" />مقاس الورق</span>
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Ruler className="h-3.5 w-3.5" />مقاس الورق</span>
                 <span className="font-medium">{analysis.closestPaperSize || analysis.paperSize}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5">
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />الوقت المتوقع</span>
                 <span className="font-medium">{estimateTime(analysis.pageCount * copies)}</span>
+              </div>
+            </div>
+            {/* Receipt-style total strip */}
+            <div className="relative px-4 py-3 bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600">
+              <div className="absolute inset-x-0 top-0 h-3 bg-gradient-to-b from-amber-400/20 to-transparent" />
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/90">
+                  <Quote className="h-4 w-4" />
+                  <span className="text-xs font-semibold">الإجمالي شامل الضريبة</span>
+                </div>
+                <span className="text-lg font-extrabold text-white tabular-nums">{finalPricing.total.toFixed(2)} <span className="text-xs font-semibold opacity-80">ر.س</span></span>
               </div>
             </div>
           </motion.div>
@@ -2814,9 +2831,9 @@ export function StandalonePreview() {
               <span>تأكيد طلب الطباعة</span>
               <span className="text-lg font-extrabold tabular-nums mr-auto">{finalPricing.total.toFixed(2)} <span className="text-xs font-semibold opacity-80">ر.س</span></span>
             </Button>
-            <p className="text-[10px] text-center text-muted-foreground mt-2 flex items-center justify-center gap-1">
-              <ShieldCheck className="h-3 w-3 text-emerald-500" />
-              <span>الدفع عند الاستلام — لا حاجة لبطاقة ائتمان</span>
+            <p className="text-[10px] text-center text-muted-foreground mt-2.5 flex items-center justify-center gap-1.5">
+              <Lock className="h-3 w-3 text-emerald-500" />
+              <span>الدفع عند الاستلام — معلوماتك محمية ومشفرة</span>
             </p>
           </motion.div>
 
