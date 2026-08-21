@@ -389,10 +389,7 @@ export function StandalonePreview() {
     if (pdfFile) {
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
-          import.meta.url
-        ).toString();
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
         const arrayBuffer = await pdfFile.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), disableAutoFetch: true });
@@ -428,7 +425,9 @@ export function StandalonePreview() {
         // Update history entry with cover data URL for offline preview
         updateHistoryCover(storedFileName, coverDataUrl);
         return;
-      } catch { /* fall through to server fallback */ }
+      } catch (clientErr) {
+        console.error("[loadCoverInBackground] Client-side pdfjs render failed:", clientErr);
+      }
     }
 
     // Server fallback: only works on persistent filesystems (local dev)
@@ -446,7 +445,9 @@ export function StandalonePreview() {
         // Update history entry with cover data URL for offline preview
         updateHistoryCover(storedFileName, cdu);
       }
-    } catch { /* non-critical */ }
+    } catch (serverErr) {
+      console.error("[loadCoverInBackground] Server fallback failed:", serverErr);
+    }
   }, []);
 
   /* ─── إعادة رفع من السجل ─── */
