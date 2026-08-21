@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { Heart, ShieldCheck, Loader2, MapPin, Clock, Package, Truck, CheckCircle2, X, Search, Copy } from "lucide-react";
+import { Heart, ShieldCheck, Loader2, MapPin, Clock, Package, Truck, CheckCircle2, X, Search, Copy, Phone, MessageCircle, FileText, RotateCcw, Zap, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -226,11 +226,24 @@ function TrackingSection() {
         )}
         {searched && orders.length === 0 && !loading && (
           <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-6"
+          >
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-muted/50 flex items-center justify-center">
+              <Search className="h-6 w-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">لا توجد طلبات بهذا الرقم</p>
+            <p className="text-xs text-muted-foreground/60">تأكد من الرقم أو قم بطلب طباعة جديد</p>
+          </motion.div>
+        )}
+        {!searched && (
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-3 text-xs text-muted-foreground"
+            className="text-center py-4"
           >
-            لا توجد طلبات بهذا الرقم
+            <p className="text-[11px] text-muted-foreground/50">أدخل رقم هاتفك لعرض طلباتك السابقة وحالة كل طلب</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -251,25 +264,39 @@ function CustomerContent() {
       </div>
       <footer className="mt-auto border-t bg-gradient-to-t from-muted/40 to-transparent backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-5">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-foreground/70">
-              {shopName && (
-                <span className="font-semibold">{shopName}</span>
-              )}
-              {tagline && (
-                <span className="text-muted-foreground">— {tagline}</span>
-              )}
-              {!shopName && !tagline && (
-                <>
-                  <span className="font-semibold">طيف</span>
-                  <span className="text-muted-foreground">— منصة الطباعة الذكية</span>
-                </>
-              )}
+          <div className="flex flex-col gap-3">
+            {/* Top row: branding + trust badges */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-foreground/70">
+                {shopName && (
+                  <span className="font-semibold">{shopName}</span>
+                )}
+                {tagline && (
+                  <span className="text-muted-foreground">— {tagline}</span>
+                )}
+                {!shopName && !tagline && (
+                  <>
+                    <span className="font-semibold">طيف</span>
+                    <span className="text-muted-foreground">— منصة الطباعة الذكية</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3 text-emerald-500" />ملفات آمنة ومشفّرة</span>
+                <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-500" />تسعيرة فورية</span>
+                <span className="flex items-center gap-1"><Printer className="h-3 w-3 text-blue-500" />طباعة فورية</span>
+                <span className="flex items-center gap-1"><Heart className="h-3 w-3 text-rose-400" />صُنع بحب</span>
+              </div>
             </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3 text-emerald-500" />ملفات آمنة ومشفّرة</span>
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-blue-500" />طباعة فورية</span>
-              <span className="flex items-center gap-1"><Heart className="h-3 w-3 text-rose-400" />صُنع بحب</span>
+            {/* Bottom row: features */}
+            <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground/60">
+              <span>تحليل ذكي للملفات</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span>معاينة ثلاثية الأبعاد</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span>تتبع الطلبات لحظياً</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span>الدفع عند الاستلام</span>
             </div>
           </div>
         </div>

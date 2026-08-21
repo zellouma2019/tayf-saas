@@ -679,7 +679,7 @@ export function StandalonePreview() {
             hasImages: numP > 1,
             isColor: true,
             insights: [
-              `رفع + تحليل في ${totalTimeMs}مث`,
+              `رفع + تحليل في ${totalTimeMs}ms`,
               `الملف يحتوي على ${numP} صفحة`,
               `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
               `مقاس الورق: ${paperSize}`,
@@ -823,7 +823,7 @@ export function StandalonePreview() {
           isColor: true,
           insights: serverMeta
             ? [
-                `تحليل دقيق على الخادم في ${serverMeta.processingTimeMs}مث`,
+                `تحليل دقيق على الخادم في ${serverMeta.processingTimeMs}ms`,
                 `الملف يحتوي على ${numP} صفحة`,
                 `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
                 `مقاس الورق: ${paperSize}`,
@@ -1198,6 +1198,9 @@ export function StandalonePreview() {
                   <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" />حتى 100 ميغابايت</span>
                   <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                   <span>رفع آمن ومشفّر</span>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                  <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted text-[9px] font-mono text-muted-foreground border">Ctrl+V</kbd>
+                  <span className="hidden sm:inline">لصق سريع</span>
                 </div>
               </div>
             </div>
@@ -1424,7 +1427,7 @@ export function StandalonePreview() {
                 )}
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{file?.name}</p>
-                  <p className="text-xs text-muted-foreground">{analysis.fileSizeMB} ميغابايت • {analysis.pageCount} صفحة</p>
+                  <p className="text-xs text-muted-foreground">{analysis.fileSizeKB > 1024 ? (analysis.fileSizeMB + " ميغابايت") : (analysis.fileSizeKB + " KB")} • {analysis.pageCount} صفحة</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -1661,13 +1664,23 @@ export function StandalonePreview() {
               )}
             </motion.div>
           )}
-          <Button onClick={() => {
-            // تعيين التجليد الافتراضي حسب التصنيف عند الدخول للمعاينة
-            setActiveBinding(getDefaultBinding(fileCategory));
-            setStep("preview");
-          }} className="w-full h-12 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2">
-            <Eye className="h-4 w-4" />متابعة للمعاينة<ArrowLeft className="h-4 w-4" />
-          </Button>
+          {/* ─── زر المتابعة مع معلومات إضافية ─── */}
+          <div className="space-y-3">
+            <Button onClick={() => {
+              // تعيين التجليد الافتراضي حسب التصنيف عند الدخول للمعاينة
+              setActiveBinding(getDefaultBinding(fileCategory));
+              setStep("preview");
+            }} className="w-full h-12 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98]">
+              <Eye className="h-4 w-4" />متابعة للمعاينة<ArrowLeft className="h-4 w-4" />
+            </Button>
+            <p className="text-center text-[10px] text-muted-foreground/60 flex items-center justify-center gap-3">
+              <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-400" />معاينة 3D حية</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span className="flex items-center gap-1"><Settings2 className="h-3 w-3 text-violet-400" />خيارات طباعة متقدمة</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span className="flex items-center gap-1"><Calculator className="h-3 w-3 text-emerald-400" />تسعيرة تلقائية</span>
+            </p>
+          </div>
         </motion.div>
       )}
 
@@ -2429,7 +2442,7 @@ export function StandalonePreview() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs opacity-80">الإجمالي شامل الضريبة</p>
-                        <p className="text-2xl font-extrabold tabular-nums">{pricing.total.toFixed(2)}</p>
+                        <p className="text-2xl font-extrabold tabular-nums">{finalPricing.total.toFixed(2)}</p>
                       </div>
                       <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
                         <Hash className="h-6 w-6" />
@@ -2657,10 +2670,10 @@ export function StandalonePreview() {
 
                       {/* التسعير النهائي */}
                       <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-amber-950/20 dark:to-orange-950/10 border border-amber-200/50 dark:border-amber-800/30 p-3.5 space-y-2">
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">طباعة + التجليد + الضريبة</span><span className="font-medium tabular-nums">{pricing.total.toFixed(2)} ر.س</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">طباعة + التجليد + الضريبة</span><span className="font-medium tabular-nums">{finalPricing.total.toFixed(2)} ر.س</span></div>
                         <div className="border-t border-amber-200/50 dark:border-amber-800/30 pt-2 flex justify-between text-sm font-extrabold">
                           <span>الإجمالي</span>
-                          <span className="text-amber-600 dark:text-amber-400 tabular-nums">{pricing.total.toFixed(2)} ر.س</span>
+                          <span className="text-amber-600 dark:text-amber-400 tabular-nums">{finalPricing.total.toFixed(2)} ر.س</span>
                         </div>
                       </div>
 
@@ -2717,7 +2730,7 @@ export function StandalonePreview() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          const text = `طلب طباعة - رقم: ${orderReference}\nالمبلغ: ${pricing.total.toFixed(2)} ر.س\nالملف: ${file?.name}\nالصفحات: ${analysis.pageCount}`;
+                          const text = `طلب طباعة - رقم: ${orderReference}\nالمبلغ: ${finalPricing.total.toFixed(2)} ر.س\nالملف: ${file?.name}\nالصفحات: ${analysis.pageCount}`;
                           if (navigator.share) {
                             navigator.share({ title: `طلب ${orderReference}`, text });
                           } else {
@@ -2728,7 +2741,7 @@ export function StandalonePreview() {
                       >
                         <Send className="h-3.5 w-3.5" />مشاركة
                       </Button>
-                      <Button variant="outline" onClick={() => { const text = encodeURIComponent(`طلب طباعة — رقم: ${orderReference}\nالمبلغ: ${pricing.total.toFixed(2)} ر.س\nالملف: ${file?.name}\nالصفحات: ${analysis.pageCount}`); window.open(`https://wa.me/?text=${text}`, "_blank"); }} className="h-10 w-10 rounded-xl gap-0 p-0 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/20">
+                      <Button variant="outline" onClick={() => { const text = encodeURIComponent(`طلب طباعة — رقم: ${orderReference}\nالمبلغ: ${finalPricing.total.toFixed(2)} ر.س\nالملف: ${file?.name}\nالصفحات: ${analysis.pageCount}`); window.open(`https://wa.me/?text=${text}`, "_blank"); }} className="h-10 w-10 rounded-xl gap-0 p-0 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/20">
                         <MessageCircle className="h-4 w-4" />
                       </Button>
                     </div>

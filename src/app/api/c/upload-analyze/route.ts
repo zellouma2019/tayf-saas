@@ -77,7 +77,7 @@ async function analyzePdfMetadata(arrayBuffer: ArrayBuffer) {
   const { width: widthPt, height: heightPt } = firstPage.getSize();
   const widthMM = Math.round((widthPt * 25.4) / 72 * 10) / 10;
   const heightMM = Math.round((heightPt * 25.4) / 72 * 10) / 10;
-  const isPortrait = heightMM > widthPt + 1;
+  const isPortrait = heightMM > widthMM + 1;
   const aspectRatio = Math.round((widthPt / heightPt) * 1000) / 1000;
   const closestPaperSize = findClosestPaperSize(widthMM, heightMM);
 
