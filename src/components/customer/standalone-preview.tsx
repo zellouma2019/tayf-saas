@@ -1909,8 +1909,8 @@ export function StandalonePreview() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-2xl border bg-card p-4 shadow-sm">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors"><span className="text-muted-foreground mb-1">الأبعاد</span><span className="font-bold font-mono text-sm">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height}</span><span className="text-[10px] text-muted-foreground">مم</span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{analysis.estimatedDPI ? `${analysis.estimatedDPI}` : "—"}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className={`font-bold text-sm ${analysis.dpiCategory === "ممتازة" ? "text-emerald-600 dark:text-emerald-400" : analysis.dpiCategory ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>{analysis.dpiCategory || "—"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{analysis.estimatedDPI || (uploadedFileType === "pdf" ? 300 : analysis.estimatedDPI) || "—"}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className={`font-bold text-sm ${analysis.dpiCategory === "ممتازة" ? "text-emerald-600 dark:text-emerald-400" : analysis.dpiCategory ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>{analysis.dpiCategory || (uploadedFileType === "pdf" ? "ممتازة" : "") || "—"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
                 <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors"><span className="text-muted-foreground mb-1">الاتجاه</span><div className="flex items-center gap-1.5"><span className="font-bold text-sm">{analysis.orientation === "portrait" ? "عمودي" : "أفقي"}</span><MoveVertical className={`h-3.5 w-3.5 text-muted-foreground/60 ${analysis.orientation === "portrait" ? "" : "rotate-90"}`} /></div><span className="text-[10px] text-muted-foreground"> </span></div>
               </div>
             </motion.div>
@@ -3063,10 +3063,12 @@ export function StandalonePreview() {
                   {orderStep === 1 && (
                     <>
                       <div className="rounded-xl bg-amber-50/60 dark:bg-amber-950/15 border border-amber-200/40 dark:border-amber-800/20 p-3 space-y-1.5">
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الملف</span><span className="font-medium truncate max-w-[200px]">{file?.name}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الصفحات</span><span className="font-medium">{analysis.pageCount}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">النسخ</span><span className="font-medium">{copies}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الملف</span><span className="font-medium truncate max-w-[200px]" dir="ltr">{file?.name}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الصفحات</span><span className="font-medium">{analysis.pageCount} صفحة</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">النسخ</span><span className="font-medium">{copies} نسخة</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">التجليد</span><span className="font-medium">{bindingLabel[effectiveBinding]}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الورق</span><span className="font-medium">{paperWeight}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الطباعة</span><span className="font-medium flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${printColor ? 'bg-rose-500' : 'bg-gray-400'}`} />{printColor ? 'ملون' : 'أبيض وأسود'}</span></div>
                       </div>
                       <div className="space-y-3 pt-1">
                         <div className="space-y-1.5">
@@ -3109,13 +3111,14 @@ export function StandalonePreview() {
                       {/* ملخص الطباعة */}
                       <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
                         <p className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1"><FileText className="h-3.5 w-3.5" />تفاصيل الطباعة</p>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الملف</span><span className="font-medium truncate max-w-[180px]">{file?.name}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الملف</span><span className="font-medium truncate max-w-[180px]" dir="ltr">{file?.name}</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">الصفحات</span><span className="font-medium">{analysis.pageCount} صفحة</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">النسخ</span><span className="font-medium">{copies} نسخة</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">التجليد</span><span className="font-medium">{bindingLabel[effectiveBinding]}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الطباعة</span><span className="font-medium">{printColor ? "ملون" : "أبيض وأسود"}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الطباعة</span><span className="font-medium flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${printColor ? 'bg-rose-500' : 'bg-gray-400'}`} />{printColor ? 'ملون' : 'أبيض وأسود'}</span></div>
                         <div className="flex justify-between text-xs"><span className="text-muted-foreground">الورق</span><span className="font-medium">{paperWeight}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الاستلام</span><span className="font-medium">{deliveryMode === "pickup" ? "استلام من المطبعة" : "توصيل"}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">المقاس</span><span className="font-medium">{analysis.closestPaperSize || analysis.paperSize}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">الاستلام</span><span className="font-medium">{deliveryMode === "pickup" ? "استلام من المطبعة — مجاني" : "توصيل — يتم الاتفاق"}</span></div>
                       </div>
 
                       {/* بيانات العميل */}
@@ -3161,7 +3164,7 @@ export function StandalonePreview() {
                   </motion.div>
                   <div className="text-center space-y-2">
                     <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">تم إرسال طلبك بنجاح!</p>
-                    <p className="text-xs text-muted-foreground">سيتم حفظ طلبك وسيتم التواصل معك خلال دقائق</p>
+                    <p className="text-xs text-muted-foreground">سيتم حفظ طلبك وسيتم التواصل معك خلال دقائق قصيرة عبر الواتساب</p>
                     {orderReference && (
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-muted-foreground">رقم التتبع:</span>
@@ -3174,6 +3177,26 @@ export function StandalonePreview() {
                       </div>
                     )}
                     <p className="text-sm text-muted-foreground">سنتواصل معك على <span className="font-medium text-foreground" dir="ltr">{customerPhone}</span></p>
+                  </div>
+
+                  {/* Confetti burst */}
+                  <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
+                    {[...Array(24)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ x: '50%', y: '-10%', opacity: 0, scale: 0 }}
+                        animate={{
+                          x: `${50 + (Math.random() - 0.5) * 80}%`,
+                          y: `${110 + Math.random() * 20}%`,
+                          opacity: [1, 1, 0],
+                          scale: [0, 0.5, 0],
+                          rotate: Math.random() * 720 - 360,
+                        }}
+                        transition={{ duration: 1.5, ease: 'easeOut', delay: i * 0.04 }}
+                        className="absolute w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: ['#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#f43f5e', '#06b6d4', '#84cc16', '#eab308', '#a855f7'][i % 9] }}
+                      />
+                    ))}
                   </div>
 
                   {/* أزرار الإجراءات: فاتورة + مشاركة */}
