@@ -594,3 +594,54 @@ Unresolved / Next Phase:
 Risks:
 - Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
 - OOM in local dev (4GB RAM) — all testing must be on Vercel
+---
+Task ID: 10
+Agent: Cron Agent (round 10)
+Task: QA, critical PDF viewer fix, styling improvements, new features
+
+Work Log:
+- QA test on Vercel via agent-browser: zero JS errors, page loads in ~1.4s
+- VLM analysis of page viewer screenshot revealed CRITICAL: PDF page viewer shows BLANK canvas
+  - Root cause: On Vercel, different serverless functions do not share /tmp filesystem
+  - upload-analyze saves PDF to /tmp/uploads/ in its own container
+  - ProfessionalPdfViewer fetches from /api/c/uploads/ (DIFFERENT function, different /tmp)
+  - File not found -> pdfjs fails silently -> empty canvas
+  - History items set file=null, so no client-side fallback available
+
+Critical Fix (3 files):
+1. ProfessionalPdfViewer: pre-fetch file with fetch(), show amber-themed error if unavailable
+2. PageViewer2D: accept pdfDataUrl prop, prefer it over server fetch (priority: file > pdfDataUrl > storedFileName)
+3. standalone-preview.tsx:
+   - RecentUpload interface: added coverDataUrl + pdfDataUrl optional fields
+   - saveToHistory: now accepts coverDu + pdfDu params, with localStorage overflow handling
+   - reuploadFromHistory: restores coverDataUrl and pdfDataUrl from history
+   - loadCoverInBackground: calls updateHistoryCover() when cover renders
+   - updateHistoryCover: updates existing history entry with cover data URL
+
+Styling Improvements:
+1. History items: show cover thumbnail instead of generic icon when available
+2. Progress step indicator on results/preview pages
+3. Result card: shows PDF cover thumbnail instead of generic file icon
+4. Preview summary bar: shows cover thumbnail instead of generic icon
+5. PageViewer2D error state: amber-themed with icon and helpful message
+6. ProfessionalPdfViewer error state: amber-themed with clear re-upload guidance
+
+Commits: ec9940f (critical fix), 7d3c5a7 (styling), 915a31c (summary bar)
+Pushed to GitHub: zellouma2019/tayf-saas main branch
+
+Current Project Status:
+- Sections 1-6: COMPLETE
+- PDF viewer blank bug: FIXED
+- History offline preview: FIXED (covers + data URLs stored in localStorage)
+
+Unresolved / Next Phase:
+- Mobile responsive testing on real devices
+- Dark mode thorough testing
+- Dead CSS cleanup in globals.css (35K lines)
+- Pre-existing TS errors in admin routes (not customer-facing)
+
+Risks:
+- Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
+- OOM in local dev (4GB RAM) - all testing must be on Vercel
+- Large PDFs stored in localStorage may exceed quota (~5-10MB for 4MB PDF base64)
+  - Mitigation: pdfDataUrl is optional; falls back to cover-only; localStorage overflow handled gracefully
