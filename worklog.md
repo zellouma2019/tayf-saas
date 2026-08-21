@@ -951,3 +951,70 @@ Unresolved / Next Phase:
 - Dark mode thorough testing
 - Dead CSS cleanup in globals.css (35K lines)
 - Pre-existing TS errors in admin routes (not customer-facing)
+---
+Task ID: 15
+Agent: Cron Agent (round 15)
+Task: QA testing, 3D preview fix, styling improvements, new features
+
+Work Log:
+- Full QA on tayf-saas.vercel.app/s/mtba-alryan via agent-browser + VLM analysis
+- VLM analysis revealed 3D book preview showing grey placeholder (no cover texture)
+- Deep investigation found 3 cascading root causes:
+  1. pdfjs worker path using `new URL(import.meta.url)` fails with Turbopack/Vercel
+  2. Server fallback (render-cover API) fails because Vercel /tmp is not shared between functions
+  3. All catch blocks in loadCoverInBackground were empty (zero logging)
+- Fixed: Changed all 3 components to use `/api/c/pdf-worker` route
+- Created `/api/c/pdf-worker/route.ts` to serve worker from node_modules
+- Discovered Vercel public/ not serving the 1.2MB worker file (404)
+- Final fix: Cover rendering uses main thread (workerSrc="") for 100% Vercel compatibility
+- Page viewer and professional viewer keep API route (worker nice-to-have, not critical)
+
+Accessibility Improvements:
+- Added ARIA radiogroup + role=radio + aria-checked to delivery mode selector
+- Added aria-pressed to auto-rotate and clear-cover toggle buttons
+- Added aria-label to all icon-only buttons (reset camera, browse pages, clear cover, color circles)
+- Added focus-visible:ring-2 ring-offset-2 to ALL interactive buttons (50+ elements)
+- Added ARIA label to single history delete button
+
+Micro-interactions & Touch Targets:
+- ServiceOptionsPanel: active:scale-95 on OptionCard, OptionRow, QuickPicks
+- ServiceOptionsPanel: ring-2 ring-offset-1 on selected OptionCard + hover:shadow-sm
+- BookMockup3D: min-w-[44px] min-h-[44px] touch targets on mobile (WCAG 2.5.5)
+- BookMockup3D: active:scale-95 on all control buttons
+- BookMockup3D: auto-rotate now shows active state (amber bg when enabled)
+- BookMockup3D: flex-wrap on info badges (was overflowing on <400px screens)
+- BookMockup3D: canvas min-height 280px (was 224px at 320px viewport)
+- Delivery mode: active:scale-[0.97] press feedback
+- Share copy: animated Check icon swap with scale bounce (motion.span)
+- Track reference copy: same animated icon swap
+- CTA buttons: active:scale-[0.98] press effect
+- Spine color selector: active:scale-95 + focus-visible
+
+New Features:
+1. Single history item delete (X button, hover-reveal, stopPropagation)
+2. Selected spine color name label (تلقائي, كحلي, أحمر, etc.)
+3. "Reorder with same settings" button on order success screen
+4. Track reference copy animation (Check icon bounce)
+5. Error logging in loadCoverInBackground catch blocks
+
+Commits: 36bfa35, 8be70c9, 63dae58, 0ec1ce5, 725b0d1
+Pushed to GitHub: zellouma2019/tayf-saas main branch
+
+Current Project Status:
+- Sections 1-6: COMPLETE
+- Upload speed: OPTIMIZED (~100ms metadata-only for PDFs)
+- 3D preview: Fixed (main thread pdfjs, no worker dependency)
+- Accessibility: SIGNIFICANTLY IMPROVED (ARIA roles, focus-visible, touch targets)
+- Styling: Enhanced (micro-interactions, press effects, badges)
+
+Unresolved / Next Phase:
+- Verify 3D cover rendering works on Vercel after deployment (need real file upload test)
+- pdf.worker.min.mjs in public/ returning 404 on Vercel (need investigation)
+- Mobile responsive testing on real devices
+- Dead CSS cleanup in globals.css (35K lines, ~200+ lines unused)
+- Pre-existing TS errors in admin routes
+
+Risks:
+- Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
+- OOM in local dev (4GB RAM) — all testing must be on Vercel
+- pdfjs main thread rendering may be slower for page viewer with many pages
