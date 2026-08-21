@@ -1572,6 +1572,13 @@ export function StandalonePreview() {
                         {item.category === "image" ? "صورة" : item.category === "short-doc" ? "مستند" : "كتاب"}
                       </Badge>
                       <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(item.timestamp)}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRecentUploads(prev => prev.filter(u => u.timestamp !== item.timestamp)); }}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 text-muted-foreground hover:text-rose-500 transition-all focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label="حذف من السجل"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </motion.button>
                   );
                 })}
@@ -1748,11 +1755,13 @@ export function StandalonePreview() {
                     setTimeout(() => setShareCopied(false), 2000);
                   }).catch(() => {});
                 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${shareCopied
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${shareCopied
                   ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent hover:border-border'}`}
               >
-                <Copy className="h-3.5 w-3.5" />
+                <motion.span animate={shareCopied ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
+                  {shareCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                </motion.span>
                 {shareCopied ? 'تم النسخ!' : 'نسخ التسعيرة'}
               </button>
               <button
@@ -2599,8 +2608,8 @@ export function StandalonePreview() {
                                     <button
                                       key={clr.c || "auto"}
                                       onClick={() => setSpineColor(clr.c)}
-                                      title={clr.label}
-                                      className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                                      aria-label={clr.label}
+                                      className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                                         spineColor === clr.c
                                           ? "border-violet-500 ring-2 ring-violet-300"
                                           : (clr.c ? `border-muted-foreground/20` : "border-muted-foreground/30 border-dashed")
@@ -2609,6 +2618,7 @@ export function StandalonePreview() {
                                     />
                                   ))}
                                 </div>
+                                {(() => { const sel = [{ c: "", label: "تلقائي" }, { c: "#1a1a2e", label: "كحلي" }, { c: "#8b0000", label: "أحمر" }, { c: "#1a5c2a", label: "أخضر" }, { c: "#1a3a5c", label: "أزرق" }, { c: "#5c4b1a", label: "بني" }].find(cl => cl.c === spineColor); return sel ? <span className="text-[10px] text-muted-foreground/70">{sel.label}</span> : null; })()}
                               </div>
                             )}
                           </div>
@@ -3055,13 +3065,13 @@ export function StandalonePreview() {
                         {/* طريقة الاستلام */}
                         <div className="space-y-1.5">
                           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5"><Truck className="h-3.5 w-3.5" />طريقة الاستلام</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button type="button" onClick={() => setDeliveryMode("pickup")} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-200 ${deliveryMode === "pickup" ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm" : "border-transparent bg-muted/40 hover:bg-muted/60"}`}>
+                          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="طريقة الاستلام">
+                            <button type="button" role="radio" aria-checked={deliveryMode === "pickup"} onClick={() => setDeliveryMode("pickup")} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${deliveryMode === "pickup" ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm" : "border-transparent bg-muted/40 hover:bg-muted/60"}`}>
                               <Printer className={`h-5 w-5 ${deliveryMode === "pickup" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
                               <span className={`text-xs font-semibold ${deliveryMode === "pickup" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}`}>استلام من المطبعة</span>
                               <span className="text-[9px] text-muted-foreground">مجاني</span>
                             </button>
-                            <button type="button" onClick={() => setDeliveryMode("delivery")} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-200 ${deliveryMode === "delivery" ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm" : "border-transparent bg-muted/40 hover:bg-muted/60"}`}>
+                            <button type="button" role="radio" aria-checked={deliveryMode === "delivery"} onClick={() => setDeliveryMode("delivery")} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${deliveryMode === "delivery" ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm" : "border-transparent bg-muted/40 hover:bg-muted/60"}`}>
                               <Truck className={`h-5 w-5 ${deliveryMode === "delivery" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
                               <span className={`text-xs font-semibold ${deliveryMode === "delivery" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}`}>توصيل</span>
                               <span className="text-[9px] text-muted-foreground">يتم الاتفاق على التكلفة</span>

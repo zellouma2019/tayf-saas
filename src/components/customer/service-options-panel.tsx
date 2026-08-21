@@ -504,8 +504,9 @@ function OptionCard({ option, isSelected, onSelect, colors, compact }: OptionCar
       onClick={onSelect}
       className={`
         flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl text-[10px] transition-all duration-200 text-center
-        ${isSelected ? colors.active : colors.inactive}
+        ${isSelected ? colors.active + ' ring-2 ring-offset-1 ring-current/20 shadow-sm' : colors.inactive + ' hover:shadow-sm'}
         ${compact ? "py-2 px-1.5" : ""}
+        active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
       `}
     >
       {option.emoji && <span className="text-base leading-none">{option.emoji}</span>}
@@ -539,7 +540,8 @@ function OptionRow({ option, isSelected, onSelect, colors }: OptionRowProps) {
       onClick={onSelect}
       className={`
         w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-200 text-right
-        ${isSelected ? colors.active : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"}
+        ${isSelected ? colors.active + ' shadow-sm' : "border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"}
+        active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
       `}
     >
       {option.emoji && <span className="text-base shrink-0">{option.emoji}</span>}
@@ -589,7 +591,7 @@ function QuickPicks({ spec, onApply, colors }: QuickPicksProps) {
         {spec.quickPicks.economic && (
           <button
             onClick={() => onApply(spec.quickPicks!.economic!)}
-            className={`flex flex-col items-center gap-1 py-2.5 px-3 rounded-xl text-[11px] transition-all duration-200 border hover:bg-muted ${colors.inactive}`}
+            className={`flex flex-col items-center gap-1 py-2.5 px-3 rounded-xl text-[11px] transition-all duration-200 border hover:bg-muted hover:shadow-sm ${colors.inactive} active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
           >
             <span className="text-base">💰</span>
             <span className="font-medium">اقتصادي</span>
@@ -599,7 +601,7 @@ function QuickPicks({ spec, onApply, colors }: QuickPicksProps) {
         {spec.quickPicks.premium && (
           <button
             onClick={() => onApply(spec.quickPicks!.premium!)}
-            className={`flex flex-col items-center gap-1 py-2.5 px-3 rounded-xl text-[11px] transition-all duration-200 border hover:bg-muted ${colors.inactive}`}
+            className={`flex flex-col items-center gap-1 py-2.5 px-3 rounded-xl text-[11px] transition-all duration-200 border hover:bg-muted hover:shadow-sm ${colors.inactive} active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
           >
             <span className="text-base">💎</span>
             <span className="font-medium">فاخر</span>
