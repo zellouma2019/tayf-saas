@@ -1,0 +1,65 @@
+{
+  "success": true,
+  "query": "realistic 3D book mockup perfect binding print shop product visualization white cover",
+  "count": 8,
+  "ranked": true,
+  "captioned_count": 6,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/a9f91d9231de.png",
+      "caption": "",
+      "source": "Pacdora",
+      "original_width": "1600px",
+      "original_height": "1216px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/49cbb321e35d.jpg",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Mockuptree",
+      "original_width": "1600px",
+      "original_height": "1067px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/3d0ee1fbf48a.png",
+      "caption": "",
+      "source": "Canva",
+      "original_width": "1466px",
+      "original_height": "2048px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/ff5c93317f75.jpg",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Etsy",
+      "original_width": "2048px",
+      "original_height": "2048px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/656c9038f02c.jpg",
+      "caption": "A blank white book mockup on a gray background with \"dreamstime\" watermarks and a blue footer.",
+      "source": "Dreamstime.com",
+      "original_width": "1418px",
+      "original_height": "1690px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/dbea08e0e20f.jpg",
+      "caption": "The image displays a graphic design interface with a large purple banner reading \"Let's Make A Book Mockup\" and a \"lemon8\" watermark.",
+      "source": "Lemon8",
+      "original_width": "1080px",
+      "original_height": "1546px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/94dbbcfdfb0d.jpg",
+      "caption": "A Simplified Guide Industrial Design Beginner's Essential Guide: a beginner's guide to product development. Suitable for background image.",
+      "source": "LinkedIn",
+      "original_width": "800px",
+      "original_height": "1072px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/7932aae9f716.jpg",
+      "caption": "The image contains a large amount of text information and you do not need to output the text completely.",
+      "source": "Mockuptree",
+      "original_width": "650px",
+      "original_height": "1517px"
+    }
+  ]
+}

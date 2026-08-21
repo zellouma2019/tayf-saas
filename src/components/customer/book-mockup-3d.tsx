@@ -247,26 +247,35 @@ function createPageEdgeTexture(
   ctx.fillStyle = paperColor;
   ctx.fillRect(0, 0, texWidth, texHeight);
 
-  // Two alternating base colors for subtle page banding
-  const baseR = 232, baseG = 229, baseB = 224;   // #e8e5e0
-  const altR  = 240, altG  = 237, altB  = 232;   // #f0ede8
+  // Two alternating base colors for visible cream page banding
+  const baseR = 235, baseG = 228, baseB = 218;   // warmer cream
+  const altR  = 245, altG  = 238, altB  = 228;   // lighter cream
 
-  // Draw individual page lines with ±5% random brightness variation
+  // Draw individual page lines with ±12% random brightness variation + fanning
   for (let i = 0; i < lineCount; i++) {
     const isEven = i % 2 === 0;
     const r = isEven ? baseR : altR;
     const g = isEven ? baseG : altG;
     const b = isEven ? baseB : altB;
 
-    // ±5% brightness variation per line for realism
-    const variation = 0.95 + Math.random() * 0.10; // range [0.95, 1.05]
+    // ±12% brightness variation per line for more visible page separation
+    const variation = 0.88 + Math.random() * 0.24; // range [0.88, 1.12]
     const cr = Math.min(255, Math.round(r * variation));
     const cg = Math.min(255, Math.round(g * variation));
     const cb = Math.min(255, Math.round(b * variation));
 
+    // Slight random x-offset per line to simulate page fanning
+    const xOff = Math.round((Math.random() - 0.5) * 2);
     ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
-    ctx.fillRect(0, i, texWidth, 1);
+    ctx.fillRect(xOff, i, texWidth, 1);
   }
+
+  // Spine-side shadow gradient (left 10% darker — simulates gutter shadow)
+  const gradSpine = ctx.createLinearGradient(0, 0, texWidth * 0.10, 0);
+  gradSpine.addColorStop(0, "rgba(0,0,0,0.10)");
+  gradSpine.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradSpine;
+  ctx.fillRect(0, 0, texWidth, texHeight);
 
   // Subtle dark line at top (head edge shadow) — gradient fade
   const gradTop = ctx.createLinearGradient(0, 0, 0, 3);
@@ -292,6 +301,106 @@ function createPageEdgeTexture(
   texture.needsUpdate = true;
 
   return { texture, disposed: false };
+}
+
+/**
+ * createForeEdgeTexture — procedural VERTICAL page lines for the fore-edge (side view).
+ * When viewing a book from the side, you see individual sheet edges as thin vertical lines.
+ * This is the MOST VISIBLE edge and is critical for realism.
+ */
+function createForeEdgeTexture(
+  THREE: typeof import("three"),
+  sheets: number,
+  basePaperColor: string,
+): { texture: import("three").CanvasTexture; disposed: boolean } {
+  const texWidth = 256;
+  const texHeight = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = texWidth;
+  canvas.height = texHeight;
+  const ctx = canvas.getContext("2d")!;
+
+  // Parse base color for subtle variation
+  const baseMatch = basePaperColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  const bR = baseMatch ? parseInt(baseMatch[1], 16) : 240;
+  const bG = baseMatch ? parseInt(baseMatch[2], 16) : 237;
+  const bB = baseMatch ? parseInt(baseMatch[3], 16) : 230;
+
+  // Fill with base cream/off-white
+  ctx.fillStyle = `rgb(${bR},${bG},${bB})`;
+  ctx.fillRect(0, 0, texWidth, texHeight);
+
+  // Draw individual page lines as thin vertical stripes across the full height
+  const lineCount = Math.max(8, Math.min(texWidth, Math.round(sheets * 1.2)));
+  const lineSpacing = texWidth / lineCount;
+  const lineThickness = Math.max(1, lineSpacing * 0.25);
+
+  for (let i = 0; i < lineCount; i++) {
+    const x = Math.round(i * lineSpacing);
+    const isEven = i % 2 === 0;
+    const variation = 0.96 + Math.random() * 0.08;
+    const cr = Math.min(255, Math.round((isEven ? bR - 8 : bR + 4) * variation));
+    const cg = Math.min(255, Math.round((isEven ? bG - 8 : bG + 4) * variation));
+    const cb = Math.min(255, Math.round((isEven ? bB - 8 : bB + 4) * variation));
+    ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+    ctx.fillRect(x, 0, Math.round(lineThickness), texHeight);
+  }
+
+  // Dark gradient at top and bottom edges (dust/shadow accumulation)
+  const gradTop = ctx.createLinearGradient(0, 0, 0, 12);
+  gradTop.addColorStop(0, "rgba(0,0,0,0.10)");
+  gradTop.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradTop;
+  ctx.fillRect(0, 0, texWidth, 12);
+  const gradBottom = ctx.createLinearGradient(0, texHeight - 12, 0, texHeight);
+  gradBottom.addColorStop(0, "rgba(0,0,0,0)");
+  gradBottom.addColorStop(1, "rgba(0,0,0,0.10)");
+  ctx.fillStyle = gradBottom;
+  ctx.fillRect(0, texHeight - 12, texWidth, 12);
+
+  // Subtle shadow on the spine-side edge (left side of texture)
+  const gradSpine = ctx.createLinearGradient(0, 0, 8, 0);
+  gradSpine.addColorStop(0, "rgba(0,0,0,0.08)");
+  gradSpine.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradSpine;
+  ctx.fillRect(0, 0, 8, texHeight);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+
+  return { texture, disposed: false };
+}
+
+/* ==================================================================
+   createCoverRoughnessMap — procedural canvas noise for cover roughness
+   Breaks up the flat CG look with micro-surface variation
+   ================================================================== */
+function createCoverRoughnessMap(THREE: typeof import("three")): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#a8a8a8"; // ~66% roughness base
+  ctx.fillRect(0, 0, 256, 256);
+  const imageData = ctx.getImageData(0, 0, 256, 256);
+  const d = imageData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 25;
+    d[i] = Math.max(0, Math.min(255, d[i] + noise));
+    d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + noise));
+    d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + noise));
+  }
+  ctx.putImageData(imageData, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  return tex;
 }
 
 /* ==================================================================
@@ -725,7 +834,7 @@ export function BookMockup3D({
       return group;
     }
 
-    /* === Path 3: Full book/notebook (>10 pages) — REALISTIC multi-mesh book === */
+    /* === Path 3: Full book/notebook (>10 pages) — PHOTO-REALISTIC multi-mesh book === */
     if (binding === "perfect") {
       const coverOverhang = 0.025; // covers extend 2.5 units beyond pages on 3 sides
       const coverThickness = 0.012;
@@ -737,11 +846,38 @@ export function BookMockup3D({
       const { texture: pageEdgeTex } = createPageEdgeTexture(THREE, thickness, sheets, paperColor);
       managerRef.current?.trackTexture(pageEdgeTex);
 
-      // ═══ 1. PAGE BLOCK (inner pages) — slightly recessed ═══
+      // Create procedural cover roughness map to break up CG flatness
+      const coverRoughnessMap = createCoverRoughnessMap(THREE);
+      managerRef.current?.trackTexture(coverRoughnessMap);
+
+      // ═══ Helper: create a rounded-rect ExtrudeGeometry for covers ═══
+      const createCoverGeo = (cw: number, ch: number, ct: number) => {
+        const cornerR = Math.min(cw, ch) * 0.008;
+        const shape = new THREE.Shape();
+        const hw = cw / 2, hh = ch / 2;
+        shape.moveTo(-hw + cornerR, -hh);
+        shape.lineTo(hw - cornerR, -hh);
+        shape.quadraticCurveTo(hw, -hh, hw, -hh + cornerR);
+        shape.lineTo(hw, hh - cornerR);
+        shape.quadraticCurveTo(hw, hh, hw - cornerR, hh);
+        shape.lineTo(-hw + cornerR, hh);
+        shape.quadraticCurveTo(-hw, hh, -hw, hh - cornerR);
+        shape.lineTo(-hw, -hh + cornerR);
+        shape.quadraticCurveTo(-hw, -hh, -hw + cornerR, -hh);
+        const extOpts = { depth: ct, bevelEnabled: true, bevelThickness: 0.001, bevelSize: 0.001, bevelSegments: 2 };
+        const geo = new THREE.ExtrudeGeometry(shape, extOpts);
+        // ExtrudeGeometry extrudes along +Z; center it so Z goes from -ct/2 to +ct/2
+        geo.translate(0, 0, -ct / 2);
+        return geo;
+      };
+
+      // ═══ 1. PAGE BLOCK (inner pages) — slightly recessed, with SSS emissive ═══
       const pageGeo = new THREE.BoxGeometry(w, h, thickness);
+      // Fore-edge and spine-side get subtle emissive for subsurface scattering simulation
+      const sssEmissive = new THREE.Color(paperColor).multiplyScalar(0.03);
       const pageMats = [
-        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0 }), // +X fore-edge
-        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0 }), // -X spine-side
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0, emissive: sssEmissive.clone() }), // +X fore-edge (SSS)
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0, emissive: sssEmissive.clone() }), // -X spine-side (SSS)
         new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.9, metalness: 0.0, map: pageEdgeTex }), // +Y top
         new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.9, metalness: 0.0, map: pageEdgeTex }), // -Y bottom
         new THREE.MeshStandardMaterial({ color: 0xfffef8, roughness: 0.95, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.02 }), // +Z front edge
@@ -754,73 +890,102 @@ export function BookMockup3D({
       pageMesh.position.set(coverOverhang / 2, 0, 0);
       group.add(pageMesh);
 
-      // ═══ 2. FRONT COVER — separate mesh, extends beyond pages ═══
-      const frontCoverGeo = new THREE.BoxGeometry(coverW, coverH, coverThickness);
-      // Materials: [+X edge, -X spine edge, +Y top, -Y bottom, +Z outer face (texture), -Z inner face]
+      // ═══ 2. FRONT COVER — ExtrudeGeometry with beveled corners + roughness map ═══
+      const frontCoverGeo = createCoverGeo(coverW, coverH, coverThickness);
       const frontCoverEdgeMat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(spColor).multiplyScalar(1.1), roughness: 0.5, metalness: 0.1,
+        color: new THREE.Color(spColor).multiplyScalar(1.1), roughness: 0.65, metalness: 0.1,
+        roughnessMap: coverRoughnessMap,
       });
       const frontCoverInnerMat = new THREE.MeshStandardMaterial({
         color: 0xf5f3ee, roughness: 0.9, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.05,
       });
-      const frontCoverMats = [
-        frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat,
-        coverFrontMat, frontCoverInnerMat,
-      ];
-      const frontCoverMesh = new THREE.Mesh(frontCoverGeo, frontCoverMats);
+      // ExtrudeGeometry material order: front (+Z), back (-Z), then sides
+      // We use a single material array matching extrude geometry groups
+      // Group 0 = front face, Group 1 = back face, Group 2+ = sides
+      // For the front cover: +Z is the outer face (texture), -Z is inner face
+      const frontCoverFaceMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, roughness: 0.65, metalness: pbr.metalness,
+        envMap: envMap || undefined, envMapIntensity: activeFrontTexInfo ? 0.3 : pbr.envMapIntensity,
+        roughnessMap: coverRoughnessMap,
+        ...(activeFrontTexInfo ? { map: activeFrontTexInfo.texture } : {}),
+      });
+      coverFrontMatRef.current = frontCoverFaceMat;
+      const frontCoverMesh = new THREE.Mesh(frontCoverGeo, [frontCoverFaceMat, frontCoverInnerMat, frontCoverEdgeMat]);
       frontCoverMesh.position.set(coverOverhang / 2, 0, thickness / 2 + coverThickness / 2);
       frontCoverMesh.castShadow = true;
       frontCoverMesh.receiveShadow = true;
       group.add(frontCoverMesh);
 
-      // ═══ 3. BACK COVER — separate mesh, extends beyond pages ═══
-      const backCoverGeo = new THREE.BoxGeometry(coverW, coverH, coverThickness);
-      const backCoverInnerMat = new THREE.MeshStandardMaterial({
+      // ═══ 3. BACK COVER — ExtrudeGeometry with beveled corners + roughness map ═══
+      const backCoverGeo = createCoverGeo(coverW, coverH, coverThickness);
+      const backCoverInnerMat2 = new THREE.MeshStandardMaterial({
         color: 0xf5f3ee, roughness: 0.9, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.05,
       });
-      const backCoverMats = [
-        frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat, frontCoverEdgeMat,
-        backCoverInnerMat, coverBackMat,
-      ];
-      const backCoverMesh = new THREE.Mesh(backCoverGeo, backCoverMats);
+      const backCoverFaceMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, roughness: 0.65, metalness: pbr.metalness,
+        envMap: envMap || undefined, envMapIntensity: activeBackTexInfo ? 0.3 : pbr.envMapIntensity,
+        roughnessMap: coverRoughnessMap,
+        ...(activeBackTexInfo ? { map: activeBackTexInfo.texture } : {}),
+      });
+      coverBackMatRef.current = backCoverFaceMat;
+      // For back cover: +Z faces toward pages (inner), -Z faces outward (back cover texture)
+      const backCoverMesh = new THREE.Mesh(backCoverGeo, [backCoverInnerMat2, backCoverFaceMat, frontCoverEdgeMat]);
       backCoverMesh.position.set(coverOverhang / 2, 0, -(thickness / 2 + coverThickness / 2));
       backCoverMesh.castShadow = true;
       backCoverMesh.receiveShadow = true;
       group.add(backCoverMesh);
 
-      // ═══ 4. SPINE — connects front and back covers on the left side ═══
-      const spineW = coverThickness;
-      const spineGeo = new THREE.BoxGeometry(spineW, coverH, totalDepth);
-      // Materials: [+X outer, -X inner (facing pages), +Y top, -Y bottom, +Z front edge, -Z back edge]
+      // ═══ 4. SPINE — partial CylinderGeometry (180° arc) for convex rounded spine ═══
+      const spineRadius = totalDepth / 2;
+      // CylinderGeometry(axis=Y): theta=PI/2 → +Z (front), theta=PI → -X (spine face), theta=3PI/2 → -Z (back)
+      const spineArcGeo = new THREE.CylinderGeometry(
+        spineRadius, spineRadius, coverH - 0.005, 24, 1, true,
+        Math.PI / 2, Math.PI,
+      );
+      const spineCenterX = -w / 2 - coverOverhang / 2;
       const spineOuterMat = new THREE.MeshStandardMaterial({
         color: spineC, roughness: 0.5, metalness: 0.15,
         envMap: envMap || undefined, envMapIntensity: 0.3,
+        side: THREE.DoubleSide,
+        roughnessMap: coverRoughnessMap,
       });
       const spineInnerMat = new THREE.MeshStandardMaterial({
-        color: 0xf0ede6, roughness: 0.9, metalness: 0.0,
+        color: 0xf0ede6, roughness: 0.9, metalness: 0.0, side: THREE.DoubleSide,
       });
       const spineEdgeMat = new THREE.MeshStandardMaterial({
-        color: spineC, roughness: 0.5, metalness: 0.1,
+        color: spineC, roughness: 0.5, metalness: 0.1, side: THREE.DoubleSide,
       });
-      const spineMats = [spineOuterMat, spineInnerMat, spineEdgeMat, spineEdgeMat, spineEdgeMat, spineEdgeMat];
-      const spineMesh = new THREE.Mesh(spineGeo, spineMats);
-      // Position: left edge of covers, centered vertically and in depth
-      spineMesh.position.set(
-        -(w + coverOverhang) / 2 + coverOverhang / 2,
-        0,
-        0,
-      );
+      spineMatRef.current = spineOuterMat;
+      // CylinderGeometry open-ended: side face (group 0) only, no caps
+      const spineMesh = new THREE.Mesh(spineArcGeo, spineOuterMat);
+      spineMesh.position.set(spineCenterX, 0, 0);
       spineMesh.castShadow = true;
       spineMesh.receiveShadow = true;
       group.add(spineMesh);
 
-      // ═══ 5. TOP EDGE STRIP — connects front cover top → spine top → back cover top ═══
+      // Spine cap disks (top and bottom of the cylinder arc)
+      const spineCapGeo = new THREE.CircleGeometry(spineRadius, 24, Math.PI / 2, Math.PI);
+      const spineCapMat = new THREE.MeshStandardMaterial({
+        color: spineC, roughness: 0.5, metalness: 0.15, side: THREE.DoubleSide,
+        roughnessMap: coverRoughnessMap,
+      });
+      const topCap = new THREE.Mesh(spineCapGeo, spineCapMat);
+      topCap.rotation.x = -Math.PI / 2;
+      topCap.position.set(spineCenterX, (coverH - 0.005) / 2, 0);
+      group.add(topCap);
+      const botCap = new THREE.Mesh(spineCapGeo.clone(), spineCapMat);
+      botCap.rotation.x = Math.PI / 2;
+      botCap.position.set(spineCenterX, -(coverH - 0.005) / 2, 0);
+      group.add(botCap);
+
+      // ═══ 5. EDGE STRIPS — connect covers at top, bottom, and fore-edge ═══
+      const stripMat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(spColor).multiplyScalar(1.05), roughness: 0.65, metalness: 0.1,
+        envMap: envMap || undefined, envMapIntensity: 0.2, roughnessMap: coverRoughnessMap,
+      });
+      // Top strip (Y = +coverH/2)
       const topStripW = w + coverOverhang + coverThickness;
       const topStripGeo = new THREE.BoxGeometry(topStripW, coverThickness, totalDepth);
-      const stripMat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(spColor).multiplyScalar(1.05), roughness: 0.55, metalness: 0.1,
-        envMap: envMap || undefined, envMapIntensity: 0.2,
-      });
       const topStrip = new THREE.Mesh(topStripGeo, stripMat);
       topStrip.position.set(
         -(w + coverOverhang) / 2 + coverThickness / 2 + topStripW / 2 - coverOverhang + coverOverhang / 2,
@@ -828,58 +993,66 @@ export function BookMockup3D({
         0,
       );
       group.add(topStrip);
-
-      // ═══ 6. BOTTOM EDGE STRIP — same as top ═══
+      // Bottom strip
       const bottomStrip = new THREE.Mesh(topStripGeo.clone(), stripMat);
-      bottomStrip.position.set(
-        topStrip.position.x,
-        -coverH / 2,
-        0,
-      );
+      bottomStrip.position.set(topStrip.position.x, -coverH / 2, 0);
       group.add(bottomStrip);
-
-      // ═══ 7. FORE-EDGE STRIP — connects front cover → bottom strip → back cover on the right ═══
+      // Fore-edge strip (right side)
       const foreStripGeo = new THREE.BoxGeometry(coverThickness, coverH, totalDepth);
       const foreStrip = new THREE.Mesh(foreStripGeo, stripMat);
       foreStrip.position.set(
         (w + coverOverhang * 2 - coverThickness) / 2 + coverOverhang / 2,
-        0,
-        0,
+        0, 0,
       );
       group.add(foreStrip);
 
-      // ═══ 8. HEAD/TAIL BANDS — colored cloth strips at spine top/bottom ═══
+      // ═══ 6. HEAD/TAIL BANDS — colored cloth strips at spine top/bottom ═══
       if (thickness > 0.06) {
         const bandColors = [0x8b1a1a, 0x1a3a5c, 0x2d5a3d, 0x5c3a1a];
         const bandColor = bandColors[Math.floor(Math.random() * bandColors.length)];
         const bandMat = new THREE.MeshStandardMaterial({ color: bandColor, roughness: 0.8, metalness: 0.0 });
-        const bandGeo = new THREE.BoxGeometry(spineW + 0.005, 0.035, 0.02);
+        const bandGeo = new THREE.CylinderGeometry(0.012, 0.012, totalDepth + 0.005, 8, 1, true, Math.PI / 2, Math.PI);
+        bandGeo.rotateX(Math.PI / 2);
         const headBand = new THREE.Mesh(bandGeo, bandMat);
-        headBand.position.set(spineMesh.position.x, coverH / 2 + 0.001, 0);
+        headBand.position.set(spineCenterX, coverH / 2 + 0.001, 0);
         group.add(headBand);
         const tailBand = new THREE.Mesh(bandGeo.clone(), bandMat);
-        tailBand.position.set(spineMesh.position.x, -coverH / 2 - 0.001, 0);
+        tailBand.position.set(spineCenterX, -coverH / 2 - 0.001, 0);
         group.add(tailBand);
       }
 
-      // ═══ 9. SPINE GROOVE LINES — where cover meets spine ═══
+      // ═══ 7. SPINE GROOVE LINES — where cover meets spine ═══
       if (thickness > 0.05) {
         const grooveMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.95, metalness: 0.0 });
         const grooveGeo = new THREE.BoxGeometry(0.002, coverH * 0.94, totalDepth);
-        // Front groove (between spine and front cover)
         const frontGroove = new THREE.Mesh(grooveGeo, grooveMat);
-        frontGroove.position.set(
-          spineMesh.position.x + spineW / 2 + 0.001,
-          0, 0,
-        );
+        frontGroove.position.set(spineCenterX + coverThickness / 2 + 0.001, 0, 0);
         group.add(frontGroove);
-        // Back groove
         const backGroove = new THREE.Mesh(grooveGeo.clone(), grooveMat);
         backGroove.position.set(frontGroove.position.x, 0, 0);
         group.add(backGroove);
       }
 
-      // ═══ 10. Glass/Plastic clear cover ═══
+      // ═══ 8. AMBIENT OCCLUSION SHADOW PLANES — dark seams where surfaces meet ═══
+      const aoMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.12, depthWrite: false });
+      // Front cover ↔ page block AO
+      const aoGeo = new THREE.PlaneGeometry(w * 0.9, h * 0.96);
+      const frontAO = new THREE.Mesh(aoGeo, aoMat);
+      frontAO.position.set(coverOverhang / 2 + 0.001, 0, thickness / 2 + 0.001);
+      group.add(frontAO);
+      // Back cover ↔ page block AO
+      const backAO = new THREE.Mesh(aoGeo.clone(), aoMat);
+      backAO.position.set(coverOverhang / 2 + 0.001, 0, -thickness / 2 - 0.001);
+      group.add(backAO);
+      // Spine-side AO (darker gutter shadow)
+      const spineAOMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false });
+      const spineAOGeo = new THREE.PlaneGeometry(0.02, h * 0.9);
+      const spineAO = new THREE.Mesh(spineAOGeo, spineAOMat);
+      spineAO.position.set(-w / 2 + coverOverhang / 2 + 0.001, 0, 0);
+      spineAO.rotation.y = Math.PI / 2;
+      group.add(spineAO);
+
+      // ═══ 9. Glass/Plastic clear cover ═══
       if (showClearCover) {
         const clearCoverMat = new THREE.MeshPhysicalMaterial({
           color: 0xffffff, roughness: 0.1, metalness: 0.0,
@@ -894,7 +1067,7 @@ export function BookMockup3D({
         group.add(clearMesh);
       }
 
-      // ═══ 11. PHOTO SIZE DIMENSIONS — override page block for photos ═══
+      // ═══ 10. PHOTO SIZE DIMENSIONS — override page block for photos ═══
       if (photoSize) {
         const photoSizeMap: Record<string, { w: number; h: number }> = {
           "10x15": { w: 1.0, h: 1.5 },

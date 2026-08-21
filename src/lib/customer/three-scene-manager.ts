@@ -262,15 +262,15 @@ export class ThreeSceneManager {
   addDefaultLighting() {
     const T = this.THREE;
 
-    // ═══ 1. Hemisphere — natural sky/ground ambient ═══
+    // ═══ 1. Hemisphere — natural sky/ground ambient (reduced for more contrast) ═══
     // Warm sky above, warm ground below (matches print shop environment)
-    const hemi = new T.HemisphereLight(0xfff8f0, 0xe8e0d0, 0.6);
+    const hemi = new T.HemisphereLight(0xfff8f0, 0xe8e0d0, 0.4);
     this.scene.add(hemi);
 
     // ═══ 2. Key Light — main directional with crisp 2048px shadows ═══
-    // Slightly warmer for print/paper look
+    // Slightly warmer, moved for more dramatic shadows
     const keyLight = new T.DirectionalLight(0xfff8f0, 1.6);
-    keyLight.position.set(3, 6, 4);
+    keyLight.position.set(4, 5, 3);
     keyLight.castShadow = true;
     // 2048px PCFSoft shadow maps (good quality, stable memory usage)
     keyLight.shadow.mapSize.set(2048, 2048);
@@ -294,7 +294,8 @@ export class ThreeSceneManager {
     this.scene.add(fillLight);
 
     // ═══ 4. Rim Light — creates edge highlight (separation from background) ═══
-    const rimLight = new T.DirectionalLight(0xfff0e0, 0.8);
+    // Slight warm tint for realistic photo studio feel
+    const rimLight = new T.DirectionalLight(0xffe8d0, 0.8);
     rimLight.position.set(-1.5, 3, -3);
     this.scene.add(rimLight);
 
