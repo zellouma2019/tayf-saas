@@ -551,55 +551,66 @@ export function BookMockup3D({
       canvas.width = 800;
       canvas.height = 1100;
       const ctx = canvas.getContext("2d")!;
-      // Paper background
-      ctx.fillStyle = "#fafaf8";
+      // Warm cream background
+      ctx.fillStyle = "#faf8f5";
       ctx.fillRect(0, 0, 800, 1100);
-      // Header bar
-      ctx.fillStyle = "#f59e0b";
-      ctx.fillRect(0, 0, 800, 8);
-      // File icon
-      ctx.fillStyle = "#fbbf24";
-      ctx.beginPath();
-      ctx.roundRect(300, 300, 200, 240, 16);
-      ctx.fill();
+      // Subtle cross-hatch linen texture
+      ctx.globalAlpha = 0.025;
+      ctx.strokeStyle = "#b0a898";
+      ctx.lineWidth = 0.5;
+      for (let y = 0; y < 1100; y += 4) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(800, y); ctx.stroke(); }
+      for (let x = 0; x < 800; x += 4) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1100); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      // Top band
+      const bandColor = fileType === "design" ? "#7c3aed" : "#0d9488";
+      ctx.fillStyle = bandColor;
+      ctx.fillRect(0, 0, 800, 60);
+      // Band label
       ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.roundRect(320, 320, 160, 200, 8);
-      ctx.fill();
+      ctx.font = "600 18px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(fileType === "design" ? "تصميم" : "مستند", 400, 38);
+      // Spine shadow
+      const spineShadow = ctx.createLinearGradient(0, 0, 30, 0);
+      spineShadow.addColorStop(0, "rgba(0,0,0,0.08)");
+      spineShadow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = spineShadow;
+      ctx.fillRect(0, 60, 30, 1032);
+      // Inner border
+      ctx.strokeStyle = fileType === "design" ? "rgba(124, 58, 237, 0.15)" : "rgba(13, 148, 136, 0.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(50, 90, 700, 920, 4); ctx.stroke();
+      // File icon (elegant)
+      ctx.fillStyle = fileType === "design" ? "rgba(124, 58, 237, 0.08)" : "rgba(13, 148, 136, 0.08)";
+      ctx.beginPath(); ctx.roundRect(280, 260, 240, 200, 16); ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.roundRect(300, 280, 200, 160, 8); ctx.fill();
       // Folded corner
-      ctx.fillStyle = "#fef3c7";
-      ctx.beginPath();
-      ctx.moveTo(440, 320);
-      ctx.lineTo(480, 320);
-      ctx.lineTo(480, 360);
-      ctx.closePath();
-      ctx.fill();
-      // File extension text
+      ctx.fillStyle = fileType === "design" ? "#ede9fe" : "#ccfbf1";
+      ctx.beginPath(); ctx.moveTo(460, 280); ctx.lineTo(500, 280); ctx.lineTo(500, 320); ctx.closePath(); ctx.fill();
+      // File extension
       const ext = fileSource.split(".").pop()?.toUpperCase() || "FILE";
-      ctx.fillStyle = "#92400e";
+      ctx.fillStyle = fileType === "design" ? "#5b21b6" : "#0f766e";
       ctx.font = "bold 36px system-ui, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(ext, 400, 440);
+      ctx.fillText(ext, 400, 390);
       // File name
-      ctx.fillStyle = "#44403c";
-      ctx.font = "600 28px system-ui, sans-serif";
-      ctx.textAlign = "center";
       const displayName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
-      const truncated = displayName.length > 28 ? displayName.slice(0, 25) + "..." : displayName;
-      ctx.fillText(truncated, 400, 620);
-      // Subtitle
-      const typeLabel = fileType === "design" ? "ملف تصميم" : "مستند";
-      ctx.fillStyle = "#a8a29e";
-      ctx.font = "500 22px system-ui, sans-serif";
-      ctx.fillText(typeLabel, 400, 670);
-      // Will be reviewed note
-      ctx.fillStyle = "#78716c";
-      ctx.font = "400 18px system-ui, sans-serif";
-      ctx.fillText("سيتم مراجعته من قبل المطبعة", 400, 760);
-      // Tayf branding
-      ctx.fillStyle = "#d6d3d1";
+      const truncated = displayName.length > 36 ? displayName.slice(0, 33) + "..." : displayName;
+      ctx.fillStyle = "#2d2a26";
+      ctx.font = "600 28px system-ui, sans-serif";
+      ctx.fillText(truncated, 400, 560);
+      // Type label
+      ctx.fillStyle = fileType === "design" ? "rgba(124, 58, 237, 0.6)" : "rgba(13, 148, 136, 0.6)";
+      ctx.font = "500 20px system-ui, sans-serif";
+      ctx.fillText(fileType === "design" ? "ملف تصميم" : "مستند", 400, 610);
+      // Bottom info
+      ctx.fillStyle = "rgba(120, 113, 108, 0.6)";
       ctx.font = "400 16px system-ui, sans-serif";
-      ctx.fillText("طيف — منصة الطباعة", 400, 1050);
+      ctx.fillText("سيتم مراجعته من قبل المطبعة", 400, 1060);
+      // Bottom band
+      ctx.fillStyle = bandColor;
+      ctx.fillRect(0, 1092, 800, 8);
 
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -620,138 +631,118 @@ export function BookMockup3D({
       canvas.height = 1100;
       const ctx = canvas.getContext("2d")!;
 
-      // ── Rich dark cover background (like a real printed book) ──
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1100);
-      bgGrad.addColorStop(0, "#1e293b");
-      bgGrad.addColorStop(0.5, "#1a2332");
-      bgGrad.addColorStop(1, "#0f172a");
-      ctx.fillStyle = bgGrad;
+      // ── Warm white/cream cover background (like a real printed book) ──
+      ctx.fillStyle = "#faf8f5";
       ctx.fillRect(0, 0, 800, 1100);
 
-      // ── Subtle texture noise overlay ──
-      ctx.globalAlpha = 0.03;
-      for (let i = 0; i < 3000; i++) {
-        const x = Math.random() * 800;
-        const y = Math.random() * 1100;
-        ctx.fillStyle = Math.random() > 0.5 ? "#ffffff" : "#000000";
-        ctx.fillRect(x, y, 1, 1);
+      // ── Subtle linen/cloth cross-hatch texture pattern ──
+      ctx.globalAlpha = 0.035;
+      ctx.strokeStyle = "#b0a898";
+      ctx.lineWidth = 0.5;
+      for (let y = 0; y < 1100; y += 4) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(800, y);
+        ctx.stroke();
+      }
+      for (let x = 0; x < 800; x += 4) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 1100);
+        ctx.stroke();
       }
       ctx.globalAlpha = 1;
 
-      // ── Top decorative band ──
-      const topGrad = ctx.createLinearGradient(0, 0, 800, 0);
-      topGrad.addColorStop(0, "#f59e0b");
-      topGrad.addColorStop(0.5, "#fbbf24");
-      topGrad.addColorStop(1, "#f59e0b");
-      ctx.fillStyle = topGrad;
-      ctx.fillRect(0, 0, 800, 8);
+      // ── Colored top band (teal/emerald) with category label ──
+      const bandH = 60;
+      ctx.fillStyle = "#0d9488";
+      ctx.fillRect(0, 0, 800, bandH);
+      // Band subtle gradient overlay
+      const bandGrad = ctx.createLinearGradient(0, 0, 800, 0);
+      bandGrad.addColorStop(0, "rgba(255,255,255,0.08)");
+      bandGrad.addColorStop(0.5, "rgba(255,255,255,0.12)");
+      bandGrad.addColorStop(1, "rgba(255,255,255,0.05)");
+      ctx.fillStyle = bandGrad;
+      ctx.fillRect(0, 0, 800, bandH);
+      // White category text in band
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "600 18px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      const catLabel = category === "book" ? "كتاب / مذكرة" : category === "short-doc" ? "مستند قصير" : "مستند";
+      ctx.fillText(catLabel, 400, 38);
 
-      // ── Inner border frame (gold) ──
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.3)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(60, 40, 680, 1020, 4);
-      ctx.stroke();
+      // ── Subtle shadow/depth effect at spine edge (left side) ──
+      const spineShadow = ctx.createLinearGradient(0, 0, 35, 0);
+      spineShadow.addColorStop(0, "rgba(0,0,0,0.12)");
+      spineShadow.addColorStop(0.4, "rgba(0,0,0,0.06)");
+      spineShadow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = spineShadow;
+      ctx.fillRect(0, bandH, 35, 1100 - bandH - 8);
 
-      // ── Second inner frame ──
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.12)";
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.roundRect(72, 52, 656, 996, 2);
-      ctx.stroke();
-
-      // ── Open book icon (centered, elegant) ──
-      const iconY = 250;
-      ctx.fillStyle = "rgba(245, 158, 11, 0.08)";
-      ctx.beginPath();
-      ctx.roundRect(220, iconY, 360, 200, 12);
-      ctx.fill();
-
-      // Left page
-      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
-      ctx.beginPath();
-      ctx.roundRect(240, iconY + 20, 155, 160, 6);
-      ctx.fill();
-      // Right page
-      ctx.beginPath();
-      ctx.roundRect(405, iconY + 20, 155, 160, 6);
-      ctx.fill();
-      // Spine line
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.15)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(400, iconY + 15);
-      ctx.lineTo(400, iconY + 185);
-      ctx.stroke();
-      // Page lines (left)
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(255, iconY + 50 + i * 22);
-        ctx.lineTo(375, iconY + 50 + i * 22);
-        ctx.stroke();
-      }
-      // Page lines (right)
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(415, iconY + 50 + i * 22);
-        ctx.lineTo(540, iconY + 50 + i * 22);
-        ctx.stroke();
-      }
-
-      // ── Decorative divider ──
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.25)";
+      // ── Thin inner border frame (subtle elegance) ──
+      ctx.strokeStyle = "rgba(13, 148, 136, 0.15)";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(250, 520);
-      ctx.lineTo(550, 520);
+      ctx.roundRect(50, bandH + 30, 700, 970, 4);
       ctx.stroke();
-      // Diamond ornament
-      ctx.fillStyle = "rgba(245, 158, 11, 0.5)";
+
+      // ── File name centered — large elegant serif-style font ──
+      const pdfName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
+      const truncName = pdfName.length > 36 ? pdfName.slice(0, 33) + "..." : pdfName;
+      ctx.fillStyle = "#2d2a26";
+      ctx.font = "700 38px Georgia, 'Times New Roman', 'Noto Naskh Arabic', serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      // Word wrap for long names
+      const maxLineW = 620;
+      const words = truncName.split(/(\s+)/);
+      const lines: string[] = [];
+      let currentLine = "";
+      for (const word of words) {
+        const testLine = currentLine + word;
+        const testW = ctx.measureText(testLine).width;
+        if (testW > maxLineW && currentLine.length > 0) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      const lineHeight = 52;
+      const totalTextH = lines.length * lineHeight;
+      const textStartY = 480 - totalTextH / 2 + lineHeight / 2;
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 400, textStartY + i * lineHeight);
+      });
+      ctx.textBaseline = "alphabetic";
+
+      // ── Subtle decorative divider below title ──
+      const divY = textStartY + totalTextH / 2 + 20;
+      ctx.strokeStyle = "rgba(13, 148, 136, 0.2)";
+      ctx.lineWidth = 0.8;
       ctx.beginPath();
-      ctx.moveTo(400, 512);
-      ctx.lineTo(410, 520);
-      ctx.lineTo(400, 528);
-      ctx.lineTo(390, 520);
+      ctx.moveTo(280, divY);
+      ctx.lineTo(520, divY);
+      ctx.stroke();
+      // Small diamond ornament
+      ctx.fillStyle = "rgba(13, 148, 136, 0.35)";
+      ctx.beginPath();
+      ctx.moveTo(400, divY - 5);
+      ctx.lineTo(406, divY);
+      ctx.lineTo(400, divY + 5);
+      ctx.lineTo(394, divY);
       ctx.closePath();
       ctx.fill();
 
-      // ── Title ──
-      ctx.fillStyle = "#f8fafc";
-      ctx.font = "700 32px system-ui, sans-serif";
+      // ── Page count & DPI info at bottom in muted text ──
+      ctx.fillStyle = "rgba(120, 113, 108, 0.7)";
+      ctx.font = "400 15px system-ui, sans-serif";
       ctx.textAlign = "center";
-      const pdfName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
-      const truncName = pdfName.length > 32 ? pdfName.slice(0, 29) + "..." : pdfName;
-      ctx.fillText(truncName, 400, 590);
+      ctx.fillText(`${totalPages} صفحة  ·  ${paperSize}  ·  300 DPI`, 400, 1060);
 
-      // ── Subtitle line ──
-      ctx.fillStyle = "rgba(245, 158, 11, 0.7)";
-      ctx.font = "500 18px system-ui, sans-serif";
-      const catLabel = category === "book" ? "كتاب / مذكرة" : "مستند";
-      ctx.fillText(catLabel, 400, 640);
-
-      // ── Page count & size info ──
-      ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
-      ctx.font = "400 16px system-ui, sans-serif";
-      ctx.fillText(`${totalPages} صفحة  ·  ${paperSize}  ·  300 DPI`, 400, 690);
-
-      // ── Bottom section ──
-      // Decorative divider
-      ctx.strokeStyle = "rgba(245, 158, 11, 0.15)";
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(250, 940);
-      ctx.lineTo(550, 940);
-      ctx.stroke();
-
-      // Branding
-      ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
-      ctx.font = "400 14px system-ui, sans-serif";
-      ctx.fillText("طيف — منصة الطباعة", 400, 970);
-
-      // ── Bottom accent bar ──
-      ctx.fillStyle = topGrad;
+      // ── Thin colored bottom border matching top band ──
+      ctx.fillStyle = "#0d9488";
       ctx.fillRect(0, 1092, 800, 8);
 
       const tex = new THREE.CanvasTexture(canvas);
@@ -901,7 +892,7 @@ export function BookMockup3D({
 
     /* === Path 3: Full book/notebook (>10 pages) — PHOTO-REALISTIC multi-mesh book === */
     if (binding === "perfect") {
-      const coverOverhang = 0.025; // covers extend 2.5 units beyond pages on 3 sides
+      const coverOverhang = 0.035; // covers extend 3.5 units beyond pages on 3 sides
       const coverThickness = 0.012;
       const coverW = w + coverOverhang * 2;
       const coverH = h + coverOverhang * 2;
@@ -1078,9 +1069,8 @@ export function BookMockup3D({
 
       // ═══ 6. HEAD/TAIL BANDS — colored cloth strips at spine top/bottom ═══
       if (thickness > 0.06) {
-        const bandColors = [0x8b1a1a, 0x1a3a5c, 0x2d5a3d, 0x5c3a1a];
-        const bandColor = bandColors[Math.floor(Math.random() * bandColors.length)];
-        const bandMat = new THREE.MeshStandardMaterial({ color: bandColor, roughness: 0.8, metalness: 0.0 });
+        // Match cover accent color (teal #0d9488)
+        const bandMat = new THREE.MeshStandardMaterial({ color: 0x0d9488, roughness: 0.8, metalness: 0.0 });
         const bandGeo = new THREE.CylinderGeometry(0.012, 0.012, totalDepth + 0.005, 8, 1, true, Math.PI / 2, Math.PI);
         bandGeo.rotateX(Math.PI / 2);
         const headBand = new THREE.Mesh(bandGeo, bandMat);
@@ -1093,10 +1083,10 @@ export function BookMockup3D({
 
       // ═══ 7. SPINE GROOVE LINES — where cover meets spine ═══
       if (thickness > 0.05) {
-        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.95, metalness: 0.0 });
-        const grooveGeo = new THREE.BoxGeometry(0.005, coverH * 0.96, totalDepth);
+        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.95, metalness: 0.0 });
+        const grooveGeo = new THREE.BoxGeometry(0.008, coverH * 0.96, totalDepth);
         const frontGroove = new THREE.Mesh(grooveGeo, grooveMat);
-        frontGroove.position.set(spineCenterX + coverThickness / 2 + 0.002, 0, 0);
+        frontGroove.position.set(spineCenterX + coverThickness / 2 + 0.003, 0, 0);
         group.add(frontGroove);
         const backGroove = new THREE.Mesh(grooveGeo.clone(), grooveMat);
         backGroove.position.set(frontGroove.position.x, 0, 0);

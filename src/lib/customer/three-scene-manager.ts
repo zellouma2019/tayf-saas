@@ -70,9 +70,9 @@ export class ThreeSceneManager {
     bgCanvas.height = 512;
     const bgCtx = bgCanvas.getContext("2d")!;
     const bgGrad = bgCtx.createLinearGradient(0, 0, 0, 512);
-    bgGrad.addColorStop(0, "#f0eeeb");
-    bgGrad.addColorStop(0.5, "#e8e5e1");
-    bgGrad.addColorStop(1, "#d8d4cf");
+    bgGrad.addColorStop(0, "#f5f0eb");
+    bgGrad.addColorStop(0.6, "#eee9e3");
+    bgGrad.addColorStop(1, "#e8e2da");
     bgCtx.fillStyle = bgGrad;
     bgCtx.fillRect(0, 0, 2, 512);
     const bgTex = new T.CanvasTexture(bgCanvas);
@@ -84,7 +84,7 @@ export class ThreeSceneManager {
       this.container.clientWidth / Math.max(this.container.clientHeight, 1);
     const fov = options.fov ?? 40;
     this.camera = new T.PerspectiveCamera(fov, aspect, 0.1, 100);
-    const pos = options.cameraPosition ?? [3, 2.5, 4];
+    const pos = options.cameraPosition ?? [2.8, 2.0, 4.2];
     this.camera.position.set(pos[0], pos[1], pos[2]);
 
     // Renderer — Ultra-HD with maximum quality settings
@@ -314,12 +314,14 @@ export class ThreeSceneManager {
   addGroundAndShadow() {
     const T = this.THREE;
 
-    // Ground plane — subtle warm gray surface with soft appearance
+    // Ground plane — subtle warm gray surface with soft appearance and slight transparency
     const gndGeo = new T.PlaneGeometry(20, 20);
     const gndMat = new T.MeshStandardMaterial({ 
       color: 0xe8e5e0, 
       roughness: 0.95, 
       metalness: 0.0,
+      transparent: true,
+      opacity: 0.92,
       ...(this.envMap ? { envMap: this.envMap, envMapIntensity: 0.3 } : {}),
     });
     const ground = new T.Mesh(gndGeo, gndMat);

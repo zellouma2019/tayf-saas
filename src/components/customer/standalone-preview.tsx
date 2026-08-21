@@ -1361,7 +1361,7 @@ export function StandalonePreview() {
               100% { transform: translateX(100%); }
             }
             .upload-zone-border {
-              background: linear-gradient(270deg, #f59e0b, #f97316, #eab308, #fb923c, #f59e0b);
+              background: linear-gradient(270deg, #f59e0b, #f97316, #eab308, #fb923c, #f43f5e, #f59e0b);
               background-size: 400% 400%;
               animation: gradient-rotate 6s ease infinite;
             }
@@ -1759,7 +1759,7 @@ export function StandalonePreview() {
       )}
 
       {step === "results" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: 'easeInOut' }} className="space-y-5">
           {/* ─── Action buttons: share quote + new file ─── */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1919,8 +1919,8 @@ export function StandalonePreview() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-2xl border bg-card p-4 shadow-sm">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors"><span className="text-muted-foreground mb-1">الأبعاد</span><span className="font-bold font-mono text-sm">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height}</span><span className="text-[10px] text-muted-foreground">مم</span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{Number(analysis.estimatedDPI) > 0 ? analysis.estimatedDPI : (uploadedFileType === "pdf" ? 300 : "—")}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className={`font-bold text-sm ${analysis.dpiCategory === "ممتازة" ? "text-emerald-600 dark:text-emerald-400" : analysis.dpiCategory ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>{analysis.dpiCategory || (uploadedFileType === "pdf" ? "ممتازة" : "") || "—"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{uploadedFileType === "pdf" ? 300 : (Number(analysis.estimatedDPI) > 0 ? analysis.estimatedDPI : "—")}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className={`font-bold text-sm ${uploadedFileType === "pdf" ? "text-emerald-600 dark:text-emerald-400" : analysis.dpiCategory === "ممتازة" ? "text-emerald-600 dark:text-emerald-400" : analysis.dpiCategory ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>{uploadedFileType === "pdf" ? "ممتازة" : (analysis.dpiCategory || "—")}</span><span className="text-[10px] text-muted-foreground"> </span></div>
                 <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors"><span className="text-muted-foreground mb-1">الاتجاه</span><div className="flex items-center gap-1.5"><span className="font-bold text-sm">{analysis.orientation === "portrait" ? "عمودي" : "أفقي"}</span><MoveVertical className={`h-3.5 w-3.5 text-muted-foreground/60 ${analysis.orientation === "portrait" ? "" : "rotate-90"}`} /></div><span className="text-[10px] text-muted-foreground"> </span></div>
               </div>
             </motion.div>
@@ -2101,7 +2101,7 @@ export function StandalonePreview() {
               // تعيين التجليد الافتراضي حسب التصنيف عند الدخول للمعاينة
               setActiveBinding(getDefaultBinding(fileCategory));
               setStep("preview");
-            }} className="w-full h-12 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98] relative overflow-hidden group">
+            }} className="w-full h-12 rounded-xl text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98] relative overflow-hidden group" style={{ background: 'linear-gradient(270deg, #f59e0b, #f97316, #f43f5e, #f97316, #f59e0b)', backgroundSize: '400% 400%', animation: 'gradient-rotate 4s ease infinite' }}>
               <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
               <Eye className="h-4 w-4 relative z-10" /><span className="relative z-10">متابعة للمعاينة</span><ArrowLeft className="h-4 w-4 relative z-10" />
             </Button>
@@ -2110,7 +2110,7 @@ export function StandalonePreview() {
       )}
 
       {step === "preview" && storedName && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: 'easeInOut' }} className="space-y-4">
 
           {/* ─── شريط الملخص العلوي ─── Summary bar ─── */}
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border bg-gradient-to-l from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 p-4 shadow-sm">
@@ -2763,7 +2763,7 @@ export function StandalonePreview() {
           )}
 
           {/* ─── ملخص الطلب السريع ─── Quick Order Summary ─── */
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06)]">
             <div className="flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-l from-muted/60 to-muted/30">
               <Receipt className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span>
               <span className="text-[9px] text-muted-foreground mr-auto font-mono">#{Date.now().toString(36).toUpperCase()}</span>
@@ -2805,6 +2805,10 @@ export function StandalonePreview() {
               <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Calculator className="h-3.5 w-3.5" />وزن الورق</span>
                 <span className="font-medium">{paperWeight === "80gsm" ? "80" : paperWeight === "100gsm" ? "100" : "120"} جم/م²</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
+                <span className="text-muted-foreground flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />حجم الملف المقدر</span>
+                <span className="font-medium font-mono">{(() => { const estBytes = analysis.pageCount * copies * (printColor ? 0.5 : 0.15) * 1024 * 1024; if (estBytes < 1024 * 1024) return `${(estBytes / 1024).toFixed(0)} KB`; return `${(estBytes / (1024 * 1024)).toFixed(1)} MB`; })()}</span>
               </div>
             </div>
             {/* Receipt-style total strip */}
