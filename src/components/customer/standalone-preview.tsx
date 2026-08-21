@@ -12,6 +12,7 @@ import {
   Pause, Play, Square, Quote, Lock,
   Printer, Zap, Clock, History, Download, Minus, Plus, Calculator, Hash, Cloud,
   Send, User, Phone, CheckCircle2, Loader2, Truck, MessageCircle, Star, FileCheck,
+  MoveVertical,
 } from "lucide-react";
 import type { BindingType, FileCategory } from "@/components/customer/book-mockup-3d";
 import { ServiceOptionsPanel, type ServiceOptionsState } from "@/components/customer/service-options-panel";
@@ -820,13 +821,19 @@ export function StandalonePreview() {
             confidence: 95,
             healthScore: 95,
             hasImages: numP > 1,
+            imageCount: 0,
             isColor: true,
+            textLayer: true,
+            estimatedDPI: 300,
+            dpiCategory: "ممتازة",
             insights: [
               `رفع + تحليل في ${totalTimeMs}ms`,
               `الملف يحتوي على ${numP} صفحة`,
               `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
               `مقاس الورق: ${paperSize}`,
-            ],
+              numP > 1 ? "يحتوي على نصوص" : null,
+              numP > 1 ? "طباعة نصوص واضحة" : null,
+            ].filter(Boolean) as string[],
             fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
           };
           setAnalysis(pdfResult);
@@ -1012,14 +1019,20 @@ export function StandalonePreview() {
           confidence: serverMeta ? 95 : 70,
           healthScore: serverMeta ? 95 : 70,
           hasImages: numP > 1,
+          imageCount: 0,
           isColor: true,
+          textLayer: true,
+          estimatedDPI: 300,
+          dpiCategory: "ممتازة",
           insights: serverMeta
             ? [
                 `تحليل دقيق على الخادم في ${serverMeta.processingTimeMs}ms`,
                 `الملف يحتوي على ${numP} صفحة`,
                 `الأبعاد: ${dimsMM?.width ?? "?"}×${dimsMM?.height ?? "?"} مم`,
                 `مقاس الورق: ${paperSize}`,
-              ]
+                numP > 1 ? "يحتوي على نصوص" : null,
+                numP > 1 ? "طباعة نصوص واضحة" : null,
+              ].filter(Boolean) as string[]
             : ["تم التحليل بنجاح"],
           fileNature: numP > 10 ? "كتاب / مذكرة" : numP > 1 ? "مستند قصير" : "صفحة واحدة",
         };
@@ -1690,26 +1703,31 @@ export function StandalonePreview() {
         </motion.div>
       )}
 
-      {/* ═══ Progress Steps Indicator (results, preview, analyzing) ═══ */}
+      {/* ═══ Progress Steps Indicator (results, preview) ═══ */}
       {(step === "results" || step === "preview") && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-0 mb-2">
           {[
-            { n: 1, label: "الرفع", icon: <Upload className="h-3.5 w-3.5" />, done: true },
-            { n: 2, label: "التحليل", icon: <Sparkles className="h-3.5 w-3.5" />, done: step === "results" || step === "preview" },
-            { n: 3, label: "المعاينة", icon: <Eye className="h-3.5 w-3.5" />, done: step === "preview" },
-            { n: 4, label: "الطلب", icon: <Send className="h-3.5 w-3.5" />, done: false },
+            { n: 1, label: "الرفع", icon: <Upload className="h-3 w-3" />, done: true, stepTarget: "results" as const },
+            { n: 2, label: "التحليل", icon: <Sparkles className="h-3 w-3" />, done: step === "results" || step === "preview", stepTarget: "results" as const },
+            { n: 3, label: "المعاينة", icon: <Eye className="h-3 w-3" />, done: step === "preview", active: step === "preview", stepTarget: "preview" as const },
+            { n: 4, label: "الطلب", icon: <Send className="h-3 w-3" />, done: false, active: false, stepTarget: "preview" as const },
           ].map((s, i) => (
             <div key={s.n} className="flex items-center">
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300 ${
-                s.done
-                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/30"
-                  : "bg-muted/50 text-muted-foreground border border-border/50"
-              }`}>
-                {s.done ? <Check className="h-3 w-3" /> : s.icon}
+              <button
+                onClick={() => { if (s.done || s.active) setStep(s.stepTarget); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-300 ${
+                  s.active
+                    ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 shadow-sm shadow-amber-200/50 dark:shadow-amber-900/20"
+                    : s.done
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/30 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
+                      : "bg-muted/40 text-muted-foreground/50 border border-border/30"
+                } ${s.done || s.active ? "cursor-pointer" : ""}`}
+              >
+                {s.done && !s.active ? <Check className="h-3 w-3" /> : s.icon}
                 {s.label}
-              </div>
+              </button>
               {i < 3 && (
-                <ChevronLeft className={`h-3 w-3 mx-0.5 transition-colors duration-300 ${s.done ? "text-emerald-400" : "text-muted-foreground/30"}`} />
+                <div className={`w-5 h-px mx-0.5 transition-colors duration-300 ${s.done ? "bg-emerald-300 dark:bg-emerald-700" : "bg-border"}`} />
               )}
             </div>
           ))}
@@ -1720,21 +1738,33 @@ export function StandalonePreview() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
           {/* ─── Action buttons: share quote + new file ─── */}
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => {
-                const quoteText = `تسعيرة طباعة من ${settings.shopName || 'طيف'}:\n- الملف: ${file?.name}\n- الصفحات: ${analysis.pageCount}\n- المقاس: ${analysis.closestPaperSize || analysis.paperSize}\n- التكلفة التقريبية: ${cost.min}–${cost.max} ر.س\n- الوقت: ${printTime}`;
-                navigator.clipboard.writeText(quoteText).then(() => {
-                  setShareCopied(true);
-                  setTimeout(() => setShareCopied(false), 2000);
-                }).catch(() => {});
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${shareCopied
-                ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent hover:border-border'}`}
-            >
-              <Copy className="h-3.5 w-3.5" />
-              {shareCopied ? 'تم النسخ!' : 'نسخ التسعيرة'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const quoteText = `تسعيرة طباعة من ${settings.shopName || 'طيف'}:\n- الملف: ${file?.name}\n- الصفحات: ${analysis.pageCount}\n- المقاس: ${analysis.closestPaperSize || analysis.paperSize}\n- التكلفة التقريبية: ${cost.min}–${cost.max} ر.س\n- الوقت: ${printTime}`;
+                  navigator.clipboard.writeText(quoteText).then(() => {
+                    setShareCopied(true);
+                    setTimeout(() => setShareCopied(false), 2000);
+                  }).catch(() => {});
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${shareCopied
+                  ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent hover:border-border'}`}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {shareCopied ? 'تم النسخ!' : 'نسخ التسعيرة'}
+              </button>
+              <button
+                onClick={() => {
+                  const quoteText = encodeURIComponent(`تسعيرة طباعة من ${settings.shopName || 'طيف'}:\n- الملف: ${file?.name}\n- الصفحات: ${analysis.pageCount}\n- المقاس: ${analysis.closestPaperSize || analysis.paperSize}\n- التكلفة التقريبية: ${cost.min}–${cost.max} ر.س\n- الوقت: ${printTime}`);
+                  window.open(`https://wa.me/?text=${quoteText}`, '_blank');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all border border-transparent hover:border-emerald-200/50 dark:hover:border-emerald-800/30"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                واتساب
+              </button>
+            </div>
             <button
               onClick={() => { setStep("idle"); setFile(null); setImagePreviewUrl(null); setAnalysis(DEFAULT_ANALYSIS); setWorkerResult(null); setError(""); }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all border border-transparent hover:border-border"
@@ -1859,10 +1889,10 @@ export function StandalonePreview() {
           {analysis.pageDimensionsMM && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-2xl border bg-card p-4 shadow-sm">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">الأبعاد</span><span className="font-bold font-mono text-sm">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height}</span><span className="text-[10px] text-muted-foreground">مم</span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{analysis.estimatedDPI ? `${analysis.estimatedDPI}` : "—"}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className="font-bold text-sm">{analysis.dpiCategory || "—"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
-                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center"><span className="text-muted-foreground mb-1">الاتجاه</span><span className="font-bold text-sm">{analysis.orientation === "portrait" ? "عمودي" : "أفقي"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors"><span className="text-muted-foreground mb-1">الأبعاد</span><span className="font-bold font-mono text-sm">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height}</span><span className="text-[10px] text-muted-foreground">مم</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{analysis.estimatedDPI ? `${analysis.estimatedDPI}` : "—"}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors"><span className="text-muted-foreground mb-1">فئة الدقة</span><span className={`font-bold text-sm ${analysis.dpiCategory === "ممتازة" ? "text-emerald-600 dark:text-emerald-400" : analysis.dpiCategory ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>{analysis.dpiCategory || "—"}</span><span className="text-[10px] text-muted-foreground"> </span></div>
+                <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors"><span className="text-muted-foreground mb-1">الاتجاه</span><div className="flex items-center gap-1.5"><span className="font-bold text-sm">{analysis.orientation === "portrait" ? "عمودي" : "أفقي"}</span><MoveVertical className={`h-3.5 w-3.5 text-muted-foreground/60 ${analysis.orientation === "portrait" ? "" : "rotate-90"}`} /></div><span className="text-[10px] text-muted-foreground"> </span></div>
               </div>
             </motion.div>
           )}
@@ -2046,14 +2076,6 @@ export function StandalonePreview() {
 
       {step === "preview" && storedName && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          {/* ─── Breadcrumb ─── */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <button onClick={() => setStep("results")} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-              نتائج التحليل
-            </button>
-            <ChevronLeft className="h-3 w-3" />
-            <span className="font-medium text-foreground">المعاينة</span>
-          </div>
 
           {/* ─── شريط الملخص العلوي ─── Summary bar ─── */}
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border bg-gradient-to-l from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 p-4 shadow-sm">
@@ -2736,6 +2758,10 @@ export function StandalonePreview() {
               <div className="flex items-center justify-between px-4 py-2.5 text-xs">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />الوقت المتوقع</span>
                 <span className="font-medium">{estimateTime(analysis.pageCount * copies)}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs">
+                <span className="text-muted-foreground flex items-center gap-1.5"><Cloud className="h-3 w-3.5" />حجم الملف</span>
+                <span className="font-medium font-mono">{analysis.fileSizeMB > 0 ? `${analysis.fileSizeMB} MB` : `${analysis.fileSizeKB} KB`}</span>
               </div>
             </div>
             {/* Receipt-style total strip */}

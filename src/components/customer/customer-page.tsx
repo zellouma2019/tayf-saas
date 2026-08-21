@@ -727,6 +727,7 @@ function CustomerContent() {
                 { icon: <MapPin className="h-3 w-3" />, label: "تتبع لحظي", desc: "تتبع طلبك لحظياً" },
                 { icon: <RotateCcw className="h-3 w-3" />, label: "الدفع عند الاستلام", desc: "لا حاجة لبطاقة" },
                 { icon: <Clock className="h-3 w-3" />, label: "تسليم سريع", desc: "جاهز في دقائق" },
+                { icon: <ShieldCheck className="h-3 w-3" />, label: "ضمان الجودة", desc: "طباعة عالية الدقة" },
               ].map((feat) => (
                 <motion.span
                   key={feat.label}
