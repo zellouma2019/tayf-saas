@@ -871,13 +871,16 @@ export function BookMockup3D({
         return geo;
       };
 
-      // ═══ 1. PAGE BLOCK (inner pages) — slightly recessed, with SSS emissive ═══
+      // ═══ 1. PAGE BLOCK (inner pages) — fore-edge texture + gutter AO ═══
       const pageGeo = new THREE.BoxGeometry(w, h, thickness);
-      // Fore-edge and spine-side get subtle emissive for subsurface scattering simulation
-      const sssEmissive = new THREE.Color(paperColor).multiplyScalar(0.03);
+      // Fore-edge texture: individual page lines visible from the side
+      const { texture: foreEdgeTex } = createForeEdgeTexture(THREE, sheets, paperColor);
+      managerRef.current?.trackTexture(foreEdgeTex);
+      // Gutter AO: darker cream where pages meet the spine
+      const gutterC = new THREE.Color(paperColor).multiplyScalar(0.88);
       const pageMats = [
-        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0, emissive: sssEmissive.clone() }), // +X fore-edge (SSS)
-        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0, emissive: sssEmissive.clone() }), // -X spine-side (SSS)
+        new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.92, metalness: 0.0, map: foreEdgeTex }), // +X fore-edge (PAGE LINES!)
+        new THREE.MeshStandardMaterial({ color: gutterC, roughness: 0.95, metalness: 0.0 }), // -X spine-side (gutter AO)
         new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.9, metalness: 0.0, map: pageEdgeTex }), // +Y top
         new THREE.MeshStandardMaterial({ color: paperC, roughness: 0.9, metalness: 0.0, map: pageEdgeTex }), // -Y bottom
         new THREE.MeshStandardMaterial({ color: 0xfffef8, roughness: 0.95, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.02 }), // +Z front edge
@@ -892,12 +895,14 @@ export function BookMockup3D({
 
       // ═══ 2. FRONT COVER — ExtrudeGeometry with beveled corners + roughness map ═══
       const frontCoverGeo = createCoverGeo(coverW, coverH, coverThickness);
-      const frontCoverEdgeMat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(spColor).multiplyScalar(1.1), roughness: 0.65, metalness: 0.1,
-        roughnessMap: coverRoughnessMap,
+      const frontCoverEdgeMat = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(spColor).multiplyScalar(1.1), roughness: 0.4, metalness: 0.05,
+        clearcoat: 0.6, clearcoatRoughness: 0.15,
+        envMap: envMap || undefined, envMapIntensity: 0.4,
       });
-      const frontCoverInnerMat = new THREE.MeshStandardMaterial({
-        color: 0xf5f3ee, roughness: 0.9, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.05,
+      const frontCoverInnerMat = new THREE.MeshPhysicalMaterial({
+        color: 0xf5f3ee, roughness: 0.85, metalness: 0.0, clearcoat: 0.0,
+        envMap: envMap || undefined, envMapIntensity: 0.05,
       });
       // ExtrudeGeometry material order: front (+Z), back (-Z), then sides
       // We use a single material array matching extrude geometry groups
@@ -918,8 +923,9 @@ export function BookMockup3D({
 
       // ═══ 3. BACK COVER — ExtrudeGeometry with beveled corners + roughness map ═══
       const backCoverGeo = createCoverGeo(coverW, coverH, coverThickness);
-      const backCoverInnerMat2 = new THREE.MeshStandardMaterial({
-        color: 0xf5f3ee, roughness: 0.9, metalness: 0.0, envMap: envMap || undefined, envMapIntensity: 0.05,
+      const backCoverInnerMat2 = new THREE.MeshPhysicalMaterial({
+        color: 0xf5f3ee, roughness: 0.85, metalness: 0.0, clearcoat: 0.0,
+        envMap: envMap || undefined, envMapIntensity: 0.05,
       });
       const backCoverFaceMat = new THREE.MeshStandardMaterial({
         color: 0xffffff, roughness: 0.65, metalness: pbr.metalness,
@@ -943,11 +949,10 @@ export function BookMockup3D({
         Math.PI / 2, Math.PI,
       );
       const spineCenterX = -w / 2 - coverOverhang / 2;
-      const spineOuterMat = new THREE.MeshStandardMaterial({
-        color: spineC, roughness: 0.5, metalness: 0.15,
-        envMap: envMap || undefined, envMapIntensity: 0.3,
+      const spineOuterMat = new THREE.MeshPhysicalMaterial({
+        color: spineC, roughness: 0.4, metalness: 0.1, clearcoat: 0.3, clearcoatRoughness: 0.2,
+        envMap: envMap || undefined, envMapIntensity: 0.4,
         side: THREE.DoubleSide,
-        roughnessMap: coverRoughnessMap,
       });
       const spineInnerMat = new THREE.MeshStandardMaterial({
         color: 0xf0ede6, roughness: 0.9, metalness: 0.0, side: THREE.DoubleSide,
@@ -1023,10 +1028,10 @@ export function BookMockup3D({
 
       // ═══ 7. SPINE GROOVE LINES — where cover meets spine ═══
       if (thickness > 0.05) {
-        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.95, metalness: 0.0 });
-        const grooveGeo = new THREE.BoxGeometry(0.002, coverH * 0.94, totalDepth);
+        const grooveMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.95, metalness: 0.0 });
+        const grooveGeo = new THREE.BoxGeometry(0.005, coverH * 0.96, totalDepth);
         const frontGroove = new THREE.Mesh(grooveGeo, grooveMat);
-        frontGroove.position.set(spineCenterX + coverThickness / 2 + 0.001, 0, 0);
+        frontGroove.position.set(spineCenterX + coverThickness / 2 + 0.002, 0, 0);
         group.add(frontGroove);
         const backGroove = new THREE.Mesh(grooveGeo.clone(), grooveMat);
         backGroove.position.set(frontGroove.position.x, 0, 0);
