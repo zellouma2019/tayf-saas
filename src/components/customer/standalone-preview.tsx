@@ -295,6 +295,8 @@ export function StandalonePreview() {
   const [deliveryMode, setDeliveryMode] = useState<"pickup" | "delivery">("pickup");
   // Share quote copied state
   const [shareCopied, setShareCopied] = useState(false);
+  // Track reference copy state
+  const [trackCopied, setTrackCopied] = useState(false);
   // Service options state (from ServiceOptionsPanel)
   const [serviceOptions, setServiceOptions] = useState<ServiceOptionsState | null>(null);
 
@@ -3147,8 +3149,10 @@ export function StandalonePreview() {
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-sm text-muted-foreground">رقم التتبع:</span>
                         <span className="font-mono font-bold text-lg text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-lg border border-amber-200 dark:border-amber-800">{orderReference}</span>
-                        <button onClick={() => { navigator.clipboard.writeText(orderReference); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="نسخ رقم التتبع">
-                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        <button onClick={() => { navigator.clipboard.writeText(orderReference); setTrackCopied(true); setTimeout(() => setTrackCopied(false), 2000); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" title="نسخ رقم التتبع">
+                          <motion.span animate={trackCopied ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
+                            {trackCopied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                          </motion.span>
                         </button>
                       </div>
                     )}
@@ -3185,7 +3189,14 @@ export function StandalonePreview() {
                     </div>
                   )}
 
-                  <Button onClick={() => { setOrderDialogOpen(false); resetAll(); }} className="w-full h-11 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm gap-2 shadow-lg shadow-amber-500/20">تم</Button>
+                  <Button onClick={() => { setOrderDialogOpen(false); resetAll(); }} className="w-full h-11 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm gap-2 shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-transform">تم</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setOrderSubmitted(false); setOrderStep(1); }}
+                    className="w-full h-10 rounded-xl gap-1.5 text-xs text-muted-foreground"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />طلب جديد بنفس الإعدادات
+                  </Button>
                 </motion.div>
               )}
             </AnimatePresence>
