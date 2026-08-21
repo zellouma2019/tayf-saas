@@ -292,6 +292,8 @@ export function StandalonePreview() {
   const [orderStep, setOrderStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState<"pickup" | "delivery">("pickup");
+  // Share quote copied state
+  const [shareCopied, setShareCopied] = useState(false);
   // Service options state (from ServiceOptionsPanel)
   const [serviceOptions, setServiceOptions] = useState<ServiceOptionsState | null>(null);
 
@@ -1176,8 +1178,8 @@ export function StandalonePreview() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="text-center space-y-4 pt-4 pb-2"
       >
-        {/* Logo */}
-        <div className="flex justify-center">
+        {/* Logo with online status dot */}
+        <div className="flex justify-center relative">
           <motion.div
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -1185,14 +1187,27 @@ export function StandalonePreview() {
           >
             <Printer className="h-8 w-8 text-white" />
           </motion.div>
+          {/* Online status pulse */}
+          <motion.div
+            animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-0.5 -left-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background"
+          />
+          <div className="absolute -top-0.5 -left-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background" />
         </div>
 
-        {/* Title with gradient */}
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent">
-            {settings.shopName || "مطبعة الذكي"}
-          </h1>
-          <p className="text-foreground/60 text-sm mt-2 font-medium">
+        {/* Title with gradient + online badge */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2.5 mb-1.5">
+            <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent">
+              {settings.shopName || "مطبعة الذكي"}
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              متصل الآن
+            </span>
+          </div>
+          <p className="text-foreground/60 text-sm mt-1 font-medium">
             ارفع ملفك واحصل على تحليل فوري وتسعيرة تلقائية
           </p>
         </div>
@@ -1256,6 +1271,13 @@ export function StandalonePreview() {
             .drag-pulse {
               animation: pulse-border 1s ease-in-out infinite;
             }
+            @keyframes drop-bounce {
+              0%, 100% { transform: translateY(0) scale(1); }
+              50% { transform: translateY(-4px) scale(1.05); }
+            }
+            .drop-icon-bounce {
+              animation: drop-bounce 0.6s ease-in-out infinite;
+            }
           `}</style>
           <div
             className={`relative rounded-3xl p-[3px] transition-all duration-300 upload-glow ${isDragging ? "scale-[1.02] shadow-xl shadow-amber-500/30" : "hover:shadow-lg hover:shadow-amber-500/15"}`}
@@ -1268,7 +1290,24 @@ export function StandalonePreview() {
               onClick={() => fileInputRef.current?.click()}
             >
               <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.tif,.avif,.svg,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.csv,.ai,.eps,.psd,.indd" className="hidden" onChange={onFileInput} />
-              <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px]">
+              <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px] relative">
+                {/* Drag overlay */}
+                <AnimatePresence>
+                  {isDragging && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-10 rounded-[21px] bg-amber-50/90 dark:bg-amber-950/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3"
+                    >
+                      <div className="drop-icon-bounce w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-500/30">
+                        <ArrowRight className="h-10 w-10 text-white" />
+                      </div>
+                      <p className="text-lg font-bold text-amber-700 dark:text-amber-300">أفلت الملف هنا</p>
+                      <p className="text-xs text-amber-600/70 dark:text-amber-400/70">سيتم رفع الملف وتحليله تلقائياً</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 {/* Upload icon with float */}
                 <div className="upload-float w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20">
                   <Upload className="h-12 w-12 text-amber-500 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
@@ -1364,8 +1403,10 @@ export function StandalonePreview() {
                 <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                   <History className="h-4 w-4" />
                   عمليات سابقة
+                  <span className="text-[10px] font-normal text-muted-foreground/60 bg-muted/60 px-2 py-0.5 rounded-full">{recentUploads.length}</span>
                 </div>
-                <button onClick={clearHistory} className="text-xs text-muted-foreground hover:text-rose-500 transition-colors">
+                <button onClick={clearHistory} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-rose-500 transition-colors">
+                  <X className="h-3 w-3" />
                   مسح السجل
                 </button>
               </div>
@@ -1401,7 +1442,13 @@ export function StandalonePreview() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{item.pages} صفحة • {item.size}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-muted-foreground">{item.pages} صفحة</span>
+                          <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/40" />
+                          <span className="text-[10px] text-muted-foreground">{item.size}</span>
+                          <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/40" />
+                          <span className="text-[10px] text-muted-foreground/60 uppercase font-mono">{item.fileType}</span>
+                        </div>
                       </div>
                       <Badge className={`${badgeColor} border-0 text-[9px] font-semibold`}>
                         {item.category === "image" ? "صورة" : item.category === "short-doc" ? "مستند" : "كتاب"}
@@ -1539,7 +1586,7 @@ export function StandalonePreview() {
         </motion.div>
       )}
 
-      {/* ═══ Progress Steps Indicator (results, preview, analyzing) ═══ */
+      {/* ═══ Progress Steps Indicator (results, preview, analyzing) ═══ */}
       {(step === "results" || step === "preview") && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-0 mb-2">
           {[
@@ -1567,8 +1614,23 @@ export function StandalonePreview() {
 
       {step === "results" && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-          {/* ─── رفع ملف جديد ─── */}
-          <div className="flex justify-end">
+          {/* ─── Action buttons: share quote + new file ─── */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => {
+                const quoteText = `تسعيرة طباعة من ${settings.shopName || 'طيف'}:\n- الملف: ${file?.name}\n- الصفحات: ${analysis.pageCount}\n- المقاس: ${analysis.closestPaperSize || analysis.paperSize}\n- التكلفة التقريبية: ${cost.min}–${cost.max} ر.س\n- الوقت: ${printTime}`;
+                navigator.clipboard.writeText(quoteText).then(() => {
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }).catch(() => {});
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${shareCopied
+                ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-800/30'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent hover:border-border'}`}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              {shareCopied ? 'تم النسخ!' : 'نسخ التسعيرة'}
+            </button>
             <button
               onClick={() => { setStep("idle"); setFile(null); setImagePreviewUrl(null); setAnalysis(DEFAULT_ANALYSIS); setWorkerResult(null); setError(""); }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all border border-transparent hover:border-border"
@@ -1891,7 +1953,7 @@ export function StandalonePreview() {
           {/* ─── شريط الملخص العلوي ─── Summary bar ─── */}
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border bg-gradient-to-l from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Cover/image thumbnail in summary */
+              {/* Cover/image thumbnail in summary */}
               {workerResult?.coverDataUrl ? (
                 <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border-2 border-amber-200/50 dark:border-amber-800/30 shadow-sm bg-white">
                   <img src={workerResult.coverDataUrl} alt="غلاف" className="w-full h-full object-cover" draggable={false} />

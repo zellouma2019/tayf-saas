@@ -296,7 +296,7 @@ function TrackingSection() {
         )}
       </AnimatePresence>
 
-      {/* ═══ Section Header ═══ */
+      {/* ═══ Section Header ═══ */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 flex items-center justify-center shadow-sm">
@@ -726,6 +726,7 @@ function CustomerContent() {
                 { icon: <Box className="h-3 w-3" />, label: "معاينة 3D" },
                 { icon: <MapPin className="h-3 w-3" />, label: "تتبع لحظي" },
                 { icon: <RotateCcw className="h-3 w-3" />, label: "الدفع عند الاستلام" },
+                { icon: <Clock className="h-3 w-3" />, label: "تسليم سريع" },
               ].map((feat) => (
                 <span
                   key={feat.label}
@@ -736,6 +737,13 @@ function CustomerContent() {
                 </span>
               ))}
             </motion.div>
+
+            {/* Copyright row */}
+            <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/40 mt-1">
+              <span>صُنع بواسطة</span>
+              <span className="font-semibold text-amber-500/60">طيف</span>
+              <span>© {new Date().getFullYear()}</span>
+            </div>
           </div>
         </div>
       </motion.footer>
