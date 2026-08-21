@@ -1198,13 +1198,20 @@ export function StandalonePreview() {
             .dark .upload-glow {
               box-shadow: 0 0 40px rgba(245, 158, 11, 0.04), 0 0 80px rgba(249, 115, 22, 0.02);
             }
+            @keyframes pulse-border {
+              0%, 100% { opacity: 0.5; transform: scale(1); }
+              50% { opacity: 1; transform: scale(1.005); }
+            }
+            .drag-pulse {
+              animation: pulse-border 1s ease-in-out infinite;
+            }
           `}</style>
           <div
             className={`relative rounded-3xl p-[3px] transition-all duration-300 upload-glow ${isDragging ? "scale-[1.02] shadow-xl shadow-amber-500/30" : "hover:shadow-lg hover:shadow-amber-500/15"}`}
             onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDragOver={onDragOver} onDrop={onDrop}
           >
             {/* Animated gradient border */}
-            <div className={`upload-zone-border absolute inset-0 rounded-3xl transition-opacity duration-300 ${isDragging ? "opacity-100 scale-105" : "opacity-70"}`} />
+            <div className={`upload-zone-border absolute inset-0 rounded-3xl transition-opacity duration-300 ${isDragging ? "opacity-100 scale-105 drag-pulse" : "opacity-70"}`} />
             <div
               className={`relative rounded-[21px] bg-background cursor-pointer group transition-all duration-300 ${isDragging ? "bg-amber-50/80 dark:bg-amber-950/30" : "hover:bg-muted/20"}`}
               onClick={() => fileInputRef.current?.click()}
@@ -1264,6 +1271,8 @@ export function StandalonePreview() {
 
                 <div className="flex items-center gap-3 text-[11px] text-muted-foreground/70">
                   <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" />حتى 100 ميغابايت</span>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                  <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-400" />رفع سريع فوري</span>
                   <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                   <span>رفع آمن ومشفّر</span>
                   <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
@@ -1396,6 +1405,13 @@ export function StandalonePreview() {
                   ? `${chunkedUpload.formatSize(chunkedUpload.uploadedBytes)} / ${chunkedUpload.formatSize(chunkedUpload.totalBytes)}`
                   : (file ? `${formatFileSize(Math.round((uploadProgress / 100) * file.size))} / ${formatFileSize(file.size)}` : "")}
               </p>
+              {/* Upload method badge for chunked upload */}
+              {file && file.size >= 4 * 1024 * 1024 && (chunkedUpload.phase !== "idle") && (
+                <div className="flex items-center justify-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 rounded-lg px-2.5 py-1 mt-1">
+                  <Layers className="h-3 w-3" />
+                  <span>رفع مجزأ (2MB/جزء) — للحفاظ على السرعة والاستقرار</span>
+                </div>
+              )}
               {/* Control buttons */}
               {(chunkedUpload.canPause || chunkedUpload.canResume) && (
                 <div className="flex items-center justify-center gap-3 pt-1">
@@ -1500,6 +1516,11 @@ export function StandalonePreview() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge className={`${categoryInfo.color} border-0 text-[10px] font-semibold gap-1`}>{categoryInfo.icon}{categoryInfo.label}</Badge>
+                {uploadStartTime > 0 && (
+                  <Badge variant="outline" className="text-[9px] text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/30 gap-1">
+                    <Zap className="h-2.5 w-2.5" />{uploadSpeed > 0 ? (uploadSpeed > 1024 * 1024 ? `${(uploadSpeed / 1024 / 1024).toFixed(1)} MB/ث` : `${(uploadSpeed / 1024).toFixed(0)} KB/ث`) : "سريع"}
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -1593,9 +1614,14 @@ export function StandalonePreview() {
             </motion.div>
           )}
           {analysis.insights.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="rounded-2xl border bg-gradient-to-br from-amber-50/60 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 p-4 space-y-2 shadow-sm">
-              <div className="flex items-center gap-2 mb-2"><Sparkles className="h-4 w-4 text-amber-500" /><span className="text-xs font-semibold">توصيات</span></div>
-              <ul className="space-y-1.5">{analysis.insights.map((ins, i) => (<li key={i} className="flex items-start gap-2 text-xs"><Check className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" /><span>{ins}</span></li>))}</ul>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="rounded-2xl border border-amber-200/50 dark:border-amber-800/30 bg-gradient-to-br from-amber-50/70 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10 p-4 space-y-2.5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3"><Sparkles className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">توصيات</span><span className="text-[9px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">{analysis.insights.length}</span></div>
+              <ul className="space-y-2">{analysis.insights.map((ins, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-xs bg-white/50 dark:bg-white/5 rounded-xl px-3 py-2 transition-colors hover:bg-white/80 dark:hover:bg-white/10">
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 mt-0.5"><Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" /></div>
+                  <span className="leading-relaxed">{ins}</span>
+                </li>
+              ))}</ul>
             </motion.div>
           )}
 
@@ -1635,7 +1661,7 @@ export function StandalonePreview() {
 
               {/* Print readiness checklist */}
               <div className="rounded-2xl border bg-card p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3"><Printer className="h-4 w-4 text-violet-500" /><span className="text-xs font-bold">فحص جاهزية الطباعة</span></div>
+                <div className="flex items-center gap-2 mb-3"><Printer className="h-4 w-4 text-violet-500" /><span className="text-xs font-bold">فحص جاهزية الطباعة</span><span className="text-[9px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full mr-auto">5/5</span></div>
                 <div className="space-y-2">
                   {[
                     { ok: !analysis.isEncrypted, label: "الملف غير مشفّر", detail: "يمكن معالجته مباشرة" },
@@ -1644,8 +1670,13 @@ export function StandalonePreview() {
                     { ok: analysis.hasEmbeddedFonts || analysis.textLayer || false, label: "يحتوي على نصوص", detail: "طباعة نصوص واضحة" },
                     { ok: analysis.isColor, label: "ملون", detail: "سيُطبع بالألوان" },
                   ].map((item, i) => (
-                    <div key={i} className={`flex items-center gap-3 py-2 px-3 rounded-xl transition-colors ${item.ok ? 'bg-emerald-50/60 dark:bg-emerald-950/15' : 'bg-amber-50/60 dark:bg-amber-950/15'}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.ok ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}`}>
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.08 }}
+                      className={`flex items-center gap-3 py-2.5 px-3 rounded-xl transition-colors ${item.ok ? 'bg-emerald-50/60 dark:bg-emerald-950/15' : 'bg-amber-50/60 dark:bg-amber-950/15'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${item.ok ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}`}>
                         {item.ok
                           ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                           : <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />}
@@ -1654,7 +1685,8 @@ export function StandalonePreview() {
                         <p className={`text-xs font-medium ${item.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>{item.label}</p>
                         <p className="text-[10px] text-muted-foreground">{item.detail}</p>
                       </div>
-                    </div>
+                      {item.ok && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 opacity-60" />}
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -1734,6 +1766,19 @@ export function StandalonePreview() {
           )}
           {/* ─── زر المتابعة مع معلومات إضافية ─── */}
           <div className="space-y-3">
+            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="flex items-center justify-center gap-4">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Eye className="h-3 w-3 text-blue-400" /><span>معاينة 3D حية</span>
+              </div>
+              <div className="w-6 h-px bg-border" />
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Settings2 className="h-3 w-3 text-violet-400" /><span>خيارات متقدمة</span>
+              </div>
+              <div className="w-6 h-px bg-border" />
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Calculator className="h-3 w-3 text-emerald-400" /><span>تسعيرة تلقائية</span>
+              </div>
+            </motion.div>
             <Button onClick={() => {
               // تعيين التجليد الافتراضي حسب التصنيف عند الدخول للمعاينة
               setActiveBinding(getDefaultBinding(fileCategory));
@@ -1741,13 +1786,6 @@ export function StandalonePreview() {
             }} className="w-full h-12 rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98]">
               <Eye className="h-4 w-4" />متابعة للمعاينة<ArrowLeft className="h-4 w-4" />
             </Button>
-            <p className="text-center text-[10px] text-muted-foreground/60 flex items-center justify-center gap-3">
-              <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-400" />معاينة 3D حية</span>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <span className="flex items-center gap-1"><Settings2 className="h-3 w-3 text-violet-400" />خيارات طباعة متقدمة</span>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <span className="flex items-center gap-1"><Calculator className="h-3 w-3 text-emerald-400" />تسعيرة تلقائية</span>
-            </p>
           </div>
         </motion.div>
       )}
