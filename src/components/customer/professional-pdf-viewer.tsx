@@ -8,7 +8,7 @@ import { Loader2, AlertCircle } from "lucide-react";
 //  • تحكم تكيفي بدقة الشاشة (Device Pixel Ratio)
 //  • Virtual scrolling: يعرض فقط الصفحات المرئية
 //  • Pinch-to-zoom + Pan على الموبايل
-//  • Smooth zoom بدون إعادة تحميل كاملة
+//  • Responsive: يستخدم عرض الحاوية الفعلي بدل قيمة ثابتة
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ProfessionalPdfViewerProps {
@@ -24,7 +24,7 @@ interface ProfessionalPdfViewerProps {
   initialScale?: number;
   /** CSS filter (مثل grayscale) */
   cssFilter?: string;
-  /** عرض أقصى للمحتوى */
+  /** عرض أقصى للمحتوى (fallback if ResizeObserver unavailable) */
   maxWidth?: number;
   /** إجمالي الصفحات */
   onTotalPages?: (n: number) => void;
@@ -75,27 +75,53 @@ export function ProfessionalPdfViewer({
   const [isPanning, setIsPanning] = useState(false);
   const [renderedPages, setRenderedPages] = useState<Map<number, string>>(new Map());
   const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set());
+  const [containerWidth, setContainerWidth] = useState<number>(maxWidth);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Use internal page for single mode, or track scroll position for scroll mode
   const activePage = viewMode === "single" ? currentPage : internalPage;
 
+  // ───Responsive container width via ResizeObserver───
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) setContainerWidth(Math.floor(w));
+      }
+    });
+    observer.observe(container);
+    // Initial measurement
+    const w = container.getBoundingClientRect().width;
+    if (w > 0) setContainerWidth(Math.floor(w));
+    return () => observer.disconnect();
+  }, []);
+
   // ───Device Pixel Ratio───
   const dpr = useMemo(() => {
     if (typeof window === "undefined") return 1;
-    return Math.min(window.devicePixelRatio || 1, 3); // Cap at 3x to avoid OOM
+    return Math.min(window.devicePixelRatio || 1, 3);
   }, []);
 
-  // ───Adaptive scale based on container width───
+  // ───Effective max width (use actual container width)───
+  const effectiveMaxWidth = Math.min(containerWidth, maxWidth);
+
+  // ───Adaptive scale: fit PDF page within container───
+  // pageDimensions is in PDF points (72 DPI base).
+  // effectiveMaxWidth is in CSS pixels (96 DPI base).
+  // We need: pdfPoints * scale * (96/72) <= containerWidth
+  // So: scale <= containerWidth / (pdfPoints * 4/3)
   const adaptiveScale = useMemo(() => {
-    if (!pageDimensions.width || !maxWidth) return scale;
-    const fitScale = (maxWidth - 16) / (pageDimensions.width / 72 * 25.4 / 0.0254);
-    // Return the smaller of requested scale or fit-to-width
+    if (!pageDimensions.width || !effectiveMaxWidth) return scale;
+    const cssWidthAtScale1 = pageDimensions.width * (96 / 72);
+    const fitScale = (effectiveMaxWidth - 16) / cssWidthAtScale1;
     if (scale <= 1) {
-      return Math.max(fitScale * 0.8, 0.3);
+      return Math.max(fitScale, 0.3);
     }
-    return scale;
-  }, [scale, pageDimensions.width, maxWidth]);
+    return Math.min(scale, fitScale);
+  }, [scale, pageDimensions.width, effectiveMaxWidth]);
 
   // ───Load PDF document───
   useEffect(() => {
@@ -122,7 +148,6 @@ export function ProfessionalPdfViewer({
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           source = { data: bytes.buffer as ArrayBuffer };
         } else {
-          // Server file — try to fetch first to provide a clear error
           const fetchUrl = `/api/c/uploads/${encodeURIComponent(fileSource)}`;
           const resp = await fetch(fetchUrl);
           if (!resp.ok) {
@@ -183,7 +208,10 @@ export function ProfessionalPdfViewer({
       const ctx = offscreen.getContext("2d");
       if (!ctx) return null;
 
-      // Enable image smoothing for better quality
+      // White background for clean rendering
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
@@ -210,7 +238,6 @@ export function ProfessionalPdfViewer({
       setLoading(true);
       onLoadingChange?.(true);
 
-      // Cancel previous render
       if (renderTaskRef.current) {
         try {
           (renderTaskRef.current as { cancel: () => void }).cancel();
@@ -225,7 +252,6 @@ export function ProfessionalPdfViewer({
         return;
       }
 
-      // Draw to visible canvas
       const canvas = canvasRef.current!;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -246,7 +272,7 @@ export function ProfessionalPdfViewer({
 
     renderCurrentPage();
     return () => { cancelled = true; };
-  }, [viewMode, currentPage, adaptiveScale, renderPageToCanvas, dpr]);
+  }, [viewMode, currentPage, adaptiveScale, renderPageToCanvas, dpr, onLoadingChange]);
 
   // ───Scroll mode: render visible pages───
   useEffect(() => {
@@ -255,7 +281,6 @@ export function ProfessionalPdfViewer({
     let cancelled = false;
 
     async function renderVisible() {
-      const newPages = new Set<number>();
       const newRendered = new Map<number, string>(renderedPages);
 
       for (const pageNum of visiblePages) {
@@ -266,7 +291,6 @@ export function ProfessionalPdfViewer({
             newRendered.set(pageNum, dataUrl);
           }
         }
-        newPages.add(pageNum);
       }
 
       if (!cancelled) {
@@ -276,7 +300,7 @@ export function ProfessionalPdfViewer({
 
     renderVisible();
     return () => { cancelled = true; };
-  }, [viewMode, visiblePages, adaptiveScale, renderPageToCanvas]);
+  }, [viewMode, visiblePages, adaptiveScale, renderPageToCanvas, renderedPages]);
 
   // ───Intersection observer for scroll mode───
   useEffect(() => {
@@ -297,7 +321,6 @@ export function ProfessionalPdfViewer({
           return merged;
         });
 
-        // Update current page based on most visible
         if (visible.size > 0) {
           const maxPage = Math.max(...visible);
           setInternalPage(maxPage);
@@ -307,7 +330,6 @@ export function ProfessionalPdfViewer({
       { root: scrollContainerRef.current, rootMargin: "200px 0px" }
     );
 
-    // Observe all page placeholders
     const placeholders = scrollContainerRef.current.querySelectorAll("[data-page-num]");
     placeholders.forEach((el) => observer.observe(el));
 
@@ -408,16 +430,16 @@ export function ProfessionalPdfViewer({
     };
   }, []);
 
-  // ───Page display width (CSS pixels)───
+  // ───Page display dimensions (CSS pixels)───
   const pageDisplayWidth = useMemo(() => {
-    if (!pageDimensions.width) return maxWidth;
-    const baseWidth = pageDimensions.width / 72 * 96; // pt to px at 96dpi
+    if (!pageDimensions.width) return effectiveMaxWidth;
+    const baseWidth = pageDimensions.width * (96 / 72);
     return baseWidth * adaptiveScale;
-  }, [pageDimensions.width, adaptiveScale, maxWidth]);
+  }, [pageDimensions.width, adaptiveScale, effectiveMaxWidth]);
 
   const pageDisplayHeight = useMemo(() => {
     if (!pageDimensions.height) return 800;
-    const baseHeight = pageDimensions.height / 72 * 96;
+    const baseHeight = pageDimensions.height * (96 / 72);
     return baseHeight * adaptiveScale;
   }, [pageDimensions.height, adaptiveScale]);
 
@@ -442,7 +464,7 @@ export function ProfessionalPdfViewer({
   return (
     <div
       ref={containerRef}
-      className={`relative ${className}`}
+      className={`relative w-full ${className}`}
       style={{ touchAction: isPanning ? "none" : "pan-x pan-y" }}
     >
       {/* Loading overlay */}
@@ -462,7 +484,7 @@ export function ProfessionalPdfViewer({
       {/* ═══ وضع الصفحة الواحدة ═══ */}
       {viewMode === "single" && (
         <div
-          className="relative overflow-auto rounded-lg bg-white shadow-lg"
+          className="relative overflow-auto rounded-lg bg-[#f5f5f5] dark:bg-zinc-900/80 shadow-lg"
           style={{
             maxWidth: "100%",
             maxHeight: "70vh",
@@ -480,18 +502,23 @@ export function ProfessionalPdfViewer({
           onWheel={handleWheel}
         >
           <div
-            className="flex items-start justify-center p-2"
-            style={{ minWidth: `${pageDisplayWidth + 16}px`, minHeight: `${pageDisplayHeight + 16}px` }}
+            className="flex items-start justify-center p-3"
+            style={{ minHeight: `${pageDisplayHeight + 24}px` }}
           >
-            <div className="relative bg-white shadow-md" style={{ filter: cssFilter }}>
+            <div className="relative bg-white rounded shadow-md ring-1 ring-black/5" style={{ filter: cssFilter }}>
               <canvas
                 ref={canvasRef}
-                className="block"
+                className="block rounded"
                 style={{
-                  maxWidth: `${pageDisplayWidth}px`,
+                  maxWidth: "100%",
                   height: "auto",
                 }}
-              />
+              />\n              {/* Page number badge overlay */}
+              {totalPagesCount > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white/90 text-[10px] font-medium">
+                  صفحة {currentPage} من {totalPagesCount}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -501,7 +528,7 @@ export function ProfessionalPdfViewer({
       {viewMode === "scroll" && (
         <div
           ref={scrollContainerRef}
-          className="overflow-auto rounded-lg bg-gray-100/50 dark:bg-gray-900/50"
+          className="overflow-auto rounded-lg bg-[#f5f5f5] dark:bg-zinc-900/80"
           style={{
             maxHeight: "75vh",
             touchAction: isPanning ? "none" : "pan-x pan-y",
@@ -511,10 +538,9 @@ export function ProfessionalPdfViewer({
           onTouchEnd={handleTouchEnd}
           onWheel={handleWheel}
         >
-          <div className="flex flex-col items-center gap-3 p-3 pb-8">
+          <div className="flex flex-col items-center gap-4 p-3 pb-8">
             {Array.from({ length: totalPagesCount }, (_, i) => i + 1).map((pageNum) => {
               const dataUrl = renderedPages.get(pageNum);
-              const isVisible = visiblePages.has(pageNum);
 
               return (
                 <div
@@ -524,7 +550,7 @@ export function ProfessionalPdfViewer({
                     if (el) pageRefs.current.set(pageNum, el);
                     else pageRefs.current.delete(pageNum);
                   }}
-                  className="relative bg-white shadow-md rounded-sm overflow-hidden"
+                  className="relative bg-white rounded shadow-md ring-1 ring-black/5 overflow-hidden"
                   style={{
                     width: `${pageDisplayWidth}px`,
                     height: `${pageDisplayHeight}px`,
@@ -544,7 +570,6 @@ export function ProfessionalPdfViewer({
                     </div>
                   )}
 
-                  {/* Page number badge */}
                   <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md font-mono">
                     {pageNum}
                   </div>

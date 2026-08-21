@@ -2774,7 +2774,7 @@ export function StandalonePreview() {
             {previewMode !== "mockup" && uploadedFileType === "pdf" && (
               <motion.div key="pdf" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} ref={previewContainerRef}>
                 <div className="rounded-2xl border bg-muted/10 overflow-hidden shadow-sm relative">
-                  <ProfessionalPdfViewer fileSource={pdfDataUrl || storedName} currentPage={currentPage} onPageChange={setCurrentPage} viewMode={pdfViewMode} initialScale={zoom / 100} maxWidth={600} onTotalPages={(n) => setTotalPages(n)} />
+                  <ProfessionalPdfViewer fileSource={pdfDataUrl || storedName} currentPage={currentPage} onPageChange={setCurrentPage} viewMode={pdfViewMode} initialScale={zoom / 100} maxWidth={800} onTotalPages={(n) => setTotalPages(n)} />
                   {pdfViewMode === "single" && totalPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 border-t">
                       <div className="flex items-center gap-1.5">
