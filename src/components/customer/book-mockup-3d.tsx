@@ -840,52 +840,6 @@ export function BookMockup3D({
       envMapIntensity: 0.05,
     });
     edgeMatRef.current = edgeMat;
-      for (let x = 0; x < 800; x += 4) { pCtx.beginPath(); pCtx.moveTo(x, 0); pCtx.lineTo(x, 1100); pCtx.stroke(); }
-      pCtx.globalAlpha = 1;
-      // Teal top band
-      pCtx.fillStyle = "#0d9488";
-      pCtx.fillRect(0, 0, 800, 50);
-      pCtx.fillStyle = "#ffffff";
-      pCtx.font = "600 16px system-ui, sans-serif";
-      pCtx.textAlign = "center";
-      pCtx.fillText("صفحة مطبوعة", 400, 32);
-      // Inner border
-      pCtx.strokeStyle = "rgba(13, 148, 136, 0.12)";
-      pCtx.lineWidth = 1;
-      pCtx.beginPath(); pCtx.roundRect(60, 80, 680, 940, 4); pCtx.stroke();
-      // File name
-      const pName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
-      const pTrunc = pName.length > 32 ? pName.slice(0, 29) + "..." : pName;
-      pCtx.fillStyle = "#2d2a26";
-      pCtx.font = "700 34px Georgia, 'Times New Roman', serif";
-      pCtx.textAlign = "center";
-      pCtx.textBaseline = "middle";
-      pCtx.fillText(pTrunc, 400, 520);
-      pCtx.textBaseline = "alphabetic";
-      // Divider
-      pCtx.strokeStyle = "rgba(13, 148, 136, 0.2)";
-      pCtx.lineWidth = 0.8;
-      pCtx.beginPath(); pCtx.moveTo(300, 620); pCtx.lineTo(500, 620); pCtx.stroke();
-      // Info
-      pCtx.fillStyle = "rgba(120, 113, 108, 0.6)";
-      pCtx.font = "400 15px system-ui, sans-serif";
-      pCtx.fillText(`${paperSize}  ·  300 DPI  ·  ${totalPages} صفحة`, 400, 660);
-      // Bottom band
-      pCtx.fillStyle = "#0d9488";
-      pCtx.fillRect(0, 1050, 800, 50);
-      // Branding
-      pCtx.fillStyle = "rgba(255,255,255,0.7)";
-      pCtx.font = "400 13px system-ui, sans-serif";
-      pCtx.fillText("طيف — منصة الطباعة", 400, 1080);
-      const pTex = new THREE.CanvasTexture(pCanvas);
-      pTex.colorSpace = THREE.SRGBColorSpace;
-      pTex.generateMipmaps = true;
-      pTex.minFilter = THREE.LinearMipmapLinearFilter;
-      pTex.magFilter = THREE.LinearFilter;
-      if (managerRef.current) pTex.anisotropy = managerRef.current.getRenderer().capabilities.getMaxAnisotropy();
-      managerRef.current?.trackTexture(pTex);
-      activeFrontTexInfo = { texture: pTex, aspectRatio: 800 / 1100 };
-    }
 
     /* === Path 1: Flat printed sheet (image / single page) === */
     if (category === "image") {

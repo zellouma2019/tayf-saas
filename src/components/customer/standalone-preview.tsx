@@ -1294,7 +1294,7 @@ export function StandalonePreview() {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="absolute -top-0.5 -left-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background"
           />
-          <div className="absolute -top-0.5 -left-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background" />
+          <div className="absolute -top-0.5 -left-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background" ></div>
         </div>
 
         {/* Title with gradient + online badge */}
@@ -1414,17 +1414,17 @@ export function StandalonePreview() {
             onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDragOver={onDragOver} onDrop={onDrop}
           >
             {/* Animated gradient border */}
-            <div className={`upload-zone-border absolute inset-0 rounded-3xl transition-opacity duration-300 ${isDragging ? "opacity-100 scale-105 drag-pulse" : "opacity-70"}`} />
+            <div className={`upload-zone-border absolute inset-0 rounded-3xl transition-opacity duration-300 ${isDragging ? "opacity-100 scale-105 drag-pulse" : "opacity-70"}`} ></div>
             <div
               className={`relative rounded-[21px] bg-background cursor-pointer group transition-all duration-300 ${isDragging ? "bg-amber-50/80 dark:bg-amber-950/30" : "hover:bg-muted/20"}`}
               onClick={() => fileInputRef.current?.click()}
             >
               <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.tif,.avif,.svg,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.csv,.ai,.eps,.psd,.indd" className="hidden" onChange={onFileInput} />
               <div className="grid-pattern rounded-[21px] px-6 sm:px-16 py-10 sm:py-16 flex flex-col items-center justify-center gap-5 min-h-[320px] sm:min-h-[360px] relative overflow-hidden">
-                {/* Floating decorative orbs */
-                <div className="upload-orb-1 absolute top-8 right-12 w-32 h-32 rounded-full bg-amber-200/20 dark:bg-amber-500/5 blur-2xl pointer-events-none" />
-                <div className="upload-orb-2 absolute bottom-12 left-8 w-40 h-40 rounded-full bg-orange-200/20 dark:bg-orange-500/5 blur-2xl pointer-events-none" />
-                <div className="absolute top-1/2 left-1/4 w-20 h-20 rounded-full bg-yellow-200/10 dark:bg-yellow-500/3 blur-xl pointer-events-none" />
+                {/* Floating decorative orbs */}
+                <div className="upload-orb-1 absolute top-8 right-12 w-32 h-32 rounded-full bg-amber-200/20 dark:bg-amber-500/5 blur-2xl pointer-events-none" ></div>
+                <div className="upload-orb-2 absolute bottom-12 left-8 w-40 h-40 rounded-full bg-orange-200/20 dark:bg-orange-500/5 blur-2xl pointer-events-none" ></div>
+                <div className="absolute top-1/2 left-1/4 w-20 h-20 rounded-full bg-yellow-200/10 dark:bg-yellow-500/3 blur-xl pointer-events-none" ></div>
                 {/* Drag overlay */}
                 <AnimatePresence>
                   {isDragging && (
@@ -1751,7 +1751,7 @@ export function StandalonePreview() {
                 {s.label}
               </button>
               {i < 3 && (
-                <div className={`w-6 h-0.5 rounded-full transition-all duration-500 ${s.done ? "bg-emerald-400 scale-100 shadow-sm shadow-emerald-300/50" : "bg-border/60"}`} />
+                <div className={`w-6 h-0.5 rounded-full transition-all duration-500 ${s.done ? "bg-emerald-400 scale-100 shadow-sm shadow-emerald-300/50" : "bg-border/60"}`} ></div>
               )}
             </div>
           ))}
@@ -1776,7 +1776,7 @@ export function StandalonePreview() {
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent hover:border-border'}`}
               >
                 <motion.span animate={shareCopied ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
-                  {shareCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" /><MessageCircle className="h-3 w-3.5 text-green-500" />}
+                  {shareCopied ? <Check className="h-3.5 w-3.5" /> : <><Copy className="h-3.5 w-3.5" /><MessageCircle className="h-3 w-3.5 text-green-500" /></>}
                 </motion.span>
                 {shareCopied ? 'تم النسخ!' : 'نسخ التسعيرة'}
               </button>
@@ -1869,7 +1869,7 @@ export function StandalonePreview() {
             </div>
           </div>
 
-          {/* ─── بطاقات الإحصائيات مع أيقونات ملونة ─── */
+          {/* ─── بطاقات الإحصائيات مع أيقونات ملونة ─── */}/
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} whileHover={{ y: -2, scale: 1.02 }} className="rounded-xl p-3.5 text-center border bg-card shadow-sm hover:shadow-lg hover:border-blue-200/50 dark:hover:border-blue-800/30 transition-all duration-200 cursor-default">
               <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/50 dark:to-blue-950/20 flex items-center justify-center shadow-sm shadow-blue-200/50 dark:shadow-blue-900/20"><BookOpen className="h-4.5 w-4.5 text-blue-500" /></div>
@@ -2088,11 +2088,11 @@ export function StandalonePreview() {
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <Eye className="h-3 w-3 text-blue-400" /><span>معاينة 3D حية</span>
               </div>
-              <div className="w-6 h-px bg-border" />
+              <div className="w-6 h-px bg-border" ></div>
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <Settings2 className="h-3 w-3 text-violet-400" /><span>خيارات متقدمة</span>
               </div>
-              <div className="w-6 h-px bg-border" />
+              <div className="w-6 h-px bg-border" ></div>
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <Calculator className="h-3 w-3 text-emerald-400" /><span>تسعيرة تلقائية</span>
               </div>
@@ -2102,7 +2102,7 @@ export function StandalonePreview() {
               setActiveBinding(getDefaultBinding(fileCategory));
               setStep("preview");
             }} className="w-full h-12 rounded-xl text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all duration-300 font-bold text-sm gap-2 active:scale-[0.98] relative overflow-hidden group" style={{ background: 'linear-gradient(270deg, #f59e0b, #f97316, #f43f5e, #f97316, #f59e0b)', backgroundSize: '400% 400%', animation: 'gradient-rotate 4s ease infinite' }}>
-              <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" ></div>
               <Eye className="h-4 w-4 relative z-10" /><span className="relative z-10">متابعة للمعاينة</span><ArrowLeft className="h-4 w-4 relative z-10" />
             </Button>
           </div>
@@ -2689,7 +2689,7 @@ export function StandalonePreview() {
             <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl border bg-card shadow-sm">
               <button onClick={() => setShowOverlay(!showOverlay)} className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all duration-200 text-muted-foreground hover:text-foreground hover:scale-105 shadow-sm ${showOverlay ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-600" : "hover:bg-muted"}`} title="منطقة آمنة"><Grid3X3 className="h-3.5 w-3.5" /></button>
               <button onClick={() => setShowCropMarks(!showCropMarks)} className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all duration-200 text-muted-foreground hover:text-foreground hover:scale-105 shadow-sm ${showCropMarks ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-600" : "hover:bg-muted"}`} title="علامات القص"><Ruler className="h-3.5 w-3.5" /></button>
-              <div className="w-px h-5 bg-border mx-0.5" />
+              <div className="w-px h-5 bg-border mx-0.5" ></div>
               <button onClick={() => setZoom((z: number) => Math.max(25, z - 25))} className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all duration-200 text-muted-foreground hover:text-foreground hover:scale-105 shadow-sm hover:bg-muted" title="تصغير"><ZoomOut className="h-3.5 w-3.5" /></button>
               <span className="text-[11px] font-mono w-10 text-center tabular-nums">{zoom}%</span>
               <button onClick={() => setZoom((z: number) => Math.min(300, z + 25))} className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all duration-200 text-muted-foreground hover:text-foreground hover:scale-105 shadow-sm hover:bg-muted" title="تكبير"><ZoomIn className="h-3.5 w-3.5" /></button>
@@ -2713,7 +2713,7 @@ export function StandalonePreview() {
                       </div>
                       <div className="flex gap-1">
                         {[0, 1, 2].map((i) => (
-                          <div key={i} className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                          <div key={i} className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} ></div>
                         ))}
                       </div>
                     </div>
@@ -2762,7 +2762,7 @@ export function StandalonePreview() {
             />
           )}
 
-          {/* ─── ملخص الطلب السريع ─── Quick Order Summary ─── */
+          {/* ─── ملخص الطلب السريع ─── Quick Order Summary ─── */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border bg-card overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06)]">
             <div className="flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-l from-muted/60 to-muted/30">
               <Receipt className="h-4 w-4 text-amber-500" /><span className="text-xs font-bold">ملخص الطلب</span>
@@ -2813,7 +2813,7 @@ export function StandalonePreview() {
             </div>
             {/* Receipt-style total strip */}
             <div className="relative px-4 py-3 bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600">
-              <div className="absolute inset-x-0 top-0 h-3 bg-gradient-to-b from-amber-400/20 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-3 bg-gradient-to-b from-amber-400/20 to-transparent" ></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white">
                   <Quote className="h-4 w-4" />
@@ -2897,7 +2897,7 @@ export function StandalonePreview() {
                 {/* Total — receipt style */}
                 <div className="relative rounded-xl bg-gradient-to-l from-amber-500 to-orange-500 p-4 text-white mt-2 overflow-hidden">
                   {/* Decorative pattern */}
-                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '16px 16px' }} ></div>
                   <div className="relative">
                     <div className="flex items-center justify-between">
                       <div>
@@ -2953,7 +2953,7 @@ export function StandalonePreview() {
               <motion.div key="doc" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }}>
                 <div className="rounded-2xl border bg-muted/10 overflow-hidden shadow-sm">
                   <div className="flex flex-col items-center justify-center p-8 bg-muted/5 min-h-[300px] gap-4">
-                    <div className={`w-20 h-24 rounded-xl border-2 border-dashed ${uploadedFileType === "design" ? "border-violet-300 bg-violet-50/80 dark:bg-violet-950/30" : "border-amber-300 bg-amber-50/80 dark:bg-amber-950/30"} flex items-center justify-center shadow-sm`} })}>
+                    <div className={`w-20 h-24 rounded-xl border-2 border-dashed ${uploadedFileType === "design" ? "border-violet-300 bg-violet-50/80 dark:bg-violet-950/30" : "border-amber-300 bg-amber-50/80 dark:bg-amber-950/30"} flex items-center justify-center shadow-sm`}>
                       <FileText className={`h-8 w-8 ${uploadedFileType === "design" ? "text-violet-400" : "text-amber-400"}`} />
                     </div>
                     <div className="text-center space-y-1">
@@ -2987,7 +2987,7 @@ export function StandalonePreview() {
                         <button onClick={() => { setZoom(z => Math.max(50, z - 25)); }} className="w-7 h-7 rounded-lg border flex items-center justify-center hover:bg-muted transition-all active:scale-95" title="تصغير"><Minus className="h-3 w-3" /></button>
                         <button onClick={() => setZoom(100)} className="px-2 h-7 rounded-lg border flex items-center justify-center hover:bg-muted transition-all text-[10px] font-mono font-medium min-w-[44px]" title="إعادة تعيين">{zoom}%</button>
                         <button onClick={() => { setZoom(z => Math.min(300, z + 25)); }} className="w-7 h-7 rounded-lg border flex items-center justify-center hover:bg-muted transition-all active:scale-95" title="تكبير"><Plus className="h-3 w-3" /></button>
-                        <div className="w-px h-4 bg-border mx-0.5" />
+                        <div className="w-px h-4 bg-border mx-0.5" ></div>
                         <button onClick={() => setBrowsePagesOpen(true)} className="h-7 px-2 rounded-lg border flex items-center justify-center gap-1 hover:bg-muted transition-all text-[10px] font-medium active:scale-95" title="تصفح جميع الصفحات"><Grid3X3 className="h-3 w-3" /><span className="hidden sm:inline">الصفحات</span></button>
                       </div>
                     </div>
@@ -3013,7 +3013,7 @@ export function StandalonePreview() {
               onClick={() => { setOrderSubmitted(false); setOrderReference(""); setOrderStep(1); setOrderDialogOpen(true); }}
               className="w-full h-14 rounded-2xl bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 font-bold text-sm gap-2.5 active:scale-[0.98] relative z-20 overflow-hidden group"
             >
-              <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/15 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-l from-white/0 via-white/15 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" ></div>
               <Send className="h-5 w-5 relative z-10" />
               <span className="relative z-10">تأكيد طلب الطباعة</span>
               <span className="text-lg font-extrabold tabular-nums mr-auto relative z-10">{finalPricing.total.toFixed(2)} <span className="text-xs font-semibold opacity-80">ر.س</span></span>
@@ -3179,7 +3179,7 @@ export function StandalonePreview() {
                       <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                     </div>
                     {/* Pulse rings */}
-                    <div className="absolute inset-0 w-20 h-20 rounded-full border-2 border-emerald-400/30 animate-ping" />
+                    <div className="absolute inset-0 w-20 h-20 rounded-full border-2 border-emerald-400/30 animate-ping" ></div>
                   </motion.div>
                   <div className="text-center space-y-2">
                     <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">تم إرسال طلبك بنجاح!</p>
@@ -3357,5 +3357,5 @@ export function StandalonePreview() {
 }
 
 function SpinLoader() {
-  return <div className="flex flex-col items-center justify-center py-32 gap-4"><div className="w-12 h-12 rounded-full border-4 border-muted border-t-amber-500 animate-spin" /><p className="text-sm text-muted-foreground">جارٍ التحميل...</p></div>;
+  return <div className="flex flex-col items-center justify-center py-32 gap-4"><div className="w-12 h-12 rounded-full border-4 border-muted border-t-amber-500 animate-spin" ></div><p className="text-sm text-muted-foreground">جارٍ التحميل...</p></div>;
 }
