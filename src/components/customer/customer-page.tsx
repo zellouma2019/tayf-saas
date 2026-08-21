@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import {
   Heart, ShieldCheck, Loader2, MapPin, Clock, Package, Truck, CheckCircle2, X,
   Search, Copy, Phone, MessageCircle, Zap, Printer, ChevronDown, ChevronUp,
-  FileText, RotateCcw, Calendar, Hash, User, ShoppingBag, Sparkles, Box
+  FileText, RotateCcw, Calendar, Hash, User, ShoppingBag, Sparkles, Box, Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -296,6 +296,21 @@ function TrackingSection() {
         )}
       </AnimatePresence>
 
+      {/* ═══ Section Header ═══ */
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 flex items-center justify-center shadow-sm">
+            <Phone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h2 className="text-sm font-bold text-foreground">تتبع الطلبات</h2>
+        </div>
+        {searched && orders.length > 0 && (
+          <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">
+            {orders.length} {orders.length === 1 ? "طلب" : "طلبات"}
+          </span>
+        )}
+      </div>
+
       {/* Search bar with focus glow */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -521,12 +536,19 @@ function TrackingSection() {
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center"
+              className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-muted/60 to-muted/30 flex items-center justify-center border border-border/50"
             >
               <Search className="h-7 w-7 text-muted-foreground/40" />
             </motion.div>
             <p className="text-sm font-semibold text-muted-foreground mb-1">لا توجد طلبات بهذا الرقم</p>
-            <p className="text-xs text-muted-foreground/60 max-w-[240px] mx-auto">تأكد من الرقم أو قم بطلب طباعة جديد من المنطقة أدناه</p>
+            <p className="text-xs text-muted-foreground/60 max-w-[260px] mx-auto leading-relaxed">تأكد من الرقم أو قم بطلب طباعة جديد من المنطقة أدناه</p>
+            <button
+              onClick={() => { document.getElementById('upload-zone-area')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-950/30 transition-all border border-amber-200/50 dark:border-amber-800/30"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              رفع ملف جديد
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
