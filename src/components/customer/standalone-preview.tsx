@@ -1741,17 +1741,17 @@ export function StandalonePreview() {
                 onClick={() => { if (s.done || s.active) setStep(s.stepTarget); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-300 ${
                   s.active
-                    ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 shadow-sm shadow-amber-200/50 dark:shadow-amber-900/20"
+                    ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 shadow-sm shadow-amber-200/50 dark:shadow-amber-900/20 cursor-pointer"
                     : s.done
-                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/30 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/30 cursor-pointer"
                       : "bg-muted/40 text-muted-foreground/50 border border-border/30"
-                } ${s.done || s.active ? "cursor-pointer" : ""}`}
+                }`}
               >
                 {s.done && !s.active ? <Check className="h-3 w-3" /> : s.icon}
                 {s.label}
               </button>
               {i < 3 && (
-                <div className={`w-5 h-px mx-0.5 transition-colors duration-300 ${s.done ? "bg-emerald-300 dark:bg-emerald-700" : "bg-border"}`} />
+                <div className={`w-6 h-0.5 rounded-full transition-all duration-500 ${s.done ? "bg-emerald-400 scale-100 shadow-sm shadow-emerald-300/50" : "bg-border/60"}`} />
               )}
             </div>
           ))}
@@ -1776,7 +1776,7 @@ export function StandalonePreview() {
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent hover:border-border'}`}
               >
                 <motion.span animate={shareCopied ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
-                  {shareCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {shareCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" /><MessageCircle className="h-3 w-3.5 text-green-500" />}
                 </motion.span>
                 {shareCopied ? 'تم النسخ!' : 'نسخ التسعيرة'}
               </button>
@@ -1916,7 +1916,7 @@ export function StandalonePreview() {
           </div>
 
           {analysis.pageDimensionsMM && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-2xl border bg-card p-4 shadow-sm">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors"><span className="text-muted-foreground mb-1">الأبعاد</span><span className="font-bold font-mono text-sm">{analysis.pageDimensionsMM.width}×{analysis.pageDimensionsMM.height}</span><span className="text-[10px] text-muted-foreground">مم</span></div>
                 <div className="flex flex-col items-center p-2.5 rounded-lg bg-muted/50 text-center group cursor-default hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"><span className="text-muted-foreground mb-1">الدقة</span><span className="font-bold text-sm">{uploadedFileType === "pdf" ? 300 : (Number(analysis.estimatedDPI) > 0 ? analysis.estimatedDPI : "—")}</span><span className="text-[10px] text-muted-foreground">DPI</span></div>
@@ -2942,8 +2942,9 @@ export function StandalonePreview() {
                     />
                   </div>
                   <div className="px-3 py-1.5 bg-muted/30 border-t flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" />معاينة الصورة • {file?.name}</span>
-                    <span>{analysis.fileSizeMB} ميغابايت</span>
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" />معاينة الصورة •</span>
+                    <span className="truncate max-w-[160px]" dir="ltr">{file?.name || "—"}</span>
+                    <span className="font-mono text-muted-foreground">{analysis.fileSizeMB} ميغابايت</span>
                   </div>
                 </div>
               </motion.div>
@@ -2952,7 +2953,7 @@ export function StandalonePreview() {
               <motion.div key="doc" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }}>
                 <div className="rounded-2xl border bg-muted/10 overflow-hidden shadow-sm">
                   <div className="flex flex-col items-center justify-center p-8 bg-muted/5 min-h-[300px] gap-4">
-                    <div className={`w-20 h-24 rounded-xl border-2 border-dashed ${uploadedFileType === "design" ? "border-violet-300 bg-violet-50 dark:bg-violet-950/20" : "border-amber-300 bg-amber-50 dark:bg-amber-950/20"} flex items-center justify-center`}>
+                    <div className={`w-20 h-24 rounded-xl border-2 border-dashed ${uploadedFileType === "design" ? "border-violet-300 bg-violet-50/80 dark:bg-violet-950/30" : "border-amber-300 bg-amber-50/80 dark:bg-amber-950/30"} flex items-center justify-center shadow-sm`} })}>
                       <FileText className={`h-8 w-8 ${uploadedFileType === "design" ? "text-violet-400" : "text-amber-400"}`} />
                     </div>
                     <div className="text-center space-y-1">
@@ -2979,7 +2980,7 @@ export function StandalonePreview() {
                     <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 border-t">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all active:scale-95"><ChevronRight className="h-4 w-4" /></button>
-                        <div className="flex items-center gap-1 text-xs"><span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">{currentPage}</span><span className="text-muted-foreground">/</span><span className="font-mono">{totalPages}</span></div>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/40"><span className="font-mono font-bold text-amber-700 text-sm">{currentPage}/{totalPages}</span></div>
                         <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage >= totalPages} className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all active:scale-95"><ChevronLeft className="h-4 w-4" /></button>
                       </div>
                       <div className="flex items-center gap-1">
@@ -2991,8 +2992,9 @@ export function StandalonePreview() {
                       </div>
                     </div>
                   )}
-                  <div className="px-3 py-1.5 bg-muted/30 border-t flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" />معاينة طباعة دقيقة • {file?.name}</span>
+                  <div className="px-3 py-2 bg-muted/30 border-t flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" />معاينة طباعة دقيقة •</span>
+                    <span className="truncate max-w-[160px]" dir="ltr">{file?.name || storedName?.split("/").pop() || "—"}</span>
                     <span>{analysis.pageDimensionsMM ? `${analysis.pageDimensionsMM.width}×${analysis.pageDimensionsMM.height} مم` : analysis.closestPaperSize || analysis.paperSize}</span>
                   </div>
                 </div>

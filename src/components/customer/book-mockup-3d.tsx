@@ -624,6 +624,40 @@ export function BookMockup3D({
       activeFrontTexInfo = { texture: tex, aspectRatio: 800 / 1100 };
     }
 
+    // ═══ Procedural cover for flat sheet/image (single page without cover texture) ═══
+    if (!activeFrontTexInfo && (fileType === "pdf" || fileType === "image")) {
+      const pC = document.createElement("canvas");
+      pC.width = 800; pC.height = 1100;
+      const pX = pC.getContext("2d")!;
+      pX.fillStyle = "#faf8f5"; pX.fillRect(0, 0, 800, 1100);
+      pX.globalAlpha = 0.03; pX.strokeStyle = "#b0a898"; pX.lineWidth = 0.5;
+      for (let y = 0; y < 1100; y += 4) { pX.beginPath(); pX.moveTo(0, y); pX.lineTo(800, y); pX.stroke(); }
+      for (let x = 0; x < 800; x += 4) { pX.beginPath(); pX.moveTo(x, 0); pX.lineTo(x, 1100); pX.stroke(); }
+      pX.globalAlpha = 1;
+      pX.fillStyle = "#0d9488"; pX.fillRect(0, 0, 800, 50);
+      pX.fillStyle = "#fff"; pX.font = "600 16px system-ui, sans-serif"; pX.textAlign = "center";
+      pX.fillText("صفحة مطبوعة", 400, 32);
+      pX.strokeStyle = "rgba(13,148,136,0.12)"; pX.lineWidth = 1;
+      pX.beginPath(); pX.roundRect(60, 80, 680, 940, 4); pX.stroke();
+      const pN = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
+      const pT = pN.length > 32 ? pN.slice(0, 29) + "..." : pN;
+      pX.fillStyle = "#2d2a26"; pX.font = "700 34px Georgia, serif"; pX.textAlign = "center"; pX.textBaseline = "middle";
+      pX.fillText(pT, 400, 520); pX.textBaseline = "alphabetic";
+      pX.strokeStyle = "rgba(13,148,136,0.2)"; pX.lineWidth = 0.8;
+      pX.beginPath(); pX.moveTo(300, 620); pX.lineTo(500, 620); pX.stroke();
+      pX.fillStyle = "rgba(120,113,108,0.6)"; pX.font = "400 15px system-ui, sans-serif";
+      pX.fillText(`${paperSize}  · 300 DPI  ·  ${totalPages} صفحة`, 400, 660);
+      pX.fillStyle = "#0d9488"; pX.fillRect(0, 1050, 800, 50);
+      pX.fillStyle = "rgba(255,255,255,0.7)"; pX.font = "400 13px system-ui, sans-serif";
+      pX.fillText("طيف — منصة الطباعة", 400, 1080);
+      const pT2 = new THREE.CanvasTexture(pC);
+      pT2.colorSpace = THREE.SRGBColorSpace; pT2.generateMipmaps = true;
+      pT2.minFilter = THREE.LinearMipmapLinearFilter; pT2.magFilter = THREE.LinearFilter;
+      if (managerRef.current) pT2.anisotropy = managerRef.current.getRenderer().capabilities.getMaxAnisotropy();
+      managerRef.current?.trackTexture(pT2);
+      activeFrontTexInfo = { texture: pT2, aspectRatio: 800 / 1100 };
+    }
+
     // For PDF files without cover texture: create realistic book cover placeholder
     if (!activeFrontTexInfo && fileType === "pdf") {
       const canvas = document.createElement("canvas");
@@ -806,6 +840,52 @@ export function BookMockup3D({
       envMapIntensity: 0.05,
     });
     edgeMatRef.current = edgeMat;
+      for (let x = 0; x < 800; x += 4) { pCtx.beginPath(); pCtx.moveTo(x, 0); pCtx.lineTo(x, 1100); pCtx.stroke(); }
+      pCtx.globalAlpha = 1;
+      // Teal top band
+      pCtx.fillStyle = "#0d9488";
+      pCtx.fillRect(0, 0, 800, 50);
+      pCtx.fillStyle = "#ffffff";
+      pCtx.font = "600 16px system-ui, sans-serif";
+      pCtx.textAlign = "center";
+      pCtx.fillText("صفحة مطبوعة", 400, 32);
+      // Inner border
+      pCtx.strokeStyle = "rgba(13, 148, 136, 0.12)";
+      pCtx.lineWidth = 1;
+      pCtx.beginPath(); pCtx.roundRect(60, 80, 680, 940, 4); pCtx.stroke();
+      // File name
+      const pName = fileSource.includes("/") ? fileSource.split("/").pop()! : fileSource;
+      const pTrunc = pName.length > 32 ? pName.slice(0, 29) + "..." : pName;
+      pCtx.fillStyle = "#2d2a26";
+      pCtx.font = "700 34px Georgia, 'Times New Roman', serif";
+      pCtx.textAlign = "center";
+      pCtx.textBaseline = "middle";
+      pCtx.fillText(pTrunc, 400, 520);
+      pCtx.textBaseline = "alphabetic";
+      // Divider
+      pCtx.strokeStyle = "rgba(13, 148, 136, 0.2)";
+      pCtx.lineWidth = 0.8;
+      pCtx.beginPath(); pCtx.moveTo(300, 620); pCtx.lineTo(500, 620); pCtx.stroke();
+      // Info
+      pCtx.fillStyle = "rgba(120, 113, 108, 0.6)";
+      pCtx.font = "400 15px system-ui, sans-serif";
+      pCtx.fillText(`${paperSize}  ·  300 DPI  ·  ${totalPages} صفحة`, 400, 660);
+      // Bottom band
+      pCtx.fillStyle = "#0d9488";
+      pCtx.fillRect(0, 1050, 800, 50);
+      // Branding
+      pCtx.fillStyle = "rgba(255,255,255,0.7)";
+      pCtx.font = "400 13px system-ui, sans-serif";
+      pCtx.fillText("طيف — منصة الطباعة", 400, 1080);
+      const pTex = new THREE.CanvasTexture(pCanvas);
+      pTex.colorSpace = THREE.SRGBColorSpace;
+      pTex.generateMipmaps = true;
+      pTex.minFilter = THREE.LinearMipmapLinearFilter;
+      pTex.magFilter = THREE.LinearFilter;
+      if (managerRef.current) pTex.anisotropy = managerRef.current.getRenderer().capabilities.getMaxAnisotropy();
+      managerRef.current?.trackTexture(pTex);
+      activeFrontTexInfo = { texture: pTex, aspectRatio: 800 / 1100 };
+    }
 
     /* === Path 1: Flat printed sheet (image / single page) === */
     if (category === "image") {
