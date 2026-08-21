@@ -1,0 +1,65 @@
+[
+  {
+    "url": "https://freefrontend.com/css-book-effects",
+    "name": "20+ CSS Book Effects: Free Code Snippets & Examples",
+    "snippet": "Dec 25, 2025 — Discover smooth CSS book effects that add realistic 3D transitions to your layout. Build immersive reading interfaces without heavy JS ...",
+    "host_name": "freefrontend.com",
+    "rank": 0,
+    "date": "Dec 25, 2025",
+    "favicon": ""
+  },
+  {
+    "url": "https://tympanus.net/codrops/tag/flip",
+    "name": "flip",
+    "snippet": "An experiment about a realistic looking book showcase with some interactivity using CSS 3D transforms.",
+    "host_name": "tympanus.net",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://fliplink.me/blog/how-to-create-3d-page-turning-book-online",
+    "name": "How to Create a 3D Page-Turning Book Online",
+    "snippet": "Feb 21, 2026 — Transform any PDF into a 3D flipbook with realistic page-turning animations. Share it with a link, embed it on your site, or print the QR code.",
+    "host_name": "fliplink.me",
+    "rank": 2,
+    "date": "Feb 21, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://real3dflipbook.com/3d-flipbook",
+    "name": "CSS 3D Flipbook – Fast 3D Page Flip, No WebGL",
+    "snippet": "A CSS 3D flipbook gives a real page flip with no WebGL and no GPU. Loads faster, works on older devices, same toolbar as the realistic 3D mode.",
+    "host_name": "real3dflipbook.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://devsnap.me/css-book-effects",
+    "name": "35+ Amazing CSS Book Effects (Free Code + Demos)",
+    "snippet": "Enjoy this 100% free and open source collection of HTML and CSS book effect code examples. The list includes 3d , animation, flip , and layout book effects .",
+    "host_name": "devsnap.me",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/css/comments/1eyxzw1/3d_book_with_css",
+    "name": "3D book with CSS : r/css",
+    "snippet": "Using the preserve- 3d transform type, these elements display as a pretty realistic book . It is also articulated using CSS variables so that ...",
+    "host_name": "www.reddit.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://en-ca.wordpress.org/plugins/real3d-flipbook-lite",
+    "name": "3D FlipBook, PDF FlipBook, PDF Viewer, PDF Embedder –",
+    "snippet": "Real 3D Flipbook is the ultimate 3D Flipbook and PDF Viewer Plugin for WordPress that converts your PDFs and images into interactive, realistic 3D flipbooks ...",
+    "host_name": "en-ca.wordpress.org",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  }
+]

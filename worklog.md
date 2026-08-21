@@ -826,3 +826,46 @@ Unresolved / Next Phase:
 Risks:
 - Vercel Hobby plan: 4.5MB body limit, 10s serverless timeout
 - OOM in local dev (4GB RAM) — all testing must be on Vercel
+
+---
+Task ID: 2
+Agent: Main
+Task: إصلاح المعاينة ثلاثية الأبعاد، ربط خيارات الطباعة بالمعاينة، إصلاح نظام الفاتورة
+
+Work Log:
+- فحص 3 صور مرجعية للمستخدم (كتب واقعية بظلال وإضاءة استوديو)
+- بحث عبر الإنترنت عن أفضل حلول 3D: StPageFlip، react-pageflip، Turn.js، Three.js
+- اكتشاف 3 مشاكل رئيسية:
+  1. الفاتورة تُرجع JSON بدل HTML → تظهر كصورة سوداء
+  2. ServiceOptionsPanel لا يُحدث BookMockup3D مباشرة
+  3. المعاينة 3D تحتاج تحسين واقعية
+- إصلاح نقطة نهاية الفاتورة `/api/c/invoice/[reference]/route.ts`:
+  - تحويل من JSON Response إلى HTML فاتورة كاملة مع تصميم احترافي
+  - تضمين خطوط Google (Cairo) للعربية
+  - دعم `?format=json` للمستهلكين API
+  - صفحات خطأ جميلة بدل JSON الخام
+- ربط ServiceOptionsPanel بالمعاينة 3D:
+  - إضافة useEffect يراقب serviceOptions.selectedOptions
+  - ربط: binding → activeBinding, sides → duplex, color → printColor
+  - ربط: paperType → imagePaperType, weight → paperWeight, copies
+  - إضافة "glue" → "perfect" mapping للتجليد بالغراء
+- تحسين ThreeSceneManager:
+  - خلفية متدرجة بدل اللون المسطح
+  - ظل اتصال متعدد الطبقات (diffuse + sharp)
+  - تحسين الإضاءة: key أدفأ + fill أقوى + rim أقوى
+  - زيادة tone mapping exposure إلى 1.15
+- تحسين BookMockup3D:
+  - زوايا مستديرة للورق (ExtrudeGeometry مع bevel)
+  - شريط معلومات سفلي محسّن مع badges
+
+Stage Summary:
+- الفاتورة: تعمل الآن كصفحة HTML جميلة قابلة للطباعة
+- الربط: تغيير أي خيار في اللوحة يُحدث المعاينة فوراً
+- الإضاءة: أكثر واقعية مع تدرج وظل متعدد الطبقات
+- الموديل: حواف مستديرة للأوراق المطبوعة
+- أخطاء TS: 4 أخطاء سابقة في مناطق لم يتم تعديلها
+
+Unresolved Issues:
+- أخطاء TS سابقة في standalone-preview.tsx (خطوط 1395, 1837, 2749) - موجودة مسبقاً
+- سيرفر التطوير يتوقف بسبب OOM في بيئة الاختبار (4GB RAM)
+- التعديلات لم تُدفع إلى GitHub بعد

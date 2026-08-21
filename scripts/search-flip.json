@@ -1,0 +1,83 @@
+[
+  {
+    "url": "http://www.turnjs.com",
+    "name": "Turn.js: The page flip effect in HTML5",
+    "snippet": "Make a flip book with HTML5 ... Turn.js is a JavaScript library that will make your content look like a real book or magazine using all the advantages of HTML5. Read more",
+    "host_name": "www.turnjs.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/Nodlik/StPageFlip",
+    "name": "Nodlik/StPageFlip: Simple library for creating realistic page",
+    "snippet": "Powerful, simple, and flexible JS Library for creating realistic and beautiful page turning effect. Features Works with simple images on canvas and complex ...",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/webdev/comments/13vjinu/ive_lost_the_link_to_the_javascript_library_for",
+    "name": "I've lost the link to the JavaScript library for creating the 3d",
+    "snippet": "StPageFlip - powerful, simple, and flexible JS Library for creating realistic and beautiful page turning effect.",
+    "host_name": "www.reddit.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://nodlik.github.io/StPageFlip",
+    "name": "St Page Flip",
+    "snippet": "Powerful, simple, and flexible JS Library for creating realistic and beautiful page turning effect. - Works with simple images on canvas and complex HTML blocks ... Read more",
+    "host_name": "nodlik.github.io",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://npmjs.com/package/react-pageflip",
+    "name": "react-pageflip",
+    "snippet": "Apr 18, 2021 — Simple React.js wrapper for StPageFlip library , for creating realistic and beautiful page turning effect. Latest version: 2.0.3, ...",
+    "host_name": "npmjs.com",
+    "rank": 4,
+    "date": "Apr 18, 2021",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=gi1lNH_lXpI",
+    "name": "Responsive Flip Book Effect Using React!",
+    "snippet": "This interactive Pokémon Flip Book uses React and the react- pageflip library to create a beautiful digital book experience. Realistic page ...",
+    "host_name": "www.youtube.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.sitepoint.com/community/t/natural-page-turning-software/431128",
+    "name": "\"Natural\" page turning software - Get Started",
+    "snippet": "Nov 3, 2023 — The page flip effect in HTML5 Turn . js makes a beautiful page turning effect using HTML5 and jQuery … at turnjs.com. slower page turn helps.",
+    "host_name": "www.sitepoint.com",
+    "rank": 6,
+    "date": "Nov 3, 2023",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.cssscript.com/book-page-flip-animation",
+    "name": "StPageFlip: Realistic Book Page Flip Animation In JavaScript",
+    "snippet": "Jun 8, 2026 — StPageFlip is a vanilla JavaScript page flip library that creates realistic book and magazine page-turning animations from HTML elements or ... Read more",
+    "host_name": "www.cssscript.com",
+    "rank": 7,
+    "date": "Jun 8, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackoverflow.com/questions/76972952/how-to-make-a-flip-page-effect-in-book-without-using-absolute-position-or-make",
+    "name": "How to make a flip page effect in book without using",
+    "snippet": "Codepen I have a div that represents a book page and contains the front and the back elements. On a click the page flips to show the reverse side. In ...",
+    "host_name": "stackoverflow.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  }
+]

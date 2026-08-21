@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://www.reddit.com/r/threejs/comments/1em6hzv/help_3d_book_rotate",
+    "name": "Help - 3d book rotate : r/threejs",
+    "snippet": "I'm creating a 3D book with an open leaf animation, but I'm having trouble rotating the cover along with the folds and spine .",
+    "host_name": "www.reddit.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/scastiel/book-cover-3d",
+    "name": "scastiel/book-cover-3d",
+    "snippet": "React component to display a 3D Book Cover in a web page . offers a service to manage, embed and host your 3D book covers. Using NPM: npm",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.jsdelivr.com/package/npm/3d-flip-book",
+    "name": "3d-flip-book CDN by jsDelivr - A CDN for npm and GitHub",
+    "snippet": "3D FlipBook allows to create volume book , with page thickness. It is the most exact computer model of a book or a magazine from real world. The plugin is able ... Read more",
+    "host_name": "www.jsdelivr.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.npmjs.com/package/three",
+    "name": "Three.js",
+    "snippet": "Jul 1, 2026 — JavaScript 3D library . The aim of the project is to create an easy-to-use, lightweight, cross-browser, general-purpose 3D library. The current ...",
+    "host_name": "www.npmjs.com",
+    "rank": 3,
+    "date": "Jul 1, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://threejs.org",
+    "name": "Three.js – JavaScript 3D Library",
+    "snippet": "Three.js – JavaScript 3D Library three.js r185 docs examples Learn examples documentation Tools devtools editor Community questions discord forum twitter Code ...",
+    "host_name": "threejs.org",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  }
+]
