@@ -124,6 +124,10 @@ interface RecentUpload {
   timestamp: number;
   storedFileName: string;
   fileType: UploadedFileType;
+  /** Cover image data URL for offline preview (JPEG, ~50-100KB) */
+  coverDataUrl?: string;
+  /** PDF data URL for client-side rendering (base64, may be large) */
+  pdfDataUrl?: string;
 }
 
 const DEFAULT_ANALYSIS: AnalysisResult = {
@@ -271,6 +275,8 @@ export function StandalonePreview() {
   const [workerResult, setWorkerResult] = useState<PdfWorkerResult | null>(null);
   // Original file ref for worker processing
   const fileForWorkerRef = useRef<File | null>(null);
+  // Track last saved history entry for updating with cover data URL
+  const lastHistoryRef = useRef<{ storedFileName: string; fileType: UploadedFileType } | null>(null);
   // 2D Page Viewer overlay state
   const [browsePagesOpen, setBrowsePagesOpen] = useState(false);
   // Download state
@@ -320,7 +326,7 @@ export function StandalonePreview() {
   }, [file, uploadedFileType]);
 
   /* ─── حفظ في السجل ─── */
-  const saveToHistory = useCallback((f: File, cat: FileCategory, sn: string, ft: UploadedFileType) => {
+  const saveToHistory = useCallback((f: File, cat: FileCategory, sn: string, ft: UploadedFileType, coverDu?: string | null, pdfDu?: string | null) => {
     setRecentUploads((prev) => {
       const entry: RecentUpload = {
         name: f.name,
@@ -330,9 +336,18 @@ export function StandalonePreview() {
         timestamp: Date.now(),
         storedFileName: sn,
         fileType: ft,
+        coverDataUrl: coverDu || undefined,
+        pdfDataUrl: pdfDu || undefined,
       };
       const updated = [entry, ...prev].slice(0, 5);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+      try {
+        // Use try-catch: localStorage may be full if pdfDataUrl is large
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+      } catch {
+        // If localStorage is full, save without pdfDataUrl (cover only)
+        const lite = updated.map(e => ({ ...e, pdfDataUrl: undefined }));
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(lite)); } catch { /* give up */ }
+      }
       return updated;
     });
   }, [totalPages]);
@@ -341,6 +356,21 @@ export function StandalonePreview() {
   const clearHistory = useCallback(() => {
     setRecentUploads([]);
     localStorage.removeItem(HISTORY_KEY);
+  }, []);
+
+  /* ─── تحديث السجل بغلاف الملف ─── */
+  const updateHistoryCover = useCallback((storedFileName: string, coverDu: string) => {
+    setRecentUploads((prev) => {
+      const updated = prev.map((item) =>
+        item.storedFileName === storedFileName
+          ? { ...item, coverDataUrl: coverDu }
+          : item
+      );
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+      } catch { /* localStorage full — non-critical */ }
+      return updated;
+    });
   }, []);
 
   /* ─── تحميل الغلاف في الخلفية (بدون حظر المستخدم) ─── */
@@ -392,6 +422,8 @@ export function StandalonePreview() {
           coverDataUrl,
           backDataUrl: null,
         });
+        // Update history entry with cover data URL for offline preview
+        updateHistoryCover(storedFileName, coverDataUrl);
         return;
       } catch { /* fall through to server fallback */ }
     }
@@ -408,6 +440,8 @@ export function StandalonePreview() {
           reader.readAsDataURL(blob);
         });
         setWorkerResult({ numPages: numP, pageDimensionsMM: dimsMM, closestPaperSize: paperSize, isPortrait, coverDataUrl: cdu, backDataUrl: null });
+        // Update history entry with cover data URL for offline preview
+        updateHistoryCover(storedFileName, cdu);
       }
     } catch { /* non-critical */ }
   }, []);
@@ -418,6 +452,23 @@ export function StandalonePreview() {
     setUploadedFileType(item.fileType);
     setFile(null);
     setImagePreviewUrl(null);
+    // Restore cover data URL from history for offline preview
+    if (item.coverDataUrl) {
+      setWorkerResult({
+        numPages: item.pages,
+        pageDimensionsMM: null,
+        closestPaperSize: "A4",
+        isPortrait: true,
+        coverDataUrl: item.coverDataUrl,
+        backDataUrl: null,
+      });
+    }
+    // Restore PDF data URL from history for client-side rendering
+    if (item.pdfDataUrl) {
+      setPdfDataUrl(item.pdfDataUrl);
+    } else {
+      setPdfDataUrl(null);
+    }
     // Set minimal analysis for re-uploaded item
     const cat = item.category;
     setAnalysis((prev) => ({
@@ -710,7 +761,7 @@ export function StandalonePreview() {
           setAnalysisProgress(100);
           setAnalysisStage("");
           const cat = classifyFile("pdf", numP, dimsMM);
-          saveToHistory(f, cat, storedFileName!, "pdf");
+          saveToHistory(f, cat, storedFileName!, "pdf", null, pdfDataUrl);
           setStep("results");
 
           // Load cover in background (non-blocking)
@@ -786,7 +837,7 @@ export function StandalonePreview() {
           if (svc === "photo") cat = "image";
           else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
           else if (svc === "poster") cat = "short-doc";
-          saveToHistory(f, cat, storedFileName!, displayType);
+          saveToHistory(f, cat, storedFileName!, displayType, null, uploadedFileType === "pdf" ? pdfDataUrl : null);
           setStep("results");
           return;
         }
@@ -848,7 +899,7 @@ export function StandalonePreview() {
         setAnalysisProgress(100);
         setAnalysisStage("");
         const cat = classifyFile("pdf", numP, dimsMM);
-        saveToHistory(f, cat, storedFileName!, "pdf");
+        saveToHistory(f, cat, storedFileName!, "pdf", null, pdfDataUrl);
         setStep("results");
 
         // Load cover in background
@@ -904,7 +955,7 @@ export function StandalonePreview() {
         setAnalysisProgress(100);
         setAnalysisStage("");
         const cat = classifyFile("pdf", numP, dimsMM);
-        saveToHistory(f, cat, storedFileName!, "pdf");
+        saveToHistory(f, cat, storedFileName!, "pdf", null, pdfDataUrl);
         setStep("results");
 
         // Load cover in background
@@ -981,7 +1032,7 @@ export function StandalonePreview() {
           if (svc === "photo") cat = "image";
           else if (realAnalysis.pageCount > 10 || svc === "book") cat = "book";
           else if (svc === "poster") cat = "short-doc";
-          saveToHistory(f, cat, storedFileName!, displayType);
+          saveToHistory(f, cat, storedFileName!, displayType, null, uploadedFileType === "pdf" ? pdfDataUrl : null);
           setStep("results");
         } catch (analysisErr) {
           console.error("[analysis] Real analysis failed:", analysisErr);
@@ -999,7 +1050,7 @@ export function StandalonePreview() {
           };
           setAnalysis(fallbackResult);
           setTotalPages(1);
-          saveToHistory(f, "short-doc", storedFileName!, displayType);
+          saveToHistory(f, "short-doc", storedFileName!, displayType, null, uploadedFileType === "pdf" ? pdfDataUrl : null);
           setStep("results");
         }
       }
@@ -2431,6 +2482,7 @@ export function StandalonePreview() {
             <PageViewer2D
               file={file}
               storedFileName={storedName}
+              pdfDataUrl={pdfDataUrl}
               totalPages={totalPages}
               isOpen={browsePagesOpen}
               onClose={() => setBrowsePagesOpen(false)}

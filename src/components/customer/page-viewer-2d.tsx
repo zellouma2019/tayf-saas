@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Loader2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -25,6 +25,8 @@ interface PageViewer2DProps {
   file?: File | null;
   /** Stored file name for server-side loading (fallback) */
   storedFileName?: string | null;
+  /** PDF data URL for client-side rendering (avoids server fetch) */
+  pdfDataUrl?: string | null;
   /** Total number of pages */
   totalPages: number;
   /** Initial page to display */
@@ -43,6 +45,7 @@ const RENDER_SCALE = 2.0;
 export function PageViewer2D({
   file,
   storedFileName,
+  pdfDataUrl,
   totalPages,
   initialPage = 1,
   isOpen,
@@ -85,9 +88,22 @@ export function PageViewer2D({
             // Client-side: use File object directly
             const arrayBuffer = await file.arrayBuffer();
             source = { data: arrayBuffer };
+          } else if (pdfDataUrl) {
+            // Data URL: decode base64 directly (avoids server fetch on Vercel)
+            const base64 = pdfDataUrl.split(",")[1];
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            source = { data: bytes.buffer as ArrayBuffer };
           } else if (storedFileName) {
-            // Server-side: fetch from /api/c/uploads/ endpoint
-            source = { url: `/api/c/uploads/${encodeURIComponent(storedFileName)}` };
+            // Server-side: fetch the file first for clear error handling
+            const fetchUrl = `/api/c/uploads/${encodeURIComponent(storedFileName)}`;
+            const resp = await fetch(fetchUrl);
+            if (!resp.ok) {
+              throw new Error("الملف غير متوفر — يرجى إعادة رفع الملف لعرض الصفحات");
+            }
+            const arrayBuffer = await resp.arrayBuffer();
+            source = { data: arrayBuffer };
           } else {
             throw new Error("لا يوجد ملف للعرض");
           }
@@ -154,7 +170,7 @@ export function PageViewer2D({
         isRenderingRef.current = false;
       }
     },
-    [file, storedFileName]
+    [file, storedFileName, pdfDataUrl]
   );
 
   // Render when page changes
@@ -186,7 +202,7 @@ export function PageViewer2D({
     setCurrentPage(initialPage);
     setPageDataUrl(null);
     setZoomLevel(100);
-  }, [file, storedFileName, initialPage]);
+  }, [file, storedFileName, pdfDataUrl, initialPage]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -351,11 +367,14 @@ export function PageViewer2D({
                 )}
 
                 {pageError && (
-                  <div className="flex flex-col items-center justify-center gap-3 min-h-[300px] bg-white/5 rounded-2xl p-8">
-                    <p className="text-rose-400 text-sm text-center">{pageError}</p>
+                  <div className="flex flex-col items-center justify-center gap-4 min-h-[300px] bg-white/5 rounded-2xl p-8">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                      <AlertCircle className="h-7 w-7 text-amber-400" />
+                    </div>
+                    <p className="text-amber-300 text-sm text-center max-w-[300px]">{pageError}</p>
                     <button
                       onClick={retryRender}
-                      className="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-all border border-amber-500/30"
+                      className="px-5 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-all border border-amber-500/30 hover:scale-105 active:scale-95"
                     >
                       إعادة محاولة
                     </button>

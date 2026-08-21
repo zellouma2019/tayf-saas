@@ -122,7 +122,14 @@ export function ProfessionalPdfViewer({
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           source = { data: bytes.buffer as ArrayBuffer };
         } else {
-          source = { url: `/api/c/uploads/${encodeURIComponent(fileSource)}` };
+          // Server file — try to fetch first to provide a clear error
+          const fetchUrl = `/api/c/uploads/${encodeURIComponent(fileSource)}`;
+          const resp = await fetch(fetchUrl);
+          if (!resp.ok) {
+            throw new Error("الملف غير متوفر على الخادم — يرجى إعادة رفع الملف لمعاينة الصفحات");
+          }
+          const arrayBuffer = await resp.arrayBuffer();
+          source = { data: arrayBuffer };
         }
 
         const pdf = await pdfjsLib.getDocument(source).promise;
@@ -421,12 +428,12 @@ export function ProfessionalPdfViewer({
   if (error && !pdfDocRef.current) {
     return (
       <div className={`flex flex-col items-center justify-center min-h-[300px] gap-3 ${className}`}>
-        <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
-          <AlertCircle className="h-6 w-6 text-red-400" />
+        <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
+          <AlertCircle className="h-7 w-7 text-amber-500" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">تعذر تحميل ملف PDF</p>
-          <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">{error}</p>
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-400">الملف غير متاح للمعاينة</p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-[300px]">يرجى إعادة رفع الملف من جهازك لعرض الصفحات</p>
         </div>
       </div>
     );
